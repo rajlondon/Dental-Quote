@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#F0F7FF"/>
+  
+  <!-- Base Tooth (Prepared) -->
+  <path d="M90 100V145C90 145 95 150 100 150C105 150 110 145 110 145V100H90Z" fill="#FFF5EE" stroke="#D4D4D4" stroke-width="1"/>
+  
+  <!-- Prepared Tooth Markings -->
+  <path d="M90 110H110" stroke="#D4D4D4" stroke-width="0.5"/>
+  <path d="M90 120H110" stroke="#D4D4D4" stroke-width="0.5"/>
+  <path d="M90 130H110" stroke="#D4D4D4" stroke-width="0.5"/>
+  <path d="M90 140H110" stroke="#D4D4D4" stroke-width="0.5"/>
+  
+  <!-- Crown -->
+  <path d="M85 100C85 100 90 85 100 85C110 85 115 100 115 100V105H85V100Z" fill="#E1F5FE" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M85 105H115" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Crown Body -->
+  <path d="M85 105V85C85 85 90 70 100 70C110 70 115 85 115 85V105H85Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Crown Surface Details (aesthetic lines) -->
+  <path d="M95 75L95 100" stroke="#E1F5FE" stroke-width="0.5"/>
+  <path d="M105 75L105 100" stroke="#E1F5FE" stroke-width="0.5"/>
+  <path d="M90 85L110 85" stroke="#E1F5FE" stroke-width="0.5"/>
+  <path d="M87 95L113 95" stroke="#E1F5FE" stroke-width="0.5"/>
+  
+  <!-- Crown Highlights -->
+  <path d="M93 75L90 90" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M107 75L110 90" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Cross-Section View (Right Side) -->
+  <path d="M130 130C130 130 135 125 140 125C145 125 150 130 150 130V160C150 160 145 165 140 165C135 165 130 160 130 160V130Z" fill="#FFF5EE" stroke="#D4D4D4" stroke-width="1"/>
+  
+  <!-- Crown Cross-Section (Right Side) -->
+  <path d="M130 130V115C130 115 135 110 140 110C145 110 150 115 150 115V130H130Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Interior Crown Line (showing thickness) -->
+  <path d="M133 125V115C133 115 135 113 140 113C145 113 147 115 147 115V125H133Z" fill="none" stroke="#E1F5FE" stroke-width="0.5" stroke-dasharray="2 1"/>
+  
+  <!-- Cross-Section Labels -->
+  <text x="140" y="170" font-family="Arial" font-size="6" text-anchor="middle" fill="#A0A0A0">Tooth</text>
+  <text x="140" y="108" font-family="Arial" font-size="6" text-anchor="middle" fill="#0EA5E9">Crown</text>
+  
+  <!-- Bridge Illustration (Left Side) -->
+  <path d="M40 130C40 130 45 125 50 125C55 125 60 130 60 130V160C60 160 55 165 50 165C45 165 40 160 40 160V130Z" fill="#FFF5EE" stroke="#D4D4D4" stroke-width="1"/>
+  <path d="M70 130C70 130 75 125 80 125C85 125 90 130 90 130V160C90 160 85 165 80 165C75 165 70 160 70 160V130Z" fill="#FFF5EE" stroke="#D4D4D4" stroke-width="1"/>
+  
+  <!-- Bridge Crown Components -->
+  <path d="M40 130V115C40 115 45 110 50 110C55 110 60 115 60 115V130H40Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M70 130V115C70 115 75 110 80 110C85 110 90 115 90 115V130H70Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Bridge Connector -->
+  <path d="M60 120H70" stroke="#0EA5E9" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Bridge Label -->
+  <text x="65" y="108" font-family="Arial" font-size="6" text-anchor="middle" fill="#0EA5E9">Bridge</text>
+  
+  <!-- Decorative Elements -->
+  <path d="M165 50L167 55L172 56L169 60L170 65L165 63L160 65L161 60L158 56L163 55L165 50Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+  <path d="M35 50L37 55L42 56L39 60L40 65L35 63L30 65L31 60L28 56L33 55L35 50Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+</svg>
