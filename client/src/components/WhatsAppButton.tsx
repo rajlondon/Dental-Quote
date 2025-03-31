@@ -10,7 +10,7 @@ interface WhatsAppButtonProps {
 
 const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({ 
   phoneNumber, 
-  message = "Hello! I'm interested in medical treatments in Istanbul. Can you help me?",
+  message = "Hello! I'm interested in medical/cosmetic treatments in Istanbul and would like some information. Can you help me?",
   className = "" 
 }) => {
   // Format the WhatsApp deep link URL

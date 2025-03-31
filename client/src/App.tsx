@@ -17,8 +17,8 @@ function Router() {
 
 function App() {
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
-  const whatsappNumber = "905012345678"; // Replace with your actual Turkey WhatsApp number
-  const phoneNumber = "+90 501 234 5678"; // Replace with your formatted display number
+  const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
+  const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
   
   return (
     <QueryClientProvider client={queryClient}>
