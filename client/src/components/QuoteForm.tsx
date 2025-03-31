@@ -51,6 +51,8 @@ const formSchema = z.object({
   otherTreatment: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone number is required")
+    .regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, "Please enter a valid phone number"),
   budget: z.string().optional(),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
@@ -78,6 +80,7 @@ const QuoteForm: React.FC = () => {
       otherTreatment: "",
       name: "",
       email: "",
+      phone: "",
       budget: "",
       startDate: undefined,
       endDate: undefined,
@@ -181,6 +184,7 @@ const QuoteForm: React.FC = () => {
                       const templateParams = {
                         name: data.name,
                         email: data.email,
+                        phone: data.phone,
                         treatment: `${data.treatmentType} - ${data.specificTreatment}`,
                         otherTreatment: data.otherTreatment || 'Not specified',
                         budget: data.budget || 'Not specified',
@@ -339,6 +343,21 @@ const QuoteForm: React.FC = () => {
                         <FormLabel>Email Address <span className="text-accent">*</span></FormLabel>
                         <FormControl>
                           <Input type="email" {...field} name="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Phone Number Field */}
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number <span className="text-accent">*</span></FormLabel>
+                        <FormControl>
+                          <Input type="tel" placeholder="+44 123 456 7890" {...field} name="phone" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
