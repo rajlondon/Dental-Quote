@@ -1,5 +1,6 @@
 import React from "react";
-import dentalLogo from "@assets/image_1743447435671.png";
+import userMaleAvatar from "../assets/user-male.svg";
+import userFemaleAvatar from "../assets/user-female.svg";
 
 interface Testimonial {
   id: string;
@@ -8,36 +9,36 @@ interface Testimonial {
   name: string;
   treatment: string;
   country: string;
+  gender: "male" | "female";
 }
-
-// Instead of using external random user images that might not load,
-// we'll use our dental logo as a placeholder
-const defaultAvatar = dentalLogo;
 
 const testimonials: Testimonial[] = [
   {
     id: "1",
     quote: "This dental concierge service took all the stress out of finding a reliable clinic. The dental veneers I had done in Istanbul were exceptional—half the price I was quoted at home with even better quality and service.",
-    image: defaultAvatar,
+    image: userFemaleAvatar,
     name: "Maria S.",
     treatment: "Dental Veneers",
-    country: "Germany"
+    country: "Germany",
+    gender: "female"
   },
   {
     id: "2",
     quote: "My dental implant procedure in Istanbul was seamless from start to finish. The clinic was state-of-the-art, the dentists were highly skilled, and the aftercare was excellent. I saved over €4,000 compared to prices back home.",
-    image: defaultAvatar,
+    image: userMaleAvatar,
     name: "Thomas K.",
     treatment: "Dental Implants",
-    country: "UK"
+    country: "UK",
+    gender: "male"
   },
   {
     id: "3",
     quote: "I was nervous about getting my smile makeover abroad, but this service made everything easy. They arranged everything from airport transfers to accommodation, and my new smile looks absolutely amazing. The dentists were true artists.",
-    image: defaultAvatar,
+    image: userFemaleAvatar,
     name: "Sophie L.",
     treatment: "Hollywood Smile",
-    country: "France"
+    country: "France",
+    gender: "female"
   }
 ];
 

@@ -1,6 +1,11 @@
 import React from "react";
-import dentalLogo from "@assets/image_1743447435671.png";
 import istanbulImage from "@assets/image_1743447461115.png";
+import veneersSvg from "../assets/dental-veneers.svg";
+import implantsSvg from "../assets/dental-implants.svg";
+import crownsSvg from "../assets/dental-crowns.svg";
+import hollywoodSvg from "../assets/hollywood-smile.svg";
+import orthodonticsSvg from "../assets/orthodontics.svg";
+import packageSvg from "../assets/dental-package.svg";
 
 interface Service {
   id: string;
@@ -11,8 +16,7 @@ interface Service {
   feature2: string;
 }
 
-// Use our local image as a fallback for all services
-const defaultImage = dentalLogo;
+// City image for packages
 const cityImage = istanbulImage;
 
 const services: Service[] = [
@@ -20,7 +24,7 @@ const services: Service[] = [
     id: "veneers",
     title: "Dental Veneers",
     description: "Premium porcelain and composite veneers customized for natural-looking, beautiful smiles at a fraction of European prices.",
-    image: defaultImage,
+    image: veneersSvg,
     feature1: "Multiple Material Options",
     feature2: "60-70% Savings"
   },
@@ -28,7 +32,7 @@ const services: Service[] = [
     id: "implants",
     title: "Dental Implants",
     description: "State-of-the-art dental implants using premium materials and advanced techniques for permanent tooth replacement.",
-    image: defaultImage,
+    image: implantsSvg,
     feature1: "Lifetime Warranty",
     feature2: "65-75% Savings"
   },
@@ -36,7 +40,7 @@ const services: Service[] = [
     id: "crowns",
     title: "Dental Crowns & Bridges",
     description: "High-quality crowns and bridges made from premium materials for both functional restoration and aesthetic improvement.",
-    image: defaultImage,
+    image: crownsSvg,
     feature1: "Same-Day Options",
     feature2: "60-70% Savings"
   },
@@ -44,7 +48,7 @@ const services: Service[] = [
     id: "hollywood",
     title: "Hollywood Smile",
     description: "Complete smile transformation combining veneers, whitening and other treatments for the perfect celebrity-style smile.",
-    image: defaultImage,
+    image: hollywoodSvg,
     feature1: "Custom Design",
     feature2: "70-80% Savings"
   },
@@ -52,7 +56,7 @@ const services: Service[] = [
     id: "orthodontics",
     title: "Orthodontic Solutions",
     description: "Modern orthodontic treatments including clear aligners, ceramic braces, and innovative corrective procedures.",
-    image: defaultImage,
+    image: orthodonticsSvg,
     feature1: "Invisible Options",
     feature2: "50-65% Savings"
   },
@@ -60,7 +64,7 @@ const services: Service[] = [
     id: "packages",
     title: "All-Inclusive Dental Packages",
     description: "Comprehensive packages including dental work, premium hotel accommodation, airport transfers, and sightseeing options.",
-    image: cityImage,
+    image: packageSvg,
     feature1: "Full Support",
     feature2: "Bundle Savings"
   }
