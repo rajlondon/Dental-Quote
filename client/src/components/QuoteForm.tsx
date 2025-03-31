@@ -197,7 +197,7 @@ const QuoteForm: React.FC = () => {
             ) : (
               <Form {...form}>
                 <form 
-                  action="https://formsubmit.co/yourname@email.com" 
+                  action="https://formsubmit.co/rajsingh140186@googlemail.com" 
                   method="POST" 
                   className="space-y-4" 
                   onSubmit={(e) => {
