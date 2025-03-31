@@ -197,7 +197,7 @@ const QuoteForm: React.FC = () => {
             ) : (
               <Form {...form}>
                 <form 
-                  action="https://formsubmit.co/rajsingh140186@googlemail.com" 
+                  action="https://formsubmit.co/aa147a0e03e96a1d968b2a4dc75fbb1e" 
                   method="POST" 
                   className="space-y-4" 
                   onSubmit={(e) => {
@@ -215,6 +215,8 @@ const QuoteForm: React.FC = () => {
                   <input type="hidden" name="_captcha" value="false" />
                   <input type="hidden" name="_template" value="box" />
                   <input type="hidden" name="_subject" value="New Treatment Quote Request" />
+                  <input type="hidden" name="_next" value={window.location.href} />
+                  <input type="hidden" name="_autoresponse" value="Thank you for your inquiry. We've received your request and will get back to you shortly with personalized clinic options." />
                   
                   {/* Hidden fields for combined form data */}
                   <input 
