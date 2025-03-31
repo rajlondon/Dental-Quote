@@ -1,3 +1,4 @@
+import React from 'react';
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
@@ -25,9 +26,12 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-createRoot(document.getElementById("root")!).render(
-  <>
-    <GlobalStyle />
-    <App />
-  </>
-);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  createRoot(rootElement).render(
+    <React.StrictMode>
+      <GlobalStyle />
+      <App />
+    </React.StrictMode>
+  );
+}
