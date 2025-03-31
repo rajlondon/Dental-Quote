@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import emailjs from '@emailjs/browser';
+import { EMAILJS_CONFIG } from '../utils/config';
 
 // Defined specific treatment options for different categories
 const dentalTreatments = [
@@ -112,11 +113,7 @@ const QuoteForm: React.FC = () => {
 
   // This is no longer needed as we've integrated the email sending directly in the form submission handler
   
-  // Helper functions to safely access environment variables
-  const getEnvVar = (key: string): string => {
-    const value = import.meta.env[`VITE_${key}`] || '';
-    return value as string;
-  };
+  // We directly use import.meta.env.VITE_* variables in our code
 
   return (
     <section id="quote-form" className="py-16 bg-white">
@@ -173,7 +170,7 @@ const QuoteForm: React.FC = () => {
                     setIsSubmitting(true);
                     
                     // Initialize EmailJS with the public key
-                    emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '');
+                    emailjs.init(EMAILJS_CONFIG.publicKey);
                     
                     // Prepare template parameters for EmailJS
                     const templateParams = {
@@ -192,18 +189,17 @@ const QuoteForm: React.FC = () => {
 
                     console.log('Sending email with EmailJS');
                     
-                    // Get environment variables
-                    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
-                    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+                    // Log EmailJS config availability for debugging
+                    console.log('EmailJS Config:', {
+                      serviceIdAvailable: !!EMAILJS_CONFIG.serviceId,
+                      templateIdAvailable: !!EMAILJS_CONFIG.templateId,
+                      publicKeyAvailable: !!EMAILJS_CONFIG.publicKey
+                    });
                     
-                    // Log service and template IDs for debugging (not their values)
-                    console.log('Service ID available:', !!serviceId);
-                    console.log('Template ID available:', !!templateId);
-                    
-                    // Send the email using EmailJS
+                    // Send the email using EmailJS with config values
                     emailjs.send(
-                      serviceId,
-                      templateId,
+                      EMAILJS_CONFIG.serviceId,
+                      EMAILJS_CONFIG.templateId,
                       templateParams
                     )
                     .then(() => {
