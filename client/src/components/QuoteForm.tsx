@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import emailjs from '@emailjs/browser';
 
 // Defined specific treatment options for different categories
 const dentalTreatments = [
@@ -64,6 +65,7 @@ type FormValues = z.infer<typeof formSchema>;
 const QuoteForm: React.FC = () => {
   const [showOtherField, setShowOtherField] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [specificTreatments, setSpecificTreatments] = useState<{ value: string; label: string }[]>([]);
   const { toast } = useToast();
   
@@ -106,46 +108,14 @@ const QuoteForm: React.FC = () => {
     setShowOtherField(value.includes("_other"));
   };
   
-  const submitQuoteRequest = useMutation({
-    mutationFn: async (data: FormValues) => {
-      // Format the data for the API
-      const formattedData = {
-        treatment: data.treatmentType,
-        specificTreatment: data.specificTreatment,
-        otherTreatment: data.otherTreatment,
-        name: data.name,
-        email: data.email,
-        budget: data.budget,
-        dates: data.startDate && data.endDate 
-          ? `${format(data.startDate, 'MMM dd, yyyy')} - ${format(data.endDate, 'MMM dd, yyyy')}` 
-          : '',
-        needsAccommodation: data.needsAccommodation,
-        notes: data.notes,
-        consent: data.consent
-      };
-      
-      const response = await apiRequest("POST", "/api/quote-requests", formattedData);
-      return response.json();
-    },
-    onSuccess: () => {
-      setIsSubmitted(true);
-      form.reset();
-      toast({
-        title: "Quote request submitted",
-        description: "We'll get back to you within 24 hours with your personalized treatment options.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error submitting request",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // This function is no longer used since we're now using EmailJS
 
-  const onSubmit = (data: FormValues) => {
-    submitQuoteRequest.mutate(data);
+  // This is no longer needed as we've integrated the email sending directly in the form submission handler
+  
+  // Helper functions to safely access environment variables
+  const getEnvVar = (key: string): string => {
+    const value = import.meta.env[`VITE_${key}`] || '';
+    return value as string;
   };
 
   return (
@@ -197,47 +167,66 @@ const QuoteForm: React.FC = () => {
             ) : (
               <Form {...form}>
                 <form 
-                  action="https://formsubmit.co/aa147a0e03e96a1d968b2a4dc75fbb1e" 
-                  method="POST" 
                   className="space-y-4" 
-                  onSubmit={(e) => {
-                    const isValid = form.formState.isValid;
-                    if (!isValid) {
-                      e.preventDefault();
-                      form.handleSubmit(onSubmit)(e);
-                    } else {
+                  onSubmit={form.handleSubmit((data) => {
+                    // Set submitting state
+                    setIsSubmitting(true);
+                    
+                    // Initialize EmailJS with the public key
+                    emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '');
+                    
+                    // Prepare template parameters for EmailJS
+                    const templateParams = {
+                      name: data.name,
+                      email: data.email,
+                      treatment: `${data.treatmentType} - ${data.specificTreatment}`,
+                      otherTreatment: data.otherTreatment || 'Not specified',
+                      budget: data.budget || 'Not specified',
+                      dates: data.startDate && data.endDate 
+                        ? `${format(data.startDate, 'MMM dd, yyyy')} - ${format(data.endDate, 'MMM dd, yyyy')}` 
+                        : 'No dates selected',
+                      needsAccommodation: data.needsAccommodation ? "Yes" : "No",
+                      notes: data.notes || 'No additional notes',
+                      consent: data.consent ? "Yes" : "No"
+                    };
+
+                    console.log('Sending email with EmailJS');
+                    
+                    // Get environment variables
+                    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+                    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+                    
+                    // Log service and template IDs for debugging (not their values)
+                    console.log('Service ID available:', !!serviceId);
+                    console.log('Template ID available:', !!templateId);
+                    
+                    // Send the email using EmailJS
+                    emailjs.send(
+                      serviceId,
+                      templateId,
+                      templateParams
+                    )
+                    .then(() => {
+                      setIsSubmitting(false);
                       setIsSubmitted(true);
-                      // The form will be submitted to FormSubmit.co directly
-                    }
-                  }}
+                      form.reset();
+                      toast({
+                        title: "Quote request submitted",
+                        description: "We'll get back to you within 24 hours with your personalized treatment options.",
+                      });
+                    })
+                    .catch((err) => {
+                      setIsSubmitting(false);
+                      console.error('Email sending failed:', err);
+                      toast({
+                        title: "Error submitting request",
+                        description: "There was an error sending your request. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                  })}
                 >
-                  {/* Hidden FormSubmit.co configuration fields */}
-                  <input type="hidden" name="_captcha" value="false" />
-                  <input type="hidden" name="_template" value="box" />
-                  <input type="hidden" name="_subject" value="New Treatment Quote Request" />
-                  <input type="hidden" name="_next" value={window.location.href} />
-                  <input type="hidden" name="_autoresponse" value="Thank you for your inquiry. We've received your request and will get back to you shortly with personalized clinic options." />
-                  
-                  {/* Hidden fields for combined form data */}
-                  <input 
-                    type="hidden" 
-                    name="treatment" 
-                    value={`${form.getValues("treatmentType")} - ${form.getValues("specificTreatment")}`} 
-                  />
-                  <input 
-                    type="hidden" 
-                    name="dates" 
-                    value={
-                      form.getValues("startDate") && form.getValues("endDate") 
-                        ? `${format(form.getValues("startDate") as Date, 'MMM dd, yyyy')} - ${format(form.getValues("endDate") as Date, 'MMM dd, yyyy')}` 
-                        : 'No dates selected'
-                    } 
-                  />
-                  <input 
-                    type="hidden" 
-                    name="accommodationNeeded" 
-                    value={form.getValues("needsAccommodation") ? "Yes" : "No"} 
-                  />
+                  {/* All form fields will be processed via EmailJS */}
                   
                   {/* Treatment Type Selection */}
                   <FormField
@@ -534,9 +523,9 @@ const QuoteForm: React.FC = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-primary text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-primary-dark transition-colors"
-                    disabled={submitQuoteRequest.isPending}
+                    disabled={isSubmitting}
                   >
-                    {submitQuoteRequest.isPending ? "Submitting..." : "Request My Free Quote"}
+                    {isSubmitting ? "Submitting..." : "Request My Free Quote"}
                   </Button>
                 </form>
               </Form>
