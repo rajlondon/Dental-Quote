@@ -3,26 +3,46 @@ import istanbulImage from "@assets/image_1743447461115.png";
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative text-white py-24 md:py-32">
-      {/* Background image with overlay */}
+    <section className="relative text-white min-h-[90vh] flex items-center">
+      {/* Background image with enhanced styling */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center"
+        className="absolute inset-0 z-0"
         style={{ 
           backgroundImage: `url(${istanbulImage})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center center'
+          backgroundPosition: 'center 35%',
+          backgroundRepeat: 'no-repeat',
+          filter: 'brightness(1.1) saturate(1.2)',
         }}
       />
-      <div className="absolute inset-0 bg-black/45 z-0"></div>
       
-      {/* Content */}
-      <div className="container mx-auto px-4 relative z-10">
+      {/* Gradient overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-black/40 to-black/20 z-0"></div>
+      
+      {/* Content with improved layout */}
+      <div className="container mx-auto px-6 md:px-8 relative z-10 py-20 md:py-24">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-display font-bold text-3xl md:text-5xl mb-6 drop-shadow-lg">Your Personal Health & Beauty Concierge in Istanbul</h2>
-          <p className="text-lg md:text-xl mb-8 text-white/90 drop-shadow-md">Skip the stress of researching clinics. Tell us what you need, and we'll match you with 3 top-rated providers in Istanbul—within your budget and preferred dates.</p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <a href="#quote-form" className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-neutral-100 transition-colors text-center">Get Your Free Quote</a>
-            <a href="#how-it-works" className="inline-block bg-transparent border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-white/10 transition-colors text-center">How It Works</a>
+          <h1 className="font-display font-bold text-4xl md:text-6xl mb-6 leading-tight text-white drop-shadow-xl">
+            Your Personal Health & Beauty Concierge in Istanbul
+          </h1>
+          
+          <p className="text-lg md:text-xl mb-10 text-white drop-shadow-md leading-relaxed max-w-2xl mx-auto">
+            Skip the stress of researching clinics. Tell us what you need, and we'll match you with 3 top-rated providers in Istanbul—within your budget and preferred dates.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-5">
+            <a 
+              href="#quote-form" 
+              className="inline-block bg-white text-primary font-semibold px-8 py-4 rounded-lg shadow-xl hover:bg-neutral-100 transition-all duration-300 text-center transform hover:-translate-y-1"
+            >
+              Get Your Free Quote
+            </a>
+            <a 
+              href="#how-it-works" 
+              className="inline-block bg-transparent border-2 border-white text-white font-semibold px-8 py-4 rounded-lg hover:bg-white/10 transition-colors text-center shadow-lg"
+            >
+              How It Works
+            </a>
           </div>
         </div>
       </div>
