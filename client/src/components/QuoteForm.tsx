@@ -19,30 +19,16 @@ import { CalendarIcon } from "lucide-react";
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
 
-// Defined specific treatment options for different categories
+// Defined specific dental treatment options
 const dentalTreatments = [
   { value: "dental_veneers", label: "Veneers" },
   { value: "dental_implants", label: "Dental Implants" },
   { value: "dental_crowns", label: "Crowns" },
   { value: "dental_hollywood", label: "Hollywood Smile" },
+  { value: "dental_whitening", label: "Teeth Whitening" },
+  { value: "dental_bridges", label: "Dental Bridges" },
+  { value: "dental_root_canal", label: "Root Canal Treatment" },
   { value: "dental_other", label: "Other Dental Work" },
-];
-
-const cosmeticTreatments = [
-  { value: "cosmetic_botox", label: "Botox" },
-  { value: "cosmetic_fillers", label: "Dermal Fillers" },
-  { value: "cosmetic_facelift", label: "Facelift" },
-  { value: "cosmetic_rhinoplasty", label: "Rhinoplasty (Nose Job)" },
-  { value: "cosmetic_liposuction", label: "Liposuction" },
-  { value: "cosmetic_other", label: "Other Cosmetic Procedure" },
-];
-
-const hairTreatments = [
-  { value: "hair_fue", label: "FUE Hair Transplant" },
-  { value: "hair_dhi", label: "DHI Hair Transplant" },
-  { value: "hair_women", label: "Women's Hair Restoration" },
-  { value: "hair_beard", label: "Beard Transplant" },
-  { value: "hair_other", label: "Other Hair Procedure" },
 ];
 
 const formSchema = z.object({
@@ -69,13 +55,13 @@ const QuoteForm: React.FC = () => {
   const [showOtherField, setShowOtherField] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [specificTreatments, setSpecificTreatments] = useState<{ value: string; label: string }[]>([]);
+  const [specificTreatments, setSpecificTreatments] = useState<{ value: string; label: string }[]>(dentalTreatments);
   const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      treatmentType: "",
+      treatmentType: "dental",
       specificTreatment: "",
       otherTreatment: "",
       name: "",
@@ -93,18 +79,10 @@ const QuoteForm: React.FC = () => {
   const handleTreatmentTypeChange = (value: string) => {
     form.setValue("specificTreatment", "");
     
-    switch (value) {
-      case "dental":
-        setSpecificTreatments(dentalTreatments);
-        break;
-      case "cosmetic":
-        setSpecificTreatments(cosmeticTreatments);
-        break;
-      case "hair":
-        setSpecificTreatments(hairTreatments);
-        break;
-      default:
-        setSpecificTreatments([]);
+    if (value === "dental") {
+      setSpecificTreatments(dentalTreatments);
+    } else {
+      setSpecificTreatments([]);
     }
   };
   
@@ -234,33 +212,13 @@ const QuoteForm: React.FC = () => {
                 >
                   {/* All form fields will be processed via EmailJS */}
                   
-                  {/* Treatment Type Selection */}
-                  <FormField
-                    control={form.control}
-                    name="treatmentType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Treatment Category <span className="text-accent">*</span></FormLabel>
-                        <Select 
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            handleTreatmentTypeChange(value);
-                          }}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select treatment category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="dental">Dental Work</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Display only Dental Treatment Category */}
+                  <div className="mb-4">
+                    <FormLabel className="block mb-2">Treatment Category</FormLabel>
+                    <div className="py-2 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-neutral-800">
+                      Dental Work
+                    </div>
+                  </div>
                   
                   {/* Specific Treatment Selection - shows when a category is selected */}
                   {specificTreatments.length > 0 && (
