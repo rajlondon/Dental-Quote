@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import emailjs from '@emailjs/browser';
-import { EMAILJS_CONFIG } from '../utils/config';
+import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
 
 // Defined specific treatment options for different categories
 const dentalTreatments = [
@@ -165,44 +165,49 @@ const QuoteForm: React.FC = () => {
               <Form {...form}>
                 <form 
                   className="space-y-4" 
-                  onSubmit={form.handleSubmit((data) => {
+                  onSubmit={form.handleSubmit(async (data) => {
                     // Set submitting state
                     setIsSubmitting(true);
                     
-                    // Initialize EmailJS with the public key
-                    emailjs.init(EMAILJS_CONFIG.publicKey);
-                    
-                    // Prepare template parameters for EmailJS
-                    const templateParams = {
-                      name: data.name,
-                      email: data.email,
-                      treatment: `${data.treatmentType} - ${data.specificTreatment}`,
-                      otherTreatment: data.otherTreatment || 'Not specified',
-                      budget: data.budget || 'Not specified',
-                      dates: data.startDate && data.endDate 
-                        ? `${format(data.startDate, 'MMM dd, yyyy')} - ${format(data.endDate, 'MMM dd, yyyy')}` 
-                        : 'No dates selected',
-                      needsAccommodation: data.needsAccommodation ? "Yes" : "No",
-                      notes: data.notes || 'No additional notes',
-                      consent: data.consent ? "Yes" : "No"
-                    };
+                    try {
+                      // First load the latest EmailJS config from the server
+                      await loadEmailJSConfig();
+                      
+                      // Initialize EmailJS with the public key
+                      emailjs.init(EMAILJS_CONFIG.publicKey);
+                      
+                      // Prepare template parameters for EmailJS
+                      const templateParams = {
+                        name: data.name,
+                        email: data.email,
+                        treatment: `${data.treatmentType} - ${data.specificTreatment}`,
+                        otherTreatment: data.otherTreatment || 'Not specified',
+                        budget: data.budget || 'Not specified',
+                        dates: data.startDate && data.endDate 
+                          ? `${format(data.startDate, 'MMM dd, yyyy')} - ${format(data.endDate, 'MMM dd, yyyy')}` 
+                          : 'No dates selected',
+                        needsAccommodation: data.needsAccommodation ? "Yes" : "No",
+                        notes: data.notes || 'No additional notes',
+                        consent: data.consent ? "Yes" : "No"
+                      };
 
-                    console.log('Sending email with EmailJS');
-                    
-                    // Log EmailJS config availability for debugging
-                    console.log('EmailJS Config:', {
-                      serviceIdAvailable: !!EMAILJS_CONFIG.serviceId,
-                      templateIdAvailable: !!EMAILJS_CONFIG.templateId,
-                      publicKeyAvailable: !!EMAILJS_CONFIG.publicKey
-                    });
-                    
-                    // Send the email using EmailJS with config values
-                    emailjs.send(
-                      EMAILJS_CONFIG.serviceId,
-                      EMAILJS_CONFIG.templateId,
-                      templateParams
-                    )
-                    .then(() => {
+                      console.log('Sending email with EmailJS');
+                      
+                      // Log EmailJS config availability for debugging
+                      console.log('EmailJS Config:', {
+                        serviceIdAvailable: !!EMAILJS_CONFIG.serviceId,
+                        templateIdAvailable: !!EMAILJS_CONFIG.templateId,
+                        publicKeyAvailable: !!EMAILJS_CONFIG.publicKey
+                      });
+                      
+                      // Send the email using EmailJS with config values
+                      await emailjs.send(
+                        EMAILJS_CONFIG.serviceId,
+                        EMAILJS_CONFIG.templateId,
+                        templateParams
+                      );
+                      
+                      // Handle success
                       setIsSubmitting(false);
                       setIsSubmitted(true);
                       form.reset();
@@ -210,8 +215,8 @@ const QuoteForm: React.FC = () => {
                         title: "Quote request submitted",
                         description: "We'll get back to you within 24 hours with your personalized treatment options.",
                       });
-                    })
-                    .catch((err) => {
+                    } catch (err) {
+                      // Handle errors
                       setIsSubmitting(false);
                       console.error('Email sending failed:', err);
                       toast({
@@ -219,7 +224,7 @@ const QuoteForm: React.FC = () => {
                         description: "There was an error sending your request. Please try again.",
                         variant: "destructive",
                       });
-                    });
+                    }
                   })}
                 >
                   {/* All form fields will be processed via EmailJS */}
