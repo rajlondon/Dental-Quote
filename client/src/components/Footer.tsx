@@ -1,0 +1,79 @@
+import React from "react";
+
+const Footer: React.FC = () => {
+  return (
+    <footer id="contact" className="bg-neutral-900 text-white pt-12 pb-6">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8">
+          <div className="md:col-span-1">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="text-white text-3xl">
+                <i className="fas fa-plus-square"></i>
+              </div>
+              <h3 className="font-display font-bold text-xl">HealthMatch Istanbul</h3>
+            </div>
+            <p className="text-neutral-400 mb-4">Your trusted concierge for premium health and cosmetic treatments in Istanbul at transparent, affordable prices.</p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-white hover:text-secondary transition-colors"><i className="fab fa-facebook-f"></i></a>
+              <a href="#" className="text-white hover:text-secondary transition-colors"><i className="fab fa-instagram"></i></a>
+              <a href="#" className="text-white hover:text-secondary transition-colors"><i className="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-display font-semibold text-lg mb-4">Services</h4>
+            <ul className="space-y-2">
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Dental Treatments</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Cosmetic Procedures</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Hair Transplants</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Laser Eye Surgery</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Wellness & Anti-aging</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-display font-semibold text-lg mb-4">Company</h4>
+            <ul className="space-y-2">
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">About Us</a></li>
+              <li><a href="#how-it-works" className="text-neutral-400 hover:text-white transition-colors">How It Works</a></li>
+              <li><a href="#testimonials" className="text-neutral-400 hover:text-white transition-colors">Client Reviews</a></li>
+              <li><a href="#faqs" className="text-neutral-400 hover:text-white transition-colors">FAQs</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Blog</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-display font-semibold text-lg mb-4">Contact</h4>
+            <ul className="space-y-3">
+              <li className="flex items-start">
+                <i className="fas fa-envelope text-secondary mt-1 mr-3"></i>
+                <a href="mailto:info@healthmatchistanbul.com" className="text-neutral-400 hover:text-white transition-colors">info@healthmatchistanbul.com</a>
+              </li>
+              <li className="flex items-start">
+                <i className="fas fa-phone-alt text-secondary mt-1 mr-3"></i>
+                <a href="tel:+905000000000" className="text-neutral-400 hover:text-white transition-colors">+90 500 000 0000</a>
+              </li>
+              <li className="flex items-start">
+                <i className="fab fa-whatsapp text-secondary mt-1 mr-3"></i>
+                <a href="https://wa.me/905000000000" className="text-neutral-400 hover:text-white transition-colors">WhatsApp Chat</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border-t border-neutral-800 pt-6 mt-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <p className="text-neutral-500 text-sm mb-4 md:mb-0">© {new Date().getFullYear()} HealthMatch Istanbul. All rights reserved.</p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Privacy Policy</a>
+              <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Terms of Service</a>
+              <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
