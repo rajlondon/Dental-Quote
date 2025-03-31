@@ -8,11 +8,11 @@ const Footer: React.FC = () => {
           <div className="md:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
               <div className="text-white text-3xl">
-                <i className="fas fa-plus-square"></i>
+                <i className="fas fa-tooth"></i>
               </div>
-              <h3 className="font-display font-bold text-xl">HealthMatch Istanbul</h3>
+              <h3 className="font-display font-bold text-xl">DentalMatch Istanbul</h3>
             </div>
-            <p className="text-neutral-400 mb-4">Your trusted concierge for premium health and cosmetic treatments in Istanbul at transparent, affordable prices.</p>
+            <p className="text-neutral-400 mb-4">Your trusted concierge for premium dental treatments in Istanbul, offering quality care at transparent, affordable prices.</p>
             <div className="flex space-x-4">
               <a href="#" className="text-white hover:text-secondary transition-colors"><i className="fab fa-facebook-f"></i></a>
               <a href="#" className="text-white hover:text-secondary transition-colors"><i className="fab fa-instagram"></i></a>
@@ -21,13 +21,13 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h4 className="font-display font-semibold text-lg mb-4">Services</h4>
+            <h4 className="font-display font-semibold text-lg mb-4">Dental Services</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Dental Treatments</a></li>
-              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Cosmetic Procedures</a></li>
-              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Hair Transplants</a></li>
-              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Laser Eye Surgery</a></li>
-              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Wellness & Anti-aging</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Dental Veneers</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Dental Implants</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Hollywood Smile</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Crowns & Bridges</a></li>
+              <li><a href="#" className="text-neutral-400 hover:text-white transition-colors">Teeth Whitening</a></li>
             </ul>
           </div>
           
@@ -63,7 +63,7 @@ const Footer: React.FC = () => {
         
         <div className="border-t border-neutral-800 pt-6 mt-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-neutral-500 text-sm mb-4 md:mb-0">© {new Date().getFullYear()} HealthMatch Istanbul. All rights reserved.</p>
+            <p className="text-neutral-500 text-sm mb-4 md:mb-0">© {new Date().getFullYear()} DentalMatch Istanbul. All rights reserved.</p>
             <div className="flex space-x-4">
               <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Privacy Policy</a>
               <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Terms of Service</a>

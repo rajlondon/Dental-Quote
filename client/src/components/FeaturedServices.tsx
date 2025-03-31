@@ -11,50 +11,50 @@ interface Service {
 
 const services: Service[] = [
   {
-    id: "dental",
-    title: "Dental Work",
-    description: "Premium dental procedures including veneers, crowns, implants, and full smile makeovers at a fraction of European prices.",
+    id: "veneers",
+    title: "Dental Veneers",
+    description: "Premium porcelain and composite veneers customized for natural-looking, beautiful smiles at a fraction of European prices.",
     image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=600&q=80",
-    feature1: "Certified Specialists",
+    feature1: "Multiple Material Options",
     feature2: "60-70% Savings"
   },
   {
-    id: "cosmetic",
-    title: "Cosmetic Treatments",
-    description: "Advanced aesthetic procedures including botox, fillers, facial treatments, and non-surgical rejuvenation therapies.",
-    image: "https://images.unsplash.com/photo-1595784279873-62b38b5e7cd6?auto=format&fit=crop&w=600&q=80",
-    feature1: "Board-Certified",
-    feature2: "50-60% Savings"
-  },
-  {
-    id: "hair",
-    title: "Hair Transplants",
-    description: "State-of-the-art FUE and DHI hair restoration techniques performed by specialized teams with high success rates.",
-    image: "https://images.unsplash.com/photo-1546525848-3ce03ca516f6?auto=format&fit=crop&w=600&q=80",
-    feature1: "Latest Techniques",
+    id: "implants",
+    title: "Dental Implants",
+    description: "State-of-the-art dental implants using premium materials and advanced techniques for permanent tooth replacement.",
+    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=600&q=80",
+    feature1: "Lifetime Warranty",
     feature2: "65-75% Savings"
   },
   {
-    id: "eye",
-    title: "Laser Eye Surgery",
-    description: "Advanced LASIK, SMILE, and PRK procedures performed with cutting-edge technology by experienced ophthalmologists.",
-    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=600&q=80",
-    feature1: "Modern Equipment",
-    feature2: "55-65% Savings"
+    id: "crowns",
+    title: "Dental Crowns & Bridges",
+    description: "High-quality crowns and bridges made from premium materials for both functional restoration and aesthetic improvement.",
+    image: "https://images.unsplash.com/photo-1579033385971-a7bc8c5f4886?auto=format&fit=crop&w=600&q=80",
+    feature1: "Same-Day Options",
+    feature2: "60-70% Savings"
   },
   {
-    id: "wellness",
-    title: "Wellness & Anti-aging",
-    description: "Holistic treatments including IV therapy, hormone optimization, PRP, and regenerative medicine therapies.",
-    image: "https://images.unsplash.com/photo-1519824145371-296894a0daa9?auto=format&fit=crop&w=600&q=80",
-    feature1: "Holistic Approach",
-    feature2: "50-60% Savings"
+    id: "hollywood",
+    title: "Hollywood Smile",
+    description: "Complete smile transformation combining veneers, whitening and other treatments for the perfect celebrity-style smile.",
+    image: "https://images.unsplash.com/photo-1581591524425-c7e0978865fc?auto=format&fit=crop&w=600&q=80",
+    feature1: "Custom Design",
+    feature2: "70-80% Savings"
+  },
+  {
+    id: "orthodontics",
+    title: "Orthodontic Solutions",
+    description: "Modern orthodontic treatments including clear aligners, ceramic braces, and innovative corrective procedures.",
+    image: "https://images.unsplash.com/photo-1608212951338-c0f321c9af9a?auto=format&fit=crop&w=600&q=80",
+    feature1: "Invisible Options",
+    feature2: "50-65% Savings"
   },
   {
     id: "packages",
-    title: "All-Inclusive Packages",
-    description: "Customized packages including hotel accommodation, airport transfers, translation services, and local experiences.",
-    image: "https://images.unsplash.com/photo-1554189097-ffe88e998a2b?auto=format&fit=crop&w=600&q=80",
+    title: "All-Inclusive Dental Packages",
+    description: "Comprehensive packages including dental work, premium hotel accommodation, airport transfers, and sightseeing options.",
+    image: "https://images.unsplash.com/photo-1596483726032-a751679f107d?auto=format&fit=crop&w=600&q=80",
     feature1: "Full Support",
     feature2: "Bundle Savings"
   }
@@ -65,8 +65,8 @@ const FeaturedServices: React.FC = () => {
     <section id="services" className="py-16 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="font-display font-bold text-3xl md:text-4xl text-neutral-800 mb-4">Health & Cosmetic Services</h2>
-          <p className="text-neutral-600">We specialize in connecting you with Istanbul's top-rated clinics for a range of premium treatments.</p>
+          <h2 className="font-display font-bold text-3xl md:text-4xl text-neutral-800 mb-4">Premium Dental Services</h2>
+          <p className="text-neutral-600">We specialize in connecting you with Istanbul's top-rated dental clinics for high-quality, affordable treatments.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

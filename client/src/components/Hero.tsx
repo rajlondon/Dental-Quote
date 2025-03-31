@@ -23,11 +23,11 @@ const Hero: React.FC = () => {
       <div className="container mx-auto px-6 md:px-8 relative z-10 py-20 md:py-24">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="font-display font-bold text-4xl md:text-6xl mb-6 leading-tight text-white drop-shadow-xl">
-            Your Personal Health & Beauty Concierge in Istanbul
+            Your Personal Dental Treatment Concierge in Istanbul
           </h1>
           
           <p className="text-lg md:text-xl mb-10 text-white drop-shadow-md leading-relaxed max-w-2xl mx-auto">
-            Skip the stress of researching clinics. Tell us what you need, and we'll match you with 3 top-rated providers in Istanbul—within your budget and preferred dates.
+            Skip the stress of researching dental clinics. Tell us what treatment you need, and we'll match you with 3 top-rated dental providers in Istanbul—offering premium care at up to 70% savings.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-5">
@@ -35,7 +35,7 @@ const Hero: React.FC = () => {
               href="#quote-form" 
               className="inline-block bg-white text-primary font-semibold px-8 py-4 rounded-lg shadow-xl hover:bg-neutral-100 transition-all duration-300 text-center transform hover:-translate-y-1"
             >
-              Get Your Free Quote
+              Get Your Free Dental Quote
             </a>
             <a 
               href="#how-it-works" 

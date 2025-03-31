@@ -12,7 +12,7 @@ interface Testimonial {
 const testimonials: Testimonial[] = [
   {
     id: "1",
-    quote: "HealthMatch took all the stress out of finding a reliable clinic. The dental work I had done in Istanbul was exceptional—half the price I was quoted at home with even better quality.",
+    quote: "This dental concierge service took all the stress out of finding a reliable clinic. The dental veneers I had done in Istanbul were exceptional—half the price I was quoted at home with even better quality and service.",
     image: "https://randomuser.me/api/portraits/women/45.jpg",
     name: "Maria S.",
     treatment: "Dental Veneers",
@@ -20,18 +20,18 @@ const testimonials: Testimonial[] = [
   },
   {
     id: "2",
-    quote: "From airport pickup to my final check-up, everything was perfectly organized. My hair transplant results are incredible, and the entire experience felt more like a luxury holiday than a medical trip.",
+    quote: "My dental implant procedure in Istanbul was seamless from start to finish. The clinic was state-of-the-art, the dentists were highly skilled, and the aftercare was excellent. I saved over €4,000 compared to prices back home.",
     image: "https://randomuser.me/api/portraits/men/32.jpg",
     name: "Thomas K.",
-    treatment: "Hair Transplant",
+    treatment: "Dental Implants",
     country: "UK"
   },
   {
     id: "3",
-    quote: "As someone who was nervous about having medical treatment abroad, HealthMatch was exactly what I needed. They answered all my questions, arranged everything, and the results of my laser eye surgery have been life-changing.",
+    quote: "I was nervous about getting my smile makeover abroad, but this service made everything easy. They arranged everything from airport transfers to accommodation, and my new smile looks absolutely amazing. The dentists were true artists.",
     image: "https://randomuser.me/api/portraits/women/68.jpg",
     name: "Sophie L.",
-    treatment: "Laser Eye Surgery",
+    treatment: "Hollywood Smile",
     country: "France"
   }
 ];
@@ -41,8 +41,8 @@ const Testimonials: React.FC = () => {
     <section id="testimonials" className="py-16 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="font-display font-bold text-3xl md:text-4xl text-neutral-800 mb-4">Client Success Stories</h2>
-          <p className="text-neutral-600">Don't just take our word for it. Here's what our clients have to say about their experience.</p>
+          <h2 className="font-display font-bold text-3xl md:text-4xl text-neutral-800 mb-4">Dental Treatment Success Stories</h2>
+          <p className="text-neutral-600">Don't just take our word for it. Here's what our clients have to say about their dental treatment experience in Istanbul.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
