@@ -196,7 +196,47 @@ const QuoteForm: React.FC = () => {
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form 
+                  action="https://formsubmit.co/yourname@email.com" 
+                  method="POST" 
+                  className="space-y-4" 
+                  onSubmit={(e) => {
+                    const isValid = form.formState.isValid;
+                    if (!isValid) {
+                      e.preventDefault();
+                      form.handleSubmit(onSubmit)(e);
+                    } else {
+                      setIsSubmitted(true);
+                      // The form will be submitted to FormSubmit.co directly
+                    }
+                  }}
+                >
+                  {/* Hidden FormSubmit.co configuration fields */}
+                  <input type="hidden" name="_captcha" value="false" />
+                  <input type="hidden" name="_template" value="box" />
+                  <input type="hidden" name="_subject" value="New Treatment Quote Request" />
+                  
+                  {/* Hidden fields for combined form data */}
+                  <input 
+                    type="hidden" 
+                    name="treatment" 
+                    value={`${form.getValues("treatmentType")} - ${form.getValues("specificTreatment")}`} 
+                  />
+                  <input 
+                    type="hidden" 
+                    name="dates" 
+                    value={
+                      form.getValues("startDate") && form.getValues("endDate") 
+                        ? `${format(form.getValues("startDate") as Date, 'MMM dd, yyyy')} - ${format(form.getValues("endDate") as Date, 'MMM dd, yyyy')}` 
+                        : 'No dates selected'
+                    } 
+                  />
+                  <input 
+                    type="hidden" 
+                    name="accommodationNeeded" 
+                    value={form.getValues("needsAccommodation") ? "Yes" : "No"} 
+                  />
+                  
                   {/* Treatment Type Selection */}
                   <FormField
                     control={form.control}
@@ -290,7 +330,7 @@ const QuoteForm: React.FC = () => {
                       <FormItem>
                         <FormLabel>Your Name <span className="text-accent">*</span></FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} name="name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -305,7 +345,7 @@ const QuoteForm: React.FC = () => {
                       <FormItem>
                         <FormLabel>Email Address <span className="text-accent">*</span></FormLabel>
                         <FormControl>
-                          <Input type="email" {...field} />
+                          <Input type="email" {...field} name="email" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -320,7 +360,7 @@ const QuoteForm: React.FC = () => {
                       <FormItem>
                         <FormLabel>Estimated Budget (€)</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="e.g. 3000" {...field} />
+                          <Input type="number" placeholder="e.g. 3000" {...field} name="budget" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -458,6 +498,7 @@ const QuoteForm: React.FC = () => {
                             placeholder="Tell us more about what you're looking for..." 
                             className="min-h-[100px]" 
                             {...field} 
+                            name="notes"
                           />
                         </FormControl>
                         <FormMessage />
