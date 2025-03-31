@@ -30,7 +30,7 @@ const services: Service[] = [
     id: "hair",
     title: "Hair Transplants",
     description: "State-of-the-art FUE and DHI hair restoration techniques performed by specialized teams with high success rates.",
-    image: "https://images.unsplash.com/photo-1516549655023-a1779cb75c7d?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1546525848-3ce03ca516f6?auto=format&fit=crop&w=600&q=80",
     feature1: "Latest Techniques",
     feature2: "65-75% Savings"
   },
