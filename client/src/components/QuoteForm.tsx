@@ -123,8 +123,8 @@ const QuoteForm: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
-            <h2 className="font-display font-bold text-3xl text-neutral-800 mb-4">Get Your Free Quote</h2>
-            <p className="text-neutral-600 mb-6">Tell us what you're looking for, and our team will create a personalized quote with vetted options that match your needs.</p>
+            <h2 className="font-display font-bold text-3xl text-neutral-800 mb-4">Get Your Free Dental Treatment Quote</h2>
+            <p className="text-neutral-600 mb-6">Tell us about your dental needs, and our team will create a personalized quote with vetted Istanbul dentists that match your requirements.</p>
             
             <div className="bg-neutral-50 p-5 rounded-lg border border-neutral-200 mb-6">
               <h3 className="font-display font-semibold text-lg mb-2 text-primary">What to expect after submitting:</h3>
@@ -162,7 +162,7 @@ const QuoteForm: React.FC = () => {
               <div className="p-6 bg-secondary/20 text-secondary-dark rounded-lg text-center">
                 <div className="text-5xl mb-4"><i className="fas fa-check-circle"></i></div>
                 <h3 className="font-display font-bold text-xl mb-2">Thank You!</h3>
-                <p>We'll get back to you within 24 hours with your personalized treatment options.</p>
+                <p>We'll get back to you within 24 hours with your personalized dental treatment options.</p>
               </div>
             ) : (
               <Form {...form}>
@@ -217,8 +217,8 @@ const QuoteForm: React.FC = () => {
                       setIsSubmitted(true);
                       form.reset();
                       toast({
-                        title: "Quote request submitted",
-                        description: "We'll get back to you within 24 hours with your personalized treatment options.",
+                        title: "Dental quote request submitted",
+                        description: "We'll get back to you within 24 hours with your personalized dental treatment options.",
                       });
                     } catch (err) {
                       // Handle errors
@@ -255,12 +255,6 @@ const QuoteForm: React.FC = () => {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="dental">Dental Work</SelectItem>
-                            <SelectItem value="cosmetic">Cosmetic Treatments</SelectItem>
-                            <SelectItem value="hair">Hair Transplant</SelectItem>
-                            <SelectItem value="eye">Laser Eye Surgery</SelectItem>
-                            <SelectItem value="wellness">Wellness & Anti-aging</SelectItem>
-                            <SelectItem value="multiple">Multiple Treatments</SelectItem>
-                            <SelectItem value="other">Other (Please specify)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
