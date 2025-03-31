@@ -47,15 +47,15 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <i className="fas fa-envelope text-secondary mt-1 mr-3"></i>
-                <a href="mailto:info@healthmatchistanbul.com" className="text-neutral-400 hover:text-white transition-colors">info@healthmatchistanbul.com</a>
+                <a href="mailto:info@dentalmatchistanbul.com" className="text-neutral-400 hover:text-white transition-colors">info@dentalmatchistanbul.com</a>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-phone-alt text-secondary mt-1 mr-3"></i>
-                <a href="tel:+905000000000" className="text-neutral-400 hover:text-white transition-colors">+90 500 000 0000</a>
+                <a href="tel:+447572445856" className="text-neutral-400 hover:text-white transition-colors">+44 7572 445856</a>
               </li>
               <li className="flex items-start">
                 <i className="fab fa-whatsapp text-secondary mt-1 mr-3"></i>
-                <a href="https://wa.me/905000000000" className="text-neutral-400 hover:text-white transition-colors">WhatsApp Chat</a>
+                <a href="https://wa.me/447572445856" className="text-neutral-400 hover:text-white transition-colors">WhatsApp Chat</a>
               </li>
             </ul>
           </div>

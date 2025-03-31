@@ -1,4 +1,6 @@
 import React from "react";
+import dentalLogo from "@assets/image_1743447435671.png";
+import istanbulImage from "@assets/image_1743447461115.png";
 
 interface Service {
   id: string;
@@ -9,12 +11,16 @@ interface Service {
   feature2: string;
 }
 
+// Use our local image as a fallback for all services
+const defaultImage = dentalLogo;
+const cityImage = istanbulImage;
+
 const services: Service[] = [
   {
     id: "veneers",
     title: "Dental Veneers",
     description: "Premium porcelain and composite veneers customized for natural-looking, beautiful smiles at a fraction of European prices.",
-    image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=600&q=80",
+    image: defaultImage,
     feature1: "Multiple Material Options",
     feature2: "60-70% Savings"
   },
@@ -22,7 +28,7 @@ const services: Service[] = [
     id: "implants",
     title: "Dental Implants",
     description: "State-of-the-art dental implants using premium materials and advanced techniques for permanent tooth replacement.",
-    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=600&q=80",
+    image: defaultImage,
     feature1: "Lifetime Warranty",
     feature2: "65-75% Savings"
   },
@@ -30,7 +36,7 @@ const services: Service[] = [
     id: "crowns",
     title: "Dental Crowns & Bridges",
     description: "High-quality crowns and bridges made from premium materials for both functional restoration and aesthetic improvement.",
-    image: "https://images.unsplash.com/photo-1579033385971-a7bc8c5f4886?auto=format&fit=crop&w=600&q=80",
+    image: defaultImage,
     feature1: "Same-Day Options",
     feature2: "60-70% Savings"
   },
@@ -38,7 +44,7 @@ const services: Service[] = [
     id: "hollywood",
     title: "Hollywood Smile",
     description: "Complete smile transformation combining veneers, whitening and other treatments for the perfect celebrity-style smile.",
-    image: "https://images.unsplash.com/photo-1581591524425-c7e0978865fc?auto=format&fit=crop&w=600&q=80",
+    image: defaultImage,
     feature1: "Custom Design",
     feature2: "70-80% Savings"
   },
@@ -46,7 +52,7 @@ const services: Service[] = [
     id: "orthodontics",
     title: "Orthodontic Solutions",
     description: "Modern orthodontic treatments including clear aligners, ceramic braces, and innovative corrective procedures.",
-    image: "https://images.unsplash.com/photo-1608212951338-c0f321c9af9a?auto=format&fit=crop&w=600&q=80",
+    image: defaultImage,
     feature1: "Invisible Options",
     feature2: "50-65% Savings"
   },
@@ -54,7 +60,7 @@ const services: Service[] = [
     id: "packages",
     title: "All-Inclusive Dental Packages",
     description: "Comprehensive packages including dental work, premium hotel accommodation, airport transfers, and sightseeing options.",
-    image: "https://images.unsplash.com/photo-1596483726032-a751679f107d?auto=format&fit=crop&w=600&q=80",
+    image: cityImage,
     feature1: "Full Support",
     feature2: "Bundle Savings"
   }
@@ -72,11 +78,15 @@ const FeaturedServices: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <div key={service.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-              <img 
-                src={service.image} 
-                alt={service.title} 
-                className="w-full h-48 object-cover"
-              />
+              <div className="w-full h-48 bg-gradient-to-b from-sky-50 to-blue-100 flex items-center justify-center">
+                <div className="bg-white/70 p-2 rounded-full shadow-lg">
+                  <img 
+                    src={service.image} 
+                    alt={service.title} 
+                    className="w-28 h-28 object-contain"
+                  />
+                </div>
+              </div>
               <div className="p-6">
                 <h3 className="font-display font-semibold text-xl mb-2 text-primary">{service.title}</h3>
                 <p className="text-neutral-600 mb-4">{service.description}</p>
