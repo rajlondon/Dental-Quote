@@ -1,0 +1,148 @@
+✅ Copy & paste this into a Replit HTML project:
+index.html
+html
+Copy
+Edit
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HealthMatch Istanbul</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>HealthMatch Istanbul</h1>
+    <p>Your Trusted Portal for Health & Cosmetic Services in Istanbul</p>
+  </header>
+
+  <section class="hero">
+    <h2>Find the Right Clinic. Skip the Stress.</h2>
+    <p>Tell us what you need, and we’ll match you with 3 top-rated, trusted providers in Istanbul—within your budget and dates.</p>
+  </section>
+
+  <section class="form-section">
+    <h3>Get Your Free Quote</h3>
+    <form id="quoteForm">
+      <label for="treatment">Treatment(s) Needed:</label>
+      <input type="text" id="treatment" name="treatment" required />
+
+      <label for="budget">Your Budget (€):</label>
+      <input type="number" id="budget" name="budget" />
+
+      <label for="dates">Preferred Travel Dates:</label>
+      <input type="text" id="dates" name="dates" placeholder="e.g. June 5-10" />
+
+      <label for="notes">Any Notes or Questions:</label>
+      <textarea id="notes" name="notes"></textarea>
+
+      <button type="submit">Request My Quote</button>
+    </form>
+    <p id="responseMessage"></p>
+  </section>
+
+  <section class="trust-section">
+    <h3>Why Trust Us?</h3>
+    <ul>
+      <li>🦷 Vetted Clinics with Proven Results</li>
+      <li>✈️ Full Travel Support</li>
+      <li>💬 Real Human Assistance</li>
+      <li>✅ Transparent, All-In Pricing</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>© 2025 HealthMatch Istanbul | info@healthmatchistanbul.com</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+style.css
+css
+Copy
+Edit
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f9f9f9;
+  color: #333;
+}
+
+header {
+  background: #00688B;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.hero {
+  padding: 30px;
+  text-align: center;
+  background: #e0f7fa;
+}
+
+.form-section {
+  background: white;
+  padding: 30px;
+  max-width: 600px;
+  margin: 30px auto;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+form label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+form input, form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  margin-top: 20px;
+  background: #00688B;
+  color: white;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background: #004d66;
+}
+
+.trust-section {
+  padding: 20px;
+  background: #f0f0f0;
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #ddd;
+  font-size: 14px;
+}
+script.js
+javascript
+Copy
+Edit
+document.getElementById("quoteForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const name = document.getElementById("treatment").value;
+  document.getElementById("responseMessage").innerText =
+    "Thanks! We’ll get back to you within 24 hours with a tailored quote.";
+  this.reset();
+});
