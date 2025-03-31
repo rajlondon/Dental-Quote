@@ -174,7 +174,8 @@ const QuoteForm: React.FC = () => {
                       await loadEmailJSConfig();
                       
                       // Initialize EmailJS with the public key
-                      emailjs.init(EMAILJS_CONFIG.publicKey);
+                      // For v4.x of @emailjs/browser, we should pass an object with publicKey property
+                      emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
                       
                       // Prepare template parameters for EmailJS
                       const templateParams = {

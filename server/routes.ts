@@ -87,6 +87,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Endpoint to securely provide EmailJS config to the frontend
   app.get("/api/config/emailjs", (_req, res) => {
+    // Log the values being extracted from environment variables (without revealing the actual values)
+    console.log('EmailJS Config from env:', {
+      serviceIdExists: !!process.env.EMAILJS_SERVICE_ID,
+      templateIdExists: !!process.env.EMAILJS_TEMPLATE_ID,
+      publicKeyExists: !!process.env.EMAILJS_PUBLIC_KEY
+    });
+    
     res.json({
       serviceId: process.env.EMAILJS_SERVICE_ID || '',
       templateId: process.env.EMAILJS_TEMPLATE_ID || '',
