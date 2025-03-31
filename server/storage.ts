@@ -1,4 +1,6 @@
 import { users, type User, type InsertUser, type InsertQuoteRequest, type QuoteRequest, quoteRequests } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // Define the storage interface
 export interface IStorage {
@@ -14,78 +16,54 @@ export interface IStorage {
   updateQuoteRequestStatus(id: number, status: string): Promise<QuoteRequest | undefined>;
 }
 
-// In-memory storage implementation
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private quoteRequests: Map<number, QuoteRequest>;
-  private userCurrentId: number;
-  private quoteRequestCurrentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.quoteRequests = new Map();
-    this.userCurrentId = 1;
-    this.quoteRequestCurrentId = 1;
-  }
-
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
   
   // Quote request methods
   async getQuoteRequest(id: number): Promise<QuoteRequest | undefined> {
-    return this.quoteRequests.get(id);
+    const [quoteRequest] = await db.select().from(quoteRequests).where(eq(quoteRequests.id, id));
+    return quoteRequest || undefined;
   }
   
   async getQuoteRequests(): Promise<QuoteRequest[]> {
-    return Array.from(this.quoteRequests.values());
+    return await db.select().from(quoteRequests);
   }
   
   async createQuoteRequest(insertQuoteRequest: Omit<InsertQuoteRequest, "consent">): Promise<QuoteRequest> {
-    const id = this.quoteRequestCurrentId++;
-    const now = new Date();
-    
-    const quoteRequest: QuoteRequest = {
-      ...insertQuoteRequest,
-      id,
-      status: "pending",
-      createdAt: now,
-    };
-    
-    this.quoteRequests.set(id, quoteRequest);
+    const [quoteRequest] = await db
+      .insert(quoteRequests)
+      .values(insertQuoteRequest)
+      .returning();
     return quoteRequest;
   }
   
   async updateQuoteRequestStatus(id: number, status: string): Promise<QuoteRequest | undefined> {
-    const quoteRequest = await this.getQuoteRequest(id);
-    
-    if (!quoteRequest) {
-      return undefined;
-    }
-    
-    const updatedQuoteRequest: QuoteRequest = {
-      ...quoteRequest,
-      status,
-    };
-    
-    this.quoteRequests.set(id, updatedQuoteRequest);
-    return updatedQuoteRequest;
+    const [updatedQuoteRequest] = await db
+      .update(quoteRequests)
+      .set({ status })
+      .where(eq(quoteRequests.id, id))
+      .returning();
+    return updatedQuoteRequest || undefined;
   }
 }
 
 // Create and export the storage instance
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

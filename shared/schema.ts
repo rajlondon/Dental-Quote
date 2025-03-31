@@ -18,11 +18,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const quoteRequests = pgTable("quote_requests", {
   id: serial("id").primaryKey(),
   treatment: text("treatment").notNull(),
+  specificTreatment: text("specific_treatment"),
   otherTreatment: text("other_treatment"),
   name: text("name").notNull(),
   email: text("email").notNull(),
   budget: text("budget"),
   dates: text("dates"),
+  needsAccommodation: boolean("needs_accommodation").default(false),
   notes: text("notes"),
   status: text("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
