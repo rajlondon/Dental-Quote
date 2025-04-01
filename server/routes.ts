@@ -1,11 +1,18 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 import { storage } from "./storage";
 import { ZodError } from "zod";
 import { insertQuoteRequestSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve the public directory for static files like translations
+  app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
   // API route for quote requests
   app.post("/api/quote-requests", async (req, res) => {
     try {

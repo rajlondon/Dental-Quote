@@ -1,0 +1,168 @@
+{
+  "navbar": {
+    "services": "Services",
+    "howItWorks": "Comment ça marche",
+    "testimonials": "Témoignages",
+    "faq": "FAQ",
+    "contact": "Contact"
+  },
+  "language": {
+    "select": "Langue",
+    "en": "Anglais",
+    "de": "Allemand",
+    "fr": "Français",
+    "es": "Espagnol",
+    "nl": "Néerlandais",
+    "it": "Italien"
+  },
+  "hero": {
+    "title": "Votre sourire parfait vous attend à Istanbul",
+    "subtitle": "Comparez les options de traitement des meilleures cliniques dentaires d'Istanbul",
+    "cta": "Demander un devis gratuit"
+  },
+  "form": {
+    "title": "Obtenez votre devis gratuit pour un traitement dentaire",
+    "name": "Nom complet",
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "treatment": "Traitement nécessaire",
+    "treatments": {
+      "veneers": "Facettes dentaires",
+      "implants": "Implants dentaires",
+      "crowns": "Couronnes dentaires",
+      "hollywood": "Sourire Hollywood",
+      "orthodontics": "Orthodontie",
+      "package": "Forfait complet",
+      "other": "Autre"
+    },
+    "otherTreatment": "Préciser autre traitement",
+    "dates": "Dates de traitement préférées",
+    "budget": "Budget pour le traitement (Optionnel)",
+    "accommodation": "Besoin d'aide pour l'hébergement ?",
+    "notes": "Informations supplémentaires",
+    "consent": "Je consens à partager mes informations pour un devis",
+    "submit": "Soumettre la demande de devis",
+    "success": "Votre demande de devis a été envoyée avec succès !",
+    "error": "Une erreur s'est produite. Veuillez réessayer."
+  },
+  "services": {
+    "title": "Nos services de traitement dentaire",
+    "subtitle": "Nous vous aidons à trouver les meilleures options de soins dentaires à Istanbul",
+    "veneers": {
+      "title": "Facettes dentaires",
+      "description": "Transformez votre sourire avec des facettes fines sur mesure qui recouvrent la surface avant des dents.",
+      "feature1": "Matériau porcelaine premium",
+      "feature2": "Apparence naturelle"
+    },
+    "implants": {
+      "title": "Implants dentaires",
+      "description": "Remplacez les dents manquantes par des implants permanents d'aspect naturel qui fonctionnent comme de vraies dents.",
+      "feature1": "Fixations racines en titane",
+      "feature2": "Garantie à vie"
+    },
+    "crowns": {
+      "title": "Couronnes dentaires",
+      "description": "Restaurez les dents endommagées avec des couronnes dentaires sur mesure qui améliorent la fonction et l'apparence.",
+      "feature1": "Zircone ou porcelaine",
+      "feature2": "Ajustement numérique précis"
+    },
+    "hollywood": {
+      "title": "Sourire Hollywood",
+      "description": "Obtenez ce sourire de célébrité parfait avec une transformation complète utilisant des facettes et un blanchiment.",
+      "feature1": "Design de sourire complet",
+      "feature2": "Transformation spectaculaire"
+    },
+    "orthodontics": {
+      "title": "Orthodontie",
+      "description": "Redressez vos dents avec des solutions orthodontiques modernes, y compris des aligneurs invisibles.",
+      "feature1": "Options d'aligneurs invisibles",
+      "feature2": "Temps de traitement court"
+    },
+    "package": {
+      "title": "Forfaits complets",
+      "description": "Forfaits de traitement tout compris avec hébergement et transferts aéroport.",
+      "feature1": "Soins complets",
+      "feature2": "Transport VIP"
+    }
+  },
+  "howItWorks": {
+    "title": "Comment fonctionne DentalMatch",
+    "subtitle": "Processus simple pour trouver votre traitement dentaire parfait à Istanbul",
+    "step1": {
+      "title": "Demander un devis",
+      "description": "Remplissez notre simple formulaire avec vos besoins et préférences de traitement dentaire.",
+      "features": [
+        "Sans obligation",
+        "Service gratuit",
+        "Devis multiples"
+      ]
+    },
+    "step2": {
+      "title": "Comparer les options",
+      "description": "Recevez des plans de traitement personnalisés et des devis de notre réseau de cliniques de premier ordre.",
+      "features": [
+        "Tarification détaillée",
+        "Références des cliniques",
+        "Calendriers de traitement"
+      ]
+    },
+    "step3": {
+      "title": "Réserver votre traitement",
+      "description": "Sélectionnez votre clinique préférée et laissez-nous gérer tous les arrangements pour votre visite.",
+      "features": [
+        "Réservation sécurisée",
+        "Assistance de paiement",
+        "Aide à l'hébergement"
+      ]
+    },
+    "step4": {
+      "title": "Profitez d'Istanbul",
+      "description": "Bénéficiez de soins dentaires de qualité tout en explorant la beauté d'Istanbul.",
+      "features": [
+        "Guidage local",
+        "Suivi des soins",
+        "Garantie de satisfaction"
+      ]
+    }
+  },
+  "whyUs": {
+    "title": "Pourquoi choisir DentalMatch Istanbul",
+    "subtitle": "Nous rendons le tourisme dentaire simple, fiable et abordable",
+    "quality": {
+      "title": "Assurance qualité",
+      "description": "Toutes nos cliniques partenaires sont vérifiées pour l'excellence, l'équipement moderne et les normes strictes d'hygiène."
+    },
+    "savings": {
+      "title": "Économies importantes",
+      "description": "Économisez jusqu'à 70% par rapport aux prix d'Europe occidentale et du Royaume-Uni sans compromettre la qualité."
+    },
+    "support": {
+      "title": "Support multilingue",
+      "description": "Notre équipe parle votre langue et vous assiste tout au long de votre parcours de traitement."
+    },
+    "convenience": {
+      "title": "Forfaits tout compris",
+      "description": "Nous organisons tout, des transferts aéroport à l'hébergement et aux visites de la ville."
+    }
+  },
+  "testimonials": {
+    "title": "Témoignages de réussite",
+    "subtitle": "Écoutez nos clients satisfaits parler de leur expérience de traitement dentaire à Istanbul"
+  },
+  "faq": {
+    "title": "Questions fréquemment posées",
+    "subtitle": "Trouvez des réponses aux questions courantes sur les traitements dentaires à Istanbul"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Vous avez des questions ? Notre équipe de conciergerie dentaire est là pour vous aider",
+    "whatsapp": "Discuter sur WhatsApp",
+    "phone": "Appelez-nous",
+    "message": "Bonjour, je suis intéressé par un traitement dentaire à Istanbul. Pouvez-vous me fournir plus d'informations ?"
+  },
+  "footer": {
+    "rights": "© 2024 DentalMatch Istanbul. Tous droits réservés.",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
+  }
+}

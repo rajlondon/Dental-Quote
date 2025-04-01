@@ -1,0 +1,168 @@
+{
+  "navbar": {
+    "services": "Servicios",
+    "howItWorks": "Cómo funciona",
+    "testimonials": "Testimonios",
+    "faq": "Preguntas frecuentes",
+    "contact": "Contacto"
+  },
+  "language": {
+    "select": "Idioma",
+    "en": "Inglés",
+    "de": "Alemán",
+    "fr": "Francés",
+    "es": "Español",
+    "nl": "Holandés",
+    "it": "Italiano"
+  },
+  "hero": {
+    "title": "Tu sonrisa perfecta te espera en Estambul",
+    "subtitle": "Compara opciones de tratamiento de las mejores clínicas dentales en Estambul",
+    "cta": "Solicitar un presupuesto gratuito"
+  },
+  "form": {
+    "title": "Obtén tu presupuesto gratuito para tratamiento dental",
+    "name": "Nombre completo",
+    "email": "Correo electrónico",
+    "phone": "Número de teléfono",
+    "treatment": "Tratamiento necesario",
+    "treatments": {
+      "veneers": "Carillas dentales",
+      "implants": "Implantes dentales",
+      "crowns": "Coronas dentales",
+      "hollywood": "Sonrisa Hollywood",
+      "orthodontics": "Ortodoncia",
+      "package": "Paquete completo",
+      "other": "Otro"
+    },
+    "otherTreatment": "Especificar otro tratamiento",
+    "dates": "Fechas preferidas para tratamiento",
+    "budget": "Presupuesto para tratamiento (Opcional)",
+    "accommodation": "¿Necesita ayuda con el alojamiento?",
+    "notes": "Información adicional",
+    "consent": "Doy mi consentimiento para compartir mi información para un presupuesto",
+    "submit": "Enviar solicitud de presupuesto",
+    "success": "¡Su solicitud de presupuesto ha sido enviada con éxito!",
+    "error": "Se ha producido un error. Por favor, inténtelo de nuevo."
+  },
+  "services": {
+    "title": "Nuestros servicios de tratamiento dental",
+    "subtitle": "Le ayudamos a encontrar las mejores opciones de atención dental en Estambul",
+    "veneers": {
+      "title": "Carillas dentales",
+      "description": "Transforma tu sonrisa con finas láminas a medida que cubren la superficie frontal de los dientes.",
+      "feature1": "Material de porcelana premium",
+      "feature2": "Apariencia natural"
+    },
+    "implants": {
+      "title": "Implantes dentales",
+      "description": "Reemplace los dientes faltantes con implantes permanentes de aspecto natural que funcionan como dientes reales.",
+      "feature1": "Fijaciones de raíz de titanio",
+      "feature2": "Garantía de por vida"
+    },
+    "crowns": {
+      "title": "Coronas dentales",
+      "description": "Restaure los dientes dañados con coronas dentales a medida que mejoran la función y la apariencia.",
+      "feature1": "Zirconio o porcelana",
+      "feature2": "Ajuste digital preciso"
+    },
+    "hollywood": {
+      "title": "Sonrisa Hollywood",
+      "description": "Consiga esa perfecta sonrisa de celebridad con una transformación completa usando carillas y blanqueamiento.",
+      "feature1": "Diseño completo de sonrisa",
+      "feature2": "Transformación dramática"
+    },
+    "orthodontics": {
+      "title": "Ortodoncia",
+      "description": "Enderece sus dientes con soluciones ortodónticas modernas, incluidos alineadores invisibles.",
+      "feature1": "Opciones de alineadores invisibles",
+      "feature2": "Tiempo de tratamiento corto"
+    },
+    "package": {
+      "title": "Paquetes completos",
+      "description": "Paquetes de tratamiento todo incluido con alojamiento y traslados al aeropuerto.",
+      "feature1": "Atención integral",
+      "feature2": "Transporte VIP"
+    }
+  },
+  "howItWorks": {
+    "title": "Cómo funciona DentalMatch",
+    "subtitle": "Proceso simple para encontrar su tratamiento dental perfecto en Estambul",
+    "step1": {
+      "title": "Solicite un presupuesto",
+      "description": "Complete nuestro simple formulario con sus necesidades y preferencias de tratamiento dental.",
+      "features": [
+        "Sin compromiso",
+        "Servicio gratuito",
+        "Múltiples presupuestos"
+      ]
+    },
+    "step2": {
+      "title": "Compare opciones",
+      "description": "Reciba planes de tratamiento personalizados y presupuestos de nuestra red de clínicas de primera categoría.",
+      "features": [
+        "Precios detallados",
+        "Credenciales de clínicas",
+        "Cronogramas de tratamiento"
+      ]
+    },
+    "step3": {
+      "title": "Reserve su tratamiento",
+      "description": "Seleccione su clínica preferida y déjenos manejar todos los arreglos para su visita.",
+      "features": [
+        "Reserva segura",
+        "Asistencia con pagos",
+        "Ayuda con alojamiento"
+      ]
+    },
+    "step4": {
+      "title": "Disfrute de Estambul",
+      "description": "Experimente atención dental de calidad mientras explora la belleza de Estambul.",
+      "features": [
+        "Guía local",
+        "Cuidado de seguimiento",
+        "Garantía de satisfacción"
+      ]
+    }
+  },
+  "whyUs": {
+    "title": "Por qué elegir DentalMatch Estambul",
+    "subtitle": "Hacemos que el turismo dental sea simple, confiable y asequible",
+    "quality": {
+      "title": "Garantía de calidad",
+      "description": "Todas nuestras clínicas asociadas son verificadas por su excelencia, equipamiento moderno y estrictos estándares de higiene."
+    },
+    "savings": {
+      "title": "Ahorros significativos",
+      "description": "Ahorre hasta un 70% en comparación con los precios de Europa occidental y Reino Unido sin comprometer la calidad."
+    },
+    "support": {
+      "title": "Soporte multilingüe",
+      "description": "Nuestro equipo habla su idioma y le brinda asistencia durante todo su proceso de tratamiento."
+    },
+    "convenience": {
+      "title": "Paquetes todo incluido",
+      "description": "Organizamos todo, desde traslados al aeropuerto hasta alojamiento y recorridos por la ciudad."
+    }
+  },
+  "testimonials": {
+    "title": "Historias de éxito",
+    "subtitle": "Escuche a nuestros clientes satisfechos sobre su experiencia de tratamiento dental en Estambul"
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "subtitle": "Encuentre respuestas a preguntas comunes sobre tratamientos dentales en Estambul"
+  },
+  "contact": {
+    "title": "Contáctenos",
+    "subtitle": "¿Tiene preguntas? Nuestro equipo de concierge dental está aquí para ayudar",
+    "whatsapp": "Chatear en WhatsApp",
+    "phone": "Llámenos",
+    "message": "Hola, estoy interesado en un tratamiento dental en Estambul. ¿Pueden proporcionarme más información?"
+  },
+  "footer": {
+    "rights": "© 2024 DentalMatch Estambul. Todos los derechos reservados.",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio"
+  }
+}

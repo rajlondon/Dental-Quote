@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createRoot } from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import App from "./App";
 import "./index.css";
+import "./i18n"; // Import i18n configuration
 
 // Extend global CSS with custom styles
 import { createGlobalStyle } from "styled-components";
@@ -26,12 +29,23 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
+// Loading component for Suspense fallback
+const Loading = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+  </div>
+);
+
 const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <React.StrictMode>
-      <GlobalStyle />
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <GlobalStyle />
+        <Suspense fallback={<Loading />}>
+          <App />
+        </Suspense>
+      </QueryClientProvider>
     </React.StrictMode>
   );
 }

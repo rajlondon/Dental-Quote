@@ -1,0 +1,168 @@
+{
+  "navbar": {
+    "services": "Diensten",
+    "howItWorks": "Hoe het werkt",
+    "testimonials": "Ervaringen",
+    "faq": "FAQ",
+    "contact": "Contact"
+  },
+  "language": {
+    "select": "Taal",
+    "en": "Engels",
+    "de": "Duits",
+    "fr": "Frans",
+    "es": "Spaans",
+    "nl": "Nederlands",
+    "it": "Italiaans"
+  },
+  "hero": {
+    "title": "Uw perfecte glimlach wacht in Istanbul",
+    "subtitle": "Vergelijk behandelingsopties van topklasse tandheelkundige klinieken in Istanbul",
+    "cta": "Vraag een gratis offerte aan"
+  },
+  "form": {
+    "title": "Krijg uw gratis tandheelkundige behandelingsofferte",
+    "name": "Volledige naam",
+    "email": "E-mailadres",
+    "phone": "Telefoonnummer",
+    "treatment": "Benodigde behandeling",
+    "treatments": {
+      "veneers": "Tandveneers",
+      "implants": "Tandimplantaten",
+      "crowns": "Tandkronen",
+      "hollywood": "Hollywood-glimlach",
+      "orthodontics": "Orthodontie",
+      "package": "Volledig pakket",
+      "other": "Anders"
+    },
+    "otherTreatment": "Specificeer andere behandeling",
+    "dates": "Voorkeursdata voor behandeling",
+    "budget": "Behandelingsbudget (Optioneel)",
+    "accommodation": "Hulp nodig bij accommodatie?",
+    "notes": "Aanvullende informatie",
+    "consent": "Ik geef toestemming om mijn gegevens te delen voor een offerte",
+    "submit": "Offerteaanvraag indienen",
+    "success": "Uw offerteaanvraag is succesvol verzonden!",
+    "error": "Er is een fout opgetreden. Probeer het opnieuw."
+  },
+  "services": {
+    "title": "Onze tandheelkundige behandelingsdiensten",
+    "subtitle": "Wij helpen u de beste tandheelkundige zorgopties te vinden in Istanbul",
+    "veneers": {
+      "title": "Tandveneers",
+      "description": "Transformeer uw glimlach met op maat gemaakte dunne schalen die het vooroppervlak van tanden bedekken.",
+      "feature1": "Premium porselein materiaal",
+      "feature2": "Natuurlijke uitstraling"
+    },
+    "implants": {
+      "title": "Tandimplantaten",
+      "description": "Vervang ontbrekende tanden door permanente, natuurlijk ogende implantaten die functioneren als echte tanden.",
+      "feature1": "Titanium wortelbevestigingen",
+      "feature2": "Levenslange garantie"
+    },
+    "crowns": {
+      "title": "Tandkronen",
+      "description": "Herstel beschadigde tanden met op maat gemaakte tandkronen die functie en uiterlijk verbeteren.",
+      "feature1": "Zirkonium of porselein",
+      "feature2": "Precieze digitale pasvorm"
+    },
+    "hollywood": {
+      "title": "Hollywood-glimlach",
+      "description": "Krijg die perfecte celebrity-glimlach met een complete make-over met veneers en bleken.",
+      "feature1": "Compleet glimlachdesign",
+      "feature2": "Dramatische transformatie"
+    },
+    "orthodontics": {
+      "title": "Orthodontie",
+      "description": "Maak uw tanden recht met moderne orthodontische oplossingen, inclusief onzichtbare aligners.",
+      "feature1": "Onzichtbare aligner-opties",
+      "feature2": "Korte behandeltijd"
+    },
+    "package": {
+      "title": "Volledige pakketten",
+      "description": "All-inclusive behandelingspakketten met accommodatie en luchthaventransfers.",
+      "feature1": "Uitgebreide zorg",
+      "feature2": "VIP-vervoer"
+    }
+  },
+  "howItWorks": {
+    "title": "Hoe DentalMatch werkt",
+    "subtitle": "Eenvoudig proces om uw perfecte tandheelkundige behandeling te vinden in Istanbul",
+    "step1": {
+      "title": "Vraag een offerte aan",
+      "description": "Vul ons eenvoudige formulier in met uw tandheelkundige behandelingsbehoeften en voorkeuren.",
+      "features": [
+        "Geen verplichting",
+        "Gratis service",
+        "Meerdere offertes"
+      ]
+    },
+    "step2": {
+      "title": "Vergelijk opties",
+      "description": "Ontvang gepersonaliseerde behandelingsplannen en offertes van ons netwerk van topklinieken.",
+      "features": [
+        "Gedetailleerde prijzen",
+        "Kliniekreferenties",
+        "Behandelingstijdlijnen"
+      ]
+    },
+    "step3": {
+      "title": "Boek uw behandeling",
+      "description": "Selecteer uw voorkeurskliniek en laat ons alle regelingen treffen voor uw bezoek.",
+      "features": [
+        "Veilige boeking",
+        "Betalingsassistentie",
+        "Accommodatiehulp"
+      ]
+    },
+    "step4": {
+      "title": "Geniet van Istanbul",
+      "description": "Ervaar hoogwaardige tandheelkundige zorg terwijl u de schoonheid van Istanbul verkent.",
+      "features": [
+        "Lokale begeleiding",
+        "Nazorg",
+        "Tevredenheidsgarantie"
+      ]
+    }
+  },
+  "whyUs": {
+    "title": "Waarom kiezen voor DentalMatch Istanbul",
+    "subtitle": "Wij maken tandheelkundig toerisme eenvoudig, betrouwbaar en betaalbaar",
+    "quality": {
+      "title": "Kwaliteitsgarantie",
+      "description": "Al onze partnerdklinieken worden gecontroleerd op excellentie, moderne apparatuur en strenge hygiënenormen."
+    },
+    "savings": {
+      "title": "Aanzienlijke besparingen",
+      "description": "Bespaar tot 70% vergeleken met West-Europese en Britse prijzen zonder concessies te doen aan kwaliteit."
+    },
+    "support": {
+      "title": "Meertalige ondersteuning",
+      "description": "Ons team spreekt uw taal en biedt ondersteuning tijdens uw gehele behandelingstraject."
+    },
+    "convenience": {
+      "title": "All-inclusive pakketten",
+      "description": "We regelen alles, van luchthaventransfers tot accommodatie en stadsrondleidingen."
+    }
+  },
+  "testimonials": {
+    "title": "Succesverhalen",
+    "subtitle": "Hoor van onze tevreden klanten over hun tandheelkundige behandelingservaring in Istanbul"
+  },
+  "faq": {
+    "title": "Veelgestelde vragen",
+    "subtitle": "Vind antwoorden op veelvoorkomende vragen over tandheelkundige behandelingen in Istanbul"
+  },
+  "contact": {
+    "title": "Neem contact met ons op",
+    "subtitle": "Heeft u vragen? Ons tandheelkundig conciërgeteam staat voor u klaar",
+    "whatsapp": "Chat op WhatsApp",
+    "phone": "Bel ons",
+    "message": "Hallo, ik ben geïnteresseerd in een tandheelkundige behandeling in Istanbul. Kunt u meer informatie geven?"
+  },
+  "footer": {
+    "rights": "© 2024 DentalMatch Istanbul. Alle rechten voorbehouden.",
+    "privacy": "Privacybeleid",
+    "terms": "Servicevoorwaarden"
+  }
+}

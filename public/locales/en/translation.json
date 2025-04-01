@@ -1,0 +1,168 @@
+{
+  "navbar": {
+    "services": "Services",
+    "howItWorks": "How It Works",
+    "testimonials": "Testimonials",
+    "faq": "FAQs",
+    "contact": "Contact"
+  },
+  "language": {
+    "select": "Language",
+    "en": "English",
+    "de": "German",
+    "fr": "French",
+    "es": "Spanish",
+    "nl": "Dutch",
+    "it": "Italian"
+  },
+  "hero": {
+    "title": "Your Perfect Smile Awaits in Istanbul",
+    "subtitle": "Compare treatment options from top-rated dental clinics in Istanbul",
+    "cta": "Request a Free Quote"
+  },
+  "form": {
+    "title": "Get Your Free Dental Treatment Quote",
+    "name": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "treatment": "Treatment Needed",
+    "treatments": {
+      "veneers": "Dental Veneers",
+      "implants": "Dental Implants",
+      "crowns": "Dental Crowns",
+      "hollywood": "Hollywood Smile",
+      "orthodontics": "Orthodontics",
+      "package": "Full Package",
+      "other": "Other"
+    },
+    "otherTreatment": "Specify Other Treatment",
+    "dates": "Preferred Treatment Dates",
+    "budget": "Treatment Budget (Optional)",
+    "accommodation": "Need Help with Accommodation?",
+    "notes": "Additional Information",
+    "consent": "I consent to share my information for a quote",
+    "submit": "Submit Quote Request",
+    "success": "Your quote request has been sent successfully!",
+    "error": "An error occurred. Please try again."
+  },
+  "services": {
+    "title": "Our Dental Treatment Services",
+    "subtitle": "We help you find the best dental care options in Istanbul",
+    "veneers": {
+      "title": "Dental Veneers",
+      "description": "Transform your smile with custom-made thin shells that cover the front surface of teeth.",
+      "feature1": "Premium porcelain material",
+      "feature2": "Natural appearance"
+    },
+    "implants": {
+      "title": "Dental Implants",
+      "description": "Replace missing teeth with permanent, natural-looking implants that function like real teeth.",
+      "feature1": "Titanium root fixtures",
+      "feature2": "Lifetime guarantee"
+    },
+    "crowns": {
+      "title": "Dental Crowns",
+      "description": "Restore damaged teeth with custom-fitted dental crowns that improve function and appearance.",
+      "feature1": "Zirconia or porcelain",
+      "feature2": "Precise digital fit"
+    },
+    "hollywood": {
+      "title": "Hollywood Smile",
+      "description": "Get that perfect celebrity smile with a complete makeover using veneers and whitening.",
+      "feature1": "Complete smile design",
+      "feature2": "Dramatic transformation"
+    },
+    "orthodontics": {
+      "title": "Orthodontics",
+      "description": "Straighten your teeth with modern orthodontic solutions, including invisible aligners.",
+      "feature1": "Invisible aligner options",
+      "feature2": "Short treatment time"
+    },
+    "package": {
+      "title": "Full Packages",
+      "description": "All-inclusive treatment packages with accommodation and airport transfers.",
+      "feature1": "Comprehensive care",
+      "feature2": "VIP transportation"
+    }
+  },
+  "howItWorks": {
+    "title": "How DentalMatch Works",
+    "subtitle": "Simple process to find your perfect dental treatment in Istanbul",
+    "step1": {
+      "title": "Request a Quote",
+      "description": "Fill out our simple form with your dental treatment needs and preferences.",
+      "features": [
+        "No obligation",
+        "Free service",
+        "Multiple quotes"
+      ]
+    },
+    "step2": {
+      "title": "Compare Options",
+      "description": "Receive personalized treatment plans and quotes from our network of top clinics.",
+      "features": [
+        "Detailed pricing",
+        "Clinic credentials",
+        "Treatment timelines"
+      ]
+    },
+    "step3": {
+      "title": "Book Your Treatment",
+      "description": "Select your preferred clinic and let us handle all the arrangements for your visit.",
+      "features": [
+        "Secure booking",
+        "Payment assistance",
+        "Accommodation help"
+      ]
+    },
+    "step4": {
+      "title": "Enjoy Istanbul",
+      "description": "Experience quality dental care while exploring the beauty of Istanbul.",
+      "features": [
+        "Local guidance",
+        "Follow-up care",
+        "Satisfaction guarantee"
+      ]
+    }
+  },
+  "whyUs": {
+    "title": "Why Choose DentalMatch Istanbul",
+    "subtitle": "We make dental tourism simple, reliable, and affordable",
+    "quality": {
+      "title": "Quality Assurance",
+      "description": "All our partner clinics are vetted for excellence, modern equipment, and strict hygiene standards."
+    },
+    "savings": {
+      "title": "Significant Savings",
+      "description": "Save up to 70% compared to Western European and UK prices without compromising on quality."
+    },
+    "support": {
+      "title": "Multilingual Support",
+      "description": "Our team speaks your language and provides assistance throughout your entire treatment journey."
+    },
+    "convenience": {
+      "title": "All-Inclusive Packages",
+      "description": "We arrange everything from airport transfers to accommodation and city tours."
+    }
+  },
+  "testimonials": {
+    "title": "Success Stories",
+    "subtitle": "Hear from our satisfied clients about their dental treatment experience in Istanbul"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find answers to common questions about dental treatments in Istanbul"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Have questions? Our dental concierge team is here to help",
+    "whatsapp": "Chat on WhatsApp",
+    "phone": "Call Us",
+    "message": "Hello, I'm interested in dental treatment in Istanbul. Can you provide more information?"
+  },
+  "footer": {
+    "rights": "© 2024 DentalMatch Istanbul. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

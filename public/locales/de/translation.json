@@ -1,0 +1,168 @@
+{
+  "navbar": {
+    "services": "Leistungen",
+    "howItWorks": "Wie es funktioniert",
+    "testimonials": "Erfahrungsberichte",
+    "faq": "FAQs",
+    "contact": "Kontakt"
+  },
+  "language": {
+    "select": "Sprache",
+    "en": "Englisch",
+    "de": "Deutsch",
+    "fr": "Französisch",
+    "es": "Spanisch",
+    "nl": "Niederländisch",
+    "it": "Italienisch"
+  },
+  "hero": {
+    "title": "Ihr perfektes Lächeln wartet in Istanbul",
+    "subtitle": "Vergleichen Sie Behandlungsoptionen von erstklassigen Zahnkliniken in Istanbul",
+    "cta": "Kostenloses Angebot anfordern"
+  },
+  "form": {
+    "title": "Holen Sie sich Ihr kostenloses Angebot für Zahnbehandlung",
+    "name": "Vollständiger Name",
+    "email": "E-Mail-Adresse",
+    "phone": "Telefonnummer",
+    "treatment": "Benötigte Behandlung",
+    "treatments": {
+      "veneers": "Zahnveneers",
+      "implants": "Zahnimplantate",
+      "crowns": "Zahnkronen",
+      "hollywood": "Hollywood-Lächeln",
+      "orthodontics": "Kieferorthopädie",
+      "package": "Komplettpaket",
+      "other": "Andere"
+    },
+    "otherTreatment": "Andere Behandlung angeben",
+    "dates": "Bevorzugte Behandlungstermine",
+    "budget": "Behandlungsbudget (Optional)",
+    "accommodation": "Hilfe bei der Unterkunft benötigt?",
+    "notes": "Zusätzliche Informationen",
+    "consent": "Ich stimme zu, meine Informationen für ein Angebot zu teilen",
+    "submit": "Angebotsanfrage senden",
+    "success": "Ihre Angebotsanfrage wurde erfolgreich gesendet!",
+    "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+  },
+  "services": {
+    "title": "Unsere Zahnbehandlungsleistungen",
+    "subtitle": "Wir helfen Ihnen, die besten Zahnpflegeoptionen in Istanbul zu finden",
+    "veneers": {
+      "title": "Zahnveneers",
+      "description": "Verwandeln Sie Ihr Lächeln mit maßgefertigten dünnen Schalen, die die Vorderseite der Zähne bedecken.",
+      "feature1": "Hochwertiges Porzellanmaterial",
+      "feature2": "Natürliches Aussehen"
+    },
+    "implants": {
+      "title": "Zahnimplantate",
+      "description": "Ersetzen Sie fehlende Zähne durch dauerhafte, natürlich aussehende Implantate, die wie echte Zähne funktionieren.",
+      "feature1": "Titan-Wurzelfixierungen",
+      "feature2": "Lebenslange Garantie"
+    },
+    "crowns": {
+      "title": "Zahnkronen",
+      "description": "Restaurieren Sie beschädigte Zähne mit maßgeschneiderten Zahnkronen, die Funktion und Aussehen verbessern.",
+      "feature1": "Zirkonium oder Porzellan",
+      "feature2": "Präzise digitale Passform"
+    },
+    "hollywood": {
+      "title": "Hollywood-Lächeln",
+      "description": "Bekommen Sie das perfekte Promi-Lächeln mit einer kompletten Verwandlung durch Veneers und Aufhellung.",
+      "feature1": "Komplettes Lächeln-Design",
+      "feature2": "Dramatische Transformation"
+    },
+    "orthodontics": {
+      "title": "Kieferorthopädie",
+      "description": "Begradigen Sie Ihre Zähne mit modernen kieferorthopädischen Lösungen, einschließlich unsichtbarer Aligner.",
+      "feature1": "Optionen für unsichtbare Aligner",
+      "feature2": "Kurze Behandlungszeit"
+    },
+    "package": {
+      "title": "Komplettpaket",
+      "description": "All-inclusive-Behandlungspakete mit Unterkunft und Flughafentransfers.",
+      "feature1": "Umfassende Versorgung",
+      "feature2": "VIP-Transport"
+    }
+  },
+  "howItWorks": {
+    "title": "Wie DentalMatch funktioniert",
+    "subtitle": "Einfacher Prozess, um Ihre perfekte Zahnbehandlung in Istanbul zu finden",
+    "step1": {
+      "title": "Angebot anfordern",
+      "description": "Füllen Sie unser einfaches Formular mit Ihren Zahnbehandlungsbedürfnissen und Präferenzen aus.",
+      "features": [
+        "Keine Verpflichtung",
+        "Kostenloser Service",
+        "Mehrere Angebote"
+      ]
+    },
+    "step2": {
+      "title": "Optionen vergleichen",
+      "description": "Erhalten Sie personalisierte Behandlungspläne und Angebote von unserem Netzwerk aus Top-Kliniken.",
+      "features": [
+        "Detaillierte Preisgestaltung",
+        "Klinik-Referenzen",
+        "Behandlungszeitpläne"
+      ]
+    },
+    "step3": {
+      "title": "Ihre Behandlung buchen",
+      "description": "Wählen Sie Ihre bevorzugte Klinik und lassen Sie uns alle Arrangements für Ihren Besuch erledigen.",
+      "features": [
+        "Sichere Buchung",
+        "Zahlungshilfe",
+        "Unterkunftshilfe"
+      ]
+    },
+    "step4": {
+      "title": "Genießen Sie Istanbul",
+      "description": "Erleben Sie hochwertige Zahnpflege, während Sie die Schönheit Istanbuls erkunden.",
+      "features": [
+        "Lokale Führung",
+        "Nachsorge",
+        "Zufriedenheitsgarantie"
+      ]
+    }
+  },
+  "whyUs": {
+    "title": "Warum DentalMatch Istanbul wählen",
+    "subtitle": "Wir machen Dentaltourismus einfach, zuverlässig und erschwinglich",
+    "quality": {
+      "title": "Qualitätssicherung",
+      "description": "Alle unsere Partnerkliniken werden auf Exzellenz, moderne Ausrüstung und strenge Hygienestandards geprüft."
+    },
+    "savings": {
+      "title": "Erhebliche Einsparungen",
+      "description": "Sparen Sie bis zu 70% im Vergleich zu westeuropäischen und britischen Preisen, ohne Kompromisse bei der Qualität."
+    },
+    "support": {
+      "title": "Mehrsprachiger Support",
+      "description": "Unser Team spricht Ihre Sprache und bietet Unterstützung während Ihrer gesamten Behandlungsreise."
+    },
+    "convenience": {
+      "title": "All-Inclusive-Pakete",
+      "description": "Wir organisieren alles vom Flughafentransfer bis zur Unterkunft und Stadtführungen."
+    }
+  },
+  "testimonials": {
+    "title": "Erfolgsgeschichten",
+    "subtitle": "Hören Sie von unseren zufriedenen Kunden über ihre Zahnbehandlungserfahrung in Istanbul"
+  },
+  "faq": {
+    "title": "Häufig gestellte Fragen",
+    "subtitle": "Finden Sie Antworten auf häufige Fragen zu Zahnbehandlungen in Istanbul"
+  },
+  "contact": {
+    "title": "Kontaktieren Sie uns",
+    "subtitle": "Haben Sie Fragen? Unser Dental-Concierge-Team ist hier, um zu helfen",
+    "whatsapp": "Auf WhatsApp chatten",
+    "phone": "Rufen Sie uns an",
+    "message": "Hallo, ich interessiere mich für eine Zahnbehandlung in Istanbul. Können Sie mir weitere Informationen geben?"
+  },
+  "footer": {
+    "rights": "© 2024 DentalMatch Istanbul. Alle Rechte vorbehalten.",
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen"
+  }
+}
