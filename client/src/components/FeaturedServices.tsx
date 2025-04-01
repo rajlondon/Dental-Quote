@@ -1,11 +1,11 @@
 import React from "react";
 import istanbulImage from "@assets/image_1743447461115.png";
-import veneersSvg from "../assets/dental-veneers-detailed.svg";
-import implantsSvg from "../assets/dental-implants-detailed.svg";
-import crownsSvg from "../assets/dental-crowns-detailed.svg";
-import hollywoodSvg from "../assets/hollywood-smile-detailed.svg";
-import orthodonticsSvg from "../assets/orthodontics-detailed.svg";
-import packageSvg from "../assets/dental-package-detailed.svg";
+import veneersSvg from "../assets/dental-veneers.svg";
+import implantsSvg from "../assets/dental-implants.svg";
+import crownsSvg from "../assets/dental-crowns.svg";
+import hollywoodSvg from "../assets/hollywood-smile.svg";
+import orthodonticsSvg from "../assets/orthodontics.svg";
+import packageSvg from "../assets/dental-package.svg";
 
 interface Service {
   id: string;
