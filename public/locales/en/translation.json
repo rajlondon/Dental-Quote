@@ -22,28 +22,56 @@
   },
   "form": {
     "title": "Get Your Free Dental Treatment Quote",
+    "description": "Tell us about your dental needs, and our team will create a personalized quote with vetted Istanbul dentists that match your requirements.",
     "name": "Full Name",
     "email": "Email Address",
     "phone": "Phone Number",
     "treatment": "Treatment Needed",
+    "treatmentCategory": "Treatment Category",
+    "dentalWork": "Dental Work",
+    "selectTreatment": "Select specific treatment",
     "treatments": {
       "veneers": "Dental Veneers",
       "implants": "Dental Implants",
       "crowns": "Dental Crowns",
       "hollywood": "Hollywood Smile",
-      "orthodontics": "Orthodontics",
-      "package": "Full Package",
-      "other": "Other"
+      "whitening": "Teeth Whitening",
+      "bridges": "Dental Bridges",
+      "root_canal": "Root Canal Treatment",
+      "other": "Other Dental Work"
     },
     "otherTreatment": "Specify Other Treatment",
-    "dates": "Preferred Treatment Dates",
-    "budget": "Treatment Budget (Optional)",
-    "accommodation": "Need Help with Accommodation?",
-    "notes": "Additional Information",
-    "consent": "I consent to share my information for a quote",
-    "submit": "Submit Quote Request",
-    "success": "Your quote request has been sent successfully!",
-    "error": "An error occurred. Please try again."
+    "dates": "Preferred Travel Dates",
+    "fromDate": "From date",
+    "toDate": "To date",
+    "budget": "Estimated Budget (€)",
+    "accommodation": "I would like help with hotel accommodation and transfers",
+    "notes": "Additional Details or Questions",
+    "notesPlaceholder": "Tell us more about what you're looking for...",
+    "consent": "I consent to being contacted about my inquiry and understand my data will be processed according to the Privacy Policy.",
+    "submit": "Request My Free Quote",
+    "submitting": "Submitting...",
+    "expectations": {
+      "title": "What to expect after submitting:",
+      "response": "Response within 24 hours",
+      "options": "Three custom-matched provider options",
+      "pricing": "Clear, all-inclusive pricing",
+      "consultation": "Follow-up consultation with our team"
+    },
+    "privacy": {
+      "title": "Your Privacy Matters",
+      "description": "All information you provide is kept strictly confidential and is only shared with medical providers if you choose to proceed."
+    },
+    "success": {
+      "title": "Thank You!",
+      "message": "We'll get back to you within 24 hours with your personalized dental treatment options.",
+      "toastTitle": "Dental quote request submitted",
+      "toastMessage": "We'll get back to you within 24 hours with your personalized dental treatment options."
+    },
+    "error": {
+      "title": "Error submitting request",
+      "message": "There was an error sending your request. Please try again."
+    }
   },
   "services": {
     "title": "Our Dental Treatment Services",

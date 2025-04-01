@@ -51,12 +51,23 @@ const HowItWorks: React.FC = () => {
                 {t(`howItWorks.${step.translationKey}.description`)}
               </p>
               <ul className="mt-4 space-y-2 text-neutral-600">
-                {(t(`howItWorks.${step.translationKey}.features`, { returnObjects: true }) as string[]).map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <i className="fas fa-check-circle text-secondary mt-1 mr-2"></i>
-                    <span>{feature}</span>
-                  </li>
-                ))}
+                {(() => {
+                  try {
+                    const features = t(`howItWorks.${step.translationKey}.features`, { returnObjects: true });
+                    if (Array.isArray(features)) {
+                      return features.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <i className="fas fa-check-circle text-secondary mt-1 mr-2"></i>
+                          <span>{feature}</span>
+                        </li>
+                      ));
+                    }
+                    return null;
+                  } catch (error) {
+                    console.error(`Error rendering features for ${step.translationKey}:`, error);
+                    return null;
+                  }
+                })()}
               </ul>
             </div>
           ))}
