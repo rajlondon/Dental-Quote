@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#F3F4F6"/>
+  
+  <!-- Istanbul skyline silhouette -->
+  <path d="M0,350 L50,360 L100,340 L150,350 L180,300 L200,320 L220,280 L240,320 L260,300 L280,350 L300,320 L320,340 L340,320 L360,330 L380,280 L400,320 L420,300 L440,330 L460,320 L480,350 L500,320 L520,340 L540,330 L560,280 L580,320 L600,300 L620,340 L640,320 L660,350 L680,330 L700,340 L720,300 L740,330 L760,340 L800,350 L800,600 L0,600 Z" fill="#2563EB" opacity="0.1"/>
+
+  <!-- Hagia Sophia Silhouette -->
+  <path d="M380,280 L360,290 L340,280 L320,290 L300,270 L280,290 L260,280 L240,290 L220,270 L200,290 L180,300 L420,300 L410,290 L400,280 L390,290 Z" fill="#2563EB" opacity="0.2"/>
+  <path d="M350,270 L350,220 L330,220 L330,270 Z" fill="#2563EB" opacity="0.2"/>
+  <circle cx="340" cy="200" r="20" fill="#2563EB" opacity="0.2"/>
+
+  <!-- Blue Mosque Silhouette -->
+  <path d="M550,280 L530,290 L510,270 L490,290 L470,280 L450,290 L430,270 L410,290 L600,290 L580,280 L570,290 L560,280 Z" fill="#2563EB" opacity="0.2"/>
+  <path d="M520,270 L520,220 L500,220 L500,270 Z" fill="#2563EB" opacity="0.2"/>
+  <circle cx="510" cy="200" r="20" fill="#2563EB" opacity="0.2"/>
+
+  <!-- Dental graphic -->
+  <g transform="translate(300, 100) scale(0.8)">
+    <!-- Tooth icon -->
+    <path d="M240,60 C240,26.9 213.1,0 180,0 C146.9,0 120,26.9 120,60 C120,93.1 146.9,120 180,120 C213.1,120 240,93.1 240,60 Z" fill="white" stroke="#2563EB" stroke-width="8"/>
+    <path d="M140,40 L220,40 M140,80 L220,80 M180,40 L180,80" stroke="#2563EB" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Text elements -->
+  <text x="400" y="430" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Dental Tourism in Istanbul</text>
+  <text x="400" y="470" font-family="Arial, sans-serif" font-size="20" fill="#4B5563" text-anchor="middle">World-class treatments at affordable prices</text>
+</svg>

@@ -1,8 +1,10 @@
 {
   "navbar": {
+    "home": "Home",
     "services": "Services",
     "howItWorks": "How It Works",
     "testimonials": "Testimonials",
+    "blog": "Blog",
     "faq": "FAQs",
     "contact": "Contact"
   },
@@ -192,5 +194,44 @@
     "rights": "© 2024 DentalMatch Istanbul. All rights reserved.",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "blog": {
+    "title": "Dental Treatment Blog",
+    "subtitle": "Expert insights and guides to dental treatments in Istanbul",
+    "featuredPost": "Featured Article",
+    "latestPosts": "Latest Articles",
+    "readMore": "Read more",
+    "writtenBy": "Written by",
+    "relatedPosts": "Related Articles",
+    "categories": {
+      "all": "All",
+      "dentalTourism": "Dental Tourism",
+      "treatments": "Treatments",
+      "travel": "Travel"
+    },
+    "ebook": {
+      "title": "10 Reasons Why Istanbul For Dental Treatment",
+      "subtitle": "Free Expert Guide",
+      "description": "Get our comprehensive guide explaining why Istanbul has become the world's leading destination for affordable, high-quality dental care.",
+      "benefit1": "Discover potential cost savings of 50-70%",
+      "benefit2": "Learn what makes Turkish dentistry world-class",
+      "benefit3": "Get practical tips for planning your dental trip",
+      "button": "Download Free Guide",
+      "downloadTitle": "Get Your Free Dental Tourism Guide",
+      "downloadDescription": "Enter your details below to receive our comprehensive guide to dental treatment in Istanbul.",
+      "consent": "I agree to receive my free ebook and occasional updates about dental treatment options.",
+      "submitButton": "Send Me The Free Guide",
+      "emailSubject": "Your Free Guide: 10 Reasons Why Istanbul For Dental Treatment",
+      "emailMessage": "Thank you for requesting our free dental tourism guide. We're preparing to send it to your inbox shortly.",
+      "success": {
+        "title": "Guide Sent Successfully!",
+        "message": "We've sent your free guide to your email inbox.",
+        "checkInbox": "If you don't see it, please check your spam/junk folder."
+      },
+      "error": {
+        "title": "Something Went Wrong",
+        "message": "We couldn't process your request. Please try again or contact us directly."
+      }
+    }
   }
 }

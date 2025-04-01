@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#F3F4F6"/>
+  
+  <!-- Decorative pattern -->
+  <path d="M-100,300 Q0,250 100,300 Q200,350 300,300 Q400,250 500,300 Q600,350 700,300 Q800,250 900,300" stroke="#2563EB" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+  <path d="M-100,350 Q0,300 100,350 Q200,400 300,350 Q400,300 500,350 Q600,400 700,350 Q800,300 900,350" stroke="#2563EB" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+  
+  <!-- Truth vs. Myth visual -->
+  <circle cx="600" cy="200" r="80" fill="#2563EB" opacity="0.1" stroke="#2563EB" stroke-width="2"/>
+  <text x="600" y="185" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1E3A8A" text-anchor="middle">MYTH</text>
+  <text x="600" y="215" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#2563EB" text-anchor="middle">BUSTED</text>
+  
+  <!-- Dental implant illustration -->
+  <g transform="translate(180, 180) scale(0.7)">
+    <!-- Implant -->
+    <rect x="120" y="180" width="40" height="120" rx="5" fill="#A1A1AA" stroke="#71717A" stroke-width="2"/>
+    <path d="M120,180 L160,180 L170,160 L110,160 Z" fill="#A1A1AA" stroke="#71717A" stroke-width="2"/>
+    <rect x="110" y="130" width="60" height="30" rx="5" fill="#E4E4E7" stroke="#71717A" stroke-width="2"/>
+    
+    <!-- Crown -->
+    <path d="M110,130 C110,90 110,50 140,50 C170,50 170,90 170,130 Z" fill="white" stroke="#2563EB" stroke-width="2"/>
+    
+    <!-- Cross section markers -->
+    <line x1="90" y1="130" x2="190" y2="130" stroke="#2563EB" stroke-width="1" stroke-dasharray="5,3"/>
+    <line x1="90" y1="160" x2="190" y2="160" stroke="#2563EB" stroke-width="1" stroke-dasharray="5,3"/>
+    <line x1="90" y1="180" x2="190" y2="180" stroke="#2563EB" stroke-width="1" stroke-dasharray="5,3"/>
+    
+    <!-- Labels -->
+    <text x="210" y="100" font-family="Arial, sans-serif" font-size="14" fill="#1E3A8A" text-anchor="start">Crown</text>
+    <line x1="170" y1="100" x2="200" y2="100" stroke="#1E3A8A" stroke-width="1"/>
+    
+    <text x="210" y="145" font-family="Arial, sans-serif" font-size="14" fill="#1E3A8A" text-anchor="start">Abutment</text>
+    <line x1="170" y1="145" x2="200" y2="145" stroke="#1E3A8A" stroke-width="1"/>
+    
+    <text x="210" y="200" font-family="Arial, sans-serif" font-size="14" fill="#1E3A8A" text-anchor="start">Implant</text>
+    <line x1="160" y1="200" x2="200" y2="200" stroke="#1E3A8A" stroke-width="1"/>
+
+    <!-- Bone illustration -->
+    <path d="M60,180 L100,180 L100,300 L60,300 C50,280 50,200 60,180 Z" fill="#F3F4F6" stroke="#71717A" stroke-width="2"/>
+    <path d="M220,180 L180,180 L180,300 L220,300 C230,280 230,200 220,180 Z" fill="#F3F4F6" stroke="#71717A" stroke-width="2"/>
+  </g>
+
+  <!-- Main title -->
+  <text x="400" y="430" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1E3A8A" text-anchor="middle">5 Myths About Dental Implants</text>
+  <text x="400" y="470" font-family="Arial, sans-serif" font-size="20" fill="#4B5563" text-anchor="middle">Separating fact from fiction</text>
+  
+  <!-- Number icons -->
+  <g>
+    <circle cx="220" cy="520" r="20" fill="#2563EB"/>
+    <text x="220" y="527" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">1</text>
+  </g>
+  <g>
+    <circle cx="310" cy="520" r="20" fill="#2563EB"/>
+    <text x="310" y="527" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">2</text>
+  </g>
+  <g>
+    <circle cx="400" cy="520" r="20" fill="#2563EB"/>
+    <text x="400" y="527" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">3</text>
+  </g>
+  <g>
+    <circle cx="490" cy="520" r="20" fill="#2563EB"/>
+    <text x="490" y="527" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">4</text>
+  </g>
+  <g>
+    <circle cx="580" cy="520" r="20" fill="#2563EB"/>
+    <text x="580" y="527" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">5</text>
+  </g>
+</svg>

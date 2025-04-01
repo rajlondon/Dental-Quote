@@ -24,9 +24,14 @@ const Navbar: React.FC = () => {
           </div>
         </div>
         <div className="hidden md:flex items-center space-x-6">
+          <Link href="/" className="text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.home')}
+          </Link>
           <a href="#services" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.services')}</a>
           <a href="#how-it-works" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.howItWorks')}</a>
-          <a href="#testimonials" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.testimonials')}</a>
+          <Link href="/blog" className="text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.blog')}
+          </Link>
           <a href="#faqs" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.faq')}</a>
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
           <LanguageSwitcher />
@@ -45,9 +50,14 @@ const Navbar: React.FC = () => {
       {/* Mobile Menu */}
       <div className={`md:hidden bg-white ${mobileMenuOpen ? 'block' : 'hidden'}`} id="mobileMenu">
         <div className="px-4 py-3 space-y-3 border-t">
+          <Link href="/" className="block text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.home')}
+          </Link>
           <a href="#services" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.services')}</a>
           <a href="#how-it-works" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.howItWorks')}</a>
-          <a href="#testimonials" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.testimonials')}</a>
+          <Link href="/blog" className="block text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.blog')}
+          </Link>
           <a href="#faqs" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.faq')}</a>
           <a href="#contact" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
         </div>
