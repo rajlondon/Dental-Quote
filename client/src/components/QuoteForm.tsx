@@ -18,17 +18,18 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
+import { useTranslation } from "react-i18next";
 
 // Defined specific dental treatment options
 const dentalTreatments = [
-  { value: "dental_veneers", label: "Veneers" },
-  { value: "dental_implants", label: "Dental Implants" },
-  { value: "dental_crowns", label: "Crowns" },
-  { value: "dental_hollywood", label: "Hollywood Smile" },
-  { value: "dental_whitening", label: "Teeth Whitening" },
-  { value: "dental_bridges", label: "Dental Bridges" },
-  { value: "dental_root_canal", label: "Root Canal Treatment" },
-  { value: "dental_other", label: "Other Dental Work" },
+  { value: "dental_veneers", label: "veneers" },
+  { value: "dental_implants", label: "implants" },
+  { value: "dental_crowns", label: "crowns" },
+  { value: "dental_hollywood", label: "hollywood" },
+  { value: "dental_whitening", label: "whitening" },
+  { value: "dental_bridges", label: "bridges" },
+  { value: "dental_root_canal", label: "root_canal" },
+  { value: "dental_other", label: "other" },
 ];
 
 const formSchema = z.object({
@@ -52,6 +53,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const QuoteForm: React.FC = () => {
+  const { t } = useTranslation();
   const [showOtherField, setShowOtherField] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,27 +103,31 @@ const QuoteForm: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
-            <h2 className="font-display font-bold text-3xl text-neutral-800 mb-4">Get Your Free Dental Treatment Quote</h2>
-            <p className="text-neutral-600 mb-6">Tell us about your dental needs, and our team will create a personalized quote with vetted Istanbul dentists that match your requirements.</p>
+            <h2 className="font-display font-bold text-3xl text-neutral-800 mb-4">
+              {t('form.title')}
+            </h2>
+            <p className="text-neutral-600 mb-6">
+              {t('form.description')}
+            </p>
             
             <div className="bg-neutral-50 p-5 rounded-lg border border-neutral-200 mb-6">
-              <h3 className="font-display font-semibold text-lg mb-2 text-primary">What to expect after submitting:</h3>
+              <h3 className="font-display font-semibold text-lg mb-2 text-primary">{t('form.expectations.title')}</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <i className="fas fa-clock text-secondary mt-1 mr-3"></i>
-                  <span className="text-neutral-700">Response within 24 hours</span>
+                  <span className="text-neutral-700">{t('form.expectations.response')}</span>
                 </li>
                 <li className="flex items-start">
                   <i className="fas fa-file-medical text-secondary mt-1 mr-3"></i>
-                  <span className="text-neutral-700">Three custom-matched provider options</span>
+                  <span className="text-neutral-700">{t('form.expectations.options')}</span>
                 </li>
                 <li className="flex items-start">
                   <i className="fas fa-tags text-secondary mt-1 mr-3"></i>
-                  <span className="text-neutral-700">Clear, all-inclusive pricing</span>
+                  <span className="text-neutral-700">{t('form.expectations.pricing')}</span>
                 </li>
                 <li className="flex items-start">
                   <i className="fas fa-comments text-secondary mt-1 mr-3"></i>
-                  <span className="text-neutral-700">Follow-up consultation with our team</span>
+                  <span className="text-neutral-700">{t('form.expectations.consultation')}</span>
                 </li>
               </ul>
             </div>
@@ -129,9 +135,9 @@ const QuoteForm: React.FC = () => {
             <div className="bg-primary/10 p-5 rounded-lg">
               <div className="flex items-center mb-3">
                 <i className="fas fa-shield-alt text-primary text-xl mr-3"></i>
-                <h3 className="font-display font-semibold text-lg text-primary">Your Privacy Matters</h3>
+                <h3 className="font-display font-semibold text-lg text-primary">{t('form.privacy.title')}</h3>
               </div>
-              <p className="text-neutral-700 text-sm">All information you provide is kept strictly confidential and is only shared with medical providers if you choose to proceed.</p>
+              <p className="text-neutral-700 text-sm">{t('form.privacy.description')}</p>
             </div>
           </div>
           
@@ -139,8 +145,8 @@ const QuoteForm: React.FC = () => {
             {isSubmitted ? (
               <div className="p-6 bg-secondary/20 text-secondary-dark rounded-lg text-center">
                 <div className="text-5xl mb-4"><i className="fas fa-check-circle"></i></div>
-                <h3 className="font-display font-bold text-xl mb-2">Thank You!</h3>
-                <p>We'll get back to you within 24 hours with your personalized dental treatment options.</p>
+                <h3 className="font-display font-bold text-xl mb-2">{t('form.success.title')}</h3>
+                <p>{t('form.success.message')}</p>
               </div>
             ) : (
               <Form {...form}>
@@ -195,16 +201,16 @@ const QuoteForm: React.FC = () => {
                       setIsSubmitted(true);
                       form.reset();
                       toast({
-                        title: "Dental quote request submitted",
-                        description: "We'll get back to you within 24 hours with your personalized dental treatment options.",
+                        title: t('form.success.toastTitle'),
+                        description: t('form.success.toastMessage'),
                       });
                     } catch (err) {
                       // Handle errors
                       setIsSubmitting(false);
                       console.error('Email sending failed:', err);
                       toast({
-                        title: "Error submitting request",
-                        description: "There was an error sending your request. Please try again.",
+                        title: t('form.error.title'),
+                        description: t('form.error.message'),
                         variant: "destructive",
                       });
                     }
@@ -214,9 +220,9 @@ const QuoteForm: React.FC = () => {
                   
                   {/* Display only Dental Treatment Category */}
                   <div className="mb-4">
-                    <FormLabel className="block mb-2">Treatment Category</FormLabel>
+                    <FormLabel className="block mb-2">{t('form.treatmentCategory')}</FormLabel>
                     <div className="py-2 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-neutral-800">
-                      Dental Work
+                      {t('form.dentalWork')}
                     </div>
                   </div>
                   
@@ -227,7 +233,7 @@ const QuoteForm: React.FC = () => {
                       name="specificTreatment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Specific Treatment <span className="text-accent">*</span></FormLabel>
+                          <FormLabel>{t('form.treatment')} <span className="text-accent">*</span></FormLabel>
                           <Select 
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -237,13 +243,13 @@ const QuoteForm: React.FC = () => {
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select specific treatment" />
+                                <SelectValue placeholder={t('form.selectTreatment')} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {specificTreatments.map((treatment) => (
                                 <SelectItem key={treatment.value} value={treatment.value}>
-                                  {treatment.label}
+                                  {t(`form.treatments.${treatment.value.replace('dental_', '')}`)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -261,7 +267,7 @@ const QuoteForm: React.FC = () => {
                       name="otherTreatment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Please Specify Treatment</FormLabel>
+                          <FormLabel>{t('form.otherTreatment')}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -277,7 +283,7 @@ const QuoteForm: React.FC = () => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Your Name <span className="text-accent">*</span></FormLabel>
+                        <FormLabel>{t('form.name')} <span className="text-accent">*</span></FormLabel>
                         <FormControl>
                           <Input {...field} name="name" />
                         </FormControl>
@@ -292,7 +298,7 @@ const QuoteForm: React.FC = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address <span className="text-accent">*</span></FormLabel>
+                        <FormLabel>{t('form.email')} <span className="text-accent">*</span></FormLabel>
                         <FormControl>
                           <Input type="email" {...field} name="email" />
                         </FormControl>
@@ -307,7 +313,7 @@ const QuoteForm: React.FC = () => {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number <span className="text-accent">*</span></FormLabel>
+                        <FormLabel>{t('form.phone')} <span className="text-accent">*</span></FormLabel>
                         <FormControl>
                           <Input type="tel" placeholder="+44 123 456 7890" {...field} name="phone" />
                         </FormControl>
@@ -322,7 +328,7 @@ const QuoteForm: React.FC = () => {
                     name="budget"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Estimated Budget (€)</FormLabel>
+                        <FormLabel>{t('form.budget')}</FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="e.g. 3000" {...field} name="budget" />
                         </FormControl>
@@ -333,7 +339,7 @@ const QuoteForm: React.FC = () => {
                   
                   {/* Date Range Selection */}
                   <div className="space-y-2">
-                    <FormLabel>Preferred Travel Dates</FormLabel>
+                    <FormLabel>{t('form.dates')}</FormLabel>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -353,7 +359,7 @@ const QuoteForm: React.FC = () => {
                                     {field.value ? (
                                       format(field.value, "MMM dd, yyyy")
                                     ) : (
-                                      <span>From date</span>
+                                      <span>{t('form.fromDate')}</span>
                                     )}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
@@ -395,7 +401,7 @@ const QuoteForm: React.FC = () => {
                                     {field.value ? (
                                       format(field.value, "MMM dd, yyyy")
                                     ) : (
-                                      <span>To date</span>
+                                      <span>{t('form.toDate')}</span>
                                     )}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
@@ -442,7 +448,7 @@ const QuoteForm: React.FC = () => {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel className="text-sm text-neutral-600">
-                            I would like help with hotel accommodation and transfers
+                            {t('form.accommodation')}
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -456,10 +462,10 @@ const QuoteForm: React.FC = () => {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Additional Details or Questions</FormLabel>
+                        <FormLabel>{t('form.notes')}</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Tell us more about what you're looking for..." 
+                            placeholder={t('form.notesPlaceholder')}
                             className="min-h-[100px]" 
                             {...field} 
                             name="notes"
@@ -484,7 +490,7 @@ const QuoteForm: React.FC = () => {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel className="text-sm text-neutral-600">
-                            I consent to being contacted about my inquiry and understand my data will be processed according to the <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
+                            {t('form.consent')}
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -498,7 +504,7 @@ const QuoteForm: React.FC = () => {
                     className="w-full bg-primary text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-primary-dark transition-colors"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Submitting..." : "Request My Free Quote"}
+                    {isSubmitting ? t('form.submitting') : t('form.submit')}
                   </Button>
                 </form>
               </Form>
