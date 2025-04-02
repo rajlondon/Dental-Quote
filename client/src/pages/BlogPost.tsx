@@ -263,8 +263,17 @@ export default function BlogPost() {
             alt={post.title}
             className="w-full h-full object-cover"
             onError={(e) => {
+              console.error(`Failed to load image: ${post.image}`);
               const target = e.target as HTMLImageElement;
-              target.src = "https://via.placeholder.com/1200x600?text=Dental+Tourism";
+              // Generate a SVG placeholder with the post title instead of using external placeholder service
+              const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+                  <rect width="1200" height="600" fill="#f3f4f6"/>
+                  <text x="600" y="300" font-family="Arial" font-size="24" fill="#4b5563" text-anchor="middle" dominant-baseline="middle">${post.title}</text>
+                </svg>
+              `;
+              const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+              target.src = URL.createObjectURL(svgBlob);
             }}
           />
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
@@ -354,8 +363,17 @@ export default function BlogPost() {
                               alt={related.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition"
                               onError={(e) => {
+                                console.error(`Failed to load related image: ${related.image}`);
                                 const target = e.target as HTMLImageElement;
-                                target.src = "https://via.placeholder.com/80?text=Dental";
+                                // Generate a SVG placeholder with a dental icon
+                                const svg = `
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+                                    <rect width="80" height="80" fill="#f3f4f6"/>
+                                    <path d="M40,20 C35,15 30,15 25,25 C20,35 20,45 25,55 C30,65 35,65 40,60 C45,65 50,65 55,55 C60,45 60,35 55,25 C50,15 45,15 40,20 Z" fill="#d1d5db"/>
+                                  </svg>
+                                `;
+                                const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+                                target.src = URL.createObjectURL(svgBlob);
                               }}
                             />
                           </div>

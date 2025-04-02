@@ -141,8 +141,17 @@ export default function Blog() {
                       alt={featuredPost.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
+                        console.error(`Failed to load featured image: ${featuredPost.image}`);
                         const target = e.target as HTMLImageElement;
-                        target.src = "https://via.placeholder.com/600x400?text=Dental+Tourism";
+                        // Generate a SVG placeholder with the post title
+                        const svg = `
+                          <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+                            <rect width="600" height="400" fill="#f3f4f6"/>
+                            <text x="300" y="200" font-family="Arial" font-size="20" fill="#4b5563" text-anchor="middle" dominant-baseline="middle">${featuredPost.title}</text>
+                          </svg>
+                        `;
+                        const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+                        target.src = URL.createObjectURL(svgBlob);
                       }}
                     />
                   </div>
@@ -197,8 +206,20 @@ export default function Blog() {
                       alt={post.title}
                       className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
                       onError={(e) => {
+                        console.error(`Failed to load post image: ${post.image}`);
                         const target = e.target as HTMLImageElement;
-                        target.src = "https://via.placeholder.com/400x300?text=Dental+Blog";
+                        // Generate a SVG placeholder with a dental icon
+                        const svg = `
+                          <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+                            <rect width="400" height="300" fill="#f3f4f6"/>
+                            <g transform="translate(160, 100)">
+                              <path d="M40,0 C35,-5 30,-5 25,5 C20,15 20,25 25,35 C30,45 35,45 40,40 C45,45 50,45 55,35 C60,25 60,15 55,5 C50,-5 45,-5 40,0 Z" fill="#d1d5db"/>
+                            </g>
+                            <text x="200" y="200" font-family="Arial" font-size="16" fill="#4b5563" text-anchor="middle" dominant-baseline="middle">${post.title.substring(0, 25)}${post.title.length > 25 ? '...' : ''}</text>
+                          </svg>
+                        `;
+                        const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+                        target.src = URL.createObjectURL(svgBlob);
                       }}
                     />
                   </div>

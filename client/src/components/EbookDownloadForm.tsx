@@ -50,6 +50,34 @@ export default function EbookDownloadForm({ onSuccess }: EbookDownloadFormProps)
       // Ensure EmailJS config is loaded and up-to-date
       await loadEmailJSConfig();
       
+      // Verify EmailJS configuration is available
+      if (!EMAILJS_CONFIG.serviceId || !EMAILJS_CONFIG.templateId || !EMAILJS_CONFIG.publicKey) {
+        console.error('EmailJS configuration incomplete:',
+          {
+            serviceIdAvailable: !!EMAILJS_CONFIG.serviceId,
+            templateIdAvailable: !!EMAILJS_CONFIG.templateId,
+            publicKeyAvailable: !!EMAILJS_CONFIG.publicKey
+          }
+        );
+        
+        // Show error to user but still allow download
+        toast({
+          title: t('ebook.error.title'),
+          description: 'Email notification could not be sent, but you can still download the e-book.',
+          variant: "destructive"
+        });
+        
+        // Skip email sending and proceed to success
+        setShowDownload(true);
+        
+        // Call onSuccess if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        return;
+      }
+
       // Prepare template parameters for EmailJS
       const templateParams = {
         name: data.name,
@@ -60,13 +88,34 @@ export default function EbookDownloadForm({ onSuccess }: EbookDownloadFormProps)
         message: `New e-book download request from ${data.name} (${data.email}) from ${data.country}.`
       };
       
-      // Send the email via EmailJS
-      await emailjs.send(
-        EMAILJS_CONFIG.serviceId,
-        EMAILJS_CONFIG.templateId,
-        templateParams,
-        EMAILJS_CONFIG.publicKey
-      );
+      try {
+        // Send the email via EmailJS
+        await emailjs.send(
+          EMAILJS_CONFIG.serviceId,
+          EMAILJS_CONFIG.templateId,
+          templateParams,
+          EMAILJS_CONFIG.publicKey
+        );
+      } catch (emailError) {
+        console.error("EmailJS sending failed:", emailError);
+        
+        // Show partial success message but still allow download
+        toast({
+          title: "E-book ready",
+          description: "Your e-book is ready for download, but we couldn't send you a confirmation email.",
+          variant: "default"
+        });
+        
+        // Still proceed with success flow
+        setShowDownload(true);
+        
+        // Call onSuccess if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        return;
+      }
       
       // Show success notification
       toast({
