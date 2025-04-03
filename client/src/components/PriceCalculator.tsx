@@ -28,6 +28,11 @@ import PdfGenerator from './PdfGenerator';
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
+  phone: z.string()
+    .min(7, 'Please enter a valid phone number')
+    .refine((val) => /^[+]?[0-9\s-()]+$/.test(val), {
+      message: 'Please enter a valid phone number format',
+    }),
   treatments: z.array(
     z.object({
       treatment: z.string().min(1, 'Please select a treatment'),
@@ -51,6 +56,7 @@ export default function PriceCalculator() {
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       treatments: [{ treatment: '', quantity: 1 }],
     },
   });
@@ -109,112 +115,170 @@ export default function PriceCalculator() {
   };
   
   return (
-    <div className="container mx-auto p-4 mt-8">
-      <h2 className="text-3xl font-bold mb-8 text-center">{t('calculate_price')}</h2>
-      
-      {loading ? (
-        <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('treatment_selection')}</CardTitle>
-              <CardDescription>{t('select_treatments_description')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('name')}</FormLabel>
-                          <FormControl>
-                            <Input placeholder={t('enter_name')} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('email')}</FormLabel>
-                          <FormControl>
-                            <Input placeholder={t('enter_email')} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">{t('treatments')}</h3>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={addTreatment}
-                        >
-                          {t('add_treatment')}
-                        </Button>
-                      </div>
-                      
-                      {form.getValues('treatments').map((_, index) => (
-                        <div key={index} className="flex gap-4 items-start">
-                          <div className="flex-1">
+    <section className="py-16 bg-gradient-to-b from-neutral-50 to-white price-calculator-section">
+      <div className="container mx-auto px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary relative inline-block">
+              {t('calculate_price')}
+              <span className="absolute -top-4 -right-12 bg-secondary/20 text-secondary-foreground text-xs px-2 py-1 rounded-full rotate-3">
+                FREE
+              </span>
+            </h2>
+            <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
+              Calculate the exact cost of your dental treatment in Istanbul and receive a detailed quote that you can download instantly.
+            </p>
+          </div>
+          
+          {loading ? (
+            <div className="flex justify-center items-center min-h-[300px]">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mb-4"></div>
+                <p className="text-neutral-600">Loading treatment options...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="relative">
+              {/* Add a highlight effect around the form */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-xl blur-lg -z-10 animate-pulse"></div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white rounded-xl shadow-lg p-6 md:p-8 border border-neutral-200">
+                <div>
+                  <div className="mb-6">
+                    <h3 className="text-2xl font-bold text-primary mb-2">{t('treatment_selection')}</h3>
+                    <p className="text-neutral-600">{t('select_treatments_description')}</p>
+                  </div>
+                  
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="bg-primary/5 p-4 rounded-lg">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-primary">{t('treatments')}</h3>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              className="bg-white border-primary text-primary hover:bg-primary hover:text-white"
+                              onClick={addTreatment}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                              {t('add_treatment')}
+                            </Button>
+                          </div>
+                          
+                          {form.getValues('treatments').map((_, index) => (
+                            <div key={index} className="flex gap-4 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">
+                              <div className="flex-1">
+                                <FormField
+                                  control={form.control}
+                                  name={`treatments.${index}.treatment`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className="text-neutral-700">{t('treatment_type')}</FormLabel>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger className="bg-white">
+                                            <SelectValue placeholder={t('select_treatment')} />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {treatments
+                                            .filter(treatment => treatment.treatment && treatment.treatment.trim() !== '')
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={idx} value={treatment.treatment}>
+                                                {treatment.treatment}
+                                              </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              <div className="w-24">
+                                <FormField
+                                  control={form.control}
+                                  name={`treatments.${index}.quantity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className="text-neutral-700">{t('quantity')}</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          className="bg-white"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              <div className="pt-8">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-neutral-400 hover:text-red-500 hover:bg-red-50"
+                                  onClick={() => removeTreatment(index)}
+                                  disabled={form.getValues('treatments').length <= 1}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-4 w-4"
+                                  >
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                  </svg>
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <FormField
                               control={form.control}
-                              name={`treatments.${index}.treatment`}
+                              name="name"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t('treatment_type')}</FormLabel>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder={t('select_treatment')} />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {treatments
-                                        .filter(treatment => treatment.treatment && treatment.treatment.trim() !== '')
-                                        .map((treatment, idx) => (
-                                          <SelectItem key={idx} value={treatment.treatment}>
-                                            {treatment.treatment}
-                                          </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                  </Select>
+                                  <FormLabel>{t('name')}</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder={t('enter_name')} {...field} className="bg-white" />
+                                  </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               )}
                             />
-                          </div>
-                          
-                          <div className="w-24">
+                            
                             <FormField
                               control={form.control}
-                              name={`treatments.${index}.quantity`}
+                              name="email"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t('quantity')}</FormLabel>
+                                  <FormLabel>{t('email')}</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      {...field}
-                                    />
+                                    <Input placeholder={t('enter_email')} {...field} className="bg-white" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -222,144 +286,197 @@ export default function PriceCalculator() {
                             />
                           </div>
                           
-                          <div className="pt-8">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeTreatment(index)}
-                              disabled={form.getValues('treatments').length <= 1}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-4 w-4"
-                              >
-                                <path d="M3 6h18"></path>
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                              </svg>
-                            </Button>
+                          <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="tel" 
+                                    placeholder="+44 7123 456789" 
+                                    {...field} 
+                                    className="bg-white"
+                                  />
+                                </FormControl>
+                                <p className="text-xs text-neutral-500 mt-1">
+                                  We'll use this to contact you about your quote and treatment options
+                                </p>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg font-semibold shadow-lg relative overflow-hidden group"
+                      >
+                        <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full"></span>
+                        <span className="relative flex items-center justify-center gap-2">
+                          {t('calculate_quote')}
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </span>
+                      </Button>
+                    </form>
+                  </Form>
+                </div>
+                
+                <div className="bg-neutral-50 rounded-xl p-6 border border-neutral-200">
+                  <h3 className="text-2xl font-bold text-primary mb-4">{t('quote_summary')}</h3>
+                  
+                  {quote ? (
+                    <div className="space-y-4">
+                      <div className="border rounded-lg overflow-hidden bg-white">
+                        <table className="w-full">
+                          <thead className="bg-primary/10">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium text-primary">{t('treatment')}</th>
+                              <th className="px-4 py-3 text-right font-medium text-primary">{t('price')}</th>
+                              <th className="px-4 py-3 text-right font-medium text-primary">{t('qty')}</th>
+                              <th className="px-4 py-3 text-right font-medium text-primary">{t('subtotal')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {quote.items.map((item, idx) => (
+                              <tr key={idx} className="border-t">
+                                <td className="px-4 py-3">
+                                  <div className="font-medium">{item.treatment}</div>
+                                  <div className="text-xs text-neutral-500">
+                                    {item.guarantee !== 'N/A' && `${t('guarantee')}: ${item.guarantee}`}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="font-medium">£{item.priceGBP.toLocaleString()}</div>
+                                  <div className="text-xs text-neutral-500">
+                                    ${item.priceUSD.toLocaleString()}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right">{item.quantity}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="font-medium">£{item.subtotalGBP.toLocaleString()}</div>
+                                  <div className="text-xs text-neutral-500">
+                                    ${item.subtotalUSD.toLocaleString()}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <div className="flex justify-between pt-4 font-bold text-xl">
+                        <div className="text-primary">{t('total')}</div>
+                        <div>
+                          <div className="text-primary">£{quote.totalGBP.toLocaleString()}</div>
+                          <div className="text-sm text-neutral-500">
+                            ${quote.totalUSD.toLocaleString()}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button type="submit" className="w-full">
-                    {t('calculate_quote')}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('quote_summary')}</CardTitle>
-              <CardDescription>{t('quote_summary_description')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {quote ? (
-                <div className="space-y-4">
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-muted/50">
-                        <tr>
-                          <th className="px-4 py-2 text-left">{t('treatment')}</th>
-                          <th className="px-4 py-2 text-right">{t('price')}</th>
-                          <th className="px-4 py-2 text-right">{t('qty')}</th>
-                          <th className="px-4 py-2 text-right">{t('subtotal')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {quote.items.map((item, idx) => (
-                          <tr key={idx} className="border-t">
-                            <td className="px-4 py-2">
-                              <div>{item.treatment}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {item.guarantee !== 'N/A' && `${t('guarantee')}: ${item.guarantee}`}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2 text-right">
-                              <div>£{item.priceGBP.toLocaleString()}</div>
-                              <div className="text-xs text-muted-foreground">
-                                ${item.priceUSD.toLocaleString()}
-                              </div>
-                            </td>
-                            <td className="px-4 py-2 text-right">{item.quantity}</td>
-                            <td className="px-4 py-2 text-right">
-                              <div>£{item.subtotalGBP.toLocaleString()}</div>
-                              <div className="text-xs text-muted-foreground">
-                                ${item.subtotalUSD.toLocaleString()}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  <div className="flex justify-between pt-4 font-medium text-lg">
-                    <div>{t('total')}</div>
-                    <div>
-                      <div>£{quote.totalGBP.toLocaleString()}</div>
-                      <div className="text-sm text-muted-foreground">
-                        ${quote.totalUSD.toLocaleString()}
+                      </div>
+                      
+                      <Separator className="my-4" />
+                      
+                      <div className="text-sm text-neutral-500 bg-white p-3 rounded-lg border border-neutral-200">
+                        <div className="flex items-start mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <p>{t('quote_validity_note')}</p>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                          <p>All treatments include consultation, examination, and post-treatment care.</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6">
+                        <PdfGenerator
+                          items={quote.items}
+                          totalGBP={quote.totalGBP}
+                          totalUSD={quote.totalUSD}
+                          patientName={form.getValues('name')}
+                          patientEmail={form.getValues('email')}
+                          patientPhone={form.getValues('phone')}
+                        />
                       </div>
                     </div>
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="text-sm text-muted-foreground">
-                    {t('quote_validity_note')}
-                  </div>
+                  ) : (
+                    <div className="min-h-[350px] flex flex-col items-center justify-center text-center text-neutral-500 bg-white rounded-lg border border-neutral-200 p-6">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-16 w-16 mb-6 text-primary/30"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                      <h4 className="text-xl font-semibold mb-2 text-primary">{t('no_quote_generated')}</h4>
+                      <p className="mb-4">{t('select_treatments_to_generate')}</p>
+                      <div className="text-sm p-3 bg-primary/5 rounded-lg max-w-md">
+                        <p className="font-medium text-primary mb-2">How it works:</p>
+                        <ol className="text-left space-y-2">
+                          <li className="flex">
+                            <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">1</span>
+                            <span>Select your desired treatments from the dropdown</span>
+                          </li>
+                          <li className="flex">
+                            <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">2</span>
+                            <span>Enter your name, email and phone number</span>
+                          </li>
+                          <li className="flex">
+                            <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">3</span>
+                            <span>Click "Calculate Quote" to see pricing</span>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="min-h-[200px] flex flex-col items-center justify-center text-center text-muted-foreground">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-12 w-12 mb-4"
-                  >
-                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                    <line x1="12" x2="12" y1="8" y2="16"></line>
-                    <line x1="8" x2="16" y1="12" y2="12"></line>
-                  </svg>
-                  <p>{t('no_quote_generated')}</p>
-                  <p className="text-xs mt-2">{t('select_treatments_to_generate')}</p>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              {quote && (
-                <PdfGenerator
-                  items={quote.items}
-                  totalGBP={quote.totalGBP}
-                  totalUSD={quote.totalUSD}
-                  patientName={form.getValues('name')}
-                  patientEmail={form.getValues('email')}
-                />
-              )}
-            </CardFooter>
-          </Card>
+              </div>
+            </div>
+          )}
+          
+          <div className="mt-12 text-center">
+            <p className="text-lg font-medium text-primary mb-4">Why our patients choose Istanbul for dental treatment</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
+                <div className="text-3xl text-primary mb-2">70%</div>
+                <p className="text-sm text-neutral-600">Average savings compared to UK prices</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
+                <div className="text-3xl text-primary mb-2">5★</div>
+                <p className="text-sm text-neutral-600">Clinics with highest quality standards</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
+                <div className="text-3xl text-primary mb-2">24/7</div>
+                <p className="text-sm text-neutral-600">Support throughout your treatment</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
+                <div className="text-3xl text-primary mb-2">100%</div>
+                <p className="text-sm text-neutral-600">Satisfaction guarantee</p>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }
