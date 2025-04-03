@@ -25,6 +25,19 @@ import {
 } from '@/services/pricingService';
 import PdfGenerator from './PdfGenerator';
 
+// Function to format treatment names to be more user-friendly
+const formatTreatmentName = (name: string): string => {
+  return name
+    .replace(/(\w)([A-Z])/g, '$1 $2') // Add space between camelCase words
+    .replace(/_/g, ' ') // Replace underscores with spaces
+    .replace(/-/g, ' - ') // Add spaces around hyphens
+    .split(' ')
+    .map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() // Capitalize first letter of each word
+    )
+    .join(' ');
+};
+
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -169,7 +182,7 @@ export default function PriceCalculator() {
                             </Button>
                           </div>
                           
-                          {form.getValues('treatments').map((_, index) => (
+                          {form.watch('treatments').map((_, index) => (
                             <div key={index} className="flex gap-4 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">
                               <div className="flex-1">
                                 <FormField
@@ -192,7 +205,7 @@ export default function PriceCalculator() {
                                             .filter(treatment => treatment.treatment && treatment.treatment.trim() !== '')
                                             .map((treatment, idx) => (
                                               <SelectItem key={idx} value={treatment.treatment}>
-                                                {treatment.treatment}
+                                                {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -231,7 +244,7 @@ export default function PriceCalculator() {
                                   size="icon"
                                   className="text-neutral-400 hover:text-red-500 hover:bg-red-50"
                                   onClick={() => removeTreatment(index)}
-                                  disabled={form.getValues('treatments').length <= 1}
+                                  disabled={form.watch('treatments').length <= 1}
                                 >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -345,7 +358,7 @@ export default function PriceCalculator() {
                             {quote.items.map((item, idx) => (
                               <tr key={idx} className="border-t">
                                 <td className="px-4 py-3">
-                                  <div className="font-medium">{item.treatment}</div>
+                                  <div className="font-medium">{formatTreatmentName(item.treatment)}</div>
                                   <div className="text-xs text-neutral-500">
                                     {item.guarantee !== 'N/A' && `${t('guarantee')}: ${item.guarantee}`}
                                   </div>

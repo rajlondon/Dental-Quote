@@ -2,6 +2,20 @@ import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
 import 'jspdf/dist/polyfills.es.js';
 
+// Function to format treatment names to be more user-friendly
+const formatTreatmentName = (name: string): string => {
+  if (!name) return '';
+  return name
+    .replace(/(\w)([A-Z])/g, '$1 $2') // Add space between camelCase words
+    .replace(/_/g, ' ') // Replace underscores with spaces
+    .replace(/-/g, ' - ') // Add spaces around hyphens
+    .split(' ')
+    .map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() // Capitalize first letter of each word
+    )
+    .join(' ');
+};
+
 interface QuoteItem {
   treatment: string;
   priceGBP: number;
@@ -113,7 +127,7 @@ export const generateQuotePdf = ({
       yPos = 20;
     }
     
-    doc.text(truncateText(item.treatment, 40), cols[0].x, yPos);
+    doc.text(truncateText(formatTreatmentName(item.treatment), 40), cols[0].x, yPos);
     doc.text(`£${item.priceGBP.toLocaleString()}`, cols[1].x, yPos);
     doc.text(`$${item.priceUSD.toLocaleString()}`, cols[2].x, yPos);
     doc.text(item.quantity.toString(), cols[3].x, yPos);
