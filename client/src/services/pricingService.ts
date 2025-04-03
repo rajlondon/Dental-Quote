@@ -1,3 +1,5 @@
+import { dentalPricesCSV } from './dentalPricesData';
+
 export interface TreatmentPrice {
   category: string;
   treatment: string;
@@ -11,8 +13,13 @@ let initialized = false;
 
 // Manual CSV parsing function for browser compatibility
 function parseCSV(csvText: string): TreatmentPrice[] {
+  console.log("CSV parsing started");
+  
   const lines = csvText.split('\n');
+  console.log(`Found ${lines.length} lines in CSV`);
+  
   const headers = lines[0].split(',');
+  console.log("Headers:", headers);
   
   const categoryIndex = headers.findIndex(h => h === 'Category');
   const treatmentIndex = headers.findIndex(h => h === 'Treatment');
@@ -20,9 +27,17 @@ function parseCSV(csvText: string): TreatmentPrice[] {
   const priceUSDIndex = headers.findIndex(h => h === 'Price (USD)');
   const guaranteeIndex = headers.findIndex(h => h === 'Guarantee');
   
-  return lines.slice(1)
+  console.log("Column indices:", {
+    categoryIndex,
+    treatmentIndex,
+    priceGBPIndex,
+    priceUSDIndex,
+    guaranteeIndex
+  });
+  
+  const results = lines.slice(1)
     .filter(line => line.trim() !== '')
-    .map(line => {
+    .map((line, idx) => {
       // Handle quoted fields with commas inside them
       const values: string[] = [];
       let inQuotes = false;
@@ -34,7 +49,7 @@ function parseCSV(csvText: string): TreatmentPrice[] {
         if (char === ',' && !inQuotes) {
           values.push(currentValue);
           currentValue = '';
-        } else if (char === "'" && (i === 0 || line[i-1] !== '\\')) {
+        } else if ((char === "'" || char === '"') && (i === 0 || line[i-1] !== '\\')) {
           inQuotes = !inQuotes;
         } else {
           currentValue += char;
@@ -44,27 +59,54 @@ function parseCSV(csvText: string): TreatmentPrice[] {
       // Don't forget to push the last value
       values.push(currentValue);
       
-      return {
+      if (idx < 3) {
+        console.log(`Example row ${idx}:`, {line, values});
+      }
+      
+      const result = {
         category: values[categoryIndex]?.trim() || 'General',
         treatment: values[treatmentIndex]?.trim() || '',
         priceGBP: parseFloat(values[priceGBPIndex]) || 0,
         priceUSD: parseFloat(values[priceUSDIndex]) || 0,
         guarantee: values[guaranteeIndex]?.trim() || 'N/A'
       };
+      
+      if (idx < 3) {
+        console.log(`Example processed row ${idx}:`, result);
+      }
+      
+      return result;
     });
+    
+  console.log(`Processed ${results.length} treatment records`);
+  
+  // Filter out items with empty treatments
+  const validResults = results.filter(item => item.treatment.trim() !== '');
+  console.log(`Valid treatment records: ${validResults.length} (filtered out ${results.length - validResults.length} empty treatments)`);
+  
+  return validResults;
 }
 
 export async function initializePrices(): Promise<void> {
   if (initialized) return;
   
   try {
-    const response = await fetch('/data/structured_dental_prices.csv');
-    const csvData = await response.text();
+    console.log('Using embedded CSV data...');
+    
+    const csvData = dentalPricesCSV;
+    console.log('CSV data length:', csvData.length);
+    
+    if (csvData.length < 10) {
+      console.error('CSV data is too short or empty');
+      throw new Error('CSV data is too short or empty');
+    }
+    
+    console.log('CSV data first 50 chars:', csvData.substring(0, 50));
     
     treatmentPrices = parseCSV(csvData);
     
     initialized = true;
-    console.log('Pricing data initialized successfully');
+    console.log('Pricing data initialized successfully with', treatmentPrices.length, 'items');
   } catch (error) {
     console.error('Error initializing pricing data:', error);
     throw error;
