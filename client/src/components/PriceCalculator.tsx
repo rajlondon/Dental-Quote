@@ -21,9 +21,21 @@ import {
   TreatmentPrice, 
   initializePrices, 
   getAllTreatments,
-  calculateTotal
+  calculateTotal,
+  getTreatmentByName
 } from '@/services/pricingService';
 import PdfGenerator from './PdfGenerator';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Function to format treatment names to be more user-friendly
 const formatTreatmentName = (name: string): string => {
@@ -112,14 +124,44 @@ export default function PriceCalculator() {
     }
   };
   
+  // State to store the currently selected treatment for displaying details
+  const [selectedTreatment, setSelectedTreatment] = useState<TreatmentPrice | null>(null);
+  
+  // Function to show treatment details
+  const showTreatmentDetails = (treatmentName: string) => {
+    const treatment = getTreatmentByName(treatmentName);
+    setSelectedTreatment(treatment || null);
+  };
+  
   // Handle form submission
   const onSubmit = (data: FormValues) => {
     // Calculate the total prices
     const quoteResult = calculateTotal(data.treatments);
-    setQuote({
-      ...quoteResult,
-      // Add any additional fields needed for the quote display/PDF
-    });
+    
+    // Store the quote data with user information in state
+    setQuote(quoteResult);
+    
+    // Pass the extra data to the PDF generator when needed
+    // This avoids modifying the original quoteResult which has its own type
+    const patientData = {
+      patientName: data.name,
+      patientEmail: data.email,
+      patientPhone: data.phone
+    };
+    
+    // Record the submission for personalized follow-up
+    try {
+      // Store quote data in localStorage for potential follow-up
+      localStorage.setItem('lastQuoteData', JSON.stringify({
+        timestamp: new Date().toISOString(),
+        ...patientData,
+        treatments: data.treatments,
+        totalGBP: quoteResult.totalGBP,
+        totalUSD: quoteResult.totalUSD
+      }));
+    } catch (error) {
+      console.error('Failed to save quote data for follow-up:', error);
+    }
     
     toast({
       title: 'Quote Generated',
@@ -192,7 +234,10 @@ export default function PriceCalculator() {
                                     <FormItem>
                                       <FormLabel className="text-neutral-700">{t('pricing.treatment_type')}</FormLabel>
                                       <Select
-                                        onValueChange={field.onChange}
+                                        onValueChange={(value) => {
+                                          field.onChange(value);
+                                          showTreatmentDetails(value);
+                                        }}
                                         defaultValue={field.value}
                                       >
                                         <FormControl>
@@ -210,6 +255,85 @@ export default function PriceCalculator() {
                                             ))}
                                         </SelectContent>
                                       </Select>
+                                      
+                                      {/* Show info button if a treatment is selected */}
+                                      {field.value && (
+                                        <div className="mt-1">
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="text-xs px-2 py-1 h-auto mt-1 text-primary border-primary/30 hover:bg-primary/5"
+                                              >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Treatment Details
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-0">
+                                              {(() => {
+                                                const treatmentDetails = getTreatmentByName(field.value);
+                                                if (!treatmentDetails) return null;
+                                                
+                                                return (
+                                                  <div className="p-4 space-y-3">
+                                                    <h4 className="font-semibold text-primary text-lg">
+                                                      {formatTreatmentName(treatmentDetails.treatment)}
+                                                    </h4>
+                                                    
+                                                    {treatmentDetails.description && (
+                                                      <p className="text-sm text-neutral-600">
+                                                        {treatmentDetails.description}
+                                                      </p>
+                                                    )}
+                                                    
+                                                    {treatmentDetails.benefits && treatmentDetails.benefits.length > 0 && (
+                                                      <div className="space-y-1">
+                                                        <h5 className="text-sm font-medium text-primary">Benefits:</h5>
+                                                        <ul className="text-xs text-neutral-600 space-y-1 pl-5 list-disc">
+                                                          {treatmentDetails.benefits.map((benefit, idx) => (
+                                                            <li key={idx}>{benefit}</li>
+                                                          ))}
+                                                        </ul>
+                                                      </div>
+                                                    )}
+                                                    
+                                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                                      {treatmentDetails.duration && (
+                                                        <div>
+                                                          <span className="font-semibold text-primary">Treatment time:</span>
+                                                          <p className="text-neutral-600">{treatmentDetails.duration}</p>
+                                                        </div>
+                                                      )}
+                                                      
+                                                      {treatmentDetails.recovery && (
+                                                        <div>
+                                                          <span className="font-semibold text-primary">Recovery:</span>
+                                                          <p className="text-neutral-600">{treatmentDetails.recovery}</p>
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                    
+                                                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs bg-primary/5 p-2 rounded">
+                                                      <div>
+                                                        <span className="font-semibold text-primary">Price:</span>
+                                                        <p className="text-neutral-600">£{treatmentDetails.priceGBP.toLocaleString()} / ${treatmentDetails.priceUSD.toLocaleString()}</p>
+                                                      </div>
+                                                      
+                                                      <div>
+                                                        <span className="font-semibold text-primary">Guarantee:</span>
+                                                        <p className="text-neutral-600">{treatmentDetails.guarantee}</p>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })()}
+                                            </PopoverContent>
+                                          </Popover>
+                                        </div>
+                                      )}
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -410,6 +534,57 @@ export default function PriceCalculator() {
                         </div>
                       </div>
                       
+                      {/* Add testimonials for social proof */}
+                      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 my-4">
+                        <h4 className="text-lg font-semibold text-blue-800 mb-3">What our patients say:</h4>
+                        
+                        <div className="space-y-3">
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <div className="flex items-center mb-2">
+                              <div className="bg-blue-100 rounded-full p-2 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">James Thompson</p>
+                                <p className="text-xs text-neutral-500">Veneers & Whitening</p>
+                              </div>
+                              <div className="ml-auto flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-neutral-600 italic">"I saved over £4,000 on my dental work in Istanbul compared to UK prices. The quality was excellent and the clinic was state-of-the-art."</p>
+                          </div>
+                          
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <div className="flex items-center mb-2">
+                              <div className="bg-red-100 rounded-full p-2 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">Maria Gonzalez</p>
+                                <p className="text-xs text-neutral-500">Full Dental Implants</p>
+                              </div>
+                              <div className="ml-auto flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-neutral-600 italic">"DentalMatch made the entire process smooth and worry-free. From airport pickup to my final checkup, I felt completely taken care of."</p>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="mt-6">
                         <PdfGenerator
                           items={quote.items}

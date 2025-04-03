@@ -13,6 +13,20 @@ export const languages = {
   it: { nativeName: 'Italiano', flag: '🇮🇹' },
 };
 
+// Create a static cache key to prevent browser caching
+const cacheKey = `v=${new Date().getFullYear()}${new Date().getMonth()}${new Date().getDate()}${new Date().getHours()}`;
+
+// Force reload translations on startup
+const forceReload = () => {
+  try {
+    if (i18n.isInitialized) {
+      i18n.reloadResources();
+    }
+  } catch (error) {
+    console.error('Error reloading translations:', error);
+  }
+};
+
 i18n
   // Load translation using http
   .use(Backend)
@@ -24,7 +38,7 @@ i18n
   .init({
     fallbackLng: 'en',
     supportedLngs: Object.keys(languages),
-    debug: process.env.NODE_ENV === 'development',
+    debug: true, // Enable debug to see issues
     
     interpolation: {
       escapeValue: false, // React already escapes values
@@ -44,9 +58,9 @@ i18n
     backend: {
       // Path where language resources will be stored
       loadPath: '/locales/{{lng}}/{{ns}}.json',
-      queryStringParams: { v: Date.now().toString() }, // Add cache-busting parameter
+      queryStringParams: { v: cacheKey }, // Static cache-busting parameter for the session
       allowMultiLoading: false,
-      reloadInterval: false // Set to the number of milliseconds to reload resourcess
+      crossDomain: false // Disable CORS for local resources
     },
     
     // Ensure defaults are loaded
@@ -60,6 +74,21 @@ i18n
     
     load: 'currentOnly', // Only load the current language
     preload: ['en'], // Preload English as fallback
+  }, () => {
+    // After initialization, force a reload of resources
+    setTimeout(forceReload, 500);
   });
+
+// Helper function to explicitly reload translations 
+export const reloadTranslations = () => {
+  return i18n.reloadResources();
+};
+
+// Export language change function with reload for convenience
+export const changeLanguageWithReload = (lang: string) => {
+  return i18n.changeLanguage(lang).then(() => {
+    return i18n.reloadResources();
+  });
+};
 
 export default i18n;
