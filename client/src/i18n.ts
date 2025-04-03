@@ -44,7 +44,9 @@ i18n
     backend: {
       // Path where language resources will be stored
       loadPath: '/locales/{{lng}}/{{ns}}.json',
-      queryStringParams: { v: Date.now() }, // Add cache-busting parameter
+      queryStringParams: { v: Date.now().toString() }, // Add cache-busting parameter
+      allowMultiLoading: false,
+      reloadInterval: false // Set to the number of milliseconds to reload resourcess
     },
     
     // Ensure defaults are loaded
