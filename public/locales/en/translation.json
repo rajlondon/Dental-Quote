@@ -196,6 +196,15 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
   },
+  "common": {
+    "name": "Full Name",
+    "enter_name": "Enter your full name",
+    "email": "Email Address",
+    "enter_email": "Enter your email address",
+    "phone_number": "Phone Number",
+    "phone_placeholder": "+44 7123 456789",
+    "phone_help_text": "We'll use this to contact you about your quote and treatment options"
+  },
   "pricing": {
     "pricing_title": "Dental Treatment Pricing",
     "pricing_description": "Get accurate cost estimates for your dental treatments in Istanbul. Select the treatments you're interested in, and we'll calculate the total price in both GBP and USD.",
@@ -222,6 +231,16 @@
     "total": "Total",
     "guarantee": "Guarantee",
     "quote_validity_note": "This quote is valid for 30 days. Prices are approximate and subject to confirmation by the clinic.",
+    "how_it_works": "How it works",
+    "step_select_treatments": "Select your desired treatments from the dropdown",
+    "step_enter_details": "Enter your name, email and phone number",
+    "step_calculate_quote": "Click \"Calculate Quote\" to see pricing",
+    "all_treatments_include": "All treatments include consultation, examination, and post-treatment care.",
+    "why_choose_istanbul": "Why our patients choose Istanbul for dental treatment",
+    "benefit_savings": "Average savings compared to UK prices",
+    "benefit_quality": "Clinics with highest quality standards",
+    "benefit_support": "Support throughout your treatment",
+    "benefit_guarantee": "Satisfaction guarantee",
     "download_quote": "Download Quote",
     "frequently_asked_questions": "Frequently Asked Questions About Pricing",
     "pricing_faq_1_question": "Why are dental treatments so much cheaper in Istanbul?",
