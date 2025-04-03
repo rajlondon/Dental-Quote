@@ -133,7 +133,7 @@ export default function PriceCalculator() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary relative inline-block">
-              {t('calculate_price')}
+              {t('pricing.calculate_price')}
               <span className="absolute -top-4 -right-12 bg-secondary/20 text-secondary-foreground text-xs px-2 py-1 rounded-full rotate-3">
                 FREE
               </span>
@@ -158,8 +158,8 @@ export default function PriceCalculator() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white rounded-xl shadow-lg p-6 md:p-8 border border-neutral-200">
                 <div>
                   <div className="mb-6">
-                    <h3 className="text-2xl font-bold text-primary mb-2">{t('treatment_selection')}</h3>
-                    <p className="text-neutral-600">{t('select_treatments_description')}</p>
+                    <h3 className="text-2xl font-bold text-primary mb-2">{t('pricing.treatment_selection')}</h3>
+                    <p className="text-neutral-600">{t('pricing.select_treatments_description')}</p>
                   </div>
                   
                   <Form {...form}>
@@ -167,7 +167,7 @@ export default function PriceCalculator() {
                       <div className="space-y-4">
                         <div className="bg-primary/5 p-4 rounded-lg">
                           <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-primary">{t('treatments')}</h3>
+                            <h3 className="text-lg font-semibold text-primary">{t('pricing.treatments')}</h3>
                             <Button 
                               type="button" 
                               variant="outline" 
@@ -178,7 +178,7 @@ export default function PriceCalculator() {
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                               </svg>
-                              {t('add_treatment')}
+                              {t('pricing.add_treatment')}
                             </Button>
                           </div>
                           
@@ -190,14 +190,14 @@ export default function PriceCalculator() {
                                   name={`treatments.${index}.treatment`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel className="text-neutral-700">{t('treatment_type')}</FormLabel>
+                                      <FormLabel className="text-neutral-700">{t('pricing.treatment_type')}</FormLabel>
                                       <Select
                                         onValueChange={field.onChange}
                                         defaultValue={field.value}
                                       >
                                         <FormControl>
                                           <SelectTrigger className="bg-white">
-                                            <SelectValue placeholder={t('select_treatment')} />
+                                            <SelectValue placeholder={t('pricing.select_treatment')} />
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -222,7 +222,7 @@ export default function PriceCalculator() {
                                   name={`treatments.${index}.quantity`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel className="text-neutral-700">{t('quantity')}</FormLabel>
+                                      <FormLabel className="text-neutral-700">{t('pricing.quantity')}</FormLabel>
                                       <FormControl>
                                         <Input
                                           type="number"
@@ -275,9 +275,9 @@ export default function PriceCalculator() {
                               name="name"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t('name')}</FormLabel>
+                                  <FormLabel>{t('common.name')}</FormLabel>
                                   <FormControl>
-                                    <Input placeholder={t('enter_name')} {...field} className="bg-white" />
+                                    <Input placeholder={t('common.enter_name')} {...field} className="bg-white" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -289,9 +289,9 @@ export default function PriceCalculator() {
                               name="email"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t('email')}</FormLabel>
+                                  <FormLabel>{t('common.email')}</FormLabel>
                                   <FormControl>
-                                    <Input placeholder={t('enter_email')} {...field} className="bg-white" />
+                                    <Input placeholder={t('common.enter_email')} {...field} className="bg-white" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -304,17 +304,17 @@ export default function PriceCalculator() {
                             name="phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
+                                <FormLabel>{t('common.phone_number')} <span className="text-red-500">*</span></FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="tel" 
-                                    placeholder="+44 7123 456789" 
+                                    placeholder={t('common.phone_placeholder')} 
                                     {...field} 
                                     className="bg-white"
                                   />
                                 </FormControl>
                                 <p className="text-xs text-neutral-500 mt-1">
-                                  We'll use this to contact you about your quote and treatment options
+                                  {t('common.phone_help_text')}
                                 </p>
                                 <FormMessage />
                               </FormItem>
@@ -329,7 +329,7 @@ export default function PriceCalculator() {
                       >
                         <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full"></span>
                         <span className="relative flex items-center justify-center gap-2">
-                          {t('calculate_quote')}
+                          {t('pricing.calculate_quote')}
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
@@ -340,7 +340,7 @@ export default function PriceCalculator() {
                 </div>
                 
                 <div className="bg-neutral-50 rounded-xl p-6 border border-neutral-200">
-                  <h3 className="text-2xl font-bold text-primary mb-4">{t('quote_summary')}</h3>
+                  <h3 className="text-2xl font-bold text-primary mb-4">{t('pricing.quote_summary')}</h3>
                   
                   {quote ? (
                     <div className="space-y-4">
@@ -348,10 +348,10 @@ export default function PriceCalculator() {
                         <table className="w-full">
                           <thead className="bg-primary/10">
                             <tr>
-                              <th className="px-4 py-3 text-left font-medium text-primary">{t('treatment')}</th>
-                              <th className="px-4 py-3 text-right font-medium text-primary">{t('price')}</th>
-                              <th className="px-4 py-3 text-right font-medium text-primary">{t('qty')}</th>
-                              <th className="px-4 py-3 text-right font-medium text-primary">{t('subtotal')}</th>
+                              <th className="px-4 py-3 text-left font-medium text-primary">{t('pricing.treatment')}</th>
+                              <th className="px-4 py-3 text-right font-medium text-primary">{t('pricing.price')}</th>
+                              <th className="px-4 py-3 text-right font-medium text-primary">{t('pricing.qty')}</th>
+                              <th className="px-4 py-3 text-right font-medium text-primary">{t('pricing.subtotal')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -360,7 +360,7 @@ export default function PriceCalculator() {
                                 <td className="px-4 py-3">
                                   <div className="font-medium">{formatTreatmentName(item.treatment)}</div>
                                   <div className="text-xs text-neutral-500">
-                                    {item.guarantee !== 'N/A' && `${t('guarantee')}: ${item.guarantee}`}
+                                    {item.guarantee !== 'N/A' && `${t('pricing.guarantee')}: ${item.guarantee}`}
                                   </div>
                                 </td>
                                 <td className="px-4 py-3 text-right">
@@ -383,7 +383,7 @@ export default function PriceCalculator() {
                       </div>
                       
                       <div className="flex justify-between pt-4 font-bold text-xl">
-                        <div className="text-primary">{t('total')}</div>
+                        <div className="text-primary">{t('pricing.total')}</div>
                         <div>
                           <div className="text-primary">£{quote.totalGBP.toLocaleString()}</div>
                           <div className="text-sm text-neutral-500">
@@ -399,14 +399,14 @@ export default function PriceCalculator() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <p>{t('quote_validity_note')}</p>
+                          <p>{t('pricing.quote_validity_note')}</p>
                         </div>
                         
                         <div className="flex items-start">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                           </svg>
-                          <p>All treatments include consultation, examination, and post-treatment care.</p>
+                          <p>{t('pricing.all_treatments_include')}</p>
                         </div>
                       </div>
                       
@@ -441,22 +441,22 @@ export default function PriceCalculator() {
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                         <polyline points="10 9 9 9 8 9"></polyline>
                       </svg>
-                      <h4 className="text-xl font-semibold mb-2 text-primary">{t('no_quote_generated')}</h4>
-                      <p className="mb-4">{t('select_treatments_to_generate')}</p>
+                      <h4 className="text-xl font-semibold mb-2 text-primary">{t('pricing.no_quote_generated')}</h4>
+                      <p className="mb-4">{t('pricing.select_treatments_to_generate')}</p>
                       <div className="text-sm p-3 bg-primary/5 rounded-lg max-w-md">
-                        <p className="font-medium text-primary mb-2">How it works:</p>
+                        <p className="font-medium text-primary mb-2">{t('pricing.how_it_works')}:</p>
                         <ol className="text-left space-y-2">
                           <li className="flex">
                             <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">1</span>
-                            <span>Select your desired treatments from the dropdown</span>
+                            <span>{t('pricing.step_select_treatments')}</span>
                           </li>
                           <li className="flex">
                             <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">2</span>
-                            <span>Enter your name, email and phone number</span>
+                            <span>{t('pricing.step_enter_details')}</span>
                           </li>
                           <li className="flex">
                             <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">3</span>
-                            <span>Click "Calculate Quote" to see pricing</span>
+                            <span>{t('pricing.step_calculate_quote')}</span>
                           </li>
                         </ol>
                       </div>
@@ -468,23 +468,23 @@ export default function PriceCalculator() {
           )}
           
           <div className="mt-12 text-center">
-            <p className="text-lg font-medium text-primary mb-4">Why our patients choose Istanbul for dental treatment</p>
+            <p className="text-lg font-medium text-primary mb-4">{t('pricing.why_choose_istanbul')}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">70%</div>
-                <p className="text-sm text-neutral-600">Average savings compared to UK prices</p>
+                <p className="text-sm text-neutral-600">{t('pricing.benefit_savings')}</p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">5★</div>
-                <p className="text-sm text-neutral-600">Clinics with highest quality standards</p>
+                <p className="text-sm text-neutral-600">{t('pricing.benefit_quality')}</p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">24/7</div>
-                <p className="text-sm text-neutral-600">Support throughout your treatment</p>
+                <p className="text-sm text-neutral-600">{t('pricing.benefit_support')}</p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">100%</div>
-                <p className="text-sm text-neutral-600">Satisfaction guarantee</p>
+                <p className="text-sm text-neutral-600">{t('pricing.benefit_guarantee')}</p>
               </div>
             </div>
           </div>
