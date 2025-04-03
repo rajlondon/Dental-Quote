@@ -99,14 +99,19 @@ const QuoteForm: React.FC = () => {
   // We directly use import.meta.env.VITE_* variables in our code
 
   return (
-    <section id="quote-form" className="py-16 bg-white">
+    <section id="quote-form" className="py-16 bg-white relative z-20">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+          {/* Add a highlight effect around the form */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-xl blur-lg -z-10 animate-pulse"></div>
           <div>
-            <h2 className="font-display font-bold text-3xl text-neutral-800 mb-4">
+            <h2 className="font-display font-bold text-4xl text-primary mb-4 relative">
               {t('form.title')}
+              <span className="absolute -top-3 -right-3 bg-secondary/20 text-secondary-foreground text-xs px-2 py-1 rounded-full rotate-3">
+                FREE
+              </span>
             </h2>
-            <p className="text-neutral-600 mb-6">
+            <p className="text-neutral-600 mb-6 text-lg">
               {t('form.description')}
             </p>
             
@@ -501,10 +506,28 @@ const QuoteForm: React.FC = () => {
                   {/* Submit Button */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-primary-dark transition-colors"
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg font-semibold shadow-lg relative overflow-hidden group"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? t('form.submitting') : t('form.submit')}
+                    <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full"></span>
+                    <span className="relative flex items-center justify-center gap-2">
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {t('form.submitting')}
+                        </>
+                      ) : (
+                        <>
+                          {t('form.submit')}
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </>
+                      )}
+                    </span>
                   </Button>
                 </form>
               </Form>

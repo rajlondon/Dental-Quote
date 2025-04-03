@@ -187,11 +187,13 @@ export default function PriceCalculator() {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {treatments.map((treatment, idx) => (
-                                        <SelectItem key={idx} value={treatment.treatment}>
-                                          {treatment.treatment}
-                                        </SelectItem>
-                                      ))}
+                                      {treatments
+                                        .filter(treatment => treatment.treatment && treatment.treatment.trim() !== '')
+                                        .map((treatment, idx) => (
+                                          <SelectItem key={idx} value={treatment.treatment}>
+                                            {treatment.treatment}
+                                          </SelectItem>
+                                        ))}
                                     </SelectContent>
                                   </Select>
                                   <FormMessage />
