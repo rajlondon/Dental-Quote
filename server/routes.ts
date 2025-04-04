@@ -11,8 +11,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Serve the public directory for static files like translations
+  // Serve the public directory for static files like translations and images
   app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
+  app.use('/images', express.static(path.join(__dirname, '../public/images')));
+  app.use('/favicon.ico', express.static(path.join(__dirname, '../public/favicon.ico')));
   // API route for quote requests
   app.post("/api/quote-requests", async (req, res) => {
     try {
