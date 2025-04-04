@@ -14,14 +14,16 @@ const Navbar: React.FC = () => {
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <img 
-            src="/images/istanbul-dental-smile-logo.png" 
-            alt="Istanbul Dental Smile Logo" 
-            className="h-14 w-auto"
-          />
+        <Link href="/" className="flex items-center">
+          <div className="bg-white p-2 rounded-md shadow-sm mr-2">
+            <img 
+              src="/images/istanbul-dental-smile-logo.png" 
+              alt="Istanbul Dental Smile Logo" 
+              className="h-12 w-auto"
+            />
+          </div>
           <div className="hidden md:block">
-            <p className="text-xs text-neutral-500">Your Trusted Dental Treatment Concierge</p>
+            <p className="text-sm font-medium text-neutral-700">Your Trusted Dental Treatment Concierge</p>
           </div>
         </Link>
         <div className="hidden md:flex items-center space-x-6">
