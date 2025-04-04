@@ -52,7 +52,8 @@ export const generateQuotePdf = ({
   const margin = 20;
   const contentWidth = pageWidth - 2 * margin;
   
-  // Add title
+  // Add title and other elements directly
+  // We'll position the title to leave space for the logo
   doc.setFontSize(20);
   doc.setTextColor(0, 59, 111); // Dark blue color
   doc.text('Istanbul Dental Smile - Treatment Quote', pageWidth / 2, 20, { align: 'center' });
@@ -62,6 +63,15 @@ export const generateQuotePdf = ({
   doc.setTextColor(100, 100, 100); // Grey
   const today = new Date().toLocaleDateString('en-GB');
   doc.text(`Quote generated on: ${today}`, pageWidth / 2, 27, { align: 'center' });
+  
+  // Add a background rectangle for the logo
+  doc.setFillColor(255, 255, 255); // White background
+  doc.roundedRect(margin, 10, 50, 20, 2, 2, 'F');
+  
+  // Add a placeholder text for the logo in case it fails to load
+  doc.setFontSize(8);
+  doc.setTextColor(200, 200, 200);
+  doc.text('Istanbul Dental Smile', margin + 25, 20, { align: 'center' });
   
   // Add patient info if available
   let yPos = 40;
