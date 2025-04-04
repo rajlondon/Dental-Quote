@@ -87,28 +87,10 @@ export const generateQuotePdf = ({
   const today = new Date().toLocaleDateString('en-GB');
   doc.text(`Quote generated on: ${today}`, pageWidth - margin, 20, { align: 'right' });
   
-  // Add a stylized "bridge" icon to represent the logo
-  doc.setDrawColor(0, 169, 157); // Teal color for the bridge lines
-  doc.setLineWidth(1.5);
-  
-  // Draw stylized bridge icon
-  const iconX = pageWidth - 60;
-  const iconY = 15;
-  const iconWidth = 30;
-  const iconHeight = 15;
-  
-  // Draw arch (simplified to avoid ellipse error)
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(2);
-  
-  // Use arc instead of ellipse which might be causing issues
-  const centerX = iconX + iconWidth/2;
-  const centerY = iconY + iconHeight/2;
-  doc.circle(centerX, centerY, iconWidth/3, 'stroke');
-  
-  // Draw pillars
-  doc.line(iconX, iconY + iconHeight, iconX, iconY + iconHeight - 5);
-  doc.line(iconX + iconWidth, iconY + iconHeight, iconX + iconWidth, iconY + iconHeight - 5);
+  // Add a contact phone number instead of an icon
+  doc.setFontSize(10);
+  doc.setTextColor(220, 220, 220); // Light grey
+  doc.text('Contact: +447572445856', pageWidth - margin, 30, { align: 'right' });
   
   // Reset colors for the rest of the document
   doc.setDrawColor(0, 0, 0);
@@ -290,10 +272,10 @@ export const generateQuotePdf = ({
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(70, 70, 70);
   
-  // Left side - Contact info with icons
-  doc.text('📞 +447572445856', margin, yPos);
+  // Left side - Contact info without icons
+  doc.text('Phone: +447572445856', margin, yPos);
   yPos += 5;
-  doc.text('✉️ info@istanbuldentalsmile.com', margin, yPos);
+  doc.text('Email: info@istanbuldentalsmile.com', margin, yPos);
   
   // Right side - Quote validity
   doc.setFont('helvetica', 'bold');
