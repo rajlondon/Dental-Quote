@@ -14,15 +14,16 @@ const Navbar: React.FC = () => {
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="text-primary text-3xl">
-            <i className="fas fa-tooth"></i>
+        <Link href="/" className="flex items-center space-x-2">
+          <img 
+            src="/images/istanbul-dental-smile-logo.png" 
+            alt="Istanbul Dental Smile Logo" 
+            className="h-14 w-auto"
+          />
+          <div className="hidden md:block">
+            <p className="text-xs text-neutral-500">Your Trusted Dental Treatment Concierge</p>
           </div>
-          <div>
-            <h1 className="font-display font-bold text-xl md:text-2xl text-primary">Istanbul Dental Smile</h1>
-            <p className="text-xs text-neutral-500 hidden md:block">Your Trusted Dental Treatment Concierge</p>
-          </div>
-        </div>
+        </Link>
         <div className="hidden md:flex items-center space-x-6">
           <Link href="/" className="text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.home')}

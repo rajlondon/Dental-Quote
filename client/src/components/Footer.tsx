@@ -6,11 +6,12 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8">
           <div className="md:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="text-white text-3xl">
-                <i className="fas fa-tooth"></i>
-              </div>
-              <h3 className="font-display font-bold text-xl">Istanbul Dental Smile</h3>
+            <div className="flex flex-col space-y-2 mb-4">
+              <img 
+                src="/images/istanbul-dental-smile-logo.png" 
+                alt="Istanbul Dental Smile Logo" 
+                className="h-20 w-auto mb-2"
+              />
             </div>
             <p className="text-neutral-400 mb-4">Your trusted concierge for premium dental treatments in Istanbul, offering quality care at transparent, affordable prices.</p>
             <div className="flex space-x-4">
