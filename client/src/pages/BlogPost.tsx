@@ -218,6 +218,9 @@ export default function BlogPost() {
   const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
   
   useEffect(() => {
+    // Set page title
+    document.title = `Blog | Istanbul Dental Smile`;
+    
     if (params) {
       const postId = params.id;
       if (postId && typeof postId === 'string') {
@@ -225,6 +228,8 @@ export default function BlogPost() {
         
         if (currentPost) {
           setPost(currentPost);
+          // Update title with blog post title
+          document.title = `${currentPost.title} | Istanbul Dental Smile`;
           
           // Get related posts if the current post has related posts
           if (currentPost.related && Array.isArray(currentPost.related)) {

@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EbookDownloadForm from "../components/EbookDownloadForm";
 
 // Mock blog post data
@@ -48,6 +48,11 @@ export default function Blog() {
   const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showEbookForm, setShowEbookForm] = useState<boolean>(false);
+  
+  // Set page title when component mounts
+  useEffect(() => {
+    document.title = `${t('blog.title')} | Istanbul Dental Smile`;
+  }, [t]);
 
   // Filter posts by category
   const filteredPosts = activeCategory === "all" 

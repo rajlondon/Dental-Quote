@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
             <i className="fas fa-tooth"></i>
           </div>
           <div>
-            <h1 className="font-display font-bold text-xl md:text-2xl text-primary">DentalMatch Istanbul</h1>
+            <h1 className="font-display font-bold text-xl md:text-2xl text-primary">Istanbul Dental Smile</h1>
             <p className="text-xs text-neutral-500 hidden md:block">Your Trusted Dental Treatment Concierge</p>
           </div>
         </div>

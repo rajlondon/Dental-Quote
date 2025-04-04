@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
               <div className="text-white text-3xl">
                 <i className="fas fa-tooth"></i>
               </div>
-              <h3 className="font-display font-bold text-xl">DentalMatch Istanbul</h3>
+              <h3 className="font-display font-bold text-xl">Istanbul Dental Smile</h3>
             </div>
             <p className="text-neutral-400 mb-4">Your trusted concierge for premium dental treatments in Istanbul, offering quality care at transparent, affordable prices.</p>
             <div className="flex space-x-4">
@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <i className="fas fa-envelope text-secondary mt-1 mr-3"></i>
-                <a href="mailto:info@dentalmatchistanbul.com" className="text-neutral-400 hover:text-white transition-colors">info@dentalmatchistanbul.com</a>
+                <a href="mailto:info@istanbuldentalsmile.com" className="text-neutral-400 hover:text-white transition-colors">info@istanbuldentalsmile.com</a>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-phone-alt text-secondary mt-1 mr-3"></i>
@@ -63,7 +63,7 @@ const Footer: React.FC = () => {
         
         <div className="border-t border-neutral-800 pt-6 mt-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-neutral-500 text-sm mb-4 md:mb-0">© {new Date().getFullYear()} DentalMatch Istanbul. All rights reserved.</p>
+            <p className="text-neutral-500 text-sm mb-4 md:mb-0">© {new Date().getFullYear()} Istanbul Dental Smile. All rights reserved.</p>
             <div className="flex space-x-4">
               <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Privacy Policy</a>
               <a href="#" className="text-neutral-500 hover:text-white text-sm transition-colors">Terms of Service</a>

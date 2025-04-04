@@ -55,7 +55,7 @@ export const generateQuotePdf = ({
   // Add title
   doc.setFontSize(20);
   doc.setTextColor(0, 59, 111); // Dark blue color
-  doc.text('DentalMatch - Treatment Quote', pageWidth / 2, 20, { align: 'center' });
+  doc.text('Istanbul Dental Smile - Treatment Quote', pageWidth / 2, 20, { align: 'center' });
   
   // Add date
   doc.setFontSize(10);
@@ -159,10 +159,10 @@ export const generateQuotePdf = ({
   doc.setTextColor(100, 100, 100);
   doc.text('Note: This quote is valid for 30 days from the issue date.', margin, yPos);
   yPos += 5;
-  doc.text('Contact us at info@dentalmatch.com or +447572445856 for more information.', margin, yPos);
+  doc.text('Contact us at info@istanbuldentalsmile.com or +447572445856 for more information.', margin, yPos);
   
   // Save the PDF
-  const filename = `DentalMatch_Quote_${today.replace(/\//g, '-')}.pdf`;
+  const filename = `IstanbulDentalSmile_Quote_${today.replace(/\//g, '-')}.pdf`;
   doc.save(filename);
   
   if (onComplete) {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import FeaturedServices from "@/components/FeaturedServices";
@@ -10,6 +10,11 @@ import Footer from "@/components/Footer";
 import PriceCalculator from "@/components/PriceCalculator";
 
 const Home: React.FC = () => {
+  // Set page title
+  useEffect(() => {
+    document.title = "Istanbul Dental Smile - Your Trusted Dental Treatment Concierge";
+  }, []);
+  
   return (
     <>
       <Navbar />
