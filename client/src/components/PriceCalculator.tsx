@@ -746,7 +746,61 @@ export default function PriceCalculator() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
-                          View HTML Quote (Better Icon Display)
+                          View Quote (Dialog)
+                        </button>
+                      </div>
+                      
+                      {/* New HTML Template Button */}
+                      <div className="mt-4">
+                        <button
+                          onClick={() => {
+                            const quoteData = form.getValues();
+                            const calculatedQuote = calculateTotal(quoteData.treatments);
+                            const quoteItems = calculatedQuote.items;
+                            
+                            // Get the current date for the quote number
+                            const today = new Date();
+                            const datePart = today.toISOString().slice(0, 10).replace(/-/g, '');
+                            const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                            const quoteNumber = `HM-${datePart}-${randomPart}`;
+                            
+                            // Format date appropriately
+                            const date = today.toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            });
+                            
+                            // Store in sessionStorage
+                            sessionStorage.setItem('quoteData', JSON.stringify({
+                              quoteNumber,
+                              date,
+                              patientName: quoteData.name,
+                              patientEmail: quoteData.email,
+                              patientPhone: quoteData.phone,
+                              items: quoteItems.map(item => ({
+                                ...item,
+                                subtotalGBP: item.priceGBP * item.quantity,
+                                subtotalUSD: item.priceUSD * item.quantity
+                              })),
+                              totalGBP: calculatedQuote.totalGBP,
+                              totalUSD: calculatedQuote.totalUSD,
+                              travelMonth: quoteData.travelMonth || '',
+                              departureCity: quoteData.departureCity || '',
+                              flightEstimate: quoteData.departureCity && quoteData.travelMonth 
+                                ? getDefaultFlightEstimate(quoteData.travelMonth) || 0 
+                                : 220
+                            }));
+                            
+                            // Open the new HTML template
+                            window.open('/quote_template_v1.html', '_blank');
+                          }}
+                          className="flex items-center justify-center w-full py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          View HealthMatch Quote (New Design)
                         </button>
                       </div>
                     </div>
