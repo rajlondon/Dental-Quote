@@ -557,32 +557,32 @@ const generateQuotePdf = ({
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
-  doc.text('Why Book With Istanbul Dental Smile?', margin, yPos);
+  doc.text('Why Book With Us?', margin, yPos);
   
   yPos += 10;
   // Add background box for Why Book With Us section
   doc.setFillColor(255, 253, 240); // Very light gold tint
-  doc.rect(margin, yPos - 5, contentWidth, 35, 'F');
+  doc.rect(margin, yPos - 5, contentWidth, 40, 'F');
   doc.setDrawColor(178, 144, 79); // #B2904F Elegant gold
   doc.setLineWidth(0.3);
-  doc.rect(margin, yPos - 5, contentWidth, 35, 'S');
+  doc.rect(margin, yPos - 5, contentWidth, 40, 'S');
   
   // Add checklist items with checkmark symbols
+  const CHECK_ICON = "✓";
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
   
-  const checkmark = '✅';
-  doc.text(`${checkmark} Vetted, Trusted Clinics`, margin + 5, yPos);
+  doc.text(`${CHECK_ICON} Vetted, Trusted Clinics`, margin + 5, yPos);
   
   yPos += 7;
-  doc.text(`${checkmark} Concierge Support from Start to Finish`, margin + 5, yPos);
+  doc.text(`${CHECK_ICON} Concierge Support from Start to Finish`, margin + 5, yPos);
   
   yPos += 7;
-  doc.text(`${checkmark} Safe Payment & Transparent Pricing`, margin + 5, yPos);
+  doc.text(`${CHECK_ICON} Safe Payment & Transparent Pricing`, margin + 5, yPos);
   
   yPos += 7;
-  doc.text(`${checkmark} Enjoy Istanbul While Enhancing Your Smile`, margin + 5, yPos);
+  doc.text(`${CHECK_ICON} Enjoy Istanbul While Enhancing Your Smile`, margin + 5, yPos);
   
   // Add next steps section
   yPos += 15;
