@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import PdfGenerator from "./PdfGenerator";
+import jsPDF from "jspdf";
 import {
   TreatmentPrice,
   getAllTreatments,
@@ -30,6 +31,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { getCities, getCitiesGroupedByCountry, months, getDefaultFlightEstimate } from '@/services/flightEstimatesService';
 
 // Function to format treatment names to be more user-friendly
@@ -170,7 +180,58 @@ export default function PriceCalculator() {
     });
   };
   
-  // Helper function to open HTML quote in a new window
+  // HTML Quote dialog state
+  const [showHtmlQuote, setShowHtmlQuote] = useState<boolean>(false);
+  const [htmlQuoteData, setHtmlQuoteData] = useState<any>(null);
+  
+  // Function to download quote as PDF
+  const downloadQuotePDF = () => {
+    if (!htmlQuoteData) return;
+    
+    try {
+      // Create reference to the dialog content
+      const quoteElement = document.getElementById('quote-content');
+      if (!quoteElement) {
+        console.error('Quote element not found');
+        return;
+      }
+      
+      // Hide download button for the PDF capture
+      const downloadButton = document.getElementById('quote-download-button');
+      const closeButton = document.getElementById('quote-close-button');
+      if (downloadButton) downloadButton.style.display = 'none';
+      if (closeButton) closeButton.style.display = 'none';
+      
+      // Create a new jsPDF instance
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Use jsPDF to render the HTML content
+      pdf.html(quoteElement, {
+        callback: function(doc) {
+          // Save the PDF
+          doc.save(`IstanbulDentalSmile_Quote_${htmlQuoteData.quoteNumber}.pdf`);
+          
+          // Restore buttons visibility
+          if (downloadButton) downloadButton.style.display = 'block';
+          if (closeButton) closeButton.style.display = 'block';
+        },
+        x: 10,
+        y: 10,
+        width: 180, // slightly smaller than A4 width (210mm) to allow for margins
+        windowWidth: 1000,
+        autoPaging: 'text'
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not generate PDF. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Helper function to prepare and show HTML quote
   const openHtmlQuote = () => {
     try {
       const quoteData = form.getValues();
@@ -183,10 +244,17 @@ export default function PriceCalculator() {
       const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
       const quoteNumber = `IDS-${datePart}-${randomPart}`;
       
-      // Store everything we need for the quote in sessionStorage
-      sessionStorage.setItem('quoteData', JSON.stringify({
+      // Format date appropriately
+      const date = today.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      
+      // Store quote data in state for the dialog
+      setHtmlQuoteData({
         quoteNumber,
-        date: today.toLocaleDateString(),
+        date,
         patientName: quoteData.name,
         patientEmail: quoteData.email,
         patientPhone: quoteData.phone,
@@ -198,15 +266,15 @@ export default function PriceCalculator() {
         flightEstimate: quoteData.departureCity && quoteData.travelMonth 
           ? getDefaultFlightEstimate(quoteData.travelMonth) || 0 
           : 0
-      }));
+      });
       
-      // Open the HTML template in a new window
-      window.open('/quote-template.html', '_blank');
+      // Show the dialog
+      setShowHtmlQuote(true);
     } catch (error) {
-      console.error('Error opening HTML quote:', error);
+      console.error('Error preparing HTML quote:', error);
       toast({
         title: 'Error',
-        description: 'Could not open the HTML quote. Please try again.',
+        description: 'Could not prepare the HTML quote. Please try again.',
         variant: 'destructive',
       });
     }
@@ -751,6 +819,243 @@ export default function PriceCalculator() {
           </div>
         </div>
       </div>
+      
+      {/* HTML Quote Dialog */}
+      <Dialog open={showHtmlQuote} onOpenChange={setShowHtmlQuote}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-primary">
+              Your Dental Treatment Quote
+            </DialogTitle>
+            <DialogDescription>
+              Quote Number: {htmlQuoteData?.quoteNumber} | Date: {htmlQuoteData?.date}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {htmlQuoteData && (
+            <div id="quote-content" className="space-y-6 py-4">
+              {/* Patient Information */}
+              <div className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+                <h3 className="text-lg font-semibold text-primary mb-2">Patient Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-neutral-500">Name</p>
+                    <p className="font-medium">{htmlQuoteData.patientName || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-500">Email</p>
+                    <p className="font-medium">{htmlQuoteData.patientEmail || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-500">Phone</p>
+                    <p className="font-medium">{htmlQuoteData.patientPhone || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Treatments Table */}
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-2">Treatment Summary</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-primary text-white">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Treatment</th>
+                        <th className="px-4 py-2 text-right">Price (GBP)</th>
+                        <th className="px-4 py-2 text-right">Price (USD)</th>
+                        <th className="px-4 py-2 text-center">Qty</th>
+                        <th className="px-4 py-2 text-left">Guarantee</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {htmlQuoteData.items.map((item: any, idx: number) => (
+                        <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}>
+                          <td className="px-4 py-3 border-b border-neutral-200">
+                            {formatTreatmentName(item.treatment)}
+                          </td>
+                          <td className="px-4 py-3 border-b border-neutral-200 text-right">
+                            £{item.priceGBP.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 border-b border-neutral-200 text-right">
+                            ${item.priceUSD.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 border-b border-neutral-200 text-center">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 border-b border-neutral-200">
+                            {item.guarantee}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="font-bold bg-primary/5">
+                        <td className="px-4 py-3">TOTAL</td>
+                        <td className="px-4 py-3 text-right">£{htmlQuoteData.totalGBP.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right">${htmlQuoteData.totalUSD.toLocaleString()}</td>
+                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* UK Cost Comparison */}
+              <div className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+                <h3 className="text-lg font-semibold text-primary mb-2">Cost Comparison</h3>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm text-neutral-500">Equivalent UK Cost Range:</p>
+                    <p className="text-xl font-bold">
+                      £{(htmlQuoteData.totalGBP * 2.5).toLocaleString()} - £{(htmlQuoteData.totalGBP * 3).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="mt-2 md:mt-0 bg-green-50 p-2 rounded-md border border-green-200">
+                    <p className="text-sm text-green-600">Your Savings with Istanbul Dental Smile:</p>
+                    <p className="text-xl font-bold text-green-700">
+                      £{(htmlQuoteData.totalGBP * 1.75).toLocaleString()} (65% saving)
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Clinic Comparison Table */}
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-2">Clinic Comparison</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-primary text-white">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Clinic</th>
+                        <th className="px-4 py-2 text-right">Price (GBP)</th>
+                        <th className="px-4 py-2 text-left">Includes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-primary/5 font-medium">
+                        <td className="px-4 py-3 border-b border-neutral-200">Istanbul Dental Smile</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{htmlQuoteData.totalGBP.toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">
+                          <div className="flex items-center space-x-2">
+                            <img src="icons/hotel.png" className="w-4 h-4" alt="Hotel" /> 
+                            <span>5★ Hotel</span>
+                            <span className="mx-1">·</span>
+                            <img src="icons/car.png" className="w-4 h-4" alt="Transfer" /> 
+                            <span>VIP Transfer</span>
+                            <span className="mx-1">·</span>
+                            <img src="icons/chat.png" className="w-4 h-4" alt="Support" /> 
+                            <span>24/7 Support</span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 border-b border-neutral-200">Premium Dental Turkey</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{(htmlQuoteData.totalGBP * 1.05).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">
+                          <div className="flex items-center space-x-2">
+                            <img src="icons/hotel.png" className="w-4 h-4" alt="Hotel" /> 
+                            <span>4★ Hotel</span>
+                            <span className="mx-1">·</span>
+                            <img src="icons/car.png" className="w-4 h-4" alt="Transfer" /> 
+                            <span>Airport Transfer</span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr className="bg-neutral-50">
+                        <td className="px-4 py-3 border-b border-neutral-200">Vera Smile Clinic</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{(htmlQuoteData.totalGBP * 0.95).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">
+                          <div className="flex items-center space-x-2">
+                            <img src="icons/car.png" className="w-4 h-4" alt="Transfer" /> 
+                            <span>Airport Transfer</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Benefits */}
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-2">What's Included With Your Treatment</h3>
+                <ul className="space-y-2">
+                  <li className="flex items-center">
+                    <img src="icons/tick.png" className="w-5 h-5 mr-2" alt="✓" />
+                    <span>Free Consultation & Treatment Plan</span>
+                  </li>
+                  <li className="flex items-center">
+                    <img src="icons/tick.png" className="w-5 h-5 mr-2" alt="✓" />
+                    <span>VIP Airport Transfers Included</span>
+                  </li>
+                  <li className="flex items-center">
+                    <img src="icons/tick.png" className="w-5 h-5 mr-2" alt="✓" />
+                    <span>5-Star Hotel Accommodation Options</span>
+                  </li>
+                  <li className="flex items-center">
+                    <img src="icons/tick.png" className="w-5 h-5 mr-2" alt="✓" />
+                    <span>English-Speaking Staff Throughout Your Stay</span>
+                  </li>
+                  <li className="flex items-center">
+                    <img src="icons/tick.png" className="w-5 h-5 mr-2" alt="✓" />
+                    <span>Dedicated Patient Coordinator Available 24/7</span>
+                  </li>
+                  <li className="flex items-center">
+                    <img src="icons/tick.png" className="w-5 h-5 mr-2" alt="✓" />
+                    <span>All Treatments with Written Guarantees</span>
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Next Steps */}
+              <div className="bg-primary/5 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-primary mb-2">Next Steps</h3>
+                <ol className="space-y-2 pl-5 list-decimal">
+                  <li className="pl-2">Contact Istanbul Dental Smile to confirm your treatment plan</li>
+                  <li className="pl-2">Book your flight to Istanbul for your chosen dates</li>
+                  <li className="pl-2">We will arrange airport transfer and accommodation options</li>
+                </ol>
+                
+                <div className="mt-4 bg-white p-4 rounded-lg border border-neutral-200">
+                  <p className="font-medium">Ready to Book?</p>
+                  <p>Email us at <strong>info@istanbuldentalsmile.com</strong> or message us on WhatsApp: <strong>+447572445856</strong></p>
+                  <p className="text-sm text-neutral-500 mt-2">We'll handle your travel, treatment, and care — all you do is show up and smile!</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              id="quote-close-button"
+              variant="outline" 
+              onClick={() => setShowHtmlQuote(false)}
+            >
+              Close
+            </Button>
+            <Button
+              id="quote-download-button"
+              onClick={downloadQuotePDF}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-5 w-5 mr-2" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+                />
+              </svg>
+              Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
