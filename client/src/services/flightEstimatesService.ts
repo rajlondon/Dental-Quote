@@ -47,6 +47,24 @@ export const flightEstimates: FlightEstimate[] = [
     }
   },
   {
+    country: 'United Kingdom',
+    city: 'Edinburgh',
+    prices: {
+      January: 140,
+      February: 130,
+      March: 150,
+      April: 180,
+      May: 190,
+      June: 230,
+      July: 260,
+      August: 250,
+      September: 210,
+      October: 180,
+      November: 140,
+      December: 170
+    }
+  },
+  {
     country: 'Germany',
     city: 'Berlin',
     prices: {

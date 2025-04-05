@@ -126,11 +126,17 @@ export const generateQuotePdf = ({
     yPos += 7; // Space before treatments
   }
   
-  // Add treatments table header
+  // Add treatments section title with subsection for medical treatments
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
-  doc.text('Selected Treatments:', margin, yPos);
-  yPos += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.text('YOUR QUOTE DETAILS', margin, yPos);
+  yPos += 8;
+  
+  // Add subsection for dental treatments
+  doc.setFontSize(11);
+  doc.text('Dental Treatments:', margin, yPos);
+  yPos += 8;
   
   // Create a professional looking table
   const cols: TableColumn[] = [
@@ -235,8 +241,48 @@ export const generateQuotePdf = ({
     yPos += 9;
   });
   
-  // Add totals
-  yPos += 2;
+  // Get flight estimate if provided
+  let flightEstimate: number | undefined;
+  if (travelMonth && departureCity) {
+    flightEstimate = getFlightEstimateForCity(departureCity, travelMonth);
+  }
+  
+  // Add flight cost row if available
+  if (flightEstimate) {
+    yPos += 12;
+    
+    // Add travel section title
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Travel Costs:', margin, yPos);
+    yPos += 8;
+    
+    // Flight cost background (slightly different color)
+    doc.setFillColor(240, 245, 255);
+    doc.rect(margin, yPos - 5, contentWidth, 9, 'F');
+    
+    // Flight cost border
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.1);
+    doc.rect(margin, yPos - 5, contentWidth, 9, 'S');
+    
+    // Flight description
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Return flight from ${departureCity} (${travelMonth})`, margin + 5, yPos);
+    
+    // Flight cost GBP (center aligned)
+    doc.text(`£${flightEstimate.toLocaleString()}`, colPositions[1].x + colPositions[1].width / 2, yPos, { align: 'center' });
+    
+    // Flight cost USD (center aligned) - approximate conversion
+    const flightUSD = Math.round(flightEstimate * 1.3); // Simple GBP to USD conversion
+    doc.text(`$${flightUSD.toLocaleString()}`, colPositions[2].x + colPositions[2].width / 2, yPos, { align: 'center' });
+  }
+  
+  // Add grand total row
+  yPos += 12;
   
   // Total background
   doc.setFillColor(245, 250, 255);
@@ -249,54 +295,19 @@ export const generateQuotePdf = ({
   
   yPos += 3;
   
+  // Calculate grand total with flight if applicable
+  const grandTotalGBP = flightEstimate ? totalGBP + flightEstimate : totalGBP;
+  const grandTotalUSD = flightEstimate ? totalUSD + Math.round(flightEstimate * 1.3) : totalUSD;
+  
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total:', margin + 10, yPos);
+  doc.text('Grand Total:', margin + 10, yPos);
   
   // Total GBP (center aligned)
-  doc.text(`£${totalGBP.toLocaleString()}`, colPositions[1].x + colPositions[1].width / 2, yPos, { align: 'center' });
+  doc.text(`£${grandTotalGBP.toLocaleString()}`, colPositions[1].x + colPositions[1].width / 2, yPos, { align: 'center' });
   
   // Total USD (center aligned)
-  doc.text(`$${totalUSD.toLocaleString()}`, colPositions[2].x + colPositions[2].width / 2, yPos, { align: 'center' });
-  
-  // Add flight cost estimate if provided
-  if (travelMonth && departureCity) {
-    yPos += 15;
-    
-    // Add flight info section title
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Estimated Travel Information:', margin, yPos);
-    yPos += 7;
-    
-    // Get flight estimate
-    const flightEstimate = getFlightEstimateForCity(departureCity, travelMonth);
-    
-    // Flight info background
-    doc.setFillColor(240, 247, 250);
-    doc.rect(margin, yPos - 5, contentWidth, 30, 'F');
-    
-    // Flight info border
-    doc.setDrawColor(0, 169, 157); // Teal accent color
-    doc.setLineWidth(0.3);
-    doc.rect(margin, yPos - 5, contentWidth, 30, 'S');
-    
-    // Add flight details
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Departure City: ${departureCity}`, margin + 5, yPos + 5);
-    doc.text(`Travel Month: ${travelMonth}`, margin + 5, yPos + 15);
-    
-    if (flightEstimate) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Estimated Flight Cost (Return): £${flightEstimate.toLocaleString()}`, margin + contentWidth/2, yPos + 10, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.text('* Flight prices are estimates and may vary based on booking date and airline', margin + 5, yPos + 25, { align: 'left' });
-    } else {
-      doc.text('* Flight price estimate not available for the selected route and month', margin + 5, yPos + 25, { align: 'left' });
-    }
-  }
+  doc.text(`$${grandTotalUSD.toLocaleString()}`, colPositions[2].x + colPositions[2].width / 2, yPos, { align: 'center' });
   
   // Add footer
   yPos = 275;
@@ -324,6 +335,14 @@ export const generateQuotePdf = ({
   // Right side - Quote validity
   doc.setFont('helvetica', 'bold');
   doc.text('Note: This quote is valid for 30 days from the issue date.', pageWidth - margin, yPos - 5, { align: 'right' });
+  
+  // Add flight price disclaimer if flight estimate is included
+  if (flightEstimate) {
+    yPos += 5;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.text('* Flight prices are general estimates and may vary based on booking date, airline, and availability.', margin, yPos);
+  }
   
   // Save the PDF
   const filename = `IstanbulDentalSmile_Quote_${today.replace(/\//g, '-')}.pdf`;
