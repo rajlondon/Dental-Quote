@@ -14,6 +14,12 @@ interface QuoteItem {
   guarantee: string;
 }
 
+interface ClinicComparison {
+  name: string;
+  priceGBP: number;
+  extras: string;
+}
+
 interface PdfGeneratorProps {
   items: QuoteItem[];
   totalGBP: number;
@@ -23,6 +29,7 @@ interface PdfGeneratorProps {
   patientPhone?: string;
   travelMonth?: string;
   departureCity?: string;
+  clinics?: ClinicComparison[];
   onComplete?: () => void;
 }
 
@@ -61,8 +68,12 @@ export const generateQuotePdf = ({
   patientPhone = '',
   travelMonth = '',
   departureCity = '',
+  clinics = [],
   onComplete,
 }: PdfGeneratorProps) => {
+  // Calculate UK comparison price (usually 2.5-3x higher)
+  const ukPriceMin = Math.round(totalGBP * 2.5);
+  const ukPriceMax = Math.round(totalGBP * 3);
   const doc = new jsPDF();
   
   // Set up document properties
@@ -309,6 +320,121 @@ export const generateQuotePdf = ({
   // Total USD (center aligned)
   doc.text(`$${grandTotalUSD.toLocaleString()}`, colPositions[2].x + colPositions[2].width / 2, yPos, { align: 'center' });
   
+  // Add clinic comparison section if clinics are provided
+  if (clinics && clinics.length > 0) {
+    // Check if we need a new page (if close to bottom)
+    if (yPos > 200) {
+      doc.addPage();
+      yPos = 40;
+    }
+
+    yPos += 20;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 59, 111); // Blue text for section headers
+    doc.text('Clinic Comparison', margin, yPos);
+    yPos += 10;
+    
+    // Create clinic comparison table
+    const clinicCols = [
+      { title: 'Clinic', width: contentWidth * 0.4, align: 'left' },
+      { title: 'Price (GBP)', width: contentWidth * 0.3, align: 'center' },
+      { title: 'Extras Included', width: contentWidth * 0.3, align: 'left' }
+    ];
+    
+    // Calculate column positions for clinic table
+    let clinicColPos: ColumnPosition[] = [];
+    let clinicX = margin;
+    clinicCols.forEach(col => {
+      clinicColPos.push({
+        x: clinicX,
+        width: col.width,
+        align: col.align
+      });
+      clinicX += col.width;
+    });
+    
+    // Draw table header
+    doc.setFillColor(0, 59, 111); // Dark blue for header
+    doc.rect(margin, yPos - 5, contentWidth, 10, 'F');
+    
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255); // White text for header
+    doc.setFont('helvetica', 'bold');
+    
+    clinicCols.forEach((col, index) => {
+      const position = clinicColPos[index];
+      const xPos = position.align === 'center' 
+        ? position.x + position.width / 2 
+        : position.x + 5;
+      
+      doc.text(col.title, xPos, yPos, { 
+        align: position.align === 'center' ? 'center' : 'left'
+      });
+    });
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'normal');
+    
+    // Add clinic rows
+    clinics.forEach((clinic, index) => {
+      // Alternate row colors
+      doc.setFillColor(index % 2 === 0 ? 240 : 250, index % 2 === 0 ? 240 : 250, index % 2 === 0 ? 240 : 250);
+      doc.rect(margin, yPos - 5, contentWidth, 9, 'F');
+      
+      // Add subtle border
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.1);
+      doc.line(margin, yPos - 5, margin + contentWidth, yPos - 5);
+      
+      // Draw row content
+      doc.setTextColor(0, 0, 0);
+      
+      // Clinic name (left aligned)
+      doc.text(clinic.name, clinicColPos[0].x + 5, yPos);
+      
+      // Price GBP (center aligned)
+      doc.text(`£${clinic.priceGBP.toLocaleString()}`, clinicColPos[1].x + clinicColPos[1].width / 2, yPos, { align: 'center' });
+      
+      // Extras (left aligned)
+      doc.text(clinic.extras, clinicColPos[2].x + 5, yPos);
+      
+      yPos += 9;
+    });
+  }
+  
+  // Add UK cost comparison section
+  yPos += 20;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 59, 111); // Blue text for section headers
+  doc.text('UK Cost Comparison', margin, yPos);
+  
+  yPos += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`The same treatment in the UK would typically cost between £${ukPriceMin.toLocaleString()} and £${ukPriceMax.toLocaleString()}.`, margin, yPos);
+  
+  // Add next steps section
+  yPos += 15;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 59, 111); // Blue text for section headers
+  doc.text('Next Steps', margin, yPos);
+  
+  yPos += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text('✓ Contact Istanbul Dental Smile to confirm your treatment plan', margin, yPos);
+  
+  yPos += 7;
+  doc.text('✓ Book your flight to Istanbul for your chosen dates', margin, yPos);
+  
+  yPos += 7;
+  doc.text('✓ We will arrange airport transfer and accommodation options', margin, yPos);
+  
   // Add footer
   yPos = 275;
   
@@ -318,7 +444,7 @@ export const generateQuotePdf = ({
   
   // Add footer box
   doc.setFillColor(245, 245, 245); // Light grey background
-  doc.rect(0, yPos, pageWidth, 25, 'F');
+  doc.rect(0, yPos, pageWidth, 35, 'F');
   
   // Add footer content with professional styling
   yPos += 7;
@@ -331,16 +457,24 @@ export const generateQuotePdf = ({
   doc.text('Phone: +447572445856', margin, yPos);
   yPos += 5;
   doc.text('Email: info@istanbuldentalsmile.com', margin, yPos);
+  yPos += 5;
+  doc.text('Web: www.istanbuldentalsmile.com', margin, yPos);
   
   // Right side - Quote validity
   doc.setFont('helvetica', 'bold');
-  doc.text('Note: This quote is valid for 30 days from the issue date.', pageWidth - margin, yPos - 5, { align: 'right' });
+  doc.text('Note: This quote is valid for 30 days from the issue date.', pageWidth - margin, yPos - 10, { align: 'right' });
   
-  // Add flight price disclaimer if flight estimate is included
+  // Add disclaimers
+  yPos += 5;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  
+  // Cost disclaimer
+  doc.text('* Prices may vary depending on the required treatment details after clinical assessment.', margin, yPos);
+  
+  // Flight price disclaimer if flight estimate is included
   if (flightEstimate) {
-    yPos += 5;
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8);
+    yPos += 4;
     doc.text('* Flight prices are general estimates and may vary based on booking date, airline, and availability.', margin, yPos);
   }
   

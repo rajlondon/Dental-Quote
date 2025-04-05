@@ -630,6 +630,23 @@ export default function PriceCalculator() {
                           patientPhone={form.getValues('phone')}
                           travelMonth={form.getValues('travelMonth')}
                           departureCity={form.getValues('departureCity')}
+                          clinics={[
+                            {
+                              name: 'Istanbul Dental Center',
+                              priceGBP: Math.round(quote.totalGBP * 0.95), // 5% discount
+                              extras: 'Hotel + Airport Transfer'
+                            },
+                            {
+                              name: 'Vera Smile Clinic',
+                              priceGBP: Math.round(quote.totalGBP * 0.9), // 10% discount
+                              extras: 'Airport Transfer Only'
+                            },
+                            {
+                              name: 'Premium Dental Turkey',
+                              priceGBP: Math.round(quote.totalGBP * 0.92), // 8% discount
+                              extras: 'Hotel + Translator'
+                            }
+                          ]}
                         />
                       </div>
                     </div>

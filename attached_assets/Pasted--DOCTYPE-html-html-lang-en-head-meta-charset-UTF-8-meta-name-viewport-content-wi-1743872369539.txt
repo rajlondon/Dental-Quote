@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthMatch Istanbul - Quote Summary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .quote-box {
+      background: white;
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #00688B;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .section {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="quote-box">
+    <h1>HealthMatch Istanbul</h1>
+    <h2>Personalized Quote Summary</h2>
+    <p><strong>Client:</strong> John Doe</p>
+    <p><strong>Treatment:</strong> Hollywood Smile</p>
+    <p><strong>Budget:</strong> €3,000</p>
+    <p><strong>Travel Dates:</strong> June 5–10</p>
+    <p><strong>Travel Month:</strong> June</p>
+    <p><strong>Estimated Return Flight Cost:</strong> ~€220 (from UK)</p>
+    <p><strong>Hotel & Transfers:</strong> Yes</p>
+
+    <div class="section">
+      <h2>Clinic Comparison</h2>
+      <table>
+        <tr>
+          <th>Clinic</th>
+          <th>Package Price</th>
+          <th>Extras Included</th>
+        </tr>
+        <tr>
+          <td>SmilePro Dental</td>
+          <td>€2,250</td>
+          <td>Hotel + Pickup</td>
+        </tr>
+        <tr>
+          <td>EsthaClinic</td>
+          <td>€2,050</td>
+          <td>Pickup Only</td>
+        </tr>
+        <tr>
+          <td>LuxeDent</td>
+          <td>€2,400</td>
+          <td>Hotel + Translator</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>UK Cost Comparison</h2>
+      <p>In the UK, the same treatment typically costs <strong>£4,500 – £5,800</strong>.<br>
+      Source: <a href="#">Gemini Deep Research</a></p>
+    </div>
+
+    <div class="section">
+      <h2>Next Steps</h2>
+      <p>✅ Book your spot with one of the above clinics<br>
+         ✅ Add optional tour/hotel packages<br>
+         📞 Contact your coordinator: <a href="mailto:info@healthmatchistanbul.com">info@healthmatchistanbul.com</a></p>
+    </div>
+  </div>
+</body>
+</html>
