@@ -59,7 +59,8 @@ const formatTreatmentName = (name: string): string => {
     .join(' ');
 };
 
-export const generateQuotePdf = ({
+// PDF generation function
+const generateQuotePdf = ({
   items,
   totalGBP,
   totalUSD,
@@ -335,11 +336,11 @@ export const generateQuotePdf = ({
     doc.text('Clinic Comparison', margin, yPos);
     yPos += 10;
     
-    // Create clinic comparison table
+    // Create clinic comparison table with improved headers
     const clinicCols = [
-      { title: 'Clinic', width: contentWidth * 0.4, align: 'left' },
-      { title: 'Price (GBP)', width: contentWidth * 0.3, align: 'center' },
-      { title: 'Extras Included', width: contentWidth * 0.3, align: 'left' }
+      { title: 'Clinic Name', width: contentWidth * 0.4, align: 'left' },
+      { title: 'Special Price (GBP)', width: contentWidth * 0.3, align: 'center' },
+      { title: 'Package Includes', width: contentWidth * 0.3, align: 'left' }
     ];
     
     // Calculate column positions for clinic table
@@ -390,14 +391,45 @@ export const generateQuotePdf = ({
       // Draw row content
       doc.setTextColor(0, 0, 0);
       
-      // Clinic name (left aligned)
+      // Clinic name with better styling (left aligned)
+      doc.setFont('helvetica', 'bold');
       doc.text(clinic.name, clinicColPos[0].x + 5, yPos);
+      doc.setFont('helvetica', 'normal');
       
-      // Price GBP (center aligned)
+      // Price GBP (center aligned) with discount highlight
+      const discount = Math.round(100 - (clinic.priceGBP / totalGBP * 100));
       doc.text(`£${clinic.priceGBP.toLocaleString()}`, clinicColPos[1].x + clinicColPos[1].width / 2, yPos, { align: 'center' });
       
-      // Extras (left aligned)
-      doc.text(clinic.extras, clinicColPos[2].x + 5, yPos);
+      // Show discount percentage in smaller text
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(0, 169, 157); // Teal color for discount
+      doc.text(`(${discount}% off)`, clinicColPos[1].x + clinicColPos[1].width / 2, yPos + 4, { align: 'center' });
+      
+      // Reset for next line
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      
+      // Extras (left aligned) with icons represented as text
+      let extrasText = clinic.extras;
+      if (clinic.extras.includes('Hotel')) {
+        extrasText = '🏨 ' + extrasText;
+      }
+      if (clinic.extras.includes('Transfer')) {
+        extrasText = '🚗 ' + extrasText.replace('Hotel + ', '');
+      }
+      if (clinic.extras.includes('Translator')) {
+        extrasText = '💬 ' + extrasText.replace('Hotel + ', '');
+      }
+      
+      // Some PDF libraries have issues with emoji, if that happens replace with text
+      try {
+        doc.text(extrasText, clinicColPos[2].x + 5, yPos);
+      } catch (e) {
+        // Fallback to plain text if emoji causes issues
+        doc.text(clinic.extras, clinicColPos[2].x + 5, yPos);
+      }
       
       yPos += 9;
     });
@@ -414,7 +446,65 @@ export const generateQuotePdf = ({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text(`The same treatment in the UK would typically cost between £${ukPriceMin.toLocaleString()} and £${ukPriceMax.toLocaleString()}.`, margin, yPos);
+  
+  // Add savings callout with background
+  doc.setFillColor(245, 250, 255); // Light blue background
+  doc.rect(margin, yPos - 5, contentWidth, 25, 'F');
+  doc.setDrawColor(0, 169, 157); // Teal border
+  doc.setLineWidth(0.5);
+  doc.rect(margin, yPos - 5, contentWidth, 25, 'S');
+  
+  doc.text(`The same treatment in the UK would typically cost between £${ukPriceMin.toLocaleString()} and £${ukPriceMax.toLocaleString()}.`, margin + 5, yPos);
+  
+  // Calculate percentage of savings
+  const avgUkPrice = (ukPriceMin + ukPriceMax) / 2;
+  const savingsAmount = avgUkPrice - totalGBP;
+  const savingsPercent = Math.round((savingsAmount / avgUkPrice) * 100);
+  
+  // Add savings text
+  yPos += 12;
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 169, 157); // Teal text for emphasis
+  doc.text(`By choosing Istanbul, you save approximately £${savingsAmount.toLocaleString()} (${savingsPercent}% savings)`, margin + 5, yPos);
+  
+  // Add a testimonial section
+  yPos += 15;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 59, 111); // Blue text for section headers
+  doc.text('What Our Patients Say', margin, yPos);
+  
+  yPos += 10;
+  // Testimonial background
+  doc.setFillColor(245, 250, 255); // Light blue background
+  doc.rect(margin, yPos - 5, contentWidth, 35, 'F');
+  doc.setDrawColor(0, 169, 157); // Teal border
+  doc.setLineWidth(0.5);
+  doc.rect(margin, yPos - 5, contentWidth, 35, 'S');
+  
+  // Quote marks
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(0, 169, 157); // Teal color
+  doc.setFontSize(20);
+  doc.text('"', margin + 5, yPos);
+  
+  // Testimonial text
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(10);
+  doc.setTextColor(70, 70, 70);
+  doc.text('Istanbul Dental Smile made the whole process simple and stress-free.', margin + 15, yPos);
+  yPos += 8;
+  doc.text('The quality of care was exceptional, and I couldn\'t be happier with my new smile!', margin + 15, yPos);
+  
+  // Author info
+  yPos += 12;
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 59, 111);
+  doc.text('James T., UK — Hollywood Smile Package', margin + 15, yPos);
+  
+  // Star rating
+  doc.setTextColor(255, 215, 0); // Gold color for stars
+  doc.text('★★★★★', margin + contentWidth - 40, yPos);
   
   // Add next steps section
   yPos += 15;
@@ -427,13 +517,32 @@ export const generateQuotePdf = ({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text('✓ Contact Istanbul Dental Smile to confirm your treatment plan', margin, yPos);
+  
+  // Using standard characters instead of special symbols like checkmarks
+  doc.text('1. Contact Istanbul Dental Smile to confirm your treatment plan', margin, yPos);
   
   yPos += 7;
-  doc.text('✓ Book your flight to Istanbul for your chosen dates', margin, yPos);
+  doc.text('2. Book your flight to Istanbul for your chosen dates', margin, yPos);
   
   yPos += 7;
-  doc.text('✓ We will arrange airport transfer and accommodation options', margin, yPos);
+  doc.text('3. We will arrange airport transfer and accommodation options', margin, yPos);
+  
+  // Add a call-to-action block
+  yPos += 15;
+  // CTA background
+  doc.setFillColor(0, 59, 111); // Dark blue background
+  doc.rect(margin, yPos - 5, contentWidth, 30, 'F');
+  
+  // CTA text
+  doc.setTextColor(255, 255, 255); // White text
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Ready to Book?', margin + 5, yPos + 5);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Email us at info@istanbuldentalsmile.com or message us on WhatsApp: +447572445856', margin + 5, yPos + 15);
+  doc.text('We\'ll handle your travel, treatment, and care — all you do is show up and smile!', margin + 5, yPos + 25);
   
   // Add footer
   yPos = 275;
