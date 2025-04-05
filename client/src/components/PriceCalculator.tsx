@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,6 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getCities, months } from '@/services/flightEstimatesService';
 
 // Function to format treatment names to be more user-friendly
 const formatTreatmentName = (name: string): string => {
@@ -58,6 +60,8 @@ const formSchema = z.object({
     .refine((val) => /^[+]?[0-9\s-()]+$/.test(val), {
       message: 'Please enter a valid phone number format',
     }),
+  travelMonth: z.string().optional(),
+  departureCity: z.string().optional(),
   treatments: z.array(
     z.object({
       treatment: z.string().min(1, 'Please select a treatment'),
@@ -82,6 +86,8 @@ export default function PriceCalculator() {
       name: '',
       email: '',
       phone: '',
+      travelMonth: '',
+      departureCity: '',
       treatments: [{ treatment: '', quantity: 1 }],
     },
   });
@@ -156,6 +162,8 @@ export default function PriceCalculator() {
         timestamp: new Date().toISOString(),
         ...patientData,
         treatments: data.treatments,
+        travelMonth: data.travelMonth,
+        departureCity: data.departureCity,
         totalGBP: quoteResult.totalGBP,
         totalUSD: quoteResult.totalUSD
       }));
@@ -444,6 +452,75 @@ export default function PriceCalculator() {
                               </FormItem>
                             )}
                           />
+                          
+                          {/* Travel information section */}
+                          <div className="mt-6 bg-primary/5 p-4 rounded-lg">
+                            <h3 className="text-lg font-semibold text-primary mb-4">Travel Information</h3>
+                            <p className="text-sm text-neutral-600 mb-4">
+                              Help us provide flight cost estimates by telling us when you plan to travel.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="travelMonth"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Month of Travel</FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger className="bg-white">
+                                          <SelectValue placeholder="Select travel month" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {months.map((month) => (
+                                          <SelectItem key={month} value={month}>
+                                            {month}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="departureCity"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Departure City</FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger className="bg-white">
+                                          <SelectValue placeholder="Where will you fly from?" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {getCities().map((item) => (
+                                          <SelectItem key={item.city} value={item.city}>
+                                            {item.city}, {item.country}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-neutral-500 mt-1">
+                                      This helps us estimate your flight costs to Istanbul.
+                                    </p>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                       
@@ -551,6 +628,8 @@ export default function PriceCalculator() {
                           patientName={form.getValues('name')}
                           patientEmail={form.getValues('email')}
                           patientPhone={form.getValues('phone')}
+                          travelMonth={form.getValues('travelMonth')}
+                          departureCity={form.getValues('departureCity')}
                         />
                       </div>
                     </div>

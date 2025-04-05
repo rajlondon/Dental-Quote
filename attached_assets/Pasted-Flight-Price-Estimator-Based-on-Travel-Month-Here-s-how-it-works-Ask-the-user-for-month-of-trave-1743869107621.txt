@@ -1,0 +1,117 @@
+Flight Price Estimator Based on Travel Month
+🧠 Here's how it works:
+Ask the user for month of travel (e.g. May, June)
+
+Pull from a static object of typical return flight prices to Istanbul from key cities (London, Berlin, Paris, etc.)
+
+Include it in the quote email or PDF estimate
+
+🧾 Example Flight Estimate Table
+We’ll use example data from Skyscanner averages for UK/Ireland:
+
+javascript
+Copy
+Edit
+const flightEstimates = {
+  January: 120,
+  February: 110,
+  March: 140,
+  April: 170,
+  May: 180,
+  June: 220,
+  July: 250,
+  August: 240,
+  September: 200,
+  October: 170,
+  November: 130,
+  December: 160
+};
+We could later expand this to:
+
+🇬🇧 UK (London, Manchester)
+
+🇩🇪 Germany (Berlin)
+
+🇫🇷 France (Paris)
+
+🇮🇪 Ireland (Dublin)
+
+🧱 How to Implement in Replit
+🔧 1. Add a dropdown for travel month in your form (index.html)
+html
+Copy
+Edit
+<label for="travelMonth">Month of Travel:</label>
+<select id="travelMonth" name="travelMonth" required>
+  <option value="">-- Select Month --</option>
+  <option value="January">January</option>
+  <option value="February">February</option>
+  <option value="March">March</option>
+  <option value="April">April</option>
+  <option value="May">May</option>
+  <option value="June">June</option>
+  <option value="July">July</option>
+  <option value="August">August</option>
+  <option value="September">September</option>
+  <option value="October">October</option>
+  <option value="November">November</option>
+  <option value="December">December</option>
+</select>
+🔧 2. Update your script.js
+We'll grab the month, estimate the flight price, and include it in the email.
+
+Add this inside your script:
+
+javascript
+Copy
+Edit
+const flightEstimates = {
+  January: 120,
+  February: 110,
+  March: 140,
+  April: 170,
+  May: 180,
+  June: 220,
+  July: 250,
+  August: 240,
+  September: 200,
+  October: 170,
+  November: 130,
+  December: 160
+};
+Then update your templateParams:
+
+javascript
+Copy
+Edit
+const travelMonth = document.getElementById("travelMonth").value;
+const flightEstimate = flightEstimates[travelMonth] || "N/A";
+
+const templateParams = {
+  treatment: document.getElementById("treatment").value,
+  budget: document.getElementById("budget").value,
+  dates: document.getElementById("dates").value,
+  notes: document.getElementById("notes").value,
+  extras: document.getElementById("extras").checked ? "Yes" : "No",
+  travelMonth: travelMonth,
+  flightEstimate: `~€${flightEstimate} (return from UK)`,
+  date: new Date().toLocaleString()
+};
+🔧 3. Update Your EmailJS Template
+Add this in your email body:
+
+html
+Copy
+Edit
+<strong>Month of Travel:</strong> {{travelMonth}}<br>
+<strong>Estimated Return Flight Cost:</strong> {{flightEstimate}}<br>
+✅ Result: Clean & Quick Travel Cost Estimation
+No API, no latency, just smart dynamic quoting based on your own market research.
+
+Let me know if you want to:
+
+Expand flight estimates to more countries?
+
+Use this data in a styled quote PDF?
+
+Include a link to Skyscanner pre-filled with flight searches?
