@@ -103,21 +103,21 @@ const generateQuotePdf = ({
   doc.setFillColor(178, 144, 79); // #B2904F Elegant gold
   doc.rect(0, 50, pageWidth, 3, 'F');
   
-  // Add actual logo image
-  try {
-    // Add the Istanbul Dental Smile logo
-    doc.addImage(LOGO_BASE64, 'PNG', margin, 10, 40, 40);
-  } catch (error) {
-    // Fallback if image loading fails
-    console.error('Error loading logo image:', error);
-    doc.setFillColor(255, 255, 255); // White background for logo area
-    doc.setDrawColor(255, 255, 255); // White border
-    doc.roundedRect(margin, 10, 40, 30, 2, 2, 'F'); // Draw a white rectangle for logo
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(0, 104, 139); // Teal blue text
-    doc.text('IDS', margin + 20, 28, { align: 'center' }); // Centered text for logo
-  }
+  // Draw a simple logo with the initials as bold text with a border
+  // This ensures the logo is visible in the PDF regardless of image loading issues
+  doc.setFillColor(255, 255, 255); // White background for logo area
+  doc.setDrawColor(0, 104, 139); // Teal blue border
+  doc.setLineWidth(1.5);
+  doc.roundedRect(margin, 10, 40, 30, 3, 3, 'FD'); // Draw a white rectangle with border
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(0, 104, 139); // Teal blue text
+  doc.text('IDS', margin + 20, 25, { align: 'center' }); // Centered text for logo
+  
+  // Add second line of smaller text
+  doc.setFontSize(8);
+  doc.text('ISTANBUL DENTAL SMILE', margin + 20, 32, { align: 'center' });
   
   // Generate a unique quote number based on date and patient name
   const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
