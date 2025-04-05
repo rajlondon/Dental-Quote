@@ -553,13 +553,14 @@ const generateQuotePdf = ({
   doc.text('[5/5 Rating]', margin + contentWidth - 40, yPos);
   
   // Add Why Book With Us section - check if we need a new page
-  if (yPos > 200) {
+  // The section needs more space, so add a new page if we're below midway point
+  if (yPos > 160) {
     doc.addPage();
     yPos = 40;
   }
   
   yPos += 15;
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
   doc.text('Why Book With Us?', margin, yPos);
@@ -567,10 +568,10 @@ const generateQuotePdf = ({
   yPos += 10;
   // Add background box for Why Book With Us section
   doc.setFillColor(255, 253, 240); // Very light gold tint
-  doc.rect(margin, yPos - 5, contentWidth, 40, 'F');
+  doc.rect(margin, yPos - 5, contentWidth, 50, 'F');
   doc.setDrawColor(178, 144, 79); // #B2904F Elegant gold
   doc.setLineWidth(0.3);
-  doc.rect(margin, yPos - 5, contentWidth, 40, 'S');
+  doc.rect(margin, yPos - 5, contentWidth, 50, 'S');
   
   // Add checklist items with checkmark symbols
   const CHECK_ICON = "✓";
@@ -578,16 +579,19 @@ const generateQuotePdf = ({
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
   
-  doc.text(`${CHECK_ICON} Vetted, Trusted Clinics`, margin + 5, yPos);
+  doc.text(`${CHECK_ICON} Vetted, Trusted Clinics`, margin + 5, yPos + 5);
   
-  yPos += 7;
-  doc.text(`${CHECK_ICON} Concierge Support from Start to Finish`, margin + 5, yPos);
+  yPos += 10;
+  doc.text(`${CHECK_ICON} Concierge Support from Start to Finish`, margin + 5, yPos + 5);
   
-  yPos += 7;
-  doc.text(`${CHECK_ICON} Safe Payment & Transparent Pricing`, margin + 5, yPos);
+  yPos += 10;
+  doc.text(`${CHECK_ICON} Safe Payment & Transparent Pricing`, margin + 5, yPos + 5);
   
-  yPos += 7;
-  doc.text(`${CHECK_ICON} Enjoy Istanbul While Enhancing Your Smile`, margin + 5, yPos);
+  yPos += 10;
+  doc.text(`${CHECK_ICON} Enjoy Istanbul While Enhancing Your Smile`, margin + 5, yPos + 5);
+  
+  // Increment yPos to account for the box height
+  yPos += 15;
   
   // Add next steps section - check if we need a new page
   if (yPos > 200) {
