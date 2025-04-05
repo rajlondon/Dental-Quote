@@ -411,25 +411,26 @@ const generateQuotePdf = ({
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
       
-      // Extras (left aligned) with icons represented as text
-      let extrasText = clinic.extras;
+      // Don't use emojis as they don't render properly in PDFs
+      // Instead, use text descriptions with standard characters
+      let extrasText = '';
+      
       if (clinic.extras.includes('Hotel')) {
-        extrasText = '🏨 ' + extrasText;
+        extrasText += '[Hotel] ';
       }
       if (clinic.extras.includes('Transfer')) {
-        extrasText = '🚗 ' + extrasText.replace('Hotel + ', '');
+        extrasText += '[Transfer] ';
       }
       if (clinic.extras.includes('Translator')) {
-        extrasText = '💬 ' + extrasText.replace('Hotel + ', '');
+        extrasText += '[Translator] ';
       }
       
-      // Some PDF libraries have issues with emoji, if that happens replace with text
-      try {
-        doc.text(extrasText, clinicColPos[2].x + 5, yPos);
-      } catch (e) {
-        // Fallback to plain text if emoji causes issues
-        doc.text(clinic.extras, clinicColPos[2].x + 5, yPos);
+      // If nothing was added, just use the original extras text
+      if (!extrasText) {
+        extrasText = clinic.extras;
       }
+      
+      doc.text(extrasText, clinicColPos[2].x + 5, yPos);
       
       yPos += 9;
     });
@@ -482,10 +483,10 @@ const generateQuotePdf = ({
   doc.setLineWidth(0.5);
   doc.rect(margin, yPos - 5, contentWidth, 35, 'S');
   
-  // Quote marks
+  // Quote marks - using standard quotes
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(0, 169, 157); // Teal color
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   doc.text('"', margin + 5, yPos);
   
   // Testimonial text
@@ -502,9 +503,9 @@ const generateQuotePdf = ({
   doc.setTextColor(0, 59, 111);
   doc.text('James T., UK — Hollywood Smile Package', margin + 15, yPos);
   
-  // Star rating
+  // Star rating - use text instead of symbols for better compatibility
   doc.setTextColor(255, 215, 0); // Gold color for stars
-  doc.text('★★★★★', margin + contentWidth - 40, yPos);
+  doc.text('[5/5 Rating]', margin + contentWidth - 40, yPos);
   
   // Add next steps section
   yPos += 15;
