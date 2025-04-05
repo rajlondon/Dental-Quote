@@ -119,10 +119,19 @@ const generateQuotePdf = ({
   doc.setFontSize(8);
   doc.text('ISTANBUL DENTAL SMILE', margin + 20, 32, { align: 'center' });
   
-  // Generate a unique quote number based on date and patient name
-  const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  // Generate date variables that will be used in multiple places
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const datePart = `${year}${month}${day}`;
+  const formattedDate = currentDate.toLocaleDateString('en-GB');
+  
+  // Generate a unique quote number based on date and patient name (in format IDS-YYYYMMDD-XX##)
+  // Format matches the HTML template example: IDS-20250405-RA87
   const namePart = patientName ? patientName.substring(0, 2).toUpperCase() : 'XX';
-  const quoteNumber = `IDS-${datePart}-${namePart}${Math.floor(Math.random() * 100)}`;
+  const randomNum = Math.floor(Math.random() * 100);
+  const quoteNumber = `IDS-${datePart}-${namePart}${randomNum}`;
   
   // Add quote number in small text below the date
   doc.setFontSize(8);
@@ -139,8 +148,7 @@ const generateQuotePdf = ({
   // Add date on the right side
   doc.setFontSize(10);
   doc.setTextColor(220, 220, 220); // Light grey
-  const today = new Date().toLocaleDateString('en-GB');
-  doc.text(`Quote generated on: ${today}`, pageWidth - margin, 20, { align: 'right' });
+  doc.text(`Quote generated on: ${formattedDate}`, pageWidth - margin, 20, { align: 'right' });
   
   // Add a contact phone number instead of an icon
   doc.setFontSize(10);
@@ -664,8 +672,9 @@ const generateQuotePdf = ({
     doc.text('* Flight prices are general estimates and may vary based on booking date, airline, and availability.', margin, yPos);
   }
   
-  // Save the PDF
-  const filename = `IstanbulDentalSmile_Quote_${today.replace(/\//g, '-')}.pdf`;
+  // Save the PDF with a formatted date in the filename
+  const formattedDateForFile = formattedDate.replace(/\//g, '-');
+  const filename = `IstanbulDentalSmile_Quote_${formattedDateForFile}.pdf`;
   doc.save(filename);
   
   if (onComplete) {
