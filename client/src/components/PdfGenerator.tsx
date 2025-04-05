@@ -83,12 +83,12 @@ const generateQuotePdf = ({
   const contentWidth = pageWidth - 2 * margin;
   
   // Create a professional header with branding colors
-  // Add a header bar
-  doc.setFillColor(0, 59, 111); // Dark blue color for header background
+  // Add a header bar - using Strong teal blue (#00688B)
+  doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
   doc.rect(0, 0, pageWidth, 40, 'F');
   
-  // Add a secondary accent strip
-  doc.setFillColor(0, 169, 157); // Teal accent color
+  // Add a secondary accent strip - using Elegant gold (#B2904F)
+  doc.setFillColor(178, 144, 79); // #B2904F Elegant gold
   doc.rect(0, 40, pageWidth, 3, 'F');
   
   // Add title with white text color for contrast against the blue background
@@ -172,7 +172,7 @@ const generateQuotePdf = ({
   });
   
   // Draw table header
-  doc.setFillColor(0, 59, 111); // Dark blue for header
+  doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
   doc.rect(margin, yPos - 5, contentWidth, 10, 'F');
   
   doc.setFontSize(10);
@@ -210,7 +210,7 @@ const generateQuotePdf = ({
       yPos = 40;
       
       // Draw header on new page
-      doc.setFillColor(0, 59, 111);
+      doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
       doc.rect(margin, yPos - 5, contentWidth, 10, 'F');
       
       doc.setTextColor(255, 255, 255);
@@ -301,7 +301,7 @@ const generateQuotePdf = ({
   doc.rect(margin, yPos - 5, contentWidth, 12, 'F');
   
   // Total border
-  doc.setDrawColor(0, 59, 111);
+  doc.setDrawColor(0, 104, 139); // #00688B Strong teal blue
   doc.setLineWidth(0.5);
   doc.rect(margin, yPos - 5, contentWidth, 12, 'S');
   
@@ -332,7 +332,7 @@ const generateQuotePdf = ({
     yPos += 20;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 59, 111); // Blue text for section headers
+    doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
     doc.text('Clinic Comparison', margin, yPos);
     yPos += 10;
     
@@ -356,7 +356,7 @@ const generateQuotePdf = ({
     });
     
     // Draw table header
-    doc.setFillColor(0, 59, 111); // Dark blue for header
+    doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
     doc.rect(margin, yPos - 5, contentWidth, 10, 'F');
     
     doc.setFontSize(10);
@@ -403,7 +403,7 @@ const generateQuotePdf = ({
       // Show discount percentage in smaller text
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(8);
-      doc.setTextColor(0, 169, 157); // Teal color for discount
+      doc.setTextColor(178, 144, 79); // #B2904F Elegant gold
       doc.text(`(${discount}% off)`, clinicColPos[1].x + clinicColPos[1].width / 2, yPos + 4, { align: 'center' });
       
       // Reset for next line
@@ -440,7 +440,7 @@ const generateQuotePdf = ({
   yPos += 20;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 59, 111); // Blue text for section headers
+  doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
   doc.text('UK Cost Comparison', margin, yPos);
   
   yPos += 7;
@@ -451,7 +451,7 @@ const generateQuotePdf = ({
   // Add savings callout with background
   doc.setFillColor(245, 250, 255); // Light blue background
   doc.rect(margin, yPos - 5, contentWidth, 25, 'F');
-  doc.setDrawColor(0, 169, 157); // Teal border
+  doc.setDrawColor(178, 144, 79); // #B2904F Elegant gold
   doc.setLineWidth(0.5);
   doc.rect(margin, yPos - 5, contentWidth, 25, 'S');
   
@@ -465,27 +465,27 @@ const generateQuotePdf = ({
   // Add savings text
   yPos += 12;
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 169, 157); // Teal text for emphasis
+  doc.setTextColor(178, 144, 79); // #B2904F Elegant gold
   doc.text(`By choosing Istanbul, you save approximately £${savingsAmount.toLocaleString()} (${savingsPercent}% savings)`, margin + 5, yPos);
   
   // Add a testimonial section
   yPos += 15;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 59, 111); // Blue text for section headers
+  doc.setTextColor(0, 104, 139); // #00688B Strong teal blue 
   doc.text('What Our Patients Say', margin, yPos);
   
   yPos += 10;
   // Testimonial background
   doc.setFillColor(245, 250, 255); // Light blue background
   doc.rect(margin, yPos - 5, contentWidth, 35, 'F');
-  doc.setDrawColor(0, 169, 157); // Teal border
+  doc.setDrawColor(178, 144, 79); // #B2904F Elegant gold
   doc.setLineWidth(0.5);
   doc.rect(margin, yPos - 5, contentWidth, 35, 'S');
   
   // Quote marks - using standard quotes
   doc.setFont('helvetica', 'italic');
-  doc.setTextColor(0, 169, 157); // Teal color
+  doc.setTextColor(178, 144, 79); // #B2904F Elegant gold
   doc.setFontSize(18);
   doc.text('"', margin + 5, yPos);
   
@@ -500,7 +500,7 @@ const generateQuotePdf = ({
   // Author info
   yPos += 12;
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 59, 111);
+  doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
   doc.text('James T., UK — Hollywood Smile Package', margin + 15, yPos);
   
   // Star rating - use text instead of symbols for better compatibility
@@ -511,7 +511,7 @@ const generateQuotePdf = ({
   yPos += 15;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 59, 111); // Blue text for section headers
+  doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
   doc.text('Next Steps', margin, yPos);
   
   yPos += 7;
@@ -531,7 +531,7 @@ const generateQuotePdf = ({
   // Add a call-to-action block
   yPos += 15;
   // CTA background
-  doc.setFillColor(0, 59, 111); // Dark blue background
+  doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
   doc.rect(margin, yPos - 5, contentWidth, 30, 'F');
   
   // CTA text
@@ -549,7 +549,7 @@ const generateQuotePdf = ({
   yPos = 275;
   
   // Add a secondary accent strip before footer
-  doc.setFillColor(0, 169, 157); // Teal accent color
+  doc.setFillColor(178, 144, 79); // #B2904F Elegant gold
   doc.rect(0, yPos - 2, pageWidth, 1, 'F');
   
   // Add footer box
