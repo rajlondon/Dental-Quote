@@ -552,7 +552,12 @@ const generateQuotePdf = ({
   doc.setTextColor(255, 215, 0); // Gold color for stars
   doc.text('[5/5 Rating]', margin + contentWidth - 40, yPos);
   
-  // Add Why Book With Us section
+  // Add Why Book With Us section - check if we need a new page
+  if (yPos > 200) {
+    doc.addPage();
+    yPos = 40;
+  }
+  
   yPos += 15;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -584,7 +589,12 @@ const generateQuotePdf = ({
   yPos += 7;
   doc.text(`${CHECK_ICON} Enjoy Istanbul While Enhancing Your Smile`, margin + 5, yPos);
   
-  // Add next steps section
+  // Add next steps section - check if we need a new page
+  if (yPos > 200) {
+    doc.addPage();
+    yPos = 40;
+  }
+  
   yPos += 15;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -605,7 +615,12 @@ const generateQuotePdf = ({
   yPos += 7;
   doc.text('3. We will arrange airport transfer and accommodation options', margin, yPos);
   
-  // Add a call-to-action block
+  // Add a call-to-action block - check if we need a new page
+  if (yPos > 200) {
+    doc.addPage();
+    yPos = 40;
+  }
+  
   yPos += 15;
   // CTA background
   doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
