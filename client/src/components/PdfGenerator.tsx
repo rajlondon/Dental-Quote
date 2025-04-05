@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import 'jspdf/dist/polyfills.es.js';
 import { getFlightEstimateForCity } from '@/services/flightEstimatesService';
 
+// Import logo as a string (workaround for image loading issues)
+const LOGO_URL = '/images/istanbul-dental-smile-logo.png';
+
 // Type definitions
 interface QuoteItem {
   treatment: string;
@@ -85,27 +88,27 @@ const generateQuotePdf = ({
   // Create a professional header with branding colors
   // Add a header bar - using Strong teal blue (#00688B)
   doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
-  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.rect(0, 0, pageWidth, 50, 'F'); // Increased header height
   
   // Add a secondary accent strip - using Elegant gold (#B2904F)
   doc.setFillColor(178, 144, 79); // #B2904F Elegant gold
-  doc.rect(0, 40, pageWidth, 3, 'F');
+  doc.rect(0, 50, pageWidth, 3, 'F');
   
-  // Try to add the logo
-  try {
-    // Load and add the logo
-    const logoBase64 = 'data:image/png;base64,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';
-    doc.addImage(logoBase64, 'PNG', margin, 5, 50, 25, undefined, 'FAST');
-  } catch (e) {
-    console.error('Error adding logo:', e);
-  }
+  // Add a logo placeholder (stylized text that looks like a logo)
+  doc.setFillColor(255, 255, 255); // White background for logo area
+  doc.setDrawColor(255, 255, 255); // White border
+  doc.roundedRect(margin, 10, 40, 30, 2, 2, 'F'); // Draw a white rectangle for logo
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(0, 104, 139); // Teal blue text
+  doc.text('IDS', margin + 20, 28, { align: 'center' }); // Centered text for logo
   
   // Add title with white text color for contrast against the blue background
-  doc.setFontSize(22);
+  doc.setFontSize(24); // Larger text
   doc.setTextColor(255, 255, 255); // White text on blue background
-  doc.text('Istanbul Dental Smile', margin + 60, 20);
+  doc.text('Istanbul Dental Smile', pageWidth / 2, 25, { align: 'center' });
   doc.setFontSize(16);
-  doc.text('Treatment Quote', margin + 60, 30);
+  doc.text('Treatment Quote', pageWidth / 2, 40, { align: 'center' });
   
   // Add date on the right side
   doc.setFontSize(10);

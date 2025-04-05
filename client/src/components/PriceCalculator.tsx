@@ -37,7 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getCities, months } from '@/services/flightEstimatesService';
+import { getCities, getCitiesGroupedByCountry, months } from '@/services/flightEstimatesService';
 
 // Function to format treatment names to be more user-friendly
 const formatTreatmentName = (name: string): string => {
@@ -504,11 +504,19 @@ export default function PriceCalculator() {
                                           <SelectValue placeholder="Where will you fly from?" />
                                         </SelectTrigger>
                                       </FormControl>
-                                      <SelectContent>
-                                        {getCities().map((item) => (
-                                          <SelectItem key={item.city} value={item.city}>
-                                            {item.city}, {item.country}
-                                          </SelectItem>
+                                      <SelectContent className="max-h-[300px]">
+                                        {getCitiesGroupedByCountry().map((countryGroup) => (
+                                          <div key={countryGroup.country}>
+                                            <div className="px-2 py-1.5 text-sm font-semibold text-primary bg-primary/5">
+                                              {countryGroup.country}
+                                            </div>
+                                            {countryGroup.cities.map((city) => (
+                                              <SelectItem key={`${countryGroup.country}-${city}`} value={city}>
+                                                {city}
+                                              </SelectItem>
+                                            ))}
+                                            <div className="py-1"></div>
+                                          </div>
                                         ))}
                                       </SelectContent>
                                     </Select>
