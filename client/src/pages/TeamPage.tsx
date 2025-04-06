@@ -8,14 +8,14 @@ const teamMembers = [
   {
     id: "raj-singh",
     name: "Raj Singh",
-    role: "Founder & CEO",
-    bio: `Raj Singh founded Istanbul Dental Smile after his own transformative dental tourism experience in Istanbul. With over 10 years in healthcare management, Raj combines his business expertise with personal passion to provide exceptional dental tourism services.
+    role: "Managing Director",
+    bio: `Raj Singh founded Istanbul Dental Smile after years of helping people navigate healthcare decisions across the UK. Born to Scottish parents and raised in Glasgow, Raj later moved to London where he worked in wills and estate planning, as well as the hair, dental care, and back pain sectors. He holds a BA in Legal Services from Glasgow Caledonian University.
 
-His mission is to make world-class dental care accessible to everyone through transparent pricing, personalized service, and carefully vetted clinics. Raj personally visits each clinic in Istanbul to ensure they meet the company's high standards for quality, hygiene, and patient care.
+A true people person at heart, Raj's mission is to make dental travel feel effortless, safe, and rewarding. He personally visits and vets every clinic in Istanbul that the company partners with, ensuring clients receive only the highest standards of quality, hygiene, and care.
 
-Based in London, Raj holds an MBA from Imperial College Business School and speaks English, Hindi, and basic Turkish.`,
+Raj is based between London and Istanbul and speaks English, Hindi, Punjabi, and basic Turkish.`,
     image: "/images/team/raj.jpg",
-    languages: ["English", "Hindi", "Basic Turkish"],
+    languages: ["English", "Hindi", "Punjabi", "Basic Turkish"],
     contactEmail: "rajsingh140186@googlemail.com"
   },
   {
