@@ -43,6 +43,9 @@ const Navbar: React.FC = () => {
           </Link>
           <a href="#faqs" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.faq')}</a>
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
+          <Link href="/test-pdf" className="text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-md transition-colors font-medium">
+            PDF Test
+          </Link>
           <LanguageSwitcher />
         </div>
         <div className="md:hidden flex items-center gap-2">
@@ -75,6 +78,9 @@ const Navbar: React.FC = () => {
           </Link>
           <a href="#faqs" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.faq')}</a>
           <a href="#contact" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
+          <Link href="/test-pdf" className="block text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-md transition-colors font-medium mt-2">
+            PDF Test
+          </Link>
         </div>
       </div>
     </nav>

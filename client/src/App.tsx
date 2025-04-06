@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/ui/toast";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
+import Index from "./pages/index";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import PricingPage from "./pages/PricingPage";
@@ -17,7 +18,7 @@ import { Suspense } from "react";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={Index} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:id" component={BlogPost} />
       <Route path="/pricing" component={PricingPage} />
