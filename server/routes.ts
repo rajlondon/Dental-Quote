@@ -6,6 +6,8 @@ import { storage } from "./storage";
 import { ZodError } from "zod";
 import { insertQuoteRequestSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
+import fs from "fs";
+import htmlPdf from "html-pdf-node";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,6 +110,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
       templateId: process.env.EMAILJS_TEMPLATE_ID || '',
       publicKey: process.env.EMAILJS_PUBLIC_KEY || ''
     });
+  });
+
+  // Serve the quote template
+  app.get("/api/quote-template", (_req, res) => {
+    try {
+      const templatePath = path.join(__dirname, "../client/src/templates/quote_template.html");
+      const template = fs.readFileSync(templatePath, "utf-8");
+      res.send(template);
+    } catch (error) {
+      console.error("Error serving template:", error);
+      res.status(500).json({
+        message: "Failed to retrieve template",
+      });
+    }
+  });
+
+  // Serve static assets for the PDF generator
+  app.get("/api/asset", (req, res) => {
+    try {
+      const assetPath = req.query.path as string;
+      if (!assetPath) {
+        return res.status(400).json({ message: "Asset path is required" });
+      }
+
+      // Make sure we're not allowing directory traversal
+      const normalizedPath = path.normalize(assetPath).replace(/^(\.\.(\/|\\|$))+/, '');
+      const filePath = path.join(__dirname, "..", normalizedPath);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+      
+      // Get the file extension
+      const ext = path.extname(filePath).toLowerCase();
+      
+      // Set appropriate content type
+      const contentTypeMap: Record<string, string> = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+      };
+      
+      const contentType = contentTypeMap[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      
+      // Stream the file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error("Error serving asset:", error);
+      res.status(500).json({
+        message: "Failed to retrieve asset",
+      });
+    }
+  });
+
+  // Generate PDF from template
+  app.post("/api/generate-pdf", async (req, res) => {
+    try {
+      const { templateData } = req.body;
+      if (!templateData) {
+        return res.status(400).json({ message: "Template data is required" });
+      }
+
+      // Get the template
+      const templatePath = path.join(__dirname, "../client/src/templates/quote_template.html");
+      let template = fs.readFileSync(templatePath, "utf-8");
+      
+      // Simple mustache-like template rendering
+      // Replace {{variable}} with actual values
+      Object.entries(templateData).forEach(([key, value]) => {
+        // Handle arrays with #each-like syntax
+        if (Array.isArray(value)) {
+          // Find all sections that use this array
+          const pattern = new RegExp(`{{#${key}}}([\\s\\S]*?){{/${key}}}`, 'g');
+          
+          template = template.replace(pattern, (_, sectionTemplate) => {
+            return (value as any[]).map((item: any) => {
+              let itemHtml = sectionTemplate;
+              // Replace item properties
+              Object.entries(item).forEach(([itemKey, itemValue]) => {
+                itemHtml = itemHtml.replace(
+                  new RegExp(`{{${itemKey}}}`, 'g'), 
+                  String(itemValue)
+                );
+              });
+              return itemHtml;
+            }).join('');
+          });
+        } else if (key.endsWith('Icon') || key.endsWith('Url')) {
+          // Use triple braces for URLs to prevent HTML escaping
+          template = template.replace(
+            new RegExp(`{{{${key}}}}`, 'g'), 
+            String(value)
+          );
+        } else {
+          // Replace simple variables
+          template = template.replace(
+            new RegExp(`{{${key}}}`, 'g'), 
+            String(value)
+          );
+        }
+      });
+
+      // Optional sections with #extras tag
+      template = template.replace(/{{#extras}}([\s\S]*?){{\/extras}}/g, (_, content) => {
+        // If extras exists and is not empty, return the content
+        return content;
+      });
+      
+      // Generate PDF from the rendered HTML
+      const options = { 
+        format: 'A4',
+        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+        printBackground: true,
+        preferCSSPageSize: true
+      };
+      
+      const file = { content: template };
+      
+      htmlPdf.generatePdf(file, options).then(pdfBuffer => {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=IstanbulDentalSmile_Quote.pdf');
+        res.send(pdfBuffer);
+      }).catch(error => {
+        console.error("PDF generation error:", error);
+        res.status(500).json({
+          message: "Failed to generate PDF",
+        });
+      });
+    } catch (error) {
+      console.error("Error processing PDF request:", error);
+      res.status(500).json({
+        message: "An error occurred while generating the PDF",
+      });
+    }
   });
 
   // Create HTTP server
