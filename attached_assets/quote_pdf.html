@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dental Quote</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; font-size: 12px; }
+    .header { background-color: #007ba7; color: white; padding: 10px; text-align: center; }
+    .section { margin-bottom: 25px; }
+    .section-title { background-color: #f0f0f0; padding: 5px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .cta { margin-top: 30px; background-color: #007ba7; color: white; padding: 10px; text-align: center; font-size: 14px; }
+    .disclaimer { font-size: 10px; color: #555; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo.png') }}" height="40" alt="Logo">
+    <h2>Istanbul Dental Smile – Personalized Quote</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Patient Details</div>
+    <p><strong>Name:</strong> {{ name }}</p>
+    <p><strong>Email:</strong> {{ email }}</p>
+    <p><strong>Date:</strong> {{ date }}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Treatment Overview</div>
+    <p><strong>Requested Treatment:</strong> {{ treatment }}</p>
+    <table>
+      <tr><th>Clinic</th><th>Price (GBP)</th><th>Price (USD)</th></tr>
+      {% for clinic in clinics %}
+      <tr><td>{{ clinic.name }}</td><td>{{ clinic.price_gbp }}</td><td>{{ clinic.price_usd }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Additional Travel Services</div>
+    <ul>
+      <li>Hotel: {{ hotel }}</li>
+      <li>Airport Pickup & Clinic Transfers: {{ transport }}</li>
+      <li>Estimated Flight (UK): {{ flights }}</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Call to Action</div>
+    <p>Secure your spot with a fully refundable £200 consultation deposit. This allows us to coordinate your journey and finalize the treatment plan after X-rays.</p>
+    <p><strong>Book Consultation:</strong> {{ consultation_link }}</p>
+    <p><strong>Pay Deposit:</strong> {{ deposit_link }}</p>
+  </div>
+
+  <div class="disclaimer">
+    Final treatment and pricing may vary slightly after consultation and diagnostics (X-rays, scans). This quote is based on your selected treatment only.
+  </div>
+</body>
+</html>

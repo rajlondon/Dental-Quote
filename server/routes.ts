@@ -177,50 +177,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get the template
-      const templatePath = path.join(__dirname, "../client/src/templates/quote_template.html");
+      const templatePath = path.join(__dirname, "templates/quote_template.html");
       let template = fs.readFileSync(templatePath, "utf-8");
       
+      // Read logo file and convert to base64
+      const logoPath = path.join(__dirname, "../public/images/logo.jpeg");
+      let logoBase64 = '';
+      if (fs.existsSync(logoPath)) {
+        const logoData = fs.readFileSync(logoPath);
+        logoBase64 = logoData.toString('base64');
+        template = template.replace(/{{logoBase64}}/g, logoBase64);
+      }
+      
+      // Read tick icon file and convert to base64
+      const tickPath = path.join(__dirname, "../public/icons/tick.png");
+      let tickBase64 = '';
+      if (fs.existsSync(tickPath)) {
+        const tickData = fs.readFileSync(tickPath);
+        tickBase64 = tickData.toString('base64');
+        template = template.replace(/{{tickBase64}}/g, tickBase64);
+      }
+
       // Simple mustache-like template rendering
       // Replace {{variable}} with actual values
       Object.entries(templateData).forEach(([key, value]) => {
         // Handle arrays with #each-like syntax
-        if (Array.isArray(value)) {
-          // Find all sections that use this array
-          const pattern = new RegExp(`{{#${key}}}([\\s\\S]*?){{/${key}}}`, 'g');
-          
-          template = template.replace(pattern, (_, sectionTemplate) => {
-            return (value as any[]).map((item: any) => {
-              let itemHtml = sectionTemplate;
-              // Replace item properties
-              Object.entries(item).forEach(([itemKey, itemValue]) => {
-                itemHtml = itemHtml.replace(
-                  new RegExp(`{{${itemKey}}}`, 'g'), 
-                  String(itemValue)
-                );
-              });
-              return itemHtml;
-            }).join('');
+        if (Array.isArray(value) && key === 'items') {
+          let itemsHtml = '';
+          // Generate HTML for each item
+          (value as any[]).forEach((item: any) => {
+            itemsHtml += `
+              <tr>
+                <td>${item.treatment}</td>
+                <td style="text-align: right;">£${item.priceGBP}</td>
+                <td style="text-align: right;">$${item.priceUSD}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                <td>${item.guarantee}</td>
+              </tr>
+            `;
           });
-        } else if (key.endsWith('Icon') || key.endsWith('Url')) {
-          // Use triple braces for URLs to prevent HTML escaping
-          template = template.replace(
-            new RegExp(`{{{${key}}}}`, 'g'), 
-            String(value)
-          );
+          template = template.replace('{{#each items}}', '').replace('{{/each}}', '');
+          template = template.replace(/{{treatment}}/g, '').replace(/{{priceGBP}}/g, '').replace(/{{priceUSD}}/g, '').replace(/{{quantity}}/g, '').replace(/{{guarantee}}/g, '');
+          // Insert the generated HTML between the table header and the total row
+          const tableStartPos = template.indexOf('<table>');
+          const totalRowPos = template.indexOf('<tr style="font-weight: bold; background-color: #f5f5f5;">');
+          if (tableStartPos !== -1 && totalRowPos !== -1) {
+            const tableHeaderEndPos = template.indexOf('</tr>', tableStartPos) + 5;
+            template = template.slice(0, tableHeaderEndPos) + itemsHtml + template.slice(tableHeaderEndPos);
+          }
+        } else if (Array.isArray(value) && key === 'clinics') {
+          let clinicsHtml = '';
+          // Generate HTML for each clinic
+          (value as any[]).forEach((clinic: any) => {
+            clinicsHtml += `
+              <tr>
+                <td>${clinic.name}</td>
+                <td>£${clinic.priceGBP}</td>
+                <td>${clinic.extras}</td>
+              </tr>
+            `;
+          });
+          template = template.replace('{{#each clinics}}', '').replace('{{/each}}', '');
+          template = template.replace(/{{name}}/g, '').replace(/{{priceGBP}}/g, '').replace(/{{extras}}/g, '');
+          // Insert the generated HTML after the table header in the cost comparison section
+          const comparisonTableStartPos = template.indexOf('<table class="comparison">');
+          if (comparisonTableStartPos !== -1) {
+            const comparisonTableHeaderEndPos = template.indexOf('</tr>', comparisonTableStartPos) + 5;
+            template = template.slice(0, comparisonTableHeaderEndPos) + clinicsHtml + template.slice(comparisonTableHeaderEndPos);
+          }
         } else {
           // Replace simple variables
           template = template.replace(
             new RegExp(`{{${key}}}`, 'g'), 
-            String(value)
+            String(value || '')
           );
         }
       });
-
-      // Optional sections with #extras tag
-      template = template.replace(/{{#extras}}([\s\S]*?){{\/extras}}/g, (_, content) => {
-        // If extras exists and is not empty, return the content
-        return content;
-      });
+      
+      // Calculate UK cost range and savings
+      const totalGBP = parseFloat(String(templateData.totalGBP || '0'));
+      const ukCostLow = Math.round(totalGBP * 2.2);
+      const ukCostHigh = Math.round(totalGBP * 3);
+      const savings = Math.round(totalGBP * 1.75);
+      
+      template = template.replace(/{{ukCostLow}}/g, ukCostLow.toLocaleString());
+      template = template.replace(/{{ukCostHigh}}/g, ukCostHigh.toLocaleString());
+      template = template.replace(/{{savings}}/g, savings.toLocaleString());
       
       // Generate PDF from the rendered HTML
       const options = { 

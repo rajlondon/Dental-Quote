@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dental Quote</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; font-size: 12px; }
+    .header { background-color: #007ba7; color: white; padding: 10px; text-align: center; }
+    .logo { height: 60px; margin-bottom: 10px; }
+    .section { margin-bottom: 25px; }
+    .section-title { background-color: #f0f0f0; padding: 5px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #007ba7; color: white; }
+    .cta { margin-top: 30px; background-color: #007ba7; color: white; padding: 10px; text-align: center; font-size: 14px; }
+    .disclaimer { font-size: 10px; color: #555; margin-top: 20px; }
+    .comparison td:nth-child(2) { text-align: right; }
+    .savings { background-color: #e6f7e6; padding: 10px; border: 1px solid #c3e6c3; margin-top: 15px; }
+    .benefits { margin-top: 15px; }
+    .benefit-item { display: flex; align-items: center; margin-bottom: 5px; }
+    .tick-icon { width: 15px; height: 15px; margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="data:image/jpeg;base64,{{logoBase64}}" class="logo" alt="Istanbul Dental Smile">
+    <h2>Istanbul Dental Smile – Personalized Quote</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Patient Details</div>
+    <p><strong>Quote Number:</strong> {{quoteNumber}}</p>
+    <p><strong>Date:</strong> {{date}}</p>
+    <p><strong>Name:</strong> {{name}}</p>
+    <p><strong>Email:</strong> {{email}}</p>
+    <p><strong>Phone:</strong> {{phone}}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Treatment Overview</div>
+    <table>
+      <tr>
+        <th>Treatment</th>
+        <th>Price (GBP)</th>
+        <th>Price (USD)</th>
+        <th>Qty</th>
+        <th>Guarantee</th>
+      </tr>
+      {{#each items}}
+      <tr>
+        <td>{{treatment}}</td>
+        <td style="text-align: right;">£{{priceGBP}}</td>
+        <td style="text-align: right;">${{priceUSD}}</td>
+        <td style="text-align: center;">{{quantity}}</td>
+        <td>{{guarantee}}</td>
+      </tr>
+      {{/each}}
+      <tr style="font-weight: bold; background-color: #f5f5f5;">
+        <td>TOTAL</td>
+        <td style="text-align: right;">£{{totalGBP}}</td>
+        <td style="text-align: right;">${{totalUSD}}</td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Cost Comparison</div>
+    <table class="comparison">
+      <tr>
+        <th>Clinic</th>
+        <th>Price (GBP)</th>
+        <th>Includes</th>
+      </tr>
+      {{#each clinics}}
+      <tr>
+        <td>{{name}}</td>
+        <td>£{{priceGBP}}</td>
+        <td>{{extras}}</td>
+      </tr>
+      {{/each}}
+    </table>
+    
+    <div class="savings">
+      <p><strong>Equivalent UK Cost Range:</strong> £{{ukCostLow}} - £{{ukCostHigh}}</p>
+      <p><strong>Your Savings with Istanbul Dental Smile:</strong> £{{savings}} (approximately 65% saving)</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Travel Information</div>
+    <p><strong>Preferred Travel Month:</strong> {{travelMonth}}</p>
+    <p><strong>Departure City:</strong> {{departureCity}}</p>
+    <p><strong>Estimated Flight Cost:</strong> £{{flightCost}}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">What's Included With Your Treatment</div>
+    <div class="benefits">
+      <div class="benefit-item">
+        <img src="data:image/png;base64,{{tickBase64}}" class="tick-icon" alt="✓">
+        <span>Free Consultation & Treatment Plan</span>
+      </div>
+      <div class="benefit-item">
+        <img src="data:image/png;base64,{{tickBase64}}" class="tick-icon" alt="✓">
+        <span>VIP Airport Transfers Included</span>
+      </div>
+      <div class="benefit-item">
+        <img src="data:image/png;base64,{{tickBase64}}" class="tick-icon" alt="✓">
+        <span>5-Star Hotel Accommodation</span>
+      </div>
+      <div class="benefit-item">
+        <img src="data:image/png;base64,{{tickBase64}}" class="tick-icon" alt="✓">
+        <span>English-Speaking Dental Team</span>
+      </div>
+      <div class="benefit-item">
+        <img src="data:image/png;base64,{{tickBase64}}" class="tick-icon" alt="✓">
+        <span>24/7 Support During Your Stay</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <p>To proceed with your treatment, please book a free consultation or secure your spot with a £200 fully refundable deposit.</p>
+    <p>Book Consultation: https://calendly.com/istanbuldentalsmile/consultation</p>
+    <p>Contact: +44 7572 445856 | rajsingh140186@googlemail.com</p>
+  </div>
+
+  <div class="disclaimer">
+    This quote is valid for 30 days from the date of issue. Final treatment plan and pricing may vary slightly after consultation and diagnostics (X-rays, scans).
+  </div>
+</body>
+</html>
