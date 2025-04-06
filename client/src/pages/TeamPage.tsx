@@ -50,7 +50,8 @@ export default function TeamPage() {
         <section className="py-20 bg-gradient-to-b from-primary/10 to-transparent">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-4xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-primary">Meet Our Team</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-primary">Our Team</h1>
+              <div className="h-1 w-32 bg-secondary mx-auto my-6"></div>
               <p className="text-lg text-neutral-600">
                 Our experienced team is dedicated to providing exceptional dental tourism experiences, connecting you with Istanbul's top clinics while offering personalized support every step of the way.
               </p>
@@ -61,48 +62,46 @@ export default function TeamPage() {
         {/* Team Members */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="space-y-16">
               {teamMembers.map(member => (
-                <div key={member.id} className="flex flex-col md:flex-row gap-8 bg-white rounded-xl shadow-md overflow-hidden border border-neutral-200">
-                  <div className="md:w-2/5 overflow-hidden bg-neutral-100 flex items-center justify-center" style={{ minHeight: "300px" }}>
-                    <OptimizedImage 
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-full object-cover"
-                      style={{ objectPosition: member.id === "raj-singh" ? "center top" : "center" }}
-                    />
+                <div key={member.id} className="flex flex-col md:flex-row items-start gap-12">
+                  <div className="md:w-1/3 flex-shrink-0">
+                    <div className="rounded-lg overflow-hidden shadow-md bg-neutral-100" style={{ maxWidth: "450px" }}>
+                      <OptimizedImage 
+                        src={member.image}
+                        alt={member.name}
+                        className="w-full h-auto object-cover"
+                        style={{ aspectRatio: "1/1" }}
+                      />
+                    </div>
                   </div>
-                  <div className="md:w-3/5 p-6 md:p-8 flex flex-col">
-                    <div>
-                      <h2 className="text-2xl font-bold text-primary mb-1">{member.name}</h2>
-                      <p className="text-lg text-secondary mb-4">{member.role}</p>
-                      
-                      <div className="mb-4">
-                        {member.bio.split('\n\n').map((paragraph, idx) => (
-                          <p key={idx} className="mb-3 text-neutral-700">{paragraph}</p>
-                        ))}
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {member.languages.map(language => (
-                          <span key={language} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
-                            {language}
-                          </span>
-                        ))}
-                      </div>
+                  <div className="md:w-2/3">
+                    <h2 className="text-3xl font-bold text-primary mb-2">{member.name} - {member.role}</h2>
+                    <div className="h-1 w-20 bg-secondary mb-6"></div>
+                    
+                    <div className="mb-6 space-y-4 text-neutral-700">
+                      {member.bio.split('\n\n').map((paragraph, idx) => (
+                        <p key={idx} className="leading-relaxed">{paragraph}</p>
+                      ))}
                     </div>
                     
-                    <div className="mt-auto">
-                      <a 
-                        href={`mailto:${member.contactEmail}`} 
-                        className="inline-flex items-center text-primary hover:text-primary/80 transition-colors"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        {member.contactEmail}
-                      </a>
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {member.languages.map(language => (
+                        <span key={language} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
+                          {language}
+                        </span>
+                      ))}
                     </div>
+                    
+                    <a 
+                      href={`mailto:${member.contactEmail}`} 
+                      className="inline-flex items-center text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {member.contactEmail}
+                    </a>
                   </div>
                 </div>
               ))}
