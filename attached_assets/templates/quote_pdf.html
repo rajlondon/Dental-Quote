@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Istanbul Dental Smile - Personalized Quote</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11px; padding: 30px; }
+    h1, h2, h3 { color: #007ba7; margin-bottom: 10px; }
+    .section { margin-bottom: 30px; }
+    .header, .footer { text-align: center; background-color: #007ba7; color: white; padding: 10px; }
+    .subsection { background-color: #f0f8ff; padding: 10px; border-radius: 5px; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    .highlight { font-weight: bold; color: #007ba7; }
+    .testimonial { margin-top: 10px; font-style: italic; background-color: #fafafa; padding: 8px; border-left: 3px solid #007ba7; }
+    .cta { margin-top: 20px; background-color: #007ba7; color: white; text-align: center; padding: 12px; font-size: 13px; border-radius: 4px; }
+    .disclaimer { font-size: 10px; color: #555; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<!-- Page 1: Cover -->
+<div class="header">
+  <img src="{{ url_for('static', filename='logo.png') }}" height="40"><br>
+  <h1>Your Smile Journey Starts Here</h1>
+  <p>Quote ID: {{ quote_id }} | Date: {{ date }}</p>
+</div>
+<div class="section">
+  <h2>Hello {{ name }},</h2>
+  <p>We’re thrilled to help you begin your transformation. Below you'll find your personalized quote with top clinic options, travel info, before & after results, and how to get started.</p>
+</div>
+<div class="footer">Page 1</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 2: Treatment Plan -->
+<h2>Treatment Overview</h2>
+<div class="subsection">
+  <p><strong>Treatment Requested:</strong> {{ treatment }}</p>
+  <table>
+    <tr><th>Clinic</th><th>Price (GBP)</th><th>Price (USD)</th></tr>
+    {% for clinic in clinics %}
+    <tr><td>{{ clinic.name }}</td><td>{{ clinic.price_gbp }}</td><td>{{ clinic.price_usd }}</td></tr>
+    {% endfor %}
+  </table>
+  <p><strong>Estimated Duration:</strong> {{ duration }}</p>
+  <p><strong>Materials:</strong> {{ materials }}</p>
+</div>
+<div class="footer">Page 2</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 3: Travel Package -->
+<h2>Travel & Services</h2>
+<div class="subsection">
+  <ul>
+    <li><strong>Hotel:</strong> {{ hotel }}</li>
+    <li><strong>Transfers:</strong> {{ transport }}</li>
+    <li><strong>Flights:</strong> {{ flights }}</li>
+    <li><strong>Bonuses:</strong> {{ bonuses }}</li>
+  </ul>
+</div>
+<div class="footer">Page 3</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 4: Clinic Comparison -->
+<h2>Top Clinic Comparison</h2>
+<table>
+  <tr><th>Clinic</th><th>Location</th><th>Guarantee</th><th>Turnaround</th><th>Rating</th></tr>
+  {% for clinic in clinics %}
+  <tr><td>{{ clinic.name }}</td><td>{{ clinic.location }}</td><td>{{ clinic.guarantee }}</td><td>{{ clinic.turnaround }}</td><td>{{ clinic.rating }}</td></tr>
+  {% endfor %}
+</table>
+<div class="footer">Page 4</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 5: UK vs Istanbul -->
+<h2>Cost Comparison</h2>
+<table>
+  <tr><th>Treatment</th><th>UK Private</th><th>Istanbul</th><th>Savings</th></tr>
+  {% for item in savings %}
+  <tr><td>{{ item.name }}</td><td>{{ item.uk }}</td><td>{{ item.istanbul }}</td><td>{{ item.savings }}</td></tr>
+  {% endfor %}
+</table>
+<div class="footer">Page 5</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 6: Before & After -->
+<h2>Real Patient Transformations</h2>
+<p>Just a few examples of the thousands of smiles we’ve helped perfect:</p>
+<p>[Insert before/after image grid here]</p>
+<div class="footer">Page 6</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 7: Reviews -->
+<h2>What Our Clients Say</h2>
+{% for review in reviews %}
+<div class="testimonial">“{{ review.text }}”<br>– {{ review.author }}</div>
+{% endfor %}
+<div class="footer">Page 7</div>
+<div style="page-break-after: always;"></div>
+
+<!-- Page 8: Final CTA -->
+<h2>Ready to Get Started?</h2>
+<div class="cta">
+  Book your FREE consultation: {{ consultation_link }}<br><br>
+  Secure your treatment with a £200 deposit: {{ deposit_link }}
+</div>
+<p>We'll be with you every step of the way — from booking to brilliant smile.</p>
+<p><strong>Contact:</strong> WhatsApp | {{ email }} | {{ website }}</p>
+<div class="disclaimer">
+  This quote is based on your selected treatment and may vary after X-rays and consultation. All prices are estimates unless confirmed by the clinic.
+</div>
+<div class="footer">Page 8</div>
+
+</body>
+</html>

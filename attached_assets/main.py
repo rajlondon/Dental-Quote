@@ -1,5 +1,5 @@
 
-from flask import Flask, render_template, make_response, url_for
+from flask import Flask, render_template, make_response
 from xhtml2pdf import pisa
 import io
 from datetime import datetime
@@ -12,15 +12,13 @@ def generate_quote():
         "quote_id": "Q-20250406-001",
         "name": "Raj Singh",
         "date": datetime.now().strftime("%d %B %Y"),
-        "email": "contact@istanbuldentalsmile.co.uk",
-        "website": "www.istanbuldentalsmile.co.uk",
         "treatment": "8 E-max Veneers + Laser Whitening",
         "duration": "3-4 Days",
         "materials": "E-max Veneers – highly aesthetic & durable ceramic",
         "clinics": [
-            {"name": "DentGroup Istanbul", "price_gbp": "£1,800", "price_usd": "$2,200", "location": "Nişantaşı", "guarantee": "5 Years", "turnaround": "3 Days", "rating": "⭐️⭐️⭐️⭐️⭐️"},
-            {"name": "Vera Smile", "price_gbp": "£1,700", "price_usd": "$2,100", "location": "Şişli", "guarantee": "5 Years", "turnaround": "4 Days", "rating": "⭐️⭐️⭐️⭐️½"},
-            {"name": "LuxClinic Turkey", "price_gbp": "£1,850", "price_usd": "$2,250", "location": "Levent", "guarantee": "10 Years", "turnaround": "3 Days", "rating": "⭐️⭐️⭐️⭐️⭐️"}
+            {"name": "DentGroup Istanbul", "price_gbp": "£1,800", "location": "Nişantaşı", "guarantee": "5 Years", "turnaround": "3 Days", "rating": "⭐⭐⭐⭐⭐"},
+            {"name": "Vera Smile", "price_gbp": "£1,700", "location": "Şişli", "guarantee": "5 Years", "turnaround": "4 Days", "rating": "⭐⭐⭐⭐½"},
+            {"name": "LuxClinic Turkey", "price_gbp": "£1,850", "location": "Levent", "guarantee": "10 Years", "turnaround": "3 Days", "rating": "⭐⭐⭐⭐⭐"}
         ],
         "hotel": "4-star luxury stay with breakfast, walking distance to clinic – £240 (3 nights)",
         "transport": "VIP airport pickup + all clinic transfers – £75",
