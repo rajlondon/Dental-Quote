@@ -262,13 +262,14 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.text('Below is a detailed breakdown of the treatments included in your quote:', 20, yPos);
   yPos += 10;
 
-  // Treatment table
-  // Define column positions and widths
+  // Treatment table with improved layout
+  // Define column positions and widths - adjusted for better text fitting
   const tableWidth = 170;
-  const columnWidths = [70, 20, 30, 30, 20]; // Treatment, Qty, Unit Price, Subtotal, Guarantee
+  const columnWidths = [65, 15, 30, 30, 30]; // Treatment, Qty, Unit Price, Subtotal, Guarantee
   const tableX = 20;
+  const rowHeight = 10; // Increased row height for better readability
   
-  // Calculate column positions
+  // Calculate column positions for better alignment
   const colPos: number[] = [];
   let currentX = tableX;
   for (let i = 0; i < columnWidths.length; i++) {
@@ -276,47 +277,52 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     currentX += columnWidths[i];
   }
   
-  // Table headers
+  // Table headers with improved styling
   doc.setFillColor(primaryColor);
   doc.setTextColor(255, 255, 255);
-  doc.rect(tableX, yPos, tableWidth, 8, 'F');
+  doc.rect(tableX, yPos, tableWidth, 10, 'F'); // Slightly taller header
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text('Treatment', colPos[0], yPos+5.5, { align: 'center' });
-  doc.text('Qty', colPos[1], yPos+5.5, { align: 'center' });
-  doc.text('Unit Price (GBP)', colPos[2], yPos+5.5, { align: 'center' });
-  doc.text('Subtotal (GBP)', colPos[3], yPos+5.5, { align: 'center' });
-  doc.text('Guarantee', colPos[4], yPos+5.5, { align: 'center' });
-  yPos += 8;
+  doc.text('Treatment', colPos[0], yPos+6.5, { align: 'center' });
+  doc.text('Qty', colPos[1], yPos+6.5, { align: 'center' });
+  doc.text('Unit Price', colPos[2], yPos+6.5, { align: 'center' });
+  doc.text('Subtotal', colPos[3], yPos+6.5, { align: 'center' });
+  doc.text('Guarantee', colPos[4], yPos+6.5, { align: 'center' });
+  yPos += 10;
 
-  // Table rows
+  // Table rows with improved text handling
   doc.setTextColor(darkTextColor);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   
   if (items && items.length > 0) {
     items.forEach((item, index) => {
+      // Create alternating row background for better readability
       const isAlternateRow = index % 2 !== 0;
       if (isAlternateRow) {
         doc.setFillColor(245, 245, 245);
-        doc.rect(tableX, yPos, tableWidth, 7, 'F');
+        doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
       }
       
-      // Wrap text for treatment name if needed
-      const treatment = item.treatment.length > 30 ? 
-        item.treatment.substring(0, 27) + '...' : 
-        item.treatment;
+      // Better text handling for treatment names
+      let treatment = item.treatment;
+      // Check if we need to wrap text
+      if (treatment.length > 28) {
+        // Split long treatment names and handle with ellipsis if needed
+        treatment = treatment.substring(0, 25) + '...';
+      }
       
-      doc.text(treatment, colPos[0], yPos+5, { align: 'center' });
-      doc.text(item.quantity.toString(), colPos[1], yPos+5, { align: 'center' });
-      doc.text(`£${item.priceGBP.toFixed(2)}`, colPos[2], yPos+5, { align: 'center' });
-      doc.text(`£${item.subtotalGBP.toFixed(2)}`, colPos[3], yPos+5, { align: 'center' });
-      doc.text(item.guarantee || 'N/A', colPos[4], yPos+5, { align: 'center' });
-      yPos += 7;
+      // Add cell content with consistent alignment
+      doc.text(treatment, colPos[0], yPos+6, { align: 'center' });
+      doc.text(item.quantity.toString(), colPos[1], yPos+6, { align: 'center' });
+      doc.text(`£${item.priceGBP.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
+      doc.text(`£${item.subtotalGBP.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
+      doc.text(item.guarantee || 'N/A', colPos[4], yPos+6, { align: 'center' });
+      yPos += rowHeight;
       
-      // Check if we need to add a new page
-      if (yPos > 270) {
+      // Check if we need to add a new page with more space allowance
+      if (yPos > 260) {
         yPos = addNewPage();
       }
     });
@@ -430,13 +436,14 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.text('and patient satisfaction. Below are your recommended clinic options:', 20, yPos);
   yPos += 10;
 
-  // Clinic comparison table
-  // Define column positions and widths
+  // Clinic comparison table with improved layout
+  // Define column positions and widths with better spacing
   const clinicTableWidth = 170;
   const clinicColumnWidths = [35, 25, 25, 25, 20, 40]; // Clinic, Location, Price, Guarantee, Rating, Features
   const clinicTableX = 20;
+  const clinicRowHeight = 12; // Increased row height for better readability
   
-  // Calculate column positions
+  // Calculate column positions for better alignment
   const clinicColPos: number[] = [];
   let clinicCurrentX = clinicTableX;
   for (let i = 0; i < clinicColumnWidths.length; i++) {
@@ -444,54 +451,62 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     clinicCurrentX += clinicColumnWidths[i];
   }
 
-  // Table headers
+  // Table headers with improved styling
   doc.setFillColor(primaryColor);
   doc.setTextColor(255, 255, 255);
-  doc.rect(clinicTableX, yPos, clinicTableWidth, 8, 'F');
+  doc.rect(clinicTableX, yPos, clinicTableWidth, 10, 'F'); // Slightly taller header
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text('Clinic', clinicColPos[0], yPos+5.5, { align: 'center' });
-  doc.text('Location', clinicColPos[1], yPos+5.5, { align: 'center' });
-  doc.text('Price (GBP)', clinicColPos[2], yPos+5.5, { align: 'center' });
-  doc.text('Guarantee', clinicColPos[3], yPos+5.5, { align: 'center' });
-  doc.text('Rating', clinicColPos[4], yPos+5.5, { align: 'center' });
-  doc.text('Features', clinicColPos[5], yPos+5.5, { align: 'center' });
-  yPos += 8;
+  doc.text('Clinic', clinicColPos[0], yPos+6.5, { align: 'center' });
+  doc.text('Location', clinicColPos[1], yPos+6.5, { align: 'center' });
+  doc.text('Price (GBP)', clinicColPos[2], yPos+6.5, { align: 'center' });
+  doc.text('Guarantee', clinicColPos[3], yPos+6.5, { align: 'center' });
+  doc.text('Rating', clinicColPos[4], yPos+6.5, { align: 'center' });
+  doc.text('Features', clinicColPos[5], yPos+6.5, { align: 'center' });
+  yPos += 10;
 
-  // Clinic rows
+  // Clinic rows with consistent spacing and improved text handling
   doc.setTextColor(darkTextColor);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   
   comparisonClinics.forEach((clinic, index) => {
+    // Create alternating row background for better readability
     const isAlternateRow = index % 2 !== 0;
     if (isAlternateRow) {
       doc.setFillColor(245, 245, 245);
-      doc.rect(clinicTableX, yPos, clinicTableWidth, 7, 'F');
+      doc.rect(clinicTableX, yPos, clinicTableWidth, clinicRowHeight, 'F');
     }
     
-    // Wrap text for clinic name if needed
-    const clinicName = clinic.name.length > 20 ? 
-      clinic.name.substring(0, 17) + '...' : 
-      clinic.name;
+    // Handle text wrapping for clinic name consistently
+    let clinicName = clinic.name;
+    if (clinicName.length > 18) {
+      clinicName = clinicName.substring(0, 15) + '...';
+    }
       
-    doc.text(clinicName, clinicColPos[0], yPos+5, { align: 'center' });
-    doc.text(clinic.location || 'Istanbul', clinicColPos[1], yPos+5, { align: 'center' });
-    doc.text(`£${clinic.priceGBP.toFixed(2)}`, clinicColPos[2], yPos+5, { align: 'center' });
-    doc.text(clinic.guarantee || '5 Years', clinicColPos[3], yPos+5, { align: 'center' });
-    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', clinicColPos[4], yPos+5, { align: 'center' });
+    // Position all text with consistent alignment
+    doc.text(clinicName, clinicColPos[0], yPos+6, { align: 'center' });
+    doc.text(clinic.location || 'Istanbul', clinicColPos[1], yPos+6, { align: 'center' });
+    doc.text(`£${clinic.priceGBP.toFixed(2)}`, clinicColPos[2], yPos+6, { align: 'center' });
+    doc.text(clinic.guarantee || '5 Years', clinicColPos[3], yPos+6, { align: 'center' });
+    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', clinicColPos[4], yPos+6, { align: 'center' });
     
-    // Handle long extras text
+    // Handle features text with better wrapping
     const extras = clinic.extras || '';
     if (extras.length > 20) {
+      // For longer text, use smaller font and properly wrap
+      doc.setFontSize(7);
       const splitExtras = doc.splitTextToSize(extras, 35);
-      doc.text(splitExtras, clinicColPos[5], yPos+3, { align: 'center' });
+      // Center the text vertically based on number of lines
+      const yOffset = splitExtras.length > 1 ? 4 : 6; 
+      doc.text(splitExtras, clinicColPos[5], yPos+yOffset, { align: 'center' });
+      doc.setFontSize(8); // Reset font size
     } else {
-      doc.text(extras, clinicColPos[5], yPos+5, { align: 'center' });
+      doc.text(extras, clinicColPos[5], yPos+6, { align: 'center' });
     }
     
-    yPos += 7;
+    yPos += clinicRowHeight;
   });
   
   yPos += 10;
@@ -522,13 +537,14 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.text('See how much you can save by choosing Istanbul for your dental treatment:', 20, yPos);
   yPos += 10;
 
-  // Cost comparison table
-  // Define column positions and widths
+  // Cost comparison table with improved layout
+  // Define column positions and widths with better spacing
   const costTableWidth = 170;
   const costColumnWidths = [60, 35, 40, 35]; // Treatment, UK Price, Istanbul Price, Savings
   const costTableX = 20;
+  const costRowHeight = 10; // Increased row height for better readability
   
-  // Calculate column positions
+  // Calculate column positions for better alignment
   const costColPos: number[] = [];
   let costCurrentX = costTableX;
   for (let i = 0; i < costColumnWidths.length; i++) {
@@ -536,20 +552,20 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     costCurrentX += costColumnWidths[i];
   }
 
-  // Table headers
+  // Table headers with improved styling
   doc.setFillColor(primaryColor);
   doc.setTextColor(255, 255, 255);
-  doc.rect(costTableX, yPos, costTableWidth, 8, 'F');
+  doc.rect(costTableX, yPos, costTableWidth, 10, 'F'); // Slightly taller header
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text('Treatment', costColPos[0], yPos+5.5, { align: 'center' });
-  doc.text('UK Price', costColPos[1], yPos+5.5, { align: 'center' });
-  doc.text('Istanbul Price', costColPos[2], yPos+5.5, { align: 'center' });
-  doc.text('Your Savings', costColPos[3], yPos+5.5, { align: 'center' });
-  yPos += 8;
+  doc.text('Treatment', costColPos[0], yPos+6.5, { align: 'center' });
+  doc.text('UK Price', costColPos[1], yPos+6.5, { align: 'center' });
+  doc.text('Istanbul Price', costColPos[2], yPos+6.5, { align: 'center' });
+  doc.text('Your Savings', costColPos[3], yPos+6.5, { align: 'center' });
+  yPos += 10;
 
-  // Cost comparison rows
+  // Cost comparison rows with consistent spacing and improved text handling
   doc.setTextColor(darkTextColor);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -559,10 +575,11 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   if (items && items.length > 0) {
     items.forEach((item, index) => {
+      // Create alternating row background for better readability
       const isAlternateRow = index % 2 !== 0;
       if (isAlternateRow) {
         doc.setFillColor(245, 245, 245);
-        doc.rect(costTableX, yPos, costTableWidth, 7, 'F');
+        doc.rect(costTableX, yPos, costTableWidth, costRowHeight, 'F');
       }
       
       // UK price is typically 2-3x higher
@@ -573,38 +590,45 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       totalUKPrice += ukPrice;
       totalIstanbulPrice += istanbulPrice;
       
-      // Wrap text for treatment name if needed
-      const treatment = item.treatment.length > 25 ? 
-        item.treatment.substring(0, 22) + '...' : 
-        item.treatment;
+      // Better text handling for treatment names
+      let treatment = item.treatment;
+      // Check if we need to wrap text
+      if (treatment.length > 23) {
+        // Split long treatment names and handle with ellipsis if needed
+        treatment = treatment.substring(0, 20) + '...';
+      }
       
-      doc.text(`${item.quantity}x ${treatment}`, costColPos[0], yPos+5, { align: 'center' });
-      doc.text(`£${ukPrice.toFixed(2)}`, costColPos[1], yPos+5, { align: 'center' });
-      doc.text(`£${istanbulPrice.toFixed(2)}`, costColPos[2], yPos+5, { align: 'center' });
-      doc.text(`£${savings.toFixed(2)}`, costColPos[3], yPos+5, { align: 'center' });
+      // Position all text with consistent alignment
+      doc.text(`${item.quantity}x ${treatment}`, costColPos[0], yPos+6, { align: 'center' });
+      doc.text(`£${ukPrice.toFixed(2)}`, costColPos[1], yPos+6, { align: 'center' });
+      doc.text(`£${istanbulPrice.toFixed(2)}`, costColPos[2], yPos+6, { align: 'center' });
+      doc.text(`£${savings.toFixed(2)}`, costColPos[3], yPos+6, { align: 'center' });
       
-      yPos += 7;
+      yPos += costRowHeight;
       
-      if (yPos > 270) {
+      // Check if we need to add a new page with more space allowance
+      if (yPos > 260) {
         yPos = addNewPage();
       }
     });
   }
   
-  // Total savings row
+  // Total savings row with improved styling
   const totalSavings = totalUKPrice - totalIstanbulPrice;
   
+  // Use the gold accent color for better highlight of savings
   doc.setFillColor(secondaryColor);
-  doc.rect(costTableX, yPos, costTableWidth, 8, 'F');
+  doc.rect(costTableX, yPos, costTableWidth, 10, 'F'); // Match row height with other rows
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total Savings', costColPos[0], yPos+5.5, { align: 'center' });
-  doc.text(`£${totalUKPrice.toFixed(2)}`, costColPos[1], yPos+5.5, { align: 'center' });
-  doc.text(`£${totalIstanbulPrice.toFixed(2)}`, costColPos[2], yPos+5.5, { align: 'center' });
-  doc.text(`£${totalSavings.toFixed(2)}`, costColPos[3], yPos+5.5, { align: 'center' });
+  doc.setFontSize(10); // Slightly larger font for emphasis
+  doc.text('Total Savings', costColPos[0], yPos+6.5, { align: 'center' });
+  doc.text(`£${totalUKPrice.toFixed(2)}`, costColPos[1], yPos+6.5, { align: 'center' });
+  doc.text(`£${totalIstanbulPrice.toFixed(2)}`, costColPos[2], yPos+6.5, { align: 'center' });
+  doc.text(`£${totalSavings.toFixed(2)}`, costColPos[3], yPos+6.5, { align: 'center' });
   
-  yPos += 15;
+  yPos += 20; // Increased spacing after the table
   
   // Add savings highlight
   const savingsPercentage = Math.round((totalSavings / totalUKPrice) * 100);
@@ -640,18 +664,22 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
 
   // Travel info boxes
   const createInfoBox = (title: string, content: string, xPos: number) => {
+    // Create a rectangular box with rounded corners
     doc.setFillColor(lightBgColor);
     doc.roundedRect(xPos, yPos, 80, 40, 3, 3, 'F');
     
+    // Add the box title in bold 
     doc.setTextColor(primaryColor);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text(title, xPos + 40, yPos + 10, { align: 'center' });
     
+    // Add the box content with proper wrapping and spacing
     doc.setTextColor(darkTextColor);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     
+    // Calculate proper width for text to ensure it fits within the box
     const splitContent = doc.splitTextToSize(content, 70);
     doc.text(splitContent, xPos + 40, yPos + 20, { align: 'center' });
   };
@@ -703,31 +731,39 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.text('Here\'s what our patients say about their Istanbul Dental Smile experience:', 20, yPos);
   yPos += 15;
 
-  // Testimonials boxes
+  // Testimonials boxes with improved styling
   reviews.forEach((review, index) => {
+    // Check if we need to add a new page
     if (yPos > 250) {
       yPos = addNewPage();
     }
     
+    // Create a light blue background box
     doc.setFillColor(lightBgColor);
-    doc.roundedRect(20, yPos, 170, 30, 3, 3, 'F');
+    doc.roundedRect(20, yPos, 170, 35, 3, 3, 'F'); // Slightly taller for better text spacing
     
+    // Add the testimonial text
     doc.setTextColor(darkTextColor);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
     
+    // Calculate proper text wrapping
     const splitReview = doc.splitTextToSize(`"${review.text}"`, 160);
     doc.text(splitReview, 25, yPos + 10);
     
+    // Add the testimonial author with treatment info
     doc.setFont('helvetica', 'bold');
     let authorText = `— ${review.author}`;
     if (review.treatment) {
       authorText += `, ${review.treatment}`;
     }
     
-    doc.text(authorText, 25, yPos + 25);
+    // Position the author text at the bottom of the box
+    const authorYPos = yPos + (splitReview.length > 1 ? 22 + (splitReview.length * 3) : 25);
+    doc.text(authorText, 25, Math.min(authorYPos, yPos + 28));
     
-    yPos += 40;
+    // Add more space between testimonials
+    yPos += 45;
   });
 
   // BEFORE/AFTER PLACEHOLDERS
