@@ -646,7 +646,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setTextColor(darkTextColor);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('Here's what our patients say about their Istanbul Dental Smile experience:', 20, yPos);
+  doc.text('Here\'s what our patients say about their Istanbul Dental Smile experience:', 20, yPos);
   yPos += 15;
 
   // Testimonials boxes
@@ -735,7 +735,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setTextColor(darkTextColor);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
-  doc.text('Ready to transform your smile? Here's how to proceed:', 105, yPos, { align: 'center' });
+  doc.text('Ready to transform your smile? Here\'s how to proceed:', 105, yPos, { align: 'center' });
   yPos += 20;
 
   // CTA steps
@@ -750,7 +750,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     },
     {
       title: '3. Pre-Treatment Planning',
-      description: 'We'll help arrange your travel, accommodation, and create a personalized treatment plan.'
+      description: 'We\'ll help arrange your travel, accommodation, and create a personalized treatment plan.'
     },
     {
       title: '4. Your Istanbul Journey',
