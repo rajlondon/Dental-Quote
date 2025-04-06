@@ -263,18 +263,31 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   yPos += 10;
 
   // Treatment table
+  // Define column positions and widths
+  const tableWidth = 170;
+  const columnWidths = [70, 20, 30, 30, 20]; // Treatment, Qty, Unit Price, Subtotal, Guarantee
+  const tableX = 20;
+  
+  // Calculate column positions
+  const colPos: number[] = [];
+  let currentX = tableX;
+  for (let i = 0; i < columnWidths.length; i++) {
+    colPos.push(currentX + columnWidths[i]/2); // Center position of each column
+    currentX += columnWidths[i];
+  }
+  
   // Table headers
   doc.setFillColor(primaryColor);
   doc.setTextColor(255, 255, 255);
-  doc.rect(20, yPos, 170, 8, 'F');
+  doc.rect(tableX, yPos, tableWidth, 8, 'F');
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text('Treatment', 35, yPos+5.5, { align: 'center' });
-  doc.text('Qty', 90, yPos+5.5, { align: 'center' });
-  doc.text('Unit Price (GBP)', 120, yPos+5.5, { align: 'center' });
-  doc.text('Subtotal (GBP)', 155, yPos+5.5, { align: 'center' });
-  doc.text('Guarantee', 185, yPos+5.5, { align: 'center' });
+  doc.text('Treatment', colPos[0], yPos+5.5, { align: 'center' });
+  doc.text('Qty', colPos[1], yPos+5.5, { align: 'center' });
+  doc.text('Unit Price (GBP)', colPos[2], yPos+5.5, { align: 'center' });
+  doc.text('Subtotal (GBP)', colPos[3], yPos+5.5, { align: 'center' });
+  doc.text('Guarantee', colPos[4], yPos+5.5, { align: 'center' });
   yPos += 8;
 
   // Table rows
@@ -287,14 +300,19 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       const isAlternateRow = index % 2 !== 0;
       if (isAlternateRow) {
         doc.setFillColor(245, 245, 245);
-        doc.rect(20, yPos, 170, 7, 'F');
+        doc.rect(tableX, yPos, tableWidth, 7, 'F');
       }
       
-      doc.text(item.treatment, 35, yPos+5, { align: 'center' });
-      doc.text(item.quantity.toString(), 90, yPos+5, { align: 'center' });
-      doc.text(`£${item.priceGBP.toFixed(2)}`, 120, yPos+5, { align: 'center' });
-      doc.text(`£${item.subtotalGBP.toFixed(2)}`, 155, yPos+5, { align: 'center' });
-      doc.text(item.guarantee || 'N/A', 185, yPos+5, { align: 'center' });
+      // Wrap text for treatment name if needed
+      const treatment = item.treatment.length > 30 ? 
+        item.treatment.substring(0, 27) + '...' : 
+        item.treatment;
+      
+      doc.text(treatment, colPos[0], yPos+5, { align: 'center' });
+      doc.text(item.quantity.toString(), colPos[1], yPos+5, { align: 'center' });
+      doc.text(`£${item.priceGBP.toFixed(2)}`, colPos[2], yPos+5, { align: 'center' });
+      doc.text(`£${item.subtotalGBP.toFixed(2)}`, colPos[3], yPos+5, { align: 'center' });
+      doc.text(item.guarantee || 'N/A', colPos[4], yPos+5, { align: 'center' });
       yPos += 7;
       
       // Check if we need to add a new page
@@ -306,13 +324,13 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
 
   // Total row
   doc.setFillColor(secondaryColor);
-  doc.rect(20, yPos, 170, 8, 'F');
+  doc.rect(tableX, yPos, tableWidth, 8, 'F');
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total', 35, yPos+5.5, { align: 'center' });
-  doc.text(`£${totalGBP.toFixed(2)}`, 155, yPos+5.5, { align: 'center' });
-  doc.text(`$${totalUSD.toFixed(2)}`, 185, yPos+5.5, { align: 'center' });
+  doc.text('Total', colPos[0], yPos+5.5, { align: 'center' });
+  doc.text(`£${totalGBP.toFixed(2)}`, colPos[3], yPos+5.5, { align: 'center' });
+  doc.text(`$${totalUSD.toFixed(2)}`, colPos[4], yPos+5.5, { align: 'center' });
   yPos += 15;
 
   // Treatment explanation (add more details about treatments)
@@ -413,19 +431,32 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   yPos += 10;
 
   // Clinic comparison table
+  // Define column positions and widths
+  const clinicTableWidth = 170;
+  const clinicColumnWidths = [35, 25, 25, 25, 20, 40]; // Clinic, Location, Price, Guarantee, Rating, Features
+  const clinicTableX = 20;
+  
+  // Calculate column positions
+  const clinicColPos: number[] = [];
+  let clinicCurrentX = clinicTableX;
+  for (let i = 0; i < clinicColumnWidths.length; i++) {
+    clinicColPos.push(clinicCurrentX + clinicColumnWidths[i]/2); // Center position of each column
+    clinicCurrentX += clinicColumnWidths[i];
+  }
+
   // Table headers
   doc.setFillColor(primaryColor);
   doc.setTextColor(255, 255, 255);
-  doc.rect(20, yPos, 170, 8, 'F');
+  doc.rect(clinicTableX, yPos, clinicTableWidth, 8, 'F');
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text('Clinic', 35, yPos+5.5, { align: 'center' });
-  doc.text('Location', 70, yPos+5.5, { align: 'center' });
-  doc.text('Price (GBP)', 100, yPos+5.5, { align: 'center' });
-  doc.text('Guarantee', 125, yPos+5.5, { align: 'center' });
-  doc.text('Rating', 145, yPos+5.5, { align: 'center' });
-  doc.text('Features', 170, yPos+5.5, { align: 'center' });
+  doc.text('Clinic', clinicColPos[0], yPos+5.5, { align: 'center' });
+  doc.text('Location', clinicColPos[1], yPos+5.5, { align: 'center' });
+  doc.text('Price (GBP)', clinicColPos[2], yPos+5.5, { align: 'center' });
+  doc.text('Guarantee', clinicColPos[3], yPos+5.5, { align: 'center' });
+  doc.text('Rating', clinicColPos[4], yPos+5.5, { align: 'center' });
+  doc.text('Features', clinicColPos[5], yPos+5.5, { align: 'center' });
   yPos += 8;
 
   // Clinic rows
@@ -437,22 +468,27 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     const isAlternateRow = index % 2 !== 0;
     if (isAlternateRow) {
       doc.setFillColor(245, 245, 245);
-      doc.rect(20, yPos, 170, 7, 'F');
+      doc.rect(clinicTableX, yPos, clinicTableWidth, 7, 'F');
     }
     
-    doc.text(clinic.name, 35, yPos+5, { align: 'center' });
-    doc.text(clinic.location || 'Istanbul', 70, yPos+5, { align: 'center' });
-    doc.text(`£${clinic.priceGBP.toFixed(2)}`, 100, yPos+5, { align: 'center' });
-    doc.text(clinic.guarantee || '5 Years', 125, yPos+5, { align: 'center' });
-    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', 145, yPos+5, { align: 'center' });
+    // Wrap text for clinic name if needed
+    const clinicName = clinic.name.length > 20 ? 
+      clinic.name.substring(0, 17) + '...' : 
+      clinic.name;
+      
+    doc.text(clinicName, clinicColPos[0], yPos+5, { align: 'center' });
+    doc.text(clinic.location || 'Istanbul', clinicColPos[1], yPos+5, { align: 'center' });
+    doc.text(`£${clinic.priceGBP.toFixed(2)}`, clinicColPos[2], yPos+5, { align: 'center' });
+    doc.text(clinic.guarantee || '5 Years', clinicColPos[3], yPos+5, { align: 'center' });
+    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', clinicColPos[4], yPos+5, { align: 'center' });
     
     // Handle long extras text
     const extras = clinic.extras || '';
     if (extras.length > 20) {
-      const splitExtras = doc.splitTextToSize(extras, 25);
-      doc.text(splitExtras, 170, yPos+3, { align: 'center' });
+      const splitExtras = doc.splitTextToSize(extras, 35);
+      doc.text(splitExtras, clinicColPos[5], yPos+3, { align: 'center' });
     } else {
-      doc.text(extras, 170, yPos+5, { align: 'center' });
+      doc.text(extras, clinicColPos[5], yPos+5, { align: 'center' });
     }
     
     yPos += 7;
@@ -487,17 +523,30 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   yPos += 10;
 
   // Cost comparison table
+  // Define column positions and widths
+  const costTableWidth = 170;
+  const costColumnWidths = [60, 35, 40, 35]; // Treatment, UK Price, Istanbul Price, Savings
+  const costTableX = 20;
+  
+  // Calculate column positions
+  const costColPos: number[] = [];
+  let costCurrentX = costTableX;
+  for (let i = 0; i < costColumnWidths.length; i++) {
+    costColPos.push(costCurrentX + costColumnWidths[i]/2); // Center position of each column
+    costCurrentX += costColumnWidths[i];
+  }
+
   // Table headers
   doc.setFillColor(primaryColor);
   doc.setTextColor(255, 255, 255);
-  doc.rect(20, yPos, 170, 8, 'F');
+  doc.rect(costTableX, yPos, costTableWidth, 8, 'F');
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text('Treatment', 50, yPos+5.5, { align: 'center' });
-  doc.text('UK Price', 100, yPos+5.5, { align: 'center' });
-  doc.text('Istanbul Price', 130, yPos+5.5, { align: 'center' });
-  doc.text('Your Savings', 170, yPos+5.5, { align: 'center' });
+  doc.text('Treatment', costColPos[0], yPos+5.5, { align: 'center' });
+  doc.text('UK Price', costColPos[1], yPos+5.5, { align: 'center' });
+  doc.text('Istanbul Price', costColPos[2], yPos+5.5, { align: 'center' });
+  doc.text('Your Savings', costColPos[3], yPos+5.5, { align: 'center' });
   yPos += 8;
 
   // Cost comparison rows
@@ -513,7 +562,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       const isAlternateRow = index % 2 !== 0;
       if (isAlternateRow) {
         doc.setFillColor(245, 245, 245);
-        doc.rect(20, yPos, 170, 7, 'F');
+        doc.rect(costTableX, yPos, costTableWidth, 7, 'F');
       }
       
       // UK price is typically 2-3x higher
@@ -524,10 +573,15 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       totalUKPrice += ukPrice;
       totalIstanbulPrice += istanbulPrice;
       
-      doc.text(`${item.quantity}x ${item.treatment}`, 50, yPos+5, { align: 'center' });
-      doc.text(`£${ukPrice.toFixed(2)}`, 100, yPos+5, { align: 'center' });
-      doc.text(`£${istanbulPrice.toFixed(2)}`, 130, yPos+5, { align: 'center' });
-      doc.text(`£${savings.toFixed(2)}`, 170, yPos+5, { align: 'center' });
+      // Wrap text for treatment name if needed
+      const treatment = item.treatment.length > 25 ? 
+        item.treatment.substring(0, 22) + '...' : 
+        item.treatment;
+      
+      doc.text(`${item.quantity}x ${treatment}`, costColPos[0], yPos+5, { align: 'center' });
+      doc.text(`£${ukPrice.toFixed(2)}`, costColPos[1], yPos+5, { align: 'center' });
+      doc.text(`£${istanbulPrice.toFixed(2)}`, costColPos[2], yPos+5, { align: 'center' });
+      doc.text(`£${savings.toFixed(2)}`, costColPos[3], yPos+5, { align: 'center' });
       
       yPos += 7;
       
@@ -541,14 +595,14 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   const totalSavings = totalUKPrice - totalIstanbulPrice;
   
   doc.setFillColor(secondaryColor);
-  doc.rect(20, yPos, 170, 8, 'F');
+  doc.rect(costTableX, yPos, costTableWidth, 8, 'F');
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total Savings', 50, yPos+5.5, { align: 'center' });
-  doc.text(`£${totalUKPrice.toFixed(2)}`, 100, yPos+5.5, { align: 'center' });
-  doc.text(`£${totalIstanbulPrice.toFixed(2)}`, 130, yPos+5.5, { align: 'center' });
-  doc.text(`£${totalSavings.toFixed(2)}`, 170, yPos+5.5, { align: 'center' });
+  doc.text('Total Savings', costColPos[0], yPos+5.5, { align: 'center' });
+  doc.text(`£${totalUKPrice.toFixed(2)}`, costColPos[1], yPos+5.5, { align: 'center' });
+  doc.text(`£${totalIstanbulPrice.toFixed(2)}`, costColPos[2], yPos+5.5, { align: 'center' });
+  doc.text(`£${totalSavings.toFixed(2)}`, costColPos[3], yPos+5.5, { align: 'center' });
   
   yPos += 15;
   
@@ -786,7 +840,8 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
   doc.text('Contact us now:', 105, 255, { align: 'center' });
-  doc.text('Phone/WhatsApp: +44 7572 445856', 105, 265, { align: 'center' });
+  doc.text('Phone/WhatsApp: +44 7572 445856', 105, 262, { align: 'center' });
+  doc.text('Website: istanbuldentalsmile.co.uk', 105, 269, { align: 'center' });
 
   // Convert the PDF to a Buffer and return
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
