@@ -711,7 +711,7 @@ export default function PriceCalculator() {
                       </div>
                       
                       {/* PDF Generator component */}
-                      <TemplatePdfGenerator
+                      <JourneyPdf
                         items={quote.items}
                         totalGBP={quote.totalGBP}
                         totalUSD={quote.totalUSD}
