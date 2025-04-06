@@ -104,7 +104,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.text(`Page ${pageNumber}`, 105, 286, { align: 'center' });
-    doc.text('www.istanbuldentalsmile.com | info@istanbuldentalsmile.com', 105, 291, { align: 'center' });
+    doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 291, { align: 'center' });
     
     return 30; // Return Y position after header
   };
@@ -176,7 +176,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text(`Page ${pageNumber}`, 105, 286, { align: 'center' });
-  doc.text('www.istanbuldentalsmile.com | info@istanbuldentalsmile.com', 105, 291, { align: 'center' });
+  doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 291, { align: 'center' });
 
   // Add CTA at bottom of first page
   doc.setTextColor(secondaryColor);
@@ -270,11 +270,11 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text('Treatment', 22, yPos+5.5);
-  doc.text('Qty', 95, yPos+5.5);
-  doc.text('Unit Price (GBP)', 110, yPos+5.5);
-  doc.text('Subtotal (GBP)', 150, yPos+5.5);
-  doc.text('Guarantee', 180, yPos+5.5);
+  doc.text('Treatment', 35, yPos+5.5, { align: 'center' });
+  doc.text('Qty', 90, yPos+5.5, { align: 'center' });
+  doc.text('Unit Price (GBP)', 120, yPos+5.5, { align: 'center' });
+  doc.text('Subtotal (GBP)', 155, yPos+5.5, { align: 'center' });
+  doc.text('Guarantee', 185, yPos+5.5, { align: 'center' });
   yPos += 8;
 
   // Table rows
@@ -290,11 +290,11 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
         doc.rect(20, yPos, 170, 7, 'F');
       }
       
-      doc.text(item.treatment, 22, yPos+5);
-      doc.text(item.quantity.toString(), 95, yPos+5);
-      doc.text(`£${item.priceGBP.toFixed(2)}`, 115, yPos+5);
-      doc.text(`£${item.subtotalGBP.toFixed(2)}`, 155, yPos+5);
-      doc.text(item.guarantee || 'N/A', 180, yPos+5);
+      doc.text(item.treatment, 35, yPos+5, { align: 'center' });
+      doc.text(item.quantity.toString(), 90, yPos+5, { align: 'center' });
+      doc.text(`£${item.priceGBP.toFixed(2)}`, 120, yPos+5, { align: 'center' });
+      doc.text(`£${item.subtotalGBP.toFixed(2)}`, 155, yPos+5, { align: 'center' });
+      doc.text(item.guarantee || 'N/A', 185, yPos+5, { align: 'center' });
       yPos += 7;
       
       // Check if we need to add a new page
@@ -310,9 +310,9 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total', 22, yPos+5.5);
-  doc.text(`£${totalGBP.toFixed(2)}`, 155, yPos+5.5);
-  doc.text(`$${totalUSD.toFixed(2)}`, 180, yPos+5.5);
+  doc.text('Total', 35, yPos+5.5, { align: 'center' });
+  doc.text(`£${totalGBP.toFixed(2)}`, 155, yPos+5.5, { align: 'center' });
+  doc.text(`$${totalUSD.toFixed(2)}`, 185, yPos+5.5, { align: 'center' });
   yPos += 15;
 
   // Treatment explanation (add more details about treatments)
@@ -420,12 +420,12 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text('Clinic', 22, yPos+5.5);
-  doc.text('Location', 65, yPos+5.5);
-  doc.text('Price (GBP)', 90, yPos+5.5);
-  doc.text('Guarantee', 120, yPos+5.5);
-  doc.text('Rating', 145, yPos+5.5);
-  doc.text('Features', 165, yPos+5.5);
+  doc.text('Clinic', 35, yPos+5.5, { align: 'center' });
+  doc.text('Location', 70, yPos+5.5, { align: 'center' });
+  doc.text('Price (GBP)', 100, yPos+5.5, { align: 'center' });
+  doc.text('Guarantee', 125, yPos+5.5, { align: 'center' });
+  doc.text('Rating', 145, yPos+5.5, { align: 'center' });
+  doc.text('Features', 170, yPos+5.5, { align: 'center' });
   yPos += 8;
 
   // Clinic rows
@@ -440,19 +440,19 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       doc.rect(20, yPos, 170, 7, 'F');
     }
     
-    doc.text(clinic.name, 22, yPos+5);
-    doc.text(clinic.location || 'Istanbul', 65, yPos+5);
-    doc.text(`£${clinic.priceGBP.toFixed(2)}`, 90, yPos+5);
-    doc.text(clinic.guarantee || '5 Years', 120, yPos+5);
-    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', 145, yPos+5);
+    doc.text(clinic.name, 35, yPos+5, { align: 'center' });
+    doc.text(clinic.location || 'Istanbul', 70, yPos+5, { align: 'center' });
+    doc.text(`£${clinic.priceGBP.toFixed(2)}`, 100, yPos+5, { align: 'center' });
+    doc.text(clinic.guarantee || '5 Years', 125, yPos+5, { align: 'center' });
+    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', 145, yPos+5, { align: 'center' });
     
     // Handle long extras text
     const extras = clinic.extras || '';
     if (extras.length > 20) {
       const splitExtras = doc.splitTextToSize(extras, 25);
-      doc.text(splitExtras, 165, yPos+3);
+      doc.text(splitExtras, 170, yPos+3, { align: 'center' });
     } else {
-      doc.text(extras, 165, yPos+5);
+      doc.text(extras, 170, yPos+5, { align: 'center' });
     }
     
     yPos += 7;
@@ -494,10 +494,10 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text('Treatment', 22, yPos+5.5);
-  doc.text('UK Price', 100, yPos+5.5);
-  doc.text('Istanbul Price', 130, yPos+5.5);
-  doc.text('Your Savings', 170, yPos+5.5);
+  doc.text('Treatment', 50, yPos+5.5, { align: 'center' });
+  doc.text('UK Price', 100, yPos+5.5, { align: 'center' });
+  doc.text('Istanbul Price', 130, yPos+5.5, { align: 'center' });
+  doc.text('Your Savings', 170, yPos+5.5, { align: 'center' });
   yPos += 8;
 
   // Cost comparison rows
@@ -524,10 +524,10 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       totalUKPrice += ukPrice;
       totalIstanbulPrice += istanbulPrice;
       
-      doc.text(`${item.quantity}x ${item.treatment}`, 22, yPos+5);
-      doc.text(`£${ukPrice.toFixed(2)}`, 100, yPos+5);
-      doc.text(`£${istanbulPrice.toFixed(2)}`, 130, yPos+5);
-      doc.text(`£${savings.toFixed(2)}`, 170, yPos+5);
+      doc.text(`${item.quantity}x ${item.treatment}`, 50, yPos+5, { align: 'center' });
+      doc.text(`£${ukPrice.toFixed(2)}`, 100, yPos+5, { align: 'center' });
+      doc.text(`£${istanbulPrice.toFixed(2)}`, 130, yPos+5, { align: 'center' });
+      doc.text(`£${savings.toFixed(2)}`, 170, yPos+5, { align: 'center' });
       
       yPos += 7;
       
@@ -545,10 +545,10 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total Savings', 22, yPos+5.5);
-  doc.text(`£${totalUKPrice.toFixed(2)}`, 100, yPos+5.5);
-  doc.text(`£${totalIstanbulPrice.toFixed(2)}`, 130, yPos+5.5);
-  doc.text(`£${totalSavings.toFixed(2)}`, 170, yPos+5.5);
+  doc.text('Total Savings', 50, yPos+5.5, { align: 'center' });
+  doc.text(`£${totalUKPrice.toFixed(2)}`, 100, yPos+5.5, { align: 'center' });
+  doc.text(`£${totalIstanbulPrice.toFixed(2)}`, 130, yPos+5.5, { align: 'center' });
+  doc.text(`£${totalSavings.toFixed(2)}`, 170, yPos+5.5, { align: 'center' });
   
   yPos += 15;
   
