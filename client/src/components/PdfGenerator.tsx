@@ -730,6 +730,170 @@ const generateQuotePdf = ({
     doc.text('* Flight prices are general estimates and may vary based on booking date, airline, and availability.', margin, yPos);
   }
   
+  // Add second page with clinic info and materials details
+  doc.addPage();
+  
+  // Reset yPos for new page
+  yPos = 20;
+  
+  // Add blue header on second page too
+  doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
+  doc.rect(0, 0, pageWidth, 30, 'F');
+  
+  // Add a secondary accent strip
+  doc.setFillColor(178, 144, 79); // #B2904F Elegant gold
+  doc.rect(0, 30, pageWidth, 3, 'F');
+  
+  // Add white text for the header
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Additional Information', pageWidth / 2, 20, { align: 'center' });
+  
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+  
+  // Materials and Laboratory section
+  yPos = 50;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Materials and Laboratory', margin, yPos);
+  yPos += 10;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const materialsText = 
+  "When choosing your perfect provider, the materials and laboratory the clinic uses are sometimes overlooked. Premium " +
+  "materials and a top laboratory are essential for achieving the most natural and aesthetic look. At Istanbul Dental Smile, " +
+  "your maximum satisfaction and natural look is our top priority. This is why we only work with the best laboratories in " +
+  "Istanbul and use only premium products, such as a Zirconium Premium system. This is based on a unique shading " +
+  "technology, meaning that its color is not on the surface but comes from within. This unique technology helps to preserve " +
+  "translucency after shading, without compromising strength. It enables the creation of highly aesthetic restorations.";
+  
+  doc.setFont('helvetica', 'normal');
+  
+  // Create a text wrapping function
+  const wrapText = (text: string, maxWidth: number) => {
+    const words = text.split(' ');
+    let line = '';
+    const lines: string[] = [];
+    
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + ' ';
+      const testWidth = doc.getStringUnitWidth(testLine) * doc.getFontSize() / doc.internal.scaleFactor;
+      
+      if (testWidth > maxWidth && i > 0) {
+        lines.push(line);
+        line = words[i] + ' ';
+      } else {
+        line = testLine;
+      }
+    }
+    
+    lines.push(line);
+    return lines;
+  };
+  
+  // Wrap and print the materials text
+  const wrappedMaterialsText = wrapText(materialsText, contentWidth);
+  wrappedMaterialsText.forEach(line => {
+    doc.text(line, margin, yPos);
+    yPos += 5;
+  });
+  
+  // Clinic Information section
+  yPos += 10;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Our Partner Clinics', margin, yPos);
+  yPos += 10;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const clinicText = 
+  "Our partner clinics are situated just a short walk away from your recommended hotel. The clinics are bright and airy with state " +
+  "of the art treatment rooms and comfy waiting areas. We have a longstanding relationship and chose these clinics based on the " +
+  "clinics' fantastic reputation, excellent work and friendly, patient approach.";
+  
+  // Wrap and print the clinic text
+  const wrappedClinicText = wrapText(clinicText, contentWidth);
+  wrappedClinicText.forEach(line => {
+    doc.text(line, margin, yPos);
+    yPos += 5;
+  });
+  
+  // Hotel and Neighborhood section
+  yPos += 10;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Hotel and Neighborhood', margin, yPos);
+  yPos += 10;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const hotelText = 
+  "Our clinics are in the lively neighborhood of Şişli situated in the center of Istanbul within a stone's throw of the exclusive " +
+  "Nişantaşı neighborhood, Maçka Park and is near to all transport links. It is within easy reach of all places of interest and " +
+  "the top tourist attractions. The seaside is only a 15-minute bus or taxi ride away.\n\n" +
+  "You can choose to check out the shops, listen to music or a live concert and sip cocktails in the one of the districts " +
+  "glorious parks, or bars hip cafes.\n\n" +
+  "Our recommended hotel is a very convenient 5 minutes' walk from our clinics within easy reach of supermarkets, " +
+  "restaurants, pharmacies and public transport. The staff speak great English and are happy to accommodate guests who " +
+  "may need softer foods to enjoy in the restaurant / bar downstairs.";
+  
+  // Wrap and print the hotel text
+  const hotelLines = hotelText.split('\n\n');
+  hotelLines.forEach(paragraph => {
+    const wrappedParagraph = wrapText(paragraph, contentWidth);
+    wrappedParagraph.forEach(line => {
+      doc.text(line, margin, yPos);
+      yPos += 5;
+    });
+    yPos += 5; // Extra spacing between paragraphs
+  });
+  
+  // Package inclusions section
+  yPos += 5;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Your Package Includes:', margin, yPos);
+  yPos += 10;
+  
+  // Add package inclusions with icons
+  doc.addImage(HOTEL_ICON_BASE64, 'PNG', margin, yPos - 4, 5, 5);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('3 nights hotel accommodation (additional nights available at reduced rates)', margin + 8, yPos);
+  yPos += 7;
+  
+  doc.addImage(TRANSFER_ICON_BASE64, 'PNG', margin, yPos - 4, 5, 5);
+  doc.text('Airport transfers to and from your hotel', margin + 8, yPos);
+  yPos += 7;
+  
+  doc.addImage(TRANSLATOR_ICON_BASE64, 'PNG', margin, yPos - 4, 5, 5);
+  doc.text('English-speaking patient coordinator to assist throughout your stay', margin + 8, yPos);
+  yPos += 7;
+  
+  doc.addImage(TICK_ICON_BASE64, 'PNG', margin, yPos - 4, 5, 5);
+  doc.text('Complimentary panoramic x-ray and dental examination', margin + 8, yPos);
+  yPos += 7;
+  
+  doc.addImage(TICK_ICON_BASE64, 'PNG', margin, yPos - 4, 5, 5);
+  doc.text('Bosphorus dinner cruise experience', margin + 8, yPos);
+  yPos += 7;
+  
+  doc.addImage(TICK_ICON_BASE64, 'PNG', margin, yPos - 4, 5, 5);
+  doc.text('Personalized treatment plan with full cost transparency', margin + 8, yPos);
+  
+  // Add footer with contact information
+  yPos = doc.internal.pageSize.getHeight() - 20;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
+  doc.text('www.istanbuldentalsmile.com', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 5;
+  doc.text('+447572445856 | Istanbul, Turkey', pageWidth / 2, yPos, { align: 'center' });
+  
   // Save the PDF with a formatted date in the filename
   const formattedDateForFile = formattedDate.replace(/\//g, '-');
   const filename = `IstanbulDentalSmile_Quote_${formattedDateForFile}.pdf`;
