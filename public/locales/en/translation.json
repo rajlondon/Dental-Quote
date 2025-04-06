@@ -6,6 +6,7 @@
     "testimonials": "Testimonials",
     "blog": "Blog",
     "pricing": "Pricing",
+    "team": "Our Team",
     "faq": "FAQs",
     "contact": "Contact"
   },
@@ -199,8 +200,11 @@
   "common": {
     "name": "Full Name",
     "enter_name": "Enter your full name",
+    "name_placeholder": "Enter your full name",
     "email": "Email Address",
     "enter_email": "Enter your email address",
+    "email_placeholder": "Enter your email address",
+    "phone": "Phone Number",
     "phone_number": "Phone Number",
     "phone_placeholder": "+44 7123 456789",
     "phone_help_text": "We'll use this to contact you about your quote and treatment options"
@@ -229,6 +233,7 @@
     "qty": "Qty",
     "subtotal": "Subtotal",
     "total": "Total",
+    "total_usd": "Total (USD)",
     "guarantee": "Guarantee",
     "quote_validity_note": "This quote is valid for 30 days. Prices are approximate and subject to confirmation by the clinic.",
     "how_it_works": "How it works",
@@ -242,6 +247,15 @@
     "benefit_support": "Support throughout your treatment",
     "benefit_guarantee": "Satisfaction guarantee",
     "download_quote": "Download Quote",
+    "patient_information": "Patient Information",
+    "travel_information": "Travel Information",
+    "travel_info_tooltip": "Providing travel details helps us arrange your stay",
+    "travel_month": "Travel Month",
+    "select_month": "Select month",
+    "departure_city": "Departure City",
+    "select_city": "Select city",
+    "treatment": "Treatment",
+    "our_patients_save": "Our patients save an average of",
     "frequently_asked_questions": "Frequently Asked Questions About Pricing",
     "pricing_faq_1_question": "Why are dental treatments so much cheaper in Istanbul?",
     "pricing_faq_1_answer": "Dental treatments in Istanbul cost significantly less due to lower operational costs, favorable exchange rates, and government incentives for healthcare tourism, while maintaining world-class quality and using the same premium materials and technology as Western clinics.",
@@ -289,6 +303,46 @@
         "title": "Something Went Wrong",
         "message": "We couldn't process your request. Please try again or contact us directly."
       }
+    }
+  },
+  "team": {
+    "title": "Meet Our Team",
+    "subtitle": "Our experienced team is dedicated to providing exceptional dental tourism experiences",
+    "members": {
+      "raj": {
+        "name": "Raj Singh",
+        "role": "Founder & CEO",
+        "bio": "Raj Singh founded Istanbul Dental Smile after his own transformative dental tourism experience in Istanbul. With over 10 years in healthcare management, Raj combines his business expertise with personal passion to provide exceptional dental tourism services.",
+        "languages": ["English", "Hindi", "Basic Turkish"]
+      },
+      "destina": {
+        "name": "Destina Yasar",
+        "role": "Chief Patient Coordinator",
+        "bio": "Destina Yasar oversees all patient coordination at Istanbul Dental Smile, ensuring seamless experiences from initial inquiry to post-treatment care. Born and raised in Istanbul, Destina brings invaluable local knowledge and cultural understanding to the team.",
+        "languages": ["Turkish", "English", "German"]
+      }
+    },
+    "values": {
+      "title": "Our Core Values",
+      "subtitle": "These principles guide everything we do at Istanbul Dental Smile",
+      "trust": {
+        "title": "Trust & Transparency",
+        "description": "We provide complete transparency in pricing, treatment options, and clinic credentials, ensuring you can make informed decisions with confidence."
+      },
+      "quality": {
+        "title": "Quality Assurance",
+        "description": "We partner only with clinics that meet our rigorous standards for facilities, hygiene, technology, and patient outcomes."
+      },
+      "care": {
+        "title": "Personalized Care",
+        "description": "Each patient receives a customized experience tailored to their dental needs, budget, travel preferences, and cultural background."
+      }
+    },
+    "cta": {
+      "title": "Let's Start Your Dental Journey Together",
+      "subtitle": "Our team is ready to answer your questions and help you plan your dental treatment in Istanbul.",
+      "quote_button": "Get a Free Quote",
+      "contact_button": "Contact Us"
     }
   }
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="300" fill="#00688B" />
+  
+  <!-- Stylized head/shoulders -->
+  <path d="M150 225C188.66 225 220 193.66 220 155C220 116.34 188.66 85 150 85C111.34 85 80 116.34 80 155C80 193.66 111.34 225 150 225Z" fill="#F5DEB3" />
+  
+  <!-- Suit -->
+  <path d="M80 225V300H220V225C220 225 200 240 150 240C100 240 80 225 80 225Z" fill="#2F4F4F" />
+  
+  <!-- Shirt and tie -->
+  <path d="M135 225V270H165V225H150H135Z" fill="#FFFFFF" />
+  <path d="M145 225V270H155V225H150H145Z" fill="#B2904F" />
+  
+  <!-- Hair -->
+  <path d="M150 85C180 85 200 115 200 130C200 145 190 155 190 155C190 155 170 120 150 120C130 120 110 155 110 155C110 155 100 145 100 130C100 115 120 85 150 85Z" fill="#1A1A1A" />
+  
+  <!-- Glasses -->
+  <path d="M120 140H95C92.5 140 90 142.5 90 145V155C90 157.5 92.5 160 95 160H120C122.5 160 125 157.5 125 155V145C125 142.5 122.5 140 120 140Z" stroke="#000000" stroke-width="2" fill="transparent" />
+  <path d="M205 140H180C177.5 140 175 142.5 175 145V155C175 157.5 177.5 160 180 160H205C207.5 160 210 157.5 210 155V145C210 142.5 207.5 140 205 140Z" stroke="#000000" stroke-width="2" fill="transparent" />
+  <path d="M125 150H175" stroke="#000000" stroke-width="2" />
+  
+  <!-- Smile -->
+  <path d="M130 175C135 185 165 185 170 175" stroke="#000000" stroke-width="2" fill="transparent" />
+  
+  <!-- Professional name text -->
+  <text x="150" y="285" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Raj Singh</text>
+</svg>

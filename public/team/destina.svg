@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="300" fill="#007B9E" />
+  
+  <!-- Stylized head/shoulders -->
+  <path d="M150 225C188.66 225 220 193.66 220 155C220 116.34 188.66 85 150 85C111.34 85 80 116.34 80 155C80 193.66 111.34 225 150 225Z" fill="#F5DEB3" />
+  
+  <!-- Professional attire -->
+  <path d="M80 225V300H220V225C220 225 200 240 150 240C100 240 80 225 80 225Z" fill="#6B8E23" />
+  
+  <!-- Shirt/blouse -->
+  <path d="M135 225V270H165V225H150H135Z" fill="#FFFFFF" />
+  <path d="M135 250C135 250 140 255 150 255C160 255 165 250 165 250V225H135V250Z" fill="#FFFFFF" />
+  
+  <!-- Hair -->
+  <path d="M110 155C110 155 120 120 150 120C180 120 190 155 190 155C190 155 200 115 180 95C160 75 140 75 120 95C100 115 110 155 110 155Z" fill="#6B4226" />
+  <path d="M110 155C110 155 100 120 100 115C100 95 110 85 120 85C130 85 130 95 130 95C130 95 120 105 120 115C120 125 110 155 110 155Z" fill="#6B4226" />
+  <path d="M190 155C190 155 200 120 200 115C200 95 190 85 180 85C170 85 170 95 170 95C170 95 180 105 180 115C180 125 190 155 190 155Z" fill="#6B4226" />
+  
+  <!-- Earrings -->
+  <circle cx="95" cy="150" r="5" fill="#B2904F" />
+  <circle cx="205" cy="150" r="5" fill="#B2904F" />
+  
+  <!-- Smile -->
+  <path d="M130 175C135 185 165 185 170 175" stroke="#000000" stroke-width="2" fill="transparent" />
+  
+  <!-- Professional name text -->
+  <text x="150" y="285" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Destina Yasar</text>
+</svg>
