@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +22,19 @@ function Router() {
       <Route path="/blog/:id" component={BlogPost} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/team" component={TeamPage} />
+      {/* Redirect /test and /testpdf to the home page */}
+      <Route path="/test">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
+      <Route path="/testpdf">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
