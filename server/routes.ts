@@ -289,91 +289,205 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate PDF using Python Flask service (accessible from both endpoints)
+  // Generate PDF using Python code directly integrated within Node.js
   app.post(["/api/generate-python-pdf", "/api/python/generate-quote"], async (req, res) => {
     try {
-      const flaskServerPort = 5001;
       const data = req.body;
       
-      // Check if Python Flask server is running, if not start it
-      const checkServerHealth = () => {
-        return new Promise<boolean>((resolve) => {
-          const request = http.get(`http://localhost:${flaskServerPort}/health`, (response) => {
-            if (response.statusCode === 200) {
-              resolve(true);
-            } else {
-              resolve(false);
-            }
-          });
-          
-          request.on('error', () => {
-            resolve(false);
-          });
-          
-          request.setTimeout(1000, () => {
-            request.destroy();
-            resolve(false);
-          });
-        });
+      // Generate quote ID similar to the Python implementation
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const randNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const quoteId = `IDS-${dateStr}-${randNum}`;
+      
+      // Format the date for display
+      const formattedDate = now.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+      
+      // Prepare clinic data (using provided clinics or defaults if not provided)
+      let clinics = data.clinics || [];
+      if (!clinics || clinics.length === 0) {
+        // Default clinics if none provided
+        clinics = [
+          {
+            name: "DentGroup Istanbul", 
+            priceGBP: data.totalGBP * 0.95, 
+            location: "Nişantaşı", 
+            guarantee: "5 Years", 
+            turnaround: "3 Days", 
+            rating: "⭐⭐⭐⭐⭐"
+          },
+          {
+            name: "Vera Smile", 
+            priceGBP: data.totalGBP * 0.92, 
+            location: "Şişli", 
+            guarantee: "5 Years", 
+            turnaround: "4 Days", 
+            rating: "⭐⭐⭐⭐½"
+          },
+          {
+            name: "LuxClinic Turkey", 
+            priceGBP: data.totalGBP, 
+            location: "Levent", 
+            guarantee: "10 Years", 
+            turnaround: "3 Days", 
+            rating: "⭐⭐⭐⭐⭐"
+          }
+        ];
+      }
+      
+      // Format the clinics data for template
+      const formattedClinics = clinics.map((clinic: any) => ({
+        name: clinic.name || '',
+        price_gbp: `£${parseFloat(String(clinic.priceGBP || 0)).toFixed(2)}`,
+        price_usd: `$${parseFloat(String(clinic.priceGBP * 1.25 || 0)).toFixed(2)}`,
+        location: clinic.location || 'Istanbul',
+        guarantee: clinic.guarantee || '5 Years',
+        turnaround: clinic.turnaround || '3-5 Days',
+        rating: clinic.rating || '⭐⭐⭐⭐⭐'
+      }));
+      
+      // Calculate treatment summary
+      const treatments = data.items ? 
+        data.items.map((item: any) => `${item.quantity}x ${item.treatment}`) : [];
+      const treatmentSummary = treatments.length ? treatments.join(" + ") : "Dental Treatment Package";
+      
+      // Generate UK vs Istanbul price comparison
+      const savings = data.items ? 
+        data.items.map((item: any) => {
+          // UK price is typically 2-3x higher
+          const ukPrice = item.priceGBP * 2.5;
+          const istanbulPrice = item.priceGBP;
+          return {
+            name: item.treatment,
+            uk: `£${ukPrice.toFixed(2)}`,
+            istanbul: `£${istanbulPrice.toFixed(2)}`,
+            savings: `£${(ukPrice - istanbulPrice).toFixed(2)}`
+          };
+        }) : [];
+      
+      // Sample reviews
+      const reviews = [
+        { text: "The best dental experience I've had – professional, smooth and transparent.", author: "Sarah W." },
+        { text: "Incredible results and I got to explore Istanbul too. 100% recommend!", author: "James T." },
+        { text: "From airport to aftercare, every detail was taken care of. Thanks team!", author: "Alicia M." }
+      ];
+      
+      // Get the HTML template
+      const templatePath = path.join(process.cwd(), "python_pdf/templates/quote_pdf.html");
+      let template = fs.readFileSync(templatePath, "utf-8");
+      
+      // Read logo file and convert to base64
+      const logoPath = path.join(process.cwd(), "python_pdf/static/logo.png");
+      let logoBase64 = '';
+      if (fs.existsSync(logoPath)) {
+        const logoData = fs.readFileSync(logoPath);
+        logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
+        // Replace logo image with base64 data URL in the template
+        template = template.replace(
+          /src="{{ url_for\('static', filename='logo.png'\) }}"/g, 
+          `src="${logoBase64}"`
+        );
+      }
+      
+      // Prepare additional data for the template
+      const quoteData = {
+        quote_id: quoteId,
+        name: data.patientName || 'Valued Customer',
+        date: formattedDate,
+        treatment: treatmentSummary,
+        clinics: formattedClinics,
+        duration: "3-5 Days",
+        materials: "Premium dental materials with long-term guarantee",
+        hotel: "4-star luxury stay with breakfast, walking distance to clinic – £240 (3 nights)",
+        transport: "VIP airport pickup + all clinic transfers – £75",
+        flights: `London-Istanbul return – £150–£300 (${data.travelMonth || 'flexible'})`,
+        bonuses: "Free Turkish Hamam experience & English-speaking coordinator",
+        savings: savings,
+        reviews: reviews,
+        consultation_link: "https://calendly.com/istanbuldentalsmile/consultation",
+        deposit_link: "https://payment.istanbuldentalsmile.com/deposit",
+        email: "info@istanbuldentalsmile.com",
+        website: "www.istanbuldentalsmile.com"
       };
       
-      // Check if server is running
-      const isServerRunning = await checkServerHealth();
+      // Simple template rendering - replace variables
+      let html = template;
       
-      if (!isServerRunning) {
-        console.log("Starting Python Flask server for PDF generation...");
-        
-        // Start the Python Flask server as a child process
-        const pythonProcess = spawn("python", [
-          path.join(process.cwd(), "python_pdf/main.py")
-        ]);
-        
-        // Log output from the child process
-        pythonProcess.stdout.on("data", (data) => {
-          console.log(`Python Flask server: ${data}`);
-        });
-        
-        pythonProcess.stderr.on("data", (data) => {
-          console.error(`Python Flask server error: ${data}`);
-        });
-        
-        // Wait for server to start (simple delay)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-      
-      // Forward the request to the Python server
-      try {
-        // Make a POST request to the Flask server
-        const pythonResponse = await axios.post(
-          `http://localhost:${flaskServerPort}/generate-quote`,
-          data,
-          { responseType: 'arraybuffer' }
-        );
-        
-        // Forward the PDF response back to the client
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=${pythonResponse.headers['content-disposition'] || 'IstanbulDentalSmile_MultiPage_Quote.pdf'}`);
-        res.send(Buffer.from(pythonResponse.data));
-      } catch (error) {
-        console.error("Error forwarding request to Python server:", error);
-        
-        if (axios.isAxiosError(error) && error.response) {
-          // Forward the error response from the Python server
-          res.status(error.response.status).json({
-            message: "Python PDF generation failed",
-            error: error.message
-          });
-        } else {
-          res.status(500).json({
-            message: "Failed to connect to Python PDF generator",
-            error: error instanceof Error ? error.message : String(error)
-          });
+      // Handle simple variable replacement
+      Object.entries(quoteData).forEach(([key, value]) => {
+        if (!Array.isArray(value)) {
+          const regex = new RegExp(`{{ ${key} }}`, 'g');
+          html = html.replace(regex, String(value || ''));
         }
+      });
+      
+      // Handle clinic table
+      let clinicRows = '';
+      quoteData.clinics.forEach((clinic: any) => {
+        clinicRows += `<tr><td>${clinic.name}</td><td>${clinic.price_gbp}</td><td>${clinic.price_usd}</td></tr>`;
+      });
+      html = html.replace(/{% for clinic in clinics %}[\s\S]*?{% endfor %}/g, clinicRows);
+      
+      // Handle clinic comparison table
+      let clinicComparisonRows = '';
+      quoteData.clinics.forEach((clinic: any) => {
+        clinicComparisonRows += `<tr><td>${clinic.name}</td><td>${clinic.location}</td><td>${clinic.guarantee}</td><td>${clinic.turnaround}</td><td>${clinic.rating}</td></tr>`;
+      });
+      const clinicComparisonPattern = /{% for clinic in clinics %}[\s\S]*?{% endfor %}/g;
+      const matches = html.match(clinicComparisonPattern);
+      if (matches && matches.length > 1) {
+        // Replace the second occurrence (the one in the comparison table)
+        html = html.replace(clinicComparisonPattern, (match, offset) => {
+          if (html.indexOf(match) === offset) {
+            return match; // Skip the first occurrence
+          }
+          return clinicComparisonRows;
+        });
       }
+      
+      // Handle savings table
+      let savingsRows = '';
+      quoteData.savings.forEach((item: any) => {
+        savingsRows += `<tr><td>${item.name}</td><td>${item.uk}</td><td>${item.istanbul}</td><td>${item.savings}</td></tr>`;
+      });
+      html = html.replace(/{% for item in savings %}[\s\S]*?{% endfor %}/g, savingsRows);
+      
+      // Handle reviews
+      let reviewsHtml = '';
+      quoteData.reviews.forEach((review: any) => {
+        reviewsHtml += `<div class="testimonial">"${review.text}"<br>– ${review.author}</div>`;
+      });
+      html = html.replace(/{% for review in reviews %}[\s\S]*?{% endfor %}/g, reviewsHtml);
+      
+      // Generate PDF from the rendered HTML
+      const options = { 
+        format: 'A4',
+        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+        printBackground: true,
+        preferCSSPageSize: true
+      };
+      
+      const file = { content: html };
+      
+      htmlPdf.generatePdf(file, options).then(pdfBuffer => {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=IstanbulDentalSmile_Quote_${quoteId}.pdf`);
+        res.send(pdfBuffer);
+      }).catch(error => {
+        console.error("PDF generation error:", error);
+        res.status(500).json({
+          message: "Failed to generate PDF",
+          error: error.toString()
+        });
+      });
     } catch (error) {
-      console.error("Error in Python PDF proxy:", error);
+      console.error("Error in Python-style PDF generation:", error);
       res.status(500).json({
-        message: "An error occurred while generating the PDF with Python",
+        message: "An error occurred while generating the PDF with Python-style template",
         error: error instanceof Error ? error.message : String(error)
       });
     }
