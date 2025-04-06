@@ -1,7 +1,7 @@
 import React from 'react';
-import { Redirect } from 'wouter';
+import Home from './Home';
 
-// This is a simple index file that redirects to the appropriate starting page
+// Main entry point for the website
 export default function Index() {
-  return <Redirect to="/test-pdf" />;
+  return <Home />;
 }
