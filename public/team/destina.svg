@@ -1,30 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="300" height="300" fill="#007B9E" />
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Professional background -->
+  <rect width="800" height="1000" fill="#F8F9FA" />
   
-  <!-- Stylized head/shoulders -->
-  <path d="M150 225C188.66 225 220 193.66 220 155C220 116.34 188.66 85 150 85C111.34 85 80 116.34 80 155C80 193.66 111.34 225 150 225Z" fill="#F5DEB3" />
+  <!-- Subtle background pattern -->
+  <rect y="0" width="800" height="1000" fill="url(#grid)" opacity="0.05" />
   
-  <!-- Professional attire -->
-  <path d="M80 225V300H220V225C220 225 200 240 150 240C100 240 80 225 80 225Z" fill="#6B8E23" />
+  <!-- Professional portrait silhouette -->
+  <g transform="translate(230, 150)">
+    <!-- Head shape -->
+    <ellipse cx="170" cy="160" rx="150" ry="160" fill="#007B9E" />
+    
+    <!-- Neck and shoulders -->
+    <path d="M70 310C70 310 40 400 40 460C40 520 300 520 300 460C300 400 270 310 270 310L70 310Z" fill="#007B9E" />
+    
+    <!-- Professional outfit -->
+    <rect x="40" y="460" width="260" height="340" fill="#00688B" />
+    
+    <!-- Shirt/blouse collar -->
+    <path d="M120 460L170 550L220 460H120Z" fill="#FFFFFF" />
+    
+    <!-- Basic facial features -->
+    <ellipse cx="120" cy="160" rx="15" ry="18" fill="white" opacity="0.8" />
+    <ellipse cx="220" cy="160" rx="15" ry="18" fill="white" opacity="0.8" />
+    <path d="M140 210C140 210 170 230 200 210" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.8" />
+    
+    <!-- Hair outline -->
+    <path d="M70 160C70 100 120 40 170 40C220 40 270 100 270 160" stroke="#6B4226" stroke-width="70" />
+    <path d="M40 180C40 140 40 100 70 80C80 70 100 70 110 80C120 90 120 110 120 130" stroke="#6B4226" stroke-width="30" stroke-linecap="round" />
+    <path d="M300 180C300 140 300 100 270 80C260 70 240 70 230 80C220 90 220 110 220 130" stroke="#6B4226" stroke-width="30" stroke-linecap="round" />
+  </g>
   
-  <!-- Shirt/blouse -->
-  <path d="M135 225V270H165V225H150H135Z" fill="#FFFFFF" />
-  <path d="M135 250C135 250 140 255 150 255C160 255 165 250 165 250V225H135V250Z" fill="#FFFFFF" />
+  <!-- Professional accessories -->
+  <circle cx="230" cy="330" r="8" fill="#B2904F" />
+  <circle cx="570" cy="330" r="8" fill="#B2904F" />
   
-  <!-- Hair -->
-  <path d="M110 155C110 155 120 120 150 120C180 120 190 155 190 155C190 155 200 115 180 95C160 75 140 75 120 95C100 115 110 155 110 155Z" fill="#6B4226" />
-  <path d="M110 155C110 155 100 120 100 115C100 95 110 85 120 85C130 85 130 95 130 95C130 95 120 105 120 115C120 125 110 155 110 155Z" fill="#6B4226" />
-  <path d="M190 155C190 155 200 120 200 115C200 95 190 85 180 85C170 85 170 95 170 95C170 95 180 105 180 115C180 125 190 155 190 155Z" fill="#6B4226" />
+  <!-- Name plate -->
+  <rect x="150" y="800" width="500" height="120" rx="10" fill="#00688B" />
+  <text x="400" y="850" font-family="Arial, sans-serif" font-size="40" font-weight="bold" text-anchor="middle" fill="white">Destina Yasar</text>
+  <text x="400" y="890" font-family="Arial, sans-serif" font-size="24" font-weight="normal" text-anchor="middle" fill="white">Chief Patient Coordinator</text>
   
-  <!-- Earrings -->
-  <circle cx="95" cy="150" r="5" fill="#B2904F" />
-  <circle cx="205" cy="150" r="5" fill="#B2904F" />
-  
-  <!-- Smile -->
-  <path d="M130 175C135 185 165 185 170 175" stroke="#000000" stroke-width="2" fill="transparent" />
-  
-  <!-- Professional name text -->
-  <text x="150" y="285" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Destina Yasar</text>
+  <!-- Grid pattern definition for background -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#007B9E" />
+      <rect width="10" height="10" fill="#00688B" />
+      <rect x="10" y="10" width="10" height="10" fill="#00688B" />
+    </pattern>
+  </defs>
 </svg>

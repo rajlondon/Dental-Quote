@@ -63,11 +63,12 @@ export default function TeamPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {teamMembers.map(member => (
                 <div key={member.id} className="flex flex-col md:flex-row gap-8 bg-white rounded-xl shadow-md overflow-hidden border border-neutral-200">
-                  <div className="md:w-2/5 overflow-hidden bg-neutral-100 flex items-center justify-center">
+                  <div className="md:w-2/5 overflow-hidden bg-neutral-100 flex items-center justify-center" style={{ minHeight: "300px" }}>
                     <img 
                       src={`/team/${member.image}`}
                       alt={member.name}
                       className="w-full h-full object-cover"
+                      style={{ objectPosition: member.id === "raj-singh" ? "center top" : "center" }}
                     />
                   </div>
                   <div className="md:w-3/5 p-6 md:p-8 flex flex-col">
