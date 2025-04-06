@@ -181,23 +181,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let template = fs.readFileSync(templatePath, "utf-8");
       
       // Read logo file and convert to base64
-      const logoPath = path.join(__dirname, "../public/images/logo.jpeg");
+      const logoPath = path.join(__dirname, "../public/images/logo.png");
       let logoBase64 = '';
       if (fs.existsSync(logoPath)) {
         const logoData = fs.readFileSync(logoPath);
         logoBase64 = logoData.toString('base64');
-        template = template.replace(/{{logoBase64}}/g, logoBase64);
+      } else {
+        // Fallback to logo.jpeg if logo.png doesn't exist
+        const jpegLogoPath = path.join(__dirname, "../public/images/logo.jpeg");
+        if (fs.existsSync(jpegLogoPath)) {
+          const logoData = fs.readFileSync(jpegLogoPath);
+          logoBase64 = logoData.toString('base64');
+        }
       }
+      template = template.replace(/{{logoBase64}}/g, logoBase64);
       
-      // Read tick icon file and convert to base64
-      const tickPath = path.join(__dirname, "../public/icons/tick.png");
-      let tickBase64 = '';
-      if (fs.existsSync(tickPath)) {
-        const tickData = fs.readFileSync(tickPath);
-        tickBase64 = tickData.toString('base64');
-        template = template.replace(/{{tickBase64}}/g, tickBase64);
+      // Generate a quote number
+      const now = new Date();
+      const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const quoteNumber = `IDS-${datePart}-${randomPart}`;
+      templateData.quoteNumber = quoteNumber;
+      
+      // Format the date
+      const formattedDate = now.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+      templateData.date = formattedDate;
+      
+      // Create a treatment summary from the items
+      let treatmentSummary = "";
+      if (templateData.items && templateData.items.length > 0) {
+        const mainTreatments = templateData.items.map((item: any) => 
+          `${item.treatment} (${item.quantity})`).join(' + ');
+        treatmentSummary = mainTreatments;
+      } else {
+        treatmentSummary = "Dental Treatment Package";
       }
-
+      templateData.treatmentSummary = treatmentSummary;
+      
       // Simple mustache-like template rendering
       // Replace {{variable}} with actual values
       Object.entries(templateData).forEach(([key, value]) => {
@@ -209,41 +233,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             itemsHtml += `
               <tr>
                 <td>${item.treatment}</td>
-                <td style="text-align: right;">£${item.priceGBP}</td>
-                <td style="text-align: right;">$${item.priceUSD}</td>
-                <td style="text-align: center;">${item.quantity}</td>
-                <td>${item.guarantee}</td>
+                <td>£${item.priceGBP}</td>
+                <td>$${item.priceUSD}</td>
               </tr>
             `;
           });
           template = template.replace('{{#each items}}', '').replace('{{/each}}', '');
-          template = template.replace(/{{treatment}}/g, '').replace(/{{priceGBP}}/g, '').replace(/{{priceUSD}}/g, '').replace(/{{quantity}}/g, '').replace(/{{guarantee}}/g, '');
-          // Insert the generated HTML between the table header and the total row
-          const tableStartPos = template.indexOf('<table>');
-          const totalRowPos = template.indexOf('<tr style="font-weight: bold; background-color: #f5f5f5;">');
-          if (tableStartPos !== -1 && totalRowPos !== -1) {
-            const tableHeaderEndPos = template.indexOf('</tr>', tableStartPos) + 5;
+          template = template.replace(/{{treatment}}/g, '').replace(/{{priceGBP}}/g, '').replace(/{{priceUSD}}/g, '');
+          
+          // Find where to insert the items in the table
+          const tableRowPos = template.indexOf('<tr><th>Treatment</th><th>Price (GBP)</th><th>Price (USD)</th></tr>');
+          if (tableRowPos !== -1) {
+            const tableHeaderEndPos = template.indexOf('</tr>', tableRowPos) + 5;
             template = template.slice(0, tableHeaderEndPos) + itemsHtml + template.slice(tableHeaderEndPos);
-          }
-        } else if (Array.isArray(value) && key === 'clinics') {
-          let clinicsHtml = '';
-          // Generate HTML for each clinic
-          (value as any[]).forEach((clinic: any) => {
-            clinicsHtml += `
-              <tr>
-                <td>${clinic.name}</td>
-                <td>£${clinic.priceGBP}</td>
-                <td>${clinic.extras}</td>
-              </tr>
-            `;
-          });
-          template = template.replace('{{#each clinics}}', '').replace('{{/each}}', '');
-          template = template.replace(/{{name}}/g, '').replace(/{{priceGBP}}/g, '').replace(/{{extras}}/g, '');
-          // Insert the generated HTML after the table header in the cost comparison section
-          const comparisonTableStartPos = template.indexOf('<table class="comparison">');
-          if (comparisonTableStartPos !== -1) {
-            const comparisonTableHeaderEndPos = template.indexOf('</tr>', comparisonTableStartPos) + 5;
-            template = template.slice(0, comparisonTableHeaderEndPos) + clinicsHtml + template.slice(comparisonTableHeaderEndPos);
           }
         } else {
           // Replace simple variables
@@ -253,16 +255,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
         }
       });
-      
-      // Calculate UK cost range and savings
-      const totalGBP = parseFloat(String(templateData.totalGBP || '0'));
-      const ukCostLow = Math.round(totalGBP * 2.2);
-      const ukCostHigh = Math.round(totalGBP * 3);
-      const savings = Math.round(totalGBP * 1.75);
-      
-      template = template.replace(/{{ukCostLow}}/g, ukCostLow.toLocaleString());
-      template = template.replace(/{{ukCostHigh}}/g, ukCostHigh.toLocaleString());
-      template = template.replace(/{{savings}}/g, savings.toLocaleString());
       
       // Generate PDF from the rendered HTML
       const options = { 
@@ -276,18 +268,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       htmlPdf.generatePdf(file, options).then(pdfBuffer => {
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=IstanbulDentalSmile_Quote.pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=IstanbulDentalSmile_Quote_${templateData.quoteNumber}.pdf`);
         res.send(pdfBuffer);
       }).catch(error => {
         console.error("PDF generation error:", error);
         res.status(500).json({
           message: "Failed to generate PDF",
+          error: error.toString()
         });
       });
     } catch (error) {
       console.error("Error processing PDF request:", error);
       res.status(500).json({
         message: "An error occurred while generating the PDF",
+        error: error.toString()
       });
     }
   });
