@@ -7,6 +7,8 @@ import ServerPdfGenerator from '@/components/ServerPdfGenerator';
 import PythonPdfGenerator from '@/components/PythonPdfGenerator';
 import JourneyPdf from '@/components/JourneyPdf';
 import TemplatePdfGenerator from '@/components/TemplatePdfGenerator';
+import SimplePdfGenerator from '@/components/SimplePdfGenerator';
+import JSPDFGenerator from '@/components/JSPDFGenerator';
 import axios from 'axios';
 
 export default function TestPdf() {
@@ -184,6 +186,32 @@ export default function TestPdf() {
           />
           
           <TemplatePdfGenerator 
+            items={sampleData.items}
+            totalGBP={sampleData.totalGBP}
+            totalUSD={sampleData.totalUSD}
+            patientName={sampleData.patientName}
+            patientEmail={sampleData.patientEmail}
+            patientPhone={sampleData.patientPhone}
+            travelMonth={sampleData.travelMonth}
+            departureCity={sampleData.departureCity}
+            clinics={sampleData.clinics}
+            onComplete={onPdfComplete}
+          />
+          
+          <SimplePdfGenerator 
+            items={sampleData.items}
+            totalGBP={sampleData.totalGBP}
+            totalUSD={sampleData.totalUSD}
+            patientName={sampleData.patientName}
+            patientEmail={sampleData.patientEmail}
+            patientPhone={sampleData.patientPhone}
+            travelMonth={sampleData.travelMonth}
+            departureCity={sampleData.departureCity}
+            clinics={sampleData.clinics}
+            onComplete={onPdfComplete}
+          />
+          
+          <JSPDFGenerator 
             items={sampleData.items}
             totalGBP={sampleData.totalGBP}
             totalUSD={sampleData.totalUSD}

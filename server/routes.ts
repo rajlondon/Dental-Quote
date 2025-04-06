@@ -11,6 +11,8 @@ import htmlPdf from "html-pdf-node";
 import { spawn } from "child_process";
 import axios from "axios";
 import http from "http";
+import Handlebars from "handlebars";
+import { generateQuotePdf } from "./pdf-generator";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -181,30 +183,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the template
       const templatePath = path.join(__dirname, "templates/quote_template.html");
-      let template = fs.readFileSync(templatePath, "utf-8");
+      let templateSource = fs.readFileSync(templatePath, "utf-8");
       
       // Read logo file and convert to base64
-      const logoPath = path.join(__dirname, "../public/images/logo.png");
+      const logoPath = path.join(__dirname, "../attached_assets/logo.png");
       let logoBase64 = '';
       if (fs.existsSync(logoPath)) {
         const logoData = fs.readFileSync(logoPath);
         logoBase64 = logoData.toString('base64');
       } else {
         // Fallback to logo.jpeg if logo.png doesn't exist
-        const jpegLogoPath = path.join(__dirname, "../public/images/logo.jpeg");
+        const jpegLogoPath = path.join(__dirname, "../attached_assets/logo.jpeg");
         if (fs.existsSync(jpegLogoPath)) {
           const logoData = fs.readFileSync(jpegLogoPath);
           logoBase64 = logoData.toString('base64');
         }
       }
-      template = template.replace(/{{logoBase64}}/g, logoBase64);
       
       // Generate a quote number
       const now = new Date();
       const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
       const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const quoteNumber = `IDS-${datePart}-${randomPart}`;
-      templateData.quoteNumber = quoteNumber;
+      const quoteId = `IDS-${datePart}-${randomPart}`;
       
       // Format the date
       const formattedDate = now.toLocaleDateString('en-GB', {
@@ -212,52 +212,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
         month: 'long',
         year: 'numeric'
       });
-      templateData.date = formattedDate;
       
       // Create a treatment summary from the items
-      let treatmentSummary = "";
+      let treatment = "";
       if (templateData.items && templateData.items.length > 0) {
         const mainTreatments = templateData.items.map((item: any) => 
           `${item.treatment} (${item.quantity})`).join(' + ');
-        treatmentSummary = mainTreatments;
+        treatment = mainTreatments;
       } else {
-        treatmentSummary = "Dental Treatment Package";
+        treatment = "Dental Treatment Package";
       }
-      templateData.treatmentSummary = treatmentSummary;
       
-      // Simple mustache-like template rendering
-      // Replace {{variable}} with actual values
-      Object.entries(templateData).forEach(([key, value]) => {
-        // Handle arrays with #each-like syntax
-        if (Array.isArray(value) && key === 'items') {
-          let itemsHtml = '';
-          // Generate HTML for each item
-          (value as any[]).forEach((item: any) => {
-            itemsHtml += `
-              <tr>
-                <td>${item.treatment}</td>
-                <td>£${item.priceGBP}</td>
-                <td>$${item.priceUSD}</td>
-              </tr>
-            `;
-          });
-          template = template.replace('{{#each items}}', '').replace('{{/each}}', '');
-          template = template.replace(/{{treatment}}/g, '').replace(/{{priceGBP}}/g, '').replace(/{{priceUSD}}/g, '');
-          
-          // Find where to insert the items in the table
-          const tableRowPos = template.indexOf('<tr><th>Treatment</th><th>Price (GBP)</th><th>Price (USD)</th></tr>');
-          if (tableRowPos !== -1) {
-            const tableHeaderEndPos = template.indexOf('</tr>', tableRowPos) + 5;
-            template = template.slice(0, tableHeaderEndPos) + itemsHtml + template.slice(tableHeaderEndPos);
+      // Generate UK vs Istanbul price comparison
+      const savings = templateData.items ? 
+        templateData.items.map((item: any) => {
+          // UK price is typically 2-3x higher
+          const ukPrice = item.priceGBP * 2.5;
+          const istanbulPrice = item.priceGBP;
+          return {
+            name: item.treatment,
+            uk: `£${ukPrice.toFixed(2)}`,
+            istanbul: `£${istanbulPrice.toFixed(2)}`,
+            savings: `£${(ukPrice - istanbulPrice).toFixed(2)}`
+          };
+        }) : [];
+      
+      // Sample reviews
+      const reviews = [
+        { text: "The best dental experience I've had – professional, smooth and transparent.", author: "Sarah W." },
+        { text: "Incredible results and I got to explore Istanbul too. 100% recommend!", author: "James T." },
+        { text: "From airport to aftercare, every detail was taken care of. Thanks team!", author: "Alicia M." }
+      ];
+      
+      // Prepare clinic data (using provided clinics or defaults if not provided)
+      let clinics = templateData.clinics || [];
+      if (!clinics || clinics.length === 0) {
+        // Default clinics if none provided
+        clinics = [
+          {
+            name: "DentGroup Istanbul", 
+            priceGBP: `£${(templateData.totalGBP * 0.95).toFixed(2)}`,
+            priceUSD: `$${(templateData.totalGBP * 0.95 * 1.25).toFixed(2)}`,
+            location: "Nişantaşı", 
+            guarantee: "5 Years", 
+            turnaround: "3 Days", 
+            rating: "⭐⭐⭐⭐⭐"
+          },
+          {
+            name: "Vera Smile", 
+            priceGBP: `£${(templateData.totalGBP * 0.92).toFixed(2)}`,
+            priceUSD: `$${(templateData.totalGBP * 0.92 * 1.25).toFixed(2)}`,
+            location: "Şişli", 
+            guarantee: "5 Years", 
+            turnaround: "4 Days", 
+            rating: "⭐⭐⭐⭐½"
+          },
+          {
+            name: "LuxClinic Turkey", 
+            priceGBP: `£${(templateData.totalGBP).toFixed(2)}`,
+            priceUSD: `$${(templateData.totalGBP * 1.25).toFixed(2)}`,
+            location: "Levent", 
+            guarantee: "10 Years", 
+            turnaround: "3 Days", 
+            rating: "⭐⭐⭐⭐⭐"
           }
-        } else {
-          // Replace simple variables
-          template = template.replace(
-            new RegExp(`{{${key}}}`, 'g'), 
-            String(value || '')
-          );
-        }
-      });
+        ];
+      }
+      
+      // Combine all the data for the template
+      const data = {
+        logoBase64,
+        quoteId,
+        date: formattedDate,
+        name: templateData.patientName || 'Valued Customer',
+        treatment,
+        clinics,
+        duration: "3-5 Days",
+        materials: "Premium dental materials with long-term guarantee",
+        hotel: "4-star luxury stay with breakfast, walking distance to clinic – £240 (3 nights)",
+        transport: "VIP airport pickup + all clinic transfers – £75",
+        flights: `London-Istanbul return – £150–£300 (${templateData.travelMonth || 'flexible'})`,
+        bonuses: "Free Turkish Hamam experience & English-speaking coordinator",
+        savings,
+        reviews,
+        consultationLink: "https://calendly.com/istanbuldentalsmile/consultation",
+        depositLink: "https://payment.istanbuldentalsmile.com/deposit",
+        email: "info@istanbuldentalsmile.com",
+        website: "www.istanbuldentalsmile.com"
+      };
+      
+      // Compile the template and render with Handlebars
+      const template = Handlebars.compile(templateSource);
+      const htmlContent = template(data);
       
       // Generate PDF from the rendered HTML
       const options = { 
@@ -267,11 +313,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferCSSPageSize: true
       };
       
-      const file = { content: template };
+      const file = { content: htmlContent };
       
       htmlPdf.generatePdf(file, options).then(pdfBuffer => {
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=IstanbulDentalSmile_Quote_${templateData.quoteNumber}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename=IstanbulDentalSmile_Quote_${quoteId}.pdf`);
         res.send(pdfBuffer);
       }).catch(error => {
         console.error("PDF generation error:", error);
@@ -488,6 +534,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error in Python-style PDF generation:", error);
       res.status(500).json({
         message: "An error occurred while generating the PDF with Python-style template",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Simple PDF generation using jspdf (HTML view)
+  app.post("/api/simple-pdf", async (req, res) => {
+    try {
+      const { items, totalGBP, totalUSD, patientName, clinics } = req.body;
+      
+      // Generate PDF on the server-side
+      const now = new Date();
+      const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const quoteId = `IDS-${datePart}-${randomPart}`;
+      
+      // Prepare the HTML for the PDF
+      const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Dental Quote - ${quoteId}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+          h1 { color: #007ba7; text-align: center; }
+          h2 { color: #007ba7; margin-top: 20px; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #007ba7; color: white; }
+          .header { background-color: #007ba7; color: white; padding: 10px; text-align: center; }
+          .footer { margin-top: 30px; text-align: center; font-size: 0.8em; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Istanbul Dental Smile</h1>
+          <p>Quote ID: ${quoteId} | Date: ${now.toLocaleDateString('en-GB')}</p>
+        </div>
+        
+        <h2>Hello ${patientName || 'Valued Customer'},</h2>
+        <p>Here is your personalized quote for dental treatment in Istanbul.</p>
+        
+        <h2>Treatment Details</h2>
+        <table>
+          <tr>
+            <th>Treatment</th>
+            <th>Quantity</th>
+            <th>Price (GBP)</th>
+            <th>Price (USD)</th>
+          </tr>
+          ${items ? items.map((item: { treatment: string; quantity: number; priceGBP: number; priceUSD: number }) => `
+          <tr>
+            <td>${item.treatment}</td>
+            <td>${item.quantity}</td>
+            <td>£${item.priceGBP.toFixed(2)}</td>
+            <td>$${item.priceUSD.toFixed(2)}</td>
+          </tr>
+          `).join('') : ''}
+          <tr>
+            <td colspan="2"><strong>Total</strong></td>
+            <td><strong>£${totalGBP.toFixed(2)}</strong></td>
+            <td><strong>$${totalUSD.toFixed(2)}</strong></td>
+          </tr>
+        </table>
+        
+        <h2>Clinic Options</h2>
+        <table>
+          <tr>
+            <th>Clinic</th>
+            <th>Price</th>
+            <th>Features</th>
+          </tr>
+          ${clinics ? clinics.map((clinic: { name: string; priceGBP: number; extras?: string }) => `
+          <tr>
+            <td>${clinic.name}</td>
+            <td>£${clinic.priceGBP.toFixed(2)}</td>
+            <td>${clinic.extras || ''}</td>
+          </tr>
+          `).join('') : ''}
+        </table>
+        
+        <div class="footer">
+          <p>For more information, please contact us at info@istanbuldentalsmile.com</p>
+          <p>www.istanbuldentalsmile.com</p>
+        </div>
+      </body>
+      </html>
+      `;
+      
+      // Send the HTML content directly as the response
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+      
+    } catch (error) {
+      console.error("Error generating simple PDF:", error);
+      res.status(500).json({
+        message: "Failed to generate simple PDF",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Pure PDF generation using jsPDF
+  app.post("/api/jspdf-quote", async (req, res) => {
+    try {
+      // Import the PDF generator function
+      const { generateQuotePdf } = await import('./pdf-generator');
+      
+      // Get data from request body
+      const quoteData = req.body;
+      
+      // Generate the PDF
+      const pdfBuffer = generateQuotePdf(quoteData);
+      
+      // Set the response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="IstanbulDentalSmile_Quote.pdf"');
+      
+      // Send the PDF
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating PDF with jsPDF:", error);
+      res.status(500).json({
+        message: "Failed to generate PDF with jsPDF",
         error: error instanceof Error ? error.message : String(error)
       });
     }
