@@ -8,6 +8,9 @@ import { insertQuoteRequestSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import htmlPdf from "html-pdf-node";
+import { spawn } from "child_process";
+import axios from "axios";
+import http from "http";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -281,7 +284,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error processing PDF request:", error);
       res.status(500).json({
         message: "An error occurred while generating the PDF",
-        error: error.toString()
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Generate PDF using Python Flask service (accessible from both endpoints)
+  app.post(["/api/generate-python-pdf", "/api/python/generate-quote"], async (req, res) => {
+    try {
+      const flaskServerPort = 5001;
+      const data = req.body;
+      
+      // Check if Python Flask server is running, if not start it
+      const checkServerHealth = () => {
+        return new Promise<boolean>((resolve) => {
+          const request = http.get(`http://localhost:${flaskServerPort}/health`, (response) => {
+            if (response.statusCode === 200) {
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          });
+          
+          request.on('error', () => {
+            resolve(false);
+          });
+          
+          request.setTimeout(1000, () => {
+            request.destroy();
+            resolve(false);
+          });
+        });
+      };
+      
+      // Check if server is running
+      const isServerRunning = await checkServerHealth();
+      
+      if (!isServerRunning) {
+        console.log("Starting Python Flask server for PDF generation...");
+        
+        // Start the Python Flask server as a child process
+        const pythonProcess = spawn("python", [
+          path.join(process.cwd(), "python_pdf/main.py")
+        ]);
+        
+        // Log output from the child process
+        pythonProcess.stdout.on("data", (data) => {
+          console.log(`Python Flask server: ${data}`);
+        });
+        
+        pythonProcess.stderr.on("data", (data) => {
+          console.error(`Python Flask server error: ${data}`);
+        });
+        
+        // Wait for server to start (simple delay)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      // Forward the request to the Python server
+      try {
+        // Make a POST request to the Flask server
+        const pythonResponse = await axios.post(
+          `http://localhost:${flaskServerPort}/generate-quote`,
+          data,
+          { responseType: 'arraybuffer' }
+        );
+        
+        // Forward the PDF response back to the client
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${pythonResponse.headers['content-disposition'] || 'IstanbulDentalSmile_MultiPage_Quote.pdf'}`);
+        res.send(Buffer.from(pythonResponse.data));
+      } catch (error) {
+        console.error("Error forwarding request to Python server:", error);
+        
+        if (axios.isAxiosError(error) && error.response) {
+          // Forward the error response from the Python server
+          res.status(error.response.status).json({
+            message: "Python PDF generation failed",
+            error: error.message
+          });
+        } else {
+          res.status(500).json({
+            message: "Failed to connect to Python PDF generator",
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error in Python PDF proxy:", error);
+      res.status(500).json({
+        message: "An error occurred while generating the PDF with Python",
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });

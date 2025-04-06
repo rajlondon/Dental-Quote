@@ -20,6 +20,7 @@ import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
 import TemplatePdfGenerator from "./TemplatePdfGenerator";
 import ServerPdfGenerator from "./ServerPdfGenerator";
+import PythonPdfGenerator from "./PythonPdfGenerator";
 import jsPDF from "jspdf";
 import {
   TreatmentPrice,
@@ -1059,17 +1060,30 @@ export default function PriceCalculator() {
               </Button>
               
               {htmlQuoteData && (
-                <ServerPdfGenerator
-                  items={htmlQuoteData.items}
-                  totalGBP={htmlQuoteData.totalGBP}
-                  totalUSD={htmlQuoteData.totalUSD}
-                  patientName={htmlQuoteData.patientName}
-                  patientEmail={htmlQuoteData.patientEmail}
-                  patientPhone={htmlQuoteData.patientPhone}
-                  travelMonth={htmlQuoteData.travelMonth}
-                  departureCity={htmlQuoteData.departureCity}
-                  onComplete={() => setShowHtmlQuote(false)}
-                />
+                <>
+                  <ServerPdfGenerator
+                    items={htmlQuoteData.items}
+                    totalGBP={htmlQuoteData.totalGBP}
+                    totalUSD={htmlQuoteData.totalUSD}
+                    patientName={htmlQuoteData.patientName}
+                    patientEmail={htmlQuoteData.patientEmail}
+                    patientPhone={htmlQuoteData.patientPhone}
+                    travelMonth={htmlQuoteData.travelMonth}
+                    departureCity={htmlQuoteData.departureCity}
+                    onComplete={() => setShowHtmlQuote(false)}
+                  />
+                  <PythonPdfGenerator
+                    items={htmlQuoteData.items}
+                    totalGBP={htmlQuoteData.totalGBP}
+                    totalUSD={htmlQuoteData.totalUSD}
+                    patientName={htmlQuoteData.patientName}
+                    patientEmail={htmlQuoteData.patientEmail}
+                    patientPhone={htmlQuoteData.patientPhone}
+                    travelMonth={htmlQuoteData.travelMonth}
+                    departureCity={htmlQuoteData.departureCity}
+                    onComplete={() => setShowHtmlQuote(false)}
+                  />
+                </>
               )}
             </div>
           </DialogFooter>
