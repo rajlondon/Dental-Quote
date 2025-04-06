@@ -101,30 +101,13 @@ const generateQuotePdf = ({
   const margin = 20;
   const contentWidth = pageWidth - 2 * margin;
   
-  // Create a professional header with branding colors
-  // Add a header bar - using Strong teal blue (#00688B)
+  // Create a modern, clean header with branding colors
   doc.setFillColor(0, 104, 139); // #00688B Strong teal blue
-  doc.rect(0, 0, pageWidth, 50, 'F'); // Increased header height
+  doc.rect(0, 0, pageWidth, 40, 'F'); // Top header bar
   
-  // Add a secondary accent strip - using Elegant gold (#B2904F)
+  // Add a secondary accent strip
   doc.setFillColor(178, 144, 79); // #B2904F Elegant gold
-  doc.rect(0, 50, pageWidth, 3, 'F');
-  
-  // Draw a simple logo with the initials as bold text with a border
-  // This ensures the logo is visible in the PDF regardless of image loading issues
-  doc.setFillColor(255, 255, 255); // White background for logo area
-  doc.setDrawColor(0, 104, 139); // Teal blue border
-  doc.setLineWidth(1.5);
-  doc.roundedRect(margin, 10, 40, 30, 3, 3, 'FD'); // Draw a white rectangle with border
-  
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.setTextColor(0, 104, 139); // Teal blue text
-  doc.text('IDS', margin + 20, 25, { align: 'center' }); // Centered text for logo
-  
-  // Add second line of smaller text
-  doc.setFontSize(8);
-  doc.text('ISTANBUL DENTAL SMILE', margin + 20, 32, { align: 'center' });
+  doc.rect(0, 40, pageWidth, 3, 'F');
   
   // Generate date variables that will be used in multiple places
   const currentDate = new Date();
@@ -132,76 +115,61 @@ const generateQuotePdf = ({
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const day = String(currentDate.getDate()).padStart(2, '0');
   const datePart = `${year}${month}${day}`;
-  const formattedDate = currentDate.toLocaleDateString('en-GB');
-  
-  // Generate a unique quote number based on date and patient name (in format IDS-YYYYMMDD-XX##)
-  // Format matches the HTML template example: IDS-20250405-RA87
-  const namePart = patientName ? patientName.substring(0, 2).toUpperCase() : 'XX';
-  const randomNum = Math.floor(Math.random() * 100);
-  const quoteNumber = `IDS-${datePart}-${namePart}${randomNum}`;
-  
-  // Add quote number in small text below the date
-  doc.setFontSize(8);
-  doc.setTextColor(220, 220, 220); // Light grey
-  doc.text(`Quote #: ${quoteNumber}`, pageWidth - margin, 35, { align: 'right' });
+  const formattedDate = currentDate.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
   
   // Add title with white text color for contrast against the blue background
   doc.setFontSize(24); // Larger text
   doc.setTextColor(255, 255, 255); // White text on blue background
-  doc.text('Istanbul Dental Smile', pageWidth / 2, 25, { align: 'center' });
-  doc.setFontSize(16);
-  doc.text('Treatment Quote', pageWidth / 2, 40, { align: 'center' });
-  
-  // Add date on the right side
-  doc.setFontSize(10);
-  doc.setTextColor(220, 220, 220); // Light grey
-  doc.text(`Quote generated on: ${formattedDate}`, pageWidth - margin, 20, { align: 'right' });
-  
-  // Add a contact phone number instead of an icon
-  doc.setFontSize(10);
-  doc.setTextColor(220, 220, 220); // Light grey
-  doc.text('Contact: +447572445856', pageWidth - margin, 30, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.text('Your Personalized Smile Journey', pageWidth / 2, 25, { align: 'center' });
   
   // Reset colors for the rest of the document
   doc.setDrawColor(0, 0, 0);
   doc.setTextColor(0, 0, 0);
   
-  // Add patient info if available
-  let yPos = 60; // Start below the header and accent strip
-  if (patientName || patientEmail || patientPhone) {
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text('Patient Information:', margin, yPos);
-    yPos += 7;
-    
-    doc.setFontSize(10);
-    if (patientName) {
-      doc.text(`Name: ${patientName || 'Not provided'}`, margin, yPos);
-      yPos += 5;
-    }
-    if (patientEmail) {
-      doc.text(`Email: ${patientEmail || 'Not provided'}`, margin, yPos);
-      yPos += 5;
-    }
-    if (patientPhone) {
-      doc.text(`Phone: ${patientPhone || 'Not provided'}`, margin, yPos);
-      yPos += 5;
-    }
-    
-    yPos += 7; // Space before treatments
+  // Add patient info and date in a clean format
+  let yPos = 60;
+  
+  // Create columns for patient info
+  const leftColX = margin;
+  const rightColX = pageWidth / 2 + 10;
+  
+  // Left column: Patient info
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Prepared for:', leftColX, yPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(patientName || 'Valued Patient', leftColX + 28, yPos);
+  
+  // Right column: Date
+  doc.setFont('helvetica', 'bold');
+  doc.text('Date:', rightColX, yPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(formattedDate, rightColX + 15, yPos);
+  
+  yPos += 12;
+  
+  // Treatment requested
+  doc.setFont('helvetica', 'bold');
+  doc.text('Treatment Requested:', leftColX, yPos);
+  yPos += 7;
+  
+  // Create treatment summary text by combining multiple treatments
+  let treatmentSummary = '';
+  if (items.length > 0) {
+    treatmentSummary = items.map(item => `${item.quantity} ${item.treatment}`).join(' + ');
+  } else {
+    treatmentSummary = 'Dental consultation and treatment plan';
   }
   
-  // Add treatments section title with subsection for medical treatments
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont('helvetica', 'bold');
-  doc.text('YOUR QUOTE DETAILS', margin, yPos);
-  yPos += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.text(treatmentSummary, leftColX, yPos);
   
-  // Add subsection for dental treatments
-  doc.setFontSize(11);
-  doc.text('Dental Treatments:', margin, yPos);
-  yPos += 8;
+  yPos += 15;
   
   // Create a professional looking table
   const cols: TableColumn[] = [

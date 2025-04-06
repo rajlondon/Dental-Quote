@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import PdfGenerator from "./PdfGenerator";
+import NewPdfGenerator from "./NewPdfGenerator";
 import jsPDF from "jspdf";
 import {
   TreatmentPrice,
@@ -709,7 +710,7 @@ export default function PriceCalculator() {
                       </div>
                       
                       {/* PDF Generator component */}
-                      <PdfGenerator
+                      <NewPdfGenerator
                         items={quote.items}
                         totalGBP={quote.totalGBP}
                         totalUSD={quote.totalUSD}
