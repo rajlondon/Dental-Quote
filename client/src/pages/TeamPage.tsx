@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import OptimizedImage from "@/components/OptimizedImage";
 
 const teamMembers = [
   {
@@ -13,7 +14,7 @@ const teamMembers = [
 His mission is to make world-class dental care accessible to everyone through transparent pricing, personalized service, and carefully vetted clinics. Raj personally visits each clinic in Istanbul to ensure they meet the company's high standards for quality, hygiene, and patient care.
 
 Based in London, Raj holds an MBA from Imperial College Business School and speaks English, Hindi, and basic Turkish.`,
-    image: "raj.jpg",
+    image: "/images/team/raj.jpg",
     languages: ["English", "Hindi", "Basic Turkish"],
     contactEmail: "rajsingh140186@googlemail.com"
   },
@@ -26,7 +27,7 @@ Based in London, Raj holds an MBA from Imperial College Business School and spea
 With a background in healthcare administration and tourism management, Destina excels at creating personalized treatment plans that consider both clinical needs and travel preferences. Her warm, empathetic approach has helped hundreds of international patients navigate their dental tourism journey with confidence.
 
 Destina is fluent in Turkish, English, and German, making her the perfect liaison between international patients and Istanbul's top dental professionals.`,
-    image: "destina.jpg",
+    image: "/images/team/destina.jpg",
     languages: ["Turkish", "English", "German"],
     contactEmail: "destina@istanbuldentalsmile.com"
   }
@@ -64,8 +65,8 @@ export default function TeamPage() {
               {teamMembers.map(member => (
                 <div key={member.id} className="flex flex-col md:flex-row gap-8 bg-white rounded-xl shadow-md overflow-hidden border border-neutral-200">
                   <div className="md:w-2/5 overflow-hidden bg-neutral-100 flex items-center justify-center" style={{ minHeight: "300px" }}>
-                    <img 
-                      src={`/team/${member.image}`}
+                    <OptimizedImage 
+                      src={member.image}
                       alt={member.name}
                       className="w-full h-full object-cover"
                       style={{ objectPosition: member.id === "raj-singh" ? "center top" : "center" }}
