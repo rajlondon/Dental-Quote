@@ -340,6 +340,30 @@ export default function PriceCalculator() {
                             </Button>
                           </div>
                           
+                          {/* How to Build Your Quote Guide */}
+                          <div className="bg-white rounded-lg p-4 mb-4 border border-neutral-200">
+                            <h4 className="font-semibold text-primary mb-2">How to Build Your Quote</h4>
+                            <div className="space-y-3 text-sm">
+                              <ol className="list-decimal pl-5 space-y-1 text-neutral-700">
+                                <li>Select each dental treatment you need from the dropdown menu</li>
+                                <li>Enter the quantity (number of teeth) for each treatment</li>
+                                <li>Add multiple treatments if needed using the "Add Treatment" button</li>
+                                <li>Fill in your contact and travel information</li>
+                              </ol>
+                              
+                              <div className="bg-primary/5 p-3 rounded mt-2">
+                                <h5 className="font-medium text-primary mb-1">Important Notes:</h5>
+                                <ul className="list-disc pl-5 space-y-1 text-neutral-600 text-xs">
+                                  <li><span className="font-medium">Sinus lifting</span> can only be determined after examining dental X-rays/CT scans</li>
+                                  <li>If you have recent X-rays or CT scans, please send these after receiving your quote</li>
+                                  <li>For dental implants, please specify quantity and brand (if you have a preference)</li>
+                                  <li>For crowns, veneers, and other treatments, please indicate quantity needed</li>
+                                  <li>Our dental team will help finalize your treatment plan during your consultation</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                          
                           {form.watch('treatments').map((_, index) => (
                             <div key={index} className="flex gap-4 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">
                               <div className="flex-1">
