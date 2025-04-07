@@ -7,8 +7,8 @@ import Autoplay from "embla-carousel-autoplay";
 
 // Import carousel images
 import istanbulImage from "@assets/image_1743447461115.png";
-import smileImage from "../../../public/images/carousel/Screenshot 2025-04-07 at 01.05.52.png";
-import clinicImage from "../../../public/images/carousel/Screenshot 2025-04-07 at 01.15.14.png";
+import smileImage from "../../../public/images/carousel/smile.png";
+import clinicImage from "../../../public/images/carousel/clinic.png";
 
 // Define the carousel slides
 const CAROUSEL_SLIDES = [
@@ -20,12 +20,12 @@ const CAROUSEL_SLIDES = [
   {
     id: 2,
     image: clinicImage,
-    alt: "Professional dental clinic"
+    alt: "Professional dental clinic with Istanbul view"
   },
   {
     id: 3,
     image: smileImage,
-    alt: "Happy dental patient smiling"
+    alt: "Beautiful smile after dental treatment"
   },
 ];
 
