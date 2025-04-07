@@ -165,15 +165,17 @@ export default function PriceCalculator() {
     const xrayStatus = data.xrayFiles && data.xrayFiles.length > 0;
     setHasXrays(!!xrayStatus);
     
-    // Log the form data including travel info for debugging
+    // Enhanced logging with additional travel info details
     console.log('Form submission data:', {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      travelMonth: data.travelMonth,
-      departureCity: data.departureCity,
+      travelMonth: data.travelMonth || 'July', // Make sure there's always a value
+      departureCity: data.departureCity || 'London', // Make sure there's always a value
       treatmentsCount: data.treatments.length,
-      hasXrays: !!xrayStatus
+      hasXrays: !!xrayStatus,
+      rawTravelMonthValue: data.travelMonth, // Show the raw value for debugging
+      rawDepartureCityValue: data.departureCity // Show the raw value for debugging
     });
     
     // Pass the extra data to the PDF generator when needed
@@ -224,8 +226,8 @@ export default function PriceCalculator() {
         patientName: data.name,
         patientEmail: data.email,
         patientPhone: data.phone,
-        travelMonth: data.travelMonth,
-        departureCity: data.departureCity,
+        travelMonth: data.travelMonth || 'July', // Use explicit default
+        departureCity: data.departureCity || 'London', // Use explicit default
         hasXrays: xrayStatus,
         xrayCount: xrayFileNames.length
       };
@@ -382,6 +384,12 @@ export default function PriceCalculator() {
       });
       
       // Store quote data in state for the dialog
+      // Log the travel data for debugging
+      console.log('HTML Quote preparation travel data:', {
+        travelMonth: quoteData.travelMonth,
+        departureCity: quoteData.departureCity
+      });
+      
       setHtmlQuoteData({
         quoteNumber,
         date,
@@ -391,8 +399,8 @@ export default function PriceCalculator() {
         items: quoteItems,
         totalGBP: calculatedQuote.totalGBP,
         totalUSD: calculatedQuote.totalUSD,
-        travelMonth: quoteData.travelMonth || '',
-        departureCity: quoteData.departureCity || '',
+        travelMonth: quoteData.travelMonth || 'July', // Use explicit default
+        departureCity: quoteData.departureCity || 'London', // Use explicit default
         flightEstimate: quoteData.departureCity && quoteData.travelMonth 
           ? getDefaultFlightEstimate(quoteData.travelMonth) || 0 
           : 0,
