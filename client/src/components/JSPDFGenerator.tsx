@@ -104,8 +104,22 @@ export default function JSPDFGenerator({
     }
   };
   
+  // Expose the PDF generation function to a global property
+  // This allows us to call it directly from other components
+  React.useEffect(() => {
+    // Attach the generatePdf function to the window object
+    // @ts-ignore - Adding custom property
+    window.generateJsPdf = generatePdf;
+
+    return () => {
+      // Clean up when component unmounts
+      // @ts-ignore - Removing custom property
+      delete window.generateJsPdf;
+    };
+  }, []);
+
   return (
-    <div className="mt-4">
+    <div id="jspdf-generator-ref" className="mt-4 jspdf-generator-container">
       <Button
         onClick={generatePdf}
         disabled={isLoading}

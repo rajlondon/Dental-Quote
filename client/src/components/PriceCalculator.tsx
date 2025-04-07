@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 import {
   Form,
   FormControl,
@@ -219,41 +220,94 @@ export default function PriceCalculator() {
   
   // Function to download quote as PDF
   const downloadQuotePDF = () => {
-    if (!htmlQuoteData) return;
-    
     try {
-      // Create reference to the dialog content
-      const quoteElement = document.getElementById('quote-content');
-      if (!quoteElement) {
-        console.error('Quote element not found');
+      // Try the global function first (for the main quote view)
+      // @ts-ignore - Using the global function we added
+      if (window.generateJsPdf) {
+        // @ts-ignore
+        window.generateJsPdf();
         return;
       }
       
-      // Hide download button for the PDF capture
-      const downloadButton = document.getElementById('quote-download-button');
-      const closeButton = document.getElementById('quote-close-button');
-      if (downloadButton) downloadButton.style.display = 'none';
-      if (closeButton) closeButton.style.display = 'none';
+      // Alternative approach: Try to find and click the hidden JSPDFGenerator component's button
+      const jspdfGeneratorRef = document.getElementById('jspdf-generator-ref');
+      if (jspdfGeneratorRef) {
+        const button = jspdfGeneratorRef.querySelector('button');
+        if (button) {
+          button.click();
+          return;
+        }
+      }
       
-      // Create a new jsPDF instance
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Use jsPDF to render the HTML content
-      pdf.html(quoteElement, {
-        callback: function(doc) {
-          // Save the PDF
-          doc.save(`IstanbulDentalSmile_Quote_${htmlQuoteData.quoteNumber}.pdf`);
+      // Fallback: Use the axios API directly (for the quote dialog)
+      if (htmlQuoteData) {
+        // Call the server-side jsPDF endpoint
+        axios({
+          method: 'post',
+          url: '/api/jspdf-quote',
+          data: {
+            items: htmlQuoteData.items,
+            totalGBP: htmlQuoteData.totalGBP,
+            totalUSD: htmlQuoteData.totalUSD,
+            patientName: htmlQuoteData.patientName,
+            patientEmail: htmlQuoteData.patientEmail,
+            patientPhone: htmlQuoteData.patientPhone,
+            travelMonth: htmlQuoteData.travelMonth,
+            departureCity: htmlQuoteData.departureCity,
+            clinics: [
+              {
+                name: "London Clinic",
+                priceGBP: Math.round(htmlQuoteData.totalGBP * 2.5),
+                extras: "Without travel"
+              },
+              {
+                name: "Manchester Clinic",
+                priceGBP: Math.round(htmlQuoteData.totalGBP * 2.2),
+                extras: "Without travel"
+              },
+              {
+                name: "Istanbul Dental Smile",
+                priceGBP: htmlQuoteData.totalGBP,
+                extras: "Including 5★ hotel"
+              }
+            ],
+            hasXrays: htmlQuoteData.hasXrays,
+            xrayCount: htmlQuoteData.xrayCount
+          },
+          responseType: 'blob'
+        }).then(response => {
+          // Create a download link for the PDF
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
           
-          // Restore buttons visibility
-          if (downloadButton) downloadButton.style.display = 'block';
-          if (closeButton) closeButton.style.display = 'block';
-        },
-        x: 10,
-        y: 10,
-        width: 180, // slightly smaller than A4 width (210mm) to allow for margins
-        windowWidth: 1000,
-        autoPaging: 'text'
-      });
+          // Generate formatted filename with date
+          const now = new Date();
+          const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+          const filename = `IstanbulDentalSmile_Quote_${formattedDate}.pdf`;
+          
+          link.setAttribute('download', filename);
+          document.body.appendChild(link);
+          link.click();
+          
+          // Clean up
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(link);
+        }).catch(error => {
+          console.error('Error downloading PDF:', error);
+          toast({
+            title: 'Error',
+            description: 'Could not generate PDF. Please try again.',
+            variant: 'destructive'
+          });
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'No quote data available. Please generate a quote first.',
+          variant: 'destructive'
+        });
+      }
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
