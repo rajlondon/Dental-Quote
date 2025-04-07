@@ -348,7 +348,21 @@ export default function PriceCalculator() {
                                   name={`treatments.${index}.treatment`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel className="text-neutral-700">{t('pricing.treatment_type')}</FormLabel>
+                                      <div className="flex items-center">
+                                        <FormLabel className="text-neutral-700">{t('pricing.treatment_type')}</FormLabel>
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p className="text-xs">Select your required dental treatment from the dropdown. We offer a wide range of procedures including implants, veneers, crowns, and more. Each has different options and pricing.</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      </div>
                                       <Select
                                         onValueChange={(value) => {
                                           field.onChange(value);
@@ -463,7 +477,21 @@ export default function PriceCalculator() {
                                   name={`treatments.${index}.quantity`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel className="text-neutral-700">{t('pricing.quantity')}</FormLabel>
+                                      <div className="flex items-center">
+                                        <FormLabel className="text-neutral-700">{t('pricing.quantity')}</FormLabel>
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p className="text-xs">Enter the number of teeth or areas that need this treatment. For example, if you need 4 dental implants, enter '4' here.</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      </div>
                                       <Input
                                         type="number"
                                         min="1"
@@ -569,7 +597,21 @@ export default function PriceCalculator() {
                                 name="travelMonth"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t('pricing.travel_month')}</FormLabel>
+                                    <div className="flex items-center">
+                                      <FormLabel>{t('pricing.travel_month')}</FormLabel>
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                          </TooltipTrigger>
+                                          <TooltipContent className="max-w-xs">
+                                            <p className="text-xs">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </div>
                                     <Select
                                       onValueChange={field.onChange}
                                       defaultValue={field.value}
@@ -597,7 +639,21 @@ export default function PriceCalculator() {
                                 name="departureCity"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t('pricing.departure_city')}</FormLabel>
+                                    <div className="flex items-center">
+                                      <FormLabel>{t('pricing.departure_city')}</FormLabel>
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                          </TooltipTrigger>
+                                          <TooltipContent className="max-w-xs">
+                                            <p className="text-xs">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </div>
                                     <Select
                                       onValueChange={field.onChange}
                                       defaultValue={field.value}
