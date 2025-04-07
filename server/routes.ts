@@ -643,11 +643,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pure PDF generation using jsPDF
+  // Pure PDF generation using jsPDF with Mailjet email notification
   app.post("/api/jspdf-quote", async (req, res) => {
     try {
-      // Import the PDF generator function
+      // Import the PDF generator function and email service
       const { generateQuotePdf } = await import('./pdf-generator');
+      const { sendQuoteEmail, isMailjetConfigured } = await import('./mailjet-service');
       
       // Get data from request body
       const quoteData = req.body;
@@ -655,9 +656,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate the PDF
       const pdfBuffer = generateQuotePdf(quoteData);
       
+      // Generate filename with date and patient name
+      const now = new Date();
+      const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const sanitizedName = (quoteData.patientName || 'Unnamed')
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .substring(0, 20);
+      const filename = `IstanbulDentalSmile_Quote_${formattedDate}_${sanitizedName}.pdf`;
+      
+      // Send email with quote PDF if Mailjet is configured
+      if (isMailjetConfigured()) {
+        try {
+          // Send email asynchronously (don't wait for it to complete)
+          sendQuoteEmail({
+            pdfBuffer,
+            quoteData,
+            filename
+          }).then(success => {
+            if (success) {
+              console.log(`Quote email sent successfully for: ${quoteData.patientName || 'unnamed patient'}`);
+            } else {
+              console.error('Failed to send quote email via Mailjet');
+            }
+          }).catch(emailError => {
+            console.error('Error sending quote email:', emailError);
+          });
+          
+          console.log('Sending quote email in background...');
+        } catch (emailError) {
+          console.error('Error initiating quote email sending:', emailError);
+          // Continue execution even if email fails - we still want to deliver the PDF to the user
+        }
+      } else {
+        console.log('Mailjet not configured, skipping email notification');
+      }
+      
       // Set the response headers
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="IstanbulDentalSmile_Quote.pdf"');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       
       // Send the PDF
       res.send(pdfBuffer);

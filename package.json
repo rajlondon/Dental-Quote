@@ -71,6 +71,7 @@
     "jspdf": "^3.0.1",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
+    "node-mailjet": "^6.0.8",
     "nodemailer": "^6.10.0",
     "openai": "^4.91.0",
     "passport": "^0.7.0",
