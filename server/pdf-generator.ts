@@ -35,6 +35,8 @@ interface QuoteData {
   travelMonth?: string;
   departureCity?: string;
   clinics?: ClinicComparison[];
+  hasXrays?: boolean;
+  xrayCount?: number;
 }
 
 export function generateQuotePdf(quoteData: QuoteData): Buffer {
@@ -47,7 +49,9 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     patientPhone,
     travelMonth,
     departureCity,
-    clinics
+    clinics,
+    hasXrays = false,
+    xrayCount = 0
   } = quoteData;
 
   // Create a new PDF document
@@ -240,6 +244,14 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     doc.text(`Planned Travel: ${travelMonth}${departureCity ? ` from ${departureCity}` : ''}`, 35, yPos);
     yPos += 7;
   }
+  
+  // Add X-ray information
+  if (hasXrays) {
+    doc.text(`X-rays/CT Scans: ${xrayCount} provided for review`, 35, yPos);
+  } else {
+    doc.text('X-rays/CT Scans: Not provided', 35, yPos);
+  }
+  yPos += 7;
   
   yPos += 15;
 
@@ -825,6 +837,20 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setTextColor(darkTextColor);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
+  
+  // Include X-ray status information
+  if (hasXrays) {
+    doc.text(`Thank you for providing ${xrayCount} X-ray/CT scan${xrayCount !== 1 ? 's' : ''}. Our dental team`, 105, yPos, { align: 'center' });
+    yPos += 6;
+    doc.text('will review your images to provide you with the most accurate treatment plan.', 105, yPos, { align: 'center' });
+    yPos += 14;
+  } else {
+    doc.text('For the most accurate treatment plan, please provide recent X-rays or CT scans', 105, yPos, { align: 'center' });
+    yPos += 6;
+    doc.text('during your consultation. This will help our dental team assess your case properly.', 105, yPos, { align: 'center' });
+    yPos += 14;
+  }
+  
   doc.text('Ready to transform your smile? Here\'s how to proceed:', 105, yPos, { align: 'center' });
   yPos += 20;
 

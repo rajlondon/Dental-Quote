@@ -28,6 +28,8 @@ interface JSPDFGeneratorProps {
   travelMonth?: string;
   departureCity?: string;
   clinics?: ClinicComparison[];
+  hasXrays?: boolean;
+  xrayCount?: number;
   onComplete?: () => void;
 }
 
@@ -41,6 +43,8 @@ export default function JSPDFGenerator({
   travelMonth,
   departureCity,
   clinics,
+  hasXrays,
+  xrayCount,
   onComplete
 }: JSPDFGeneratorProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +68,9 @@ export default function JSPDFGenerator({
           patientPhone,
           travelMonth,
           departureCity,
-          clinics
+          clinics,
+          hasXrays,
+          xrayCount
         },
         responseType: 'blob'
       });

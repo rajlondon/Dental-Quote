@@ -76,6 +76,7 @@ const formSchema = z.object({
       quantity: z.coerce.number().int().min(1, 'Quantity must be at least 1'),
     })
   ).min(1, 'Please add at least one treatment'),
+  xrayFiles: z.instanceof(FileList).optional().transform(val => val || null),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -97,6 +98,7 @@ export default function PriceCalculator() {
       travelMonth: '',
       departureCity: '',
       treatments: [{ treatment: '', quantity: 1 }],
+      xrayFiles: undefined,
     },
   });
   
@@ -147,6 +149,9 @@ export default function PriceCalculator() {
     setSelectedTreatment(treatment || null);
   };
   
+  // State to track if X-rays have been uploaded
+  const [hasXrays, setHasXrays] = useState<boolean>(false);
+  
   // Handle form submission
   const onSubmit = (data: FormValues) => {
     // Calculate the total prices
@@ -155,6 +160,10 @@ export default function PriceCalculator() {
     // Store the quote data with user information in state
     setQuote(quoteResult);
     
+    // Check if X-rays were uploaded
+    const xrayStatus = data.xrayFiles && data.xrayFiles.length > 0;
+    setHasXrays(!!xrayStatus);
+    
     // Pass the extra data to the PDF generator when needed
     // This avoids modifying the original quoteResult which has its own type
     const patientData = {
@@ -162,6 +171,23 @@ export default function PriceCalculator() {
       patientEmail: data.email,
       patientPhone: data.phone
     };
+    
+    // Handle X-ray file uploads (in a real implementation, this would send files to a server)
+    let xrayFileNames: string[] = [];
+    if (data.xrayFiles && data.xrayFiles.length > 0) {
+      // Get file names for record keeping
+      xrayFileNames = Array.from(data.xrayFiles).map(file => file.name);
+      
+      // In a real implementation, you would upload these files to a server
+      console.log('X-ray files to be uploaded:', xrayFileNames);
+      
+      // Show success message for file upload
+      toast({
+        title: 'X-rays Received',
+        description: `${xrayFileNames.length} file(s) will be reviewed by our dental team.`,
+        variant: 'default',
+      });
+    }
     
     // Record the submission for personalized follow-up
     try {
@@ -173,7 +199,9 @@ export default function PriceCalculator() {
         travelMonth: data.travelMonth,
         departureCity: data.departureCity,
         totalGBP: quoteResult.totalGBP,
-        totalUSD: quoteResult.totalUSD
+        totalUSD: quoteResult.totalUSD,
+        hasXrays: xrayStatus,
+        xrayFileNames: xrayFileNames
       }));
     } catch (error) {
       console.error('Failed to save quote data for follow-up:', error);
@@ -270,7 +298,9 @@ export default function PriceCalculator() {
         departureCity: quoteData.departureCity || '',
         flightEstimate: quoteData.departureCity && quoteData.travelMonth 
           ? getDefaultFlightEstimate(quoteData.travelMonth) || 0 
-          : 0
+          : 0,
+        hasXrays: hasXrays,
+        xrayCount: hasXrays && quoteData.xrayFiles ? quoteData.xrayFiles.length : 0
       });
       
       // Show the dialog
@@ -348,6 +378,9 @@ export default function PriceCalculator() {
                                   <li>For crowns, veneers, and other treatments, please indicate quantity needed</li>
                                   <li>Our dental team will help finalize your treatment plan during your consultation</li>
                                 </ul>
+                                <p className="mt-2 text-xs text-neutral-600">
+                                  To ensure your quote is as accurate as possible, you can upload recent X-rays or CT scans. Our partner clinics will review them and confirm with you if any adjustments are needed. Your quote will be updated before you travel, so you always know what to expect.
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -712,6 +745,78 @@ export default function PriceCalculator() {
                               />
                             </div>
                           </div>
+                        </div>
+                        
+                        {/* X-ray upload section */}
+                        <div className="mt-6 border rounded-lg p-4 bg-white border-primary/20">
+                          <div className="flex items-center mb-2">
+                            <h3 className="text-lg font-semibold text-primary">Upload X-rays / CT Scans</h3>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs text-xs">Uploading your X-rays or CT scans will help our dental team provide a more accurate treatment plan and final quote.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          
+                          <p className="text-sm text-neutral-600 mb-3">
+                            For more accurate quotes, upload your recent dental X-rays or CT scans (optional)
+                          </p>
+                          
+                          <FormField
+                            control={form.control}
+                            name="xrayFiles"
+                            render={({ field: { onChange, value, ...rest } }) => (
+                              <FormItem>
+                                <FormLabel htmlFor="xrayFiles" className="cursor-pointer">
+                                  <div className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center hover:bg-primary/5 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                    <p className="mt-2 text-neutral-700 font-medium">Click to upload or drag and drop</p>
+                                    <p className="text-xs text-neutral-500 mt-1">PNG, JPG, PDF up to 10MB</p>
+                                  </div>
+                                </FormLabel>
+                                <FormControl>
+                                  <input
+                                    type="file"
+                                    id="xrayFiles"
+                                    multiple
+                                    accept=".jpg,.jpeg,.png,.pdf"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      onChange(e.target.files);
+                                    }}
+                                    {...rest}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                                
+                                {/* Preview uploaded files */}
+                                {value && value.length > 0 && (
+                                  <div className="mt-2">
+                                    <p className="text-sm font-medium text-primary mb-1">Selected files:</p>
+                                    <ul className="text-xs space-y-1">
+                                      {Array.from(value).map((file, idx) => (
+                                        <li key={idx} className="flex items-center text-neutral-700">
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                          </svg>
+                                          {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </FormItem>
+                            )}
+                          />
                         </div>
                         
                         <Button 
