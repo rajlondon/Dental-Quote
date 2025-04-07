@@ -653,6 +653,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get data from request body
       const quoteData = req.body;
       
+      // Log flight info for debugging
+      console.log('JSPDF Quote Request Travel Info:', {
+        travelMonth: quoteData.travelMonth,
+        departureCity: quoteData.departureCity
+      });
+      
       // Generate the PDF
       const pdfBuffer = generateQuotePdf(quoteData);
       

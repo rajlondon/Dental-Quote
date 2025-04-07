@@ -716,9 +716,16 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     20
   );
   
+  // Log the travel information for debugging
+  console.log('PDF TRAVEL INFO DEBUG:', { departureCity, travelMonth });
+  
+  // Format the flight information text
+  const flightText = `Estimated flight cost: £150-£300 return from ${departureCity || 'UK'} to Istanbul (${travelMonth || 'year-round'}).`;
+  
+  // Display the box with the flight info
   createInfoBox(
     'Flight Information', 
-    `Estimated flight cost: £150-£300 return from ${departureCity || 'UK'} to Istanbul (${travelMonth || 'year-round'}).`,
+    flightText,
     110
   );
   
