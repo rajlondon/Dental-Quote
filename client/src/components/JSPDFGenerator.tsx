@@ -55,6 +55,12 @@ export default function JSPDFGenerator({
     setError(null);
     
     try {
+      // Log the travel info for debugging
+      console.log('JSPDFGenerator travel info:', { 
+        travelMonth, 
+        departureCity
+      });
+      
       // Call the server-side jsPDF endpoint
       const response = await axios({
         method: 'post',
@@ -66,8 +72,8 @@ export default function JSPDFGenerator({
           patientName,
           patientEmail,
           patientPhone,
-          travelMonth,
-          departureCity,
+          travelMonth: travelMonth || 'year-round', // Ensure a fallback value
+          departureCity: departureCity || 'UK', // Ensure a fallback value
           clinics,
           hasXrays,
           xrayCount

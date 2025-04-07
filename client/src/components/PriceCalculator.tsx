@@ -96,8 +96,8 @@ export default function PriceCalculator() {
       name: '',
       email: '',
       phone: '',
-      travelMonth: '',
-      departureCity: '',
+      travelMonth: 'July', // Set a default month
+      departureCity: 'London', // Set a default city
       treatments: [{ treatment: '', quantity: 1 }],
       xrayFiles: undefined,
     },
@@ -164,6 +164,17 @@ export default function PriceCalculator() {
     // Check if X-rays were uploaded
     const xrayStatus = data.xrayFiles && data.xrayFiles.length > 0;
     setHasXrays(!!xrayStatus);
+    
+    // Log the form data including travel info for debugging
+    console.log('Form submission data:', {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      travelMonth: data.travelMonth,
+      departureCity: data.departureCity,
+      treatmentsCount: data.treatments.length,
+      hasXrays: !!xrayStatus
+    });
     
     // Pass the extra data to the PDF generator when needed
     // This avoids modifying the original quoteResult which has its own type
@@ -267,6 +278,12 @@ export default function PriceCalculator() {
       
       // Fallback: Use the axios API directly (for the quote dialog)
       if (htmlQuoteData) {
+        // Log data for debugging
+        console.log('Quote dialog travel info:', {
+          travelMonth: htmlQuoteData.travelMonth,
+          departureCity: htmlQuoteData.departureCity
+        });
+        
         // Call the server-side jsPDF endpoint
         axios({
           method: 'post',
@@ -278,8 +295,8 @@ export default function PriceCalculator() {
             patientName: htmlQuoteData.patientName,
             patientEmail: htmlQuoteData.patientEmail,
             patientPhone: htmlQuoteData.patientPhone,
-            travelMonth: htmlQuoteData.travelMonth,
-            departureCity: htmlQuoteData.departureCity,
+            travelMonth: htmlQuoteData.travelMonth || 'year-round', // Ensure fallback value
+            departureCity: htmlQuoteData.departureCity || 'UK', // Ensure fallback value
             clinics: [
               {
                 name: "London Clinic",
