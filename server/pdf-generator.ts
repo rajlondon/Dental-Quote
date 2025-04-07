@@ -725,8 +725,41 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   console.log('Using these values in PDF:', { departureDisplay, monthDisplay });
   
-  // Format the flight information text with explicit values
-  const flightText = `Estimated flight cost: £150-£300 return from ${departureDisplay} to Istanbul (${monthDisplay}).`;
+  // Calculate the flight cost estimate based on the city and month
+  // These values match the ones from the frontend flightEstimatesService.ts
+  const getFlightCost = (city: string, month: string): number => {
+    // Default values for common cities by month
+    const flightCosts: Record<string, Record<string, number>> = {
+      'London': {
+        'January': 120, 'February': 110, 'March': 140, 'April': 170,
+        'May': 180, 'June': 220, 'July': 250, 'August': 240,
+        'September': 200, 'October': 170, 'November': 130, 'December': 160
+      },
+      'Manchester': {
+        'January': 140, 'February': 130, 'March': 150, 'April': 180,
+        'May': 190, 'June': 230, 'July': 260, 'August': 250,
+        'September': 210, 'October': 180, 'November': 140, 'December': 170
+      }
+    };
+    
+    // Try to get the exact cost, or use London/July as fallback
+    return flightCosts[city]?.[month] || flightCosts['London']['July'] || 250;
+  };
+  
+  // Get the estimated flight cost as a specific amount
+  const flightCost = getFlightCost(departureDisplay, monthDisplay);
+  
+  // Format the flight information text with explicit values and the calculated cost
+  const flightText = `Estimated flight cost: £${flightCost} return from ${departureDisplay} to Istanbul (${monthDisplay}).`;
+  
+  // Add flight cost to the total cost calculation
+  totalGBP += flightCost;
+  
+  // Update the total cost display
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(`Updated Total (including flight): £${totalGBP.toLocaleString()}`, 20, yPos - 10);
   
   // Display the box with the flight info
   createInfoBox(
