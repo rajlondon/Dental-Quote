@@ -752,14 +752,14 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   // Format the flight information text with explicit values and the calculated cost
   const flightText = `Estimated flight cost: £${flightCost} return from ${departureDisplay} to Istanbul (${monthDisplay}).`;
   
-  // Add flight cost to the total cost calculation
-  totalGBP += flightCost;
+  // Create a new variable for the updated total instead of modifying the constant
+  const updatedTotalGBP = totalGBP + flightCost;
   
   // Update the total cost display
   doc.setTextColor(primaryColor);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.text(`Updated Total (including flight): £${totalGBP.toLocaleString()}`, 20, yPos - 10);
+  doc.text(`Updated Total (including flight): £${updatedTotalGBP.toLocaleString()}`, 20, yPos - 10);
   
   // Display the box with the flight info
   createInfoBox(
@@ -767,6 +767,9 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     flightText,
     110
   );
+  
+  // Use the updated total for the rest of the document
+  const calculatedTotalGBP = updatedTotalGBP;
   
   yPos += 50;
 
