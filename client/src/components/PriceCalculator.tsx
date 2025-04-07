@@ -154,7 +154,7 @@ export default function PriceCalculator() {
   const [hasXrays, setHasXrays] = useState<boolean>(false);
   
   // Handle form submission
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     // Calculate the total prices
     const quoteResult = calculateTotal(data.treatments);
     
@@ -204,6 +204,32 @@ export default function PriceCalculator() {
         hasXrays: xrayStatus,
         xrayFileNames: xrayFileNames
       }));
+      
+      // Prepare notification data for the server
+      const notificationData = {
+        items: quoteResult.items,
+        totalGBP: quoteResult.totalGBP,
+        totalUSD: quoteResult.totalUSD,
+        patientName: data.name,
+        patientEmail: data.email,
+        patientPhone: data.phone,
+        travelMonth: data.travelMonth,
+        departureCity: data.departureCity,
+        hasXrays: xrayStatus,
+        xrayCount: xrayFileNames.length
+      };
+      
+      // Send notification to server - don't await or handle errors to avoid blocking UI
+      // This is fire-and-forget style to ensure the user experience isn't affected
+      axios.post('/api/notify-quote-calculation', notificationData)
+        .then(response => {
+          console.log('Quote calculation notification sent:', response.data);
+        })
+        .catch(error => {
+          console.error('Failed to send quote calculation notification:', error);
+          // Don't show an error toast since this is a background operation
+        });
+        
     } catch (error) {
       console.error('Failed to save quote data for follow-up:', error);
     }

@@ -706,6 +706,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint for quote calculation notification
+  app.post("/api/notify-quote-calculation", async (req, res) => {
+    try {
+      // Import the mailjet service
+      const { sendEmailNotification, isMailjetConfigured } = await import('./mailjet-service');
+      
+      // Get data from request body
+      const quoteData = req.body;
+      
+      // If Mailjet is not configured, return success anyway but log the issue
+      if (!isMailjetConfigured()) {
+        console.log('Mailjet not configured, skipping email notification for quote calculation');
+        return res.status(200).json({
+          message: "Quote calculation recorded successfully (email notification skipped)",
+          emailSent: false
+        });
+      }
+      
+      // Send the notification email
+      const emailResult = await sendEmailNotification({
+        quoteData,
+        isCalculationOnly: true
+      });
+      
+      // Return success response
+      return res.status(200).json({
+        message: "Quote calculation notification sent successfully",
+        emailSent: emailResult
+      });
+    } catch (error) {
+      console.error("Error sending quote calculation notification:", error);
+      // Return success anyway to not block the user experience
+      return res.status(200).json({
+        message: "Quote calculation recorded successfully (notification failed)",
+        emailSent: false,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   

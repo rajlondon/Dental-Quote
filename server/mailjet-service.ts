@@ -53,7 +53,156 @@ export interface EmailData {
   filename: string;
 }
 
+export interface NotificationData {
+  quoteData: QuoteData;
+  isCalculationOnly: boolean;
+}
+
 // Send quote email with PDF attachment
+// Function to send email notification when a quote is calculated
+export async function sendEmailNotification(notificationData: NotificationData): Promise<boolean> {
+  try {
+    if (!isMailjetConfigured()) {
+      console.error('Mailjet is not configured. Check environment variables.');
+      return false;
+    }
+
+    const { quoteData, isCalculationOnly } = notificationData;
+    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
+    const recipientEmail = 'rajsingh140186@googlemail.com';
+    
+    // Format date
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // Calculate total price
+    const totalPrice = quoteData.totalGBP;
+    const totalPriceFormatted = new Intl.NumberFormat('en-GB', { 
+      style: 'currency', 
+      currency: 'GBP' 
+    }).format(totalPrice);
+
+    // Build treatment list
+    const treatmentsList = quoteData.items.map((item: { 
+      treatment: string; 
+      quantity: number; 
+      priceGBP: number; 
+    }) => {
+      return `${item.treatment} x${item.quantity} - £${item.priceGBP}`;
+    }).join('<br>');
+
+    // Create message object for admin notification
+    const adminMessage = {
+      From: {
+        Email: senderEmail,
+        Name: "Istanbul Dental Smile"
+      },
+      To: [
+        {
+          Email: recipientEmail,
+          Name: "Raj Singh"
+        }
+      ],
+      Subject: `${isCalculationOnly ? 'New Quote Calculation' : 'New Quote Downloaded'}: ${quoteData.patientName || 'Unnamed Patient'} - ${totalPriceFormatted}`,
+      HTMLPart: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
+            <h1 style="margin: 0;">${isCalculationOnly ? 'New Quote Calculation' : 'New Quote Downloaded'}</h1>
+            <p style="margin: 5px 0 0 0;">Istanbul Dental Smile</p>
+          </div>
+          
+          <div style="background-color: #f9f9f9; padding: 20px;">
+            <h2 style="color: #007B9E; margin-top: 0;">Quote Details</h2>
+            <p>A customer has ${isCalculationOnly ? 'calculated a dental treatment quote' : 'downloaded a dental treatment quote PDF'} through the website. Details are below:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; width: 40%;"><strong>Date:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${formattedDate}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Patient Name:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.patientName || 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Email:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.patientEmail || 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Phone:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.patientPhone || 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Travel Month:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.travelMonth || 'Not specified'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Departure City:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.departureCity || 'Not specified'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Total Quote Value:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; color: #007B9E;">${totalPriceFormatted}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>X-rays Uploaded:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files)` : 'No'}</td>
+              </tr>
+              ${isCalculationOnly ? `
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Quote Status:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #B2904F;"><strong>Calculated but not yet downloaded</strong></td>
+              </tr>
+              ` : ''}
+            </table>
+            
+            <h3 style="color: #007B9E;">Treatments Requested</h3>
+            <div style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+              ${treatmentsList}
+            </div>
+            
+            ${isCalculationOnly ? `
+            <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px; margin-bottom: 20px;">
+              <strong>Early Notification!</strong> This customer has calculated a quote but hasn't downloaded it yet - an opportunity for proactive outreach!
+            </div>
+            ` : `
+            <p style="margin-bottom: 8px;">The complete quote PDF is attached to this email.</p>
+            `}
+            
+            <p style="margin-bottom: 20px;">Please contact the patient as soon as possible to follow up on this quote.</p>
+            
+            <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px;">
+              <strong>Next Steps:</strong> Send WhatsApp follow-up or call the patient within 24 hours.
+            </div>
+          </div>
+          
+          <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+            <p>This is an automated notification from the Istanbul Dental Smile website.</p>
+            <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
+          </div>
+        </div>
+      `
+    };
+
+    // Send the admin email notification
+    await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [adminMessage]
+    });
+
+    console.log(`Quote calculation notification sent successfully for ${quoteData.patientName || 'unnamed patient'}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending quote calculation notification with Mailjet:', error);
+    return false;
+  }
+}
+
 export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
   try {
     if (!isMailjetConfigured()) {
