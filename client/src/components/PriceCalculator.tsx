@@ -902,47 +902,54 @@ export default function PriceCalculator() {
                         </div>
                       </div>
                       
-                      {/* PDF Generator component */}
-                      <JSPDFGenerator
-                        items={quote.items}
-                        totalGBP={quote.totalGBP}
-                        totalUSD={quote.totalUSD}
-                        patientName={form.getValues('name')}
-                        patientEmail={form.getValues('email')}
-                        patientPhone={form.getValues('phone')}
-                        travelMonth={form.getValues('travelMonth')}
-                        departureCity={form.getValues('departureCity')}
-                        clinics={[
-                          {
-                            name: "London Clinic",
-                            priceGBP: Math.round(quote.totalGBP * 2.5),
-                            extras: "Without travel"
-                          },
-                          {
-                            name: "Manchester Clinic",
-                            priceGBP: Math.round(quote.totalGBP * 2.2),
-                            extras: "Without travel"
-                          },
-                          {
-                            name: "Istanbul Dental Smile",
-                            priceGBP: quote.totalGBP,
-                            extras: "Including 5★ hotel"
-                          }
-                        ]}
-                        hasXrays={hasXrays}
-                        xrayCount={form.getValues('xrayFiles')?.length || 0}
-                      />
+                      {/* Hidden PDF Generator component */}
+                      <div style={{ display: "none" }}>
+                        <JSPDFGenerator
+                          items={quote.items}
+                          totalGBP={quote.totalGBP}
+                          totalUSD={quote.totalUSD}
+                          patientName={form.getValues('name')}
+                          patientEmail={form.getValues('email')}
+                          patientPhone={form.getValues('phone')}
+                          travelMonth={form.getValues('travelMonth')}
+                          departureCity={form.getValues('departureCity')}
+                          clinics={[
+                            {
+                              name: "London Clinic",
+                              priceGBP: Math.round(quote.totalGBP * 2.5),
+                              extras: "Without travel"
+                            },
+                            {
+                              name: "Manchester Clinic",
+                              priceGBP: Math.round(quote.totalGBP * 2.2),
+                              extras: "Without travel"
+                            },
+                            {
+                              name: "Istanbul Dental Smile",
+                              priceGBP: quote.totalGBP,
+                              extras: "Including 5★ hotel"
+                            }
+                          ]}
+                          hasXrays={hasXrays}
+                          xrayCount={form.getValues('xrayFiles')?.length || 0}
+                        />
+                      </div>
                       
-                      {/* Quote Button */}
+                      {/* Download Quote Button */}
                       <div className="mt-4">
                         <button
-                          onClick={openHtmlQuote}
+                          onClick={downloadQuotePDF}
                           className="flex items-center justify-center w-full py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+                            />
                           </svg>
-                          View Quote
+                          Download Your Custom Quote PDF
                         </button>
                       </div>
                     </div>
@@ -1248,35 +1255,38 @@ export default function PriceCalculator() {
                     d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
                   />
                 </svg>
-                Client PDF
+                Download Your Custom Quote PDF
               </Button>
               
-              {htmlQuoteData && (
-                <>
-                  <ServerPdfGenerator
-                    items={htmlQuoteData.items}
-                    totalGBP={htmlQuoteData.totalGBP}
-                    totalUSD={htmlQuoteData.totalUSD}
-                    patientName={htmlQuoteData.patientName}
-                    patientEmail={htmlQuoteData.patientEmail}
-                    patientPhone={htmlQuoteData.patientPhone}
-                    travelMonth={htmlQuoteData.travelMonth}
-                    departureCity={htmlQuoteData.departureCity}
-                    onComplete={() => setShowHtmlQuote(false)}
-                  />
-                  <PythonPdfGenerator
-                    items={htmlQuoteData.items}
-                    totalGBP={htmlQuoteData.totalGBP}
-                    totalUSD={htmlQuoteData.totalUSD}
-                    patientName={htmlQuoteData.patientName}
-                    patientEmail={htmlQuoteData.patientEmail}
-                    patientPhone={htmlQuoteData.patientPhone}
-                    travelMonth={htmlQuoteData.travelMonth}
-                    departureCity={htmlQuoteData.departureCity}
-                    onComplete={() => setShowHtmlQuote(false)}
-                  />
-                </>
-              )}
+              {/* Hidden PDF generator components */}
+              <div style={{ display: "none" }}>
+                {htmlQuoteData && (
+                  <>
+                    <ServerPdfGenerator
+                      items={htmlQuoteData.items}
+                      totalGBP={htmlQuoteData.totalGBP}
+                      totalUSD={htmlQuoteData.totalUSD}
+                      patientName={htmlQuoteData.patientName}
+                      patientEmail={htmlQuoteData.patientEmail}
+                      patientPhone={htmlQuoteData.patientPhone}
+                      travelMonth={htmlQuoteData.travelMonth}
+                      departureCity={htmlQuoteData.departureCity}
+                      onComplete={() => setShowHtmlQuote(false)}
+                    />
+                    <PythonPdfGenerator
+                      items={htmlQuoteData.items}
+                      totalGBP={htmlQuoteData.totalGBP}
+                      totalUSD={htmlQuoteData.totalUSD}
+                      patientName={htmlQuoteData.patientName}
+                      patientEmail={htmlQuoteData.patientEmail}
+                      patientPhone={htmlQuoteData.patientPhone}
+                      travelMonth={htmlQuoteData.travelMonth}
+                      departureCity={htmlQuoteData.departureCity}
+                      onComplete={() => setShowHtmlQuote(false)}
+                    />
+                  </>
+                )}
+              </div>
             </div>
           </DialogFooter>
         </DialogContent>
