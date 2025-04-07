@@ -300,7 +300,10 @@ export function getCategories(): string[] {
   return Array.from(categories);
 }
 
-export function calculateTotal(treatments: Array<{ treatment: string, quantity: number }>): {
+export function calculateTotal(
+  treatments: Array<{ treatment: string, quantity: number }>,
+  flightInfo?: { city: string, month: string }
+): {
   totalGBP: number,
   totalUSD: number,
   items: Array<{
@@ -311,12 +314,19 @@ export function calculateTotal(treatments: Array<{ treatment: string, quantity: 
     subtotalGBP: number,
     subtotalUSD: number,
     guarantee: string
-  }>
+  }>,
+  hasFlightCost: boolean,
+  flightCostGBP?: number,
+  flightCostUSD?: number
 } {
   let totalGBP = 0;
   let totalUSD = 0;
   const items = [];
+  let hasFlightCost = false;
+  let flightCostGBP: number | undefined;
+  let flightCostUSD: number | undefined;
 
+  // Calculate treatment costs
   for (const item of treatments) {
     const treatmentData = getTreatmentByName(item.treatment);
     if (treatmentData) {
@@ -338,9 +348,45 @@ export function calculateTotal(treatments: Array<{ treatment: string, quantity: 
     }
   }
 
+  // If flight information is provided, import the function and calculate flight cost
+  if (flightInfo && flightInfo.city && flightInfo.month) {
+    try {
+      // Dynamically import the flight estimates service
+      const { getFlightEstimateForCity } = require('./flightEstimatesService');
+      const flightEstimate = getFlightEstimateForCity(flightInfo.city, flightInfo.month);
+      
+      if (flightEstimate) {
+        // Convert flight cost from EUR to GBP and USD
+        flightCostGBP = Math.round(flightEstimate * 0.85); // Approximate EUR to GBP conversion
+        flightCostUSD = Math.round(flightEstimate * 1.1);  // Approximate EUR to USD conversion
+        
+        // Add flight cost to the total
+        totalGBP += flightCostGBP;
+        totalUSD += flightCostUSD;
+        hasFlightCost = true;
+        
+        // Add flight cost as a line item
+        items.push({
+          treatment: `Return Flights (${flightInfo.city} to Istanbul)`,
+          priceGBP: flightCostGBP,
+          priceUSD: flightCostUSD,
+          quantity: 1,
+          subtotalGBP: flightCostGBP,
+          subtotalUSD: flightCostUSD,
+          guarantee: 'N/A'
+        });
+      }
+    } catch (error) {
+      console.error('Error calculating flight costs:', error);
+    }
+  }
+
   return {
     totalGBP,
     totalUSD,
-    items
+    items,
+    hasFlightCost,
+    flightCostGBP,
+    flightCostUSD
   };
 }

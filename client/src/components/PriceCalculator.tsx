@@ -155,8 +155,15 @@ export default function PriceCalculator() {
   
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
-    // Calculate the total prices
-    const quoteResult = calculateTotal(data.treatments);
+    // Get the travel info for flight cost calculations
+    const travelMonth = data.travelMonth || 'July';
+    const departureCity = data.departureCity || 'London';
+    
+    // Calculate the total prices including flight costs
+    const quoteResult = calculateTotal(
+      data.treatments, 
+      { city: departureCity, month: travelMonth }
+    );
     
     // Store the quote data with user information in state
     setQuote(quoteResult);
@@ -170,12 +177,12 @@ export default function PriceCalculator() {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      travelMonth: data.travelMonth || 'July', // Make sure there's always a value
-      departureCity: data.departureCity || 'London', // Make sure there's always a value
+      travelMonth,
+      departureCity,
       treatmentsCount: data.treatments.length,
       hasXrays: !!xrayStatus,
-      rawTravelMonthValue: data.travelMonth, // Show the raw value for debugging
-      rawDepartureCityValue: data.departureCity // Show the raw value for debugging
+      hasFlightCost: quoteResult.hasFlightCost,
+      flightCostGBP: quoteResult.flightCostGBP
     });
     
     // Pass the extra data to the PDF generator when needed
@@ -367,7 +374,15 @@ export default function PriceCalculator() {
   const openHtmlQuote = () => {
     try {
       const quoteData = form.getValues();
-      const calculatedQuote = calculateTotal(quoteData.treatments);
+      const travelMonth = quoteData.travelMonth || 'July';
+      const departureCity = quoteData.departureCity || 'London';
+      
+      // Calculate total with flight costs included
+      const calculatedQuote = calculateTotal(
+        quoteData.treatments,
+        { city: departureCity, month: travelMonth }
+      );
+      
       const quoteItems = calculatedQuote.items;
       
       // Get the current date for the quote number
@@ -385,9 +400,11 @@ export default function PriceCalculator() {
       
       // Store quote data in state for the dialog
       // Log the travel data for debugging
-      console.log('HTML Quote preparation travel data:', {
-        travelMonth: quoteData.travelMonth,
-        departureCity: quoteData.departureCity
+      console.log('HTML Quote preparation data:', {
+        travelMonth,
+        departureCity,
+        hasFlightCost: calculatedQuote.hasFlightCost,
+        flightCostGBP: calculatedQuote.flightCostGBP
       });
       
       setHtmlQuoteData({
@@ -396,14 +413,14 @@ export default function PriceCalculator() {
         patientName: quoteData.name,
         patientEmail: quoteData.email,
         patientPhone: quoteData.phone,
-        items: quoteItems,
-        totalGBP: calculatedQuote.totalGBP,
-        totalUSD: calculatedQuote.totalUSD,
-        travelMonth: quoteData.travelMonth || 'July', // Use explicit default
-        departureCity: quoteData.departureCity || 'London', // Use explicit default
-        flightEstimate: quoteData.departureCity && quoteData.travelMonth 
-          ? getDefaultFlightEstimate(quoteData.travelMonth) || 0 
-          : 0,
+        items: quoteItems, // This now includes the flight cost as a line item
+        totalGBP: calculatedQuote.totalGBP, // This now includes the flight cost in the total
+        totalUSD: calculatedQuote.totalUSD, // This now includes the flight cost in the total
+        travelMonth,
+        departureCity,
+        hasFlightCost: calculatedQuote.hasFlightCost,
+        flightCostGBP: calculatedQuote.flightCostGBP,
+        flightCostUSD: calculatedQuote.flightCostUSD,
         hasXrays: hasXrays,
         xrayCount: hasXrays && quoteData.xrayFiles ? quoteData.xrayFiles.length : 0
       });
