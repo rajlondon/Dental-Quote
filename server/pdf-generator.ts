@@ -308,8 +308,36 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   
+  // Calculate the flight cost estimate based on the city and month
+  // These values match the ones from the frontend flightEstimatesService.ts
+  const getFlightCost = (city: string, month: string): number => {
+    // Default values for common cities by month
+    const flightCosts: Record<string, Record<string, number>> = {
+      'London': {
+        'January': 120, 'February': 110, 'March': 140, 'April': 170,
+        'May': 180, 'June': 220, 'July': 250, 'August': 240,
+        'September': 200, 'October': 170, 'November': 130, 'December': 160
+      },
+      'Manchester': {
+        'January': 140, 'February': 130, 'March': 150, 'April': 180,
+        'May': 190, 'June': 230, 'July': 260, 'August': 250,
+        'September': 210, 'October': 180, 'November': 140, 'December': 170
+      }
+    };
+    
+    // Try to get the exact cost, or use London/July as fallback
+    return flightCosts[city]?.[month] || flightCosts['London']['July'] || 250;
+  };
+  
+  // Get departure and month data with defaults
+  const departureDisplay = departureCity || 'London';
+  const monthDisplay = travelMonth || 'July';
+  const flightCost = getFlightCost(departureDisplay, monthDisplay);
+  
+  let rowCount = 0;
   if (items && items.length > 0) {
     items.forEach((item, index) => {
+      rowCount++;
       // Create alternating row background for better readability
       const isAlternateRow = index % 2 !== 0;
       if (isAlternateRow) {
@@ -339,6 +367,27 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       }
     });
   }
+  
+  // Add flight cost as a line item
+  rowCount++;
+  const isAlternateRow = rowCount % 2 !== 0;
+  if (isAlternateRow) {
+    doc.setFillColor(245, 245, 245);
+    doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+  }
+  
+  doc.text(`Flight (${departureDisplay} to Istanbul, ${monthDisplay})`, colPos[0], yPos+6, { align: 'center' });
+  doc.text("1", colPos[1], yPos+6, { align: 'center' });
+  doc.text(`£${flightCost.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
+  doc.text(`£${flightCost.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
+  doc.text('N/A', colPos[4], yPos+6, { align: 'center' });
+  yPos += rowHeight;
+  
+  // Calculate updated totals
+  const updatedTotalGBP = totalGBP + flightCost;
+  // Estimate USD conversion
+  const exchangeRate = totalUSD / totalGBP; // Use the same exchange rate as provided in the quote data
+  const updatedTotalUSD = updatedTotalGBP * exchangeRate;
 
   // Total row
   doc.setFillColor(secondaryColor);
@@ -346,9 +395,9 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total', colPos[0], yPos+5.5, { align: 'center' });
-  doc.text(`£${totalGBP.toFixed(2)}`, colPos[3], yPos+5.5, { align: 'center' });
-  doc.text(`$${totalUSD.toFixed(2)}`, colPos[4], yPos+5.5, { align: 'center' });
+  doc.text('Total (including flight)', colPos[0], yPos+5.5, { align: 'center' });
+  doc.text(`£${updatedTotalGBP.toFixed(2)}`, colPos[3], yPos+5.5, { align: 'center' });
+  doc.text(`$${updatedTotalUSD.toFixed(2)}`, colPos[4], yPos+5.5, { align: 'center' });
   yPos += 15;
 
   // Treatment explanation (add more details about treatments)
@@ -719,57 +768,20 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   // Log the travel information for debugging
   console.log('PDF TRAVEL INFO DEBUG:', { departureCity, travelMonth });
   
-  // Use hard-coded departureCity and travelMonth values for debugging
-  const departureDisplay = departureCity || 'London';
-  const monthDisplay = travelMonth || 'July';
+  // Note: The flight cost calculation and display is now handled earlier in the document
+  // in the treatment breakdown table. The total prices already include the flight costs.
+  // We're just showing the flight information in a separate info box here.
   
-  console.log('Using these values in PDF:', { departureDisplay, monthDisplay });
-  
-  // Calculate the flight cost estimate based on the city and month
-  // These values match the ones from the frontend flightEstimatesService.ts
-  const getFlightCost = (city: string, month: string): number => {
-    // Default values for common cities by month
-    const flightCosts: Record<string, Record<string, number>> = {
-      'London': {
-        'January': 120, 'February': 110, 'March': 140, 'April': 170,
-        'May': 180, 'June': 220, 'July': 250, 'August': 240,
-        'September': 200, 'October': 170, 'November': 130, 'December': 160
-      },
-      'Manchester': {
-        'January': 140, 'February': 130, 'March': 150, 'April': 180,
-        'May': 190, 'June': 230, 'July': 260, 'August': 250,
-        'September': 210, 'October': 180, 'November': 140, 'December': 170
-      }
-    };
-    
-    // Try to get the exact cost, or use London/July as fallback
-    return flightCosts[city]?.[month] || flightCosts['London']['July'] || 250;
-  };
-  
-  // Get the estimated flight cost as a specific amount
-  const flightCost = getFlightCost(departureDisplay, monthDisplay);
-  
-  // Format the flight information text with explicit values and the calculated cost
-  const flightText = `Estimated flight cost: £${flightCost} return from ${departureDisplay} to Istanbul (${monthDisplay}).`;
-  
-  // Create a new variable for the updated total instead of modifying the constant
-  const updatedTotalGBP = totalGBP + flightCost;
-  
-  // Update the total cost display
-  doc.setTextColor(primaryColor);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text(`Updated Total (including flight): £${updatedTotalGBP.toLocaleString()}`, 20, yPos - 10);
+  // Format the flight information text for the info box
+  // Use the already calculated flightCost from earlier in the document
+  const flightInfoText = `Estimated flight cost: £${flightCost} return from ${departureDisplay} to Istanbul (${monthDisplay}).`;
   
   // Display the box with the flight info
   createInfoBox(
     'Flight Information', 
-    flightText,
+    flightInfoText,
     110
   );
-  
-  // Use the updated total for the rest of the document
-  const calculatedTotalGBP = updatedTotalGBP;
   
   yPos += 50;
 
