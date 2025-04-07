@@ -227,8 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savings = templateData.items ? 
         templateData.items.map((item: any) => {
           // UK price is typically 2-3x higher
-          const ukPrice = item.priceGBP * 2.5;
-          const istanbulPrice = item.priceGBP;
+          // Ensure we're working with numbers
+          const priceGBP = typeof item.priceGBP === 'number' ? item.priceGBP : parseFloat(item.priceGBP || '0');
+          const ukPrice = priceGBP * 2.5;
+          const istanbulPrice = priceGBP;
           return {
             name: item.treatment,
             uk: `£${ukPrice.toFixed(2)}`,
@@ -405,8 +407,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savings = data.items ? 
         data.items.map((item: any) => {
           // UK price is typically 2-3x higher
-          const ukPrice = item.priceGBP * 2.5;
-          const istanbulPrice = item.priceGBP;
+          // Ensure we're working with numbers
+          const priceGBP = typeof item.priceGBP === 'number' ? item.priceGBP : parseFloat(item.priceGBP || '0');
+          const ukPrice = priceGBP * 2.5;
+          const istanbulPrice = priceGBP;
           return {
             name: item.treatment,
             uk: `£${ukPrice.toFixed(2)}`,
@@ -606,13 +610,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <th>Price</th>
             <th>Features</th>
           </tr>
-          ${clinics ? clinics.map((clinic: { name: string; priceGBP: number; extras?: string }) => `
+          ${clinics ? clinics.map((clinic: { name: string; priceGBP: number | string; extras?: string }) => {
+            const price = typeof clinic.priceGBP === 'number' ? clinic.priceGBP : parseFloat(String(clinic.priceGBP || '0'));
+            return `
           <tr>
             <td>${clinic.name}</td>
-            <td>£${clinic.priceGBP.toFixed(2)}</td>
+            <td>£${price.toFixed(2)}</td>
             <td>${clinic.extras || ''}</td>
           </tr>
-          `).join('') : ''}
+          `;
+          }).join('') : ''}
         </table>
         
         <div class="footer">

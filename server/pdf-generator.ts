@@ -500,7 +500,8 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     // Position all text with consistent alignment
     doc.text(clinicName, clinicColPos[0], yPos+6, { align: 'center' });
     doc.text(clinic.location || 'Istanbul', clinicColPos[1], yPos+6, { align: 'center' });
-    doc.text(`£${clinic.priceGBP.toFixed(2)}`, clinicColPos[2], yPos+6, { align: 'center' });
+    const clinicPrice = typeof clinic.priceGBP === 'number' ? clinic.priceGBP : parseFloat(String(clinic.priceGBP || '0'));
+    doc.text(`£${clinicPrice.toFixed(2)}`, clinicColPos[2], yPos+6, { align: 'center' });
     doc.text(clinic.guarantee || '5 Years', clinicColPos[3], yPos+6, { align: 'center' });
     doc.text(clinic.rating || '⭐⭐⭐⭐⭐', clinicColPos[4], yPos+6, { align: 'center' });
     
