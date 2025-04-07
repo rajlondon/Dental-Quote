@@ -785,10 +785,111 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   yPos += 50;
 
-  // PATIENT TESTIMONIALS
-  if (yPos > 220) {
-    yPos = addNewPage();
+  // BEFORE AND AFTER RESULTS SECTION
+  yPos = addNewPage();
+  
+  // Section header
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Before & After Treatment Results', 20, yPos);
+  yPos += 10;
+
+  // Descriptive text
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Below are real results from our patients who received dental treatments in Istanbul.', 20, yPos);
+  yPos += 6;
+  doc.text('These transformations showcase the high quality of our dental work.', 20, yPos);
+  yPos += 15;
+
+  // Before & After images - First example
+  const imageWidth = 75;
+  const imageHeight = 75;
+  const imgPadding = 10;
+  const labelHeight = 10;
+
+  // First before/after set - yellowed teeth to white teeth
+  // Left image (Before)
+  doc.setFillColor(lightBgColor);
+  doc.roundedRect(20, yPos, imageWidth + imgPadding, imageHeight + imgPadding + labelHeight, 3, 3, 'F');
+  
+  try {
+    // Use relative path which should work better in the server environment
+    doc.addImage('./public/images/before_smile.png', 'PNG', 25, yPos + 5, imageWidth, imageHeight);
+  } catch (error) {
+    console.error('Error adding before image 1:', error);
   }
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BEFORE', 25 + imageWidth/2, yPos + imageHeight + 10, { align: 'center' });
+
+  // Right image (After)
+  doc.setFillColor(lightBgColor);
+  doc.roundedRect(115, yPos, imageWidth + imgPadding, imageHeight + imgPadding + labelHeight, 3, 3, 'F');
+  
+  try {
+    doc.addImage('./public/images/after_smile.png', 'PNG', 120, yPos + 5, imageWidth, imageHeight);
+  } catch (error) {
+    console.error('Error adding after image 1:', error);
+  }
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AFTER', 120 + imageWidth/2, yPos + imageHeight + 10, { align: 'center' });
+
+  // Treatment type label
+  yPos += imageHeight + imgPadding + labelHeight + 5;
+  doc.setTextColor(primaryColor);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Treatment: Premium Porcelain Veneers', 105, yPos, { align: 'center' });
+  yPos += 20;
+
+  // Second before/after set - broken tooth to fixed tooth
+  // Left image (Before)
+  doc.setFillColor(lightBgColor);
+  doc.roundedRect(20, yPos, imageWidth + imgPadding, imageHeight + imgPadding + labelHeight, 3, 3, 'F');
+  
+  try {
+    doc.addImage('./public/images/before_smile2.png', 'PNG', 25, yPos + 5, imageWidth, imageHeight);
+  } catch (error) {
+    console.error('Error adding before image 2:', error);
+  }
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BEFORE', 25 + imageWidth/2, yPos + imageHeight + 10, { align: 'center' });
+
+  // Right image (After)
+  doc.setFillColor(lightBgColor);
+  doc.roundedRect(115, yPos, imageWidth + imgPadding, imageHeight + imgPadding + labelHeight, 3, 3, 'F');
+  
+  try {
+    doc.addImage('./public/images/after_smile2.png', 'PNG', 120, yPos + 5, imageWidth, imageHeight);
+  } catch (error) {
+    console.error('Error adding after image 2:', error);
+  }
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AFTER', 120 + imageWidth/2, yPos + imageHeight + 10, { align: 'center' });
+
+  // Treatment type label
+  yPos += imageHeight + imgPadding + labelHeight + 5;
+  doc.setTextColor(primaryColor);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Treatment: Dental Implant with Porcelain Crown', 105, yPos, { align: 'center' });
+  
+  // PATIENT TESTIMONIALS
+  yPos = addNewPage();
   
   // Section header
   doc.setTextColor(primaryColor);
@@ -839,50 +940,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     yPos += 45;
   });
 
-  // BEFORE/AFTER PLACEHOLDERS
-  if (yPos > 220) {
-    yPos = addNewPage();
-  }
-  
-  // Section header
-  doc.setTextColor(primaryColor);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('Treatment Results', 20, yPos);
-  yPos += 10;
-
-  // Results description
-  doc.setTextColor(darkTextColor);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text('See the transformation our patients experience with their treatments:', 20, yPos);
-  yPos += 15;
-
-  // Before/After placeholder
-  doc.setFillColor(lightBgColor);
-  doc.roundedRect(20, yPos, 80, 60, 3, 3, 'F');
-  doc.roundedRect(110, yPos, 80, 60, 3, 3, 'F');
-  
-  doc.setTextColor(primaryColor);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BEFORE', 60, yPos + 30, { align: 'center' });
-  doc.text('AFTER', 150, yPos + 30, { align: 'center' });
-  
-  yPos += 70;
-  
-  // Add second Before/After placeholder
-  doc.setFillColor(lightBgColor);
-  doc.roundedRect(20, yPos, 80, 60, 3, 3, 'F');
-  doc.roundedRect(110, yPos, 80, 60, 3, 3, 'F');
-  
-  doc.setTextColor(primaryColor);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BEFORE', 60, yPos + 30, { align: 'center' });
-  doc.text('AFTER', 150, yPos + 30, { align: 'center' });
-  
-  yPos += 70;
+  // Skip the placeholder section since we now have a proper Before & After section
 
   // CALL TO ACTION PAGE
   yPos = addNewPage();
