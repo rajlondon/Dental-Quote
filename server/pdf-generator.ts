@@ -100,15 +100,15 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     doc.setFontSize(9);
     doc.text(`Quote: ${quoteId}`, 170, 12);
     
-    // Add footer to new page
+    // Add footer to new page (moved to bottom of page)
     doc.setFillColor(lightBgColor);
-    doc.rect(0, 280, 210, 17, 'F');
+    doc.rect(0, 285, 210, 12, 'F');
     
     doc.setTextColor(darkTextColor);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(`Page ${pageNumber}`, 105, 286, { align: 'center' });
-    doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 291, { align: 'center' });
+    doc.text(`Page ${pageNumber}`, 105, 291, { align: 'center' });
+    doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 295, { align: 'center' });
     
     return 30; // Return Y position after header
   };
@@ -172,15 +172,15 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'bold');
   doc.text(`Total: £${totalGBP.toFixed(2)} / $${totalUSD.toFixed(2)}`, 105, 185, { align: 'center' });
 
-  // Add footer to first page
+  // Add footer to first page (moved to bottom of page)
   doc.setFillColor(lightBgColor);
-  doc.rect(0, 280, 210, 17, 'F');
+  doc.rect(0, 285, 210, 12, 'F');
   
   doc.setTextColor(darkTextColor);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text(`Page ${pageNumber}`, 105, 286, { align: 'center' });
-  doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 291, { align: 'center' });
+  doc.text(`Page ${pageNumber}`, 105, 291, { align: 'center' });
+  doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 295, { align: 'center' });
 
   // Add CTA at bottom of first page
   doc.setTextColor(secondaryColor);
