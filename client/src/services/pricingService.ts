@@ -1,4 +1,5 @@
 import { dentalPricesCSV } from './dentalPricesData';
+import { getFlightEstimateForCity } from './flightEstimatesService';
 
 export interface TreatmentPrice {
   category: string;
@@ -348,11 +349,10 @@ export function calculateTotal(
     }
   }
 
-  // If flight information is provided, import the function and calculate flight cost
+  // If flight information is provided, calculate flight cost
   if (flightInfo && flightInfo.city && flightInfo.month) {
     try {
-      // Dynamically import the flight estimates service
-      const { getFlightEstimateForCity } = require('./flightEstimatesService');
+      // Use the imported flight estimates service
       const flightEstimate = getFlightEstimateForCity(flightInfo.city, flightInfo.month);
       
       if (flightEstimate) {
@@ -375,6 +375,10 @@ export function calculateTotal(
           subtotalUSD: flightCostUSD,
           guarantee: 'N/A'
         });
+        
+        console.log(`Added flight cost: £${flightCostGBP} / $${flightCostUSD} for ${flightInfo.city} in ${flightInfo.month}`);
+      } else {
+        console.log(`No flight estimate found for ${flightInfo.city} in ${flightInfo.month}`);
       }
     } catch (error) {
       console.error('Error calculating flight costs:', error);
