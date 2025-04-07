@@ -396,9 +396,8 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   }
 
   // CLINIC COMPARISON PAGE
-  if (yPos > 230) {
-    yPos = addNewPage();
-  }
+  // Always start the clinic comparison section on a new page to ensure enough space
+  yPos = addNewPage();
 
   // Prepare clinic data if not provided
   let comparisonClinics = clinics || [];
@@ -453,7 +452,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   const clinicTableWidth = 170;
   const clinicColumnWidths = [35, 25, 25, 25, 20, 40]; // Clinic, Location, Price, Guarantee, Rating, Features
   const clinicTableX = 20;
-  const clinicRowHeight = 12; // Increased row height for better readability
+  const clinicRowHeight = 15; // Further increased row height for better readability and spacing
   
   // Calculate column positions for better alignment
   const clinicColPos: number[] = [];
@@ -497,13 +496,13 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       clinicName = clinicName.substring(0, 15) + '...';
     }
       
-    // Position all text with consistent alignment
-    doc.text(clinicName, clinicColPos[0], yPos+6, { align: 'center' });
-    doc.text(clinic.location || 'Istanbul', clinicColPos[1], yPos+6, { align: 'center' });
+    // Position all text with consistent alignment and improved vertical centering
+    doc.text(clinicName, clinicColPos[0], yPos+8, { align: 'center' }); // Center vertically in the taller row
+    doc.text(clinic.location || 'Istanbul', clinicColPos[1], yPos+8, { align: 'center' });
     const clinicPrice = typeof clinic.priceGBP === 'number' ? clinic.priceGBP : parseFloat(String(clinic.priceGBP || '0'));
-    doc.text(`£${clinicPrice.toFixed(2)}`, clinicColPos[2], yPos+6, { align: 'center' });
-    doc.text(clinic.guarantee || '5 Years', clinicColPos[3], yPos+6, { align: 'center' });
-    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', clinicColPos[4], yPos+6, { align: 'center' });
+    doc.text(`£${clinicPrice.toFixed(2)}`, clinicColPos[2], yPos+8, { align: 'center' });
+    doc.text(clinic.guarantee || '5 Years', clinicColPos[3], yPos+8, { align: 'center' });
+    doc.text(clinic.rating || '⭐⭐⭐⭐⭐', clinicColPos[4], yPos+8, { align: 'center' });
     
     // Handle features text with better wrapping
     const extras = clinic.extras || '';
@@ -512,11 +511,11 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
       doc.setFontSize(7);
       const splitExtras = doc.splitTextToSize(extras, 35);
       // Center the text vertically based on number of lines
-      const yOffset = splitExtras.length > 1 ? 4 : 6; 
+      const yOffset = splitExtras.length > 1 ? 6 : 8; 
       doc.text(splitExtras, clinicColPos[5], yPos+yOffset, { align: 'center' });
       doc.setFontSize(8); // Reset font size
     } else {
-      doc.text(extras, clinicColPos[5], yPos+6, { align: 'center' });
+      doc.text(extras, clinicColPos[5], yPos+8, { align: 'center' });
     }
     
     yPos += clinicRowHeight;
