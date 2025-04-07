@@ -62,8 +62,8 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     }
 
     const { pdfBuffer, quoteData, filename } = emailData;
-    const senderEmail = process.env.MAILJET_SENDER_EMAIL || '';
-    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || '';
+    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
+    const recipientEmail = 'rajsingh140186@googlemail.com';
     
     // Format date
     const now = new Date();
@@ -82,7 +82,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       currency: 'GBP' 
     }).format(totalPrice);
 
-    // Build treatment list
+    // Build treatment list for internal email
     const treatmentsList = quoteData.items.map((item: { 
       treatment: string; 
       quantity: number; 
@@ -90,8 +90,25 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     }) => {
       return `${item.treatment} x${item.quantity} - £${item.priceGBP}`;
     }).join('<br>');
+    
+    // Create a more detailed treatment list for patient email
+    const patientTreatmentsList = quoteData.items.map((item: { 
+      treatment: string; 
+      quantity: number; 
+      priceGBP: number;
+      guarantee: string;
+    }) => {
+      return `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.treatment}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">£${item.priceGBP.toFixed(2)}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${item.guarantee || 'Standard'}</td>
+        </tr>
+      `;
+    }).join('');
 
-    // Create message object
+    // Create admin message object
     const message = {
       From: {
         Email: senderEmail,
@@ -178,10 +195,95 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       ]
     };
 
-    // Send the email using Mailjet
-    await mailjet.post('send', { version: 'v3.1' }).request({
-      Messages: [message]
-    });
+    // If there's a patient email, create a patient-specific message
+    if (quoteData.patientEmail) {
+      const patientMessage = {
+        From: {
+          Email: senderEmail,
+          Name: "Istanbul Dental Smile"
+        },
+        To: [
+          {
+            Email: quoteData.patientEmail,
+            Name: quoteData.patientName || 'Valued Customer'
+          }
+        ],
+        Subject: `Your Dental Treatment Quote from Istanbul Dental Smile`,
+        HTMLPart: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
+              <h1 style="margin: 0;">Your Dental Treatment Quote</h1>
+              <p style="margin: 5px 0 0 0;">Thank you for choosing Istanbul Dental Smile</p>
+            </div>
+            
+            <div style="background-color: #f9f9f9; padding: 20px;">
+              <h2 style="color: #007B9E; margin-top: 0;">Hello ${quoteData.patientName || 'there'},</h2>
+              <p>Thank you for your interest in dental treatment with Istanbul Dental Smile. We have prepared a detailed quote based on your requirements.</p>
+              
+              <div style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+                <h3 style="color: #007B9E; margin-top: 0;">Your Selected Treatments</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                  <thead>
+                    <tr style="background-color: #f2f2f2;">
+                      <th style="padding: 8px; border-bottom: 2px solid #ddd; text-align: left;">Treatment</th>
+                      <th style="padding: 8px; border-bottom: 2px solid #ddd; text-align: center;">Qty</th>
+                      <th style="padding: 8px; border-bottom: 2px solid #ddd; text-align: right;">Price</th>
+                      <th style="padding: 8px; border-bottom: 2px solid #ddd; text-align: left;">Guarantee</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${patientTreatmentsList}
+                    <tr style="background-color: #f9f9f9; font-weight: bold;">
+                      <td style="padding: 8px; border-top: 2px solid #ddd;" colspan="2">Total</td>
+                      <td style="padding: 8px; border-top: 2px solid #ddd; text-align: right; color: #007B9E;">${totalPriceFormatted}</td>
+                      <td style="padding: 8px; border-top: 2px solid #ddd;"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div style="background-color: #f0f8fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3 style="color: #007B9E; margin-top: 0;">What's Next?</h3>
+                <p>Our dental tourism consultant will contact you within 24 hours to discuss your quote and answer any questions you may have.</p>
+                <p>We've attached a comprehensive PDF quote to this email that includes more details about:</p>
+                <ul>
+                  <li>Price comparisons with UK clinics</li>
+                  <li>Our partner clinics in Istanbul</li>
+                  <li>Treatment process and timelines</li>
+                  <li>Accommodation and travel options</li>
+                </ul>
+              </div>
+              
+              <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px;">
+                <p style="margin: 5px 0;"><strong>Have Questions?</strong> Reply to this email or call/WhatsApp us at +447572445856</p>
+              </div>
+            </div>
+            
+            <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+              <p>Istanbul Dental Smile | Your UK-Based Dental Tourism Specialists</p>
+              <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
+            </div>
+          </div>
+        `,
+        Attachments: [
+          {
+            ContentType: 'application/pdf',
+            Filename: filename,
+            Base64Content: pdfBuffer.toString('base64')
+          }
+        ]
+      };
+      
+      // Send separate emails to admin and patient
+      await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [message, patientMessage]
+      });
+    } else {
+      // Only send the admin email if no patient email is provided
+      await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [message]
+      });
+    }
 
     console.log(`Quote email sent successfully for ${quoteData.patientName || 'unnamed patient'}`);
     return true;
