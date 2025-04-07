@@ -324,20 +324,8 @@ export default function PriceCalculator() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="space-y-4">
                         <div className="bg-primary/5 p-4 rounded-lg">
-                          <div className="flex justify-between items-center mb-4">
+                          <div className="mb-4">
                             <h3 className="text-lg font-semibold text-primary">{t('pricing.treatments')}</h3>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="sm"
-                              className="bg-white border-primary text-primary hover:bg-primary hover:text-white"
-                              onClick={addTreatment}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                              </svg>
-                              {t('pricing.add_treatment')}
-                            </Button>
                           </div>
                           
                           {/* How to Build Your Quote Guide */}
@@ -544,6 +532,22 @@ export default function PriceCalculator() {
                               )}
                             </div>
                           ))}
+                          
+                          {/* Add Treatment Button - Moved here for easier access */}
+                          <div className="flex justify-center mb-2">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              className="bg-white border-primary text-primary hover:bg-primary hover:text-white"
+                              onClick={addTreatment}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                              {t('pricing.add_treatment')}
+                            </Button>
+                          </div>
                         </div>
                         
                         <div className="space-y-4 mt-6">
