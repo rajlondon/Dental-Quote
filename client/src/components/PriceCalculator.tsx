@@ -929,6 +929,8 @@ export default function PriceCalculator() {
                             extras: "Including 5★ hotel"
                           }
                         ]}
+                        hasXrays={hasXrays}
+                        xrayCount={form.getValues('xrayFiles')?.length || 0}
                       />
                       
                       {/* Quote Button */}
