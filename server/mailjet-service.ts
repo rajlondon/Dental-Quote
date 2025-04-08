@@ -366,14 +366,10 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       ]
     };
 
-    // NOTE: Patient emails are now handled by EmailJS directly from the browser
-    // Commenting out server-side patient email to avoid duplicates
+    // Re-enabling server-side Mailjet emails for customers as they look better
     console.log('Processing patient email:', quoteData.patientEmail || 'none');
-    if (false && quoteData.patientEmail && quoteData.patientEmail.includes('@')) {
-      console.log('Valid patient email found, but skipping server-side email since this is now handled by EmailJS');
-      
-      /* Original patient message code kept for reference:
-      // This commented code is intentionally kept for documentation
+    if (quoteData.patientEmail && quoteData.patientEmail.includes('@')) {
+      console.log('Valid patient email found, creating customer quote email with Mailjet');
       const patientMessage = {
         From: {
           Email: senderEmail,
@@ -455,16 +451,15 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [message, patientMessage]
       });
-      */
     } else {
-      // Send only the admin email since customer email is now handled by EmailJS
-      console.log('Sending admin email only (customer email is handled by EmailJS in browser)');
+      // No valid email address found, only send admin notification
+      console.log('No valid customer email found, sending admin notification only');
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [message]
       });
     }
 
-    console.log(`Admin notification sent to ${recipientEmail} (customer email handled separately via EmailJS)`);
+    console.log(`Quote email sent successfully for: ${quoteData.patientName || 'Customer'} to ${quoteData.patientEmail || 'no email'}`);
     return true;
   } catch (error: any) {
     console.error('Error sending quote email with Mailjet:', error);

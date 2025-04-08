@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { sendCustomerQuoteEmail } from '@/utils/emailjs';
 
 interface QuoteItem {
   treatment: string;
@@ -100,51 +99,9 @@ export default function JSPDFGenerator({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
       
-      // Send a friendly confirmation email to the customer via EmailJS
-      if (patientEmail) {
-        try {
-          // Get the current date for the quote number
-          const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
-          const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-          const quoteNumber = `IDS-${datePart}-${randomPart}`;
-          
-          // Format date appropriately
-          const emailDate = now.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-          
-          // Extract flight cost details from items if available
-          let flightCostGBP = 0;
-          const flightItem = items.find(item => item.treatment.toLowerCase().includes('flight'));
-          if (flightItem) {
-            flightCostGBP = flightItem.subtotalGBP;
-          }
-          
-          // Send the friendly customer email
-          const emailSent = await sendCustomerQuoteEmail({
-            items,
-            totalGBP,
-            totalUSD,
-            patientName,
-            patientEmail,
-            patientPhone,
-            travelMonth,
-            departureCity,
-            flightCostGBP,
-            hasXrays,
-            xrayCount,
-            quoteNumber,
-            date: emailDate
-          });
-          
-          console.log(`Customer friendly email sent: ${emailSent ? 'Success' : 'Failed'}`);
-        } catch (emailError) {
-          // Just log the error, don't block the PDF download process
-          console.error('Error sending friendly customer email:', emailError);
-        }
-      }
+      // Customer emails are now handled server-side through Mailjet
+      // No need to send a duplicate email via EmailJS
+      console.log('Customer email will be sent via Mailjet from the server');
       
       if (onComplete) {
         onComplete();
