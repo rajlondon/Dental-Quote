@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
+import { sendCustomerQuoteEmail } from '@/utils/emailjs';
 
 interface QuoteItem {
   treatment: string;
@@ -99,6 +100,52 @@ export default function JSPDFGenerator({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
       
+      // Send a friendly confirmation email to the customer via EmailJS
+      if (patientEmail) {
+        try {
+          // Get the current date for the quote number
+          const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+          const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+          const quoteNumber = `IDS-${datePart}-${randomPart}`;
+          
+          // Format date appropriately
+          const emailDate = now.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          
+          // Extract flight cost details from items if available
+          let flightCostGBP = 0;
+          const flightItem = items.find(item => item.treatment.toLowerCase().includes('flight'));
+          if (flightItem) {
+            flightCostGBP = flightItem.subtotalGBP;
+          }
+          
+          // Send the friendly customer email
+          const emailSent = await sendCustomerQuoteEmail({
+            items,
+            totalGBP,
+            totalUSD,
+            patientName,
+            patientEmail,
+            patientPhone,
+            travelMonth,
+            departureCity,
+            flightCostGBP,
+            hasXrays,
+            xrayCount,
+            quoteNumber,
+            date: emailDate
+          });
+          
+          console.log(`Customer friendly email sent: ${emailSent ? 'Success' : 'Failed'}`);
+        } catch (emailError) {
+          // Just log the error, don't block the PDF download process
+          console.error('Error sending friendly customer email:', emailError);
+        }
+      }
+      
       if (onComplete) {
         onComplete();
       }
@@ -144,7 +191,12 @@ export default function JSPDFGenerator({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 group-hover:animate-bounce" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
             </svg>
-            Download Your Custom Quote PDF
+            <div className="flex flex-col items-center">
+              <span>Download Your Custom Quote PDF</span>
+              {patientEmail && (
+                <span className="text-xs opacity-90 mt-0.5">We'll also email you a copy</span>
+              )}
+            </div>
           </>
         )}
       </Button>

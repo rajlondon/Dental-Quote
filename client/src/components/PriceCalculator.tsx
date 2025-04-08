@@ -24,6 +24,7 @@ import TemplatePdfGenerator from "./TemplatePdfGenerator";
 import ServerPdfGenerator from "./ServerPdfGenerator";
 import PythonPdfGenerator from "./PythonPdfGenerator";
 import jsPDF from "jspdf";
+import { sendCustomerQuoteEmail } from '@/utils/emailjs';
 import {
   TreatmentPrice,
   getAllTreatments,
@@ -267,6 +268,17 @@ export default function PriceCalculator() {
   // Function to download quote as PDF
   const downloadQuotePDF = () => {
     try {
+      // Display a toast notification about the email being sent if email is provided
+      if (form.getValues('email')) {
+        setTimeout(() => {
+          toast({
+            title: 'Email Confirmation',
+            description: 'We\'ll also email you a copy of your quote 📧',
+            variant: 'default',
+          });
+        }, 2000); // Show this toast 2 seconds after clicking, to not interfere with download
+      }
+      
       // Try the global function first (for the main quote view)
       // @ts-ignore - Using the global function we added
       if (window.generateJsPdf) {
