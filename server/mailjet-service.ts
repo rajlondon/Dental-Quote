@@ -69,7 +69,8 @@ export async function sendEmailNotification(notificationData: NotificationData):
 
     const { quoteData, isCalculationOnly } = notificationData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
-    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'rajsingh140186@googlemail.com';
+    // Hardcoding the correct email address to solve the issue
+    const recipientEmail = 'rajsingh140186@googlemail.com';
     
     console.log(`[Notification] Using sender email: ${senderEmail}`);
     console.log(`[Notification] Using recipient email: ${recipientEmail}`);
@@ -228,7 +229,8 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
 
     const { pdfBuffer, quoteData, filename } = emailData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
-    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'rajsingh140186@googlemail.com';
+    // Hardcoding the correct email address to solve the issue
+    const recipientEmail = 'rajsingh140186@googlemail.com';
     
     console.log(`Using sender email: ${senderEmail}`);
     console.log(`Using recipient email: ${recipientEmail}`);
