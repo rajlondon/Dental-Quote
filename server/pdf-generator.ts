@@ -1659,14 +1659,9 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   yPos += 10;
   
   // Create UK comparison clinics with pricing based on research
-  // Add note about the data source
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  doc.text('* UK pricing data based on Gemini AI market research of private dental clinics, April 2025', 20, yPos);
-  yPos += 7;
+  // Note about the data source will be added after the comparison table
   
-  // Reset text style
+  // Set text style for the pricing section
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(darkTextColor);
   doc.setFontSize(10);
@@ -1704,12 +1699,12 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   
   const ukClinics = [
     {
-      name: "London Private Clinic",
+      name: "London clinic average price*",
       priceGBP: Math.round(updatedTotalGBP * londonMultiplier),
       extras: "Without travel costs"
     },
     {
-      name: "Manchester Private Clinic",
+      name: "Manchester clinic average price*",
       priceGBP: Math.round(updatedTotalGBP * manchesterMultiplier),
       extras: "Without travel costs"
     },
@@ -1717,7 +1712,7 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
       // Use the selected clinic name instead of "Istanbul Dental Smile Package"
       name: comparisonClinics[0].name, // Use first clinic (which is the selected one after reordering)
       priceGBP: comparisonClinics[0].priceGBP, // Use the selected clinic's price
-      extras: "Including flights & accommodation"
+      extras: "Including flights"
     }
   ];
   
@@ -1797,7 +1792,14 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.text(`Your Savings: £${savingsAmount.toLocaleString()} (${savingsPercentage}% off UK prices)`, 105, yPos, { align: 'center' });
-  yPos += 15;
+  yPos += 10;
+  
+  // Add Gemini research citation
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  doc.text('* Pricing data sourced from Gemini deep research of average UK prices', 105, yPos, { align: 'center' });
+  yPos += 10;
   
   // TESTIMONIALS SECTION
   if (yPos > 230) { // If not enough space left, start a new page
