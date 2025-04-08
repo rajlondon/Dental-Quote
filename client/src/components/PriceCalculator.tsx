@@ -426,42 +426,47 @@ export default function PriceCalculator() {
         method: 'post',
         url: `/api/jspdf-quote-v2?t=${timestamp}`,
         data: quoteData,
-        responseType: 'blob',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
         }
       }).then(response => {
-        // Create a download link for the PDF
-        const url = window.URL.createObjectURL(new Blob([response.data]));
+        // Show PDF is ready toast
+        toast({
+          title: 'PDF Generated',
+          description: 'Your quote PDF is ready for download',
+          variant: 'default',
+        });
+        
+        // Get the download URL from the response
+        const { downloadUrl, filename } = response.data;
+        
+        // Create a new link for downloading via the separate endpoint
         const link = document.createElement('a');
-        link.href = url;
-        
-        // Generate formatted filename with date
-        const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const sanitizedName = (quoteData.patientName || 'unnamed')
-          .replace(/[^a-zA-Z0-9]/g, '_')
-          .substring(0, 20);
-        const filename = `IstanbulDentalSmile_Quote_${formattedDate}_${sanitizedName}.pdf`;
-        
-        // Add download attribute and click the link
+        link.href = downloadUrl;
         link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
+        link.setAttribute('target', '_blank');
         
-        // Clean up but allow more time for browser to process
+        // Append to body and click
+        document.body.appendChild(link);
+        
+        // Wait a moment before clicking to allow UI to update
         setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(link);
+          link.click();
           
+          // Clean up
+          document.body.removeChild(link);
+        }, 500);
+        
+        // Show success message after a delay
+        setTimeout(() => {
           toast({
             title: 'Success',
             description: 'Your quote PDF has been downloaded!',
             variant: 'default',
           });
-        }, 2000); // Allow more time for download to complete
+        }, 3000); // Allow more time for download to complete
       }).catch(error => {
         console.error('Error downloading PDF:', error);
         toast({

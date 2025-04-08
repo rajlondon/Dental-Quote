@@ -17,6 +17,26 @@ import { generateQuotePdf } from "./pdf-generator";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Simple in-memory cache to store generated PDFs temporarily
+const pdfCache = new Map<string, { 
+  buffer: Buffer, 
+  filename: string, 
+  createdAt: number 
+}>();
+
+// Clean up PDFs older than 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  const expiryTime = 15 * 60 * 1000; // 15 minutes
+  
+  // Using Array.from to convert map entries to array to avoid iterator issues
+  Array.from(pdfCache.entries()).forEach(([key, data]) => {
+    if (now - data.createdAt > expiryTime) {
+      pdfCache.delete(key);
+    }
+  });
+}, 5 * 60 * 1000); // Check every 5 minutes
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve the public directory for static files like translations and images
   app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
@@ -653,6 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pure PDF generation using jsPDF with Mailjet email notification
+  // Generate a PDF and store it in memory for later download
   app.post("/api/jspdf-quote-v2", async (req, res) => {
     try {
       // Import the updated PDF generator function and email service
@@ -728,17 +749,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Mailjet not configured, skipping email notification');
       }
       
-      // Set headers to prevent caching issues
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.setHeader('Access-Control-Allow-Origin', '*');
+      // Generate a unique ID for this PDF
+      const pdfId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
       
-      // Send the PDF with explicit buffer length to help browsers
-      res.setHeader('Content-Length', pdfBuffer.length);
-      res.send(pdfBuffer);
+      // Store the PDF in memory cache
+      pdfCache.set(pdfId, {
+        buffer: pdfBuffer,
+        filename,
+        createdAt: Date.now()
+      });
+      
+      // Return the download URL
+      return res.json({
+        success: true,
+        message: "PDF generated successfully",
+        downloadUrl: `/api/download-quote/${pdfId}`,
+        filename
+      });
     } catch (error) {
       console.error("Error generating PDF with jsPDF:", error);
       res.status(500).json({
@@ -793,6 +820,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add a route to download the stored PDF using the ID
+  app.get("/api/download-quote/:id", (req, res) => {
+    try {
+      const pdfId = req.params.id;
+      
+      // Get the PDF from cache
+      const pdfData = pdfCache.get(pdfId);
+      
+      if (!pdfData) {
+        return res.status(404).json({
+          message: "PDF not found. It may have expired or was never generated."
+        });
+      }
+      
+      // Set headers for a proper PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${pdfData.filename}"`);
+      res.setHeader('Content-Length', pdfData.buffer.length);
+      
+      // Browser cache control to ensure fresh downloads
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Send the PDF
+      res.send(pdfData.buffer);
+      
+      // Optional: Delete after retrieval
+      // pdfCache.delete(pdfId);
+    } catch (error) {
+      console.error("Error delivering cached PDF:", error);
+      res.status(500).json({
+        message: "Failed to deliver PDF",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   
