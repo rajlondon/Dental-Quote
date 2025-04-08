@@ -9,13 +9,13 @@ const Footer: React.FC = () => {
           <div className="md:col-span-1">
             <div className="flex flex-col space-y-2 mb-4">
               <Link href="/">
-                <a className="bg-white p-3 rounded-md inline-block w-fit">
+                <div className="bg-white p-3 rounded-md inline-block w-fit cursor-pointer">
                   <img 
                     src="/images/istanbul-dental-smile-logo.png" 
                     alt="Istanbul Dental Smile Logo" 
                     className="h-16 w-auto"
                   />
-                </a>
+                </div>
               </Link>
             </div>
             <p className="text-neutral-400 mb-4">Your trusted concierge for premium dental treatments in Istanbul, offering quality care at transparent, affordable prices.</p>
@@ -29,22 +29,22 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-display font-semibold text-lg mb-4">Dental Services</h4>
             <ul className="space-y-2">
-              <li><Link href="/"><a className="text-neutral-400 hover:text-white transition-colors">Dental Veneers</a></Link></li>
-              <li><Link href="/"><a className="text-neutral-400 hover:text-white transition-colors">Dental Implants</a></Link></li>
-              <li><Link href="/"><a className="text-neutral-400 hover:text-white transition-colors">Hollywood Smile</a></Link></li>
-              <li><Link href="/"><a className="text-neutral-400 hover:text-white transition-colors">Crowns & Bridges</a></Link></li>
-              <li><Link href="/"><a className="text-neutral-400 hover:text-white transition-colors">Teeth Whitening</a></Link></li>
+              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Dental Veneers</span></Link></li>
+              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Dental Implants</span></Link></li>
+              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Hollywood Smile</span></Link></li>
+              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Crowns & Bridges</span></Link></li>
+              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Teeth Whitening</span></Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-display font-semibold text-lg mb-4">Company</h4>
             <ul className="space-y-2">
-              <li><Link href="/"><a className="text-neutral-400 hover:text-white transition-colors">About Us</a></Link></li>
-              <li><Link href="/#how-it-works"><a className="text-neutral-400 hover:text-white transition-colors">How It Works</a></Link></li>
-              <li><Link href="/#testimonials"><a className="text-neutral-400 hover:text-white transition-colors">Client Reviews</a></Link></li>
-              <li><Link href="/#faqs"><a className="text-neutral-400 hover:text-white transition-colors">FAQs</a></Link></li>
-              <li><Link href="/blog"><a className="text-neutral-400 hover:text-white transition-colors">Blog</a></Link></li>
+              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">About Us</span></Link></li>
+              <li><a href="/#how-it-works" className="text-neutral-400 hover:text-white transition-colors">How It Works</a></li>
+              <li><a href="/#testimonials" className="text-neutral-400 hover:text-white transition-colors">Client Reviews</a></li>
+              <li><a href="/#faqs" className="text-neutral-400 hover:text-white transition-colors">FAQs</a></li>
+              <li><Link href="/blog"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Blog</span></Link></li>
             </ul>
           </div>
           
@@ -71,9 +71,9 @@ const Footer: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-neutral-500 text-sm mb-4 md:mb-0">© {new Date().getFullYear()} Istanbul Dental Smile. All rights reserved.</p>
             <div className="flex space-x-4">
-              <Link href="/"><a className="text-neutral-500 hover:text-white text-sm transition-colors">Privacy Policy</a></Link>
-              <Link href="/"><a className="text-neutral-500 hover:text-white text-sm transition-colors">Terms of Service</a></Link>
-              <Link href="/"><a className="text-neutral-500 hover:text-white text-sm transition-colors">Cookie Policy</a></Link>
+              <Link href="/"><span className="text-neutral-500 hover:text-white text-sm transition-colors cursor-pointer">Privacy Policy</span></Link>
+              <Link href="/"><span className="text-neutral-500 hover:text-white text-sm transition-colors cursor-pointer">Terms of Service</span></Link>
+              <Link href="/"><span className="text-neutral-500 hover:text-white text-sm transition-colors cursor-pointer">Cookie Policy</span></Link>
             </div>
           </div>
         </div>
