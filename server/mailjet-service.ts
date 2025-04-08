@@ -64,18 +64,21 @@ export interface NotificationData {
 export async function sendEmailNotification(notificationData: NotificationData): Promise<boolean> {
   try {
     if (!isMailjetConfigured()) {
-      console.error('Mailjet is not configured. Check environment variables.');
-      return false;
+      console.warn('Mailjet is not fully configured - email functionality will be limited');
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Skipping email in production due to missing configuration');
+        return false;
+      }
     }
 
     const { quoteData, isCalculationOnly } = notificationData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
     // Hardcoding the correct email address to solve the issue
     const recipientEmail = 'rajsingh140186@googlemail.com';
-    
+
     console.log(`[Notification] Using sender email: ${senderEmail}`);
     console.log(`[Notification] Using recipient email: ${recipientEmail}`);
-    
+
     // Format date
     const now = new Date();
     const formattedDate = now.toLocaleDateString('en-GB', {
@@ -121,11 +124,11 @@ export async function sendEmailNotification(notificationData: NotificationData):
             <h1 style="margin: 0;">${isCalculationOnly ? 'New Quote Calculation' : 'New Quote Downloaded'}</h1>
             <p style="margin: 5px 0 0 0;">Istanbul Dental Smile</p>
           </div>
-          
+
           <div style="background-color: #f9f9f9; padding: 20px;">
             <h2 style="color: #007B9E; margin-top: 0;">Quote Details</h2>
             <p>A customer has ${isCalculationOnly ? 'calculated a dental treatment quote' : 'downloaded a dental treatment quote PDF'} through the website. Details are below:</p>
-            
+
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd; width: 40%;"><strong>Date:</strong></td>
@@ -172,12 +175,12 @@ export async function sendEmailNotification(notificationData: NotificationData):
               </tr>
               ` : ''}
             </table>
-            
+
             <h3 style="color: #007B9E;">Treatments Requested</h3>
             <div style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
               ${treatmentsList}
             </div>
-            
+
             ${isCalculationOnly ? `
             <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px; margin-bottom: 20px;">
               <strong>Early Notification!</strong> This customer has calculated a quote but hasn't downloaded it yet - an opportunity for proactive outreach!
@@ -185,14 +188,14 @@ export async function sendEmailNotification(notificationData: NotificationData):
             ` : `
             <p style="margin-bottom: 8px;">The complete quote PDF is attached to this email.</p>
             `}
-            
+
             <p style="margin-bottom: 20px;">Please contact the patient as soon as possible to follow up on this quote.</p>
-            
+
             <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px;">
               <strong>Next Steps:</strong> Send WhatsApp follow-up or call the patient within 24 hours.
             </div>
           </div>
-          
+
           <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
             <p>This is an automated notification from the Istanbul Dental Smile website.</p>
             <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
@@ -204,7 +207,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
     // Send the admin email notification
     console.log(`Sending calculation notification to admin email: ${recipientEmail}`);
     console.log(`Patient information: Name: ${quoteData.patientName || 'unnamed'}, Email: ${quoteData.patientEmail || 'no email provided'}`);
-    
+
     await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [adminMessage]
     });
@@ -213,7 +216,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
     return true;
   } catch (error: any) {
     console.error('Error sending quote calculation notification with Mailjet:', error);
-    
+
     // Log more details about the error to help diagnose issues
     if (error.response) {
       console.error('Mailjet API error details:', {
@@ -222,7 +225,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
         data: error.response.data
       });
     }
-    
+
     return false;
   }
 }
@@ -231,18 +234,21 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
   // We declare return type as Promise<boolean> and ensure all code paths return a boolean
   try {
     if (!isMailjetConfigured()) {
-      console.error('Mailjet is not configured. Check environment variables.');
-      return false;
+      console.warn('Mailjet is not fully configured - email functionality will be limited');
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Skipping email in production due to missing configuration');
+        return false;
+      }
     }
 
     const { pdfBuffer, quoteData, filename } = emailData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
     // Hardcoding the correct email address to solve the issue
     const recipientEmail = 'rajsingh140186@googlemail.com';
-    
+
     console.log(`Using sender email: ${senderEmail}`);
     console.log(`Using recipient email: ${recipientEmail}`);
-    
+
     // Format date
     const now = new Date();
     const formattedDate = now.toLocaleDateString('en-GB', {
@@ -268,7 +274,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     }) => {
       return `${item.treatment} x${item.quantity} - £${item.priceGBP}`;
     }).join('<br>');
-    
+
     // Create a more detailed treatment list for patient email
     const patientTreatmentsList = quoteData.items.map((item: { 
       treatment: string; 
@@ -305,11 +311,11 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
             <h1 style="margin: 0;">New Quote Generated</h1>
             <p style="margin: 5px 0 0 0;">Istanbul Dental Smile</p>
           </div>
-          
+
           <div style="background-color: #f9f9f9; padding: 20px;">
             <h2 style="color: #007B9E; margin-top: 0;">Quote Details</h2>
             <p>A new dental treatment quote has been generated through the website. Details are below:</p>
-            
+
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd; width: 40%;"><strong>Date:</strong></td>
@@ -350,20 +356,20 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
               </tr>
               ` : ''}
             </table>
-            
+
             <h3 style="color: #007B9E;">Treatments Requested</h3>
             <div style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
               ${treatmentsList}
             </div>
-            
+
             <p style="margin-bottom: 8px;">The complete quote PDF is attached to this email.</p>
             <p style="margin-bottom: 20px;">Please contact the patient as soon as possible to follow up on this quote.</p>
-            
+
             <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px;">
               <strong>Next Steps:</strong> Send WhatsApp follow-up or call the patient within 24 hours.
             </div>
           </div>
-          
+
           <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
             <p>This is an automated notification from the Istanbul Dental Smile website.</p>
             <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
@@ -401,11 +407,11 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
               <h1 style="margin: 0;">Your Dental Treatment Quote</h1>
               <p style="margin: 5px 0 0 0;">Thank you for choosing Istanbul Dental Smile</p>
             </div>
-            
+
             <div style="background-color: #f9f9f9; padding: 20px;">
               <h2 style="color: #007B9E; margin-top: 0;">Hello ${quoteData.patientName || 'there'},</h2>
               <p>Thank you for your interest in dental treatment with Istanbul Dental Smile. We have prepared a detailed quote based on your requirements.</p>
-              
+
               <div style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
                 <h3 style="color: #007B9E; margin-top: 0;">Your Selected Treatments</h3>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
@@ -427,7 +433,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
                   </tbody>
                 </table>
               </div>
-              
+
               ${quoteData.selectedClinicIndex !== undefined && quoteData.clinics && quoteData.clinics.length > quoteData.selectedClinicIndex ? `
               <div style="background-color: #e6f4f7; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #007B9E;">
                 <h3 style="color: #007B9E; margin-top: 0;">Your Selected Clinic</h3>
@@ -435,7 +441,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
                 <p style="margin-top: 0;">Based on your preferences, we've included information about this clinic in your detailed quote. Your PDF quote shows pricing, extras, and guarantees offered by this clinic.</p>
               </div>
               ` : ''}
-              
+
               <div style="background-color: #f0f8fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
                 <h3 style="color: #007B9E; margin-top: 0;">What's Next?</h3>
                 <p>Our dental tourism consultant will contact you within 24 hours to discuss your quote and answer any questions you may have.</p>
@@ -447,12 +453,12 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
                   <li>Accommodation and travel options</li>
                 </ul>
               </div>
-              
+
               <div style="background-color: #B2904F; color: white; padding: 10px; text-align: center; border-radius: 5px;">
                 <p style="margin: 5px 0;"><strong>Have Questions?</strong> Reply to this email or call/WhatsApp us at +447572445856</p>
               </div>
             </div>
-            
+
             <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
               <p>Istanbul Dental Smile | Your UK-Based Dental Tourism Specialists</p>
               <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
@@ -467,7 +473,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
           }
         ]
       };
-      
+
       // Send separate emails to admin and patient
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [message, patientMessage]
@@ -492,12 +498,12 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
         data: error.response.data
       });
     }
-    
+
     // Even if sending to the patient fails, try to send at least to admin as a fallback
     try {
       // Destructure emailData to use in the fallback message
       const { quoteData, filename, pdfBuffer } = emailData;
-      
+
       // Create a simplified message for the fallback attempt
       const fallbackMessage = {
         From: {
@@ -527,7 +533,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
           }
         ]
       };
-      
+
       console.log('Attempting fallback: Sending admin notification only after failure');
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [fallbackMessage]
@@ -536,7 +542,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     } catch (fallbackError) {
       console.error('Fallback also failed:', fallbackError);
     }
-    
+
     return false;
   }
 }
