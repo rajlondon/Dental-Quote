@@ -37,6 +37,7 @@ interface QuoteData {
   clinics?: ClinicComparison[];
   hasXrays?: boolean;
   xrayCount?: number;
+  selectedClinicIndex?: number;
 }
 
 // Original function - this stays the same
@@ -1146,7 +1147,8 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     departureCity,
     clinics,
     hasXrays = false,
-    xrayCount = 0
+    xrayCount = 0,
+    selectedClinicIndex = 0
   } = quoteData;
 
   // Debug travel info
@@ -1513,6 +1515,15 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
       }
     ];
   }
+  
+  // Reorder clinics based on selectedClinicIndex to put the selected clinic first
+  if (selectedClinicIndex !== undefined && comparisonClinics.length > selectedClinicIndex) {
+    const selectedClinic = comparisonClinics[selectedClinicIndex];
+    const otherClinics = comparisonClinics.filter((_, idx) => idx !== selectedClinicIndex);
+    comparisonClinics = [selectedClinic, ...otherClinics];
+    
+    console.log(`Using selected clinic for PDF: ${selectedClinic.name}`);
+  }
 
   // Clinic comparison table
   const clinicTableX = 20;
@@ -1546,7 +1557,7 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFontSize(9);
   
   comparisonClinics.forEach((clinic, index) => {
-    const isHighlighted = index === 1; // Highlight the middle (best value) option
+    const isHighlighted = index === 0; // Highlight the selected clinic (first in the list after reordering)
     
     if (isHighlighted) {
       doc.setFillColor(230, 245, 255); // Light blue background for highlighted row
@@ -1584,11 +1595,11 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     yPos += 12;
   });
   
-  // Add footnote for recommended option
+  // Add footnote for selected clinic
   doc.setTextColor(primaryColor);
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(8);
-  doc.text('* Recommended option based on value for money', clinicTableX, yPos+5);
+  doc.text('* Your selected clinic', clinicTableX, yPos+5);
   yPos += 15;
   
   // Explanation of Istanbul clinic benefits
@@ -1675,8 +1686,9 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
       extras: "Without travel costs"
     },
     {
-      name: "Istanbul Dental Smile Package",
-      priceGBP: updatedTotalGBP,
+      // Use the selected clinic name instead of "Istanbul Dental Smile Package"
+      name: comparisonClinics[0].name, // Use first clinic (which is the selected one after reordering)
+      priceGBP: comparisonClinics[0].priceGBP, // Use the selected clinic's price
       extras: "Including flights & accommodation"
     }
   ];
@@ -1746,9 +1758,9 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     }
   });
   
-  // Calculate savings
+  // Calculate savings using the selected clinic's price
   const ukAveragePrice = Math.round((ukClinics[0].priceGBP + ukClinics[1].priceGBP) / 2);
-  const savingsAmount = ukAveragePrice - updatedTotalGBP;
+  const savingsAmount = ukAveragePrice - comparisonClinics[0].priceGBP; // Use selected clinic's price
   const savingsPercentage = Math.round((savingsAmount / ukAveragePrice) * 100);
   
   // Add savings calculation

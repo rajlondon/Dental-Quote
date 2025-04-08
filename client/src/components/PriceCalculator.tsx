@@ -1018,11 +1018,25 @@ export default function PriceCalculator() {
                           <tfoot className="bg-primary/5 font-semibold">
                             <tr>
                               <td colSpan={2} className="px-4 py-3 text-primary">{t('pricing.total')}</td>
-                              <td className="px-4 py-3 text-right text-primary">£{quote.totalGBP.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-right text-primary">
+                                £{(() => {
+                                  // Get the selected clinic price
+                                  const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+                                  const selectedFactor = clinicPriceFactors[selectedClinic];
+                                  return Math.round(quote.totalGBP * selectedFactor).toLocaleString();
+                                })()}
+                              </td>
                             </tr>
                             <tr>
                               <td colSpan={2} className="px-4 py-3 text-primary">{t('pricing.total_usd')}</td>
-                              <td className="px-4 py-3 text-right text-primary">${quote.totalUSD.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-right text-primary">
+                                ${(() => {
+                                  // Get the selected clinic price
+                                  const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+                                  const selectedFactor = clinicPriceFactors[selectedClinic];
+                                  return Math.round(quote.totalUSD * selectedFactor).toLocaleString();
+                                })()}
+                              </td>
                             </tr>
                           </tfoot>
                         </table>
@@ -1095,52 +1109,90 @@ export default function PriceCalculator() {
                         <h4 className="font-semibold text-primary mb-2">Cost Comparison: UK vs Istanbul</h4>
                         <p className="text-sm mb-3">See how much you can save compared to UK prices:</p>
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
-                          {[
-                            {
-                              name: "London Private Clinic",
-                              price: Math.round(quote.totalGBP * 3.2),
-                              extra: "Without travel costs"
-                            },
-                            {
-                              name: "Manchester Private Clinic",
-                              price: Math.round(quote.totalGBP * 2.8),
-                              extra: "Without travel costs"
-                            },
-                            {
-                              name: "Istanbul Dental Smile",
-                              price: quote.totalGBP,
-                              extra: "Including flights & hotel"
-                            }
-                          ].map((clinic, idx) => (
-                            <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${idx === 2 ? 'bg-primary text-white' : 'bg-white'}`}>
-                              <div className="flex justify-between sm:block">
-                                <div className="text-sm font-semibold">{clinic.name}</div>
-                                <div className={`text-lg font-bold ${idx === 2 ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                          {(() => {
+                            // Get the selected clinic data
+                            const istanbulClinics = [
+                              {
+                                name: "Maltepe Dental Clinic",
+                                price: Math.round(quote.totalGBP * 0.85),
+                                extra: "Including flights & hotel"
+                              },
+                              {
+                                name: "Denteste Istanbul",
+                                price: Math.round(quote.totalGBP * 0.80),
+                                extra: "Including flights & hotel"
+                              },
+                              {
+                                name: "Istanbulsmilecenter",
+                                price: Math.round(quote.totalGBP * 0.90),
+                                extra: "Including flights & hotel"
+                              }
+                            ];
+                            
+                            // Get the selected clinic price
+                            const selectedClinicData = istanbulClinics[selectedClinic];
+                            
+                            // Create comparison data
+                            const comparisonData = [
+                              {
+                                name: "London Private Clinic",
+                                price: Math.round(quote.totalGBP * 3.2),
+                                extra: "Without travel costs"
+                              },
+                              {
+                                name: "Manchester Private Clinic",
+                                price: Math.round(quote.totalGBP * 2.8),
+                                extra: "Without travel costs"
+                              },
+                              {
+                                name: selectedClinicData.name,
+                                price: selectedClinicData.price,
+                                extra: selectedClinicData.extra
+                              }
+                            ];
+                            
+                            return comparisonData.map((clinic, idx) => (
+                              <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${idx === 2 ? 'bg-primary text-white' : 'bg-white'}`}>
+                                <div className="flex justify-between sm:block">
+                                  <div className="text-sm font-semibold">{clinic.name}</div>
+                                  <div className={`text-lg font-bold ${idx === 2 ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                                </div>
+                                <div className="text-xs mt-1">{clinic.extra}</div>
                               </div>
-                              <div className="text-xs mt-1">{clinic.extra}</div>
-                            </div>
-                          ))}
+                            ));
+                          })()}
                         </div>
                         
-                        {/* Savings calculation */}
-                        <div className="mt-3 text-center text-primary font-semibold">
-                          Your Savings: £{Math.round((Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2 - quote.totalGBP).toLocaleString()} 
-                          ({Math.round(((Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2 - quote.totalGBP) / ((Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2) * 100)}% off UK prices)
-                        </div>
+                        {/* Savings calculation based on selected clinic price */}
+                        {(() => {
+                          // Get the selected clinic price
+                          const selectedClinicPrice = [
+                            Math.round(quote.totalGBP * 0.85), // Maltepe
+                            Math.round(quote.totalGBP * 0.80), // Denteste
+                            Math.round(quote.totalGBP * 0.90)  // Istanbulsmilecenter
+                          ][selectedClinic];
+                          
+                          // Calculate UK average price
+                          const ukAvgPrice = (Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2;
+                          
+                          // Calculate savings
+                          const savings = ukAvgPrice - selectedClinicPrice;
+                          const savingsPercent = Math.round((savings / ukAvgPrice) * 100);
+                          
+                          return (
+                            <div className="mt-3 text-center text-primary font-semibold">
+                              Your Savings: £{Math.round(savings).toLocaleString()} 
+                              ({savingsPercent}% off UK prices)
+                            </div>
+                          );
+                        })()}
                       </div>
                       
                       {/* Hidden PDF Generator component */}
                       <div style={{ display: "none" }}>
-                        <JSPDFGenerator
-                          items={quote.items}
-                          totalGBP={quote.totalGBP}
-                          totalUSD={quote.totalUSD}
-                          patientName={form.getValues('name')}
-                          patientEmail={form.getValues('email')}
-                          patientPhone={form.getValues('phone')}
-                          travelMonth={form.getValues('travelMonth')}
-                          departureCity={form.getValues('departureCity')}
-                          clinics={[
+                        {(() => {
+                          // Define all clinics
+                          const allClinics = [
                             {
                               name: "Maltepe Dental Clinic",
                               priceGBP: Math.round(quote.totalGBP * 0.85),
@@ -1162,10 +1214,37 @@ export default function PriceCalculator() {
                               guarantee: "7 Years",
                               location: "Sisli District"
                             }
-                          ]}
-                          hasXrays={hasXrays}
-                          xrayCount={form.getValues('xrayFiles')?.length || 0}
-                        />
+                          ];
+                          
+                          // Calculate the selected clinic's price for total GBP and USD
+                          const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+                          const selectedFactor = clinicPriceFactors[selectedClinic];
+                          const selectedClinicTotalGBP = Math.round(quote.totalGBP * selectedFactor);
+                          const selectedClinicTotalUSD = Math.round(quote.totalUSD * selectedFactor);
+                          
+                          // Set the selected clinic as the first in the array (so it's used for UK comparisons)
+                          const orderedClinics = [
+                            allClinics[selectedClinic],  // Put selected clinic first
+                            ...allClinics.filter((_, idx) => idx !== selectedClinic) // Add the others
+                          ];
+                          
+                          return (
+                            <JSPDFGenerator
+                              items={quote.items}
+                              totalGBP={selectedClinicTotalGBP} // Use the selected clinic's total
+                              totalUSD={selectedClinicTotalUSD} // Use the selected clinic's total
+                              patientName={form.getValues('name')}
+                              patientEmail={form.getValues('email')}
+                              patientPhone={form.getValues('phone')}
+                              travelMonth={form.getValues('travelMonth')}
+                              departureCity={form.getValues('departureCity')}
+                              clinics={orderedClinics}
+                              hasXrays={hasXrays}
+                              xrayCount={form.getValues('xrayFiles')?.length || 0}
+                              selectedClinicIndex={selectedClinic}
+                            />
+                          );
+                        })()}
                       </div>
                       
                       {/* Download Quote Button */}

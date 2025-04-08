@@ -33,6 +33,7 @@ interface JSPDFGeneratorProps {
   clinics?: ClinicComparison[];
   hasXrays?: boolean;
   xrayCount?: number;
+  selectedClinicIndex?: number;
   onComplete?: () => void;
 }
 
@@ -48,6 +49,7 @@ export default function JSPDFGenerator({
   clinics,
   hasXrays,
   xrayCount,
+  selectedClinicIndex,
   onComplete
 }: JSPDFGeneratorProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +81,8 @@ export default function JSPDFGenerator({
           departureCity: departureCity || 'UK', // Ensure a fallback value
           clinics,
           hasXrays,
-          xrayCount
+          xrayCount,
+          selectedClinicIndex // Pass the selected clinic index to the server
         },
         responseType: 'blob'
       });

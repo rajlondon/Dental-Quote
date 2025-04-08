@@ -28,6 +28,7 @@ export interface QuoteData {
   }>;
   hasXrays?: boolean;
   xrayCount?: number;
+  selectedClinicIndex?: number;
 }
 
 // Initialize Mailjet client
@@ -158,6 +159,12 @@ export async function sendEmailNotification(notificationData: NotificationData):
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>X-rays Uploaded:</strong></td>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files)` : 'No'}</td>
               </tr>
+              ${quoteData.selectedClinicIndex !== undefined && quoteData.clinics && quoteData.clinics.length > quoteData.selectedClinicIndex ? `
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Selected Clinic:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #007B9E;"><strong>${quoteData.clinics[quoteData.selectedClinicIndex].name}</strong></td>
+              </tr>
+              ` : ''}
               ${isCalculationOnly ? `
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Quote Status:</strong></td>
@@ -336,6 +343,12 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>X-rays Uploaded:</strong></td>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;">${quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files)` : 'No'}</td>
               </tr>
+              ${quoteData.selectedClinicIndex !== undefined && quoteData.clinics && quoteData.clinics.length > quoteData.selectedClinicIndex ? `
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Selected Clinic:</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #007B9E;"><strong>${quoteData.clinics[quoteData.selectedClinicIndex].name}</strong></td>
+              </tr>
+              ` : ''}
             </table>
             
             <h3 style="color: #007B9E;">Treatments Requested</h3>
@@ -414,6 +427,14 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
                   </tbody>
                 </table>
               </div>
+              
+              ${quoteData.selectedClinicIndex !== undefined && quoteData.clinics && quoteData.clinics.length > quoteData.selectedClinicIndex ? `
+              <div style="background-color: #e6f4f7; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #007B9E;">
+                <h3 style="color: #007B9E; margin-top: 0;">Your Selected Clinic</h3>
+                <p style="font-weight: bold; margin-bottom: 5px;">${quoteData.clinics[quoteData.selectedClinicIndex].name}</p>
+                <p style="margin-top: 0;">Based on your preferences, we've included information about this clinic in your detailed quote. Your PDF quote shows pricing, extras, and guarantees offered by this clinic.</p>
+              </div>
+              ` : ''}
               
               <div style="background-color: #f0f8fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
                 <h3 style="color: #007B9E; margin-top: 0;">What's Next?</h3>

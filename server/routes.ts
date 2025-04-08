@@ -674,6 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         patientEmail: quoteData.patientEmail,
         travelMonth: quoteData.travelMonth,
         departureCity: quoteData.departureCity,
+        selectedClinicIndex: quoteData.selectedClinicIndex,
         itemCount: quoteData.items.length,
         totalGBP: quoteData.totalGBP
       });
@@ -750,6 +751,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get data from request body
       const quoteData = req.body;
+      
+      // Log the selected clinic index if available
+      if (quoteData.selectedClinicIndex !== undefined) {
+        console.log(`Notification for quote with selected clinic index: ${quoteData.selectedClinicIndex}`);
+      }
       
       // If Mailjet is not configured, return success anyway but log the issue
       if (!isMailjetConfigured()) {
