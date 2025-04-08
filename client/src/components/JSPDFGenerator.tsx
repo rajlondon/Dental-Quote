@@ -61,10 +61,10 @@ export default function JSPDFGenerator({
         departureCity
       });
       
-      // Call the server-side jsPDF endpoint
+      // Call the server-side jsPDF endpoint with version 2
       const response = await axios({
         method: 'post',
-        url: '/api/jspdf-quote',
+        url: '/api/jspdf-quote-v2',
         data: {
           items,
           totalGBP,

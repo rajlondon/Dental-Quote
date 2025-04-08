@@ -653,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pure PDF generation using jsPDF with Mailjet email notification
-  app.post("/api/jspdf-quote", async (req, res) => {
+  app.post("/api/jspdf-quote-v2", async (req, res) => {
     try {
       // Import the PDF generator function and email service
       const { generateQuotePdf } = await import('./pdf-generator');
