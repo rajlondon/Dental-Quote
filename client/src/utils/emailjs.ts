@@ -32,10 +32,18 @@ export const initEmailJS = async () => {
   await loadEmailJSConfig();
   
   if (!EMAILJS_CONFIG.publicKey) {
+    console.error('EmailJS public key is not available');
     throw new Error('EmailJS public key is not available');
   }
   
-  emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
+  try {
+    // Initialize EmailJS with the public key
+    emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
+    console.log('EmailJS initialized successfully');
+  } catch (error) {
+    console.error('Error initializing EmailJS:', error);
+    throw error;
+  }
 };
 
 /**
@@ -66,7 +74,7 @@ export const sendCustomerQuoteEmail = async (quoteData: QuoteEmailData): Promise
     const savings = ukPrice - quoteData.totalGBP;
     const savingsPercentage = Math.round((savings / ukPrice) * 100);
     
-    // Format data for the email template
+    // Format data for the email template with a personalized, customer-friendly approach
     const templateParams = {
       to_email: quoteData.patientEmail,
       to_name: quoteData.patientName || 'Valued Patient',
@@ -83,7 +91,18 @@ export const sendCustomerQuoteEmail = async (quoteData: QuoteEmailData): Promise
       flight_cost: quoteData.flightCostGBP ? `£${quoteData.flightCostGBP.toLocaleString()}` : 'Not included',
       reply_to: 'info@istanbuldentalsmile.co.uk',
       from_name: 'Istanbul Dental Smile',
-      xray_status: quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files received)` : 'No'
+      xray_status: quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files received)` : 'No',
+      
+      // Customer-specific personalized content
+      subject: 'Your Istanbul Dental Smile Quote - Transform Your Smile & Save',
+      greeting: `Dear ${quoteData.patientName || 'Valued Patient'},`,
+      intro_message: `Thank you for requesting a quote from Istanbul Dental Smile! We're excited to help you transform your smile while saving substantially on your dental care.`,
+      quote_intro: `Please find your personalized quote details below, along with the attached PDF that contains comprehensive information about your treatment options, our partner clinics, and the complete 5-star experience we offer.`,
+      savings_message: `By choosing Istanbul Dental Smile, you'll save approximately £${savings.toLocaleString()} (${savingsPercentage}%) compared to UK prices while receiving the same or better quality treatment.`,
+      next_steps: `Our team will contact you shortly to discuss your quote and answer any questions you may have. If you'd like to proceed sooner, you can secure your treatment dates with just a £200 deposit.`,
+      contact_message: `Feel free to reach out to us directly at +44 7572 445856 or reply to this email if you have any questions or would like to discuss your treatment options further.`,
+      closing: `We look forward to welcoming you to Istanbul and helping you achieve the smile you deserve!`,
+      signature: `Warm regards,\nThe Istanbul Dental Smile Team`
     };
     
     // Send the email using EmailJS

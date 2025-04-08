@@ -110,10 +110,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       publicKeyExists: !!process.env.EMAILJS_PUBLIC_KEY
     });
     
+    // Create a configuration object with customer-specific template ID
+    // This ensures personalized emails for different purposes
+    const customerQuoteTemplateId = process.env.EMAILJS_CUSTOMER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || '';
+    
     res.json({
       serviceId: process.env.EMAILJS_SERVICE_ID || '',
-      templateId: process.env.EMAILJS_TEMPLATE_ID || '',
-      publicKey: process.env.EMAILJS_PUBLIC_KEY || ''
+      templateId: customerQuoteTemplateId, // Use customer template for client-facing emails
+      publicKey: process.env.EMAILJS_PUBLIC_KEY || '',
+      // Include extra information for debugging
+      isConfigured: !!(process.env.EMAILJS_SERVICE_ID && customerQuoteTemplateId && process.env.EMAILJS_PUBLIC_KEY)
     });
   });
 

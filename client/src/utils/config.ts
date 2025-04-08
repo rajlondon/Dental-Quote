@@ -9,17 +9,27 @@ export const EMAILJS_CONFIG = {
 // This avoids issues with Vite environment variables not being accessible
 export async function loadEmailJSConfig() {
   try {
-    const response = await fetch('/api/config/emailjs');
+    // Add cache busting parameter to avoid cached responses
+    const response = await fetch('/api/config/emailjs?t=' + Date.now());
     if (!response.ok) {
       throw new Error(`Error fetching EmailJS config: ${response.status}`);
     }
     
     const config = await response.json();
     
+    // Verify that all required fields are present
+    if (!config.serviceId || !config.templateId || !config.publicKey) {
+      console.warn('EmailJS configuration incomplete:', {
+        serviceIdAvailable: !!config.serviceId,
+        templateIdAvailable: !!config.templateId,
+        publicKeyAvailable: !!config.publicKey
+      });
+    }
+    
     // Update the configuration
-    EMAILJS_CONFIG.serviceId = config.serviceId;
-    EMAILJS_CONFIG.templateId = config.templateId;
-    EMAILJS_CONFIG.publicKey = config.publicKey;
+    EMAILJS_CONFIG.serviceId = config.serviceId || '';
+    EMAILJS_CONFIG.templateId = config.templateId || '';
+    EMAILJS_CONFIG.publicKey = config.publicKey || '';
     
     // Log config status for debugging
     console.log('EmailJS Config Loaded:', {
