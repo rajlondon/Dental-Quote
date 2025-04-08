@@ -368,23 +368,36 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     });
   }
   
-  // Add flight cost as a line item
-  rowCount++;
-  const isAlternateRow = rowCount % 2 !== 0;
-  if (isAlternateRow) {
-    doc.setFillColor(245, 245, 245);
-    doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+  // Add flight cost as a line item, but only if it's not already in the items array
+  let hasFlightItem = false;
+  
+  // Check if there's already a flight item in the array
+  if (items && items.length > 0) {
+    hasFlightItem = items.some(item => 
+      item.treatment.toLowerCase().includes('flight') || 
+      item.treatment.toLowerCase().includes('return flights')
+    );
   }
   
-  doc.text(`Flight (${departureDisplay} to Istanbul, ${monthDisplay})`, colPos[0], yPos+6, { align: 'center' });
-  doc.text("1", colPos[1], yPos+6, { align: 'center' });
-  doc.text(`£${flightCost.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
-  doc.text(`£${flightCost.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
-  doc.text('N/A', colPos[4], yPos+6, { align: 'center' });
-  yPos += rowHeight;
+  // Only add flight cost as a separate line if it doesn't already exist
+  if (!hasFlightItem) {
+    rowCount++;
+    const isAlternateRow = rowCount % 2 !== 0;
+    if (isAlternateRow) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+    }
+    
+    doc.text(`Flight (${departureDisplay} to Istanbul, ${monthDisplay})`, colPos[0], yPos+6, { align: 'center' });
+    doc.text("1", colPos[1], yPos+6, { align: 'center' });
+    doc.text(`£${flightCost.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
+    doc.text(`£${flightCost.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
+    doc.text('N/A', colPos[4], yPos+6, { align: 'center' });
+    yPos += rowHeight;
+  }
   
-  // Calculate updated totals
-  const updatedTotalGBP = totalGBP + flightCost;
+  // Calculate updated totals, but only add flight cost if it's not already included
+  const updatedTotalGBP = hasFlightItem ? totalGBP : totalGBP + flightCost;
   // Estimate USD conversion
   const exchangeRate = totalUSD / totalGBP; // Use the same exchange rate as provided in the quote data
   const updatedTotalUSD = updatedTotalGBP * exchangeRate;
@@ -395,7 +408,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total (including flight)', colPos[0], yPos+5.5, { align: 'center' });
+  doc.text('Total (including flights)', colPos[0], yPos+5.5, { align: 'center' });
   doc.text(`£${updatedTotalGBP.toFixed(2)}`, colPos[3], yPos+5.5, { align: 'center' });
   doc.text(`$${updatedTotalUSD.toFixed(2)}`, colPos[4], yPos+5.5, { align: 'center' });
   yPos += 15;
@@ -451,28 +464,28 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   // Prepare clinic data if not provided
   let comparisonClinics = clinics || [];
   if (comparisonClinics.length === 0) {
-    // Default clinics if none provided
+    // Default clinics if none provided, using the user-requested clinic names
     comparisonClinics = [
       {
-        name: "DentGroup Istanbul",
-        priceGBP: Math.round(totalGBP * 0.95),
-        extras: "Premium Service, Modern Facilities",
-        location: "Nişantaşı",
+        name: "Maltepe Dental Clinic",
+        priceGBP: Math.round(totalGBP * 0.85), // 15% cheaper
+        extras: "Modern Facilities, Airport Transfer",
+        location: "Maltepe District",
         guarantee: "5 Years",
+        rating: "⭐⭐⭐⭐"
+      },
+      {
+        name: "Denteste Istanbul",
+        priceGBP: Math.round(totalGBP * 0.80), // 20% cheaper
+        extras: "Central Location, 5-Star Hotel Included",
+        location: "Şişli",
+        guarantee: "7 Years",
         rating: "⭐⭐⭐⭐⭐"
       },
       {
-        name: "Vera Smile",
-        priceGBP: Math.round(totalGBP * 0.92),
-        extras: "Central Location, Experienced Doctors",
-        location: "Şişli",
-        guarantee: "5 Years",
-        rating: "⭐⭐⭐⭐½"
-      },
-      {
-        name: "LuxClinic Turkey",
-        priceGBP: totalGBP,
-        extras: "Luxury Experience, VIP Service",
+        name: "Istanbul Smile Center",
+        priceGBP: totalGBP, // Original price
+        extras: "Luxury Experience, VIP Service, Premium Hotel",
         location: "Levent",
         guarantee: "10 Years",
         rating: "⭐⭐⭐⭐⭐"
