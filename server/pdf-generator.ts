@@ -1602,24 +1602,40 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.text('* Your selected clinic', clinicTableX, yPos+5);
   yPos += 15;
   
-  // Explanation of Istanbul clinic benefits
+  // Explanation of Istanbul clinic benefits - improved formatting
   doc.setTextColor(darkTextColor);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('All Istanbul clinics include:', 20, yPos);
-  yPos += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('All Istanbul Clinics Include:', 20, yPos);
+  yPos += 10;
   
+  // Create a light blue background box for benefits
+  doc.setFillColor(240, 248, 255); // Light blue background
+  doc.roundedRect(20, yPos-5, 170, 45, 3, 3, 'F');
+  
+  // List benefits with consistent checkmarks and better spacing
   const benefits = [
-    '✓ Free initial online consultation',
-    '✓ Treatment by experienced specialists',
-    '✓ Premium quality materials',
-    '✓ Assistance with accommodation',
-    '✓ Airport pickup and transfer service'
+    'Free initial online consultation',
+    'Treatment by experienced specialists',
+    'Premium quality materials',
+    'Assistance with accommodation',
+    'Airport pickup and transfer service'
   ];
   
-  benefits.forEach(benefit => {
-    doc.text(benefit, 25, yPos);
-    yPos += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  
+  benefits.forEach((benefit, index) => {
+    // Draw a colored checkmark
+    doc.setTextColor(primaryColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('✓', 25, yPos);
+    
+    // Draw the benefit text
+    doc.setTextColor(darkTextColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text(benefit, 35, yPos);
+    yPos += 8; // Increased spacing between items
   });
   
   // UK VS ISTANBUL PRICE COMPARISON SECTION
@@ -1642,8 +1658,20 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.text('See how much you can save by choosing dental treatment in Istanbul compared to UK prices:', 20, yPos);
   yPos += 10;
   
-  // Create UK comparison clinics with more accurate pricing
-  // Source: Gemini AI research on UK private dental costs
+  // Create UK comparison clinics with pricing based on research
+  // Add note about the data source
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  doc.text('* UK pricing data based on Gemini AI market research of private dental clinics, April 2025', 20, yPos);
+  yPos += 7;
+  
+  // Reset text style
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(10);
+  
+  // Set multipliers based on Gemini AI research
   let londonMultiplier = 3.2; // London clinics approximately 3.2x more expensive
   let manchesterMultiplier = 2.8; // Manchester clinics approximately 2.8x more expensive
   
