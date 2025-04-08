@@ -420,13 +420,15 @@ export default function PriceCalculator() {
         itemCount: quoteData.items.length
       });
       
+      // Add a timestamp to bust cache
+      const timestamp = new Date().getTime();
       axios({
         method: 'post',
-        url: '/api/jspdf-quote-v2',
+        url: `/api/jspdf-quote-v2?t=${timestamp}`,
         data: quoteData,
         responseType: 'blob',
         headers: {
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
         }
@@ -449,7 +451,7 @@ export default function PriceCalculator() {
         document.body.appendChild(link);
         link.click();
         
-        // Clean up
+        // Clean up but allow more time for browser to process
         setTimeout(() => {
           window.URL.revokeObjectURL(url);
           document.body.removeChild(link);
@@ -459,7 +461,7 @@ export default function PriceCalculator() {
             description: 'Your quote PDF has been downloaded!',
             variant: 'default',
           });
-        }, 100);
+        }, 2000); // Allow more time for download to complete
       }).catch(error => {
         console.error('Error downloading PDF:', error);
         toast({

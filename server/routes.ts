@@ -728,11 +728,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Mailjet not configured, skipping email notification');
       }
       
-      // Set the response headers
+      // Set headers to prevent caching issues
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Access-Control-Allow-Origin', '*');
       
-      // Send the PDF
+      // Send the PDF with explicit buffer length to help browsers
+      res.setHeader('Content-Length', pdfBuffer.length);
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating PDF with jsPDF:", error);
