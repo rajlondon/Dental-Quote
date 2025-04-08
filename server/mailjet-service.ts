@@ -221,6 +221,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
 }
 
 export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
+  // We declare return type as Promise<boolean> and ensure all code paths return a boolean
   try {
     if (!isMailjetConfigured()) {
       console.error('Mailjet is not configured. Check environment variables.');
@@ -365,10 +366,14 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       ]
     };
 
-    // If there's a patient email, create a patient-specific message
-    console.log('Processing patient email:', quoteData.patientEmail);
-    if (quoteData.patientEmail && quoteData.patientEmail.includes('@')) {
-      console.log('Valid patient email found, creating patient message');
+    // NOTE: Patient emails are now handled by EmailJS directly from the browser
+    // Commenting out server-side patient email to avoid duplicates
+    console.log('Processing patient email:', quoteData.patientEmail || 'none');
+    if (false && quoteData.patientEmail && quoteData.patientEmail.includes('@')) {
+      console.log('Valid patient email found, but skipping server-side email since this is now handled by EmailJS');
+      
+      /* Original patient message code kept for reference:
+      // This commented code is intentionally kept for documentation
       const patientMessage = {
         From: {
           Email: senderEmail,
@@ -450,16 +455,16 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [message, patientMessage]
       });
+      */
     } else {
-      // Only send the admin email if no patient email is provided
-      console.log('Sending admin email only because no patient email was provided');
+      // Send only the admin email since customer email is now handled by EmailJS
+      console.log('Sending admin email only (customer email is handled by EmailJS in browser)');
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [message]
       });
     }
 
-    console.log(`Quote email sent successfully for ${quoteData.patientName || 'unnamed patient'} to ${quoteData.patientEmail || 'no patient email'}`);
-    console.log(`Admin notification sent to ${recipientEmail}`);
+    console.log(`Admin notification sent to ${recipientEmail} (customer email handled separately via EmailJS)`);
     return true;
   } catch (error: any) {
     console.error('Error sending quote email with Mailjet:', error);
