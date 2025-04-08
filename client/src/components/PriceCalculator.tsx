@@ -508,19 +508,19 @@ export default function PriceCalculator() {
                           </div>
                           
                           {form.watch('treatments').map((_, index) => (
-                            <div key={index} className="flex gap-4 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">
-                              <div className="flex-1">
+                            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">
+                              <div className="flex-1 w-full">
                                 <FormField
                                   control={form.control}
                                   name={`treatments.${index}.treatment`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <div className="flex items-center">
-                                        <FormLabel className="text-neutral-700">{t('pricing.treatment_type')}</FormLabel>
+                                      <div className="flex flex-wrap items-center">
+                                        <FormLabel className="text-neutral-700 mr-2">{t('pricing.treatment_type')}</FormLabel>
                                         <TooltipProvider>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                               </svg>
                                             </TooltipTrigger>
@@ -638,18 +638,18 @@ export default function PriceCalculator() {
                                 />
                               </div>
                               
-                              <div className="w-28">
+                              <div className="w-full sm:w-28">
                                 <FormField
                                   control={form.control}
                                   name={`treatments.${index}.quantity`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <div className="flex items-center">
-                                        <FormLabel className="text-neutral-700">{t('pricing.quantity')}</FormLabel>
+                                      <div className="flex flex-wrap items-center">
+                                        <FormLabel className="text-neutral-700 mr-2">{t('pricing.quantity')}</FormLabel>
                                         <TooltipProvider>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                               </svg>
                                             </TooltipTrigger>
@@ -677,12 +677,13 @@ export default function PriceCalculator() {
                                   type="button"
                                   variant="ghost"
                                   size="sm"
-                                  className="mt-8 text-destructive hover:text-destructive/80"
+                                  className="mt-2 sm:mt-8 w-full sm:w-auto text-destructive hover:text-destructive/80"
                                   onClick={() => removeTreatment(index)}
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 sm:mr-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
+                                  <span className="sm:hidden">Remove Treatment</span>
                                 </Button>
                               )}
                             </div>
@@ -943,13 +944,16 @@ export default function PriceCalculator() {
                         
                         <Button 
                           type="submit" 
-                          className="w-full mt-8 py-6 text-lg"
+                          className="w-full mt-8 py-4 sm:py-6 text-base sm:text-lg fixed bottom-0 left-0 z-10 rounded-none sm:relative sm:bottom-auto sm:left-auto sm:z-auto sm:rounded-md"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           </svg>
                           {t('pricing.calculate_quote')}
                         </Button>
+                        
+                        {/* Extra space at bottom on mobile to prevent button overlap */}
+                        <div className="h-16 sm:hidden"></div>
                       </div>
                     </form>
                   </Form>
@@ -994,10 +998,10 @@ export default function PriceCalculator() {
                         </table>
                       </div>
                       
-                      {/* Simple testimonial section */}
+                      {/* Simple testimonial section - mobile responsive */}
                       <div className="p-4 bg-primary/5 rounded-lg">
                         <h4 className="font-semibold text-primary mb-2">{t('pricing.our_patients_save')}</h4>
-                        <div className="flex space-x-4 pt-2">
+                        <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {[
                             {
                               name: "London Clinic",
@@ -1015,9 +1019,11 @@ export default function PriceCalculator() {
                               extra: "Including 5★ hotel"
                             }
                           ].map((clinic, idx) => (
-                            <div key={idx} className={`flex-1 p-3 rounded-lg ${idx === 2 ? 'bg-primary text-white' : 'bg-white'}`}>
-                              <div className="text-sm font-semibold mb-1">{clinic.name}</div>
-                              <div className={`text-lg font-bold ${idx === 2 ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                            <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${idx === 2 ? 'bg-primary text-white' : 'bg-white'}`}>
+                              <div className="flex justify-between sm:block">
+                                <div className="text-sm font-semibold">{clinic.name}</div>
+                                <div className={`text-lg font-bold ${idx === 2 ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                              </div>
                               <div className="text-xs mt-1">{clinic.extra}</div>
                             </div>
                           ))}
