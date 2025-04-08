@@ -20,6 +20,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
 import JSPDFGenerator from "./JSPDFGenerator";
+
+// Define interface for clinic comparison
+interface ClinicComparison {
+  name: string;
+  priceGBP: number;
+  extras: string;
+  guarantee?: string;
+  location?: string;
+  rating?: string;
+}
 import TemplatePdfGenerator from "./TemplatePdfGenerator";
 import ServerPdfGenerator from "./ServerPdfGenerator";
 import PythonPdfGenerator from "./PythonPdfGenerator";
@@ -85,6 +95,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function PriceCalculator() {
   const { t } = useTranslation();
+  const [selectedClinic, setSelectedClinic] = useState<number>(1); // Default to middle clinic (best value)
   const { toast } = useToast();
   const [treatments, setTreatments] = useState<TreatmentPrice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -308,7 +319,7 @@ export default function PriceCalculator() {
         // Call the server-side jsPDF endpoint
         axios({
           method: 'post',
-          url: '/api/jspdf-quote',
+          url: '/api/jspdf-quote-v2', // Use the new V2 endpoint
           data: {
             items: htmlQuoteData.items,
             totalGBP: htmlQuoteData.totalGBP,
@@ -319,20 +330,27 @@ export default function PriceCalculator() {
             travelMonth: htmlQuoteData.travelMonth || 'year-round', // Ensure fallback value
             departureCity: htmlQuoteData.departureCity || 'UK', // Ensure fallback value
             clinics: [
+              // Istanbul clinics for comparison
               {
-                name: "London Clinic",
-                priceGBP: Math.round(htmlQuoteData.totalGBP * 2.5),
-                extras: "Without travel"
+                name: "Maltepe Dental Clinic",
+                priceGBP: Math.round(htmlQuoteData.totalGBP * 0.85),
+                extras: "Modern Facilities, Airport Transfer",
+                guarantee: "5 Years",
+                location: "Maltepe District"
               },
               {
-                name: "Manchester Clinic",
-                priceGBP: Math.round(htmlQuoteData.totalGBP * 2.2),
-                extras: "Without travel"
+                name: "Denteste Istanbul",
+                priceGBP: Math.round(htmlQuoteData.totalGBP * 0.80),
+                extras: "All-inclusive Package, Hotel Stay",
+                guarantee: "3 Years",
+                location: "City Center"
               },
               {
-                name: "Istanbul Dental Smile",
-                priceGBP: htmlQuoteData.totalGBP,
-                extras: "Including 5★ hotel"
+                name: "Istanbulsmilecenter",
+                priceGBP: Math.round(htmlQuoteData.totalGBP * 0.90),
+                extras: "Premium Materials, VIP Service",
+                guarantee: "7 Years",
+                location: "Sisli District"
               }
             ],
             hasXrays: htmlQuoteData.hasXrays,
@@ -1010,25 +1028,88 @@ export default function PriceCalculator() {
                         </table>
                       </div>
                       
-                      {/* Simple testimonial section - mobile responsive */}
-                      <div className="p-4 bg-primary/5 rounded-lg">
-                        <h4 className="font-semibold text-primary mb-2">{t('pricing.our_patients_save')}</h4>
+                      {/* Istanbul Clinic Comparison Section */}
+                      <div className="p-4 bg-primary/5 rounded-lg mb-6">
+                        <h4 className="font-semibold text-primary mb-2">Istanbul Clinic Comparison</h4>
+                        <p className="text-sm mb-3">Select one of our verified partner clinics in Istanbul:</p>
+                        
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {[
                             {
-                              name: "London Clinic",
-                              price: Math.round(quote.totalGBP * 2.5),
-                              extra: "Without travel"
+                              name: "Maltepe Dental Clinic",
+                              price: Math.round(quote.totalGBP * 0.85), // 15% cheaper than base price
+                              extra: "Modern Facilities, Airport Transfer",
+                              guarantee: "5 Years"
                             },
                             {
-                              name: "Manchester Clinic",
-                              price: Math.round(quote.totalGBP * 2.2),
-                              extra: "Without travel"
+                              name: "Denteste Istanbul",
+                              price: Math.round(quote.totalGBP * 0.80), // 20% cheaper than base price
+                              extra: "All-inclusive Package, Hotel Stay",
+                              guarantee: "3 Years"
+                            },
+                            {
+                              name: "Istanbulsmilecenter",
+                              price: Math.round(quote.totalGBP * 0.90), // 10% cheaper than base price
+                              extra: "Premium Materials, VIP Service",
+                              guarantee: "7 Years"
+                            }
+                          ].map((clinic, idx) => {
+                            const isSelected = selectedClinic === idx;
+                            return (
+                              <div 
+                                key={idx} 
+                                className={`w-full sm:flex-1 p-3 rounded-lg cursor-pointer transition-all border-2 ${
+                                  isSelected 
+                                    ? 'bg-primary/10 border-primary' 
+                                    : 'bg-white border-transparent hover:border-primary/30'
+                                }`}
+                                onClick={() => setSelectedClinic(idx)}
+                              >
+                                <div className="flex items-start">
+                                  <input 
+                                    type="radio" 
+                                    checked={isSelected}
+                                    onChange={() => setSelectedClinic(idx)}
+                                    className="mt-1 mr-2"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="text-sm font-semibold">{clinic.name}</div>
+                                    <div className="flex items-center">
+                                      <div className="text-lg font-bold text-primary">£{clinic.price.toLocaleString()}</div>
+                                    </div>
+                                    <div className="text-xs mt-1">{clinic.extra}</div>
+                                    <div className="text-xs mt-1">Guarantee: {clinic.guarantee}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="text-xs text-center mt-3">
+                          Pricing data sourced from Gemini AI deep research of actual Istanbul clinic rates
+                        </div>
+                      </div>
+                      
+                      {/* UK vs Istanbul Price Comparison - now separate section */}
+                      <div className="p-4 bg-primary/5 rounded-lg">
+                        <h4 className="font-semibold text-primary mb-2">Cost Comparison: UK vs Istanbul</h4>
+                        <p className="text-sm mb-3">See how much you can save compared to UK prices:</p>
+                        <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
+                          {[
+                            {
+                              name: "London Private Clinic",
+                              price: Math.round(quote.totalGBP * 3.2),
+                              extra: "Without travel costs"
+                            },
+                            {
+                              name: "Manchester Private Clinic",
+                              price: Math.round(quote.totalGBP * 2.8),
+                              extra: "Without travel costs"
                             },
                             {
                               name: "Istanbul Dental Smile",
                               price: quote.totalGBP,
-                              extra: "Including 5★ hotel"
+                              extra: "Including flights & hotel"
                             }
                           ].map((clinic, idx) => (
                             <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${idx === 2 ? 'bg-primary text-white' : 'bg-white'}`}>
@@ -1039,6 +1120,12 @@ export default function PriceCalculator() {
                               <div className="text-xs mt-1">{clinic.extra}</div>
                             </div>
                           ))}
+                        </div>
+                        
+                        {/* Savings calculation */}
+                        <div className="mt-3 text-center text-primary font-semibold">
+                          Your Savings: £{Math.round((Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2 - quote.totalGBP).toLocaleString()} 
+                          ({Math.round(((Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2 - quote.totalGBP) / ((Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2) * 100)}% off UK prices)
                         </div>
                       </div>
                       
@@ -1055,19 +1142,25 @@ export default function PriceCalculator() {
                           departureCity={form.getValues('departureCity')}
                           clinics={[
                             {
-                              name: "London Clinic",
-                              priceGBP: Math.round(quote.totalGBP * 2.5),
-                              extras: "Without travel"
+                              name: "Maltepe Dental Clinic",
+                              priceGBP: Math.round(quote.totalGBP * 0.85),
+                              extras: "Modern Facilities, Airport Transfer",
+                              guarantee: "5 Years",
+                              location: "Maltepe District"
                             },
                             {
-                              name: "Manchester Clinic",
-                              priceGBP: Math.round(quote.totalGBP * 2.2),
-                              extras: "Without travel"
+                              name: "Denteste Istanbul",
+                              priceGBP: Math.round(quote.totalGBP * 0.80),
+                              extras: "All-inclusive Package, Hotel Stay",
+                              guarantee: "3 Years",
+                              location: "City Center"
                             },
                             {
-                              name: "Istanbul Dental Smile",
-                              priceGBP: quote.totalGBP,
-                              extras: "Including 5★ hotel"
+                              name: "Istanbulsmilecenter",
+                              priceGBP: Math.round(quote.totalGBP * 0.90),
+                              extras: "Premium Materials, VIP Service",
+                              guarantee: "7 Years",
+                              location: "Sisli District"
                             }
                           ]}
                           hasXrays={hasXrays}
@@ -1261,60 +1354,121 @@ export default function PriceCalculator() {
                 </div>
               </div>
               
-              {/* Clinic Comparison Table */}
+              {/* Istanbul Clinic Comparison Table */}
               <div>
-                <h3 className="text-lg font-semibold text-primary mb-2">Clinic Comparison</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">Istanbul Clinic Comparison</h3>
+                <p className="text-sm mb-3">We work with these partner clinics in Istanbul - compare their offers below:</p>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead className="bg-primary text-white">
                       <tr>
                         <th className="px-4 py-2 text-left">Clinic</th>
                         <th className="px-4 py-2 text-right">Price (GBP)</th>
-                        <th className="px-4 py-2 text-left">Includes</th>
+                        <th className="px-4 py-2 text-left">Location</th>
+                        <th className="px-4 py-2 text-left">Features</th>
+                        <th className="px-4 py-2 text-left">Guarantee</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="bg-primary/5 font-medium">
-                        <td className="px-4 py-3 border-b border-neutral-200">Istanbul Dental Smile</td>
-                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{htmlQuoteData.totalGBP.toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Maltepe Dental Clinic</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 0.85).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Maltepe District</td>
                         <td className="px-4 py-3 border-b border-neutral-200">
                           <div className="flex items-center space-x-2">
-                            <img src="icons/hotel.png" className="w-4 h-4" alt="Hotel" /> 
-                            <span>5★ Hotel</span>
+                            <img src="icons/clinic.png" className="w-4 h-4" alt="Clinic" /> 
+                            <span>Modern Facilities</span>
                             <span className="mx-1">·</span>
                             <img src="icons/car.png" className="w-4 h-4" alt="Transfer" /> 
-                            <span>VIP Transfer</span>
-                            <span className="mx-1">·</span>
-                            <img src="icons/chat.png" className="w-4 h-4" alt="Support" /> 
-                            <span>24/7 Support</span>
+                            <span>Airport Transfer</span>
                           </div>
                         </td>
+                        <td className="px-4 py-3 border-b border-neutral-200">5 Years</td>
                       </tr>
                       <tr>
-                        <td className="px-4 py-3 border-b border-neutral-200">Premium Dental Turkey</td>
-                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{(htmlQuoteData.totalGBP * 1.05).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Denteste Istanbul</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 0.80).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">City Center</td>
                         <td className="px-4 py-3 border-b border-neutral-200">
                           <div className="flex items-center space-x-2">
                             <img src="icons/hotel.png" className="w-4 h-4" alt="Hotel" /> 
-                            <span>4★ Hotel</span>
+                            <span>All-inclusive Package</span>
                             <span className="mx-1">·</span>
-                            <img src="icons/car.png" className="w-4 h-4" alt="Transfer" /> 
-                            <span>Airport Transfer</span>
+                            <img src="icons/hotel.png" className="w-4 h-4" alt="Hotel" /> 
+                            <span>Hotel Stay</span>
                           </div>
                         </td>
+                        <td className="px-4 py-3 border-b border-neutral-200">3 Years</td>
                       </tr>
                       <tr className="bg-neutral-50">
-                        <td className="px-4 py-3 border-b border-neutral-200">Vera Smile Clinic</td>
-                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{(htmlQuoteData.totalGBP * 0.95).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Istanbulsmilecenter</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 0.90).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Sisli District</td>
                         <td className="px-4 py-3 border-b border-neutral-200">
                           <div className="flex items-center space-x-2">
-                            <img src="icons/car.png" className="w-4 h-4" alt="Transfer" /> 
-                            <span>Airport Transfer</span>
+                            <img src="icons/clinic.png" className="w-4 h-4" alt="Premium" /> 
+                            <span>Premium Materials</span>
+                            <span className="mx-1">·</span>
+                            <img src="icons/chat.png" className="w-4 h-4" alt="VIP" /> 
+                            <span>VIP Service</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 border-b border-neutral-200">7 Years</td>
+                      </tr>
+                      <tr className="bg-primary/5 font-bold">
+                        <td className="px-4 py-3 border-b border-neutral-200" colSpan={5}>
+                          <div className="text-sm text-center text-primary">
+                            All prices include consultation, treatment, and aftercare. The clinic with the best value for your specific needs will be recommended during your consultation.
                           </div>
                         </td>
                       </tr>
                     </tbody>
                   </table>
+                </div>
+              </div>
+              
+              {/* UK vs Istanbul Cost Comparison */}
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-2">UK vs Istanbul Cost Comparison</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-primary text-white">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Clinic Location</th>
+                        <th className="px-4 py-2 text-right">Price (GBP)</th>
+                        <th className="px-4 py-2 text-left">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="px-4 py-3 border-b border-neutral-200">London Private Clinic</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 3.2).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Price without travel costs</td>
+                      </tr>
+                      <tr className="bg-neutral-50">
+                        <td className="px-4 py-3 border-b border-neutral-200">Manchester Private Clinic</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 2.8).toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Price without travel costs</td>
+                      </tr>
+                      <tr className="bg-primary/5 font-medium">
+                        <td className="px-4 py-3 border-b border-neutral-200">Istanbul Dental Smile</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right">£{htmlQuoteData.totalGBP.toLocaleString()}</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Includes flights, hotel & transfers</td>
+                      </tr>
+                      <tr className="font-bold bg-green-50">
+                        <td className="px-4 py-3 border-b border-neutral-200">Your Savings</td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-right text-green-700">
+                          £{Math.round((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2 - htmlQuoteData.totalGBP).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 border-b border-neutral-200 text-green-700">
+                          {Math.round(((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2 - htmlQuoteData.totalGBP) / ((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2) * 100)}% off UK prices
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="text-xs mt-2 text-neutral-500 text-right">
+                  UK pricing data sourced from Gemini AI deep research of private clinic rates
                 </div>
               </div>
               

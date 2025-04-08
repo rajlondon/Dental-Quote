@@ -12,10 +12,13 @@ interface QuoteItem {
   guarantee: string;
 }
 
-interface ClinicComparison {
+export interface ClinicComparison {
   name: string;
   priceGBP: number;
   extras: string;
+  guarantee?: string;
+  location?: string;
+  rating?: string;
 }
 
 interface JSPDFGeneratorProps {
