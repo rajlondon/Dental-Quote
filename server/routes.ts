@@ -12,7 +12,8 @@ import { spawn } from "child_process";
 import axios from "axios";
 import http from "http";
 import Handlebars from "handlebars";
-import { generateQuotePdf } from "./pdf-generator";
+import { generateQuotePdf, generateQuotePdfV2 } from "./pdf-generator";
+import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -858,7 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // New direct download endpoint using form post
+  // New direct download endpoint using form post - uses temporary storage to avoid import issues
   app.post("/api/direct-download-pdf", (req, res) => {
     try {
       // Get data from request body
@@ -878,45 +879,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasEmail: !!quoteData.patientEmail
       });
       
-      // Import the PDF generator and email service
-      const { generateQuotePdfV2 } = require('./pdf-generator');
-      const { sendQuoteEmail, isMailjetConfigured } = require('./mailjet-service');
+      // Generate a unique ID for this PDF
+      const pdfId = crypto.randomBytes(16).toString('hex');
       
-      // Generate the PDF
+      // Generate the PDF 
       const pdfBuffer = generateQuotePdfV2(quoteData);
       
-      // Send email if configured and email is provided
+      // Store in cache for immediate download
+      const finalFilename = filename || `IstanbulDentalSmile_Quote.pdf`;
+      pdfCache.set(pdfId, {
+        buffer: pdfBuffer,
+        filename: finalFilename,
+        createdAt: Date.now()
+      });
+      
+      // Send email if configured and email is provided - in the background
       if (isMailjetConfigured() && quoteData.patientEmail) {
-        try {
-          // Send email asynchronously
-          sendQuoteEmail({
-            pdfBuffer,
-            quoteData,
-            filename: filename || `IstanbulDentalSmile_Quote.pdf`
-          }).then(success => {
-            if (success) {
-              console.log(`Quote email sent successfully for: ${quoteData.patientName || 'unnamed'}`);
-            } else {
-              console.error('Failed to send quote email');
-            }
-          }).catch(emailError => {
-            console.error('Error sending quote email:', emailError);
-          });
-        } catch (emailError) {
-          console.error('Error initiating quote email:', emailError);
-        }
+        // Create a timeout to run the email sending asynchronously
+        setTimeout(() => {
+          try {
+            sendQuoteEmail({
+              pdfBuffer,
+              quoteData,
+              filename: finalFilename
+            }).then(success => {
+              if (success) {
+                console.log(`Quote email sent successfully for: ${quoteData.patientName || 'unnamed'}`);
+              } else {
+                console.error('Failed to send quote email');
+              }
+            }).catch(emailError => {
+              console.error('Error sending quote email:', emailError);
+            });
+          } catch (emailError) {
+            console.error('Error initiating quote email:', emailError);
+          }
+        }, 10); // Tiny timeout to ensure this runs after response
       }
       
-      // Set headers to force download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename || 'IstanbulDentalSmile_Quote.pdf'}"`);
-      res.setHeader('Content-Length', pdfBuffer.length);
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      // Send the PDF
-      res.send(pdfBuffer);
+      // Redirect to the download endpoint with the ID
+      res.redirect(`/api/download-quote/${pdfId}`);
     } catch (error) {
       console.error("Error generating direct download PDF:", error);
       res.status(500).send(`
@@ -927,6 +929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <p>There was an error generating your PDF. Please try again or contact support.</p>
             <p>Error details: ${error instanceof Error ? error.message : String(error)}</p>
             <p><a href="/">Return to homepage</a></p>
+            <p><a href="/pdf-download-help.html" target="_blank">View alternative download options</a></p>
           </body>
         </html>
       `);
