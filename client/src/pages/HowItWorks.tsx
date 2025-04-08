@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Helmet } from "react-helmet";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -9,19 +8,11 @@ const HowItWorks: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Helmet>
-        <title>How It Works | Istanbul Dental Smile</title>
-        <meta 
-          name="description" 
-          content="Learn how Istanbul Dental Smile provides a comprehensive concierge service for dental tourism in Istanbul, Turkey." 
-        />
-      </Helmet>
-      
       <Navbar />
       
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-primary to-primary-dark text-white py-24">
+        <section className="bg-primary text-white py-24">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">How Istanbul Dental Smile Works</h1>
             <p className="text-xl max-w-3xl mx-auto text-center">
@@ -53,55 +44,55 @@ const HowItWorks: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Step 1 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
-                <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">1</div>
+                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">1</div>
                 <h3 className="text-xl font-bold mt-4 mb-4 text-primary">Get Your Free Quote</h3>
                 <p className="text-neutral-700">
-                  Use our online calculator to select your required treatments and instantly see pricing. Provide your contact details, and we'll send you a detailed quote with treatment options.
+                  Use our online calculator to select your required treatments and instantly see pricing. Provide your contact details, and we'll send you a detailed quote.
                 </p>
               </div>
               
               {/* Step 2 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
-                <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">2</div>
+                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">2</div>
                 <h3 className="text-xl font-bold mt-4 mb-4 text-primary">Consultation & Planning</h3>
                 <p className="text-neutral-700">
-                  Our team will discuss your requirements, answer questions, and if you have dental X-rays, our partner clinics will review them to confirm treatment plans and pricing.
+                  Our team will discuss your requirements and answer questions. If you have dental X-rays, our partner clinics will review them.
                 </p>
               </div>
               
               {/* Step 3 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
-                <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">3</div>
+                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">3</div>
                 <h3 className="text-xl font-bold mt-4 mb-4 text-primary">Secure Your Booking</h3>
                 <p className="text-neutral-700">
-                  Place a £200 deposit to secure your treatment dates. This deposit will be deducted from your final treatment cost when you arrive in Istanbul.
+                  Place a £200 deposit to secure your treatment dates. This deposit will be deducted from your final treatment cost when you arrive.
                 </p>
               </div>
               
               {/* Step 4 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
-                <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">4</div>
+                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">4</div>
                 <h3 className="text-xl font-bold mt-4 mb-4 text-primary">Travel Arrangements</h3>
                 <p className="text-neutral-700">
-                  We handle all your travel logistics — flights, 5-star hotel accommodation, private airport transfers, and clinic transportation are all arranged for a seamless experience.
+                  We handle all your travel logistics — flights, 5-star hotel accommodation, private airport transfers, and clinic transportation.
                 </p>
               </div>
               
               {/* Step 5 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
-                <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">5</div>
+                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">5</div>
                 <h3 className="text-xl font-bold mt-4 mb-4 text-primary">Your 5-Star Experience</h3>
                 <p className="text-neutral-700">
-                  Enjoy your treatment at a top-rated Istanbul dental clinic with English-speaking staff. Between appointments, experience luxury hotel stays and optional extras like Turkish hammams and Bosphorus cruises.
+                  Enjoy your treatment at a top-rated Istanbul dental clinic. Between appointments, experience luxury hotel stays and optional extras.
                 </p>
               </div>
               
               {/* Step 6 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
-                <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">6</div>
+                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">6</div>
                 <h3 className="text-xl font-bold mt-4 mb-4 text-primary">Comprehensive Aftercare</h3>
                 <p className="text-neutral-700">
-                  Return home with your new smile and full aftercare guidance. We maintain contact to ensure your recovery goes smoothly and address any questions about your treatment.
+                  Return home with your new smile and full aftercare guidance. We maintain contact to ensure your recovery goes smoothly.
                 </p>
               </div>
             </div>
@@ -117,9 +108,7 @@ const HowItWorks: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <span className="text-primary font-bold text-lg">✓</span>
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-neutral-800">Transparent Pricing</h3>
@@ -131,23 +120,19 @@ const HowItWorks: React.FC = () => {
                 
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+                    <span className="text-primary font-bold text-lg">✓</span>
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-neutral-800">Vetted Top-Rated Clinics</h3>
                     <p className="text-neutral-700">
-                      We partner only with Istanbul's best dental clinics, ensuring state-of-the-art facilities, highly qualified professionals, and the highest standards of care and hygiene.
+                      We partner only with Istanbul's best dental clinics, ensuring state-of-the-art facilities, highly qualified professionals, and the highest standards of care.
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
+                    <span className="text-primary font-bold text-lg">✓</span>
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-neutral-800">Complete Concierge Experience</h3>
@@ -159,9 +144,7 @@ const HowItWorks: React.FC = () => {
                 
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <span className="text-primary font-bold text-lg">✓</span>
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-neutral-800">Quality Guarantees</h3>
@@ -173,9 +156,7 @@ const HowItWorks: React.FC = () => {
                 
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
+                    <span className="text-primary font-bold text-lg">✓</span>
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-neutral-800">Personalized Support</h3>
