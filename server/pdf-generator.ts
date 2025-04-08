@@ -464,7 +464,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   // Prepare clinic data if not provided
   let comparisonClinics = clinics || [];
   if (comparisonClinics.length === 0) {
-    // Default clinics if none provided, using the user-requested clinic names
+    // Default clinics if none provided, using the specific clinic names requested by the client
     comparisonClinics = [
       {
         name: "Maltepe Dental Clinic",
@@ -483,7 +483,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
         rating: "⭐⭐⭐⭐⭐"
       },
       {
-        name: "Istanbul Smile Center",
+        name: "Istanbulsmilecenter",
         priceGBP: totalGBP, // Original price
         extras: "Luxury Experience, VIP Service, Premium Hotel",
         location: "Levent",
@@ -497,7 +497,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setTextColor(primaryColor);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('Clinic Comparison', 20, yPos);
+  doc.text('Istanbul Clinic Comparison', 20, yPos);
   yPos += 10;
 
   // Clinic description
@@ -506,7 +506,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'normal');
   doc.text('We partner with the best dental clinics in Istanbul, each carefully vetted for quality, expertise,', 20, yPos);
   yPos += 6;
-  doc.text('and patient satisfaction. Below are your recommended clinic options:', 20, yPos);
+  doc.text('and patient satisfaction. Below are your three recommended Istanbul clinic options:', 20, yPos);
   yPos += 10;
 
   // Clinic comparison table with improved layout
@@ -589,7 +589,9 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setTextColor(secondaryColor);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.text('* Our treatment coordinators will help you select the best clinic based on your specific needs.', 20, yPos);
+  doc.text('* Our treatment coordinators will help you select the best clinic from these three Istanbul options', 20, yPos);
+  yPos += 6;
+  doc.text('  based on your specific treatment needs and preferences.', 20, yPos);
   yPos += 15;
 
   // COST SAVINGS COMPARISON (UK vs ISTANBUL)
@@ -608,7 +610,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.setTextColor(darkTextColor);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('See how much you can save by choosing Istanbul for your dental treatment:', 20, yPos);
+  doc.text('Compare UK dental prices with our Istanbul prices to see how much you can save:', 20, yPos);
   yPos += 10;
 
   // Cost comparison table with improved layout
