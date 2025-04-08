@@ -1794,7 +1794,7 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.text(`Your Savings: £${savingsAmount.toLocaleString()} (${savingsPercentage}% off UK prices)`, 105, yPos, { align: 'center' });
   yPos += 10;
   
-  // Add Gemini research citation
+  // Add Gemini research citation (force rebuild)
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(8);
   doc.setTextColor(80, 80, 80);
