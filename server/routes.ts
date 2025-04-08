@@ -880,7 +880,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Generate a unique ID for this PDF
-      const pdfId = crypto.randomBytes(16).toString('hex');
+      const pdfId = createHash('sha256')
+        .update(quoteDataStr + Date.now().toString())
+        .digest('hex')
+        .substring(0, 32);
       
       // Generate the PDF 
       const pdfBuffer = generateQuotePdfV2(quoteData);
