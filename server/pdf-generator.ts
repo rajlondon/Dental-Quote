@@ -68,7 +68,7 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   const quoteId = `IDS-${datePart}-${randomPart}`;
 
   // Document styling
-  const primaryColor = "#007ba7";  // Main blue
+  const primaryColor = "#009ACA";  // Brighter blue - TEST
   const secondaryColor = "#b2904f"; // Gold accent
   const darkTextColor = "#333333";  // Dark text
   const lightBgColor = "#f5f5f5";   // Light background
