@@ -1099,9 +1099,7 @@ export default function PriceCalculator() {
                             );
                           })}
                         </div>
-                        <div className="text-xs text-center mt-3">
-                          Pricing data sourced from Gemini AI deep research of actual Istanbul clinic rates
-                        </div>
+                        {/* The Gemini citation will move to the UK price comparison section */}
                       </div>
                       
                       {/* UK vs Istanbul Price Comparison - now separate section */}
@@ -1135,12 +1133,12 @@ export default function PriceCalculator() {
                             // Create comparison data
                             const comparisonData = [
                               {
-                                name: "London Private Clinic",
+                                name: "London clinic average price*",
                                 price: Math.round(quote.totalGBP * 3.2),
                                 extra: "Without travel costs"
                               },
                               {
-                                name: "Manchester Private Clinic",
+                                name: "Manchester clinic average price*",
                                 price: Math.round(quote.totalGBP * 2.8),
                                 extra: "Without travel costs"
                               },
@@ -1180,10 +1178,15 @@ export default function PriceCalculator() {
                           const savingsPercent = Math.round((savings / ukAvgPrice) * 100);
                           
                           return (
-                            <div className="mt-3 text-center text-primary font-semibold">
-                              Your Savings: £{Math.round(savings).toLocaleString()} 
-                              ({savingsPercent}% off UK prices)
-                            </div>
+                            <>
+                              <div className="mt-3 text-center text-primary font-semibold">
+                                Your Savings: £{Math.round(savings).toLocaleString()} 
+                                ({savingsPercent}% off UK prices)
+                              </div>
+                              <div className="text-xs text-center mt-2">
+                                * Pricing data sourced from Gemini deep research of average UK clinic rates
+                              </div>
+                            </>
                           );
                         })()}
                       </div>
@@ -1520,12 +1523,12 @@ export default function PriceCalculator() {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="px-4 py-3 border-b border-neutral-200">London Private Clinic</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">London clinic average price*</td>
                         <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 3.2).toLocaleString()}</td>
                         <td className="px-4 py-3 border-b border-neutral-200">Price without travel costs</td>
                       </tr>
                       <tr className="bg-neutral-50">
-                        <td className="px-4 py-3 border-b border-neutral-200">Manchester Private Clinic</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">Manchester clinic average price*</td>
                         <td className="px-4 py-3 border-b border-neutral-200 text-right">£{Math.round(htmlQuoteData.totalGBP * 2.8).toLocaleString()}</td>
                         <td className="px-4 py-3 border-b border-neutral-200">Price without travel costs</td>
                       </tr>

@@ -655,10 +655,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pure PDF generation using jsPDF with Mailjet email notification
   app.post("/api/jspdf-quote-v2", async (req, res) => {
     try {
-      // Force a fresh import of the PDF generator function
-      delete require.cache[require.resolve('./pdf-generator')];
-      const pdfGenerator = await import('./pdf-generator?t=' + Date.now());
-      const { generateQuotePdfV2 } = pdfGenerator;
+      // Import the updated PDF generator function and email service
+      const { generateQuotePdfV2 } = await import('./pdf-generator?t=' + Date.now());
       const { sendQuoteEmail, isMailjetConfigured } = await import('./mailjet-service');
       
       // Get data from request body
