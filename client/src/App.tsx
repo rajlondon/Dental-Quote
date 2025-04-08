@@ -10,6 +10,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import PricingPage from "./pages/PricingPage";
 import TeamPage from "@/pages/TeamPage";
+import HowItWorks from "@/pages/HowItWorks";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import { Suspense } from "react";
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/blog/:id" component={BlogPost} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/team" component={TeamPage} />
+      <Route path="/how-it-works" component={HowItWorks} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {

@@ -40,8 +40,8 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-display font-semibold text-lg mb-4">Company</h4>
             <ul className="space-y-2">
-              <li><Link href="/"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">About Us</span></Link></li>
-              <li><a href="/#how-it-works" className="text-neutral-400 hover:text-white transition-colors">How It Works</a></li>
+              <li><Link href="/team"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Our Team</span></Link></li>
+              <li><Link href="/how-it-works"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">How It Works</span></Link></li>
               <li><a href="/#testimonials" className="text-neutral-400 hover:text-white transition-colors">Client Reviews</a></li>
               <li><a href="/#faqs" className="text-neutral-400 hover:text-white transition-colors">FAQs</a></li>
               <li><Link href="/blog"><span className="text-neutral-400 hover:text-white transition-colors cursor-pointer">Blog</span></Link></li>
