@@ -279,117 +279,195 @@ export default function PriceCalculator() {
   // Function to download quote as PDF
   const downloadQuotePDF = () => {
     try {
-      // Display a toast notification about the email being sent if email is provided
-      if (form.getValues('email')) {
-        setTimeout(() => {
-          toast({
-            title: 'Email Confirmation',
-            description: 'We\'ll also email you a copy of your quote 📧',
-            variant: 'default',
-          });
-        }, 2000); // Show this toast 2 seconds after clicking, to not interfere with download
-      }
+      // Display a toast notification about the download starting
+      toast({
+        title: 'Generating PDF',
+        description: 'Your quote is being prepared, please wait...',
+        variant: 'default',
+      });
       
-      // Try the global function first (for the main quote view)
-      // @ts-ignore - Using the global function we added
-      if (window.generateJsPdf) {
-        // @ts-ignore
-        window.generateJsPdf();
-        return;
-      }
+      // Determine which quote data to use
+      let quoteData;
+      let selectedClinicIdx = 0;
+      let clinics = [];
       
-      // Alternative approach: Try to find and click the hidden JSPDFGenerator component's button
-      const jspdfGeneratorRef = document.getElementById('jspdf-generator-ref');
-      if (jspdfGeneratorRef) {
-        const button = jspdfGeneratorRef.querySelector('button');
-        if (button) {
-          button.click();
-          return;
-        }
-      }
-      
-      // Fallback: Use the axios API directly (for the quote dialog)
-      if (htmlQuoteData) {
-        // Log data for debugging
+      // Check if we're in the main calculator view
+      if (quote && quote.items.length > 0) {
+        console.log('JSPDFGenerator travel info:', {
+          travelMonth: form.getValues('travelMonth'),
+          departureCity: form.getValues('departureCity')
+        });
+        
+        // Define all clinics and their price factors
+        const allClinics = [
+          {
+            name: "Maltepe Dental Clinic",
+            priceGBP: Math.round(quote.totalGBP * 0.85),
+            extras: "Modern Facilities, Airport Transfer",
+            guarantee: "5 Years",
+            location: "Maltepe District"
+          },
+          {
+            name: "Denteste Istanbul",
+            priceGBP: Math.round(quote.totalGBP * 0.80),
+            extras: "All-inclusive Package, Hotel Stay",
+            guarantee: "3 Years",
+            location: "City Center"
+          },
+          {
+            name: "Istanbulsmilecenter",
+            priceGBP: Math.round(quote.totalGBP * 0.90),
+            extras: "Premium Materials, VIP Service",
+            guarantee: "7 Years",
+            location: "Sisli District"
+          }
+        ];
+        
+        // Get the selected clinic's total price
+        const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+        const selectedFactor = clinicPriceFactors[selectedClinic];
+        const selectedClinicTotalGBP = Math.round(quote.totalGBP * selectedFactor);
+        const selectedClinicTotalUSD = Math.round(quote.totalUSD * selectedFactor);
+        
+        // Reorder clinics with selected clinic first
+        const orderedClinics = [
+          allClinics[selectedClinic],  // Put selected clinic first
+          ...allClinics.filter((_, idx) => idx !== selectedClinic) // Add the others
+        ];
+        
+        quoteData = {
+          items: quote.items,
+          totalGBP: selectedClinicTotalGBP,
+          totalUSD: selectedClinicTotalUSD,
+          patientName: form.getValues('name'),
+          patientEmail: form.getValues('email'),
+          patientPhone: form.getValues('phone'),
+          travelMonth: form.getValues('travelMonth') || 'year-round',
+          departureCity: form.getValues('departureCity') || 'UK',
+          clinics: orderedClinics,
+          hasXrays: hasXrays,
+          xrayCount: form.getValues('xrayFiles')?.length || 0,
+          selectedClinicIndex: selectedClinic
+        };
+      } 
+      // Or we're in the dialog view
+      else if (htmlQuoteData) {
         console.log('Quote dialog travel info:', {
           travelMonth: htmlQuoteData.travelMonth,
           departureCity: htmlQuoteData.departureCity
         });
         
-        // Call the server-side jsPDF endpoint
-        axios({
-          method: 'post',
-          url: '/api/jspdf-quote-v2', // Use the new V2 endpoint
-          data: {
-            items: htmlQuoteData.items,
-            totalGBP: htmlQuoteData.totalGBP,
-            totalUSD: htmlQuoteData.totalUSD,
-            patientName: htmlQuoteData.patientName,
-            patientEmail: htmlQuoteData.patientEmail,
-            patientPhone: htmlQuoteData.patientPhone,
-            travelMonth: htmlQuoteData.travelMonth || 'year-round', // Ensure fallback value
-            departureCity: htmlQuoteData.departureCity || 'UK', // Ensure fallback value
-            clinics: [
-              // Istanbul clinics for comparison
-              {
-                name: "Maltepe Dental Clinic",
-                priceGBP: Math.round(htmlQuoteData.totalGBP * 0.85),
-                extras: "Modern Facilities, Airport Transfer",
-                guarantee: "5 Years",
-                location: "Maltepe District"
-              },
-              {
-                name: "Denteste Istanbul",
-                priceGBP: Math.round(htmlQuoteData.totalGBP * 0.80),
-                extras: "All-inclusive Package, Hotel Stay",
-                guarantee: "3 Years",
-                location: "City Center"
-              },
-              {
-                name: "Istanbulsmilecenter",
-                priceGBP: Math.round(htmlQuoteData.totalGBP * 0.90),
-                extras: "Premium Materials, VIP Service",
-                guarantee: "7 Years",
-                location: "Sisli District"
-              }
-            ],
-            hasXrays: htmlQuoteData.hasXrays,
-            xrayCount: htmlQuoteData.xrayCount
-          },
-          responseType: 'blob'
-        }).then(response => {
-          // Create a download link for the PDF
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
-          link.href = url;
-          
-          // Generate formatted filename with date
-          const now = new Date();
-          const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
-          const filename = `IstanbulDentalSmile_Quote_${formattedDate}.pdf`;
-          
-          link.setAttribute('download', filename);
-          document.body.appendChild(link);
-          link.click();
-          
-          // Clean up
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(link);
-        }).catch(error => {
-          console.error('Error downloading PDF:', error);
-          toast({
-            title: 'Error',
-            description: 'Could not generate PDF. Please try again.',
-            variant: 'destructive'
-          });
-        });
+        quoteData = {
+          items: htmlQuoteData.items,
+          totalGBP: htmlQuoteData.totalGBP,
+          totalUSD: htmlQuoteData.totalUSD,
+          patientName: htmlQuoteData.patientName,
+          patientEmail: htmlQuoteData.patientEmail,
+          patientPhone: htmlQuoteData.patientPhone,
+          travelMonth: htmlQuoteData.travelMonth || 'year-round',
+          departureCity: htmlQuoteData.departureCity || 'UK',
+          clinics: [
+            {
+              name: "Maltepe Dental Clinic",
+              priceGBP: Math.round(htmlQuoteData.totalGBP * 0.85),
+              extras: "Modern Facilities, Airport Transfer",
+              guarantee: "5 Years",
+              location: "Maltepe District"
+            },
+            {
+              name: "Denteste Istanbul",
+              priceGBP: Math.round(htmlQuoteData.totalGBP * 0.80),
+              extras: "All-inclusive Package, Hotel Stay",
+              guarantee: "3 Years",
+              location: "City Center"
+            },
+            {
+              name: "Istanbulsmilecenter",
+              priceGBP: Math.round(htmlQuoteData.totalGBP * 0.90),
+              extras: "Premium Materials, VIP Service",
+              guarantee: "7 Years",
+              location: "Sisli District"
+            }
+          ],
+          hasXrays: htmlQuoteData.hasXrays,
+          xrayCount: htmlQuoteData.xrayCount
+        };
       } else {
         toast({
           title: 'Error',
           description: 'No quote data available. Please generate a quote first.',
           variant: 'destructive'
         });
+        return;
       }
+      
+      // Display a toast notification about the email being sent if email is provided
+      if (quoteData.patientEmail) {
+        setTimeout(() => {
+          toast({
+            title: 'Email Confirmation',
+            description: 'We\'ll also email you a copy of your quote 📧',
+            variant: 'default',
+          });
+        }, 2000); // Show this toast 2 seconds after clicking
+      }
+      
+      // Call the server-side jsPDF endpoint
+      console.log('Sending PDF request to server with data:', {
+        patientName: quoteData.patientName,
+        travelMonth: quoteData.travelMonth,
+        departureCity: quoteData.departureCity,
+        itemCount: quoteData.items.length
+      });
+      
+      axios({
+        method: 'post',
+        url: '/api/jspdf-quote-v2',
+        data: quoteData,
+        responseType: 'blob',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      }).then(response => {
+        // Create a download link for the PDF
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate formatted filename with date
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const sanitizedName = (quoteData.patientName || 'unnamed')
+          .replace(/[^a-zA-Z0-9]/g, '_')
+          .substring(0, 20);
+        const filename = `IstanbulDentalSmile_Quote_${formattedDate}_${sanitizedName}.pdf`;
+        
+        // Add download attribute and click the link
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(link);
+          
+          toast({
+            title: 'Success',
+            description: 'Your quote PDF has been downloaded!',
+            variant: 'default',
+          });
+        }, 100);
+      }).catch(error => {
+        console.error('Error downloading PDF:', error);
+        toast({
+          title: 'Error',
+          description: 'Could not generate PDF. Please try again.',
+          variant: 'destructive'
+        });
+      });
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
