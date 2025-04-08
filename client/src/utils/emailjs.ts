@@ -64,46 +64,72 @@ export const sendCustomerQuoteEmail = async (quoteData: QuoteEmailData): Promise
       return false;
     }
     
-    // Format the treatment list for the email
-    const treatmentList = quoteData.items.map(item => 
-      `${item.treatment} (x${item.quantity}) - £${item.subtotalGBP.toLocaleString()}`
-    ).join(', ');
+    // Format treatments for the email in a user-friendly way
+    const formattedTreatments = quoteData.items.map(item => ({
+      treatment: item.treatment,
+      quantity: item.quantity,
+      price: `£${item.subtotalGBP.toLocaleString()}`
+    }));
     
     // Calculate UK savings compared to local prices
     const ukPrice = Math.round(quoteData.totalGBP * 2.5);
     const savings = ukPrice - quoteData.totalGBP;
     const savingsPercentage = Math.round((savings / ukPrice) * 100);
     
-    // Format data for the email template with a personalized, customer-friendly approach
+    // Format data for the email template based on the Python example
     const templateParams = {
+      // Email routing information
       to_email: quoteData.patientEmail,
-      to_name: quoteData.patientName || 'Valued Patient',
+      reply_to: 'info@istanbuldentalsmile.co.uk',
+      from_name: 'Istanbul Dental Smile',
+      
+      // Patient details
+      name: quoteData.patientName || 'Valued Patient',
+      email: quoteData.patientEmail,
+      phone: quoteData.patientPhone || 'Not provided',
+      
+      // Quote information
       quote_number: quoteData.quoteNumber,
-      quote_date: quoteData.date,
-      treatment_list: treatmentList,
-      total_gbp: `£${quoteData.totalGBP.toLocaleString()}`,
-      total_usd: `$${quoteData.totalUSD.toLocaleString()}`,
+      date: quoteData.date,
+      
+      // Financial details
+      total: `£${quoteData.totalGBP.toLocaleString()}`,
       uk_price: `£${ukPrice.toLocaleString()}`,
-      savings: `£${savings.toLocaleString()}`,
-      savings_percentage: `${savingsPercentage}%`,
+      savings: `£${savings.toLocaleString()} (${savingsPercentage}%)`,
+      
+      // Treatment details
+      treatments: formattedTreatments,
+      treatment_list: formattedTreatments.map(t => `${t.treatment} (x${t.quantity}) - ${t.price}`).join(', '),
+      
+      // Travel information
       travel_month: quoteData.travelMonth || 'flexible dates',
       departure_city: quoteData.departureCity || 'your location',
       flight_cost: quoteData.flightCostGBP ? `£${quoteData.flightCostGBP.toLocaleString()}` : 'Not included',
-      reply_to: 'info@istanbuldentalsmile.co.uk',
-      from_name: 'Istanbul Dental Smile',
+      
+      // X-ray status
       xray_status: quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files received)` : 'No',
       
-      // Customer-specific personalized content
-      subject: 'Your Istanbul Dental Smile Quote - Transform Your Smile & Save',
-      greeting: `Dear ${quoteData.patientName || 'Valued Patient'},`,
-      intro_message: `Thank you for requesting a quote from Istanbul Dental Smile! We're excited to help you transform your smile while saving substantially on your dental care.`,
-      quote_intro: `Please find your personalized quote details below, along with the attached PDF that contains comprehensive information about your treatment options, our partner clinics, and the complete 5-star experience we offer.`,
+      // Links
+      consultation_link: 'https://calendly.com/istanbuldentalsmile/consultation',
+      deposit_link: 'https://payment.istanbuldentalsmile.com/deposit',
+      
+      // Personalized message content
+      greeting: `Hi ${quoteData.patientName || 'there'},`,
+      intro_message: "Thanks for requesting your personalized quote. We're excited to guide you through your smile journey.",
+      quote_intro: "Here's a breakdown of your selected treatment and estimated costs.",
       savings_message: `By choosing Istanbul Dental Smile, you'll save approximately £${savings.toLocaleString()} (${savingsPercentage}%) compared to UK prices while receiving the same or better quality treatment.`,
-      next_steps: `Our team will contact you shortly to discuss your quote and answer any questions you may have. If you'd like to proceed sooner, you can secure your treatment dates with just a £200 deposit.`,
-      contact_message: `Feel free to reach out to us directly at +44 7572 445856 or reply to this email if you have any questions or would like to discuss your treatment options further.`,
-      closing: `We look forward to welcoming you to Istanbul and helping you achieve the smile you deserve!`,
-      signature: `Warm regards,\nThe Istanbul Dental Smile Team`
+      next_steps: "Secure your booking with a £200 deposit and we'll schedule your in-person consultation with X-rays.",
+      contact_message: "If you have any questions, reply to this email or message us on WhatsApp at +44 7572 445856.",
+      closing: "Looking forward to welcoming you to Istanbul!",
+      signature: "Raj Singh, Istanbul Dental Smile"
     };
+    
+    // Log the template parameters for debugging
+    console.log('Sending customer email with template params:', {
+      serviceId: EMAILJS_CONFIG.serviceId,
+      templateIdAvailable: !!EMAILJS_CONFIG.templateId,
+      recipientEmail: quoteData.patientEmail
+    });
     
     // Send the email using EmailJS
     const result = await emailjs.send(
