@@ -659,6 +659,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         departureCity: quoteData.departureCity
       });
       
+      // Log the full quote data for debugging
+      console.log('Quote data for PDF generation:', {
+        patientName: quoteData.patientName,
+        patientEmail: quoteData.patientEmail,
+        travelMonth: quoteData.travelMonth,
+        departureCity: quoteData.departureCity,
+        itemCount: quoteData.items.length,
+        totalGBP: quoteData.totalGBP
+      });
+      
+      // Validate that patient email has proper format if provided
+      if (quoteData.patientEmail && !quoteData.patientEmail.includes('@')) {
+        console.warn('Invalid patient email format detected:', quoteData.patientEmail);
+      }
+      
       // Generate the PDF
       const pdfBuffer = generateQuotePdf(quoteData);
       
@@ -673,6 +688,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email with quote PDF if Mailjet is configured
       if (isMailjetConfigured()) {
         try {
+          console.log('Initiating email send for quote with patient details:', {
+            name: quoteData.patientName || 'unnamed',
+            email: quoteData.patientEmail || 'no email',
+            phone: quoteData.patientPhone || 'no phone'
+          });
+          
           // Send email asynchronously (don't wait for it to complete)
           sendQuoteEmail({
             pdfBuffer,
@@ -680,7 +701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             filename
           }).then(success => {
             if (success) {
-              console.log(`Quote email sent successfully for: ${quoteData.patientName || 'unnamed patient'}`);
+              console.log(`Quote email sent successfully for: ${quoteData.patientName || 'unnamed patient'} to ${quoteData.patientEmail || 'no email'}`);
             } else {
               console.error('Failed to send quote email via Mailjet');
             }

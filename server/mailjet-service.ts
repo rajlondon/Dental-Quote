@@ -69,7 +69,10 @@ export async function sendEmailNotification(notificationData: NotificationData):
 
     const { quoteData, isCalculationOnly } = notificationData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
-    const recipientEmail = 'rajsingh140186@googlemail.com';
+    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'rajsingh140186@googlemail.com';
+    
+    console.log(`[Notification] Using sender email: ${senderEmail}`);
+    console.log(`[Notification] Using recipient email: ${recipientEmail}`);
     
     // Format date
     const now = new Date();
@@ -191,14 +194,27 @@ export async function sendEmailNotification(notificationData: NotificationData):
     };
 
     // Send the admin email notification
+    console.log(`Sending calculation notification to admin email: ${recipientEmail}`);
+    console.log(`Patient information: Name: ${quoteData.patientName || 'unnamed'}, Email: ${quoteData.patientEmail || 'no email provided'}`);
+    
     await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [adminMessage]
     });
 
     console.log(`Quote calculation notification sent successfully for ${quoteData.patientName || 'unnamed patient'}`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending quote calculation notification with Mailjet:', error);
+    
+    // Log more details about the error to help diagnose issues
+    if (error.response) {
+      console.error('Mailjet API error details:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    
     return false;
   }
 }
@@ -212,7 +228,10 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
 
     const { pdfBuffer, quoteData, filename } = emailData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
-    const recipientEmail = 'rajsingh140186@googlemail.com';
+    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'rajsingh140186@googlemail.com';
+    
+    console.log(`Using sender email: ${senderEmail}`);
+    console.log(`Using recipient email: ${recipientEmail}`);
     
     // Format date
     const now = new Date();
@@ -345,7 +364,9 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     };
 
     // If there's a patient email, create a patient-specific message
-    if (quoteData.patientEmail) {
+    console.log('Processing patient email:', quoteData.patientEmail);
+    if (quoteData.patientEmail && quoteData.patientEmail.includes('@')) {
+      console.log('Valid patient email found, creating patient message');
       const patientMessage = {
         From: {
           Email: senderEmail,
@@ -429,15 +450,70 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       });
     } else {
       // Only send the admin email if no patient email is provided
+      console.log('Sending admin email only because no patient email was provided');
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [message]
       });
     }
 
-    console.log(`Quote email sent successfully for ${quoteData.patientName || 'unnamed patient'}`);
+    console.log(`Quote email sent successfully for ${quoteData.patientName || 'unnamed patient'} to ${quoteData.patientEmail || 'no patient email'}`);
+    console.log(`Admin notification sent to ${recipientEmail}`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending quote email with Mailjet:', error);
+    // Log more details about the error to help diagnose issues
+    if (error.response) {
+      console.error('Mailjet API error details:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    
+    // Even if sending to the patient fails, try to send at least to admin as a fallback
+    try {
+      // Destructure emailData to use in the fallback message
+      const { quoteData, filename, pdfBuffer } = emailData;
+      
+      // Create a simplified message for the fallback attempt
+      const fallbackMessage = {
+        From: {
+          Email: process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk',
+          Name: "Istanbul Dental Smile"
+        },
+        To: [
+          {
+            Email: 'rajsingh140186@googlemail.com',
+            Name: "Raj Singh"
+          }
+        ],
+        Subject: `FALLBACK: Quote Generated: ${quoteData.patientName || 'Unnamed Patient'}`,
+        HTMLPart: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <p>This is a fallback notification. The original email attempt failed.</p>
+            <p>Check the server logs for more information.</p>
+            <p>Patient: ${quoteData.patientName || 'Unnamed'}</p>
+            <p>Email: ${quoteData.patientEmail || 'None provided'}</p>
+          </div>
+        `,
+        Attachments: [
+          {
+            ContentType: 'application/pdf',
+            Filename: filename,
+            Base64Content: pdfBuffer.toString('base64')
+          }
+        ]
+      };
+      
+      console.log('Attempting fallback: Sending admin notification only after failure');
+      await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [fallbackMessage]
+      });
+      console.log('Fallback admin notification sent successfully');
+    } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError);
+    }
+    
     return false;
   }
 }
