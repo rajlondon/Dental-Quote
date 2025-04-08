@@ -99,6 +99,7 @@ export default function PriceCalculator() {
   const { toast } = useToast();
   const [treatments, setTreatments] = useState<TreatmentPrice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [quote, setQuote] = useState<ReturnType<typeof calculateTotal> | null>(null);
   
   // Initialize the form with default values
@@ -420,66 +421,93 @@ export default function PriceCalculator() {
         itemCount: quoteData.items.length
       });
       
-      // Add a timestamp to bust cache
-      const timestamp = new Date().getTime();
-      axios({
-        method: 'post',
-        url: `/api/jspdf-quote-v2?t=${timestamp}`,
-        data: quoteData,
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      }).then(response => {
-        // Show PDF is ready toast
-        toast({
-          title: 'PDF Generated',
-          description: 'Your quote PDF is ready for download',
-          variant: 'default',
-        });
+      // Open a new window/tab for direct download instead of using axios
+      // This works more reliably in production environments
+      setGeneratingPdf(true);
+      
+      // Prepare URL parameters with quote data
+      try {
+        // Format current date for filename
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const sanitizedName = (quoteData.patientName || 'unnamed')
+          .replace(/[^a-zA-Z0-9]/g, '_')
+          .substring(0, 20);
         
-        // Get the download URL from the response
-        const { downloadUrl, filename } = response.data;
+        // Create the form for direct post to the server
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/direct-download-pdf';
+        form.target = '_blank'; // Open in new window/tab
+        form.style.display = 'none';
         
-        // Create a new link for downloading via the separate endpoint
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.setAttribute('download', filename);
-        link.setAttribute('target', '_blank');
+        // Add the quote data as a hidden input
+        const dataInput = document.createElement('input');
+        dataInput.type = 'hidden';
+        dataInput.name = 'quoteData';
+        dataInput.value = JSON.stringify(quoteData);
+        form.appendChild(dataInput);
         
-        // Append to body and click
-        document.body.appendChild(link);
+        // Add the filename as a hidden input
+        const filenameInput = document.createElement('input');
+        filenameInput.type = 'hidden';
+        filenameInput.name = 'filename';
+        filenameInput.value = `IstanbulDentalSmile_Quote_${formattedDate}_${sanitizedName}.pdf`;
+        form.appendChild(filenameInput);
         
-        // Wait a moment before clicking to allow UI to update
+        // Add timestamp to bust cache
+        const timestampInput = document.createElement('input');
+        timestampInput.type = 'hidden';
+        timestampInput.name = 't';
+        timestampInput.value = Date.now().toString();
+        form.appendChild(timestampInput);
+        
+        // Append form to body and submit it
+        document.body.appendChild(form);
+        
+        // Wait a moment then submit the form
         setTimeout(() => {
-          link.click();
+          form.submit();
           
-          // Clean up
-          document.body.removeChild(link);
-        }, 500);
-        
-        // Show success message after a delay
-        setTimeout(() => {
-          toast({
-            title: 'Success',
-            description: 'Your quote PDF has been downloaded!',
-            variant: 'default',
-          });
-        }, 3000); // Allow more time for download to complete
-      }).catch(error => {
+          // Clean up the form after submission
+          setTimeout(() => {
+            document.body.removeChild(form);
+            setGeneratingPdf(false);
+            
+            // Show success message
+            toast({
+              title: 'Success',
+              description: 'Your quote PDF should open in a new tab. If not, please check your popup blocker settings.',
+              variant: 'default',
+            });
+          }, 1000);
+        }, 200);
+      }
+      catch(error) {
         console.error('Error downloading PDF:', error);
+        setGeneratingPdf(false);
         toast({
-          title: 'Error',
-          description: 'Could not generate PDF. Please try again.',
+          title: 'PDF Download Issue',
+          description: 'PDF download failed. Please check your email for a copy, or try again.',
           variant: 'destructive'
         });
-      });
+      }
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
-        title: 'Error',
-        description: 'Could not generate PDF. Please try again.',
+        title: 'PDF Download Issue',
+        description: (
+          <div>
+            <p>PDF download failed. Please try the alternative options below:</p>
+            <a 
+              href="/pdf-download-help.html" 
+              target="_blank" 
+              className="underline text-blue-500 font-medium hover:text-blue-700"
+            >
+              View alternative download options
+            </a>
+          </div>
+        ),
         variant: 'destructive',
       });
     }
@@ -1351,6 +1379,21 @@ export default function PriceCalculator() {
                           </svg>
                           Download Your Custom Quote PDF
                         </button>
+                        
+                        <div className="mt-3 text-center">
+                          <a 
+                            href="/pdf-download-help.html" 
+                            target="_blank" 
+                            className="inline-flex items-center text-sm text-primary hover:underline"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="8" x2="12" y2="16"></line>
+                              <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Having trouble downloading? Click here for help
+                          </a>
+                        </div>
                       </div>
                     </div>
                   ) : (

@@ -858,6 +858,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // New direct download endpoint using form post
+  app.post("/api/direct-download-pdf", (req, res) => {
+    try {
+      // Get data from request body
+      const { quoteData: quoteDataStr, filename } = req.body;
+      
+      if (!quoteDataStr) {
+        return res.status(400).send("Missing quote data");
+      }
+      
+      // Parse the JSON string
+      const quoteData = JSON.parse(quoteDataStr);
+      
+      // Log the request
+      console.log('Direct PDF download request:', {
+        patientName: quoteData.patientName,
+        itemCount: quoteData.items?.length || 0,
+        hasEmail: !!quoteData.patientEmail
+      });
+      
+      // Import the PDF generator and email service
+      const { generateQuotePdfV2 } = require('./pdf-generator');
+      const { sendQuoteEmail, isMailjetConfigured } = require('./mailjet-service');
+      
+      // Generate the PDF
+      const pdfBuffer = generateQuotePdfV2(quoteData);
+      
+      // Send email if configured and email is provided
+      if (isMailjetConfigured() && quoteData.patientEmail) {
+        try {
+          // Send email asynchronously
+          sendQuoteEmail({
+            pdfBuffer,
+            quoteData,
+            filename: filename || `IstanbulDentalSmile_Quote.pdf`
+          }).then(success => {
+            if (success) {
+              console.log(`Quote email sent successfully for: ${quoteData.patientName || 'unnamed'}`);
+            } else {
+              console.error('Failed to send quote email');
+            }
+          }).catch(emailError => {
+            console.error('Error sending quote email:', emailError);
+          });
+        } catch (emailError) {
+          console.error('Error initiating quote email:', emailError);
+        }
+      }
+      
+      // Set headers to force download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename || 'IstanbulDentalSmile_Quote.pdf'}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Send the PDF
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating direct download PDF:", error);
+      res.status(500).send(`
+        <html>
+          <head><title>Error</title></head>
+          <body>
+            <h1>Error Generating PDF</h1>
+            <p>There was an error generating your PDF. Please try again or contact support.</p>
+            <p>Error details: ${error instanceof Error ? error.message : String(error)}</p>
+            <p><a href="/">Return to homepage</a></p>
+          </body>
+        </html>
+      `);
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   
