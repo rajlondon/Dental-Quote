@@ -76,46 +76,32 @@ export const sendCustomerQuoteEmail = async (quoteData: QuoteEmailData): Promise
     const savings = ukPrice - quoteData.totalGBP;
     const savingsPercentage = Math.round((savings / ukPrice) * 100);
     
-    // Using exactly the template parameters expected by template_new
+    // Simplified parameters using standard EmailJS default template
+    const totalAmount = quoteData.totalGBP.toLocaleString();
+    const treatmentSummary = formattedTreatments.map(t => `${t.treatment} (x${t.quantity})`).join(', ');
+    
     const templateParams = {
-      // Email routing
+      // Standard EmailJS fields
       to_name: quoteData.patientName || 'Valued Patient',
       to_email: quoteData.patientEmail,
-      from_name: 'Istanbul Dental Smile',
-      from_email: 'info@istanbuldentalsmile.co.uk',
+      from_name: 'Raj Singh, Istanbul Dental Smile',
       reply_to: 'info@istanbuldentalsmile.co.uk',
       
-      // Quote details
-      message: `Thank you for requesting a quote for your dental treatment in Istanbul. Your custom quote for ${formattedTreatments.map(t => `${t.treatment} (x${t.quantity})`).join(', ')} comes to a total of £${quoteData.totalGBP}.`,
-      quote_id: quoteData.quoteNumber,
-      quote_date: quoteData.date,
-      
-      // Patient details
-      patient_name: quoteData.patientName || 'Valued Patient',
-      patient_email: quoteData.patientEmail,
-      patient_phone: quoteData.patientPhone || 'Not provided',
-      
-      // Treatment details
-      treatment_summary: formattedTreatments.map(t => `${t.treatment} (x${t.quantity}) - ${t.price}`).join(', '),
-      total_cost: `£${quoteData.totalGBP}`,
-      uk_comparison: `£${ukPrice}`,
-      savings_amount: `£${savings}`,
-      savings_percent: `${savingsPercentage}%`,
-      
-      // Travel info
-      travel_month: quoteData.travelMonth || 'flexible dates',
-      departure_city: quoteData.departureCity || 'your location',
-      flight_cost: quoteData.flightCostGBP ? `£${quoteData.flightCostGBP}` : 'Not included',
-      
-      // Additional info
-      xray_status: quoteData.hasXrays ? `Yes (${quoteData.xrayCount} files received)` : 'No',
-      consultation_link: 'https://calendly.com/istanbuldentalsmile/consultation',
-      deposit_link: 'https://payment.istanbuldentalsmile.com/deposit',
-      contact_phone: '+44 7572 445856',
-      
-      // Don't use the prefix/postfix variables as they might be causing issues
-      greeting: `Hi ${quoteData.patientName || 'there'}`,
-      subject: 'Your Istanbul Dental Smile Quote'
+      // Custom template fields (using standard message for now)
+      message: `Thank you for requesting a quote for your dental treatment in Istanbul!
+
+TREATMENT DETAILS:
+${treatmentSummary}
+Total: £${totalAmount}
+Travel Month: ${quoteData.travelMonth || 'Flexible'}
+Departure: ${quoteData.departureCity || 'UK'}
+
+NEXT STEPS:
+1. Book a free consultation: https://calendly.com/istanbuldentalsmile/consultation
+2. Pay your £200 deposit (deducted from treatment): https://payment.istanbuldentalsmile.com/deposit
+3. Contact us with questions: +44 7572 445856
+
+We look forward to welcoming you to Istanbul!`
     };
     
     // Log the template parameters for debugging
@@ -123,11 +109,7 @@ export const sendCustomerQuoteEmail = async (quoteData: QuoteEmailData): Promise
       serviceId: EMAILJS_CONFIG.serviceId,
       templateId: EMAILJS_CONFIG.templateId,
       recipientEmail: quoteData.patientEmail,
-      firstFewParams: {
-        to_name: templateParams.to_name,
-        from_email: templateParams.from_email,
-        subject: templateParams.subject
-      }
+      params: templateParams
     });
     
     // Send the email using EmailJS

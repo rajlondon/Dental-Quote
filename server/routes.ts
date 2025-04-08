@@ -110,9 +110,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       publicKeyExists: !!process.env.EMAILJS_PUBLIC_KEY
     });
     
-    // Use the specific template_new ID for the customer-facing emails
-    // This ensures personalized emails for different purposes
-    const customerQuoteTemplateId = 'template_new';
+    // Let's use the default template ID from the environment variables
+    // The template_new ID might be incorrectly configured
+    const customerQuoteTemplateId = process.env.EMAILJS_TEMPLATE_ID || '';
     
     // Log the template ID we're using for debugging
     console.log('Using EmailJS template ID:', customerQuoteTemplateId);
