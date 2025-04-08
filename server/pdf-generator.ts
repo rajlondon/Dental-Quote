@@ -39,6 +39,7 @@ interface QuoteData {
   xrayCount?: number;
 }
 
+// Original function - this stays the same
 export function generateQuotePdf(quoteData: QuoteData): Buffer {
   const {
     items,
@@ -1128,6 +1129,700 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   doc.text('Website: istanbuldentalsmile.co.uk', 105, 269, { align: 'center' });
 
   // Convert the PDF to a Buffer and return
+  const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+  return pdfBuffer;
+}
+
+// New function for v2 with improved formatting and clinic comparison
+export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
+  const {
+    items,
+    totalGBP,
+    totalUSD,
+    patientName = 'Valued Customer',
+    patientEmail,
+    patientPhone,
+    travelMonth,
+    departureCity,
+    clinics,
+    hasXrays = false,
+    xrayCount = 0
+  } = quoteData;
+
+  // Debug travel info
+  console.log('PDF TRAVEL INFO DEBUG:', { departureCity, travelMonth });
+
+  // Create a new PDF document
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  // Generate a quote ID
+  const now = new Date();
+  const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const quoteId = `IDS-${datePart}-${randomPart}`;
+
+  // Document styling - UPDATED COLORS FOR TESTING
+  const primaryColor = "#007B9E";  // Updated blue
+  const secondaryColor = "#B2904F"; // Gold accent
+  const darkTextColor = "#333333";  // Dark text
+  const lightBgColor = "#f9f9f9";   // Light background
+  
+  // Sample reviews
+  const reviews: Review[] = [
+    { text: "The best dental experience I've had – professional, smooth and transparent.", author: "Sarah W.", treatment: "Veneers" },
+    { text: "Incredible results and I got to explore Istanbul too. 100% recommend!", author: "James T.", treatment: "Dental Implants" },
+    { text: "From airport to aftercare, every detail was taken care of. Thanks team!", author: "Alicia M.", treatment: "Full Smile Makeover" }
+  ];
+
+  // Initialize page counter
+  let pageNumber = 1;
+  
+  // Helper function to add page
+  const addNewPage = () => {
+    doc.addPage();
+    pageNumber++;
+    
+    // Add header to new page
+    doc.setDrawColor(primaryColor);
+    doc.setFillColor(primaryColor);
+    doc.rect(0, 0, 210, 20, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Istanbul Dental Smile', 20, 12);
+    doc.setFontSize(9);
+    doc.text(`Quote: ${quoteId}`, 170, 12);
+    
+    // Add footer to new page
+    doc.setFillColor(lightBgColor);
+    doc.rect(0, 285, 210, 12, 'F');
+    
+    doc.setTextColor(darkTextColor);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Page ${pageNumber}`, 105, 291, { align: 'center' });
+    doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 295, { align: 'center' });
+    
+    return 30; // Return Y position after header
+  };
+
+  // COVER PAGE
+  // Add main header
+  doc.setDrawColor(primaryColor);
+  doc.setFillColor(primaryColor);
+  doc.rect(0, 0, 210, 60, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
+  
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
+  
+  // Add quote info box
+  doc.setFillColor(secondaryColor);
+  doc.roundedRect(35, 80, 140, 50, 3, 3, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Quote Information', 105, 92, { align: 'center' });
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Quote ID: ${quoteId}`, 105, 102, { align: 'center' });
+  doc.text(`Date: ${now.toLocaleDateString('en-GB')}`, 105, 110, { align: 'center' });
+  doc.text(`Prepared For: ${patientName}`, 105, 118, { align: 'center' });
+
+  // Add treatment summary
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(35, 140, 140, 60, 3, 3, 'F');
+  
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Treatment Summary', 105, 152, { align: 'center' });
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+
+  // Calculate treatments description
+  let treatmentText = "";
+  if (items && items.length > 0) {
+    treatmentText = items.map(item => `${item.quantity}x ${item.treatment}`).join(" + ");
+  } else {
+    treatmentText = "Dental Treatment Package";
+  }
+  
+  // Handle long texts with wrapping
+  const splitTreatment = doc.splitTextToSize(treatmentText, 130);
+  doc.text(splitTreatment, 105, 162, { align: 'center' });
+  
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Total: £${totalGBP.toFixed(2)} / $${totalUSD.toFixed(2)}`, 105, 185, { align: 'center' });
+
+  // Add footer to first page
+  doc.setFillColor(lightBgColor);
+  doc.rect(0, 285, 210, 12, 'F');
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`Page ${pageNumber}`, 105, 291, { align: 'center' });
+  doc.text('www.istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk', 105, 295, { align: 'center' });
+
+  // Add CTA at bottom of first page
+  doc.setTextColor(secondaryColor);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Book Your Free Consultation Today!', 105, 240, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.text('Call or WhatsApp: +44 7572 445856', 105, 248, { align: 'center' });
+
+  // TREATMENT BREAKDOWN PAGE
+  let yPos = addNewPage();
+
+  // Add patient details at top if available
+  if (patientName || patientEmail || patientPhone) {
+    doc.setTextColor(darkTextColor);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Hello ${patientName},`, 20, yPos);
+    yPos += 10;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text('Thank you for your interest in dental treatment with Istanbul Dental Smile. This personalized', 20, yPos);
+    yPos += 6;
+    doc.text('quote provides comprehensive information including your requested treatments and options.', 20, yPos);
+    yPos += 10;
+  }
+
+  // Section header
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Treatment Breakdown', 20, yPos);
+  yPos += 10;
+
+  // Treatment description
+  doc.setTextColor(darkTextColor);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Below is a detailed breakdown of the treatments included in your quote:', 20, yPos);
+  yPos += 10;
+
+  // Treatment table with improved layout
+  // Define column positions and widths
+  const tableWidth = 170;
+  const columnWidths = [65, 15, 30, 30, 30]; // Treatment, Qty, Unit Price, Subtotal, Guarantee
+  const tableX = 20;
+  const rowHeight = 10;
+  
+  // Calculate column positions for better alignment
+  const colPos: number[] = [];
+  let currentX = tableX;
+  for (let i = 0; i < columnWidths.length; i++) {
+    colPos.push(currentX + columnWidths[i]/2); // Center position of each column
+    currentX += columnWidths[i];
+  }
+  
+  // Table headers with improved styling
+  doc.setFillColor(primaryColor);
+  doc.setTextColor(255, 255, 255);
+  doc.rect(tableX, yPos, tableWidth, 10, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('Treatment', colPos[0], yPos+6.5, { align: 'center' });
+  doc.text('Qty', colPos[1], yPos+6.5, { align: 'center' });
+  doc.text('Unit Price', colPos[2], yPos+6.5, { align: 'center' });
+  doc.text('Subtotal', colPos[3], yPos+6.5, { align: 'center' });
+  doc.text('Guarantee', colPos[4], yPos+6.5, { align: 'center' });
+  yPos += 10;
+
+  // Calculate the flight cost estimate based on the city and month
+  const getFlightCost = (city: string, month: string): number => {
+    // Default values for common cities by month
+    const flightCosts: Record<string, Record<string, number>> = {
+      'London': {
+        'January': 120, 'February': 110, 'March': 140, 'April': 170,
+        'May': 180, 'June': 220, 'July': 250, 'August': 240,
+        'September': 200, 'October': 170, 'November': 130, 'December': 160
+      },
+      'Manchester': {
+        'January': 140, 'February': 130, 'March': 150, 'April': 180,
+        'May': 190, 'June': 230, 'July': 260, 'August': 250,
+        'September': 210, 'October': 180, 'November': 140, 'December': 170
+      }
+    };
+    
+    // Convert city and month to proper format
+    const formattedCity = city || 'London';
+    const formattedMonth = month || 'July';
+    
+    // Try to get the exact cost, or use London/July as fallback
+    console.log('Looking up flight cost for:', { city: formattedCity, month: formattedMonth });
+    return flightCosts[formattedCity]?.[formattedMonth] || 213; // Default £213 if not found
+  };
+  
+  // Get departure and month data with defaults
+  const departureDisplay = departureCity || 'London';
+  const monthDisplay = travelMonth || 'July';
+  const flightCost = getFlightCost(departureDisplay, monthDisplay);
+  
+  // Use 0.85 for GBP to USD conversion if not available
+  const exchangeRate = totalGBP > 0 ? (totalUSD / totalGBP) : 1.29;
+  
+  // Table rows with improved text handling
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  let rowCount = 0;
+  let hasFlightItem = false;
+  
+  if (items && items.length > 0) {
+    // First check if any item is a flight
+    hasFlightItem = items.some(item => 
+      item.treatment.toLowerCase().includes('flight') || 
+      item.treatment.toLowerCase().includes('air')
+    );
+    
+    items.forEach((item, index) => {
+      rowCount++;
+      // Create alternating row background
+      const isAlternateRow = index % 2 !== 0;
+      if (isAlternateRow) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+      }
+      
+      // Truncate long treatment names
+      let treatment = item.treatment;
+      if (treatment.length > 28) {
+        treatment = treatment.substring(0, 25) + '...';
+      }
+      
+      // Add cell content
+      doc.text(treatment, colPos[0], yPos+6, { align: 'center' });
+      doc.text(item.quantity.toString(), colPos[1], yPos+6, { align: 'center' });
+      doc.text(`£${item.priceGBP.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
+      doc.text(`£${item.subtotalGBP.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
+      doc.text(item.guarantee || 'N/A', colPos[4], yPos+6, { align: 'center' });
+      yPos += rowHeight;
+      
+      // Add new page if needed
+      if (yPos > 260) {
+        yPos = addNewPage();
+      }
+    });
+  }
+  
+  // Only add flight cost if not already included
+  if (!hasFlightItem) {
+    rowCount++;
+    const isAlternateRow = rowCount % 2 !== 0;
+    if (isAlternateRow) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+    }
+    
+    doc.text(`Return Flight (${departureDisplay}-Istanbul, ${monthDisplay})`, colPos[0], yPos+6, { align: 'center' });
+    doc.text("1", colPos[1], yPos+6, { align: 'center' });
+    doc.text(`£${flightCost.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
+    doc.text(`£${flightCost.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
+    doc.text('N/A', colPos[4], yPos+6, { align: 'center' });
+    yPos += rowHeight;
+  }
+  
+  // Calculate updated totals
+  const updatedTotalGBP = hasFlightItem ? totalGBP : totalGBP + flightCost;
+  const updatedTotalUSD = updatedTotalGBP * exchangeRate;
+
+  // Total row
+  doc.setFillColor(secondaryColor);
+  doc.rect(tableX, yPos, tableWidth, 8, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total (including flights)', colPos[0], yPos+5.5, { align: 'center' });
+  doc.text(`£${updatedTotalGBP.toFixed(2)}`, colPos[3], yPos+5.5, { align: 'center' });
+  doc.text(`$${updatedTotalUSD.toFixed(2)}`, colPos[4], yPos+5.5, { align: 'center' });
+  yPos += 15;
+
+  // ISTANBUL CLINIC COMPARISON SECTION
+  // Always start the clinic comparison section on a new page
+  yPos = addNewPage();
+
+  // Section title with highlight box
+  doc.setFillColor(primaryColor);
+  doc.rect(20, yPos, 170, 12, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Istanbul Clinic Comparison', 105, yPos+8, { align: 'center' });
+  yPos += 20;
+
+  // Introduction to clinic comparison
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Below is a comparison of three top-rated dental clinics in Istanbul that can perform your treatment:', 20, yPos);
+  yPos += 10;
+
+  // Prepare clinic data if not provided
+  let comparisonClinics = clinics || [];
+  if (comparisonClinics.length === 0) {
+    // Default clinics if none provided, with the specific clinic names
+    comparisonClinics = [
+      {
+        name: "Maltepe Dental Clinic",
+        priceGBP: Math.round(updatedTotalGBP * 0.85), // 15% cheaper
+        extras: "Modern Facilities, Airport Transfer",
+        location: "Maltepe District",
+        guarantee: "5 Years",
+        rating: "⭐⭐⭐⭐"
+      },
+      {
+        name: "Denteste Istanbul",
+        priceGBP: Math.round(updatedTotalGBP * 0.80), // 20% cheaper
+        extras: "All-inclusive Package, Hotel Stay",
+        location: "City Center",
+        guarantee: "3 Years",
+        rating: "⭐⭐⭐⭐⭐"
+      },
+      {
+        name: "Istanbulsmilecenter",
+        priceGBP: Math.round(updatedTotalGBP * 0.90), // 10% cheaper
+        extras: "Premium Materials, VIP Service",
+        location: "Sisli District",
+        guarantee: "7 Years",
+        rating: "⭐⭐⭐⭐"
+      }
+    ];
+  }
+
+  // Clinic comparison table
+  const clinicTableX = 20;
+  const clinicTableWidth = 170;
+  const clinicColWidths = [40, 30, 60, 40]; // Name, Price, Extras, Guarantee
+  
+  // Calculate clinic column positions
+  const clinicColPos: number[] = [];
+  let clinicCurrentX = clinicTableX;
+  for (let i = 0; i < clinicColWidths.length; i++) {
+    clinicColPos.push(clinicCurrentX + clinicColWidths[i]/2);
+    clinicCurrentX += clinicColWidths[i];
+  }
+  
+  // Table headers
+  doc.setFillColor(primaryColor);
+  doc.setTextColor(255, 255, 255);
+  doc.rect(clinicTableX, yPos, clinicTableWidth, 10, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('Clinic', clinicColPos[0], yPos+6.5, { align: 'center' });
+  doc.text('Price', clinicColPos[1], yPos+6.5, { align: 'center' });
+  doc.text('Included Extras', clinicColPos[2], yPos+6.5, { align: 'center' });
+  doc.text('Guarantee', clinicColPos[3], yPos+6.5, { align: 'center' });
+  yPos += 10;
+  
+  // Table rows for Istanbul clinics
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  comparisonClinics.forEach((clinic, index) => {
+    const isHighlighted = index === 1; // Highlight the middle (best value) option
+    
+    if (isHighlighted) {
+      doc.setFillColor(230, 245, 255); // Light blue background for highlighted row
+      doc.rect(clinicTableX, yPos, clinicTableWidth, 12, 'F');
+      doc.setFont('helvetica', 'bold');
+    } else {
+      const isAlternateRow = index % 2 === 0;
+      if (isAlternateRow) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(clinicTableX, yPos, clinicTableWidth, 12, 'F');
+      }
+      doc.setFont('helvetica', 'normal');
+    }
+    
+    // Clinic name
+    doc.text(clinic.name, clinicColPos[0], yPos+6.5, { align: 'center' });
+    
+    // Price
+    if (isHighlighted) {
+      doc.setTextColor(primaryColor);
+      doc.text(`£${clinic.priceGBP} *`, clinicColPos[1], yPos+6.5, { align: 'center' });
+      doc.setTextColor(darkTextColor);
+    } else {
+      doc.text(`£${clinic.priceGBP}`, clinicColPos[1], yPos+6.5, { align: 'center' });
+    }
+    
+    // Extras
+    const extrasText = clinic.extras || 'Standard service';
+    const splitExtras = doc.splitTextToSize(extrasText, clinicColWidths[2] - 4);
+    doc.text(splitExtras, clinicColPos[2], yPos+6.5, { align: 'center' });
+    
+    // Guarantee
+    doc.text(clinic.guarantee || 'Standard', clinicColPos[3], yPos+6.5, { align: 'center' });
+    
+    yPos += 12;
+  });
+  
+  // Add footnote for recommended option
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.text('* Recommended option based on value for money', clinicTableX, yPos+5);
+  yPos += 15;
+  
+  // Explanation of Istanbul clinic benefits
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('All Istanbul clinics include:', 20, yPos);
+  yPos += 7;
+  
+  const benefits = [
+    '✓ Free initial online consultation',
+    '✓ Treatment by experienced specialists',
+    '✓ Premium quality materials',
+    '✓ Assistance with accommodation',
+    '✓ Airport pickup and transfer service'
+  ];
+  
+  benefits.forEach(benefit => {
+    doc.text(benefit, 25, yPos);
+    yPos += 7;
+  });
+  
+  // UK VS ISTANBUL PRICE COMPARISON SECTION
+  yPos += 10;
+  
+  // Section title with highlight box
+  doc.setFillColor(primaryColor);
+  doc.rect(20, yPos, 170, 12, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Cost Comparison: UK vs Istanbul', 105, yPos+8, { align: 'center' });
+  yPos += 20;
+  
+  // Introduction to UK comparison
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('See how much you can save by choosing dental treatment in Istanbul compared to UK prices:', 20, yPos);
+  yPos += 10;
+  
+  // Create UK comparison clinics
+  const ukClinics = [
+    {
+      name: "London Private Clinic",
+      priceGBP: Math.round(updatedTotalGBP * 2.8),
+      extras: "Without travel costs"
+    },
+    {
+      name: "Manchester Private Clinic",
+      priceGBP: Math.round(updatedTotalGBP * 2.5),
+      extras: "Without travel costs"
+    },
+    {
+      name: "Istanbul Dental Smile Package",
+      priceGBP: updatedTotalGBP,
+      extras: "Including flights & accommodation"
+    }
+  ];
+  
+  // UK comparison table
+  const ukTableX = 20;
+  const ukTableWidth = 170;
+  const ukColWidths = [60, 50, 60]; // Location, Price, Notes
+  
+  // Calculate UK comparison column positions
+  const ukColPos: number[] = [];
+  let ukCurrentX = ukTableX;
+  for (let i = 0; i < ukColWidths.length; i++) {
+    ukColPos.push(ukCurrentX + ukColWidths[i]/2);
+    ukCurrentX += ukColWidths[i];
+  }
+  
+  // Table headers
+  doc.setFillColor(primaryColor);
+  doc.setTextColor(255, 255, 255);
+  doc.rect(ukTableX, yPos, ukTableWidth, 10, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('Location', ukColPos[0], yPos+6.5, { align: 'center' });
+  doc.text('Price', ukColPos[1], yPos+6.5, { align: 'center' });
+  doc.text('Notes', ukColPos[2], yPos+6.5, { align: 'center' });
+  yPos += 10;
+  
+  // Table rows for UK vs Istanbul comparison
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  ukClinics.forEach((clinic, index) => {
+    const isHighlighted = index === 2; // Highlight the Istanbul option
+    
+    if (isHighlighted) {
+      doc.setFillColor(230, 245, 255); // Light blue background for highlighted row
+      doc.rect(ukTableX, yPos, ukTableWidth, 12, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(primaryColor);
+    } else {
+      const isAlternateRow = index % 2 === 0;
+      if (isAlternateRow) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(ukTableX, yPos, ukTableWidth, 12, 'F');
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(darkTextColor);
+    }
+    
+    // Location
+    doc.text(clinic.name, ukColPos[0], yPos+6.5, { align: 'center' });
+    
+    // Price
+    doc.text(`£${clinic.priceGBP.toLocaleString()}`, ukColPos[1], yPos+6.5, { align: 'center' });
+    
+    // Notes
+    doc.text(clinic.extras, ukColPos[2], yPos+6.5, { align: 'center' });
+    
+    yPos += 12;
+    
+    // Reset text color after highlighted row
+    if (isHighlighted) {
+      doc.setTextColor(darkTextColor);
+    }
+  });
+  
+  // Calculate savings
+  const ukAveragePrice = Math.round((ukClinics[0].priceGBP + ukClinics[1].priceGBP) / 2);
+  const savingsAmount = ukAveragePrice - updatedTotalGBP;
+  const savingsPercentage = Math.round((savingsAmount / ukAveragePrice) * 100);
+  
+  // Add savings calculation
+  yPos += 5;
+  doc.setTextColor(secondaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(`Your Savings: £${savingsAmount.toLocaleString()} (${savingsPercentage}% off UK prices)`, 105, yPos, { align: 'center' });
+  yPos += 15;
+  
+  // TESTIMONIALS SECTION
+  if (yPos > 230) { // If not enough space left, start a new page
+    yPos = addNewPage();
+  }
+  
+  // Section header
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('What Our Patients Say', 20, yPos);
+  yPos += 10;
+  
+  // Add testimonials
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  
+  reviews.forEach((review, index) => {
+    // Add new page if needed
+    if (yPos > 250) {
+      yPos = addNewPage();
+    }
+    
+    // Add review box
+    doc.setFillColor(lightBgColor);
+    doc.roundedRect(30, yPos, 150, 23, 3, 3, 'F');
+    
+    // Add quote marks
+    doc.setTextColor(primaryColor);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('"', 35, yPos + 8);
+    
+    // Add review text
+    doc.setTextColor(darkTextColor);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    const reviewText = doc.splitTextToSize(review.text, 140);
+    doc.text(reviewText, 40, yPos + 8);
+    
+    // Add author and treatment
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(`${review.author}${review.treatment ? ` - ${review.treatment}` : ''}`, 170, yPos + 19, { align: 'right' });
+    
+    yPos += 28;
+  });
+  
+  // NEXT STEPS SECTION
+  if (yPos > 230) { // If not enough space left, start a new page
+    yPos = addNewPage();
+  }
+  
+  // Section header
+  doc.setTextColor(primaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Next Steps', 20, yPos);
+  yPos += 10;
+  
+  doc.setTextColor(darkTextColor);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('To proceed with your treatment journey:', 20, yPos);
+  yPos += 7;
+  
+  const steps = [
+    '1. Book a free online consultation with one of our dental specialists',
+    '2. Ask any questions you may have about the treatment options',
+    '3. Reserve your treatment date with just a £200 deposit (deducted from final price)',
+    '4. We\'ll assist with all travel arrangements and accommodation',
+    '5. Enjoy your new smile and Istanbul experience!'
+  ];
+  
+  steps.forEach(step => {
+    doc.text(step, 25, yPos);
+    yPos += 7;
+  });
+  
+  yPos += 5;
+  
+  // Add CTA
+  doc.setTextColor(secondaryColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Contact Us Today:', 20, yPos);
+  yPos += 7;
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('WhatsApp/Phone: +44 7572 445856', 25, yPos);
+  yPos += 7;
+  doc.text('Email: info@istanbuldentalsmile.co.uk', 25, yPos);
+  yPos += 7;
+  doc.text('Web: www.istanbuldentalsmile.co.uk', 25, yPos);
+  
+  // Generate PDF buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
   return pdfBuffer;
 }

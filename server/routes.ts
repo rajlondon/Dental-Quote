@@ -655,8 +655,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pure PDF generation using jsPDF with Mailjet email notification
   app.post("/api/jspdf-quote-v2", async (req, res) => {
     try {
-      // Import the PDF generator function and email service
-      const { generateQuotePdf } = await import('./pdf-generator');
+      // Import the updated PDF generator function and email service
+      const { generateQuotePdfV2 } = await import('./pdf-generator');
       const { sendQuoteEmail, isMailjetConfigured } = await import('./mailjet-service');
       
       // Get data from request body
@@ -683,8 +683,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn('Invalid patient email format detected:', quoteData.patientEmail);
       }
       
-      // Generate the PDF
-      const pdfBuffer = generateQuotePdf(quoteData);
+      // Generate the PDF using the v2 function
+      const pdfBuffer = generateQuotePdfV2(quoteData);
       
       // Generate filename with date and patient name
       const now = new Date();
