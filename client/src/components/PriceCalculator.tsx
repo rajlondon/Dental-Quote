@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -101,6 +101,7 @@ export default function PriceCalculator() {
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [quote, setQuote] = useState<ReturnType<typeof calculateTotal> | null>(null);
+  const quoteResultRef = useRef<HTMLDivElement>(null); // Reference to quote result section
   
   // Initialize the form with default values
   const form = useForm<FormValues>({
@@ -271,6 +272,16 @@ export default function PriceCalculator() {
       title: 'Quote Generated',
       description: 'Your quote has been calculated successfully.',
     });
+    
+    // Scroll to the quote section
+    setTimeout(() => {
+      if (quoteResultRef.current) {
+        quoteResultRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 100);
   };
   
   // HTML Quote dialog state
@@ -1104,7 +1115,7 @@ export default function PriceCalculator() {
                 
                 <div>
                   {quote ? (
-                    <div className="space-y-4">
+                    <div ref={quoteResultRef} className="space-y-4">
                       <div className="border rounded-lg overflow-hidden bg-white">
                         <table className="w-full">
                           <thead className="bg-primary/10">
