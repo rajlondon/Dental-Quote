@@ -1183,6 +1183,24 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
+  // Helper function to add logo
+  const addLogo = (x: number, y: number, width: number, height: number) => {
+    try {
+      // Try to add logo from the public directory
+      doc.addImage('public/images/istanbul-dental-smile-logo.png', 'PNG', x, y, width, height);
+    } catch (error) {
+      console.error('Error adding logo from public/images:', error);
+      
+      try {
+        // Try another path if the first one fails
+        doc.addImage('public/images/logo.png', 'PNG', x, y, width, height);
+      } catch (fallbackError) {
+        console.error('Error adding logo from fallback path:', fallbackError);
+        // If logo fails to load, do nothing (text will be shown instead)
+      }
+    }
+  };
+
   // Helper function to add page
   const addNewPage = () => {
     doc.addPage();
@@ -1193,10 +1211,17 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, 210, 20, 'F');
     
+    // Add logo to header
+    try {
+      addLogo(5, 2, 16, 16);
+    } catch (e) {
+      console.error('Error adding logo to header:', e);
+    }
+    
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text('Istanbul Dental Smile', 20, 12);
+    doc.text('Istanbul Dental Smile', 28, 12); // Moved to the right to make space for logo
     doc.setFontSize(9);
     doc.text(`Quote: ${quoteId}`, 170, 12);
     
@@ -1219,14 +1244,26 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFillColor(primaryColor);
   doc.rect(0, 0, 210, 60, 'F');
   
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
-  doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
-  
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
+  // Add logo to cover page
+  try {
+    addLogo(105 - 25, 8, 50, 30); // Centered logo
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
+  } catch (e) {
+    console.error('Error adding logo to cover page:', e);
+    // If logo fails to load, fall back to text
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(28);
+    doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
+  }
   
   // Add quote info box
   doc.setFillColor(secondaryColor);
