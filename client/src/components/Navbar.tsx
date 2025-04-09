@@ -22,11 +22,9 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <a href="/" onClick={goToHomePage} className="flex items-center">
           <div className="bg-white p-2 rounded-md shadow-sm mr-2">
-            <img 
-              src="/images/istanbul-dental-smile-logo.png" 
-              alt="Istanbul Dental Smile Logo" 
-              className="h-12 w-auto"
-            />
+            <div className="flex items-center justify-center h-12 w-12 bg-[#00688B] text-white font-bold rounded-md">
+              <span>IDS</span>
+            </div>
           </div>
           <div className="hidden md:block">
             <p className="text-sm font-medium text-neutral-700">Your Trusted Dental Treatment Concierge</p>
