@@ -381,33 +381,36 @@ export default function PriceCalculator() {
           departureCity: form.getValues('departureCity')
         });
         
-        // Define all clinics and their price factors
+        // Define all clinics and their price factors based on new tiers
         const allClinics = [
           {
-            name: "Maltepe Dental Clinic",
-            priceGBP: Math.round(quote.totalGBP * 0.85),
-            extras: "Modern Facilities, Airport Transfer",
-            guarantee: "5 Years",
-            location: "Maltepe District"
-          },
-          {
-            name: "Denteste Istanbul",
+            name: "Istanbul Dental Care",
             priceGBP: Math.round(quote.totalGBP * 0.80),
-            extras: "All-inclusive Package, Hotel Stay",
+            extras: "Simple procedures & budget-focused travel",
             guarantee: "3 Years",
-            location: "City Center"
+            location: "Affordable",
+            rating: "⭐⭐⭐⭐"
           },
           {
-            name: "Istanbulsmilecenter",
+            name: "DentGroup Istanbul",
             priceGBP: Math.round(quote.totalGBP * 0.90),
-            extras: "Premium Materials, VIP Service",
-            guarantee: "7 Years",
-            location: "Sisli District"
+            extras: "Balanced budget + comfort with aftercare support",
+            guarantee: "5 Years",
+            location: "Mid-Tier",
+            rating: "⭐⭐⭐⭐½"
+          },
+          {
+            name: "Vera Smile",
+            priceGBP: Math.round(quote.totalGBP * 1.00),
+            extras: "VIP clients, faster results, luxury environment",
+            guarantee: "10 Years",
+            location: "Premium",
+            rating: "⭐⭐⭐⭐⭐"
           }
         ];
         
         // Get the selected clinic's total price
-        const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+        const clinicPriceFactors = [0.80, 0.90, 1.00]; // Price factors for each clinic (Affordable, Mid-Tier, Premium)
         const selectedFactor = clinicPriceFactors[selectedClinic];
         const selectedClinicTotalGBP = Math.round(quote.totalGBP * selectedFactor);
         const selectedClinicTotalUSD = Math.round(quote.totalUSD * selectedFactor);
@@ -458,25 +461,28 @@ export default function PriceCalculator() {
           departureCity: htmlQuoteData.departureCity || 'UK',
           clinics: [
             {
-              name: "Maltepe Dental Clinic",
-              priceGBP: Math.round(htmlQuoteData.totalGBP * 0.85),
-              extras: "Modern Facilities, Airport Transfer",
-              guarantee: "5 Years",
-              location: "Maltepe District"
-            },
-            {
-              name: "Denteste Istanbul",
+              name: "Istanbul Dental Care",
               priceGBP: Math.round(htmlQuoteData.totalGBP * 0.80),
-              extras: "All-inclusive Package, Hotel Stay",
+              extras: "Simple procedures & budget-focused travel",
               guarantee: "3 Years",
-              location: "City Center"
+              location: "Affordable",
+              rating: "⭐⭐⭐⭐"
             },
             {
-              name: "Istanbulsmilecenter",
+              name: "DentGroup Istanbul",
               priceGBP: Math.round(htmlQuoteData.totalGBP * 0.90),
-              extras: "Premium Materials, VIP Service",
-              guarantee: "7 Years",
-              location: "Sisli District"
+              extras: "Balanced budget + comfort with aftercare support",
+              guarantee: "5 Years",
+              location: "Mid-Tier",
+              rating: "⭐⭐⭐⭐½"
+            },
+            {
+              name: "Vera Smile",
+              priceGBP: Math.round(htmlQuoteData.totalGBP * 1.00),
+              extras: "VIP clients, faster results, luxury environment",
+              guarantee: "10 Years",
+              location: "Premium",
+              rating: "⭐⭐⭐⭐⭐"
             }
           ],
           hasXrays: htmlQuoteData.hasXrays,
@@ -1497,8 +1503,8 @@ export default function PriceCalculator() {
                               <td colSpan={2} className="px-4 py-3 text-primary">{t('pricing.total_usd')}</td>
                               <td className="px-4 py-3 text-right text-primary">
                                 ${(() => {
-                                  // Get the selected clinic price
-                                  const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+                                  // Get the selected clinic price with updated price factors
+                                  const clinicPriceFactors = [0.80, 0.90, 1.00]; // Price factors for each clinic
                                   const selectedFactor = clinicPriceFactors[selectedClinic];
                                   return Math.round(quote.totalUSD * selectedFactor).toLocaleString();
                                 })()}
@@ -1508,30 +1514,36 @@ export default function PriceCalculator() {
                         </table>
                       </div>
                       
-                      {/* Istanbul Clinic Comparison Section */}
+                      {/* Istanbul Clinic Comparison Section - New Tiered Design */}
                       <div className="p-4 bg-primary/5 rounded-lg mb-6">
-                        <h4 className="font-semibold text-primary mb-2">Istanbul Clinic Comparison</h4>
-                        <p className="text-sm mb-3">Select one of our verified partner clinics in Istanbul:</p>
+                        <h4 className="font-semibold text-primary mb-2">Compare Clinics Across Tiers</h4>
+                        <p className="text-sm mb-3">Each quote includes vetted options from affordable, mid-tier, and premium clinics in Istanbul. Choose what suits your comfort and budget best:</p>
                         
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {[
                             {
-                              name: "Maltepe Dental Clinic",
-                              price: Math.round(quote.totalGBP * 0.85), // 15% cheaper than base price
-                              extra: "Modern Facilities, Airport Transfer",
-                              guarantee: "5 Years"
+                              name: "Istanbul Dental Care",
+                              type: "🏷️ Affordable",
+                              price: Math.round(quote.totalGBP * 0.80), 
+                              extra: "Simple procedures & budget-focused travel",
+                              guarantee: "3 Years",
+                              rating: "⭐⭐⭐⭐"
                             },
                             {
-                              name: "Denteste Istanbul",
-                              price: Math.round(quote.totalGBP * 0.80), // 20% cheaper than base price
-                              extra: "All-inclusive Package, Hotel Stay",
-                              guarantee: "3 Years"
+                              name: "DentGroup Istanbul",
+                              type: "💼 Mid-Tier",
+                              price: Math.round(quote.totalGBP * 0.90), 
+                              extra: "Balanced budget + comfort with aftercare support",
+                              guarantee: "5 Years",
+                              rating: "⭐⭐⭐⭐½"
                             },
                             {
-                              name: "Istanbulsmilecenter",
-                              price: Math.round(quote.totalGBP * 0.90), // 10% cheaper than base price
-                              extra: "Premium Materials, VIP Service",
-                              guarantee: "7 Years"
+                              name: "Vera Smile",
+                              type: "💎 Premium",
+                              price: Math.round(quote.totalGBP * 1.00), 
+                              extra: "VIP clients, faster results, luxury environment",
+                              guarantee: "10 Years",
+                              rating: "⭐⭐⭐⭐⭐"
                             }
                           ].map((clinic, idx) => {
                             const isSelected = selectedClinic === idx;
@@ -1553,12 +1565,14 @@ export default function PriceCalculator() {
                                     className="mt-1 mr-2"
                                   />
                                   <div className="flex-1">
+                                    <div className="text-sm font-bold text-primary">{clinic.type}</div>
                                     <div className="text-sm font-semibold">{clinic.name}</div>
                                     <div className="flex items-center">
                                       <div className="text-lg font-bold text-primary">£{clinic.price.toLocaleString()}</div>
                                     </div>
-                                    <div className="text-xs mt-1">{clinic.extra}</div>
                                     <div className="text-xs mt-1">Guarantee: {clinic.guarantee}</div>
+                                    <div className="text-xs mt-1">Rating: {clinic.rating}</div>
+                                    <div className="text-xs mt-1">{clinic.extra}</div>
                                   </div>
                                 </div>
                               </div>
@@ -1574,22 +1588,25 @@ export default function PriceCalculator() {
                         <p className="text-sm mb-3">See how much you can save compared to UK prices:</p>
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {(() => {
-                            // Get the selected clinic data
+                            // Get the selected clinic data using the new clinic information
                             const istanbulClinics = [
                               {
-                                name: "Maltepe Dental Clinic",
-                                price: Math.round(quote.totalGBP * 0.85),
-                                extra: "Including flights & hotel"
-                              },
-                              {
-                                name: "Denteste Istanbul",
+                                name: "Istanbul Dental Care",
                                 price: Math.round(quote.totalGBP * 0.80),
-                                extra: "Including flights & hotel"
+                                extra: "Including flights & hotel",
+                                type: "Affordable"
                               },
                               {
-                                name: "Istanbulsmilecenter",
+                                name: "DentGroup Istanbul",
                                 price: Math.round(quote.totalGBP * 0.90),
-                                extra: "Including flights & hotel"
+                                extra: "Including flights & hotel",
+                                type: "Mid-Tier"
+                              },
+                              {
+                                name: "Vera Smile",
+                                price: Math.round(quote.totalGBP * 1.00),
+                                extra: "Including flights & hotel",
+                                type: "Premium"
                               }
                             ];
                             
@@ -1629,11 +1646,11 @@ export default function PriceCalculator() {
                         
                         {/* Savings calculation based on selected clinic price */}
                         {(() => {
-                          // Get the selected clinic price
+                          // Get the selected clinic price with the new price factors
                           const selectedClinicPrice = [
-                            Math.round(quote.totalGBP * 0.85), // Maltepe
-                            Math.round(quote.totalGBP * 0.80), // Denteste
-                            Math.round(quote.totalGBP * 0.90)  // Istanbulsmilecenter
+                            Math.round(quote.totalGBP * 0.80), // Istanbul Dental Care (Affordable)
+                            Math.round(quote.totalGBP * 0.90), // DentGroup Istanbul (Mid-Tier)
+                            Math.round(quote.totalGBP * 1.00)  // Vera Smile (Premium)
                           ][selectedClinic];
                           
                           // Calculate UK average price
@@ -1660,33 +1677,36 @@ export default function PriceCalculator() {
                       {/* Hidden PDF Generator component */}
                       <div style={{ display: "none" }}>
                         {(() => {
-                          // Define all clinics
+                          // Define all clinics with new names and details
                           const allClinics = [
                             {
-                              name: "Maltepe Dental Clinic",
-                              priceGBP: Math.round(quote.totalGBP * 0.85),
-                              extras: "Modern Facilities, Airport Transfer",
-                              guarantee: "5 Years",
-                              location: "Maltepe District"
-                            },
-                            {
-                              name: "Denteste Istanbul",
+                              name: "Istanbul Dental Care",
                               priceGBP: Math.round(quote.totalGBP * 0.80),
-                              extras: "All-inclusive Package, Hotel Stay",
+                              extras: "Simple procedures & budget-focused travel",
                               guarantee: "3 Years",
-                              location: "City Center"
+                              location: "City Center",
+                              rating: "⭐⭐⭐⭐"
                             },
                             {
-                              name: "Istanbulsmilecenter",
+                              name: "DentGroup Istanbul",
                               priceGBP: Math.round(quote.totalGBP * 0.90),
-                              extras: "Premium Materials, VIP Service",
-                              guarantee: "7 Years",
-                              location: "Sisli District"
+                              extras: "Balanced budget + comfort with aftercare support",
+                              guarantee: "5 Years",
+                              location: "Şişli District",
+                              rating: "⭐⭐⭐⭐½"
+                            },
+                            {
+                              name: "Vera Smile",
+                              priceGBP: Math.round(quote.totalGBP * 1.00),
+                              extras: "VIP clients, faster results, luxury environment",
+                              guarantee: "10 Years",
+                              location: "Levent District",
+                              rating: "⭐⭐⭐⭐⭐"
                             }
                           ];
                           
-                          // Calculate the selected clinic's price for total GBP and USD
-                          const clinicPriceFactors = [0.85, 0.80, 0.90]; // Price factors for each clinic
+                          // Calculate the selected clinic's price for total GBP and USD with new price factors
+                          const clinicPriceFactors = [0.80, 0.90, 1.00]; // Price factors for each clinic
                           const selectedFactor = clinicPriceFactors[selectedClinic];
                           const selectedClinicTotalGBP = Math.round(quote.totalGBP * selectedFactor);
                           const selectedClinicTotalUSD = Math.round(quote.totalUSD * selectedFactor);
