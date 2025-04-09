@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,6 +15,7 @@ import http from "http";
 import Handlebars from "handlebars";
 import { generateQuotePdf, generateQuotePdfV2 } from "./pdf-generator";
 import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
+import { upload, handleUploadError, type UploadedFile } from "./file-upload";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -935,6 +936,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </body>
         </html>
       `);
+    }
+  });
+  
+  // File upload endpoint for X-rays
+  app.post('/api/upload-xrays', upload.array('xrays', 5), handleUploadError, (req: Request, res: Response) => {
+    try {
+      // Validate if files were uploaded
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No files were uploaded.'
+        });
+      }
+      
+      // Process uploaded files
+      const files = (req.files as Express.Multer.File[]).map(file => ({
+        filename: file.filename,
+        originalname: file.originalname,
+        path: file.path,
+        size: file.size,
+        mimetype: file.mimetype
+      }));
+      
+      // Return success response with file information
+      res.status(200).json({
+        success: true,
+        message: `${files.length} file(s) uploaded successfully.`,
+        files
+      });
+    } catch (error) {
+      console.error('File upload error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error processing file upload.',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Serve uploaded files (with security checks)
+  app.get('/api/xrays/:filename', (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      
+      // Security check to prevent directory traversal
+      if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid filename.'
+        });
+      }
+      
+      const filePath = path.join(process.cwd(), 'uploads', 'xrays', filename);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          success: false,
+          message: 'File not found.'
+        });
+      }
+      
+      // Determine content type
+      const ext = path.extname(filePath).toLowerCase();
+      const contentTypeMap: Record<string, string> = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.pdf': 'application/pdf'
+      };
+      const contentType = contentTypeMap[ext] || 'application/octet-stream';
+      
+      // Set headers and stream file
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error('Error serving file:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error retrieving file.',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   

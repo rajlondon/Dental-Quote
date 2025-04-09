@@ -1,4 +1,5 @@
 import MailJet from 'node-mailjet';
+import fs from 'fs';
 
 // Define or import the QuoteData interface
 export interface QuoteData {
@@ -29,6 +30,13 @@ export interface QuoteData {
   hasXrays?: boolean;
   xrayCount?: number;
   selectedClinicIndex?: number;
+  xrayFiles?: Array<{
+    filename: string;
+    originalname: string;
+    path: string;
+    size: number;
+    mimetype: string;
+  }>;
 }
 
 // Initialize Mailjet client
@@ -106,7 +114,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
     }).join('<br>');
 
     // Create message object for admin notification
-    const adminMessage = {
+    const adminMessage: any = {
       From: {
         Email: senderEmail,
         Name: "Istanbul Dental Smile"
@@ -207,6 +215,38 @@ export async function sendEmailNotification(notificationData: NotificationData):
     // Send the admin email notification
     console.log(`Sending calculation notification to admin email: ${recipientEmail}`);
     console.log(`Patient information: Name: ${quoteData.patientName || 'unnamed'}, Email: ${quoteData.patientEmail || 'no email provided'}`);
+    
+    // Check for X-ray file attachments
+    let attachments: any[] = [];
+    
+    if (quoteData.xrayFiles && quoteData.xrayFiles.length > 0) {
+      console.log(`Attaching ${quoteData.xrayFiles.length} X-ray files to email notification`);
+      
+      // Add each X-ray file as an attachment
+      for (const file of quoteData.xrayFiles) {
+        try {
+          if (fs.existsSync(file.path)) {
+            const fileContent = fs.readFileSync(file.path);
+            const base64Content = fileContent.toString('base64');
+            
+            attachments.push({
+              ContentType: file.mimetype,
+              Filename: file.originalname,
+              Base64Content: base64Content
+            });
+            
+            console.log(`Added X-ray file: ${file.originalname} (${file.mimetype})`);
+          } else {
+            console.warn(`X-ray file not found: ${file.path}`);
+          }
+        } catch (fileError) {
+          console.error(`Error reading X-ray file ${file.originalname}:`, fileError);
+        }
+      }
+    }
+    
+    // Add attachments to the message
+    adminMessage.Attachments = attachments;
 
     await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [adminMessage]
@@ -292,8 +332,37 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       `;
     }).join('');
 
+    // Prepare X-ray file attachments if they exist
+    let xrayAttachments: any[] = [];
+    
+    if (quoteData.xrayFiles && quoteData.xrayFiles.length > 0) {
+      console.log(`Attaching ${quoteData.xrayFiles.length} X-ray files to quote email`);
+      
+      // Add each X-ray file as an attachment
+      for (const file of quoteData.xrayFiles) {
+        try {
+          if (fs.existsSync(file.path)) {
+            const fileContent = fs.readFileSync(file.path);
+            const base64Content = fileContent.toString('base64');
+            
+            xrayAttachments.push({
+              ContentType: file.mimetype,
+              Filename: file.originalname,
+              Base64Content: base64Content
+            });
+            
+            console.log(`Added X-ray file: ${file.originalname} (${file.mimetype})`);
+          } else {
+            console.warn(`X-ray file not found: ${file.path}`);
+          }
+        } catch (fileError) {
+          console.error(`Error reading X-ray file ${file.originalname}:`, fileError);
+        }
+      }
+    }
+    
     // Create admin message object
-    const message = {
+    const message: any = {
       From: {
         Email: senderEmail,
         Name: "Istanbul Dental Smile"
@@ -381,7 +450,9 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
           ContentType: 'application/pdf',
           Filename: filename,
           Base64Content: pdfBuffer.toString('base64')
-        }
+        },
+        // Add any X-ray file attachments
+        ...xrayAttachments
       ]
     };
 
@@ -389,7 +460,8 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     console.log('Processing patient email:', quoteData.patientEmail || 'none');
     if (quoteData.patientEmail && quoteData.patientEmail.includes('@')) {
       console.log('Valid patient email found, creating customer quote email with Mailjet');
-      const patientMessage = {
+      // Patient email does not need X-ray files attached as they were uploaded by the patient
+      const patientMessage: any = {
         From: {
           Email: senderEmail,
           Name: "Istanbul Dental Smile"
@@ -505,7 +577,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       const { quoteData, filename, pdfBuffer } = emailData;
 
       // Create a simplified message for the fallback attempt
-      const fallbackMessage = {
+      const fallbackMessage: any = {
         From: {
           Email: process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk',
           Name: "Istanbul Dental Smile"

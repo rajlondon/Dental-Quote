@@ -207,21 +207,60 @@ export default function PriceCalculator() {
       patientPhone: data.phone
     };
     
-    // Handle X-ray file uploads (in a real implementation, this would send files to a server)
+    // Handle X-ray file uploads - upload to the server
     let xrayFileNames: string[] = [];
+    let uploadedXrayFiles: Array<{
+      filename: string;
+      originalname: string;
+      path: string;
+      size: number;
+      mimetype: string;
+    }> = [];
+    
     if (data.xrayFiles && data.xrayFiles.length > 0) {
       // Get file names for record keeping
       xrayFileNames = Array.from(data.xrayFiles).map(file => file.name);
       
-      // In a real implementation, you would upload these files to a server
-      console.log('X-ray files to be uploaded:', xrayFileNames);
-      
-      // Show success message for file upload
-      toast({
-        title: 'X-rays Received',
-        description: `${xrayFileNames.length} file(s) will be reviewed by our dental team.`,
-        variant: 'default',
-      });
+      try {
+        // Create FormData object for file upload
+        const formData = new FormData();
+        Array.from(data.xrayFiles).forEach(file => {
+          formData.append('xrays', file);
+        });
+        
+        // Show loading toast
+        toast({
+          title: 'Uploading X-rays',
+          description: 'Please wait while we upload your files...',
+        });
+        
+        // Upload the files to the server
+        const uploadResponse = await axios.post('/api/upload-xrays', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        if (uploadResponse.data.success) {
+          uploadedXrayFiles = uploadResponse.data.files;
+          
+          // Show success message for file upload
+          toast({
+            title: 'X-rays Uploaded Successfully',
+            description: `${xrayFileNames.length} file(s) will be reviewed by our dental team.`,
+            variant: 'default',
+          });
+        }
+      } catch (error) {
+        console.error('Error uploading X-ray files:', error);
+        
+        // Show error message
+        toast({
+          title: 'Upload Failed',
+          description: 'There was a problem uploading your X-ray files. You can proceed with your quote and send X-rays later.',
+          variant: 'destructive',
+        });
+      }
     }
     
     // Record the submission for personalized follow-up
@@ -250,7 +289,8 @@ export default function PriceCalculator() {
         travelMonth: data.travelMonth || 'July', // Use explicit default
         departureCity: data.departureCity || 'London', // Use explicit default
         hasXrays: xrayStatus,
-        xrayCount: xrayFileNames.length
+        xrayCount: xrayFileNames.length,
+        xrayFiles: uploadedXrayFiles.length > 0 ? uploadedXrayFiles : undefined
       };
       
       // Send notification to server - don't await or handle errors to avoid blocking UI
@@ -359,7 +399,8 @@ export default function PriceCalculator() {
           clinics: orderedClinics,
           hasXrays: hasXrays,
           xrayCount: form.getValues('xrayFiles')?.length || 0,
-          selectedClinicIndex: selectedClinic
+          selectedClinicIndex: selectedClinic,
+          xrayFiles: uploadedXrayFiles.length > 0 ? uploadedXrayFiles : undefined
         };
       } 
       // Or we're in the dialog view
@@ -910,6 +951,8 @@ export default function PriceCalculator() {
                             )}
                           />
                           
+
+
                           {/* Travel information section */}
                           <div className="mt-6">
                             <div className="flex items-center mb-4">
