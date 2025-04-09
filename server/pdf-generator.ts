@@ -1183,23 +1183,26 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // Use a simple SVG logo for maximum reliability 
-  const addLogo = (x: number, y: number, width: number, height: number) => {
+  // Simple text-based symbol as a logo
+  const addTextLogo = (x: number, y: number, fontSize: number) => {
     try {
-      // Create a simple tooth/bridge SVG logo - no external dependencies
-      const svg = `
-      <svg width="50" height="30" viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10,25 Q25,5 40,25 L40,20 Q25,0 10,20 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
-        <path d="M15,25 Q25,15 35,25" fill="none" stroke="#ffffff" stroke-width="2"/>
-      </svg>`;
+      const currentFont = doc.getFont();
+      const currentFontSize = doc.getFontSize();
+      const currentTextColor = doc.getTextColor();
       
-      // Convert to data URL and add to document
-      const svgData = 'data:image/svg+xml;base64,' + btoa(svg);
-      doc.addImage(svgData, 'SVG', x, y, width, height);
-      console.log('Successfully added SVG logo to PDF');
+      // Use a simple Unicode symbol that looks like a tooth or smile
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(fontSize);
+      doc.setTextColor(255, 255, 255);
+      doc.text('☺', x, y);
+      
+      // Restore previous settings
+      doc.setFont(currentFont.fontName, currentFont.fontStyle);
+      doc.setFontSize(currentFontSize);
+      doc.setTextColor(currentTextColor);
     } catch (error) {
-      console.error('Error adding SVG logo:', error);
-      // If logo fails to load, do nothing (text will be shown instead)
+      console.error('Error adding text logo:', error);
+      // If text logo fails, do nothing
     }
   };
 
@@ -1213,11 +1216,11 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, 210, 20, 'F');
     
-    // Try to add logo to header
+    // Add text symbol in header
     try {
-      addLogo(10, 2, 16, 16);
+      addTextLogo(28, 12, 14);
     } catch (e) {
-      console.error('Error adding logo to header:', e);
+      console.error('Error adding text logo to header:', e);
     }
     
     doc.setTextColor(255, 255, 255);
@@ -1251,17 +1254,18 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(28);
   
-  // Try to add logo to cover page
+  // Add decorative text symbol to cover page
   let titleYPos = 30;
   let subtitleYPos = 45;
   
   try {
-    addLogo(80, 15, 50, 30); // Add logo above the title
+    // Add a smile symbol 
+    addTextLogo(95, 25, 28);
     titleYPos = 50; // Using logo, move title down
     subtitleYPos = 65; // And subtitle further down
     doc.text('Istanbul Dental Smile', 105, titleYPos, { align: 'center' });
   } catch (e) {
-    console.error('Error adding logo to cover page:', e);
+    console.error('Error adding text logo to cover page:', e);
     // Fallback to text-only if logo fails
     doc.text('Istanbul Dental Smile', 105, titleYPos, { align: 'center' });
   }
