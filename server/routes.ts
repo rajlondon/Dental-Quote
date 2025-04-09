@@ -8,6 +8,7 @@ import { insertQuoteRequestSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import htmlPdf from "html-pdf-node";
+import { createHash } from "crypto";
 import { spawn } from "child_process";
 import axios from "axios";
 import http from "http";
@@ -859,7 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // New direct download endpoint using form post - uses temporary storage to avoid import issues
+  // New direct download endpoint using form post - simplified to avoid crypto issues
   app.post("/api/direct-download-pdf", (req, res) => {
     try {
       // Get data from request body
@@ -879,22 +880,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasEmail: !!quoteData.patientEmail
       });
       
-      // Generate a unique ID for this PDF
-      const pdfId = createHash('sha256')
-        .update(quoteDataStr + Date.now().toString())
-        .digest('hex')
-        .substring(0, 32);
-      
       // Generate the PDF 
       const pdfBuffer = generateQuotePdfV2(quoteData);
       
-      // Store in cache for immediate download
-      const finalFilename = filename || `IstanbulDentalSmile_Quote.pdf`;
-      pdfCache.set(pdfId, {
-        buffer: pdfBuffer,
-        filename: finalFilename,
-        createdAt: Date.now()
-      });
+      // Set a default filename with timestamp for uniqueness
+      const timestamp = Date.now();
+      const finalFilename = filename || `IstanbulDentalSmile_Quote_${timestamp}.pdf`;
       
       // Send email if configured and email is provided - in the background
       if (isMailjetConfigured() && quoteData.patientEmail) {
@@ -920,8 +911,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }, 10); // Tiny timeout to ensure this runs after response
       }
       
-      // Redirect to the download endpoint with the ID
-      res.redirect(`/api/download-quote/${pdfId}`);
+      // Set headers to force download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${finalFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Send the PDF directly
+      res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating direct download PDF:", error);
       res.status(500).send(`
