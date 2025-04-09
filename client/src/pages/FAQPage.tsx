@@ -56,10 +56,10 @@ export default function FAQPage() {
             
             <AccordionItem value="item-3">
               <AccordionTrigger className="text-left">
-                {t('pricing.pricing_faq_3_question')}
+                How do I pay for my treatment?
               </AccordionTrigger>
               <AccordionContent>
-                {t('pricing.pricing_faq_3_answer')}
+                To start the process and secure your appointment including your hotel we need a £200 deposit which will be taken off your treatment plan when you pay the full balance before your treatment starts at the clinic.
               </AccordionContent>
             </AccordionItem>
             
@@ -99,6 +99,27 @@ export default function FAQPage() {
               </AccordionTrigger>
               <AccordionContent>
                 The required stay depends on your specific treatment. For simple procedures like teeth whitening, 2-3 days may be sufficient. For veneers, typically 5-7 days are needed. Dental implants usually require two visits: 3-4 days for the initial placement, then another visit 3-6 months later for the final crown placement. We'll provide a detailed timeline based on your specific treatment plan.
+              </AccordionContent>
+            </AccordionItem>
+            
+            {/* Payment Questions */}
+            <h2 className="text-2xl font-bold mb-4 mt-8 text-primary">Payment & Financing</h2>
+            
+            <AccordionItem value="payment-1">
+              <AccordionTrigger className="text-left">
+                What payment methods do you accept?
+              </AccordionTrigger>
+              <AccordionContent>
+                We accept various payment methods including bank transfers, credit/debit cards, and PayPal. For the initial £200 deposit, you can pay securely online. The remaining balance is typically paid directly to the clinic before your treatment begins, and they accept cash (Turkish Lira, GBP, EUR, or USD) and most major credit cards.
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="payment-2">
+              <AccordionTrigger className="text-left">
+                Is the £200 deposit refundable?
+              </AccordionTrigger>
+              <AccordionContent>
+                The deposit is fully refundable if you cancel more than 14 days before your scheduled treatment. For cancellations within 14 days of treatment, the refund policy depends on the specific circumstances and any costs already incurred. We always try to work with our clients to find the best solution in case plans change.
               </AccordionContent>
             </AccordionItem>
             
