@@ -1050,6 +1050,23 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   // CALL TO ACTION PAGE
   yPos = addNewPage();
   
+  // Add X-ray Accuracy Disclaimer
+  doc.setFillColor(255, 248, 225); // Light amber background
+  doc.roundedRect(20, yPos, 170, 30, 3, 3, 'F');
+  
+  doc.setTextColor(130, 100, 0); // Amber text color
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Important Note About Quote Accuracy', 105, yPos + 10, { align: 'center' });
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  const disclaimerText = "This quote is based on the information you have provided and the treatments you have selected. After an X-ray review (which we can help arrange), your final treatment plan and price will be confirmed — usually within ±10% of this quote.";
+  const splitDisclaimer = doc.splitTextToSize(disclaimerText, 160);
+  doc.text(splitDisclaimer, 105, yPos + 16, { align: 'center' });
+  
+  yPos += 40;
+  
   // CTA header
   doc.setTextColor(primaryColor);
   doc.setFont('helvetica', 'bold');
@@ -1894,6 +1911,28 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     
     yPos += 28;
   });
+  
+  // X-RAY DISCLAIMER SECTION
+  if (yPos > 230) { // If not enough space left, start a new page
+    yPos = addNewPage();
+  }
+  
+  // Add X-ray Accuracy Disclaimer
+  doc.setFillColor(255, 248, 225); // Light amber background
+  doc.rect(20, yPos, 170, 30, 'F');
+  
+  doc.setTextColor(130, 100, 0); // Amber text color
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Important Note About Quote Accuracy', 20, yPos + 8);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  const disclaimerText = "This quote is based on the information you have provided and the treatments you have selected. After an X-ray review (which we can help arrange), your final treatment plan and price will be confirmed — usually within ±10% of this quote.";
+  const splitDisclaimer = doc.splitTextToSize(disclaimerText, 160);
+  doc.text(splitDisclaimer, 20, yPos + 16);
+  
+  yPos += 40;
   
   // NEXT STEPS SECTION
   if (yPos > 230) { // If not enough space left, start a new page

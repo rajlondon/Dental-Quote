@@ -8,6 +8,7 @@ import axios from "axios";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -89,6 +90,12 @@ const formSchema = z.object({
     })
   ).min(1, 'Please add at least one treatment'),
   xrayFiles: z.instanceof(FileList).optional().transform(val => val || null),
+  // New fields
+  journeyMode: z.enum(['concierge', 'clinic']).default('concierge'),
+  londonConsult: z.enum(['yes', 'no']).default('no'),
+  replacingExisting: z.enum(['yes', 'no', 'not-sure']).default('not-sure'),
+  preferredBrands: z.string().optional(),
+  budgetRange: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -114,6 +121,12 @@ export default function PriceCalculator() {
       departureCity: 'London', // Set a default city
       treatments: [{ treatment: '', quantity: 1 }],
       xrayFiles: undefined,
+      // New fields with defaults
+      journeyMode: 'concierge',
+      londonConsult: 'no',
+      replacingExisting: 'not-sure',
+      preferredBrands: '',
+      budgetRange: '',
     },
   });
   
@@ -166,6 +179,15 @@ export default function PriceCalculator() {
   
   // State to track if X-rays have been uploaded
   const [hasXrays, setHasXrays] = useState<boolean>(false);
+  
+  // State to store uploaded X-ray files
+  const [uploadedXrayFiles, setUploadedXrayFiles] = useState<Array<{
+    filename: string;
+    originalname: string;
+    path: string;
+    size: number;
+    mimetype: string;
+  }>>([]);
   
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
@@ -243,6 +265,8 @@ export default function PriceCalculator() {
         
         if (uploadResponse.data.success) {
           uploadedXrayFiles = uploadResponse.data.files;
+          // Also update the state variable for use later
+          setUploadedXrayFiles(uploadResponse.data.files);
           
           // Show success message for file upload
           toast({
@@ -290,7 +314,13 @@ export default function PriceCalculator() {
         departureCity: data.departureCity || 'London', // Use explicit default
         hasXrays: xrayStatus,
         xrayCount: xrayFileNames.length,
-        xrayFiles: uploadedXrayFiles.length > 0 ? uploadedXrayFiles : undefined
+        xrayFiles: uploadedXrayFiles.length > 0 ? uploadedXrayFiles : undefined,
+        // Include new fields
+        journeyMode: data.journeyMode,
+        londonConsult: data.londonConsult,
+        replacingExisting: data.replacingExisting,
+        preferredBrands: data.preferredBrands || '',
+        budgetRange: data.budgetRange || ''
       };
       
       // Send notification to server - don't await or handle errors to avoid blocking UI
@@ -400,7 +430,13 @@ export default function PriceCalculator() {
           hasXrays: hasXrays,
           xrayCount: form.getValues('xrayFiles')?.length || 0,
           selectedClinicIndex: selectedClinic,
-          xrayFiles: uploadedXrayFiles.length > 0 ? uploadedXrayFiles : undefined
+          xrayFiles: uploadedXrayFiles.length > 0 ? uploadedXrayFiles : undefined,
+          // Include additional information
+          journeyMode: form.getValues('journeyMode'),
+          londonConsult: form.getValues('londonConsult'),
+          replacingExisting: form.getValues('replacingExisting'),
+          preferredBrands: form.getValues('preferredBrands') || '',
+          budgetRange: form.getValues('budgetRange') || ''
         };
       } 
       // Or we're in the dialog view
@@ -617,7 +653,13 @@ export default function PriceCalculator() {
         flightCostGBP: calculatedQuote.flightCostGBP,
         flightCostUSD: calculatedQuote.flightCostUSD,
         hasXrays: hasXrays,
-        xrayCount: hasXrays && quoteData.xrayFiles ? quoteData.xrayFiles.length : 0
+        xrayCount: hasXrays && quoteData.xrayFiles ? quoteData.xrayFiles.length : 0,
+        // Include new fields
+        journeyMode: quoteData.journeyMode,
+        londonConsult: quoteData.londonConsult,
+        replacingExisting: quoteData.replacingExisting,
+        preferredBrands: quoteData.preferredBrands || '',
+        budgetRange: quoteData.budgetRange || ''
       });
       
       // Show the dialog
@@ -1067,6 +1109,261 @@ export default function PriceCalculator() {
                           </div>
                         </div>
                         
+                        {/* Additional questions section */}
+                        <div className="mt-6 space-y-5">
+                          <div className="flex items-center mb-4">
+                            <h3 className="text-lg font-semibold text-primary">Additional Information</h3>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs text-xs">These details help us provide a more personalized service and accurate quote.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          
+                          {/* Journey Mode */}
+                          <FormField
+                            control={form.control}
+                            name="journeyMode"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-primary font-semibold">Who would you like to guide your journey?</FormLabel>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div
+                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'concierge' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('concierge')}
+                                  >
+                                    <div className="flex items-start mb-2">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'concierge'}
+                                        onChange={() => field.onChange('concierge')}
+                                        className="mt-1 mr-3"
+                                      />
+                                      <div>
+                                        <h4 className="font-semibold">Istanbul Dental Smile (Full Concierge)</h4>
+                                        <p className="text-sm text-neutral-600 mt-1">
+                                          We'll handle everything from clinic booking to accommodation and transportation
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div
+                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'clinic' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('clinic')}
+                                  >
+                                    <div className="flex items-start mb-2">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'clinic'}
+                                        onChange={() => field.onChange('clinic')}
+                                        className="mt-1 mr-3"
+                                      />
+                                      <div>
+                                        <h4 className="font-semibold">The Clinic (We hand you over)</h4>
+                                        <p className="text-sm text-neutral-600 mt-1">
+                                          We'll connect you with the clinic, and they'll provide their own concierge service
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          
+                          {/* London Consultation */}
+                          <FormField
+                            control={form.control}
+                            name="londonConsult"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-primary font-semibold">Would you like a £150 consultation in London?</FormLabel>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div
+                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'yes' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('yes')}
+                                  >
+                                    <div className="flex items-start mb-2">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'yes'}
+                                        onChange={() => field.onChange('yes')}
+                                        className="mt-1 mr-3"
+                                      />
+                                      <div>
+                                        <h4 className="font-semibold">Yes, I'd like a London consultation</h4>
+                                        <p className="text-sm text-neutral-600 mt-1">
+                                          Includes X-rays and a detailed treatment plan before you travel
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div
+                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'no' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('no')}
+                                  >
+                                    <div className="flex items-start mb-2">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'no'}
+                                        onChange={() => field.onChange('no')}
+                                        className="mt-1 mr-3"
+                                      />
+                                      <div>
+                                        <h4 className="font-semibold">No, I'll have my consultation in Istanbul</h4>
+                                        <p className="text-sm text-neutral-600 mt-1">
+                                          Consultation and X-rays are provided free at the clinic in Istanbul
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          
+                          {/* Replacing Existing Work */}
+                          <FormField
+                            control={form.control}
+                            name="replacingExisting"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-primary font-semibold">Are you replacing existing crowns or veneers?</FormLabel>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div
+                                    className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'yes' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('yes')}
+                                  >
+                                    <div className="flex items-center">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'yes'}
+                                        onChange={() => field.onChange('yes')}
+                                        className="mr-2"
+                                      />
+                                      <div className="font-medium">Yes</div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div
+                                    className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'no' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('no')}
+                                  >
+                                    <div className="flex items-center">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'no'}
+                                        onChange={() => field.onChange('no')}
+                                        className="mr-2"
+                                      />
+                                      <div className="font-medium">No</div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div
+                                    className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                      field.value === 'not-sure' 
+                                        ? 'border-primary bg-primary/5' 
+                                        : 'border-neutral-200 hover:border-primary/50'
+                                    }`}
+                                    onClick={() => field.onChange('not-sure')}
+                                  >
+                                    <div className="flex items-center">
+                                      <input
+                                        type="radio"
+                                        checked={field.value === 'not-sure'}
+                                        onChange={() => field.onChange('not-sure')}
+                                        className="mr-2"
+                                      />
+                                      <div className="font-medium">Not sure</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          
+                          {/* Preferred Brands/Materials */}
+                          <FormField
+                            control={form.control}
+                            name="preferredBrands"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-primary font-semibold">
+                                  Preferred brands or materials (optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="E.g., Straumann implants, E-max crowns, etc." 
+                                    className="bg-white" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-xs text-neutral-500">
+                                  Let us know if you have preferences for specific implant brands or materials
+                                </FormDescription>
+                              </FormItem>
+                            )}
+                          />
+                          
+                          {/* Budget Range */}
+                          <FormField
+                            control={form.control}
+                            name="budgetRange"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-primary font-semibold">
+                                  Your budget range (optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="E.g., £2,000 - £4,000" 
+                                    className="bg-white" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-xs text-neutral-500">
+                                  This helps us suggest the most suitable options for your financial comfort
+                                </FormDescription>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
                         {/* X-ray upload section */}
                         <div className="mt-6 border rounded-lg p-4 bg-white border-primary/20">
                           <div className="flex items-center mb-2">
@@ -1417,6 +1714,13 @@ export default function PriceCalculator() {
                         })()}
                       </div>
                       
+                      {/* X-ray Accuracy Disclaimer */}
+                      <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                        <p>
+                          <span className="font-medium">Note about accuracy:</span> This quote is based on the information you've provided and the selections you've chosen. After an X-ray (which we can help arrange), your final treatment plan and price will be confirmed — usually within ±10% of this quote.
+                        </p>
+                      </div>
+                      
                       {/* Download Quote Button */}
                       <div className="mt-4">
                         <button
@@ -1597,6 +1901,14 @@ export default function PriceCalculator() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+              
+              {/* X-ray Accuracy Disclaimer */}
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
+                <h3 className="text-lg font-semibold text-amber-800 mb-2">Important Note About Quote Accuracy</h3>
+                <p className="text-amber-700">
+                  This quote is based on the information you've provided and the treatments you've selected. After an X-ray review (which we can help arrange), your final treatment plan and price will be confirmed — usually within ±10% of this quote.
+                </p>
               </div>
               
               {/* UK Cost Comparison */}

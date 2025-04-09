@@ -1,0 +1,71 @@
+<form id="quoteForm" method="POST" action="/generate-quote" enctype="multipart/form-data">
+  <h2>Build Your Quote</h2>
+
+  <label for="name">Full Name:</label>
+  <input type="text" name="name" required>
+
+  <label for="email">Email Address:</label>
+  <input type="email" name="email" required>
+
+  <label for="travel_month">Preferred Travel Month:</label>
+  <input type="month" name="travel_month">
+
+  <h3>Treatments</h3>
+  <div id="treatment-section">
+    <!-- You would dynamically add rows here with JS -->
+    <input type="text" name="treatments[0][type]" placeholder="e.g. Veneers">
+    <input type="number" name="treatments[0][quantity]" placeholder="Quantity">
+  </div>
+  <button type="button" onclick="addTreatmentRow()">Add Another Treatment</button>
+
+  <h3>Do You Have X-rays or a CT Scan?</h3>
+  <label><input type="radio" name="has_scan" value="yes"> Yes</label>
+  <label><input type="radio" name="has_scan" value="no"> No</label>
+
+  <div id="scan-upload" style="display: none;">
+    <label for="scan">Upload Your Scan (PDF, JPG, PNG):</label>
+    <input type="file" name="scan" accept=".pdf,.jpg,.jpeg,.png">
+  </div>
+
+  <h3>Would You Like a £100 Consultation + X-ray in London?</h3>
+  <label><input type="radio" name="london_consult" value="yes"> Yes</label>
+  <label><input type="radio" name="london_consult" value="no"> No</label>
+
+  <h3>Who Should Guide Your Journey?</h3>
+  <label><input type="radio" name="journey_mode" value="concierge" checked> Istanbul Dental Smile (Full Concierge)</label><br>
+  <label><input type="radio" name="journey_mode" value="clinic"> The Clinic (We Hand You Over)</label>
+
+  <label for="budget">Your Estimated Budget (Optional):</label>
+  <input type="text" name="budget" placeholder="e.g. £2,000 - £4,000">
+
+  <br><br>
+  <button type="submit">Get My Quote</button>
+</form>
+
+<script>
+function addTreatmentRow() {
+  const container = document.getElementById('treatment-section');
+  const index = container.children.length / 2;
+  const typeInput = document.createElement('input');
+  const qtyInput = document.createElement('input');
+
+  typeInput.setAttribute('name', `treatments[${index}][type]`);
+  typeInput.setAttribute('placeholder', 'e.g. Veneers');
+
+  qtyInput.setAttribute('type', 'number');
+  qtyInput.setAttribute('name', `treatments[${index}][quantity]`);
+  qtyInput.setAttribute('placeholder', 'Quantity');
+
+  container.appendChild(typeInput);
+  container.appendChild(qtyInput);
+}
+
+// Show upload field if "yes" is selected
+const scanRadios = document.getElementsByName('has_scan');
+scanRadios.forEach(radio => {
+  radio.addEventListener('change', function () {
+    const show = this.value === 'yes';
+    document.getElementById('scan-upload').style.display = show ? 'block' : 'none';
+  });
+});
+</script>
