@@ -1,32 +1,8 @@
-import React, { useEffect } from "react";
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import FeaturedServices from "@/components/FeaturedServices";
-import HowItWorks from "@/components/HowItWorks";
-import WhyChooseUs from "@/components/WhyChooseUs";
-import Testimonials from "@/components/Testimonials";
-import FAQ from "@/components/FAQ";
-import Footer from "@/components/Footer";
-import PriceCalculator from "@/components/PriceCalculator";
+import React from "react";
+import { Redirect } from "wouter";
+import Home from "./Home";
 
-// Main entry point for the website
+// Redirect the index page to home component to avoid duplication
 export default function Index() {
-  // Set page title
-  useEffect(() => {
-    document.title = "Istanbul Dental Smile - Your Trusted Dental Treatment Concierge";
-  }, []);
-  
-  return (
-    <>
-      <Navbar />
-      <Hero />
-      <PriceCalculator />
-      <FeaturedServices />
-      <HowItWorks />
-      <WhyChooseUs />
-      <Testimonials />
-      <FAQ />
-      <Footer />
-    </>
-  );
+  return <Redirect to="/" />;
 }
