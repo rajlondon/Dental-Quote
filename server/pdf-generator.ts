@@ -1183,18 +1183,32 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // Helper function to add logo using inline base64 data
-  const addLogo = (x: number, y: number, width: number, height: number) => {
+  // TextLogo helper - creates a text-based logo instead of an image
+  const addTextLogo = (x: number, y: number, fontSize: number) => {
     try {
-      // Simple tooth logo, embedded directly as base64
-      const LOGO_BASE64 = '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';
+      // Save current text settings
+      const currentFontSize = doc.getFontSize();
+      const currentTextColor = doc.getTextColor();
+      const currentFont = doc.getFont();
       
-      // Add the image from base64 data
-      doc.addImage(`data:image/png;base64,${LOGO_BASE64}`, 'PNG', x, y, width, height);
-      console.log('Successfully added embedded logo to PDF');
+      // Apply text logo settings
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(fontSize);
+      doc.setTextColor(255, 255, 255); 
+      
+      // Add a tooth symbol emoji or special character
+      const symbol = "★"; // Star symbol as a tooth representation
+      doc.text(symbol, x, y);
+      
+      // Restore previous text settings
+      doc.setFontSize(currentFontSize);
+      doc.setTextColor(currentTextColor);
+      doc.setFont(currentFont.fontName, currentFont.fontStyle);
+      
+      console.log('Successfully added text logo to PDF');
     } catch (error) {
-      console.error('Error adding embedded logo:', error);
-      // If logo fails to load, do nothing (text will be shown instead)
+      console.error('Error adding text logo:', error);
+      // If text logo fails, continue without it
     }
   };
 
@@ -1208,11 +1222,11 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, 210, 20, 'F');
     
-    // Add logo to header
+    // Add text logo to header
     try {
-      addLogo(5, 2, 16, 16);
+      addTextLogo(14, 12, 14);
     } catch (e) {
-      console.error('Error adding logo to header:', e);
+      console.error('Error adding text logo to header:', e);
     }
     
     doc.setTextColor(255, 255, 255);
@@ -1241,26 +1255,25 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFillColor(primaryColor);
   doc.rect(0, 0, 210, 60, 'F');
   
-  // Add logo to cover page
+  // Add stylized title with text symbols
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  
+  // Add tooth symbol as part of the title
   try {
-    addLogo(105 - 25, 8, 50, 30); // Centered logo
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
-  } catch (e) {
-    console.error('Error adding logo to cover page:', e);
-    // If logo fails to load, fall back to text
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(28);
+    // Add star symbols on both sides of the title
+    addTextLogo(65, 30, 24); 
     doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
-    
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
+    addTextLogo(145, 30, 24);
+  } catch (e) {
+    console.error('Error adding text symbols to cover page:', e);
+    doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
   }
+  
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
   
   // Add quote info box
   doc.setFillColor(secondaryColor);
