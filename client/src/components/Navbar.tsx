@@ -11,10 +11,16 @@ const Navbar: React.FC = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  // Function to handle navigation to home page (force full page refresh)
+  const goToHomePage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.href = "/"; // Force a full page refresh
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center">
+        <a href="/" onClick={goToHomePage} className="flex items-center">
           <div className="bg-white p-2 rounded-md shadow-sm mr-2">
             <img 
               src="/images/istanbul-dental-smile-logo.png" 
@@ -25,11 +31,11 @@ const Navbar: React.FC = () => {
           <div className="hidden md:block">
             <p className="text-sm font-medium text-neutral-700">Your Trusted Dental Treatment Concierge</p>
           </div>
-        </Link>
+        </a>
         <div className="hidden md:flex items-center space-x-6">
-          <Link href="/" className="text-neutral-600 hover:text-primary transition-colors">
+          <a href="/" onClick={goToHomePage} className="text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.home')}
-          </Link>
+          </a>
           <a href="#services" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.services')}</a>
           <Link href="/how-it-works" className="text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.howItWorks')}
@@ -63,9 +69,9 @@ const Navbar: React.FC = () => {
       {/* Mobile Menu */}
       <div className={`md:hidden bg-white ${mobileMenuOpen ? 'block' : 'hidden'}`} id="mobileMenu">
         <div className="px-4 py-3 space-y-3 border-t">
-          <Link href="/" className="block text-neutral-600 hover:text-primary transition-colors">
+          <a href="/" onClick={goToHomePage} className="block text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.home')}
-          </Link>
+          </a>
           <a href="#services" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.services')}</a>
           <Link href="/how-it-works" className="block text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.howItWorks')}
