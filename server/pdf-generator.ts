@@ -1183,34 +1183,7 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // TextLogo helper - creates a text-based logo instead of an image
-  const addTextLogo = (x: number, y: number, fontSize: number) => {
-    try {
-      // Save current text settings
-      const currentFontSize = doc.getFontSize();
-      const currentTextColor = doc.getTextColor();
-      const currentFont = doc.getFont();
-      
-      // Apply text logo settings
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(fontSize);
-      doc.setTextColor(255, 255, 255); 
-      
-      // Add a tooth symbol emoji or special character
-      const symbol = "★"; // Star symbol as a tooth representation
-      doc.text(symbol, x, y);
-      
-      // Restore previous text settings
-      doc.setFontSize(currentFontSize);
-      doc.setTextColor(currentTextColor);
-      doc.setFont(currentFont.fontName, currentFont.fontStyle);
-      
-      console.log('Successfully added text logo to PDF');
-    } catch (error) {
-      console.error('Error adding text logo:', error);
-      // If text logo fails, continue without it
-    }
-  };
+  // No need for a logo helper function anymore - we'll just use text
 
   // Helper function to add page
   const addNewPage = () => {
@@ -1222,17 +1195,12 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, 210, 20, 'F');
     
-    // Add text logo to header
-    try {
-      addTextLogo(14, 12, 14);
-    } catch (e) {
-      console.error('Error adding text logo to header:', e);
-    }
+    // No logo in header, just text
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text('Istanbul Dental Smile', 28, 12); // Moved to the right to make space for logo
+    doc.text('Istanbul Dental Smile', 105, 12, { align: 'center' }); // Centered in header
     doc.setFontSize(9);
     doc.text(`Quote: ${quoteId}`, 170, 12);
     
@@ -1260,16 +1228,8 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(28);
   
-  // Add tooth symbol as part of the title
-  try {
-    // Add star symbols on both sides of the title
-    addTextLogo(65, 30, 24); 
-    doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
-    addTextLogo(145, 30, 24);
-  } catch (e) {
-    console.error('Error adding text symbols to cover page:', e);
-    doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
-  }
+  // Simple centered title - no special symbols
+  doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
   
   doc.setFontSize(16);
   doc.setFont('helvetica', 'normal');
