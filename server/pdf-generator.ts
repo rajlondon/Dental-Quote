@@ -1183,18 +1183,18 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // Simple text-based branding as a logo
+  // Simple text-based branding - no special characters, just professional design
   const addTextLogo = (x: number, y: number, fontSize: number) => {
     try {
       const currentFont = doc.getFont();
       const currentFontSize = doc.getFontSize();
       const currentTextColor = doc.getTextColor();
       
-      // Use a simple but elegant symbol for branding (a diamond symbol)
+      // Use professional initials for the branding
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(fontSize);
       doc.setTextColor(255, 255, 255);
-      doc.text('◆', x, y);  // Diamond symbol is more universal and dental-like
+      doc.text('IDS', x, y);  // Just use the company initials (Istanbul Dental Smile)
       
       // Restore previous settings
       doc.setFont(currentFont.fontName, currentFont.fontStyle);
@@ -1216,9 +1216,9 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, 210, 20, 'F');
     
-    // Add text symbol in header
+    // Add IDS text logo in header
     try {
-      addTextLogo(28, 12, 14);
+      addTextLogo(22, 12, 14);
     } catch (e) {
       console.error('Error adding text logo to header:', e);
     }
@@ -1259,8 +1259,8 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   let subtitleYPos = 45;
   
   try {
-    // Add a smile symbol 
-    addTextLogo(95, 25, 28);
+    // Add the IDS logo text
+    addTextLogo(105, 30, 32);
     titleYPos = 50; // Using logo, move title down
     subtitleYPos = 65; // And subtitle further down
     doc.text('Istanbul Dental Smile', 105, titleYPos, { align: 'center' });
