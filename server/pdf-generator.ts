@@ -1185,19 +1185,51 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   
   // Helper function to add logo
   const addLogo = (x: number, y: number, width: number, height: number) => {
+    // Convert the logo file to base64
+    const fs = require('fs');
+    const path = require('path');
+    
     try {
-      // Try to add logo from the public directory
-      doc.addImage('public/images/istanbul-dental-smile-logo.png', 'PNG', x, y, width, height);
-    } catch (error) {
-      console.error('Error adding logo from public/images:', error);
+      // Try different paths to find the logo, prioritizing the simple logo we created
+      const possiblePaths = [
+        path.join(process.cwd(), 'public/images/simple-logo.png'),
+        path.join(__dirname, '../public/images/simple-logo.png'),
+        path.join(process.cwd(), 'public/images/logo.png'),
+        path.join(__dirname, '../public/images/logo.png'),
+        path.join(process.cwd(), 'public/images/istanbul-dental-smile-logo.png'),
+        path.join(__dirname, '../public/images/istanbul-dental-smile-logo.png'),
+        './public/images/simple-logo.png',
+        './public/images/logo.png',
+        './public/logo.png'
+      ];
       
-      try {
-        // Try another path if the first one fails
-        doc.addImage('public/images/logo.png', 'PNG', x, y, width, height);
-      } catch (fallbackError) {
-        console.error('Error adding logo from fallback path:', fallbackError);
-        // If logo fails to load, do nothing (text will be shown instead)
+      let logoBase64 = '';
+      let foundPath = '';
+      
+      // Try each path until we find one that works
+      for (const logoPath of possiblePaths) {
+        try {
+          if (fs.existsSync(logoPath)) {
+            logoBase64 = fs.readFileSync(logoPath).toString('base64');
+            foundPath = logoPath;
+            console.log(`Found logo at path: ${logoPath}`);
+            break;
+          }
+        } catch (e) {
+          // Continue to the next path
+        }
       }
+      
+      if (logoBase64) {
+        // Add the image from base64 data
+        doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', x, y, width, height);
+        console.log('Successfully added logo to PDF');
+      } else {
+        console.error('Could not find logo file in any of the expected locations');
+      }
+    } catch (error) {
+      console.error('Error adding logo:', error);
+      // If logo fails to load, do nothing (text will be shown instead)
     }
   };
 
