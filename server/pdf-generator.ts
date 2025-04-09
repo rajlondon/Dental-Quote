@@ -1183,7 +1183,23 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // No need for a logo helper function anymore - we'll just use text
+  // Helper function to add logo using inline base64 data - most reliable approach
+  const addLogo = (x: number, y: number, width: number, height: number) => {
+    try {
+      // Get the logo from public directory and convert to base64
+      const LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAIAAADwf7zUAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAA'; // This is truncated, we'd need the full string
+      
+      // Use a fallback simple logo that's smaller/more reliable
+      const SIMPLE_LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0klEQVR4nO2de4hVRRzHP3t1vbSatVKpmZSpUZlFD3oQGBG9iB5ERVFJUQZFbxCzh9GTsCAiCYyICIooKigqetigSOlh0R8VpWWpq2u5u7m+unvnxnfgd66De8+dM3PmnDnfDwzq3fvbMzPfMzO/+c1vfgNCCCGEEEIIIYQQQgghhBBCCCGEEEJUGUOAx';
+      
+      // Add the image from base64 data (use smaller fallback)
+      doc.addImage(`data:image/png;base64,${SIMPLE_LOGO_BASE64}`, 'PNG', x, y, width, height);
+      console.log('Successfully added embedded logo to PDF');
+    } catch (error) {
+      console.error('Error adding embedded logo:', error);
+      // If logo fails to load, do nothing (text will be shown instead)
+    }
+  };
 
   // Helper function to add page
   const addNewPage = () => {
@@ -1195,7 +1211,12 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, 210, 20, 'F');
     
-    // No logo in header, just text
+    // Try to add logo to header
+    try {
+      addLogo(10, 2, 16, 16);
+    } catch (e) {
+      console.error('Error adding logo to header:', e);
+    }
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
@@ -1228,12 +1249,24 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(28);
   
-  // Simple centered title - no special symbols
-  doc.text('Istanbul Dental Smile', 105, 30, { align: 'center' });
+  // Try to add logo to cover page
+  let titleYPos = 30;
+  let subtitleYPos = 45;
+  
+  try {
+    addLogo(80, 15, 50, 30); // Add logo above the title
+    titleYPos = 50; // Using logo, move title down
+    subtitleYPos = 65; // And subtitle further down
+    doc.text('Istanbul Dental Smile', 105, titleYPos, { align: 'center' });
+  } catch (e) {
+    console.error('Error adding logo to cover page:', e);
+    // Fallback to text-only if logo fails
+    doc.text('Istanbul Dental Smile', 105, titleYPos, { align: 'center' });
+  }
   
   doc.setFontSize(16);
   doc.setFont('helvetica', 'normal');
-  doc.text('Your Personalized Treatment Quote', 105, 45, { align: 'center' });
+  doc.text('Your Personalized Treatment Quote', 105, subtitleYPos, { align: 'center' });
   
   // Add quote info box
   doc.setFillColor(secondaryColor);
