@@ -1183,20 +1183,22 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // Helper function to add logo using inline base64 data - most reliable approach
+  // Use a simple SVG logo for maximum reliability 
   const addLogo = (x: number, y: number, width: number, height: number) => {
     try {
-      // Get the logo from public directory and convert to base64
-      const LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAIAAADwf7zUAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAA'; // This is truncated, we'd need the full string
+      // Create a simple tooth/bridge SVG logo - no external dependencies
+      const svg = `
+      <svg width="50" height="30" viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10,25 Q25,5 40,25 L40,20 Q25,0 10,20 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+        <path d="M15,25 Q25,15 35,25" fill="none" stroke="#ffffff" stroke-width="2"/>
+      </svg>`;
       
-      // Use a fallback simple logo that's smaller/more reliable
-      const SIMPLE_LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0klEQVR4nO2de4hVRRzHP3t1vbSatVKpmZSpUZlFD3oQGBG9iB5ERVFJUQZFbxCzh9GTsCAiCYyICIooKigqetigSOlh0R8VpWWpq2u5u7m+unvnxnfgd66De8+dM3PmnDnfDwzq3fvbMzPfMzO/+c1vfgNCCCGEEEIIIYQQQgghhBBCCCGEEEJUGUOAx';
-      
-      // Add the image from base64 data (use smaller fallback)
-      doc.addImage(`data:image/png;base64,${SIMPLE_LOGO_BASE64}`, 'PNG', x, y, width, height);
-      console.log('Successfully added embedded logo to PDF');
+      // Convert to data URL and add to document
+      const svgData = 'data:image/svg+xml;base64,' + btoa(svg);
+      doc.addImage(svgData, 'SVG', x, y, width, height);
+      console.log('Successfully added SVG logo to PDF');
     } catch (error) {
-      console.error('Error adding embedded logo:', error);
+      console.error('Error adding SVG logo:', error);
       // If logo fails to load, do nothing (text will be shown instead)
     }
   };
