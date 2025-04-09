@@ -1183,52 +1183,17 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // Helper function to add logo
+  // Helper function to add logo using inline base64 data
   const addLogo = (x: number, y: number, width: number, height: number) => {
-    // Convert the logo file to base64
-    const fs = require('fs');
-    const path = require('path');
-    
     try {
-      // Try different paths to find the logo, prioritizing the simple logo we created
-      const possiblePaths = [
-        path.join(process.cwd(), 'public/images/simple-logo.png'),
-        path.join(__dirname, '../public/images/simple-logo.png'),
-        path.join(process.cwd(), 'public/images/logo.png'),
-        path.join(__dirname, '../public/images/logo.png'),
-        path.join(process.cwd(), 'public/images/istanbul-dental-smile-logo.png'),
-        path.join(__dirname, '../public/images/istanbul-dental-smile-logo.png'),
-        './public/images/simple-logo.png',
-        './public/images/logo.png',
-        './public/logo.png'
-      ];
+      // Simple tooth logo, embedded directly as base64
+      const LOGO_BASE64 = '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';
       
-      let logoBase64 = '';
-      let foundPath = '';
-      
-      // Try each path until we find one that works
-      for (const logoPath of possiblePaths) {
-        try {
-          if (fs.existsSync(logoPath)) {
-            logoBase64 = fs.readFileSync(logoPath).toString('base64');
-            foundPath = logoPath;
-            console.log(`Found logo at path: ${logoPath}`);
-            break;
-          }
-        } catch (e) {
-          // Continue to the next path
-        }
-      }
-      
-      if (logoBase64) {
-        // Add the image from base64 data
-        doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', x, y, width, height);
-        console.log('Successfully added logo to PDF');
-      } else {
-        console.error('Could not find logo file in any of the expected locations');
-      }
+      // Add the image from base64 data
+      doc.addImage(`data:image/png;base64,${LOGO_BASE64}`, 'PNG', x, y, width, height);
+      console.log('Successfully added embedded logo to PDF');
     } catch (error) {
-      console.error('Error adding logo:', error);
+      console.error('Error adding embedded logo:', error);
       // If logo fails to load, do nothing (text will be shown instead)
     }
   };
