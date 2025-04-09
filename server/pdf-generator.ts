@@ -1183,18 +1183,18 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   // Initialize page counter
   let pageNumber = 1;
   
-  // Simple text-based symbol as a logo
+  // Simple text-based branding as a logo
   const addTextLogo = (x: number, y: number, fontSize: number) => {
     try {
       const currentFont = doc.getFont();
       const currentFontSize = doc.getFontSize();
       const currentTextColor = doc.getTextColor();
       
-      // Use a simple Unicode symbol that looks like a tooth or smile
+      // Use a simple but elegant symbol for branding (a diamond symbol)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(fontSize);
       doc.setTextColor(255, 255, 255);
-      doc.text('☺', x, y);
+      doc.text('◆', x, y);  // Diamond symbol is more universal and dental-like
       
       // Restore previous settings
       doc.setFont(currentFont.fontName, currentFont.fontStyle);
