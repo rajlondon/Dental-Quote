@@ -11,6 +11,7 @@ import BlogPost from "./pages/BlogPost";
 import PricingPage from "./pages/PricingPage";
 import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
+import FAQPage from "@/pages/FAQPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/pricing" component={PricingPage} />
       <Route path="/team" component={TeamPage} />
       <Route path="/how-it-works" component={HowItWorks} />
+      <Route path="/faq" component={FAQPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {

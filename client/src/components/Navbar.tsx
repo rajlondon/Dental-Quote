@@ -43,7 +43,9 @@ const Navbar: React.FC = () => {
           <Link href="/team" className="text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.team')}
           </Link>
-          <a href="#faqs" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.faq')}</a>
+          <Link href="/faq" className="text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.faq')}
+          </Link>
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
           <LanguageSwitcher />
         </div>
@@ -77,7 +79,9 @@ const Navbar: React.FC = () => {
           <Link href="/team" className="block text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.team')}
           </Link>
-          <a href="#faqs" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.faq')}</a>
+          <Link href="/faq" className="block text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.faq')}
+          </Link>
           <a href="#contact" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
         </div>
       </div>
