@@ -13,6 +13,7 @@ import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
+import ScrollToTop from "@/components/ScrollToTop";
 import { Suspense } from "react";
 
 function Router() {
@@ -57,6 +58,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <Suspense fallback={<div>Loading...</div>}>
+          <ScrollToTop />
           <ReloadTranslations />
           <Router />
           <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
