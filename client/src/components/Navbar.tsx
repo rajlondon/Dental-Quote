@@ -31,7 +31,9 @@ const Navbar: React.FC = () => {
             {t('navbar.home')}
           </Link>
           <a href="#services" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.services')}</a>
-          <a href="#how-it-works" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.howItWorks')}</a>
+          <Link href="/how-it-works" className="text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.howItWorks')}
+          </Link>
           <Link href="/blog" className="text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.blog')}
           </Link>
@@ -63,7 +65,9 @@ const Navbar: React.FC = () => {
             {t('navbar.home')}
           </Link>
           <a href="#services" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.services')}</a>
-          <a href="#how-it-works" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.howItWorks')}</a>
+          <Link href="/how-it-works" className="block text-neutral-600 hover:text-primary transition-colors">
+            {t('navbar.howItWorks')}
+          </Link>
           <Link href="/blog" className="block text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.blog')}
           </Link>
