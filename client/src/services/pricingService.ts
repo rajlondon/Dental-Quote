@@ -303,7 +303,8 @@ export function getCategories(): string[] {
 
 export function calculateTotal(
   treatments: Array<{ treatment: string, quantity: number }>,
-  flightInfo?: { city: string, month: string }
+  flightInfo?: { city: string, month: string },
+  options?: { londonConsult?: 'yes' | 'no' }
 ): {
   totalGBP: number,
   totalUSD: number,
@@ -318,7 +319,10 @@ export function calculateTotal(
   }>,
   hasFlightCost: boolean,
   flightCostGBP?: number,
-  flightCostUSD?: number
+  flightCostUSD?: number,
+  hasLondonConsult?: boolean,
+  londonConsultCostGBP?: number,
+  londonConsultCostUSD?: number
 } {
   let totalGBP = 0;
   let totalUSD = 0;
@@ -326,6 +330,13 @@ export function calculateTotal(
   let hasFlightCost = false;
   let flightCostGBP: number | undefined;
   let flightCostUSD: number | undefined;
+  let hasLondonConsult = options?.londonConsult === 'yes';
+  let londonConsultCostGBP: number | undefined;
+  let londonConsultCostUSD: number | undefined;
+  
+  // London consultation fee
+  const LONDON_CONSULT_FEE_GBP = 150;
+  const LONDON_CONSULT_FEE_USD = Math.round(LONDON_CONSULT_FEE_GBP * 1.29); // Using approximate exchange rate
 
   // Calculate treatment costs
   for (const item of treatments) {
@@ -385,12 +396,38 @@ export function calculateTotal(
     }
   }
 
+  // Add London consultation fee if selected
+  if (hasLondonConsult) {
+    londonConsultCostGBP = LONDON_CONSULT_FEE_GBP;
+    londonConsultCostUSD = LONDON_CONSULT_FEE_USD;
+    
+    // Add the consultation fee to the total
+    totalGBP += londonConsultCostGBP;
+    totalUSD += londonConsultCostUSD;
+    
+    // Add the consultation fee as a line item
+    items.push({
+      treatment: 'London Consultation Fee',
+      priceGBP: londonConsultCostGBP,
+      priceUSD: londonConsultCostUSD,
+      quantity: 1,
+      subtotalGBP: londonConsultCostGBP,
+      subtotalUSD: londonConsultCostUSD,
+      guarantee: 'N/A'
+    });
+    
+    console.log(`Added London consultation fee: £${londonConsultCostGBP} / $${londonConsultCostUSD}`);
+  }
+
   return {
     totalGBP,
     totalUSD,
     items,
     hasFlightCost,
     flightCostGBP,
-    flightCostUSD
+    flightCostUSD,
+    hasLondonConsult,
+    londonConsultCostGBP,
+    londonConsultCostUSD
   };
 }

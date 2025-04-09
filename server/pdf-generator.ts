@@ -38,6 +38,10 @@ interface QuoteData {
   hasXrays?: boolean;
   xrayCount?: number;
   selectedClinicIndex?: number;
+  hasLondonConsult?: boolean;
+  londonConsult?: 'yes' | 'no';
+  londonConsultCostGBP?: number;
+  londonConsultCostUSD?: number;
 }
 
 // Original function - this stays the same
@@ -53,7 +57,11 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
     departureCity,
     clinics,
     hasXrays = false,
-    xrayCount = 0
+    xrayCount = 0,
+    hasLondonConsult = false,
+    londonConsult = 'no',
+    londonConsultCostGBP,
+    londonConsultCostUSD
   } = quoteData;
 
   // Create a new PDF document
@@ -1165,7 +1173,11 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     clinics,
     hasXrays = false,
     xrayCount = 0,
-    selectedClinicIndex = 0
+    selectedClinicIndex = 0,
+    hasLondonConsult = false,
+    londonConsult = 'no',
+    londonConsultCostGBP,
+    londonConsultCostUSD
   } = quoteData;
 
   // Debug travel info
@@ -1492,6 +1504,26 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     });
   }
   
+  // Add London consultation fee if selected
+  if (hasLondonConsult || londonConsult === 'yes') {
+    const londonConsultFeeGBP = londonConsultCostGBP || 150; // Default to £150 if not provided
+    const londonConsultFeeUSD = londonConsultCostUSD || Math.round(londonConsultFeeGBP * exchangeRate);
+    
+    rowCount++;
+    const isAlternateRow = rowCount % 2 !== 0;
+    if (isAlternateRow) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+    }
+    
+    doc.text("London Consultation Fee", colPos[0], yPos+6, { align: 'center' });
+    doc.text("1", colPos[1], yPos+6, { align: 'center' });
+    doc.text(`£${londonConsultFeeGBP.toFixed(2)}`, colPos[2], yPos+6, { align: 'center' });
+    doc.text(`£${londonConsultFeeGBP.toFixed(2)}`, colPos[3], yPos+6, { align: 'center' });
+    doc.text('N/A', colPos[4], yPos+6, { align: 'center' });
+    yPos += rowHeight;
+  }
+  
   // Only add flight cost if not already included
   if (!hasFlightItem) {
     rowCount++;
@@ -1509,8 +1541,15 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     yPos += rowHeight;
   }
   
-  // Calculate updated totals
-  const updatedTotalGBP = hasFlightItem ? totalGBP : totalGBP + flightCost;
+  // Calculate updated totals including London consultation fee if selected
+  let updatedTotalGBP = hasFlightItem ? totalGBP : totalGBP + flightCost;
+  
+  // Add London consultation fee if selected
+  if (hasLondonConsult || londonConsult === 'yes') {
+    const londonConsultFeeGBP = londonConsultCostGBP || 150; // Default to £150 if not provided
+    updatedTotalGBP += londonConsultFeeGBP;
+  }
+  
   const updatedTotalUSD = updatedTotalGBP * exchangeRate;
 
   // Total row

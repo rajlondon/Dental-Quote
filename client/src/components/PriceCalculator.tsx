@@ -195,10 +195,11 @@ export default function PriceCalculator() {
     const travelMonth = data.travelMonth || 'July';
     const departureCity = data.departureCity || 'London';
     
-    // Calculate the total prices including flight costs
+    // Calculate the total prices including flight costs and London consultation if selected
     const quoteResult = calculateTotal(
       data.treatments, 
-      { city: departureCity, month: travelMonth }
+      { city: departureCity, month: travelMonth },
+      { londonConsult: data.londonConsult as 'yes' | 'no' }
     );
     
     // Store the quote data with user information in state
@@ -608,10 +609,11 @@ export default function PriceCalculator() {
       const travelMonth = quoteData.travelMonth || 'July';
       const departureCity = quoteData.departureCity || 'London';
       
-      // Calculate total with flight costs included
+      // Calculate total with flight costs and London consultation if selected
       const calculatedQuote = calculateTotal(
         quoteData.treatments,
-        { city: departureCity, month: travelMonth }
+        { city: departureCity, month: travelMonth },
+        { londonConsult: quoteData.londonConsult as 'yes' | 'no' }
       );
       
       const quoteItems = calculatedQuote.items;
