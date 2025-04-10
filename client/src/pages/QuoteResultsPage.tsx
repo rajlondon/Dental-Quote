@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
+import ClinicImageCarousel from '@/components/ClinicImageCarousel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -169,19 +170,9 @@ const ClinicCard: React.FC<{
         </div>
       )}
       <div className="flex flex-col md:flex-row">
-        {/* Left column - Clinic Image */}
+        {/* Left column - Clinic Image Carousel */}
         <div className="md:w-1/4 h-48 md:h-auto relative overflow-hidden">
-          {clinic.imageSrc ? (
-            <img 
-              src={clinic.imageSrc} 
-              alt={`${clinic.name} clinic`} 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-500">Clinic Image</span>
-            </div>
-          )}
+          <ClinicImageCarousel clinicId={clinic.id} />
           <div className="absolute top-2 left-2">
             <TierBadge tier={clinic.tier} />
           </div>
