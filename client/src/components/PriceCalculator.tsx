@@ -827,7 +827,7 @@ export default function PriceCalculator() {
                                         <SelectContent>
                                           
                                           {/* IMPLANTS SECTION */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-2 bg-primary rounded-sm">
                                             Implants
                                           </div>
                                           {treatments
@@ -845,7 +845,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* CROWNS SECTION */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-blue-600 rounded-sm">
                                             Crowns
                                           </div>
                                           {treatments
@@ -863,7 +863,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* VENEERS SECTION */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-green-600 rounded-sm">
                                             Veneers
                                           </div>
                                           {treatments
@@ -882,7 +882,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* GENERAL DENTAL PROCEDURES */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-purple-600 rounded-sm">
                                             General Dental Procedures
                                           </div>
                                           {treatments
@@ -916,7 +916,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* DENTURES & INVISALIGN/ORTHODONTIC */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-pink-600 rounded-sm">
                                             Dentures & Orthodontics
                                           </div>
                                           {treatments
@@ -938,7 +938,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* PACKAGES */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-orange-600 rounded-sm">
                                             Packages
                                           </div>
                                           {treatments
