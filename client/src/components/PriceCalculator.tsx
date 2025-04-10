@@ -109,6 +109,25 @@ const hasComplexTerms = (name: string): boolean => {
   return complexTreatments.some(term => name.includes(term));
 };
 
+// Custom tooltip component for dental term explanations
+const DentalTermTooltip = ({ treatment }: { treatment: string }) => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger className="ml-1 inline-flex">
+        <span className="text-primary font-bold">ℹ️</span>
+      </TooltipTrigger>
+      <TooltipContent side="right" align="start" className="max-w-sm z-50 p-3">
+        <p className="text-xs">
+          {complexTreatments
+            .filter(term => treatment.includes(term))
+            .map(term => getTooltipForTerm(term))
+            .join('. ')}
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -878,22 +897,7 @@ export default function PriceCalculator() {
                                               <SelectItem key={`implants-${treatment.treatment}`} value={treatment.treatment}>
                                                 <div className="flex items-center">
                                                   <span>{formatTreatmentName(treatment.treatment)}</span>
-                                                  {hasComplexTerms(treatment.treatment) && (
-                                                    <TooltipProvider>
-                                                      <Tooltip>
-                                                        <TooltipTrigger className="ml-1 inline-flex">
-                                                          <span className="text-primary">ℹ️</span>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent className="max-w-xs">
-                                                          <p className="text-xs">
-                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
-                                                              getTooltipForTerm(term)
-                                                            ).join('. ')}
-                                                          </p>
-                                                        </TooltipContent>
-                                                      </Tooltip>
-                                                    </TooltipProvider>
-                                                  )}
+                                                  {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
                                             ))}
