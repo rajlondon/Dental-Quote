@@ -94,7 +94,7 @@ const formSchema = z.object({
   journeyMode: z.enum(['concierge', 'clinic']).default('concierge'),
   londonConsult: z.enum(['yes', 'no']).default('no'),
   replacingExisting: z.enum(['yes', 'no', 'not-sure']).default('not-sure'),
-  preferredBrands: z.string().optional(),
+  preferredBrands: z.enum(['no_preference', 'premium', 'guide_me']).default('no_preference'),
   budgetRange: z.string().optional(),
 });
 
@@ -125,7 +125,7 @@ export default function PriceCalculator() {
       journeyMode: 'concierge',
       londonConsult: 'no',
       replacingExisting: 'not-sure',
-      preferredBrands: '',
+      preferredBrands: 'no_preference',
       budgetRange: '',
     },
   });
@@ -320,7 +320,7 @@ export default function PriceCalculator() {
         journeyMode: data.journeyMode,
         londonConsult: data.londonConsult,
         replacingExisting: data.replacingExisting,
-        preferredBrands: data.preferredBrands || '',
+        preferredBrands: data.preferredBrands,
         budgetRange: data.budgetRange || ''
       };
       
@@ -476,7 +476,7 @@ export default function PriceCalculator() {
           journeyMode: form.getValues('journeyMode'),
           londonConsult: form.getValues('londonConsult'),
           replacingExisting: form.getValues('replacingExisting'),
-          preferredBrands: form.getValues('preferredBrands') || '',
+          preferredBrands: form.getValues('preferredBrands'),
           budgetRange: form.getValues('budgetRange') || ''
         };
       } 
@@ -703,7 +703,7 @@ export default function PriceCalculator() {
         journeyMode: quoteData.journeyMode,
         londonConsult: quoteData.londonConsult,
         replacingExisting: quoteData.replacingExisting,
-        preferredBrands: quoteData.preferredBrands || '',
+        preferredBrands: quoteData.preferredBrands,
         budgetRange: quoteData.budgetRange || ''
       });
       
@@ -1369,17 +1369,23 @@ export default function PriceCalculator() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-primary font-semibold">
-                                  Preferred brands or materials (optional)
+                                  Do you have a brand preference for materials?
                                 </FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="E.g., Straumann implants, E-max crowns, etc." 
-                                    className="bg-white" 
-                                    {...field} 
-                                  />
-                                </FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value || "no_preference"}>
+                                  <FormControl>
+                                    <SelectTrigger className="bg-white">
+                                      <SelectValue placeholder="Select your preference" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="no_preference">No preference (recommended)</SelectItem>
+                                    <SelectItem value="premium">Premium brands (German/Swiss)</SelectItem>
+                                    <SelectItem value="guide_me">I'm unsure — please guide me</SelectItem>
+                                  </SelectContent>
+                                </Select>
                                 <FormDescription className="text-xs text-neutral-500">
-                                  Let us know if you have preferences for specific implant brands or materials
+                                  All clinics we work with use high-quality, time-tested materials from globally recognized brands.
+                                  Specific brand requests can be discussed during your consultation.
                                 </FormDescription>
                               </FormItem>
                             )}
