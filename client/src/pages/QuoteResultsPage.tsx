@@ -153,13 +153,10 @@ const ClinicCard: React.FC<{
 }> = ({ clinic, quoteData, isSelected, onSelect }) => {
   const { t } = useTranslation();
   
-  // Calculate the total price including treatments and only London consultation
-  // Flight cost is listed separately in the quote summary
-  const finalPriceGBP = clinic.priceGBP + 
-    (quoteData.hasLondonConsult ? (quoteData.londonConsultCostGBP || 150) : 0);
-  
-  const finalPriceUSD = clinic.priceUSD + 
-    (quoteData.hasLondonConsult ? (quoteData.londonConsultCostUSD || 195) : 0);
+  // We show ONLY the treatment price in the clinic card
+  // Both flights and consultation costs are shown separately in the quote summary
+  const finalPriceGBP = clinic.priceGBP;
+  const finalPriceUSD = clinic.priceUSD;
   
   return (
     <Card className={`relative overflow-hidden mb-6 border-2 ${isSelected ? 'border-primary' : 'border-gray-200'}`}>
@@ -224,7 +221,7 @@ const ClinicCard: React.FC<{
             <div className="mb-4">
               <p className="text-3xl font-bold text-primary">£{finalPriceGBP}</p>
               <p className="text-sm text-gray-500">${finalPriceUSD}</p>
-              <p className="text-xs text-gray-500 mt-1">Total for all treatments</p>
+              <p className="text-xs text-gray-500 mt-1">Treatment price only</p>
             </div>
             
             <div className="mb-4">
