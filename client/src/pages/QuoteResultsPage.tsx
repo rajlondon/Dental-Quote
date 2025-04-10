@@ -269,10 +269,17 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const { t } = useTranslation();
   
   // Calculate the actual total including treatments, flights, and london consult
+  // First check if flights are already included in the items array to avoid double-counting
+  const hasFlightItem = quoteData.items.some(item => 
+    item.treatment.toLowerCase().includes('flight') || 
+    item.treatment.toLowerCase().includes('return')
+  );
+  
   const treatmentOnlyTotalGBP = quoteData.totalGBP;
   const treatmentOnlyTotalUSD = quoteData.totalUSD;
-  const flightCostGBP = quoteData.flightCostGBP || 0;
-  const flightCostUSD = quoteData.flightCostUSD || 0;
+  // Only add flight costs if they're not already in the items
+  const flightCostGBP = hasFlightItem ? 0 : (quoteData.flightCostGBP || 0);
+  const flightCostUSD = hasFlightItem ? 0 : (quoteData.flightCostUSD || 0);
   const consultCostGBP = quoteData.hasLondonConsult ? (quoteData.londonConsultCostGBP || 150) : 0;
   const consultCostUSD = quoteData.hasLondonConsult ? (quoteData.londonConsultCostUSD || 193) : 0;
   const actualTotalGBP = treatmentOnlyTotalGBP + flightCostGBP + consultCostGBP;
@@ -326,14 +333,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
                 <td className="text-right p-2">£{item.subtotalGBP}</td>
               </tr>
             ))}
-            {quoteData.flightCostGBP && (
-              <tr className="border-b bg-gray-50">
-                <td className="p-2">Flight ({quoteData.departureCity} to Istanbul)</td>
-                <td className="text-right p-2">1</td>
-                <td className="text-right p-2">£{quoteData.flightCostGBP}</td>
-                <td className="text-right p-2">£{quoteData.flightCostGBP}</td>
-              </tr>
-            )}
+            {/* Flight cost is already included in items array, no need to show it separately */}
             {quoteData.hasLondonConsult && (
               <tr className="border-b bg-gray-50">
                 <td className="p-2">London Consultation</td>
@@ -474,6 +474,15 @@ const QuoteResultsPage: React.FC = () => {
           subtotalGBP: 700,
           subtotalUSD: 900,
           guarantee: '3-year'
+        },
+        {
+          treatment: 'Return Flights (London to Istanbul)',
+          priceGBP: 220,
+          priceUSD: 283,
+          quantity: 1,
+          subtotalGBP: 220,
+          subtotalUSD: 283,
+          guarantee: 'N/A'
         },
       ],
       // totalGBP should only include the cost of treatments (not flights or consultation)
