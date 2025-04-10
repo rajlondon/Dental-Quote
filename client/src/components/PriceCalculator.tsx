@@ -900,7 +900,6 @@ export default function PriceCalculator() {
                                                treatment.treatment.includes('Gum flap') ||
                                                treatment.treatment.includes('Frenectomy') ||
                                                treatment.treatment.includes('Post')) &&
-                                              !treatment.treatment.includes('Premium') &&
                                               !treatment.treatment.toLowerCase().includes('denture') &&
                                               !treatment.treatment.toLowerCase().includes('prothesis') &&
                                               !treatment.treatment.toLowerCase().includes('package') &&
