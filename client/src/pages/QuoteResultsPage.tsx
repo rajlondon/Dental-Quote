@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail } from 'lucide-react';
+import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail, Info as InfoIcon } from 'lucide-react';
 
 // Types
 interface ClinicInfo {
@@ -327,7 +327,14 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           <tbody>
             {quoteData.items.map((item, index) => (
               <tr key={index} className="border-b">
-                <td className="p-2">{item.treatment}</td>
+                <td className="p-2">
+                  {item.treatment}
+                  {item.treatment.toLowerCase().includes('flight') && (
+                    <span className="block text-xs text-gray-500 italic">
+                      *Average estimate for {quoteData.travelMonth}
+                    </span>
+                  )}
+                </td>
                 <td className="text-right p-2">{item.quantity}</td>
                 <td className="text-right p-2">£{item.priceGBP}</td>
                 <td className="text-right p-2">£{item.subtotalGBP}</td>
@@ -408,6 +415,20 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
               <p className="font-medium">{quoteData.departureCity}</p>
             </div>
           )}
+        </div>
+        <div className="mt-2 p-3 bg-blue-50 rounded-md text-xs text-blue-700">
+          <p className="flex items-start">
+            <svg className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="8" />
+            </svg>
+            <span>
+              Flight costs are estimated averages based on your selected travel month. 
+              Actual prices will vary based on booking time, airline, and availability. 
+              Our concierge team can help you find the best available flights for your travel dates.
+            </span>
+          </p>
         </div>
       </div>
       
