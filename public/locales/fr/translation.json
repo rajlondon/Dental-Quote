@@ -8,6 +8,7 @@
   },
   "language": {
     "select": "Langue",
+    "changing": "Traduction en cours...",
     "en": "Anglais",
     "de": "Allemand",
     "fr": "Français",

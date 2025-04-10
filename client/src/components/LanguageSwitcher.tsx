@@ -36,7 +36,7 @@ const LanguageSwitcher: React.FC = () => {
         clearTimeout(tooltipTimeout.current);
       }
     };
-  }, []);
+  }, [i18n]);
 
   const changeLanguage = async (lng: string) => {
     if (lng === currentLang) return;

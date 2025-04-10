@@ -39,7 +39,7 @@ const ReloadTranslations: React.FC = () => {
     return () => {
       i18n.off('languageChanged', handleLanguageChanged);
     };
-  }, [i18n, previousLang]);
+  }, [i18n, previousLang, toast]);
 
   return null; // This component doesn't render anything visible
 };
