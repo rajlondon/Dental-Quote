@@ -848,13 +848,9 @@ export default function PriceCalculator() {
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              (treatment.treatment.includes('Implant') || 
-                                               treatment.treatment.includes('implant') ||
-                                               treatment.category === 'IMPLANTS' && 
-                                               (treatment.treatment.includes('Sinus') || 
-                                                treatment.treatment.includes('Bone') || 
-                                                treatment.treatment.includes('Membrane') || 
-                                                treatment.treatment.includes('PRE'))) &&
+                                              (treatment.category === 'IMPLANTS' || 
+                                              (treatment.treatment.toLowerCase().includes('implant') && 
+                                               !treatment.treatment.toLowerCase().includes('prothesis'))) &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
@@ -872,8 +868,8 @@ export default function PriceCalculator() {
                                             .filter(treatment => 
                                               treatment.treatment && 
                                               (treatment.category === 'CROWNS' ||
-                                               treatment.treatment.includes('Crown') ||
-                                               treatment.treatment.includes('crown')) &&
+                                               treatment.treatment.toLowerCase().includes('crown')) &&
+                                              !treatment.treatment.toLowerCase().includes('package') &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
@@ -891,9 +887,9 @@ export default function PriceCalculator() {
                                             .filter(treatment => 
                                               treatment.treatment && 
                                               (treatment.category === 'VENEERS' ||
-                                               treatment.treatment.includes('Veneer') ||
-                                               treatment.treatment.includes('veneer') ||
+                                               treatment.treatment.toLowerCase().includes('veneer') ||
                                                treatment.treatment.includes('Lumineers')) &&
+                                              !treatment.treatment.toLowerCase().includes('package') &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
@@ -923,10 +919,13 @@ export default function PriceCalculator() {
                                                treatment.treatment.includes('Frenectomy') ||
                                                treatment.treatment.includes('Post')) &&
                                               !treatment.treatment.includes('Premium') &&
-                                              !treatment.treatment.includes('Denture') &&
-                                              !treatment.treatment.includes('Prothesis') &&
-                                              !treatment.treatment.includes('Package') &&
-                                              !treatment.treatment.includes('package') &&
+                                              !treatment.treatment.toLowerCase().includes('denture') &&
+                                              !treatment.treatment.toLowerCase().includes('prothesis') &&
+                                              !treatment.treatment.toLowerCase().includes('package') &&
+                                              !treatment.treatment.toLowerCase().includes('implant') &&
+                                              !treatment.treatment.toLowerCase().includes('crown') &&
+                                              !treatment.treatment.toLowerCase().includes('veneer') &&
+                                              !treatment.treatment.toLowerCase().includes('braces') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -944,14 +943,12 @@ export default function PriceCalculator() {
                                               treatment.treatment && 
                                               (treatment.category === 'DENTURES' || 
                                                treatment.category === 'ORTHODONTIC' ||
-                                               treatment.treatment.includes('Denture') ||
-                                               treatment.treatment.includes('Prothesis') ||
-                                               treatment.treatment.includes('prothesis') ||
+                                               treatment.treatment.toLowerCase().includes('denture') ||
+                                               treatment.treatment.toLowerCase().includes('prothesis') ||
                                                treatment.treatment.includes('Invisalign') ||
-                                               treatment.treatment.includes('Braces')) &&
+                                               treatment.treatment.toLowerCase().includes('braces')) &&
+                                              !treatment.treatment.toLowerCase().includes('package') &&
                                               !treatment.treatment.includes('Premium') &&
-                                              !treatment.treatment.includes('Package') &&
-                                              !treatment.treatment.includes('package') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -968,9 +965,8 @@ export default function PriceCalculator() {
                                             .filter(treatment => 
                                               treatment.treatment && 
                                               (treatment.category === 'PACKAGES' || 
-                                               treatment.treatment.includes('Package') ||
-                                               treatment.treatment.includes('package') ||
-                                               treatment.treatment.includes('Smile')) &&
+                                               treatment.treatment.toLowerCase().includes('package') ||
+                                               (treatment.treatment.includes('Smile') && !treatment.treatment.toLowerCase().includes('veneer'))) &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
