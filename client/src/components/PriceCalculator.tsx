@@ -826,7 +826,7 @@ export default function PriceCalculator() {
                                         </FormControl>
                                         <SelectContent>
                                           {/* Premium treatments section */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none">
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none border-b">
                                             Premium Options
                                           </div>
                                           {treatments
@@ -841,18 +841,104 @@ export default function PriceCalculator() {
                                               </SelectItem>
                                             ))}
                                           
-                                          {/* Regular treatments section */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2">
-                                            Standard Options
+                                          {/* IMPLANTS SECTION */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                            Implants
                                           </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
+                                              treatment.category === 'IMPLANTS' &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`standard-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`implants-${idx}`} value={treatment.treatment}>
+                                                {formatTreatmentName(treatment.treatment)}
+                                              </SelectItem>
+                                            ))}
+                                          
+                                          {/* CROWNS SECTION */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                            Crowns
+                                          </div>
+                                          {treatments
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              treatment.category === 'CROWNS' &&
+                                              !treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={`crowns-${idx}`} value={treatment.treatment}>
+                                                {formatTreatmentName(treatment.treatment)}
+                                              </SelectItem>
+                                            ))}
+                                          
+                                          {/* VENEERS SECTION */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                            Veneers
+                                          </div>
+                                          {treatments
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              treatment.category === 'VENEERS' &&
+                                              !treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={`veneers-${idx}`} value={treatment.treatment}>
+                                                {formatTreatmentName(treatment.treatment)}
+                                              </SelectItem>
+                                            ))}
+                                          
+                                          {/* GENERAL DENTAL PROCEDURES */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                            General Dental Procedures
+                                          </div>
+                                          {treatments
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              (treatment.category === 'GENERAL' || treatment.category === 'ROOT_CANAL' || treatment.category === 'WHITENING') &&
+                                              !treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={`general-${idx}`} value={treatment.treatment}>
+                                                {formatTreatmentName(treatment.treatment)}
+                                              </SelectItem>
+                                            ))}
+                                          
+                                          {/* DENTURES & INVISALIGN */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                            Dentures & Invisalign
+                                          </div>
+                                          {treatments
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              (treatment.category === 'DENTURES' || treatment.category === 'INVISALIGN') &&
+                                              !treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={`dentures-${idx}`} value={treatment.treatment}>
+                                                {formatTreatmentName(treatment.treatment)}
+                                              </SelectItem>
+                                            ))}
+                                          
+                                          {/* PACKAGES */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
+                                            Packages
+                                          </div>
+                                          {treatments
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              (treatment.category === 'PACKAGES' || treatment.treatment.includes('Smile')) &&
+                                              !treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={`packages-${idx}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
