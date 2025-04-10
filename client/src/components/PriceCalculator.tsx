@@ -73,6 +73,42 @@ const formatTreatmentName = (name: string): string => {
     .join(' ');
 };
 
+// List of complex treatments that need info icons
+const complexTreatments = [
+  'Zirconium', 'E-Max', 'Metal-Ceramic', 'Laminate', 'Curettage', 
+  'Gingivectomy', 'Frenectomy', 'Sinus Lift', 'Tomography', 'Implant',
+  'Invisalign', 'Ceramic', 'CEREC', 'Lumineers', 'Inlay', 'Onlay'
+];
+
+// Get tooltip description for a complex treatment term
+const getTooltipForTerm = (term: string): string => {
+  const descriptions: Record<string, string> = {
+    'Zirconium': 'High-strength ceramic material known for durability and aesthetics',
+    'E-Max': 'All-ceramic material combining excellent aesthetics with good strength',
+    'Metal-Ceramic': 'Traditional crown with metal base and porcelain exterior for strength and appearance',
+    'Laminate': 'Thin shells bonded to front of teeth for cosmetic enhancement',
+    'Curettage': 'Procedure to remove damaged tissue from gum pockets',
+    'Gingivectomy': 'Surgical removal of gum tissue to treat gum disease or reshape gums',
+    'Frenectomy': 'Procedure to remove or modify connective tissue in mouth',
+    'Sinus Lift': 'Bone augmentation procedure to add bone to upper jaw for implant placement',
+    'Tomography': 'Advanced 3D imaging technique for precise diagnosis',
+    'Implant': 'Artificial tooth root that supports replacement teeth',
+    'Invisalign': 'Clear, removable aligners that gradually straighten teeth',
+    'Ceramic': 'Tooth-colored material used for crowns, veneers and restorations',
+    'CEREC': 'Same-day computer-aided design and manufacturing of restorations',
+    'Lumineers': 'Ultra-thin veneers that require minimal tooth preparation',
+    'Inlay': 'Custom filling fitted inside the cusps of a damaged tooth',
+    'Onlay': 'Restoration covering one or more cusps of a damaged tooth'
+  };
+  
+  return descriptions[term] || 'Advanced dental treatment option';
+};
+
+// Check if a treatment name contains complex terms that need info icons
+const hasComplexTerms = (name: string): boolean => {
+  return complexTreatments.some(term => name.includes(term));
+};
+
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -827,7 +863,7 @@ export default function PriceCalculator() {
                                         <SelectContent>
                                           
                                           {/* IMPLANTS SECTION */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-2 bg-primary rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-2 bg-[#007B9E] rounded-sm">
                                             Implants
                                           </div>
                                           {treatments
@@ -840,12 +876,30 @@ export default function PriceCalculator() {
                                             )
                                             .map((treatment, idx) => (
                                               <SelectItem key={`implants-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
+                                                <div className="flex items-center">
+                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                                  {hasComplexTerms(treatment.treatment) && (
+                                                    <TooltipProvider>
+                                                      <Tooltip>
+                                                        <TooltipTrigger className="ml-1 inline-flex">
+                                                          <span className="text-primary">ℹ️</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-xs">
+                                                          <p className="text-xs">
+                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
+                                                              getTooltipForTerm(term)
+                                                            ).join('. ')}
+                                                          </p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  )}
+                                                </div>
                                               </SelectItem>
                                             ))}
                                           
                                           {/* CROWNS SECTION */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-blue-600 rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#009E8B] rounded-sm">
                                             Crowns
                                           </div>
                                           {treatments
@@ -863,7 +917,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* VENEERS SECTION */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-green-600 rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#C29A5C] rounded-sm">
                                             Veneers
                                           </div>
                                           {treatments
@@ -882,7 +936,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* GENERAL DENTAL PROCEDURES */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-purple-600 rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#555555] rounded-sm">
                                             General Dental Procedures
                                           </div>
                                           {treatments
@@ -916,7 +970,7 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* DENTURES & INVISALIGN/ORTHODONTIC */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-pink-600 rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#7B5BA6] rounded-sm">
                                             Dentures & Orthodontics
                                           </div>
                                           {treatments
