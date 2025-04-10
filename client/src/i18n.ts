@@ -84,11 +84,25 @@ export const reloadTranslations = () => {
   return i18n.reloadResources();
 };
 
-// Export language change function with reload for convenience
-export const changeLanguageWithReload = (lang: string) => {
-  return i18n.changeLanguage(lang).then(() => {
-    return i18n.reloadResources();
-  });
+// Export enhanced language change function with reload for convenience
+export const changeLanguageWithReload = async (lang: string) => {
+  // Change the language
+  await i18n.changeLanguage(lang);
+  
+  // Reload resources to ensure we have all translations
+  await i18n.reloadResources(lang, ['translation']);
+  
+  // Update local storage with the new language
+  localStorage.setItem('i18nextLng', lang);
+  
+  // Set HTML lang attribute
+  document.documentElement.setAttribute('lang', lang);
+  
+  // Update page title direction for RTL languages if needed in the future
+  const isRTL = ['ar', 'he', 'fa', 'ur'].includes(lang);
+  document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+  
+  return true;
 };
 
 export default i18n;

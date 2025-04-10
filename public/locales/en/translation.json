@@ -12,6 +12,7 @@
   },
   "language": {
     "select": "Language",
+    "changing": "Translating...",
     "en": "English",
     "de": "German",
     "fr": "French",
