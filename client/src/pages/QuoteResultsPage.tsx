@@ -102,7 +102,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '10-year',
     materials: ['Nobel Biocare Implants', 'Premium Zirconia'],
     conciergeType: 'ids',
-    imageSrc: '/images/carousel/clinic-3.jpg',
+    imageSrc: '/images/carousel/maltepe-clinic.jpg',
     features: ['State-of-the-art technology', 'VIP service', 'Luxury facility'],
     description: 'For VIP clients seeking the finest care in a luxury environment. Features the latest technology, premium materials, and fastest results.'
   }
