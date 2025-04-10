@@ -153,13 +153,12 @@ const ClinicCard: React.FC<{
 }> = ({ clinic, quoteData, isSelected, onSelect }) => {
   const { t } = useTranslation();
   
-  // Calculate the total price including treatments and additional options
+  // Calculate the total price including treatments and only London consultation
+  // Flight cost is listed separately in the quote summary
   const finalPriceGBP = clinic.priceGBP + 
-    (quoteData.flightCostGBP || 0) + 
     (quoteData.hasLondonConsult ? (quoteData.londonConsultCostGBP || 150) : 0);
   
   const finalPriceUSD = clinic.priceUSD + 
-    (quoteData.flightCostUSD || 0) + 
     (quoteData.hasLondonConsult ? (quoteData.londonConsultCostUSD || 195) : 0);
   
   return (
@@ -272,10 +271,13 @@ const ClinicCard: React.FC<{
 const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const { t } = useTranslation();
   
-  // Calculate UK price comparison (typically 2.5-3x higher than Istanbul)
+  // Calculate the actual total including flight costs
+  const actualTotalGBP = quoteData.totalGBP;
+  
+  // Calculate UK price comparison (typically 2.8x higher than Istanbul)
   const calculateUKPrice = (istanbulPrice: number) => Math.round(istanbulPrice * 2.8);
-  const ukTotalPrice = calculateUKPrice(quoteData.totalGBP);
-  const savingsAmount = ukTotalPrice - quoteData.totalGBP;
+  const ukTotalPrice = calculateUKPrice(actualTotalGBP);
+  const savingsAmount = ukTotalPrice - actualTotalGBP;
   const savingsPercentage = Math.round((savingsAmount / ukTotalPrice) * 100);
   
   return (
