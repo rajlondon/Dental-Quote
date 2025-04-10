@@ -836,7 +836,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`premium-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`premium-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
@@ -859,7 +859,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`implants-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`implants-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
@@ -878,7 +878,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`crowns-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`crowns-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
@@ -898,7 +898,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`veneers-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`veneers-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
@@ -930,7 +930,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`general-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`general-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
@@ -955,7 +955,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`dentures-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`dentures-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
@@ -975,7 +975,7 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`packages-${idx}`} value={treatment.treatment}>
+                                              <SelectItem key={`packages-${treatment.treatment}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}
