@@ -825,21 +825,6 @@ export default function PriceCalculator() {
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          {/* Premium treatments section */}
-                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none border-b">
-                                            Premium Options
-                                          </div>
-                                          {treatments
-                                            .filter(treatment => 
-                                              treatment.treatment && 
-                                              treatment.treatment.includes('Premium') &&
-                                              treatment.treatment.trim() !== ''
-                                            )
-                                            .map((treatment, idx) => (
-                                              <SelectItem key={`premium-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
-                                              </SelectItem>
-                                            ))}
                                           
                                           {/* IMPLANTS SECTION */}
                                           <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
@@ -851,7 +836,6 @@ export default function PriceCalculator() {
                                               (treatment.category === 'IMPLANTS' || 
                                               (treatment.treatment.toLowerCase().includes('implant') && 
                                                !treatment.treatment.toLowerCase().includes('prothesis'))) &&
-                                              !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -870,7 +854,6 @@ export default function PriceCalculator() {
                                               (treatment.category === 'CROWNS' ||
                                                treatment.treatment.toLowerCase().includes('crown')) &&
                                               !treatment.treatment.toLowerCase().includes('package') &&
-                                              !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -890,7 +873,6 @@ export default function PriceCalculator() {
                                                treatment.treatment.toLowerCase().includes('veneer') ||
                                                treatment.treatment.includes('Lumineers')) &&
                                               !treatment.treatment.toLowerCase().includes('package') &&
-                                              !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -948,7 +930,6 @@ export default function PriceCalculator() {
                                                treatment.treatment.includes('Invisalign') ||
                                                treatment.treatment.toLowerCase().includes('braces')) &&
                                               !treatment.treatment.toLowerCase().includes('package') &&
-                                              !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -967,7 +948,6 @@ export default function PriceCalculator() {
                                               (treatment.category === 'PACKAGES' || 
                                                treatment.treatment.toLowerCase().includes('package') ||
                                                (treatment.treatment.includes('Smile') && !treatment.treatment.toLowerCase().includes('veneer'))) &&
-                                              !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
