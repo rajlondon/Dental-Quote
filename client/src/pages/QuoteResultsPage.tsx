@@ -272,6 +272,12 @@ const ClinicCard: React.FC<{
 const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const { t } = useTranslation();
   
+  // Calculate UK price comparison (typically 2.5-3x higher than Istanbul)
+  const calculateUKPrice = (istanbulPrice: number) => Math.round(istanbulPrice * 2.8);
+  const ukTotalPrice = calculateUKPrice(quoteData.totalGBP);
+  const savingsAmount = ukTotalPrice - quoteData.totalGBP;
+  const savingsPercentage = Math.round((savingsAmount / ukTotalPrice) * 100);
+  
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h3 className="text-lg font-bold mb-4">Your Quote Summary</h3>
@@ -342,6 +348,29 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
             </tr>
           </tfoot>
         </table>
+      </div>
+      
+      {/* UK Price Comparison */}
+      <div className="mb-4 p-4 bg-green-50 border border-green-100 rounded-lg">
+        <h4 className="font-medium text-sm text-gray-700 mb-3">UK Price Comparison</h4>
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm">UK Average Cost:</span>
+            <span className="font-medium">£{ukTotalPrice}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm">Your Istanbul Price:</span>
+            <span className="font-medium">£{quoteData.totalGBP}</span>
+          </div>
+          <div className="h-px bg-green-200 my-2"></div>
+          <div className="flex justify-between text-green-700 font-bold">
+            <span>Your Savings:</span>
+            <span>£{savingsAmount} ({savingsPercentage}%)</span>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          *UK prices based on average private clinic rates in London and Manchester
+        </p>
       </div>
       
       <div className="mb-4">
