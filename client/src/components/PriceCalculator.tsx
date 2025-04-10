@@ -110,29 +110,38 @@ const hasComplexTerms = (name: string): boolean => {
 };
 
 // Custom tooltip component for dental term explanations
-const DentalTermTooltip = ({ treatment }: { treatment: string }) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger className="ml-1 inline-flex">
-        <span className="text-primary font-bold">ℹ️</span>
-      </TooltipTrigger>
-      <TooltipContent 
-        side="right" 
-        align="start" 
-        className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
-        avoidCollisions={true}
-        collisionPadding={10}
+const DentalTermTooltip = ({ treatment }: { treatment: string }) => {
+  // Create a reference to track if tooltip is open
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Get tooltip content
+  const tooltipContent = complexTreatments
+    .filter(term => treatment.includes(term))
+    .map(term => getTooltipForTerm(term))
+    .join('. ');
+  
+  return (
+    <div className="inline-flex ml-1 relative">
+      <button 
+        className="text-primary font-bold cursor-help"
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
       >
-        <p className="text-xs whitespace-normal break-words">
-          {complexTreatments
-            .filter(term => treatment.includes(term))
-            .map(term => getTooltipForTerm(term))
-            .join('. ')}
-        </p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+        ℹ️
+      </button>
+      
+      {isOpen && (
+        <div 
+          className="absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-72 right-0 top-0 transform translate-x-2"
+          style={{ wordBreak: 'break-word' }}
+        >
+          <p className="text-xs">{tooltipContent}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -1129,24 +1138,35 @@ export default function PriceCalculator() {
                                     <FormItem>
                                       <div className="flex flex-wrap items-center">
                                         <FormLabel className="text-neutral-700 mr-2">{t('pricing.quantity')}</FormLabel>
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                              </svg>
-                                            </TooltipTrigger>
-                                            <TooltipContent 
-                                              side="top" 
-                                              align="center" 
-                                              className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
-                                              avoidCollisions={true}
-                                              collisionPadding={10}
-                                            >
-                                              <p className="text-xs whitespace-normal break-words">Enter the number of teeth or areas that need this treatment. For example, if you need 4 dental implants, enter '4' here.</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
+                                        <div className="relative inline-block">
+                                          <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            className="h-4 w-4 ml-1 text-neutral-400 cursor-help" 
+                                            fill="none" 
+                                            viewBox="0 0 24 24" 
+                                            stroke="currentColor"
+                                            onMouseEnter={(e) => {
+                                              const tooltip = e.currentTarget.nextElementSibling;
+                                              if (tooltip) tooltip.classList.remove('hidden');
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              const tooltip = e.currentTarget.nextElementSibling;
+                                              if (tooltip) tooltip.classList.add('hidden');
+                                            }}
+                                            onClick={(e) => {
+                                              const tooltip = e.currentTarget.nextElementSibling;
+                                              if (tooltip) tooltip.classList.toggle('hidden');
+                                            }}
+                                          >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                          <div 
+                                            className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 left-0 top-5"
+                                            style={{ wordBreak: 'break-word' }}
+                                          >
+                                            <p className="text-xs">Enter the number of teeth or areas that need this treatment. For example, if you need 4 dental implants, enter '4' here.</p>
+                                          </div>
+                                        </div>
                                       </div>
                                       <Input
                                         type="number"
@@ -1252,18 +1272,35 @@ export default function PriceCalculator() {
                             <div className="flex items-center mb-4">
                               <h3 className="text-lg font-semibold text-primary">{t('pricing.travel_information')}</h3>
                               
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p className="max-w-xs text-xs">{t('pricing.travel_info_tooltip')}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <div className="relative inline-block ml-2">
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="h-5 w-5 text-neutral-400 cursor-help" 
+                                  fill="none" 
+                                  viewBox="0 0 24 24" 
+                                  stroke="currentColor"
+                                  onMouseEnter={(e) => {
+                                    const tooltip = e.currentTarget.nextElementSibling;
+                                    if (tooltip) tooltip.classList.remove('hidden');
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    const tooltip = e.currentTarget.nextElementSibling;
+                                    if (tooltip) tooltip.classList.add('hidden');
+                                  }}
+                                  onClick={(e) => {
+                                    const tooltip = e.currentTarget.nextElementSibling;
+                                    if (tooltip) tooltip.classList.toggle('hidden');
+                                  }}
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div 
+                                  className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 right-0 top-6"
+                                  style={{ wordBreak: 'break-word' }}
+                                >
+                                  <p className="text-xs">{t('pricing.travel_info_tooltip')}</p>
+                                </div>
+                              </div>
                             </div>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1274,24 +1311,35 @@ export default function PriceCalculator() {
                                   <FormItem>
                                     <div className="flex items-center">
                                       <FormLabel>{t('pricing.travel_month')}</FormLabel>
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                          </TooltipTrigger>
-                                          <TooltipContent 
-                                            side="top" 
-                                            align="center" 
-                                            className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
-                                            avoidCollisions={true}
-                                            collisionPadding={10}
-                                          >
-                                            <p className="text-xs whitespace-normal break-words">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
+                                      <div className="relative inline-block ml-2">
+                                        <svg 
+                                          xmlns="http://www.w3.org/2000/svg" 
+                                          className="h-4 w-4 text-neutral-400 cursor-help" 
+                                          fill="none" 
+                                          viewBox="0 0 24 24" 
+                                          stroke="currentColor"
+                                          onMouseEnter={(e) => {
+                                            const tooltip = e.currentTarget.nextElementSibling;
+                                            if (tooltip) tooltip.classList.remove('hidden');
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            const tooltip = e.currentTarget.nextElementSibling;
+                                            if (tooltip) tooltip.classList.add('hidden');
+                                          }}
+                                          onClick={(e) => {
+                                            const tooltip = e.currentTarget.nextElementSibling;
+                                            if (tooltip) tooltip.classList.toggle('hidden');
+                                          }}
+                                        >
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div 
+                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 left-0 top-5"
+                                          style={{ wordBreak: 'break-word' }}
+                                        >
+                                          <p className="text-xs">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
+                                        </div>
+                                      </div>
                                     </div>
                                     <Select
                                       onValueChange={field.onChange}
@@ -1322,24 +1370,35 @@ export default function PriceCalculator() {
                                   <FormItem>
                                     <div className="flex items-center">
                                       <FormLabel>{t('pricing.departure_city')}</FormLabel>
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                          </TooltipTrigger>
-                                          <TooltipContent 
-                                            side="top" 
-                                            align="center" 
-                                            className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
-                                            avoidCollisions={true}
-                                            collisionPadding={10}
-                                          >
-                                            <p className="text-xs whitespace-normal break-words">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
+                                      <div className="relative inline-block ml-2">
+                                        <svg 
+                                          xmlns="http://www.w3.org/2000/svg" 
+                                          className="h-4 w-4 text-neutral-400 cursor-help" 
+                                          fill="none" 
+                                          viewBox="0 0 24 24" 
+                                          stroke="currentColor"
+                                          onMouseEnter={(e) => {
+                                            const tooltip = e.currentTarget.nextElementSibling;
+                                            if (tooltip) tooltip.classList.remove('hidden');
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            const tooltip = e.currentTarget.nextElementSibling;
+                                            if (tooltip) tooltip.classList.add('hidden');
+                                          }}
+                                          onClick={(e) => {
+                                            const tooltip = e.currentTarget.nextElementSibling;
+                                            if (tooltip) tooltip.classList.toggle('hidden');
+                                          }}
+                                        >
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div 
+                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 left-0 top-5"
+                                          style={{ wordBreak: 'break-word' }}
+                                        >
+                                          <p className="text-xs">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
+                                        </div>
+                                      </div>
                                     </div>
                                     <Select
                                       onValueChange={field.onChange}
@@ -1378,24 +1437,35 @@ export default function PriceCalculator() {
                           <div className="flex items-center mb-4">
                             <h3 className="text-lg font-semibold text-primary">Additional Information</h3>
                             
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                </TooltipTrigger>
-                                <TooltipContent 
-                                  side="top" 
-                                  align="center" 
-                                  className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
-                                  avoidCollisions={true}
-                                  collisionPadding={10}
-                                >
-                                  <p className="text-xs whitespace-normal break-words">These details help us provide a more personalized service and accurate quote.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <div className="relative inline-block ml-2">
+                              <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                className="h-5 w-5 text-neutral-400 cursor-help" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                stroke="currentColor"
+                                onMouseEnter={(e) => {
+                                  const tooltip = e.currentTarget.nextElementSibling;
+                                  if (tooltip) tooltip.classList.remove('hidden');
+                                }}
+                                onMouseLeave={(e) => {
+                                  const tooltip = e.currentTarget.nextElementSibling;
+                                  if (tooltip) tooltip.classList.add('hidden');
+                                }}
+                                onClick={(e) => {
+                                  const tooltip = e.currentTarget.nextElementSibling;
+                                  if (tooltip) tooltip.classList.toggle('hidden');
+                                }}
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <div 
+                                className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 right-0 top-6"
+                                style={{ wordBreak: 'break-word' }}
+                              >
+                                <p className="text-xs">These details help us provide a more personalized service and accurate quote.</p>
+                              </div>
+                            </div>
                           </div>
                           
                           {/* Journey Mode */}
