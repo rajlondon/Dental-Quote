@@ -94,7 +94,7 @@ const formSchema = z.object({
   journeyMode: z.enum(['concierge', 'clinic']).default('concierge'),
   londonConsult: z.enum(['yes', 'no']).default('no'),
   replacingExisting: z.enum(['yes', 'no', 'not-sure']).default('not-sure'),
-  preferredBrands: z.enum(['no_preference', 'premium', 'guide_me']).default('no_preference'),
+  preferredBrands: z.enum(['no_preference', 'premium_eu', 'premium_usa', 'premium_korea', 'guide_me']).default('no_preference'),
   budgetRange: z.string().optional(),
 });
 
@@ -1379,13 +1379,20 @@ export default function PriceCalculator() {
                                   </FormControl>
                                   <SelectContent>
                                     <SelectItem value="no_preference">No preference (recommended)</SelectItem>
-                                    <SelectItem value="premium">Premium brands (German/Swiss)</SelectItem>
+                                    <SelectItem value="premium_eu">Premium European brands (German/Swiss)</SelectItem>
+                                    <SelectItem value="premium_usa">Premium USA brands</SelectItem>
+                                    <SelectItem value="premium_korea">Premium South Korean brands</SelectItem>
                                     <SelectItem value="guide_me">I'm unsure — please guide me</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormDescription className="text-xs text-neutral-500">
-                                  All clinics we work with use high-quality, time-tested materials from globally recognized brands.
-                                  Specific brand requests can be discussed during your consultation.
+                                  <p className="mb-1">All clinics we work with use high-quality, time-tested materials from globally recognized brands.</p>
+                                  <ul className="list-disc pl-5 space-y-1">
+                                    <li><span className="font-medium">European brands</span>: Straumann, Camlog (Swiss/German)</li>
+                                    <li><span className="font-medium">USA brands</span>: Nobel Biocare, 3M</li>
+                                    <li><span className="font-medium">Korean brands</span>: Osstem, Dentium (excellent quality, cost-effective)</li>
+                                  </ul>
+                                  <p className="mt-1">Specific brand requests can be discussed during your consultation.</p>
                                 </FormDescription>
                               </FormItem>
                             )}
