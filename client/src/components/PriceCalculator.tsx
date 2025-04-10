@@ -109,11 +109,53 @@ const hasComplexTerms = (name: string): boolean => {
   return complexTreatments.some(term => name.includes(term));
 };
 
-// Custom tooltip component for dental term explanations
-const DentalTermTooltip = ({ treatment }: { treatment: string }) => {
-  // Create a reference to track if tooltip is open
+// Custom InfoIcon component for consistent styling across all tooltips
+const InfoIcon = ({ 
+  tooltipContent, 
+  position = "right",
+  size = "small",
+  tooltipWidth = "64"
+}: { 
+  tooltipContent: string; 
+  position?: "left" | "right"; 
+  size?: "small" | "medium";
+  tooltipWidth?: "64" | "72"
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   
+  return (
+    <div className={`relative inline-block ${size === "small" ? "ml-1" : "ml-2"}`}>
+      <button 
+        className="bg-white rounded-full flex items-center justify-center cursor-help"
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+        style={{ 
+          border: '1px solid #007B9E', 
+          width: size === "small" ? '16px' : '18px', 
+          height: size === "small" ? '16px' : '18px' 
+        }}
+      >
+        <span className="text-primary" style={{ 
+          fontSize: size === "small" ? '10px' : '12px', 
+          fontWeight: 'bold' 
+        }}>i</span>
+      </button>
+      
+      {isOpen && (
+        <div 
+          className={`absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-${tooltipWidth} ${position === "left" ? "left-0 top-5" : "right-0 top-6"}`}
+          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
+        >
+          <p className="text-xs">{tooltipContent}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom tooltip component for dental term explanations
+const DentalTermTooltip = ({ treatment }: { treatment: string }) => {
   // Get tooltip content
   const tooltipContent = complexTreatments
     .filter(term => treatment.includes(term))
@@ -121,25 +163,7 @@ const DentalTermTooltip = ({ treatment }: { treatment: string }) => {
     .join('. ');
   
   return (
-    <div className="inline-flex ml-1 relative">
-      <button 
-        className="text-primary font-bold cursor-help"
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-      >
-        ℹ️
-      </button>
-      
-      {isOpen && (
-        <div 
-          className="absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-72 right-0 top-0 transform translate-x-2"
-          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
-        >
-          <p className="text-xs">{tooltipContent}</p>
-        </div>
-      )}
-    </div>
+    <InfoIcon tooltipContent={tooltipContent} position="right" tooltipWidth="72" />
   );
 };
 
@@ -1271,36 +1295,11 @@ export default function PriceCalculator() {
                           <div className="mt-6">
                             <div className="flex items-center mb-4">
                               <h3 className="text-lg font-semibold text-primary">{t('pricing.travel_information')}</h3>
-                              
-                              <div className="relative inline-block ml-2">
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  className="h-5 w-5 text-neutral-400 cursor-help" 
-                                  fill="none" 
-                                  viewBox="0 0 24 24" 
-                                  stroke="currentColor"
-                                  onMouseEnter={(e) => {
-                                    const tooltip = e.currentTarget.nextElementSibling;
-                                    if (tooltip) tooltip.classList.remove('hidden');
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    const tooltip = e.currentTarget.nextElementSibling;
-                                    if (tooltip) tooltip.classList.add('hidden');
-                                  }}
-                                  onClick={(e) => {
-                                    const tooltip = e.currentTarget.nextElementSibling;
-                                    if (tooltip) tooltip.classList.toggle('hidden');
-                                  }}
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <div 
-                                  className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 right-0 top-6"
-                                  style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
-                                >
-                                  <p className="text-xs">{t('pricing.travel_info_tooltip')}</p>
-                                </div>
-                              </div>
+                              <InfoIcon 
+                                tooltipContent={t('pricing.travel_info_tooltip')} 
+                                position="right" 
+                                size="medium"
+                              />
                             </div>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1311,35 +1310,10 @@ export default function PriceCalculator() {
                                   <FormItem>
                                     <div className="flex items-center">
                                       <FormLabel>{t('pricing.travel_month')}</FormLabel>
-                                      <div className="relative inline-block ml-2">
-                                        <svg 
-                                          xmlns="http://www.w3.org/2000/svg" 
-                                          className="h-4 w-4 text-neutral-400 cursor-help" 
-                                          fill="none" 
-                                          viewBox="0 0 24 24" 
-                                          stroke="currentColor"
-                                          onMouseEnter={(e) => {
-                                            const tooltip = e.currentTarget.nextElementSibling;
-                                            if (tooltip) tooltip.classList.remove('hidden');
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            const tooltip = e.currentTarget.nextElementSibling;
-                                            if (tooltip) tooltip.classList.add('hidden');
-                                          }}
-                                          onClick={(e) => {
-                                            const tooltip = e.currentTarget.nextElementSibling;
-                                            if (tooltip) tooltip.classList.toggle('hidden');
-                                          }}
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div 
-                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 left-0 top-5"
-                                          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
-                                        >
-                                          <p className="text-xs">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
-                                        </div>
-                                      </div>
+                                      <InfoIcon 
+                                        tooltipContent="Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates."
+                                        position="left"
+                                      />
                                     </div>
                                     <Select
                                       onValueChange={field.onChange}
@@ -1370,35 +1344,10 @@ export default function PriceCalculator() {
                                   <FormItem>
                                     <div className="flex items-center">
                                       <FormLabel>{t('pricing.departure_city')}</FormLabel>
-                                      <div className="relative inline-block ml-2">
-                                        <svg 
-                                          xmlns="http://www.w3.org/2000/svg" 
-                                          className="h-4 w-4 text-neutral-400 cursor-help" 
-                                          fill="none" 
-                                          viewBox="0 0 24 24" 
-                                          stroke="currentColor"
-                                          onMouseEnter={(e) => {
-                                            const tooltip = e.currentTarget.nextElementSibling;
-                                            if (tooltip) tooltip.classList.remove('hidden');
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            const tooltip = e.currentTarget.nextElementSibling;
-                                            if (tooltip) tooltip.classList.add('hidden');
-                                          }}
-                                          onClick={(e) => {
-                                            const tooltip = e.currentTarget.nextElementSibling;
-                                            if (tooltip) tooltip.classList.toggle('hidden');
-                                          }}
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div 
-                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 left-0 top-5"
-                                          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
-                                        >
-                                          <p className="text-xs">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
-                                        </div>
-                                      </div>
+                                      <InfoIcon 
+                                        tooltipContent="Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities."
+                                        position="left"
+                                      />
                                     </div>
                                     <Select
                                       onValueChange={field.onChange}
@@ -1436,36 +1385,11 @@ export default function PriceCalculator() {
                         <div className="mt-6 space-y-5">
                           <div className="flex items-center mb-4">
                             <h3 className="text-lg font-semibold text-primary">Additional Information</h3>
-                            
-                            <div className="relative inline-block ml-2">
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                className="h-5 w-5 text-neutral-400 cursor-help" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor"
-                                onMouseEnter={(e) => {
-                                  const tooltip = e.currentTarget.nextElementSibling;
-                                  if (tooltip) tooltip.classList.remove('hidden');
-                                }}
-                                onMouseLeave={(e) => {
-                                  const tooltip = e.currentTarget.nextElementSibling;
-                                  if (tooltip) tooltip.classList.add('hidden');
-                                }}
-                                onClick={(e) => {
-                                  const tooltip = e.currentTarget.nextElementSibling;
-                                  if (tooltip) tooltip.classList.toggle('hidden');
-                                }}
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <div 
-                                className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 right-0 top-6"
-                                style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
-                              >
-                                <p className="text-xs">These details help us provide a more personalized service and accurate quote.</p>
-                              </div>
-                            </div>
+                            <InfoIcon 
+                              tooltipContent="These details help us provide a more personalized service and accurate quote."
+                              position="right" 
+                              size="medium"
+                            />
                           </div>
                           
                           {/* Journey Mode */}
