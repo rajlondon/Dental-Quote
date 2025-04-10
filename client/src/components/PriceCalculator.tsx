@@ -339,20 +339,57 @@ export default function PriceCalculator() {
       console.error('Failed to save quote data for follow-up:', error);
     }
     
-    toast({
-      title: 'Quote Generated',
-      description: 'Your quote has been calculated successfully.',
-    });
-    
-    // Scroll to the quote section
-    setTimeout(() => {
-      if (quoteResultRef.current) {
-        quoteResultRef.current.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    }, 100);
+    // Store quote data in localStorage for the results page
+    try {
+      const quoteResultsData = {
+        items: quoteResult.items,
+        totalGBP: quoteResult.totalGBP,
+        totalUSD: quoteResult.totalUSD,
+        patientName: data.name,
+        patientEmail: data.email,
+        patientPhone: data.phone,
+        travelMonth: data.travelMonth,
+        departureCity: data.departureCity,
+        flightCostGBP: quoteResult.flightCostGBP,
+        flightCostUSD: quoteResult.flightCostUSD,
+        hasLondonConsult: data.londonConsult === 'yes',
+        londonConsultCostGBP: 150,
+        londonConsultCostUSD: 195,
+        selectedClinicIndex: 1, // Default to mid-tier
+      };
+      
+      // Save to localStorage for the results page to use
+      localStorage.setItem('quoteData', JSON.stringify(quoteResultsData));
+      
+      // Show toast and redirect to results page
+      toast({
+        title: 'Quote Generated',
+        description: 'Redirecting you to your detailed quote results.',
+      });
+      
+      // Redirect to the results page after a short delay
+      setTimeout(() => {
+        window.location.href = '/your-quote';
+      }, 1000);
+    } catch (error) {
+      console.error('Error preparing quote results:', error);
+      
+      // Fallback to original behavior if there's an error
+      toast({
+        title: 'Quote Generated',
+        description: 'Your quote has been calculated successfully.',
+      });
+      
+      // Scroll to the quote section as fallback
+      setTimeout(() => {
+        if (quoteResultRef.current) {
+          quoteResultRef.current.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }, 100);
+    }
   };
   
   // HTML Quote dialog state

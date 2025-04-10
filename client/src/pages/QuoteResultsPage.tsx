@@ -72,7 +72,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '3-year',
     materials: ['Generic Implants', 'Standard Materials'],
     conciergeType: 'clinic',
-    imageSrc: '/images/clinics/istanbul-dental-care.jpg',
+    imageSrc: '/images/carousel/clinic-1.jpg',
     features: ['Modern facility', 'English-speaking staff', 'Affordable prices'],
     description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-focused travel.'
   },
@@ -87,7 +87,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '5-year',
     materials: ['Straumann Implants', 'Premium Materials'],
     conciergeType: 'ids',
-    imageSrc: '/images/clinics/dentgroup-istanbul.jpg',
+    imageSrc: '/images/carousel/clinic-2.jpg',
     features: ['Advanced technology', 'Multilingual staff', 'Luxury waiting area'],
     description: 'A balanced option for quality and price with excellent aftercare support. Features newer technology and enhanced patient comfort.'
   },
@@ -102,7 +102,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '10-year',
     materials: ['Nobel Biocare Implants', 'Premium Zirconia'],
     conciergeType: 'ids',
-    imageSrc: '/images/clinics/vera-smile.jpg',
+    imageSrc: '/images/carousel/clinic-3.jpg',
     features: ['State-of-the-art technology', 'VIP service', 'Luxury facility'],
     description: 'For VIP clients seeking the finest care in a luxury environment. Features the latest technology, premium materials, and fastest results.'
   }
@@ -171,11 +171,18 @@ const ClinicCard: React.FC<{
       )}
       <div className="flex flex-col md:flex-row">
         {/* Left column - Clinic Image */}
-        <div className="md:w-1/4 h-48 md:h-auto relative">
-          {/* Placeholder for clinic image */}
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-500">Clinic Image</span>
-          </div>
+        <div className="md:w-1/4 h-48 md:h-auto relative overflow-hidden">
+          {clinic.imageSrc ? (
+            <img 
+              src={clinic.imageSrc} 
+              alt={`${clinic.name} clinic`} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-500">Clinic Image</span>
+            </div>
+          )}
           <div className="absolute top-2 left-2">
             <TierBadge tier={clinic.tier} />
           </div>
