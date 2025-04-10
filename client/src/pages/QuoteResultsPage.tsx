@@ -271,14 +271,17 @@ const ClinicCard: React.FC<{
 const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const { t } = useTranslation();
   
-  // Calculate the actual total including flight costs
-  const actualTotalGBP = quoteData.totalGBP;
+  // Calculate the actual total including treatments, flights, and london consult
+  const treatmentOnlyTotalGBP = quoteData.totalGBP;
+  const flightCostGBP = quoteData.flightCostGBP || 0;
+  const consultCostGBP = quoteData.hasLondonConsult ? (quoteData.londonConsultCostGBP || 150) : 0;
+  const actualTotalGBP = treatmentOnlyTotalGBP + flightCostGBP + consultCostGBP;
   
-  // Calculate UK price comparison (typically 2.8x higher than Istanbul)
+  // Calculate UK price comparison (2.8x higher than Istanbul) but only based on treatment cost
   const calculateUKPrice = (istanbulPrice: number) => Math.round(istanbulPrice * 2.8);
-  const ukTotalPrice = calculateUKPrice(actualTotalGBP);
-  const savingsAmount = ukTotalPrice - actualTotalGBP;
-  const savingsPercentage = Math.round((savingsAmount / ukTotalPrice) * 100);
+  const ukTreatmentPrice = calculateUKPrice(treatmentOnlyTotalGBP);
+  const savingsAmount = ukTreatmentPrice - treatmentOnlyTotalGBP;
+  const savingsPercentage = Math.round((savingsAmount / ukTreatmentPrice) * 100);
   
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -358,11 +361,11 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-sm">UK Average Cost:</span>
-            <span className="font-medium">£{ukTotalPrice}</span>
+            <span className="font-medium">£{ukTreatmentPrice}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm">Your Istanbul Price:</span>
-            <span className="font-medium">£{quoteData.totalGBP}</span>
+            <span className="font-medium">£{treatmentOnlyTotalGBP}</span>
           </div>
           <div className="h-px bg-green-200 my-2"></div>
           <div className="flex justify-between text-green-700 font-bold">
@@ -464,6 +467,7 @@ const QuoteResultsPage: React.FC = () => {
           guarantee: '3-year'
         },
       ],
+      // totalGBP should only include the cost of treatments (not flights or consultation)
       totalGBP: 1800,
       totalUSD: 2314,
       patientName: 'John Doe',
