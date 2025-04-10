@@ -116,8 +116,14 @@ const DentalTermTooltip = ({ treatment }: { treatment: string }) => (
       <TooltipTrigger className="ml-1 inline-flex">
         <span className="text-primary font-bold">ℹ️</span>
       </TooltipTrigger>
-      <TooltipContent side="right" align="start" className="max-w-sm z-50 p-3">
-        <p className="text-xs">
+      <TooltipContent 
+        side="right" 
+        align="start" 
+        className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
+        avoidCollisions={true}
+        collisionPadding={10}
+      >
+        <p className="text-xs whitespace-normal break-words">
           {complexTreatments
             .filter(term => treatment.includes(term))
             .map(term => getTooltipForTerm(term))
@@ -1130,8 +1136,14 @@ export default function PriceCalculator() {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                               </svg>
                                             </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                              <p className="text-xs">Enter the number of teeth or areas that need this treatment. For example, if you need 4 dental implants, enter '4' here.</p>
+                                            <TooltipContent 
+                                              side="top" 
+                                              align="center" 
+                                              className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
+                                              avoidCollisions={true}
+                                              collisionPadding={10}
+                                            >
+                                              <p className="text-xs whitespace-normal break-words">Enter the number of teeth or areas that need this treatment. For example, if you need 4 dental implants, enter '4' here.</p>
                                             </TooltipContent>
                                           </Tooltip>
                                         </TooltipProvider>
@@ -1269,8 +1281,14 @@ export default function PriceCalculator() {
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                           </TooltipTrigger>
-                                          <TooltipContent className="max-w-xs">
-                                            <p className="text-xs">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
+                                          <TooltipContent 
+                                            side="top" 
+                                            align="center" 
+                                            className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
+                                            avoidCollisions={true}
+                                            collisionPadding={10}
+                                          >
+                                            <p className="text-xs whitespace-normal break-words">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
                                           </TooltipContent>
                                         </Tooltip>
                                       </TooltipProvider>
@@ -1311,8 +1329,14 @@ export default function PriceCalculator() {
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                           </TooltipTrigger>
-                                          <TooltipContent className="max-w-xs">
-                                            <p className="text-xs">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
+                                          <TooltipContent 
+                                            side="top" 
+                                            align="center" 
+                                            className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
+                                            avoidCollisions={true}
+                                            collisionPadding={10}
+                                          >
+                                            <p className="text-xs whitespace-normal break-words">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
                                           </TooltipContent>
                                         </Tooltip>
                                       </TooltipProvider>
@@ -1361,8 +1385,14 @@ export default function PriceCalculator() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="max-w-xs text-xs">These details help us provide a more personalized service and accurate quote.</p>
+                                <TooltipContent 
+                                  side="top" 
+                                  align="center" 
+                                  className="max-w-xs z-50 p-3 overflow-hidden whitespace-normal"
+                                  avoidCollisions={true}
+                                  collisionPadding={10}
+                                >
+                                  <p className="text-xs whitespace-normal break-words">These details help us provide a more personalized service and accurate quote.</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
