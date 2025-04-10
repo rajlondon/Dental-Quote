@@ -912,7 +912,25 @@ export default function PriceCalculator() {
                                             )
                                             .map((treatment, idx) => (
                                               <SelectItem key={`crowns-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
+                                                <div className="flex items-center">
+                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                                  {hasComplexTerms(treatment.treatment) && (
+                                                    <TooltipProvider>
+                                                      <Tooltip>
+                                                        <TooltipTrigger className="ml-1 inline-flex">
+                                                          <span className="text-primary">ℹ️</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-xs">
+                                                          <p className="text-xs">
+                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
+                                                              getTooltipForTerm(term)
+                                                            ).join('. ')}
+                                                          </p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  )}
+                                                </div>
                                               </SelectItem>
                                             ))}
                                           
@@ -931,7 +949,25 @@ export default function PriceCalculator() {
                                             )
                                             .map((treatment, idx) => (
                                               <SelectItem key={`veneers-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
+                                                <div className="flex items-center">
+                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                                  {hasComplexTerms(treatment.treatment) && (
+                                                    <TooltipProvider>
+                                                      <Tooltip>
+                                                        <TooltipTrigger className="ml-1 inline-flex">
+                                                          <span className="text-primary">ℹ️</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-xs">
+                                                          <p className="text-xs">
+                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
+                                                              getTooltipForTerm(term)
+                                                            ).join('. ')}
+                                                          </p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  )}
+                                                </div>
                                               </SelectItem>
                                             ))}
                                           
@@ -965,7 +1001,25 @@ export default function PriceCalculator() {
                                             )
                                             .map((treatment, idx) => (
                                               <SelectItem key={`general-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
+                                                <div className="flex items-center">
+                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                                  {hasComplexTerms(treatment.treatment) && (
+                                                    <TooltipProvider>
+                                                      <Tooltip>
+                                                        <TooltipTrigger className="ml-1 inline-flex">
+                                                          <span className="text-primary">ℹ️</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-xs">
+                                                          <p className="text-xs">
+                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
+                                                              getTooltipForTerm(term)
+                                                            ).join('. ')}
+                                                          </p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  )}
+                                                </div>
                                               </SelectItem>
                                             ))}
                                           
@@ -987,7 +1041,25 @@ export default function PriceCalculator() {
                                             )
                                             .map((treatment, idx) => (
                                               <SelectItem key={`dentures-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
+                                                <div className="flex items-center">
+                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                                  {hasComplexTerms(treatment.treatment) && (
+                                                    <TooltipProvider>
+                                                      <Tooltip>
+                                                        <TooltipTrigger className="ml-1 inline-flex">
+                                                          <span className="text-primary">ℹ️</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-xs">
+                                                          <p className="text-xs">
+                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
+                                                              getTooltipForTerm(term)
+                                                            ).join('. ')}
+                                                          </p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  )}
+                                                </div>
                                               </SelectItem>
                                             ))}
                                           
@@ -1005,7 +1077,25 @@ export default function PriceCalculator() {
                                             )
                                             .map((treatment, idx) => (
                                               <SelectItem key={`packages-${treatment.treatment}`} value={treatment.treatment}>
-                                                {formatTreatmentName(treatment.treatment)}
+                                                <div className="flex items-center">
+                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                                  {hasComplexTerms(treatment.treatment) && (
+                                                    <TooltipProvider>
+                                                      <Tooltip>
+                                                        <TooltipTrigger className="ml-1 inline-flex">
+                                                          <span className="text-primary">ℹ️</span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-xs">
+                                                          <p className="text-xs">
+                                                            {complexTreatments.filter(term => treatment.treatment.includes(term)).map(term => 
+                                                              getTooltipForTerm(term)
+                                                            ).join('. ')}
+                                                          </p>
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  )}
+                                                </div>
                                               </SelectItem>
                                             ))}
                                         </SelectContent>
