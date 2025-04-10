@@ -71,10 +71,10 @@ const CLINIC_DATA: ClinicInfo[] = [
     rating: 4,
     guarantee: '3-year',
     materials: ['Generic Implants', 'Standard Materials'],
-    conciergeType: 'clinic',
+    conciergeType: 'ids',
     imageSrc: '/images/carousel/clinic-1.jpg',
     features: ['Modern facility', 'English-speaking staff', 'Affordable prices'],
-    description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-focused travel.'
+    description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-focused travel with qualified professionals.'
   },
   {
     id: 'dentgroup-istanbul',
@@ -92,12 +92,12 @@ const CLINIC_DATA: ClinicInfo[] = [
     description: 'A balanced option for quality and price with excellent aftercare support. Features newer technology and enhanced patient comfort.'
   },
   {
-    id: 'vera-smile',
-    name: 'Vera Smile',
+    id: 'maltepe-dental-clinic',
+    name: 'Maltepe Dental Clinic',
     tier: 'premium',
     priceGBP: 2250,
     priceUSD: 2899,
-    location: 'Beşiktaş, Istanbul',
+    location: 'Maltepe, Istanbul',
     rating: 5,
     guarantee: '10-year',
     materials: ['Nobel Biocare Implants', 'Premium Zirconia'],
