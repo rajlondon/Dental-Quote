@@ -109,7 +109,7 @@ const hasComplexTerms = (name: string): boolean => {
   return complexTreatments.some(term => name.includes(term));
 };
 
-// Custom InfoIcon component for consistent styling across all tooltips
+// Custom InfoIcon component with guaranteed tooltip visibility
 const InfoIcon = ({ 
   tooltipContent, 
   position = "right",
@@ -121,15 +121,46 @@ const InfoIcon = ({
   size?: "small" | "medium";
   tooltipWidth?: "64" | "72"
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  // Use a ref for direct DOM manipulation
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  
+  // Ensure we have content
+  const content = tooltipContent || "More information about this item.";
+  
+  // Show/hide tooltip without React state
+  const showTooltip = () => {
+    if (tooltipRef.current) {
+      tooltipRef.current.style.display = 'block';
+    }
+  };
+  
+  const hideTooltip = () => {
+    if (tooltipRef.current) {
+      tooltipRef.current.style.display = 'none';
+    }
+  };
+  
+  // Set initial display to none
+  useEffect(() => {
+    if (tooltipRef.current) {
+      tooltipRef.current.style.display = 'none';
+    }
+  }, []);
   
   return (
     <div className={`relative inline-block ${size === "small" ? "ml-1" : "ml-2"}`}>
       <button 
+        type="button"
         className="bg-white rounded-full flex items-center justify-center cursor-help"
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
+        onClick={() => {
+          if (tooltipRef.current && tooltipRef.current.style.display === 'none') {
+            showTooltip();
+          } else {
+            hideTooltip();
+          }
+        }}
+        onMouseEnter={showTooltip}
+        onMouseLeave={hideTooltip}
         style={{ 
           border: '1px solid #007B9E', 
           width: size === "small" ? '16px' : '18px', 
@@ -143,21 +174,18 @@ const InfoIcon = ({
         }}>i</span>
       </button>
       
-      {isOpen && (
-        <div 
-          className={`absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-${tooltipWidth} ${position === "left" ? "left-0 top-5" : "right-0 top-6"}`}
-          style={{ 
-            wordBreak: 'break-word', 
-            backgroundColor: 'white', 
-            opacity: 1,
-            minHeight: '40px',
-            display: 'block',
-            visibility: 'visible'
-          }}
-        >
-          <p className="text-xs">{tooltipContent || "More information about this item."}</p>
-        </div>
-      )}
+      <div 
+        ref={tooltipRef}
+        className={`absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-${tooltipWidth} ${position === "left" ? "left-0 top-5" : "right-0 top-6"}`}
+        style={{ 
+          wordBreak: 'break-word', 
+          backgroundColor: 'white', 
+          opacity: 1,
+          minHeight: '40px'
+        }}
+      >
+        <p className="text-xs">{content}</p>
+      </div>
     </div>
   );
 };
