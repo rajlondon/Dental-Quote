@@ -30,7 +30,6 @@ interface ClinicInfo {
   guarantee: string;
   materials: string[];
   conciergeType: 'ids' | 'clinic';
-  imageSrc: string;
   features: string[];
   description: string;
 }
@@ -72,7 +71,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '3-year',
     materials: ['Generic Implants', 'Standard Materials'],
     conciergeType: 'ids',
-    imageSrc: '/images/carousel/istanbul-dental-care.jpg',
+
     features: ['Modern facility', 'English-speaking staff', 'Affordable prices'],
     description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-focused travel with qualified professionals.'
   },
@@ -87,7 +86,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '5-year',
     materials: ['Straumann Implants', 'Premium Materials'],
     conciergeType: 'ids',
-    imageSrc: '/images/carousel/dentgroup-istanbul.jpg',
+
     features: ['Advanced technology', 'Multilingual staff', 'Luxury waiting area'],
     description: 'A balanced option for quality and price with excellent aftercare support. Features newer technology and enhanced patient comfort.'
   },
@@ -102,7 +101,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '10-year',
     materials: ['Nobel Biocare Implants', 'Premium Zirconia'],
     conciergeType: 'ids',
-    imageSrc: '/images/carousel/maltepe-clinic.jpg',
+
     features: ['State-of-the-art technology', 'VIP service', 'Luxury facility'],
     description: 'For VIP clients seeking the finest care in a luxury environment. Features the latest technology, premium materials, and fastest results.'
   }
