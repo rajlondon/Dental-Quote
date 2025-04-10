@@ -848,7 +848,13 @@ export default function PriceCalculator() {
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              treatment.category === 'IMPLANTS' &&
+                                              (treatment.treatment.includes('Implant') || 
+                                               treatment.treatment.includes('implant') ||
+                                               treatment.category === 'IMPLANTS' && 
+                                               (treatment.treatment.includes('Sinus') || 
+                                                treatment.treatment.includes('Bone') || 
+                                                treatment.treatment.includes('Membrane') || 
+                                                treatment.treatment.includes('PRE'))) &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
@@ -865,7 +871,9 @@ export default function PriceCalculator() {
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              treatment.category === 'CROWNS' &&
+                                              (treatment.category === 'CROWNS' ||
+                                               treatment.treatment.includes('Crown') ||
+                                               treatment.treatment.includes('crown')) &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
@@ -882,7 +890,10 @@ export default function PriceCalculator() {
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              treatment.category === 'VENEERS' &&
+                                              (treatment.category === 'VENEERS' ||
+                                               treatment.treatment.includes('Veneer') ||
+                                               treatment.treatment.includes('veneer') ||
+                                               treatment.treatment.includes('Lumineers')) &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
@@ -899,8 +910,23 @@ export default function PriceCalculator() {
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              (treatment.category === 'GENERAL' || treatment.category === 'ROOT_CANAL' || treatment.category === 'WHITENING') &&
+                                              (treatment.category === 'GENERAL' || 
+                                               treatment.treatment.includes('Root Canal') ||
+                                               treatment.treatment.includes('Extraction') ||
+                                               treatment.treatment.includes('Filling') ||
+                                               treatment.treatment.includes('Cleaning') ||
+                                               treatment.treatment.includes('Whitening') ||
+                                               treatment.treatment.includes('Tomography') ||
+                                               treatment.treatment.includes('Curettage') ||
+                                               treatment.treatment.includes('Gingivectomy') ||
+                                               treatment.treatment.includes('Gum flap') ||
+                                               treatment.treatment.includes('Frenectomy') ||
+                                               treatment.treatment.includes('Post')) &&
                                               !treatment.treatment.includes('Premium') &&
+                                              !treatment.treatment.includes('Denture') &&
+                                              !treatment.treatment.includes('Prothesis') &&
+                                              !treatment.treatment.includes('Package') &&
+                                              !treatment.treatment.includes('package') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -909,15 +935,23 @@ export default function PriceCalculator() {
                                               </SelectItem>
                                             ))}
                                           
-                                          {/* DENTURES & INVISALIGN */}
+                                          {/* DENTURES & INVISALIGN/ORTHODONTIC */}
                                           <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2 border-b">
-                                            Dentures & Invisalign
+                                            Dentures & Orthodontics
                                           </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              (treatment.category === 'DENTURES' || treatment.category === 'INVISALIGN') &&
+                                              (treatment.category === 'DENTURES' || 
+                                               treatment.category === 'ORTHODONTIC' ||
+                                               treatment.treatment.includes('Denture') ||
+                                               treatment.treatment.includes('Prothesis') ||
+                                               treatment.treatment.includes('prothesis') ||
+                                               treatment.treatment.includes('Invisalign') ||
+                                               treatment.treatment.includes('Braces')) &&
                                               !treatment.treatment.includes('Premium') &&
+                                              !treatment.treatment.includes('Package') &&
+                                              !treatment.treatment.includes('package') &&
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
@@ -933,7 +967,10 @@ export default function PriceCalculator() {
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
-                                              (treatment.category === 'PACKAGES' || treatment.treatment.includes('Smile')) &&
+                                              (treatment.category === 'PACKAGES' || 
+                                               treatment.treatment.includes('Package') ||
+                                               treatment.treatment.includes('package') ||
+                                               treatment.treatment.includes('Smile')) &&
                                               !treatment.treatment.includes('Premium') &&
                                               treatment.treatment.trim() !== ''
                                             )
