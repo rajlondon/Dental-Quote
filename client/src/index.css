@@ -11,3 +11,24 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Custom tooltip styling */
+.fixed-tooltip {
+  display: none;
+  z-index: 9999;
+  position: absolute;
+  white-space: normal;
+  word-wrap: break-word;
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: tooltipFadeIn 0.2s ease-in-out;
+}
+
+@keyframes tooltipFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
