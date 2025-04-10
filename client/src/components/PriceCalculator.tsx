@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
@@ -825,10 +825,34 @@ export default function PriceCalculator() {
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
+                                          {/* Premium treatments section */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none">
+                                            Premium Options
+                                          </div>
                                           {treatments
-                                            .filter(treatment => treatment.treatment && treatment.treatment.trim() !== '')
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={idx} value={treatment.treatment}>
+                                              <SelectItem key={`premium-${idx}`} value={treatment.treatment}>
+                                                {formatTreatmentName(treatment.treatment)}
+                                              </SelectItem>
+                                            ))}
+                                          
+                                          {/* Regular treatments section */}
+                                          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium select-none mt-2">
+                                            Standard Options
+                                          </div>
+                                          {treatments
+                                            .filter(treatment => 
+                                              treatment.treatment && 
+                                              !treatment.treatment.includes('Premium') &&
+                                              treatment.treatment.trim() !== ''
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem key={`standard-${idx}`} value={treatment.treatment}>
                                                 {formatTreatmentName(treatment.treatment)}
                                               </SelectItem>
                                             ))}

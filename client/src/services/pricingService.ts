@@ -98,6 +98,13 @@ function enhanceTreatmentData(treatments: TreatmentPrice[]): TreatmentPrice[] {
   // Common treatment descriptions, benefits, and other details
   const treatmentDetails: Record<string, Partial<TreatmentPrice>> = {
     // VENEERS
+    'Premium Veneer': {
+      description: 'Premium quality veneers using the highest grade materials and advanced techniques for exceptional aesthetics.',
+      benefits: ['Superior aesthetics', 'Enhanced durability (10+ years)', 'Premium materials', 'Meticulous craftsmanship', 'Natural translucency'],
+      duration: '2-3 visits over 1-2 weeks',
+      recovery: 'Minimal to none; immediate return to normal activities',
+      image: '/treatments/porcelain-veneers.svg',
+    },
     'Porcelain Veneers': {
       description: 'Thin shells of porcelain that are bonded to the front surface of teeth to improve their appearance.',
       benefits: ['Natural-looking results', 'Stain-resistant', 'Durable (10-15 years)', 'Minimal enamel removal'],
@@ -165,6 +172,13 @@ function enhanceTreatmentData(treatments: TreatmentPrice[]): TreatmentPrice[] {
     },
 
     // CROWNS
+    'Premium Crown': {
+      description: 'Highest quality crown featuring premium materials, advanced fabrication techniques, and superior aesthetics.',
+      benefits: ['Superior durability (10+ years)', 'Exceptional aesthetics', 'Perfect fit and comfort', 'Premium materials', 'Advanced fabrication'],
+      duration: '2 visits over 1-2 weeks',
+      recovery: 'Minimal; temporary sensitivity may occur',
+      image: '/treatments/porcelain-crown.svg',
+    },
     'Porcelain Crown': {
       description: 'A cap that covers a damaged tooth to restore its shape, size, strength, and improve its appearance.',
       benefits: ['Natural-looking aesthetics', 'Full protection for damaged teeth', 'Custom-shaped to match your bite', 'Long-lasting restoration'],
