@@ -17,7 +17,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail, Info as InfoIcon } from 'lucide-react';
+import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail } from 'lucide-react';
+import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 
 // Types
 interface ClinicInfo {
@@ -285,9 +286,32 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const actualTotalGBP = treatmentOnlyTotalGBP + flightCostGBP + consultCostGBP;
   const actualTotalUSD = treatmentOnlyTotalUSD + flightCostUSD + consultCostUSD;
   
-  // Calculate UK price comparison (2.8x higher than Istanbul) but only based on treatment cost
-  const calculateUKPrice = (istanbulPrice: number) => Math.round(istanbulPrice * 2.8);
-  const ukTreatmentPrice = calculateUKPrice(treatmentOnlyTotalGBP);
+  // Calculate UK price comparison using data from our research on UK private dental prices
+  // Calculate UK price based on actual UK dental price data for the same treatments
+  const calculateUKPrice = () => {
+    let ukTotal = 0;
+    
+    // Only count actual dental treatments (not flights or consultation)
+    for (const item of quoteData.items) {
+      // Skip if the item is about flights or consultation
+      if (!item.treatment.toLowerCase().includes('flight') && 
+          !item.treatment.toLowerCase().includes('consultation')) {
+        // Get the UK price for this treatment
+        const ukPrice = getUKPriceForIstanbulTreatment(item.treatment);
+        if (ukPrice > 0) {
+          // Multiply by quantity
+          ukTotal += ukPrice * item.quantity;
+        } else {
+          // If no exact match found, use the 2.8x multiplier as fallback
+          ukTotal += item.priceGBP * 2.8 * item.quantity;
+        }
+      }
+    }
+    
+    return Math.round(ukTotal);
+  };
+  
+  const ukTreatmentPrice = calculateUKPrice();
   const savingsAmount = ukTreatmentPrice - treatmentOnlyTotalGBP;
   const savingsPercentage = Math.round((savingsAmount / ukTreatmentPrice) * 100);
   
