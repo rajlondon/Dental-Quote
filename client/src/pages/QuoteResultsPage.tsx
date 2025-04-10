@@ -273,9 +273,13 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   
   // Calculate the actual total including treatments, flights, and london consult
   const treatmentOnlyTotalGBP = quoteData.totalGBP;
+  const treatmentOnlyTotalUSD = quoteData.totalUSD;
   const flightCostGBP = quoteData.flightCostGBP || 0;
+  const flightCostUSD = quoteData.flightCostUSD || 0;
   const consultCostGBP = quoteData.hasLondonConsult ? (quoteData.londonConsultCostGBP || 150) : 0;
+  const consultCostUSD = quoteData.hasLondonConsult ? (quoteData.londonConsultCostUSD || 193) : 0;
   const actualTotalGBP = treatmentOnlyTotalGBP + flightCostGBP + consultCostGBP;
+  const actualTotalUSD = treatmentOnlyTotalUSD + flightCostUSD + consultCostUSD;
   
   // Calculate UK price comparison (2.8x higher than Istanbul) but only based on treatment cost
   const calculateUKPrice = (istanbulPrice: number) => Math.round(istanbulPrice * 2.8);
@@ -345,12 +349,20 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           <tfoot className="font-medium">
             <tr className="bg-gray-100">
               <td colSpan={3} className="p-2 text-right">Total (GBP)</td>
-              <td className="p-2 text-right">£{quoteData.totalGBP}</td>
+              <td className="p-2 text-right">£{actualTotalGBP}</td>
             </tr>
             <tr>
               <td colSpan={3} className="p-2 text-right">Total (USD)</td>
-              <td className="p-2 text-right">${quoteData.totalUSD}</td>
+              <td className="p-2 text-right">${actualTotalUSD}</td>
             </tr>
+            {(flightCostGBP > 0 || consultCostGBP > 0) && (
+              <tr>
+                <td colSpan={4} className="p-2 text-xs text-center text-gray-500 italic">
+                  *Total includes treatment costs {flightCostGBP > 0 ? ', estimated flights' : ''} 
+                  {consultCostGBP > 0 ? ' and London consultation' : ''}
+                </td>
+              </tr>
+            )}
           </tfoot>
         </table>
       </div>
