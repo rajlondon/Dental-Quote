@@ -72,7 +72,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '3-year',
     materials: ['Generic Implants', 'Standard Materials'],
     conciergeType: 'ids',
-    imageSrc: '/images/carousel/clinic-1.jpg',
+    imageSrc: '/images/carousel/istanbul-dental-care.jpg',
     features: ['Modern facility', 'English-speaking staff', 'Affordable prices'],
     description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-focused travel with qualified professionals.'
   },
@@ -87,7 +87,7 @@ const CLINIC_DATA: ClinicInfo[] = [
     guarantee: '5-year',
     materials: ['Straumann Implants', 'Premium Materials'],
     conciergeType: 'ids',
-    imageSrc: '/images/carousel/clinic-2.jpg',
+    imageSrc: '/images/carousel/dentgroup-istanbul.jpg',
     features: ['Advanced technology', 'Multilingual staff', 'Luxury waiting area'],
     description: 'A balanced option for quality and price with excellent aftercare support. Features newer technology and enhanced patient comfort.'
   },
