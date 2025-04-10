@@ -109,7 +109,7 @@ const hasComplexTerms = (name: string): boolean => {
   return complexTreatments.some(term => name.includes(term));
 };
 
-// Custom InfoIcon component with fixed tooltip display
+// Simple tooltip component with basic functionality
 const InfoIcon = ({ 
   tooltipContent, 
   position = "right",
@@ -121,20 +121,19 @@ const InfoIcon = ({
   size?: "small" | "medium";
   tooltipWidth?: "64" | "72"
 }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   
-  // Set a minimum content length to ensure consistent display
-  const content = tooltipContent || "More information about this item.";
+  // Always have some content
+  const content = tooltipContent ? tooltipContent : "More information about this item.";
   
   return (
     <div className={`relative inline-block ${size === "small" ? "ml-1" : "ml-2"}`}>
-      {/* Info Icon Button */}
-      <button 
+      <button
         type="button"
         className="bg-white rounded-full flex items-center justify-center cursor-help"
-        onClick={() => setShowTooltip(!showTooltip)}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
         style={{ 
           border: '1px solid #007B9E', 
           width: size === "small" ? '16px' : '18px', 
@@ -148,20 +147,22 @@ const InfoIcon = ({
         }}>i</span>
       </button>
       
-      {/* Fixed Position Tooltip */}
-      <div 
-        className={`${showTooltip ? 'block' : 'hidden'} fixed-tooltip absolute z-50 bg-white rounded-md shadow-lg border border-neutral-200 ${position === "left" ? "left-0 top-5" : "right-0 top-6"}`}
-        style={{ 
-          padding: '12px', 
-          width: tooltipWidth === "64" ? '16rem' : '18rem',
-          minHeight: '50px',
-          backgroundColor: 'rgba(255, 255, 255, 0.98)',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          borderColor: '#e5e7eb'
-        }}
-      >
-        <p className="text-xs" style={{ wordBreak: 'break-word' }}>{content}</p>
-      </div>
+      {isVisible && (
+        <div 
+          className="absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200"
+          style={{ 
+            width: tooltipWidth === "64" ? '16rem' : '18rem',
+            [position === "left" ? "left" : "right"]: "0",
+            top: position === "left" ? "5" : "6",
+            minHeight: '40px',
+            display: 'block'
+          }}
+        >
+          <p className="text-xs" style={{ wordBreak: 'break-word' }}>
+            {content}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
