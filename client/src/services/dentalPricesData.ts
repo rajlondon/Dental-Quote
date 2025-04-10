@@ -1,4 +1,5 @@
 export const dentalPricesCSV = `Category,Treatment,Price (GBP),Price (USD),Guarantee
+IMPLANTS,Premium Implant,750,950,LIFETIME
 ,Medigma Implant-Germany,485,625,LIFETIME
 ,Nobel Biocare Implant-Sweden,675,865,LIFETIME
 ,ITI Straumann Implant-Switzerland,825,1055,LIFETIME

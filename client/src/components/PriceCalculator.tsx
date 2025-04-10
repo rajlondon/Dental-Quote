@@ -1386,13 +1386,22 @@ export default function PriceCalculator() {
                                   </SelectContent>
                                 </Select>
                                 <FormDescription className="text-xs text-neutral-500">
-                                  <p className="mb-1">All clinics we work with use high-quality, time-tested materials from globally recognized brands.</p>
-                                  <ul className="list-disc pl-5 space-y-1">
-                                    <li><span className="font-medium">European brands</span>: Straumann, Camlog (Swiss/German)</li>
-                                    <li><span className="font-medium">USA brands</span>: Nobel Biocare, 3M</li>
-                                    <li><span className="font-medium">Korean brands</span>: Osstem, Dentium (excellent quality, cost-effective)</li>
-                                  </ul>
-                                  <p className="mt-1">Specific brand requests can be discussed during your consultation.</p>
+                                  <span className="block mb-1">All clinics we work with use high-quality, time-tested materials from globally recognized brands.</span>
+                                  <div className="pl-5 space-y-1 my-2">
+                                    <div className="flex items-baseline">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 block mr-2 flex-shrink-0 mt-1.5"></span>
+                                      <span><span className="font-medium">European brands</span>: Straumann, Camlog (Swiss/German)</span>
+                                    </div>
+                                    <div className="flex items-baseline">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 block mr-2 flex-shrink-0 mt-1.5"></span>
+                                      <span><span className="font-medium">USA brands</span>: Nobel Biocare, 3M</span>
+                                    </div>
+                                    <div className="flex items-baseline">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 block mr-2 flex-shrink-0 mt-1.5"></span>
+                                      <span><span className="font-medium">Korean brands</span>: Osstem, Dentium (excellent quality, cost-effective)</span>
+                                    </div>
+                                  </div>
+                                  <span className="block mt-1">Specific brand requests can be discussed during your consultation.</span>
                                 </FormDescription>
                               </FormItem>
                             )}

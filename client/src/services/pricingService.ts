@@ -128,6 +128,13 @@ function enhanceTreatmentData(treatments: TreatmentPrice[]): TreatmentPrice[] {
     },
 
     // IMPLANTS
+    'Premium Implant': {
+      description: 'Premium grade implant system with the highest quality materials from top European, American, or Korean manufacturers.',
+      benefits: ['Superior quality materials', 'Latest implant technology', 'Brand-specific features', 'Enhanced aesthetics', '95%+ success rate'],
+      duration: '2-3 visits over 3-6 months',
+      recovery: '1-2 weeks for initial healing; 3-6 months for complete osseointegration',
+      image: '/treatments/single-implant.svg',
+    },
     'Single Tooth Implant': {
       description: 'A titanium post surgically placed into the jawbone to replace a missing tooth root, topped with a crown.',
       benefits: ['Prevents bone loss', 'Restores full function', 'No impact on adjacent teeth', '95% success rate'],
