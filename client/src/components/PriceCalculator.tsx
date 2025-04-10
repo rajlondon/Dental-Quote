@@ -109,36 +109,32 @@ const hasComplexTerms = (name: string): boolean => {
   return complexTreatments.some(term => name.includes(term));
 };
 
-// Ultra-simple tooltip component
+// Using Radix UI's Tooltip component for consistent behavior
 const InfoIcon = ({ 
   tooltipContent, 
   position = "right",
-  size = "small"
+  size = "small",
+  tooltipWidth = "72"
 }: { 
   tooltipContent: string; 
   position?: "left" | "right"; 
   size?: "small" | "medium";
   tooltipWidth?: string;
 }) => {
-  // Always provide content
+  // Ensure we always have content
   const safeContent = tooltipContent || "More information will be provided upon request.";
   
-  // Fixed styling and content
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    display: 'inline-block',
-    marginLeft: size === "small" ? '4px' : '8px'
-  };
-  
-  const buttonStyle: React.CSSProperties = {
-    backgroundColor: 'white',
+  // Style for the info button
+  const buttonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     border: '1px solid #007B9E',
+    backgroundColor: '#ffffff',
     borderRadius: '50%',
     width: size === "small" ? '16px' : '18px',
     height: size === "small" ? '16px' : '18px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginLeft: size === "small" ? '4px' : '8px',
     cursor: 'help',
     padding: 0,
     color: '#007B9E',
@@ -146,70 +142,29 @@ const InfoIcon = ({
     fontSize: size === "small" ? '10px' : '12px'
   };
   
-  const tooltipStyle: React.CSSProperties = {
-    position: 'absolute',
-    zIndex: 999,
-    backgroundColor: 'white',
-    border: '1px solid #e2e2e2',
-    borderRadius: '6px',
-    boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15)',
-    padding: '10px',
-    width: position === "left" ? '250px' : '280px',
-    [position === "left" ? "left" : "right"]: '0',
-    top: position === "left" ? '20px' : '25px',
-    display: 'none',
-    lineHeight: 1.4,
-    fontWeight: 'normal',
-    minHeight: '50px'
-  };
-  
-  // Use DOM event handlers directly
-  const handleMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
-    const tooltip = e.currentTarget.querySelector('.tooltip-content');
-    if (tooltip) {
-      (tooltip as HTMLElement).style.display = 'block';
-    }
-  };
-  
-  const handleMouseOut = (e: React.MouseEvent<HTMLDivElement>) => {
-    const tooltip = e.currentTarget.querySelector('.tooltip-content');
-    if (tooltip) {
-      (tooltip as HTMLElement).style.display = 'none';
-    }
-  };
-  
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation(); // Prevent event bubbling
-    const container = e.currentTarget.parentElement;
-    if (container) {
-      const tooltip = container.querySelector('.tooltip-content');
-      if (tooltip) {
-        const current = (tooltip as HTMLElement).style.display;
-        (tooltip as HTMLElement).style.display = current === 'block' ? 'none' : 'block';
-      }
-    }
-  };
-  
+  // Tooltip implementation using Radix UI components
   return (
-    <div 
-      style={containerStyle}
-      onMouseOver={handleMouseOver}
-      onMouseOut={handleMouseOut}
-    >
-      <button 
-        type="button"
-        style={buttonStyle}
-        onClick={handleClick}
-      >
-        i
-      </button>
-      
-      <div className="tooltip-content" style={tooltipStyle}>
-        <div style={{ fontSize: '12px' }}>
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" style={buttonStyle}>
+            i
+          </button>
+        </TooltipTrigger>
+        <TooltipContent 
+          side={position === "left" ? "left" : "right"}
+          className="bg-white text-black border border-gray-200 p-3 text-xs max-w-[280px] min-w-[200px] shadow-lg"
+          style={{ 
+            zIndex: 9999,
+            whiteSpace: 'normal',
+            lineHeight: 1.5,
+            minHeight: '40px'
+          }}
+        >
           {safeContent}
-        </div>
-      </div>
-    </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
