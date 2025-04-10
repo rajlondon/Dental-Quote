@@ -133,7 +133,8 @@ const InfoIcon = ({
         style={{ 
           border: '1px solid #007B9E', 
           width: size === "small" ? '16px' : '18px', 
-          height: size === "small" ? '16px' : '18px' 
+          height: size === "small" ? '16px' : '18px',
+          backgroundColor: '#fff'
         }}
       >
         <span className="text-primary" style={{ 
@@ -145,9 +146,16 @@ const InfoIcon = ({
       {isOpen && (
         <div 
           className={`absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-${tooltipWidth} ${position === "left" ? "left-0 top-5" : "right-0 top-6"}`}
-          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
+          style={{ 
+            wordBreak: 'break-word', 
+            backgroundColor: 'white', 
+            opacity: 1,
+            minHeight: '40px',
+            display: 'block',
+            visibility: 'visible'
+          }}
         >
-          <p className="text-xs">{tooltipContent}</p>
+          <p className="text-xs">{tooltipContent || "More information about this item."}</p>
         </div>
       )}
     </div>
@@ -157,10 +165,15 @@ const InfoIcon = ({
 // Custom tooltip component for dental term explanations
 const DentalTermTooltip = ({ treatment }: { treatment: string }) => {
   // Get tooltip content
-  const tooltipContent = complexTreatments
+  let tooltipContent = complexTreatments
     .filter(term => treatment.includes(term))
     .map(term => getTooltipForTerm(term))
     .join('. ');
+  
+  // Ensure we always have some content
+  if (!tooltipContent || tooltipContent.length < 10) {
+    tooltipContent = "Information about " + treatment + ". Contact us for more details.";
+  }
   
   return (
     <InfoIcon tooltipContent={tooltipContent} position="right" tooltipWidth="72" />
