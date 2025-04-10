@@ -109,60 +109,106 @@ const hasComplexTerms = (name: string): boolean => {
   return complexTreatments.some(term => name.includes(term));
 };
 
-// Simple tooltip component with basic functionality
+// Ultra-simple tooltip component
 const InfoIcon = ({ 
   tooltipContent, 
   position = "right",
-  size = "small",
-  tooltipWidth = "64"
+  size = "small"
 }: { 
   tooltipContent: string; 
   position?: "left" | "right"; 
   size?: "small" | "medium";
-  tooltipWidth?: "64" | "72"
+  tooltipWidth?: string;
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  // Always provide content
+  const safeContent = tooltipContent || "More information will be provided upon request.";
   
-  // Always have some content
-  const content = tooltipContent ? tooltipContent : "More information about this item.";
+  // Fixed styling and content
+  const containerStyle: React.CSSProperties = {
+    position: 'relative',
+    display: 'inline-block',
+    marginLeft: size === "small" ? '4px' : '8px'
+  };
+  
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: 'white',
+    border: '1px solid #007B9E',
+    borderRadius: '50%',
+    width: size === "small" ? '16px' : '18px',
+    height: size === "small" ? '16px' : '18px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'help',
+    padding: 0,
+    color: '#007B9E',
+    fontWeight: 'bold',
+    fontSize: size === "small" ? '10px' : '12px'
+  };
+  
+  const tooltipStyle: React.CSSProperties = {
+    position: 'absolute',
+    zIndex: 999,
+    backgroundColor: 'white',
+    border: '1px solid #e2e2e2',
+    borderRadius: '6px',
+    boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15)',
+    padding: '10px',
+    width: position === "left" ? '250px' : '280px',
+    [position === "left" ? "left" : "right"]: '0',
+    top: position === "left" ? '20px' : '25px',
+    display: 'none',
+    lineHeight: 1.4,
+    fontWeight: 'normal',
+    minHeight: '50px'
+  };
+  
+  // Use DOM event handlers directly
+  const handleMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
+    const tooltip = e.currentTarget.querySelector('.tooltip-content');
+    if (tooltip) {
+      (tooltip as HTMLElement).style.display = 'block';
+    }
+  };
+  
+  const handleMouseOut = (e: React.MouseEvent<HTMLDivElement>) => {
+    const tooltip = e.currentTarget.querySelector('.tooltip-content');
+    if (tooltip) {
+      (tooltip as HTMLElement).style.display = 'none';
+    }
+  };
+  
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Prevent event bubbling
+    const container = e.currentTarget.parentElement;
+    if (container) {
+      const tooltip = container.querySelector('.tooltip-content');
+      if (tooltip) {
+        const current = (tooltip as HTMLElement).style.display;
+        (tooltip as HTMLElement).style.display = current === 'block' ? 'none' : 'block';
+      }
+    }
+  };
   
   return (
-    <div className={`relative inline-block ${size === "small" ? "ml-1" : "ml-2"}`}>
-      <button
+    <div 
+      style={containerStyle}
+      onMouseOver={handleMouseOver}
+      onMouseOut={handleMouseOut}
+    >
+      <button 
         type="button"
-        className="bg-white rounded-full flex items-center justify-center cursor-help"
-        onClick={() => setIsVisible(!isVisible)}
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-        style={{ 
-          border: '1px solid #007B9E', 
-          width: size === "small" ? '16px' : '18px', 
-          height: size === "small" ? '16px' : '18px',
-          backgroundColor: '#fff'
-        }}
+        style={buttonStyle}
+        onClick={handleClick}
       >
-        <span className="text-primary" style={{ 
-          fontSize: size === "small" ? '10px' : '12px', 
-          fontWeight: 'bold' 
-        }}>i</span>
+        i
       </button>
       
-      {isVisible && (
-        <div 
-          className="absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200"
-          style={{ 
-            width: tooltipWidth === "64" ? '16rem' : '18rem',
-            [position === "left" ? "left" : "right"]: "0",
-            top: position === "left" ? "5" : "6",
-            minHeight: '40px',
-            display: 'block'
-          }}
-        >
-          <p className="text-xs" style={{ wordBreak: 'break-word' }}>
-            {content}
-          </p>
+      <div className="tooltip-content" style={tooltipStyle}>
+        <div style={{ fontSize: '12px' }}>
+          {safeContent}
         </div>
-      )}
+      </div>
     </div>
   );
 };
