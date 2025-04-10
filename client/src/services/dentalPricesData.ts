@@ -5,8 +5,12 @@ VENEERS,Premium Veneer,380,490,10 YEARS
 IMPLANTS,Medigma Implant-Germany,485,625,LIFETIME
 IMPLANTS,Nobel Biocare Implant-Sweden,675,865,LIFETIME
 IMPLANTS,ITI Straumann Implant-Switzerland,825,1055,LIFETIME
+CROWNS,Metal - Ceramic Crown / VITA,165,215,5 YEARS
 CROWNS,Zirconium Crown / VITA-NACERA-IVOCLAR VIVADENT,190,245,5 YEARS
+CROWNS,E-Max Crown / IVOCLAR VIVADENT,215,280,5 YEARS
+VENEERS,E-Max Laminate Veneer Lenses / IVOCLAR VIVADENT,215,280,5 YEARS
 CROWNS,Premium Solid Silver Crown,600,770,5 YEARS
+CROWNS,24 Carat Solid Gold Crown,1250,1600,5 YEARS
 PACKAGES,Package I- 24 Premium Titanium Fused Porcelain Ceramic Crowns.,3790,4850,5 YEARS
 PACKAGES,Package 2- 28 Premium Titanium Fused Porcelain Ceramic Crowns.,4450,5690,5 YEARS
 PACKAGES,Package 3-24 Premium Zirconium Crowns.,4390,5610,5 YEARS
