@@ -133,8 +133,8 @@ const DentalTermTooltip = ({ treatment }: { treatment: string }) => {
       
       {isOpen && (
         <div 
-          className="absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-72 right-0 top-0 transform translate-x-2"
-          style={{ wordBreak: 'break-word' }}
+          className="absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-72 right-0 top-0 transform translate-x-2"
+          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
         >
           <p className="text-xs">{tooltipContent}</p>
         </div>
@@ -1161,8 +1161,8 @@ export default function PriceCalculator() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                           </svg>
                                           <div 
-                                            className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 left-0 top-5"
-                                            style={{ wordBreak: 'break-word' }}
+                                            className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 left-0 top-5"
+                                            style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
                                           >
                                             <p className="text-xs">Enter the number of teeth or areas that need this treatment. For example, if you need 4 dental implants, enter '4' here.</p>
                                           </div>
@@ -1295,8 +1295,8 @@ export default function PriceCalculator() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <div 
-                                  className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 right-0 top-6"
-                                  style={{ wordBreak: 'break-word' }}
+                                  className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 right-0 top-6"
+                                  style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
                                 >
                                   <p className="text-xs">{t('pricing.travel_info_tooltip')}</p>
                                 </div>
@@ -1334,8 +1334,8 @@ export default function PriceCalculator() {
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <div 
-                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 left-0 top-5"
-                                          style={{ wordBreak: 'break-word' }}
+                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 left-0 top-5"
+                                          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
                                         >
                                           <p className="text-xs">Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates.</p>
                                         </div>
@@ -1393,8 +1393,8 @@ export default function PriceCalculator() {
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <div 
-                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 left-0 top-5"
-                                          style={{ wordBreak: 'break-word' }}
+                                          className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 left-0 top-5"
+                                          style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
                                         >
                                           <p className="text-xs">Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities.</p>
                                         </div>
@@ -1460,8 +1460,8 @@ export default function PriceCalculator() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               <div 
-                                className="hidden absolute z-50 p-3 bg-white rounded-md shadow-md border border-neutral-200 w-64 right-0 top-6"
-                                style={{ wordBreak: 'break-word' }}
+                                className="hidden absolute z-50 p-3 bg-white rounded-md shadow-lg border border-neutral-200 w-64 right-0 top-6"
+                                style={{ wordBreak: 'break-word', backgroundColor: 'white', opacity: 1 }}
                               >
                                 <p className="text-xs">These details help us provide a more personalized service and accurate quote.</p>
                               </div>
