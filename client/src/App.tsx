@@ -14,6 +14,7 @@ import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
 import BookingPage from "@/pages/BookingPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
+import PortalLoginPage from "@/pages/PortalLoginPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -35,7 +36,8 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={QuoteResultsPage} />
       <Route path="/booking" component={BookingPage} />
-      <Route path="/portal" component={ClientPortalPage} />
+      <Route path="/portal" component={PortalLoginPage} />
+      <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/client-portal" component={ClientPortalPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">

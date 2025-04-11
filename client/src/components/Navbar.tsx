@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
+import { UserCircle2 } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const Navbar: React.FC = () => {
@@ -51,6 +52,10 @@ const Navbar: React.FC = () => {
           <Link href="/faq" className="text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.faq')}
           </Link>
+          <Link href="/portal" className="text-neutral-600 hover:text-primary transition-colors flex items-center">
+            <UserCircle2 className="h-4 w-4 mr-1" />
+            {t('navbar.patient_portal', 'Patient Portal')}
+          </Link>
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
           <LanguageSwitcher />
         </div>
@@ -86,6 +91,10 @@ const Navbar: React.FC = () => {
           </Link>
           <Link href="/faq" className="block text-neutral-600 hover:text-primary transition-colors">
             {t('navbar.faq')}
+          </Link>
+          <Link href="/portal" className="block text-neutral-600 hover:text-primary transition-colors flex items-center">
+            <UserCircle2 className="h-4 w-4 mr-1" />
+            {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           <a href="#contact" className="block text-neutral-600 hover:text-primary transition-colors">{t('navbar.contact')}</a>
         </div>
