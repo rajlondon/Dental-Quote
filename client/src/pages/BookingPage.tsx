@@ -218,16 +218,45 @@ const BookingPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-start">
-                      <Info className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
-                      <div>
-                        <h4 className="font-medium">{t('booking.deposit_info', 'Deposit Information')}</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {t('booking.deposit_explanation', 'A £200 deposit is required to secure your booking. This amount will be deducted from your final treatment cost.')}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                    <h3 className="font-semibold text-blue-800 text-lg mb-3">{t('booking.deposit_info', 'Pay £200 today to reserve your treatment')}</h3>
+                    <p className="text-blue-700 mb-4">
+                      {t('booking.deposit_explanation', 'This guarantees your journey can begin. The £200 deposit is deducted from your final treatment cost.')}
+                    </p>
+                    
+                    <h4 className="font-medium text-blue-800 mb-2">{t('booking.after_payment', 'After payment, you\'ll have access to your personal client portal to:')}</h4>
+                    <ul className="space-y-3 text-blue-700">
+                      <li className="flex items-start">
+                        <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                          <Check className="h-3.5 w-3.5 text-blue-600" />
+                        </span>
+                        <span>{t('booking.benefit1', 'Chat directly with your clinic')}</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                          <Check className="h-3.5 w-3.5 text-blue-600" />
+                        </span>
+                        <span>{t('booking.benefit2', 'Upload X-rays or Documents')}</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                          <Check className="h-3.5 w-3.5 text-blue-600" />
+                        </span>
+                        <span>{t('booking.benefit3', 'Confirm your Treatment Plan')}</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                          <Check className="h-3.5 w-3.5 text-blue-600" />
+                        </span>
+                        <span>{t('booking.benefit4', 'Arrange Travel & Appointments')}</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                          <Check className="h-3.5 w-3.5 text-blue-600" />
+                        </span>
+                        <span>{t('booking.benefit5', 'Have Aftercare Support')}</span>
+                      </li>
+                    </ul>
                   </div>
 
                   <div className="space-y-3">
@@ -264,9 +293,9 @@ const BookingPage: React.FC = () => {
                   <Button
                     onClick={handleProceedToPayment}
                     disabled={!selectedClinic}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-6 py-6 h-auto text-base font-medium"
                   >
-                    <CreditCard className="h-4 w-4" />
+                    <CreditCard className="h-5 w-5 mr-1" />
                     {t('booking.proceed_to_payment', 'Proceed to Payment')}
                   </Button>
                 </CardFooter>
@@ -283,17 +312,45 @@ const BookingPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <Info className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm text-blue-700">
-                            {t('booking.payment_info', 'Your card will be charged £200 as a deposit. This amount will be deducted from your final treatment cost.')}
-                          </p>
-                        </div>
-                      </div>
+                    <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                      <h3 className="font-semibold text-blue-800 text-lg mb-3">{t('booking.deposit_info', 'Pay £200 today to reserve your treatment')}</h3>
+                      <p className="text-blue-700 mb-4">
+                        {t('booking.deposit_explanation', 'This guarantees your journey can begin. The £200 deposit is deducted from your final treatment cost.')}
+                      </p>
+                      
+                      <h4 className="font-medium text-blue-800 mb-2">{t('booking.after_payment', 'After payment, you\'ll have access to your personal client portal to:')}</h4>
+                      <ul className="space-y-3 text-blue-700">
+                        <li className="flex items-start">
+                          <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                            <Check className="h-3.5 w-3.5 text-blue-600" />
+                          </span>
+                          <span>{t('booking.benefit1', 'Chat directly with your clinic')}</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                            <Check className="h-3.5 w-3.5 text-blue-600" />
+                          </span>
+                          <span>{t('booking.benefit2', 'Upload X-rays or Documents')}</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                            <Check className="h-3.5 w-3.5 text-blue-600" />
+                          </span>
+                          <span>{t('booking.benefit3', 'Confirm your Treatment Plan')}</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                            <Check className="h-3.5 w-3.5 text-blue-600" />
+                          </span>
+                          <span>{t('booking.benefit4', 'Arrange Travel & Appointments')}</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                            <Check className="h-3.5 w-3.5 text-blue-600" />
+                          </span>
+                          <span>{t('booking.benefit5', 'Have Aftercare Support')}</span>
+                        </li>
+                      </ul>
                     </div>
                     
                     {quoteData?.patientEmail && (
