@@ -2075,9 +2075,9 @@ export default function PriceCalculator() {
                     </div>
                   ) : (
                     <div className="min-h-[350px] flex flex-col text-neutral-700 bg-white rounded-lg border border-neutral-200 p-6">
-                      <div className="flex flex-col sm:flex-row gap-6">
-                        {/* Left Panel: How to generate a quote */}
-                        <div className="w-full sm:w-1/3 flex flex-col items-center text-center">
+                      <div className="flex flex-col gap-6">
+                        {/* Top Section: No Quote Generated */}
+                        <div className="flex flex-col items-center text-center">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -2098,7 +2098,7 @@ export default function PriceCalculator() {
                           </svg>
                           <h4 className="text-lg font-semibold mb-2 text-primary">{t('pricing.no_quote_generated')}</h4>
                           <p className="mb-3 text-sm">{t('pricing.select_treatments_to_generate')}</p>
-                          <div className="text-xs p-3 bg-primary/5 rounded-lg w-full">
+                          <div className="text-xs p-3 bg-primary/5 rounded-lg w-full max-w-sm">
                             <p className="font-medium text-primary mb-2">{t('pricing.how_it_works')}:</p>
                             <ol className="text-left space-y-1.5">
                               <li className="flex">
@@ -2117,56 +2117,212 @@ export default function PriceCalculator() {
                           </div>
                         </div>
                         
-                        {/* Right Panel: Sample Quote and Recommendations */}
-                        <div className="w-full sm:w-2/3 border-t sm:border-t-0 sm:border-l border-gray-200 sm:pl-6 pt-6 sm:pt-0">
-                          <h4 className="text-lg font-semibold mb-3 text-primary">{t('pricing.get_accurate_quote_title')}</h4>
-                          <p className="text-sm mb-4">{t('pricing.sample_quote_explanation')}</p>
+                        {/* Middle Section: How to Get The Most Accurate Quote with Smart Tags */}
+                        <div className="border-t border-gray-200 pt-6">
+                          <h4 className="text-lg font-semibold mb-3 text-primary text-center">{t('pricing.get_accurate_quote_title')}</h4>
                           
-                          <div className="rounded-lg border border-gray-200 overflow-hidden">
-                            <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
-                              <h5 className="font-medium text-sm text-primary">{t('pricing.sample_quote_title')}</h5>
+                          {/* Smart i-Tag Info Section */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            {/* Implants Tag */}
+                            <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                              <div className="flex items-center mb-2">
+                                <span className="font-medium text-sm text-primary">Implants</span>
+                                <TooltipProvider delayDuration={100}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button type="button" className="ml-1 flex-shrink-0" style={{ color: '#007B9E' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <circle cx="12" cy="12" r="10"></circle>
+                                          <line x1="12" y1="16" x2="12" y2="12"></line>
+                                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent 
+                                      side="top"
+                                      className="bg-white text-black border border-gray-200 p-3 text-xs max-w-[280px] min-w-[200px] shadow-lg"
+                                      style={{ 
+                                        zIndex: 9999,
+                                        whiteSpace: 'normal',
+                                        lineHeight: 1.5,
+                                        backgroundColor: '#e6f7ff'
+                                      }}
+                                    >
+                                      {t('pricing.implant_tooltip')}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <p className="text-xs text-gray-600">Clinic Preferred Brands</p>
                             </div>
                             
-                            <div className="p-3">
-                              <h6 className="font-medium text-xs mb-2 text-gray-600">{t('pricing.recommended_combinations')}</h6>
+                            {/* Veneers Tag */}
+                            <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                              <div className="flex items-center mb-2">
+                                <span className="font-medium text-sm text-primary">Veneers</span>
+                                <TooltipProvider delayDuration={100}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button type="button" className="ml-1 flex-shrink-0" style={{ color: '#007B9E' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <circle cx="12" cy="12" r="10"></circle>
+                                          <line x1="12" y1="16" x2="12" y2="12"></line>
+                                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent 
+                                      side="top"
+                                      className="bg-white text-black border border-gray-200 p-3 text-xs max-w-[280px] min-w-[200px] shadow-lg"
+                                      style={{ 
+                                        zIndex: 9999,
+                                        whiteSpace: 'normal',
+                                        lineHeight: 1.5,
+                                        backgroundColor: '#e6f7ff'
+                                      }}
+                                    >
+                                      {t('pricing.veneer_tooltip')}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <p className="text-xs text-gray-600">Material & Look Options</p>
+                            </div>
+                            
+                            {/* Crowns Tag */}
+                            <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                              <div className="flex items-center mb-2">
+                                <span className="font-medium text-sm text-primary">Crowns</span>
+                                <TooltipProvider delayDuration={100}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button type="button" className="ml-1 flex-shrink-0" style={{ color: '#007B9E' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <circle cx="12" cy="12" r="10"></circle>
+                                          <line x1="12" y1="16" x2="12" y2="12"></line>
+                                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                        </svg>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent 
+                                      side="top"
+                                      className="bg-white text-black border border-gray-200 p-3 text-xs max-w-[280px] min-w-[200px] shadow-lg"
+                                      style={{ 
+                                        zIndex: 9999,
+                                        whiteSpace: 'normal',
+                                        lineHeight: 1.5,
+                                        backgroundColor: '#e6f7ff'
+                                      }}
+                                    >
+                                      {t('pricing.crown_tooltip')}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <p className="text-xs text-gray-600">Function vs Aesthetics</p>
+                            </div>
+                          </div>
+                          
+                          {/* Sample Quotes Section */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            {/* Left Panel: Treatment Combinations */}
+                            <div className="rounded-lg border border-gray-200 overflow-hidden">
+                              <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
+                                <h5 className="font-medium text-sm text-primary">{t('pricing.sample_quote_title')}</h5>
+                              </div>
                               
-                              {/* Basic Package */}
-                              <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
-                                <div className="flex justify-between mb-1">
-                                  <span className="text-xs font-medium">{t('pricing.simple_combination')}</span>
-                                  <span className="text-xs font-semibold text-primary">£650 - £850</span>
+                              <div className="p-3">
+                                <h6 className="font-medium text-xs mb-2 text-gray-600">{t('pricing.recommended_combinations')}</h6>
+                                
+                                {/* Basic Package */}
+                                <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-xs font-medium">{t('pricing.simple_combination')}</span>
+                                    <span className="text-xs font-semibold text-primary">£650 - £850</span>
+                                  </div>
+                                  <div className="text-[11px] text-gray-600">
+                                    • 4 Dental Fillings + Teeth Cleaning
+                                  </div>
                                 </div>
-                                <div className="text-[11px] text-gray-600">
-                                  • 4 Dental Fillings + Teeth Cleaning
+                                
+                                {/* Comprehensive Package */}
+                                <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-xs font-medium">{t('pricing.medium_combination')}</span>
+                                    <span className="text-xs font-semibold text-primary">£1,850 - £2,200</span>
+                                  </div>
+                                  <div className="text-[11px] text-gray-600">
+                                    • 2 Dental Implants + 4 Porcelain Crowns
+                                  </div>
+                                </div>
+                                
+                                {/* Premium Package */}
+                                <div className="mb-1">
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-xs font-medium">{t('pricing.advanced_combination')}</span>
+                                    <span className="text-xs font-semibold text-primary">£4,500 - £5,800</span>
+                                  </div>
+                                  <div className="text-[11px] text-gray-600">
+                                    • Full Mouth Rehabilitation: 8 Implants + 12 Zirconia Crowns
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Right Panel: Flight Cost and UK Savings */}
+                            <div className="space-y-4">
+                              {/* Flight Cost Panel */}
+                              <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
+                                  <h5 className="font-medium text-sm text-primary">{t('pricing.flight_cost_example')}</h5>
+                                </div>
+                                
+                                <div className="p-3">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-xs text-gray-600">{t('pricing.flight_cost_note')}</span>
+                                    <span className="text-sm font-semibold text-primary">£180 - £250</span>
+                                  </div>
+                                  <div className="text-[11px] text-gray-500 mt-2">
+                                    * Prices vary by season and booking time
+                                  </div>
                                 </div>
                               </div>
                               
-                              {/* Comprehensive Package */}
-                              <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
-                                <div className="flex justify-between mb-1">
-                                  <span className="text-xs font-medium">{t('pricing.medium_combination')}</span>
-                                  <span className="text-xs font-semibold text-primary">£1,850 - £2,200</span>
+                              {/* UK Savings Panel */}
+                              <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
+                                  <h5 className="font-medium text-sm text-primary">{t('pricing.uk_savings')}</h5>
                                 </div>
-                                <div className="text-[11px] text-gray-600">
-                                  • 2 Dental Implants + 4 Porcelain Crowns
-                                </div>
-                              </div>
-                              
-                              {/* Premium Package */}
-                              <div className="mb-1">
-                                <div className="flex justify-between mb-1">
-                                  <span className="text-xs font-medium">{t('pricing.advanced_combination')}</span>
-                                  <span className="text-xs font-semibold text-primary">£4,500 - £5,800</span>
-                                </div>
-                                <div className="text-[11px] text-gray-600">
-                                  • Full Mouth Rehabilitation: 8 Implants + 12 Zirconia Crowns
+                                
+                                <div className="p-3">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-xs text-gray-600">{t('pricing.uk_savings_note')}</span>
+                                    <span className="text-sm font-semibold text-green-600">60% - 70%</span>
+                                  </div>
+                                  <div className="text-[11px] text-gray-500 mt-2">
+                                    * Average savings compared to private UK dental prices
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                           
-                          <div className="mt-3 text-center">
-                            <span className="text-xs text-gray-500">* Prices are indicative and based on average treatment combinations</span>
+                          {/* Reassurance Message */}
+                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center mb-4">
+                            <p className="text-xs text-blue-700">{t('pricing.reassurance_message')}</p>
+                          </div>
+                          
+                          {/* Learn More Button */}
+                          <div className="text-center">
+                            <a 
+                              href="/how-we-quote" 
+                              className="inline-flex items-center text-xs text-primary hover:underline font-medium"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {t('pricing.learn_more_button')}
+                            </a>
                           </div>
                         </div>
                       </div>
