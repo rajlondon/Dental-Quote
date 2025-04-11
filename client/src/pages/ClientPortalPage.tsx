@@ -23,8 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 // Import client portal components
 import MessagingSection from '@/components/portal/MessagingSection';
 import DocumentsSection from '@/components/portal/DocumentsSection';
+import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
 // These will be built later:
-// import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
 // import AppointmentsSection from '@/components/portal/AppointmentsSection';
 // import SupportSection from '@/components/portal/SupportSection';
 // import TravelSection from '@/components/portal/TravelSection';
