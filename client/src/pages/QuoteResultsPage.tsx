@@ -570,14 +570,26 @@ const QuoteResultsPage: React.FC = () => {
   };
   
   const handleProceedBooking = () => {
-    // Here we would implement the booking flow
-    toast({
-      title: "Proceeding to Booking",
-      description: "This would take you to the booking/deposit page in a real implementation.",
-    });
-    
-    // In a real implementation, we would redirect to a booking page
-    // setLocation('/booking');
+    // Save the current quote data to global state
+    if (quoteData) {
+      import('@/services/quoteState').then(({ setQuoteData }) => {
+        setQuoteData(quoteData);
+        
+        // Redirect to the booking page
+        setLocation(`/booking${quoteRequestId ? `/${quoteRequestId}` : ''}`);
+        
+        toast({
+          title: t('quote_results.proceeding_to_booking'),
+          description: t('quote_results.deposit_info'),
+        });
+      });
+    } else {
+      toast({
+        title: t('quote_results.error'),
+        description: t('quote_results.no_quote_data'),
+        variant: 'destructive',
+      });
+    }
   };
   
   if (!quoteData) {

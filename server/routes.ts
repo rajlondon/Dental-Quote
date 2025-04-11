@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { storage } from "./storage";
 import { ZodError } from "zod";
-import { insertQuoteRequestSchema } from "@shared/schema";
+import { insertUserSchema, insertQuoteRequestSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import htmlPdf from "html-pdf-node";
@@ -16,6 +16,8 @@ import Handlebars from "handlebars";
 import { generateQuotePdf, generateQuotePdfV2 } from "./pdf-generator";
 import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 import { upload, handleUploadError, type UploadedFile } from "./file-upload";
+import { createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
+import Stripe from "stripe";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1025,6 +1027,234 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Payment endpoints for the booking system
+  // Check if Stripe is configured
+  app.get('/api/config/stripe', (_req, res) => {
+    res.json({
+      isConfigured: isStripeConfigured(),
+      publicKey: process.env.STRIPE_PUBLIC_KEY || ''
+    });
+  });
+
+  // Create a payment intent for the booking deposit
+  app.post('/api/create-deposit-payment-intent', async (req, res) => {
+    try {
+      const { email, currency = 'gbp' } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+      
+      if (!isStripeConfigured()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Payment processing is not available'
+        });
+      }
+      
+      // Create the payment intent for the £200 deposit
+      const paymentIntentData = await createDepositPaymentIntent(email, currency);
+      
+      if (!paymentIntentData) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create payment intent'
+        });
+      }
+      
+      // Return the client secret to the frontend
+      res.json({
+        success: true,
+        clientSecret: paymentIntentData.clientSecret,
+        paymentIntentId: paymentIntentData.paymentIntentId
+      });
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred while processing the payment intent',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Handle successful payment confirmation
+  app.post('/api/confirm-deposit-payment', async (req, res) => {
+    try {
+      const { paymentIntentId, quoteRequestId, clinicId } = req.body;
+      
+      if (!paymentIntentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment intent ID is required'
+        });
+      }
+      
+      // Retrieve the payment intent from Stripe to verify the status
+      const paymentIntent = await getPaymentIntent(paymentIntentId);
+      
+      if (!paymentIntent) {
+        return res.status(404).json({
+          success: false,
+          message: 'Payment intent not found'
+        });
+      }
+      
+      // Verify the payment was successful
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({
+          success: false,
+          message: `Payment is not complete. Status: ${paymentIntent.status}`
+        });
+      }
+      
+      // Get the quote request
+      let quoteRequest = null;
+      if (quoteRequestId) {
+        quoteRequest = await storage.getQuoteRequest(Number(quoteRequestId));
+        if (!quoteRequest) {
+          return res.status(404).json({
+            success: false,
+            message: 'Quote request not found'
+          });
+        }
+      }
+      
+      // Find or create a user account
+      const email = paymentIntent.receipt_email || '';
+      let user = await storage.getUserByEmail(email);
+      
+      // If no user exists, create one
+      if (!user && email) {
+        // Generate a temporary password - in a real scenario you'd send a reset link
+        const tempPassword = Math.random().toString(36).slice(2, 10);
+        
+        try {
+          user = await storage.createUser({
+            email,
+            password: tempPassword, // In production you would hash this
+            role: 'patient'
+          });
+        } catch (error) {
+          console.error('Error creating user account:', error);
+          // Continue with payment processing even if user creation fails
+        }
+      }
+      
+      // Create a booking record
+      let booking = null;
+      if (user) {
+        booking = await storage.createBooking({
+          userId: user.id,
+          quoteRequestId: quoteRequest?.id,
+          clinicId: clinicId ? Number(clinicId) : undefined,
+          status: 'deposit_paid',
+          depositPaid: true,
+          depositAmount: 200.00
+        });
+      }
+      
+      // Record the payment
+      if (user) {
+        await storage.createPayment({
+          userId: user.id,
+          bookingId: booking?.id,
+          amount: paymentIntent.amount / 100, // Convert from cents to pounds
+          currency: paymentIntent.currency.toUpperCase(),
+          status: 'succeeded',
+          paymentMethod: paymentIntent.payment_method_types[0] || 'card',
+          transactionId: paymentIntent.id,
+          stripePaymentIntentId: paymentIntent.id,
+          paymentType: 'deposit'
+        });
+      }
+      
+      // Return success response
+      res.json({
+        success: true,
+        message: 'Payment confirmed successfully',
+        bookingId: booking?.id
+      });
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred while confirming the payment',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Webhook to handle Stripe events
+  app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!isStripeConfigured()) {
+      return res.status(503).json({ message: 'Stripe is not configured' });
+    }
+    
+    const sig = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    // Verify the webhook signature
+    if (!webhookSecret) {
+      return res.status(500).json({ message: 'Webhook secret is not configured' });
+    }
+    
+    let event;
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+        apiVersion: '2023-10-16' as any,
+      });
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err);
+      return res.status(400).json({ message: 'Webhook signature verification failed' });
+    }
+    
+    // Handle the event
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        console.log('Payment intent succeeded:', paymentIntent.id);
+        
+        // Check if we already recorded this payment
+        const existingPayment = await storage.getPaymentByStripeId(paymentIntent.id);
+        if (!existingPayment) {
+          // Find the user by email
+          const email = paymentIntent.receipt_email || '';
+          const user = await storage.getUserByEmail(email);
+          
+          if (user) {
+            // Record the payment
+            await storage.createPayment({
+              userId: user.id,
+              amount: paymentIntent.amount / 100,
+              currency: paymentIntent.currency.toUpperCase(),
+              status: 'succeeded',
+              paymentMethod: paymentIntent.payment_method_types[0] || 'card',
+              transactionId: paymentIntent.id,
+              stripePaymentIntentId: paymentIntent.id,
+              paymentType: 'deposit'
+            });
+          }
+        }
+        break;
+        
+      case 'payment_intent.payment_failed':
+        const failedPaymentIntent = event.data.object as Stripe.PaymentIntent;
+        console.log('Payment failed:', failedPaymentIntent.id);
+        break;
+        
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+    
+    // Return a success response
+    res.json({ received: true });
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
