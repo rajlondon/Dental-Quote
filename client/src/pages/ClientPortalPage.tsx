@@ -20,11 +20,12 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 
-// Import client portal components (will be built later)
+// Import client portal components
+import MessagingSection from '@/components/portal/MessagingSection';
+import DocumentsSection from '@/components/portal/DocumentsSection';
+// These will be built later:
 // import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
-// import MessagingSection from '@/components/portal/MessagingSection';
 // import AppointmentsSection from '@/components/portal/AppointmentsSection';
-// import DocumentsSection from '@/components/portal/DocumentsSection';
 // import SupportSection from '@/components/portal/SupportSection';
 // import TravelSection from '@/components/portal/TravelSection';
 
@@ -91,11 +92,11 @@ const ClientPortalPage: React.FC = () => {
       case 'dashboard':
         return <DashboardSection />;
       case 'messages':
-        return <PlaceholderSection title="Messages" />;
+        return <MessagingSection />;
       case 'appointments':
         return <PlaceholderSection title="Appointments" />;
       case 'documents':
-        return <PlaceholderSection title="Documents" />;
+        return <DocumentsSection />;
       case 'support':
         return <PlaceholderSection title="Support" />;
       case 'profile':
