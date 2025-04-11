@@ -2074,43 +2074,101 @@ export default function PriceCalculator() {
                       </div>
                     </div>
                   ) : (
-                    <div className="min-h-[350px] flex flex-col items-center justify-center text-center text-neutral-500 bg-white rounded-lg border border-neutral-200 p-6">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-16 w-16 mb-6 text-primary/30"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                      </svg>
-                      <h4 className="text-xl font-semibold mb-2 text-primary">{t('pricing.no_quote_generated')}</h4>
-                      <p className="mb-4">{t('pricing.select_treatments_to_generate')}</p>
-                      <div className="text-sm p-3 bg-primary/5 rounded-lg max-w-md">
-                        <p className="font-medium text-primary mb-2">{t('pricing.how_it_works')}:</p>
-                        <ol className="text-left space-y-2">
-                          <li className="flex">
-                            <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">1</span>
-                            <span>{t('pricing.step_select_treatments')}</span>
-                          </li>
-                          <li className="flex">
-                            <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">2</span>
-                            <span>{t('pricing.step_enter_details')}</span>
-                          </li>
-                          <li className="flex">
-                            <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">3</span>
-                            <span>{t('pricing.step_calculate_quote')}</span>
-                          </li>
-                        </ol>
+                    <div className="min-h-[350px] flex flex-col text-neutral-700 bg-white rounded-lg border border-neutral-200 p-6">
+                      <div className="flex flex-col sm:flex-row gap-6">
+                        {/* Left Panel: How to generate a quote */}
+                        <div className="w-full sm:w-1/3 flex flex-col items-center text-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-10 w-10 mb-3 text-primary/50"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          <h4 className="text-lg font-semibold mb-2 text-primary">{t('pricing.no_quote_generated')}</h4>
+                          <p className="mb-3 text-sm">{t('pricing.select_treatments_to_generate')}</p>
+                          <div className="text-xs p-3 bg-primary/5 rounded-lg w-full">
+                            <p className="font-medium text-primary mb-2">{t('pricing.how_it_works')}:</p>
+                            <ol className="text-left space-y-1.5">
+                              <li className="flex">
+                                <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">1</span>
+                                <span>{t('pricing.step_select_treatments')}</span>
+                              </li>
+                              <li className="flex">
+                                <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">2</span>
+                                <span>{t('pricing.step_enter_details')}</span>
+                              </li>
+                              <li className="flex">
+                                <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">3</span>
+                                <span>{t('pricing.step_calculate_quote')}</span>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        
+                        {/* Right Panel: Sample Quote and Recommendations */}
+                        <div className="w-full sm:w-2/3 border-t sm:border-t-0 sm:border-l border-gray-200 sm:pl-6 pt-6 sm:pt-0">
+                          <h4 className="text-lg font-semibold mb-3 text-primary">{t('pricing.get_accurate_quote_title')}</h4>
+                          <p className="text-sm mb-4">{t('pricing.sample_quote_explanation')}</p>
+                          
+                          <div className="rounded-lg border border-gray-200 overflow-hidden">
+                            <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
+                              <h5 className="font-medium text-sm text-primary">{t('pricing.sample_quote_title')}</h5>
+                            </div>
+                            
+                            <div className="p-3">
+                              <h6 className="font-medium text-xs mb-2 text-gray-600">{t('pricing.recommended_combinations')}</h6>
+                              
+                              {/* Basic Package */}
+                              <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
+                                <div className="flex justify-between mb-1">
+                                  <span className="text-xs font-medium">{t('pricing.simple_combination')}</span>
+                                  <span className="text-xs font-semibold text-primary">£650 - £850</span>
+                                </div>
+                                <div className="text-[11px] text-gray-600">
+                                  • 4 Dental Fillings + Teeth Cleaning
+                                </div>
+                              </div>
+                              
+                              {/* Comprehensive Package */}
+                              <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
+                                <div className="flex justify-between mb-1">
+                                  <span className="text-xs font-medium">{t('pricing.medium_combination')}</span>
+                                  <span className="text-xs font-semibold text-primary">£1,850 - £2,200</span>
+                                </div>
+                                <div className="text-[11px] text-gray-600">
+                                  • 2 Dental Implants + 4 Porcelain Crowns
+                                </div>
+                              </div>
+                              
+                              {/* Premium Package */}
+                              <div className="mb-1">
+                                <div className="flex justify-between mb-1">
+                                  <span className="text-xs font-medium">{t('pricing.advanced_combination')}</span>
+                                  <span className="text-xs font-semibold text-primary">£4,500 - £5,800</span>
+                                </div>
+                                <div className="text-[11px] text-gray-600">
+                                  • Full Mouth Rehabilitation: 8 Implants + 12 Zirconia Crowns
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 text-center">
+                            <span className="text-xs text-gray-500">* Prices are indicative and based on average treatment combinations</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
