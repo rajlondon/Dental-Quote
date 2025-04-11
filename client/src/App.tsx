@@ -36,6 +36,7 @@ function Router() {
       <Route path="/your-quote" component={QuoteResultsPage} />
       <Route path="/booking" component={BookingPage} />
       <Route path="/portal" component={ClientPortalPage} />
+      <Route path="/client-portal" component={ClientPortalPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {
