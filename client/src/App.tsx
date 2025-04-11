@@ -33,6 +33,7 @@ function Router() {
       <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={QuoteResultsPage} />
+      <Route path="/booking" component={BookingPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {

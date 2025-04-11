@@ -1,388 +1,212 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { AlertCircle, CheckCircle, CreditCard, Lock } from 'lucide-react';
-import { 
-  loadStripe, 
-  Stripe, 
-  StripeElementsOptions, 
-  StripePaymentElementOptions 
-} from '@stripe/stripe-js';
-import { 
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js';
-
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
+import { CardElement, useStripe, useElements, Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
-// Get the Stripe publishable key from environment
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY as string);
-
-// Stripe Payment Form Component
-interface StripePaymentFormProps {
-  clientSecret: string;
-  amount: number;
-  currency: string;
-  onProcessingChange: (isProcessing: boolean) => void;
-  onPaymentComplete: (success: boolean, bookingId?: number) => void;
+// Define the prop types for the component
+export interface PaymentFormProps {
+  email: string;
+  onSuccess?: () => void;
 }
 
-const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
-  clientSecret,
-  amount,
-  currency,
-  onProcessingChange,
-  onPaymentComplete,
-}) => {
+// Styling for the Stripe card element
+const cardElementOptions = {
+  style: {
+    base: {
+      fontSize: '16px',
+      color: '#424770',
+      fontFamily: 'Arial, sans-serif',
+      '::placeholder': {
+        color: '#aab7c4',
+      },
+    },
+    invalid: {
+      color: '#9e2146',
+    },
+  },
+  hidePostalCode: true,
+};
+
+// The actual payment form component wrapped with Stripe context
+const PaymentFormContent: React.FC<PaymentFormProps> = ({ email, onSuccess }) => {
   const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
-  const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [isPaymentComplete, setIsPaymentComplete] = useState<boolean>(false);
   const { toast } = useToast();
-
-  // Configure the appearance of the payment element
-  const paymentElementOptions: StripePaymentElementOptions = {
-    layout: 'tabs',
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsProcessing(true);
-    onProcessingChange(true);
-    setError(null);
-
-    try {
-      // Confirm the payment with Stripe
-      const result = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          // We don't use return_url here as we want to handle the confirmation in the client
-          // instead of redirecting to a separate page - we'll manually update the UI
-        },
-        redirect: 'if_required',
-      });
-
-      if (result.error) {
-        // Show error to your customer
-        setError(result.error.message || t('payment.generic_error'));
-        toast({
-          title: t('payment.error'),
-          description: result.error.message || t('payment.generic_error'),
-          variant: 'destructive',
-        });
-      } else {
-        // The payment was successful
-        if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-          setIsPaymentComplete(true);
-          toast({
-            title: t('payment.success'),
-            description: t('payment.payment_succeeded'),
-          });
-          
-          // Extract booking ID from the metadata if available
-          const metadata = (result.paymentIntent as any).metadata;
-          const bookingId = metadata && metadata.bookingId
-            ? parseInt(metadata.bookingId, 10) 
-            : undefined;
-            
-          onPaymentComplete(true, bookingId);
-        } else {
-          // Payment requires additional action or handling
-          onPaymentComplete(false);
-          setError(t('payment.additional_action_required'));
-        }
-      }
-    } catch (err) {
-      console.error('Payment error:', err);
-      setError(t('payment.generic_error'));
-      onPaymentComplete(false);
-    } finally {
-      setIsProcessing(false);
-      onProcessingChange(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('payment.error')}</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {isPaymentComplete ? (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          <AlertTitle className="text-green-800">{t('payment.success')}</AlertTitle>
-          <AlertDescription className="text-green-700">
-            {t('payment.payment_succeeded')}
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <>
-          <div className="space-y-4">
-            <PaymentElement options={paymentElementOptions} />
-            
-            <div className="flex items-center text-sm text-gray-500 mt-4">
-              <Lock className="mr-2 h-4 w-4" />
-              <span>{t('payment.secure_transaction')}</span>
-            </div>
-          </div>
-
-          <Button 
-            type="submit" 
-            disabled={!stripe || isProcessing} 
-            className="w-full"
-          >
-            {isProcessing ? (
-              <div className="flex items-center">
-                <Spinner className="mr-2" />
-                {t('payment.processing')}
-              </div>
-            ) : (
-              <>
-                {t('payment.pay_now')} {currency.toUpperCase()} {amount.toFixed(2)}
-              </>
-            )}
-          </Button>
-        </>
-      )}
-    </form>
-  );
-};
-
-// Main Payment Form Component that handles the form and API integration
-interface PaymentFormProps {
-  amount: number; // in whole currency units (e.g., pounds, not pennies)
-  currency: string;
-  email: string;
-  quoteRequestId?: number;
-  clinicId?: number;
-  onProcessingChange: (isProcessing: boolean) => void;
-  onPaymentComplete: (success: boolean, bookingId?: number) => void;
-}
-
-// Define form validation schema
-const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-const PaymentForm: React.FC<PaymentFormProps> = ({
-  amount,
-  currency,
-  email,
-  quoteRequestId,
-  clinicId,
-  onProcessingChange,
-  onPaymentComplete,
-}) => {
-  const { t } = useTranslation();
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
-  // Initialize form with default values
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: email || '',
-      firstName: '',
-      lastName: '',
-    },
-  });
-
-  // Fetch the payment intent client secret from the server
+  // Get a payment intent from the server when the component mounts
   useEffect(() => {
-    const createPaymentIntent = async () => {
-      setIsLoading(true);
-      setError(null);
-
+    const getPaymentIntent = async () => {
       try {
-        // For deposit payment, use the dedicated deposit endpoint
-        const endpoint = '/api/create-deposit-payment-intent';
-        const customerEmail = form.getValues('email');
-        const customerName = `${form.getValues('firstName')} ${form.getValues('lastName')}`;
-        
-        const response = await fetch(endpoint, {
+        setIsProcessing(true);
+        const response = await fetch('/api/create-deposit-payment-intent', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            email: customerEmail,
-            currency,
-            quoteRequestId,
-            clinicId,
-            name: customerName,
-          }),
+          body: JSON.stringify({ email }),
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to create payment intent');
-        }
-
+        
         const data = await response.json();
-        setClientSecret(data.clientSecret);
+
+        if (data.success && data.clientSecret) {
+          setClientSecret(data.clientSecret);
+        } else {
+          setError(data.message || 'Failed to create payment intent');
+          toast({
+            title: t('payment.error', 'Error'),
+            description: data.message || t('payment.failed_intent', 'Failed to create payment intent'),
+            variant: 'destructive',
+          });
+        }
       } catch (err) {
-        console.error('Error creating payment intent:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        console.error('Payment intent error:', err);
+        setError(t('payment.failed_intent', 'Failed to create payment intent'));
         toast({
-          title: t('payment.error'),
-          description: err instanceof Error ? err.message : t('payment.generic_error'),
+          title: t('payment.error', 'Error'),
+          description: t('payment.failed_intent', 'Failed to create payment intent'),
           variant: 'destructive',
         });
       } finally {
-        setIsLoading(false);
+        setIsProcessing(false);
       }
     };
 
-    if (form.formState.isValid) {
-      createPaymentIntent();
+    getPaymentIntent();
+  }, [email, t, toast]);
+
+  // Handle form submission and payment confirmation
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!stripe || !elements || !clientSecret) {
+      return;
     }
-  }, [amount, currency, quoteRequestId, clinicId, form.formState.isValid, t, toast]);
 
-  const onSubmit = (data: FormValues) => {
-    // This function handles the form submission before Stripe payment
-    console.log('Form data submitted:', data);
-    // The actual payment processing is handled by the Stripe component
+    try {
+      setIsProcessing(true);
+      setError(null);
+
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error('Card element not found');
+      }
+
+      // Confirm the payment with Stripe
+      const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            email,
+          },
+        },
+      });
+
+      if (paymentError) {
+        setError(paymentError.message || 'Payment failed');
+        toast({
+          title: t('payment.failed', 'Payment Failed'),
+          description: paymentError.message || t('payment.generic_error', 'An error occurred during payment processing'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (paymentIntent.status === 'succeeded') {
+        // Payment successful
+        toast({
+          title: t('payment.success', 'Payment Successful'),
+          description: t('payment.deposit_confirmed', 'Your £200 deposit has been confirmed'),
+        });
+
+        // Call the success callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      setError(t('payment.processing_error', 'Error processing payment'));
+      toast({
+        title: t('payment.error', 'Error'),
+        description: t('payment.processing_error', 'Error processing payment'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // Configure the appearance for Stripe Elements
-  const appearance = {
-    theme: 'stripe' as const,
-    variables: {
-      colorPrimary: '#007B9E',
-      colorBackground: '#ffffff',
-      colorText: '#333333',
-      colorDanger: '#ef4444',
-      fontSizeBase: '16px',
-      borderRadius: '4px',
-    },
-  };
-
-  const options: StripeElementsOptions = {
-    clientSecret,
-    appearance,
-  };
+  if (!clientSecret) {
+    return (
+      <div className="text-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+        <p>{t('payment.loading', 'Preparing payment form...')}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('payment.error')}</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('payment.first_name')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('payment.first_name_placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('payment.last_name')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('payment.last_name_placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="card-element" className="block text-sm font-medium">
+            {t('payment.card_details', 'Card Details')}
+          </label>
+          <div className="border rounded-md p-3">
+            <CardElement id="card-element" options={cardElementOptions} />
           </div>
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('payment.email')}</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="email" 
-                    placeholder={t('payment.email_placeholder')} 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
-
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-6">
-          <Spinner className="mb-2" />
-          <p className="text-gray-500">{t('payment.loading')}</p>
+          {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
         </div>
-      ) : clientSecret ? (
-        <div className="border rounded-md p-4 bg-gray-50">
-          <h3 className="font-medium mb-4 flex items-center">
-            <CreditCard className="mr-2 h-5 w-5" />
-            {t('payment.payment_details')}
-          </h3>
-          
-          <Elements stripe={stripePromise} options={options}>
-            <StripePaymentForm
-              clientSecret={clientSecret}
-              amount={amount}
-              currency={currency}
-              onProcessingChange={onProcessingChange}
-              onPaymentComplete={onPaymentComplete}
-            />
-          </Elements>
+
+        <div className="flex items-center justify-between">
+          <div className="text-sm">
+            <span className="text-gray-500">
+              {t('payment.secure_transaction', 'Secure transaction')}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium mr-2">
+              {t('payment.amount', 'Amount:')}
+            </span>
+            <span className="font-bold">£200.00</span>
+          </div>
         </div>
-      ) : (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('payment.form_incomplete')}</AlertTitle>
-          <AlertDescription>
-            {t('payment.complete_form_to_proceed')}
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
+
+        <Button 
+          type="submit" 
+          disabled={isProcessing || !stripe} 
+          className="w-full"
+        >
+          {isProcessing ? (
+            <>
+              <span className="mr-2">{t('payment.processing', 'Processing...')}</span>
+              <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
+            </>
+          ) : (
+            t('payment.pay_deposit', 'Pay £200 Deposit')
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+// Get Stripe public key from environment variable
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY as string);
+
+// Main component that wraps the payment form with Stripe Elements
+const PaymentForm: React.FC<PaymentFormProps> = (props) => {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentFormContent {...props} />
+    </Elements>
   );
 };
 

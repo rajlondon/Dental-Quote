@@ -1,3 +1,4 @@
+// Define interface for quote items
 export interface QuoteItem {
   treatment: string;
   priceGBP: number;
@@ -8,6 +9,7 @@ export interface QuoteItem {
   guarantee: string;
 }
 
+// Define clinic information interface
 export interface ClinicInfo {
   id: string;
   name: string;
@@ -23,6 +25,26 @@ export interface ClinicInfo {
   description: string;
 }
 
+// Interface for clinic comparison in quotes
+export interface ClinicComparison {
+  name: string;
+  priceGBP: number;
+  extras?: string;
+  location?: string;
+  guarantee?: string;
+  rating?: string;
+}
+
+// Interface for uploaded X-ray files
+export interface UploadedFile {
+  filename: string;
+  originalname: string;
+  path: string;
+  size: number;
+  mimetype: string;
+}
+
+// Main interface for quote data
 export interface QuoteData {
   items: QuoteItem[];
   totalGBP: number;
@@ -32,10 +54,13 @@ export interface QuoteData {
   patientPhone?: string;
   travelMonth?: string;
   departureCity?: string;
-  flightCostGBP?: number;
-  flightCostUSD?: number;
+  clinics?: ClinicComparison[];
+  hasXrays?: boolean;
+  xrayCount?: number;
+  selectedClinicIndex?: number;
+  xrayFiles?: UploadedFile[];
   hasLondonConsult?: boolean;
+  londonConsult?: 'yes' | 'no';
   londonConsultCostGBP?: number;
   londonConsultCostUSD?: number;
-  selectedClinicIndex?: number;
 }
