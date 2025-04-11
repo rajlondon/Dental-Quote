@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState as useHookState } from '@hookstate/core';
+import { useHookstate } from '@hookstate/core';
 import { globalQuoteState } from '@/services/quoteState';
 import PaymentForm from '@/components/PaymentForm';
 import { Check, Shield, Info, AlertCircle, Clock } from 'lucide-react';
@@ -53,22 +53,22 @@ const BookingPage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const [match, params] = useRoute('/booking/:quoteId?');
   const { toast } = useToast();
-  const quoteState = useHookState(globalQuoteState);
+  const quoteState = useHookstate(globalQuoteState);
   
   const [currentStep, setCurrentStep] = useState('info');
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [bookingId, setBookingId] = useState<number | null>(null);
   
-  const quoteData = quoteState.value || {};
+  const quoteData = quoteState.value || null;
   const quoteId = params?.quoteId || '';
   
   // If no quote data is available, redirect to home
   useEffect(() => {
-    if (!quoteData || !quoteData.items || quoteData.items.length === 0) {
+    if (!quoteData) {
       toast({
-        title: t('booking.no_quote_data'),
-        description: t('booking.start_new_quote'),
+        title: t('booking.no_quote_data', 'No Quote Available'),
+        description: t('booking.start_new_quote', 'Please start a new quote calculation.'),
         variant: 'destructive',
       });
       setLocation('/');
@@ -189,7 +189,7 @@ const BookingPage: React.FC = () => {
                   <PaymentForm 
                     amount={200} 
                     currency="gbp"
-                    email={quoteData.patientEmail || ''}
+                    email={quoteData?.patientEmail || ''}
                     quoteRequestId={quoteId ? parseInt(quoteId, 10) : undefined}
                     onProcessingChange={setIsPaymentProcessing}
                     onPaymentComplete={(success, bookingID) => {

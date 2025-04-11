@@ -575,18 +575,18 @@ const QuoteResultsPage: React.FC = () => {
       import('@/services/quoteState').then(({ setQuoteData }) => {
         setQuoteData(quoteData);
         
-        // Redirect to the booking page
-        setLocation(`/booking${quoteRequestId ? `/${quoteRequestId}` : ''}`);
+        // Redirect to the booking page - for now without specific quote ID
+        setLocation(`/booking`);
         
         toast({
-          title: t('quote_results.proceeding_to_booking'),
-          description: t('quote_results.deposit_info'),
+          title: t('quote_results.proceeding_to_booking', 'Proceeding to booking'),
+          description: t('quote_results.deposit_info', 'You will be required to pay a £200 deposit to secure your booking.'),
         });
       });
     } else {
       toast({
-        title: t('quote_results.error'),
-        description: t('quote_results.no_quote_data'),
+        title: t('quote_results.error', 'Error'),
+        description: t('quote_results.no_quote_data', 'No quote data available. Please create a new quote.'),
         variant: 'destructive',
       });
     }

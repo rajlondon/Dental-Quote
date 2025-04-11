@@ -16,7 +16,7 @@ import Handlebars from "handlebars";
 import { generateQuotePdf, generateQuotePdfV2 } from "./pdf-generator";
 import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 import { upload, handleUploadError, type UploadedFile } from "./file-upload";
-import { createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
+import { createPaymentIntent, createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
 import Stripe from "stripe";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1037,6 +1037,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a payment intent for the booking deposit
+  // Create a general payment intent
+  app.post('/api/create-payment-intent', async (req, res) => {
+    try {
+      const { amount, currency = 'gbp', quoteRequestId, clinicId, metadata = {} } = req.body;
+      
+      if (!amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Amount is required'
+        });
+      }
+      
+      if (!isStripeConfigured()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Payment processing is not available'
+        });
+      }
+      
+      // Add additional metadata if provided
+      const paymentMetadata: Record<string, string> = {
+        ...metadata
+      };
+      
+      if (quoteRequestId) {
+        paymentMetadata.quoteRequestId = String(quoteRequestId);
+      }
+      
+      if (clinicId) {
+        paymentMetadata.clinicId = String(clinicId);
+      }
+      
+      // Create the payment intent
+      const paymentIntentData = await createPaymentIntent(
+        amount,
+        currency,
+        paymentMetadata
+      );
+      
+      res.status(200).json({
+        success: true,
+        clientSecret: paymentIntentData.clientSecret,
+        paymentIntentId: paymentIntentData.id
+      });
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create payment intent',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Create a deposit payment intent (£200)
   app.post('/api/create-deposit-payment-intent', async (req, res) => {
     try {
       const { email, currency = 'gbp' } = req.body;
