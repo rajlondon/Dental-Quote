@@ -2148,7 +2148,7 @@ export default function PriceCalculator() {
                                         backgroundColor: '#e6f7ff'
                                       }}
                                     >
-                                      {t('pricing.implant_tooltip')}
+                                      Clinics use trusted implant brands for durability & patient safety. If you have a brand preference, let us know — we'll match you where possible.
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -2181,7 +2181,7 @@ export default function PriceCalculator() {
                                         backgroundColor: '#e6f7ff'
                                       }}
                                     >
-                                      {t('pricing.veneer_tooltip')}
+                                      Veneers come in various materials — chosen for beauty and long-lasting quality. Your clinic will guide you on the best choice for your smile.
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -2214,7 +2214,7 @@ export default function PriceCalculator() {
                                         backgroundColor: '#e6f7ff'
                                       }}
                                     >
-                                      {t('pricing.crown_tooltip')}
+                                      Crowns protect your teeth — clinics use brands known for strength & fit. Cosmetic preferences can be discussed during your consultation.
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -2274,12 +2274,12 @@ export default function PriceCalculator() {
                               {/* Flight Cost Panel */}
                               <div className="rounded-lg border border-gray-200 overflow-hidden">
                                 <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
-                                  <h5 className="font-medium text-sm text-primary">{t('pricing.flight_cost_example')}</h5>
+                                  <h5 className="font-medium text-sm text-primary">Sample Flight Cost</h5>
                                 </div>
                                 
                                 <div className="p-3">
                                   <div className="flex justify-between items-center mb-1">
-                                    <span className="text-xs text-gray-600">{t('pricing.flight_cost_note')}</span>
+                                    <span className="text-xs text-gray-600">Average round-trip from London to Istanbul</span>
                                     <span className="text-sm font-semibold text-primary">£180 - £250</span>
                                   </div>
                                   <div className="text-[11px] text-gray-500 mt-2">
@@ -2291,12 +2291,12 @@ export default function PriceCalculator() {
                               {/* UK Savings Panel */}
                               <div className="rounded-lg border border-gray-200 overflow-hidden">
                                 <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
-                                  <h5 className="font-medium text-sm text-primary">{t('pricing.uk_savings')}</h5>
+                                  <h5 className="font-medium text-sm text-primary">Average savings compared to UK prices</h5>
                                 </div>
                                 
                                 <div className="p-3">
                                   <div className="flex justify-between items-center mb-1">
-                                    <span className="text-xs text-gray-600">{t('pricing.uk_savings_note')}</span>
+                                    <span className="text-xs text-gray-600">Based on UK private dental pricing surveys</span>
                                     <span className="text-sm font-semibold text-green-600">60% - 70%</span>
                                   </div>
                                   <div className="text-[11px] text-gray-500 mt-2">
@@ -2309,7 +2309,7 @@ export default function PriceCalculator() {
                           
                           {/* Reassurance Message */}
                           <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center mb-4">
-                            <p className="text-xs text-blue-700">{t('pricing.reassurance_message')}</p>
+                            <p className="text-xs text-blue-700">Remember — your quote today gives you a clear guide on treatment pricing. Your final treatment plan will be tailored after your X-rays & consultation with our partner clinics however you will have the price list for your preferred clinic prior to the consultation to refer to.</p>
                           </div>
                           
                           {/* Learn More Button */}
@@ -2321,7 +2321,7 @@ export default function PriceCalculator() {
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              {t('pricing.learn_more_button')}
+                              Learn More About How We Quote
                             </a>
                           </div>
                         </div>
