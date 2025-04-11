@@ -268,6 +268,123 @@ const ClinicCard: React.FC<{
 
 const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  
+  // Handle downloading the quote
+  const handleDownloadQuote = async () => {
+    if (!quoteData) {
+      toast({
+        title: t('quote_results.error', 'Error'),
+        description: t('quote_results.no_quote_data', 'No quote data available. Please create a new quote.'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsDownloading(true);
+    
+    try {
+      // Use the server-side API endpoint to generate the PDF
+      const response = await fetch('/api/jspdf-quote-v2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quoteData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error generating PDF: ${response.statusText}`);
+      }
+      
+      // Get the PDF blob
+      const pdfBlob = await response.blob();
+      
+      // Generate a download link for the PDF
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate formatted filename with date
+      const now = new Date();
+      const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const filename = `IstanbulDentalSmile_Quote_${formattedDate}.pdf`;
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      
+      toast({
+        title: t('quote_results.download_success', 'Download Complete'),
+        description: t('quote_results.download_success_message', 'Your quote has been downloaded successfully.'),
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: t('quote_results.download_error', 'Download Failed'),
+        description: t('quote_results.download_error_message', 'Failed to generate and download your quote. Please try again.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  
+  // Handle emailing the quote
+  const handleEmailQuote = async () => {
+    if (!quoteData || !quoteData.patientEmail) {
+      toast({
+        title: t('quote_results.error', 'Error'),
+        description: t('quote_results.no_email', 'No email address available. Please create a new quote with your email.'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsEmailing(true);
+    
+    try {
+      // Use the server-side API endpoint to email the quote
+      const response = await fetch('/api/email-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quoteData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send email');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: t('quote_results.email_success', 'Email Sent'),
+          description: t('quote_results.email_success_message', `Your quote has been sent to ${quoteData.patientEmail}`),
+        });
+      } else {
+        throw new Error(data.message || 'Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error emailing quote:', error);
+      toast({
+        title: t('quote_results.email_error', 'Email Failed'),
+        description: t('quote_results.email_error_message', 'Failed to email your quote. Please try again.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsEmailing(false);
+    }
+  };
   
   // Calculate the actual total including treatments, flights, and london consult
   // First check if flights are already included in the items array to avoid double-counting
