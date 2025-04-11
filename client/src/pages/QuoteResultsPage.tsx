@@ -573,40 +573,38 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
         </div>
       </div>
       
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-4">
         <Button 
-          variant="outline" 
-          className="flex items-center"
+          className="flex items-center bg-primary text-white hover:bg-primary/90 px-6 py-5 h-auto text-base"
           onClick={handleDownloadQuote}
           disabled={isDownloading}
         >
           {isDownloading ? (
             <>
-              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-primary" />
+              <div className="h-5 w-5 mr-2 animate-spin rounded-full border-b-2 border-white" />
               {t('quote_results.downloading', 'Downloading...')}
             </>
           ) : (
             <>
-              <Download className="h-4 w-4 mr-2" />
-              {t('quote_results.download_quote', 'Download Quote')}
+              <Download className="h-5 w-5 mr-2" />
+              {t('quote_results.download_quote', 'Download Your Custom PDF Quote')}
             </>
           )}
         </Button>
         <Button 
-          variant="outline" 
-          className="flex items-center"
+          className="flex items-center bg-primary text-white hover:bg-primary/90 px-6 py-5 h-auto text-base"
           onClick={handleEmailQuote}
           disabled={isEmailing}
         >
           {isEmailing ? (
             <>
-              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-primary" />
+              <div className="h-5 w-5 mr-2 animate-spin rounded-full border-b-2 border-white" />
               {t('quote_results.emailing', 'Sending Email...')}
             </>
           ) : (
             <>
-              <Mail className="h-4 w-4 mr-2" />
-              {t('quote_results.email_quote', 'Email Quote')}
+              <Mail className="h-5 w-5 mr-2" />
+              {t('quote_results.email_quote', 'Email Your Custom PDF Quote')}
             </>
           )}
         </Button>
