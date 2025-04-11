@@ -575,7 +575,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       
       <div className="flex flex-wrap gap-4">
         <Button 
-          className="flex items-center bg-primary text-white hover:bg-primary/90 px-6 py-5 h-auto text-base"
+          className="flex items-center bg-blue-600 text-white hover:bg-blue-700 px-6 py-5 h-auto text-base font-medium rounded-md"
           onClick={handleDownloadQuote}
           disabled={isDownloading}
         >
@@ -592,7 +592,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           )}
         </Button>
         <Button 
-          className="flex items-center bg-primary text-white hover:bg-primary/90 px-6 py-5 h-auto text-base"
+          className="flex items-center bg-blue-600 text-white hover:bg-blue-700 px-6 py-5 h-auto text-base font-medium rounded-md"
           onClick={handleEmailQuote}
           disabled={isEmailing}
         >
@@ -766,7 +766,7 @@ const QuoteResultsPage: React.FC = () => {
                 {selectedClinicIndex !== null && (
                   <Button 
                     size="lg" 
-                    className="flex items-center"
+                    className="flex items-center bg-blue-600 text-white hover:bg-blue-700 font-medium"
                     onClick={handleProceedBooking}
                   >
                     {t('quote_results.proceed_booking', 'Proceed to Booking')}
@@ -818,7 +818,7 @@ const QuoteResultsPage: React.FC = () => {
                     <h3 className="font-bold text-green-800 mb-2">Ready to proceed?</h3>
                     <p className="text-green-700 text-sm mb-4">You've selected {CLINIC_DATA[selectedClinicIndex].name}. Click below to start the booking process.</p>
                     <Button 
-                      className="w-full"
+                      className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium"
                       onClick={handleProceedBooking}
                     >
                       {t('quote_results.proceed_booking', 'Proceed to Booking')}
