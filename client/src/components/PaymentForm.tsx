@@ -72,7 +72,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       const result = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/booking/confirmation`,
+          // We don't use return_url here as we want to handle the confirmation in the client
+          // instead of redirecting to a separate page - we'll manually update the UI
         },
         redirect: 'if_required',
       });
@@ -220,23 +221,22 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       setError(null);
 
       try {
-        // Convert amount to cents/pennies for Stripe
-        const amountInSmallestUnit = Math.round(amount * 100);
+        // For deposit payment, use the dedicated deposit endpoint
+        const endpoint = '/api/create-deposit-payment-intent';
+        const customerEmail = form.getValues('email');
+        const customerName = `${form.getValues('firstName')} ${form.getValues('lastName')}`;
         
-        const response = await fetch('/api/create-payment-intent', {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            amount: amountInSmallestUnit,
+            email: customerEmail,
             currency,
             quoteRequestId,
             clinicId,
-            metadata: {
-              customerEmail: form.getValues('email'),
-              customerName: `${form.getValues('firstName')} ${form.getValues('lastName')}`,
-            },
+            name: customerName,
           }),
         });
 
