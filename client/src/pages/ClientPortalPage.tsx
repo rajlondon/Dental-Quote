@@ -56,6 +56,7 @@ const mockBookingData = {
 const navItems = [
   { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, id: 'dashboard' },
   { label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, id: 'messages', notificationCount: 3 },
+  { label: 'Treatment Plan', icon: <FileText className="h-5 w-5" />, id: 'treatment_plan' },
   { label: 'Appointments', icon: <Calendar className="h-5 w-5" />, id: 'appointments' },
   { label: 'Documents', icon: <FileText className="h-5 w-5" />, id: 'documents' },
   { label: 'Support', icon: <UserCog className="h-5 w-5" />, id: 'support' },
@@ -90,7 +91,7 @@ const ClientPortalPage: React.FC = () => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <DashboardSection />;
+        return <DashboardSection setActiveSection={setActiveSection} />;
       case 'messages':
         return <MessagingSection />;
       case 'appointments':
@@ -101,8 +102,10 @@ const ClientPortalPage: React.FC = () => {
         return <PlaceholderSection title="Support" />;
       case 'profile':
         return <PlaceholderSection title="My Details" />;
+      case 'treatment_plan':
+        return <TreatmentPlanSection />;
       default:
-        return <DashboardSection />;
+        return <DashboardSection setActiveSection={setActiveSection} />;
     }
   };
 
@@ -241,7 +244,11 @@ const ClientPortalPage: React.FC = () => {
 };
 
 // Dashboard section component
-const DashboardSection: React.FC = () => {
+interface DashboardSectionProps {
+  setActiveSection: (section: string) => void;
+}
+
+const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const { t } = useTranslation();
   
   return (
@@ -285,7 +292,10 @@ const DashboardSection: React.FC = () => {
               <span className="font-medium">{t('portal.dashboard.total', 'Total')}:</span>
               <span className="font-bold">£{mockBookingData.treatmentPlan.totalGBP}</span>
             </div>
-            <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+              onClick={() => setActiveSection('treatment_plan')}
+            >
               {t('portal.dashboard.view_treatment_plan', 'View Full Treatment Plan')}
             </Button>
           </CardContent>
