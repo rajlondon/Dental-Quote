@@ -1124,7 +1124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         clientSecret: paymentIntentData.clientSecret,
-        paymentIntentId: paymentIntentData.paymentIntentId
+        paymentIntentId: paymentIntentData.id
       });
     } catch (error) {
       console.error('Error creating payment intent:', error);
@@ -1208,7 +1208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clinicId: clinicId ? Number(clinicId) : undefined,
           status: 'deposit_paid',
           depositPaid: true,
-          depositAmount: 200.00
+          depositAmount: "200.00"
         });
       }
       
@@ -1217,7 +1217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createPayment({
           userId: user.id,
           bookingId: booking?.id,
-          amount: paymentIntent.amount / 100, // Convert from cents to pounds
+          amount: String(paymentIntent.amount / 100), // Convert from cents to pounds as string
           currency: paymentIntent.currency.toUpperCase(),
           status: 'succeeded',
           paymentMethod: paymentIntent.payment_method_types[0] || 'card',
@@ -1285,7 +1285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Record the payment
             await storage.createPayment({
               userId: user.id,
-              amount: paymentIntent.amount / 100,
+              amount: String(paymentIntent.amount / 100),
               currency: paymentIntent.currency.toUpperCase(),
               status: 'succeeded',
               paymentMethod: paymentIntent.payment_method_types[0] || 'card',
