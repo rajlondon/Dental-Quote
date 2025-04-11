@@ -457,13 +457,41 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       </div>
       
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" className="flex items-center">
-          <Download className="h-4 w-4 mr-2" />
-          Download Quote
+        <Button 
+          variant="outline" 
+          className="flex items-center"
+          onClick={handleDownloadQuote}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-primary" />
+              {t('quote_results.downloading', 'Downloading...')}
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 mr-2" />
+              {t('quote_results.download_quote', 'Download Quote')}
+            </>
+          )}
         </Button>
-        <Button variant="outline" className="flex items-center">
-          <Mail className="h-4 w-4 mr-2" />
-          Email Quote
+        <Button 
+          variant="outline" 
+          className="flex items-center"
+          onClick={handleEmailQuote}
+          disabled={isEmailing}
+        >
+          {isEmailing ? (
+            <>
+              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-primary" />
+              {t('quote_results.emailing', 'Sending Email...')}
+            </>
+          ) : (
+            <>
+              <Mail className="h-4 w-4 mr-2" />
+              {t('quote_results.email_quote', 'Email Quote')}
+            </>
+          )}
         </Button>
       </div>
     </div>
