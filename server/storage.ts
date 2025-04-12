@@ -1,319 +1,642 @@
-import { 
-  users, type User, type InsertUser, 
-  type InsertQuoteRequest, type QuoteRequest, quoteRequests,
-  type InsertBooking, type Booking, bookings,
-  type InsertPayment, type Payment, payments,
-  type InsertFile, type File, files,
-  type InsertMessage, type Message, messages,
-  type InsertClinic, type Clinic, clinics
-} from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, or, isNull } from "drizzle-orm";
+import createMemoryStore from "memorystore";
+import session from "express-session";
+import {
+  users, User, InsertUser,
+  quoteRequests, QuoteRequest, InsertQuoteRequest,
+  quoteVersions, QuoteVersion, InsertQuoteVersion,
+  bookings, Booking, InsertBooking,
+  payments, Payment, InsertPayment,
+  appointments, Appointment, InsertAppointment,
+  files, File, InsertFile,
+  messages, Message, InsertMessage,
+  clinics, Clinic, InsertClinic,
+  clinicReviews, ClinicReview, InsertClinicReview,
+  notifications, Notification, InsertNotification
+} from "@shared/schema";
 
-// Define the storage interface
+// Memory store for session storage
+const MemoryStore = createMemoryStore(session);
+
+// Storage interface for all database operations
 export interface IStorage {
-  // User methods
+  // Session store for authentication
+  sessionStore: session.SessionStore;
+
+  // User management
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
+  createUser(data: InsertUser): Promise<User>;
+  updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
   
-  // Quote request methods
+  // Quote management
   getQuoteRequest(id: number): Promise<QuoteRequest | undefined>;
-  getQuoteRequestByEmail(email: string): Promise<QuoteRequest | undefined>;
-  getQuoteRequests(): Promise<QuoteRequest[]>;
   getQuoteRequestsByUserId(userId: number): Promise<QuoteRequest[]>;
-  createQuoteRequest(quoteRequest: Omit<InsertQuoteRequest, "consent">): Promise<QuoteRequest>;
-  updateQuoteRequestStatus(id: number, status: string): Promise<QuoteRequest | undefined>;
-  updateQuoteRequestData(id: number, quoteData: any): Promise<QuoteRequest | undefined>;
+  getQuoteRequestsByClinicId(clinicId: number): Promise<QuoteRequest[]>;
+  getAllQuoteRequests(filters?: Partial<QuoteRequest>): Promise<QuoteRequest[]>;
+  createQuoteRequest(data: InsertQuoteRequest): Promise<QuoteRequest>;
+  updateQuoteRequest(id: number, data: Partial<QuoteRequest>): Promise<QuoteRequest | undefined>;
   
-  // Booking methods
+  // Quote versions
+  getQuoteVersions(quoteRequestId: number): Promise<QuoteVersion[]>;
+  getLatestQuoteVersion(quoteRequestId: number): Promise<QuoteVersion | undefined>;
+  createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion>;
+  
+  // Bookings
   getBooking(id: number): Promise<Booking | undefined>;
+  getBookingByQuoteRequestId(quoteRequestId: number): Promise<Booking | undefined>;
   getBookingsByUserId(userId: number): Promise<Booking[]>;
-  createBooking(booking: InsertBooking): Promise<Booking>;
-  updateBookingStatus(id: number, status: string): Promise<Booking | undefined>;
-  updateBookingDetails(id: number, bookingData: Partial<InsertBooking>): Promise<Booking | undefined>;
+  getBookingsByClinicId(clinicId: number): Promise<Booking[]>;
+  createBooking(data: InsertBooking): Promise<Booking>;
+  updateBooking(id: number, data: Partial<Booking>): Promise<Booking | undefined>;
   
-  // Payment methods
-  getPayment(id: number): Promise<Payment | undefined>;
+  // Appointments
+  getAppointmentsByBookingId(bookingId: number): Promise<Appointment[]>;
+  getAppointmentsByClinicId(clinicId: number, date?: Date): Promise<Appointment[]>;
+  createAppointment(data: InsertAppointment): Promise<Appointment>;
+  updateAppointment(id: number, data: Partial<Appointment>): Promise<Appointment | undefined>;
+  
+  // Payments
   getPaymentsByBookingId(bookingId: number): Promise<Payment[]>;
   getPaymentsByUserId(userId: number): Promise<Payment[]>;
-  createPayment(payment: InsertPayment): Promise<Payment>;
-  updatePaymentStatus(id: number, status: string): Promise<Payment | undefined>;
-  getPaymentByStripeId(stripePaymentIntentId: string): Promise<Payment | undefined>;
+  createPayment(data: InsertPayment): Promise<Payment>;
+  updatePayment(id: number, data: Partial<Payment>): Promise<Payment | undefined>;
   
-  // File methods
-  getFile(id: number): Promise<File | undefined>;
+  // Files
   getFilesByBookingId(bookingId: number): Promise<File[]>;
+  getFilesByQuoteRequestId(quoteRequestId: number): Promise<File[]>;
   getFilesByUserId(userId: number): Promise<File[]>;
-  createFile(file: InsertFile): Promise<File>;
+  createFile(data: InsertFile): Promise<File>;
   
-  // Message methods
-  getMessage(id: number): Promise<Message | undefined>;
+  // Messages
   getMessagesByBookingId(bookingId: number): Promise<Message[]>;
-  createMessage(message: InsertMessage): Promise<Message>;
-  markMessageAsRead(id: number): Promise<Message | undefined>;
+  getMessageThreads(userId: number): Promise<any[]>;
+  createMessage(data: InsertMessage): Promise<Message>;
+  markMessageAsRead(id: number): Promise<void>;
   
-  // Clinic methods
+  // Clinics
   getClinic(id: number): Promise<Clinic | undefined>;
-  getClinics(): Promise<Clinic[]>;
-  getActiveClinicsByTier(tier: string): Promise<Clinic[]>;
+  getAllClinics(filters?: Partial<Clinic>): Promise<Clinic[]>;
+  createClinic(data: InsertClinic): Promise<Clinic>;
+  updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined>;
+  
+  // Clinic reviews
+  getClinicReviews(clinicId: number): Promise<ClinicReview[]>;
+  createClinicReview(data: InsertClinicReview): Promise<ClinicReview>;
+  
+  // Notifications
+  getUserNotifications(userId: number, unreadOnly?: boolean): Promise<Notification[]>;
+  createNotification(data: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: number): Promise<void>;
+  
+  // Stats and aggregations
+  getDashboardStats(userRole: string, id: number): Promise<any>;
 }
 
-// Database storage implementation
+// Database implementation of IStorage
 export class DatabaseStorage implements IStorage {
-  // User methods
+  sessionStore: session.SessionStore;
+
+  constructor() {
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    });
+  }
+
+  // === User Management ===
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
+    return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(data: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(data).returning();
+    return user;
+  }
+
+  async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
     const [user] = await db
-      .insert(users)
-      .values(insertUser)
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
-  
-  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({ ...userData, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return updatedUser || undefined;
-  }
-  
-  // Quote request methods
+
+  // === Quote Management ===
   async getQuoteRequest(id: number): Promise<QuoteRequest | undefined> {
     const [quoteRequest] = await db.select().from(quoteRequests).where(eq(quoteRequests.id, id));
-    return quoteRequest || undefined;
+    return quoteRequest;
   }
-  
-  async getQuoteRequestByEmail(email: string): Promise<QuoteRequest | undefined> {
-    const [quoteRequest] = await db
-      .select()
-      .from(quoteRequests)
-      .where(eq(quoteRequests.email, email))
-      .orderBy(desc(quoteRequests.createdAt))
-      .limit(1);
-    return quoteRequest || undefined;
-  }
-  
-  async getQuoteRequests(): Promise<QuoteRequest[]> {
-    return await db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
-  }
-  
+
   async getQuoteRequestsByUserId(userId: number): Promise<QuoteRequest[]> {
-    return await db
+    return db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
+  }
+
+  async getQuoteRequestsByClinicId(clinicId: number): Promise<QuoteRequest[]> {
+    return db.select().from(quoteRequests).where(eq(quoteRequests.selectedClinicId, clinicId));
+  }
+
+  async getAllQuoteRequests(filters?: Partial<QuoteRequest>): Promise<QuoteRequest[]> {
+    if (!filters) {
+      return db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
+    }
+
+    // Build the filter conditions
+    const conditions = [];
+    if (filters.status) conditions.push(eq(quoteRequests.status, filters.status));
+    if (filters.selectedClinicId) conditions.push(eq(quoteRequests.selectedClinicId, filters.selectedClinicId));
+    if (filters.hasXrays !== undefined) conditions.push(eq(quoteRequests.hasXrays, filters.hasXrays));
+    
+    if (conditions.length === 0) {
+      return db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
+    }
+
+    return db
       .select()
       .from(quoteRequests)
-      .where(eq(quoteRequests.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(quoteRequests.createdAt));
   }
-  
-  async createQuoteRequest(insertQuoteRequest: Omit<InsertQuoteRequest, "consent">): Promise<QuoteRequest> {
+
+  async createQuoteRequest(data: InsertQuoteRequest): Promise<QuoteRequest> {
+    const [quoteRequest] = await db.insert(quoteRequests).values(data).returning();
+    return quoteRequest;
+  }
+
+  async updateQuoteRequest(id: number, data: Partial<QuoteRequest>): Promise<QuoteRequest | undefined> {
     const [quoteRequest] = await db
-      .insert(quoteRequests)
-      .values(insertQuoteRequest)
+      .update(quoteRequests)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(quoteRequests.id, id))
       .returning();
     return quoteRequest;
   }
-  
-  async updateQuoteRequestStatus(id: number, status: string): Promise<QuoteRequest | undefined> {
-    const [updatedQuoteRequest] = await db
-      .update(quoteRequests)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(quoteRequests.id, id))
-      .returning();
-    return updatedQuoteRequest || undefined;
+
+  // === Quote Versions ===
+  async getQuoteVersions(quoteRequestId: number): Promise<QuoteVersion[]> {
+    return db
+      .select()
+      .from(quoteVersions)
+      .where(eq(quoteVersions.quoteRequestId, quoteRequestId))
+      .orderBy(desc(quoteVersions.versionNumber));
   }
-  
-  async updateQuoteRequestData(id: number, quoteData: any): Promise<QuoteRequest | undefined> {
-    const [updatedQuoteRequest] = await db
-      .update(quoteRequests)
-      .set({ quoteData, updatedAt: new Date() })
-      .where(eq(quoteRequests.id, id))
-      .returning();
-    return updatedQuoteRequest || undefined;
+
+  async getLatestQuoteVersion(quoteRequestId: number): Promise<QuoteVersion | undefined> {
+    const [version] = await db
+      .select()
+      .from(quoteVersions)
+      .where(eq(quoteVersions.quoteRequestId, quoteRequestId))
+      .orderBy(desc(quoteVersions.versionNumber))
+      .limit(1);
+    return version;
   }
-  
-  // Booking methods
+
+  async createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion> {
+    const [version] = await db.insert(quoteVersions).values(data).returning();
+    return version;
+  }
+
+  // === Bookings ===
   async getBooking(id: number): Promise<Booking | undefined> {
     const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
-    return booking || undefined;
+    return booking;
   }
-  
+
+  async getBookingByQuoteRequestId(quoteRequestId: number): Promise<Booking | undefined> {
+    const [booking] = await db.select().from(bookings).where(eq(bookings.quoteRequestId, quoteRequestId));
+    return booking;
+  }
+
   async getBookingsByUserId(userId: number): Promise<Booking[]> {
-    return await db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.userId, userId))
-      .orderBy(desc(bookings.createdAt));
+    return db.select().from(bookings).where(eq(bookings.userId, userId));
   }
-  
-  async createBooking(insertBooking: InsertBooking): Promise<Booking> {
+
+  async getBookingsByClinicId(clinicId: number): Promise<Booking[]> {
+    return db.select().from(bookings).where(eq(bookings.clinicId, clinicId));
+  }
+
+  async createBooking(data: InsertBooking): Promise<Booking> {
+    const [booking] = await db.insert(bookings).values(data).returning();
+    return booking;
+  }
+
+  async updateBooking(id: number, data: Partial<Booking>): Promise<Booking | undefined> {
     const [booking] = await db
-      .insert(bookings)
-      .values(insertBooking)
+      .update(bookings)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(bookings.id, id))
       .returning();
     return booking;
   }
-  
-  async updateBookingStatus(id: number, status: string): Promise<Booking | undefined> {
-    const [updatedBooking] = await db
-      .update(bookings)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(bookings.id, id))
+
+  // === Appointments ===
+  async getAppointmentsByBookingId(bookingId: number): Promise<Appointment[]> {
+    return db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.bookingId, bookingId))
+      .orderBy(asc(appointments.startTime));
+  }
+
+  async getAppointmentsByClinicId(clinicId: number, date?: Date): Promise<Appointment[]> {
+    if (date) {
+      // Convert the date to start and end of the specified day
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      return db
+        .select()
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.clinicId, clinicId),
+            appointments.startTime >= startDate,
+            appointments.startTime <= endDate
+          )
+        )
+        .orderBy(asc(appointments.startTime));
+    }
+    
+    return db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.clinicId, clinicId))
+      .orderBy(asc(appointments.startTime));
+  }
+
+  async createAppointment(data: InsertAppointment): Promise<Appointment> {
+    const [appointment] = await db.insert(appointments).values(data).returning();
+    return appointment;
+  }
+
+  async updateAppointment(id: number, data: Partial<Appointment>): Promise<Appointment | undefined> {
+    const [appointment] = await db
+      .update(appointments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(appointments.id, id))
       .returning();
-    return updatedBooking || undefined;
+    return appointment;
   }
-  
-  async updateBookingDetails(id: number, bookingData: Partial<InsertBooking>): Promise<Booking | undefined> {
-    const [updatedBooking] = await db
-      .update(bookings)
-      .set({ ...bookingData, updatedAt: new Date() })
-      .where(eq(bookings.id, id))
-      .returning();
-    return updatedBooking || undefined;
-  }
-  
-  // Payment methods
-  async getPayment(id: number): Promise<Payment | undefined> {
-    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
-    return payment || undefined;
-  }
-  
+
+  // === Payments ===
   async getPaymentsByBookingId(bookingId: number): Promise<Payment[]> {
-    return await db
+    return db
       .select()
       .from(payments)
       .where(eq(payments.bookingId, bookingId))
       .orderBy(desc(payments.createdAt));
   }
-  
+
   async getPaymentsByUserId(userId: number): Promise<Payment[]> {
-    return await db
+    return db
       .select()
       .from(payments)
       .where(eq(payments.userId, userId))
       .orderBy(desc(payments.createdAt));
   }
-  
-  async createPayment(insertPayment: InsertPayment): Promise<Payment> {
+
+  async createPayment(data: InsertPayment): Promise<Payment> {
+    const [payment] = await db.insert(payments).values(data).returning();
+    return payment;
+  }
+
+  async updatePayment(id: number, data: Partial<Payment>): Promise<Payment | undefined> {
     const [payment] = await db
-      .insert(payments)
-      .values(insertPayment)
+      .update(payments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(payments.id, id))
       .returning();
     return payment;
   }
-  
-  async updatePaymentStatus(id: number, status: string): Promise<Payment | undefined> {
-    const [updatedPayment] = await db
-      .update(payments)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(payments.id, id))
-      .returning();
-    return updatedPayment || undefined;
-  }
-  
-  async getPaymentByStripeId(stripePaymentIntentId: string): Promise<Payment | undefined> {
-    const [payment] = await db
-      .select()
-      .from(payments)
-      .where(eq(payments.stripePaymentIntentId, stripePaymentIntentId));
-    return payment || undefined;
-  }
-  
-  // File methods
-  async getFile(id: number): Promise<File | undefined> {
-    const [file] = await db.select().from(files).where(eq(files.id, id));
-    return file || undefined;
-  }
-  
+
+  // === Files ===
   async getFilesByBookingId(bookingId: number): Promise<File[]> {
-    return await db
+    return db
       .select()
       .from(files)
       .where(eq(files.bookingId, bookingId))
       .orderBy(desc(files.createdAt));
   }
-  
+
+  async getFilesByQuoteRequestId(quoteRequestId: number): Promise<File[]> {
+    return db
+      .select()
+      .from(files)
+      .where(eq(files.quoteRequestId, quoteRequestId))
+      .orderBy(desc(files.createdAt));
+  }
+
   async getFilesByUserId(userId: number): Promise<File[]> {
-    return await db
+    return db
       .select()
       .from(files)
       .where(eq(files.userId, userId))
       .orderBy(desc(files.createdAt));
   }
-  
-  async createFile(insertFile: InsertFile): Promise<File> {
-    const [file] = await db
-      .insert(files)
-      .values(insertFile)
-      .returning();
+
+  async createFile(data: InsertFile): Promise<File> {
+    const [file] = await db.insert(files).values(data).returning();
     return file;
   }
-  
-  // Message methods
-  async getMessage(id: number): Promise<Message | undefined> {
-    const [message] = await db.select().from(messages).where(eq(messages.id, id));
-    return message || undefined;
-  }
-  
+
+  // === Messages ===
   async getMessagesByBookingId(bookingId: number): Promise<Message[]> {
-    return await db
+    return db
       .select()
       .from(messages)
       .where(eq(messages.bookingId, bookingId))
       .orderBy(asc(messages.createdAt));
   }
-  
-  async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const [message] = await db
-      .insert(messages)
-      .values(insertMessage)
-      .returning();
+
+  async getMessageThreads(userId: number): Promise<any[]> {
+    // This is a complex query that would return unique threads with their latest message
+    // For now, we'll return a simplified version
+    return db
+      .select({
+        bookingId: messages.bookingId,
+        lastMessage: messages.content,
+        lastMessageTime: messages.createdAt,
+        senderId: messages.senderId,
+        recipientId: messages.recipientId,
+        isRead: messages.isRead
+      })
+      .from(messages)
+      .where(
+        or(
+          eq(messages.senderId, userId),
+          eq(messages.recipientId, userId)
+        )
+      )
+      .orderBy(desc(messages.createdAt));
+  }
+
+  async createMessage(data: InsertMessage): Promise<Message> {
+    const [message] = await db.insert(messages).values(data).returning();
+    
+    // Update the relevant "lastMessageAt" field in the booking
+    if (message.bookingId) {
+      const bookingUpdate: Partial<Booking> = {};
+      
+      // Determine which field to update based on the sender's role
+      const sender = await this.getUser(message.senderId);
+      if (sender) {
+        switch (sender.role) {
+          case 'patient':
+            bookingUpdate.lastPatientMessageAt = message.createdAt;
+            break;
+          case 'clinic_staff':
+            bookingUpdate.lastClinicMessageAt = message.createdAt;
+            break;
+          case 'admin':
+            bookingUpdate.lastAdminMessageAt = message.createdAt;
+            break;
+        }
+        
+        // Update the booking if we have a field to update
+        if (Object.keys(bookingUpdate).length > 0) {
+          await this.updateBooking(message.bookingId, bookingUpdate);
+        }
+      }
+    }
+    
     return message;
   }
-  
-  async markMessageAsRead(id: number): Promise<Message | undefined> {
-    const [updatedMessage] = await db
+
+  async markMessageAsRead(id: number): Promise<void> {
+    await db
       .update(messages)
-      .set({ isRead: true })
-      .where(eq(messages.id, id))
-      .returning();
-    return updatedMessage || undefined;
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(messages.id, id));
   }
-  
-  // Clinic methods
+
+  // === Clinics ===
   async getClinic(id: number): Promise<Clinic | undefined> {
     const [clinic] = await db.select().from(clinics).where(eq(clinics.id, id));
-    return clinic || undefined;
+    return clinic;
   }
-  
-  async getClinics(): Promise<Clinic[]> {
-    return await db
+
+  async getAllClinics(filters?: Partial<Clinic>): Promise<Clinic[]> {
+    if (!filters) {
+      return db.select().from(clinics).where(eq(clinics.active, true));
+    }
+
+    // Build the filter conditions
+    const conditions = [];
+    if (filters.tier) conditions.push(eq(clinics.tier, filters.tier));
+    if (filters.city) conditions.push(eq(clinics.city, filters.city));
+    if (filters.featured !== undefined) conditions.push(eq(clinics.featured, filters.featured));
+    
+    // Always filter for active clinics unless explicitly set to false
+    if (filters.active !== false) {
+      conditions.push(eq(clinics.active, true));
+    }
+    
+    if (conditions.length === 0) {
+      return db.select().from(clinics).where(eq(clinics.active, true));
+    }
+
+    return db
       .select()
       .from(clinics)
-      .where(eq(clinics.active, true))
-      .orderBy(asc(clinics.name));
+      .where(and(...conditions));
   }
-  
-  async getActiveClinicsByTier(tier: string): Promise<Clinic[]> {
-    return await db
+
+  async createClinic(data: InsertClinic): Promise<Clinic> {
+    const [clinic] = await db.insert(clinics).values(data).returning();
+    return clinic;
+  }
+
+  async updateClinic(id: number, data: Partial<Clinic>): Promise<Clinic | undefined> {
+    const [clinic] = await db
+      .update(clinics)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(clinics.id, id))
+      .returning();
+    return clinic;
+  }
+
+  // === Clinic Reviews ===
+  async getClinicReviews(clinicId: number): Promise<ClinicReview[]> {
+    return db
       .select()
-      .from(clinics)
-      .where(and(eq(clinics.active, true), eq(clinics.tier, tier)))
-      .orderBy(asc(clinics.name));
+      .from(clinicReviews)
+      .where(
+        and(
+          eq(clinicReviews.clinicId, clinicId),
+          eq(clinicReviews.status, 'approved')
+        )
+      )
+      .orderBy(desc(clinicReviews.createdAt));
+  }
+
+  async createClinicReview(data: InsertClinicReview): Promise<ClinicReview> {
+    const [review] = await db.insert(clinicReviews).values(data).returning();
+    
+    // Update the clinic's rating and review count
+    const clinic = await this.getClinic(data.clinicId);
+    if (clinic) {
+      const allApprovedReviews = await db
+        .select()
+        .from(clinicReviews)
+        .where(
+          and(
+            eq(clinicReviews.clinicId, data.clinicId),
+            eq(clinicReviews.status, 'approved')
+          )
+        );
+      
+      // Calculate the new average rating
+      const totalRating = allApprovedReviews.reduce((sum, review) => sum + review.rating, 0);
+      const avgRating = allApprovedReviews.length > 0 ? totalRating / allApprovedReviews.length : 0;
+      
+      // Update the clinic
+      await this.updateClinic(data.clinicId, {
+        rating: avgRating,
+        reviewCount: allApprovedReviews.length
+      });
+    }
+    
+    return review;
+  }
+
+  // === Notifications ===
+  async getUserNotifications(userId: number, unreadOnly: boolean = false): Promise<Notification[]> {
+    if (unreadOnly) {
+      return db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.userId, userId),
+            eq(notifications.isRead, false)
+          )
+        )
+        .orderBy(desc(notifications.createdAt));
+    }
+    
+    return db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(data: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(data).returning();
+    return notification;
+  }
+
+  async markNotificationAsRead(id: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id));
+  }
+
+  // === Dashboard Stats ===
+  async getDashboardStats(userRole: string, id: number): Promise<any> {
+    let stats: any = {};
+    
+    switch(userRole) {
+      case 'admin':
+        // Admin dashboard stats - platform-wide
+        const totalUsers = await db.select({ count: sql`count(*)` }).from(users);
+        const totalBookings = await db.select({ count: sql`count(*)` }).from(bookings);
+        const pendingQuotes = await db
+          .select({ count: sql`count(*)` })
+          .from(quoteRequests)
+          .where(eq(quoteRequests.status, 'pending'));
+        
+        stats = {
+          totalUsers: totalUsers[0]?.count || 0,
+          totalBookings: totalBookings[0]?.count || 0,
+          pendingQuotes: pendingQuotes[0]?.count || 0,
+          // Add more stats as needed
+        };
+        break;
+        
+      case 'clinic_staff':
+        // Clinic dashboard stats - clinic specific
+        const clinicBookings = await db
+          .select({ count: sql`count(*)` })
+          .from(bookings)
+          .where(eq(bookings.clinicId, id));
+        
+        const upcomingAppointments = await db
+          .select({ count: sql`count(*)` })
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.clinicId, id),
+              appointments.startTime > new Date(),
+              eq(appointments.status, 'scheduled')
+            )
+          );
+        
+        const clinicQuotes = await db
+          .select({ count: sql`count(*)` })
+          .from(quoteRequests)
+          .where(eq(quoteRequests.selectedClinicId, id));
+        
+        stats = {
+          totalBookings: clinicBookings[0]?.count || 0,
+          upcomingAppointments: upcomingAppointments[0]?.count || 0,
+          totalQuotes: clinicQuotes[0]?.count || 0,
+          // Add more stats as needed
+        };
+        break;
+        
+      case 'patient':
+        // Patient dashboard stats - user specific
+        const userBookings = await db
+          .select({ count: sql`count(*)` })
+          .from(bookings)
+          .where(eq(bookings.userId, id));
+        
+        const userAppointments = await db
+          .select({ count: sql`count(*)` })
+          .from(appointments)
+          .innerJoin(bookings, eq(appointments.bookingId, bookings.id))
+          .where(
+            and(
+              eq(bookings.userId, id),
+              appointments.startTime > new Date(),
+              eq(appointments.status, 'scheduled')
+            )
+          );
+        
+        const userUnreadMessages = await db
+          .select({ count: sql`count(*)` })
+          .from(messages)
+          .where(
+            and(
+              eq(messages.recipientId, id),
+              eq(messages.isRead, false)
+            )
+          );
+        
+        stats = {
+          totalBookings: userBookings[0]?.count || 0,
+          upcomingAppointments: userAppointments[0]?.count || 0,
+          unreadMessages: userUnreadMessages[0]?.count || 0,
+          // Add more stats as needed
+        };
+        break;
+    }
+    
+    return stats;
   }
 }
 
-// Create and export the storage instance
+// Export an instance of the storage class
 export const storage = new DatabaseStorage();
