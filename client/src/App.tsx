@@ -12,6 +12,7 @@ import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
+import YourQuotePage from "@/pages/YourQuotePage";
 import BookingPage from "@/pages/BookingPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
@@ -36,7 +37,8 @@ function Router() {
       <Route path="/team" component={TeamPage} />
       <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/faq" component={FAQPage} />
-      <Route path="/your-quote" component={QuoteResultsPage} />
+      <Route path="/your-quote" component={YourQuotePage} />
+      <Route path="/quote-results" component={QuoteResultsPage} />
       <Route path="/booking" component={BookingPage} />
       <Route path="/portal" component={PortalLoginPage} />
       <Route path="/portal-login" component={PortalLoginPage} />

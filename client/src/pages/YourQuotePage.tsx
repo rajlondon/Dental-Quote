@@ -1,0 +1,786 @@
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation, Link } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ScrollToTop from '@/components/ScrollToTop';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Check, 
+  ChevronRight, 
+  MapPin, 
+  Star, 
+  Clock, 
+  Calendar, 
+  Download, 
+  Mail, 
+  CreditCard,
+  Hotel,
+  Car,
+  Shield,
+  Plane,
+  Sparkles,
+  Info,
+  ArrowLeft,
+  Edit3,
+  RefreshCcw
+} from 'lucide-react';
+import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
+
+// Types
+interface ClinicInfo {
+  id: string;
+  name: string;
+  tier: 'affordable' | 'mid' | 'premium';
+  priceGBP: number;
+  priceUSD: number;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  guarantee: string;
+  materials: string[];
+  conciergeType: 'mydentalfly' | 'clinic';
+  features: string[];
+  description: string;
+  packages: {
+    hotel?: boolean;
+    transfers?: boolean;
+    consultation?: boolean;
+    cityTour?: boolean;
+  };
+  images: string[];
+}
+
+interface QuoteParams {
+  treatment: string;
+  travelMonth: string;
+  budget: string;
+}
+
+interface TreatmentItem {
+  treatment: string;
+  priceGBP: number;
+  priceUSD: number;
+  quantity: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  guarantee: string;
+}
+
+// Mock data for clinics
+const CLINIC_DATA: ClinicInfo[] = [
+  {
+    id: 'istanbul-dental-care',
+    name: 'Istanbul Dental Care',
+    tier: 'affordable',
+    priceGBP: 1550,
+    priceUSD: 1999,
+    location: 'Şişli, Istanbul',
+    rating: 4.1,
+    reviewCount: 58,
+    guarantee: '3-year',
+    materials: ['Generic Implants', 'Standard Materials'],
+    conciergeType: 'mydentalfly',
+    features: ['Airport pickup', 'Modern facility', 'English-speaking staff'],
+    description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-conscious patients.',
+    packages: {
+      hotel: true,
+      transfers: true,
+      consultation: true
+    },
+    images: ['/images/clinics/istanbul-dental.jpg']
+  },
+  {
+    id: 'dentgroup-istanbul',
+    name: 'DentGroup Istanbul',
+    tier: 'mid',
+    priceGBP: 1950,
+    priceUSD: 2499,
+    location: 'Kadıköy, Istanbul',
+    rating: 4.7,
+    reviewCount: 124,
+    guarantee: '5-year',
+    materials: ['Straumann Implants', 'Premium Materials'],
+    conciergeType: 'mydentalfly',
+    features: ['Airport pickup', 'Hotel transfers', 'Advanced technology', 'Multilingual staff'],
+    description: 'A balanced option offering premium quality at reasonable prices with excellent aftercare support. Popular with international patients.',
+    packages: {
+      hotel: true,
+      transfers: true,
+      consultation: true,
+      cityTour: true
+    },
+    images: ['/images/clinics/dentgroup.jpg']
+  },
+  {
+    id: 'maltepe-dental-clinic',
+    name: 'Maltepe Dental Clinic',
+    tier: 'premium',
+    priceGBP: 2250,
+    priceUSD: 2899,
+    location: 'Maltepe, Istanbul',
+    rating: 4.9,
+    reviewCount: 203,
+    guarantee: '10-year',
+    materials: ['Nobel Biocare Implants', 'Premium Zirconia'],
+    conciergeType: 'mydentalfly',
+    features: ['VIP airport service', 'Luxury hotel arrangements', 'State-of-the-art technology', 'VIP transfers'],
+    description: 'Our premium option offering VIP service, cutting-edge technology, and the finest materials. The choice for patients seeking luxury and perfection.',
+    packages: {
+      hotel: true,
+      transfers: true,
+      consultation: true,
+      cityTour: true
+    },
+    images: ['/images/clinics/maltepe.jpg']
+  },
+  {
+    id: 'dentakay-clinic',
+    name: 'Dentakay',
+    tier: 'premium',
+    priceGBP: 2190,
+    priceUSD: 2799,
+    location: 'Sisli, Istanbul',
+    rating: 4.8,
+    reviewCount: 176,
+    guarantee: '7-year',
+    materials: ['Straumann Implants', 'E.max Crowns'],
+    conciergeType: 'clinic',
+    features: ['Dedicated patient coordinators', 'Luxury accommodation', 'VIP transfers', 'International accreditation'],
+    description: 'A prestigious clinic offering luxury services with its own concierge team. Known for catering to international celebrities and VIP clients.',
+    packages: {
+      hotel: true,
+      transfers: true,
+      consultation: true,
+      cityTour: true
+    },
+    images: ['/images/clinics/dentakay.jpg']
+  },
+  {
+    id: 'crown-dental',
+    name: 'Crown Dental Clinic',
+    tier: 'mid',
+    priceGBP: 1890,
+    priceUSD: 2399,
+    location: 'Taksim, Istanbul',
+    rating: 4.6,
+    reviewCount: 92,
+    guarantee: '5-year',
+    materials: ['Osstem Implants', 'Zirconia Crowns'],
+    conciergeType: 'mydentalfly',
+    features: ['Central location', 'Hotel booking assistance', 'Airport transfers', 'Multilingual staff'],
+    description: 'Located in the heart of Istanbul, this clinic combines convenience with quality care. Great for patients who want to explore the city.',
+    packages: {
+      hotel: true,
+      transfers: true,
+      consultation: true
+    },
+    images: ['/images/clinics/crown.jpg']
+  }
+];
+
+// Helper components
+const RatingStars: React.FC<{ rating: number }> = ({ rating }) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating - fullStars >= 0.3;
+  
+  return (
+    <div className="flex items-center">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < fullStars 
+              ? 'fill-yellow-400 text-yellow-400' 
+              : (i === fullStars && hasHalfStar)
+                ? 'text-yellow-400 fill-yellow-400' 
+                : 'text-gray-300'
+          }`}
+        />
+      ))}
+      <span className="ml-2 text-sm font-medium">{rating}</span>
+    </div>
+  );
+};
+
+const TierBadge: React.FC<{ tier: 'affordable' | 'mid' | 'premium' }> = ({ tier }) => {
+  const colors = {
+    affordable: 'bg-blue-100 text-blue-800',
+    mid: 'bg-purple-100 text-purple-800',
+    premium: 'bg-amber-100 text-amber-800'
+  };
+  
+  const labels = {
+    affordable: 'Budget-Friendly',
+    mid: 'Mid-Range',
+    premium: 'Premium'
+  };
+  
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[tier]}`}>
+      {labels[tier]}
+    </span>
+  );
+};
+
+const PackageIcon: React.FC<{ type: 'hotel' | 'transfers' | 'consultation' | 'cityTour', included: boolean }> = ({ type, included }) => {
+  const icons = {
+    hotel: <Hotel className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />,
+    transfers: <Car className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />,
+    consultation: <Shield className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />,
+    cityTour: <Plane className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />
+  };
+
+  const labels = {
+    hotel: 'Hotel',
+    transfers: 'Transfers',
+    consultation: 'Consultation',
+    cityTour: 'City Tour'
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {icons[type]}
+      <span className={`text-xs ${included ? 'text-gray-700' : 'text-gray-400'}`}>{labels[type]}</span>
+    </div>
+  );
+};
+
+const ClinicCard: React.FC<{ 
+  clinic: ClinicInfo, 
+  isSelected: boolean,
+  onSelect: () => void 
+}> = ({ clinic, isSelected, onSelect }) => {
+  
+  return (
+    <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${isSelected ? 'border-blue-500 shadow-lg' : 'border-gray-200'}`}>
+      {isSelected && (
+        <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 text-sm font-semibold z-10 rounded-bl-md">
+          Selected
+        </div>
+      )}
+      
+      <div className="flex flex-col md:flex-row overflow-hidden">
+        {/* Left column - Clinic Image */}
+        <div className="md:w-1/4 h-52 md:h-auto relative overflow-hidden">
+          <img 
+            src={clinic.images[0]} 
+            alt={clinic.name} 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-2 left-2">
+            <TierBadge tier={clinic.tier} />
+          </div>
+        </div>
+        
+        {/* Middle column - Clinic details */}
+        <div className="md:w-2/4 p-4">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h3 className="text-xl font-bold">{clinic.name}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <RatingStars rating={clinic.rating} />
+                <span className="text-sm text-gray-500">({clinic.reviewCount} reviews)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center text-gray-700 mb-3">
+            <MapPin className="h-4 w-4 mr-1 text-gray-500" />
+            <span className="text-sm">{clinic.location}</span>
+          </div>
+          
+          <p className="text-gray-700 mb-4 text-sm">{clinic.description}</p>
+          
+          <div className="mb-4">
+            <div className="flex gap-6 flex-wrap">
+              <PackageIcon type="hotel" included={clinic.packages.hotel || false} />
+              <PackageIcon type="transfers" included={clinic.packages.transfers || false} />
+              <PackageIcon type="consultation" included={clinic.packages.consultation || false} />
+              <PackageIcon type="cityTour" included={clinic.packages.cityTour || false} />
+            </div>
+          </div>
+          
+          <div className="mb-3">
+            <h4 className="font-medium text-sm text-gray-700 mb-2">Highlights:</h4>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+              {clinic.features.map((feature, index) => (
+                <li key={index} className="flex items-center text-sm text-gray-600">
+                  <Check className="h-3 w-3 text-green-500 mr-1 flex-shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="flex items-center text-sm text-gray-700 font-medium">
+            <Shield className="h-4 w-4 mr-1 text-blue-500" />
+            <span>{clinic.guarantee} guarantee</span>
+          </div>
+        </div>
+        
+        {/* Right column - Price and action */}
+        <div className="md:w-1/4 p-4 bg-gray-50 flex flex-col justify-between border-t md:border-t-0 md:border-l border-gray-200">
+          <div>
+            <div className="mb-4">
+              <p className="text-3xl font-bold text-blue-600">£{clinic.priceGBP}</p>
+              <p className="text-sm text-gray-500">${clinic.priceUSD}</p>
+              <p className="text-xs text-gray-500 mt-1">Treatment price</p>
+            </div>
+            
+            <div className="mb-4">
+              <div className="flex items-start mb-1">
+                <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
+                <span className="text-xs text-gray-700">£200 deposit, remainder after consultation</span>
+              </div>
+              <div className="flex items-start mb-1">
+                <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
+                <span className="text-xs text-gray-700">Price confirmed before treatment</span>
+              </div>
+              <div className="flex items-start">
+                <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
+                <span className="text-xs text-gray-700">
+                  Concierge by {clinic.conciergeType === 'mydentalfly' ? 'MyDentalFly' : 'clinic'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <Button 
+              className="w-full mb-2" 
+              onClick={onSelect}
+              variant={isSelected ? "outline" : "default"}
+              size="sm"
+            >
+              {isSelected ? 'Selected' : 'Choose This Clinic'}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full text-xs flex items-center justify-center"
+              size="sm"
+            >
+              <span>View Clinic Details</span>
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+const QuoteSummary: React.FC<{ 
+  params: QuoteParams,
+  selectedClinic: ClinicInfo | null,
+  onEditQuote: () => void
+}> = ({ params, selectedClinic, onEditQuote }) => {
+  const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  
+  // Placeholder for download and email functions
+  const handleDownloadQuote = () => {
+    toast({
+      title: "PDF Download",
+      description: "Your quote PDF is being generated. It will download automatically.",
+    });
+  };
+  
+  const handleEmailQuote = () => {
+    toast({
+      title: "Email Sent",
+      description: "Your quote has been emailed to you.",
+    });
+  };
+  
+  // Calculate UK price comparison (simplified for this example)
+  const ukTreatmentPrice = selectedClinic ? selectedClinic.priceGBP * 2.5 : 0;
+  const savingsAmount = selectedClinic ? ukTreatmentPrice - selectedClinic.priceGBP : 0;
+  const savingsPercentage = selectedClinic ? Math.round((savingsAmount / ukTreatmentPrice) * 100) : 0;
+  
+  return (
+    <Card className="bg-white shadow-md mb-8">
+      <CardHeader className="bg-blue-50 pb-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+          <CardTitle className="text-xl font-bold">Your Quote Summary</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center text-xs mt-2 md:mt-0"
+            onClick={onEditQuote}
+          >
+            <Edit3 className="mr-2 h-3 w-3" />
+            Edit Quote
+          </Button>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gray-50 p-3 rounded-md">
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">Treatment</h3>
+            <p className="text-base">{params.treatment || 'Not specified'}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">Travel Month</h3>
+            <p className="text-base">{params.travelMonth || 'Not specified'}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">Budget Range</h3>
+            <p className="text-base">{params.budget || 'Not specified'}</p>
+          </div>
+        </div>
+        
+        {selectedClinic && (
+          <>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">Selected Clinic</h3>
+              <div className="flex items-center p-3 bg-blue-50 rounded-md">
+                <img 
+                  src={selectedClinic.images[0]} 
+                  alt={selectedClinic.name} 
+                  className="w-16 h-16 object-cover rounded-md mr-4"
+                />
+                <div>
+                  <h4 className="font-semibold">{selectedClinic.name}</h4>
+                  <div className="flex items-center text-sm text-gray-600 mb-1">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    <span>{selectedClinic.location}</span>
+                  </div>
+                  <TierBadge tier={selectedClinic.tier} />
+                </div>
+                <div className="ml-auto text-right">
+                  <p className="text-2xl font-bold text-blue-600">£{selectedClinic.priceGBP}</p>
+                  <p className="text-sm text-gray-500">${selectedClinic.priceUSD}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border rounded-md p-4 mb-6 bg-emerald-50">
+              <h3 className="text-lg font-semibold mb-3">UK Price Comparison</h3>
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="flex items-center mb-3 md:mb-0">
+                  <div className="bg-white p-3 rounded-full mr-4 border border-emerald-200">
+                    <Sparkles className="h-6 w-6 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Same treatment in the UK would cost:</p>
+                    <p className="text-xl font-bold">£{ukTreatmentPrice}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-emerald-100 p-3 rounded-md text-center">
+                  <p className="text-sm text-gray-700">Your savings</p>
+                  <p className="text-xl font-bold text-emerald-700">£{savingsAmount} ({savingsPercentage}%)</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-3">
+              <Button 
+                onClick={() => {}}
+                className="flex-1 flex items-center justify-center py-6"
+              >
+                <CreditCard className="mr-2 h-5 w-5" />
+                Pay £200 Deposit & Book
+              </Button>
+              
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center"
+                  onClick={handleDownloadQuote}
+                  disabled={isDownloading}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  PDF Quote
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex items-center"
+                  onClick={handleEmailQuote}
+                  disabled={isEmailing}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email Quote
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+        
+        {!selectedClinic && (
+          <div className="text-center py-6">
+            <p className="text-gray-500 mb-3">Please select a clinic from the options below</p>
+            <ChevronRight className="h-8 w-8 mx-auto text-gray-400 animate-bounce" />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const EducationalSection: React.FC = () => {
+  return (
+    <div className="mb-10">
+      <h2 className="text-2xl font-bold mb-4">Understanding Your Quote</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Materials & Brands</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-700">Clinics use different dental implant brands and materials which affect price and longevity. Premium clinics use globally recognized brands like Nobel Biocare and Straumann.</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Price Adjustments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-700">Final prices may adjust slightly (±10%) after your X-rays and consultation, as your exact needs become clear. We'll always confirm before proceeding.</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Guarantees & Aftercare</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-700">All treatments include guarantees (ranging from 3-10 years) that are honored internationally. Your dental work is backed by both the clinic and MyDentalFly.</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="mt-4 text-center">
+        <Button variant="link" className="text-blue-600">
+          Read Our Full Pricing Guide
+          <ChevronRight className="ml-1 h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const FAQSection: React.FC = () => {
+  return (
+    <div className="mb-10">
+      <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
+      
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="item-1" className="border rounded-md mb-3 border-gray-200">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+            <span className="text-base font-medium">What happens after I choose a clinic?</span>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <p className="text-gray-700">
+              Once you select a clinic and pay the £200 deposit, your personal concierge will contact you within 24 hours to confirm your booking and discuss your travel dates. We'll then arrange your consultation, accommodation, and transportation in Istanbul.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+        
+        <AccordionItem value="item-2" className="border rounded-md mb-3 border-gray-200">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+            <span className="text-base font-medium">Is my £200 deposit refundable?</span>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <p className="text-gray-700">
+              Yes, your deposit is fully refundable if you cancel more than 7 days before your scheduled consultation. If you proceed with treatment, the £200 is deducted from your final bill at the clinic. This deposit ensures we can secure your appointment and make all necessary arrangements.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+        
+        <AccordionItem value="item-3" className="border rounded-md mb-3 border-gray-200">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+            <span className="text-base font-medium">Will my quote change after consultation?</span>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <p className="text-gray-700">
+              In most cases, your quote will remain within ±10% of the estimate. However, after your X-rays and in-person consultation, the dentist might recommend adjustments to your treatment plan based on your specific dental condition. Any changes to your treatment plan and costs will be clearly explained and require your approval before proceeding.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+        
+        <AccordionItem value="item-4" className="border rounded-md mb-3 border-gray-200">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+            <span className="text-base font-medium">How do I contact MyDentalFly for help?</span>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <p className="text-gray-700">
+              Our team is available 24/7 through multiple channels. You can reach us by:
+            </p>
+            <ul className="list-disc pl-5 mt-2 text-gray-700">
+              <li>Calling our UK number: +44 7572 445856</li>
+              <li>WhatsApp chat for quick responses</li>
+              <li>Email: info@mydentalfly.com</li>
+              <li>Or through the live chat on our website</li>
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+};
+
+const CTASection: React.FC<{ 
+  selectedClinic: ClinicInfo | null 
+}> = ({ selectedClinic }) => {
+  return (
+    <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
+      <div className="max-w-3xl mx-auto text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Transform Your Smile?</h2>
+        <p className="text-blue-100 mb-8">
+          Book your dental treatment today with just a £200 deposit. Your concierge will handle all arrangements for a stress-free experience.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button 
+            className="bg-white text-blue-700 hover:bg-blue-50"
+            size="lg"
+            disabled={!selectedClinic}
+          >
+            <CreditCard className="mr-2 h-5 w-5" />
+            Pay £200 Deposit & Book Now
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="border-white text-white hover:bg-blue-700"
+            size="lg"
+          >
+            <Mail className="mr-2 h-5 w-5" />
+            Contact Us For Help
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const YourQuotePage: React.FC = () => {
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
+  const [quoteParams, setQuoteParams] = useState<QuoteParams>({
+    treatment: 'Dental Implants (2 Teeth)',
+    travelMonth: 'June 2025',
+    budget: '£1,500 - £2,500'
+  });
+  
+  // Get the selected clinic object based on ID
+  const selectedClinic = CLINIC_DATA.find(clinic => clinic.id === selectedClinicId) || null;
+  
+  // Function to reset the quote
+  const handleEditQuote = () => {
+    setLocation('/');
+  };
+  
+  useEffect(() => {
+    // In a real implementation, we would parse query parameters here
+    // and fetch real data from an API
+    document.title = "Your Dental Treatment Quote | MyDentalFly";
+    
+    // Show welcome toast when the page loads
+    toast({
+      title: "Quote Generated",
+      description: "Here are your personalized clinic options based on your requirements.",
+    });
+  }, []);
+  
+  return (
+    <>
+      <Navbar />
+      <ScrollToTop />
+      
+      <main className="min-h-screen bg-gray-50 pt-24 pb-12">
+        <div className="container mx-auto px-4">
+          {/* Back button */}
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center text-gray-600"
+              onClick={() => setLocation('/')}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
+          
+          <h1 className="text-3xl md:text-4xl font-bold mb-6">Your Personalized Quote</h1>
+          
+          {/* Quote summary section */}
+          <QuoteSummary 
+            params={quoteParams} 
+            selectedClinic={selectedClinic}
+            onEditQuote={handleEditQuote}
+          />
+          
+          {/* Clinic comparison section */}
+          <div className="mb-10">
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold">Recommended Clinics</h2>
+                <p className="text-gray-600">Based on your requirements and preferences</p>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="flex items-center text-blue-600"
+                onClick={() => setSelectedClinicId(null)}
+              >
+                <RefreshCcw className="mr-2 h-3 w-3" />
+                Reset Selection
+              </Button>
+            </div>
+            
+            {CLINIC_DATA.map((clinic) => (
+              <ClinicCard
+                key={clinic.id}
+                clinic={clinic}
+                isSelected={selectedClinicId === clinic.id}
+                onSelect={() => setSelectedClinicId(clinic.id)}
+              />
+            ))}
+          </div>
+          
+          {/* Educational section */}
+          <EducationalSection />
+          
+          {/* FAQ Section */}
+          <FAQSection />
+          
+          {/* Final CTA section */}
+          <CTASection selectedClinic={selectedClinic} />
+        </div>
+      </main>
+      
+      <Footer />
+    </>
+  );
+};
+
+export default YourQuotePage;
