@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/accordion';
 import { AlertCircle, CheckCircle, Lightbulb, Shield, Zap } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import GeneralDentistryTab from './GeneralDentistryTab';
 
 const TreatmentGuide: React.FC = () => {
   return (
@@ -35,11 +36,12 @@ const TreatmentGuide: React.FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="implants" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
             <TabsTrigger value="implants">Implants</TabsTrigger>
             <TabsTrigger value="veneers">Veneers</TabsTrigger>
             <TabsTrigger value="crowns">Crowns</TabsTrigger>
             <TabsTrigger value="bridges">Bridges</TabsTrigger>
+            <TabsTrigger value="general">General Dentistry</TabsTrigger>
             <TabsTrigger value="other">Other</TabsTrigger>
           </TabsList>
           
