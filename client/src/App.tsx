@@ -15,6 +15,7 @@ import QuoteResultsPage from "@/pages/QuoteResultsPage";
 import BookingPage from "@/pages/BookingPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
+import ClinicPortalPage from "@/pages/ClinicPortalPage";
 import PortalLoginPage from "@/pages/PortalLoginPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/client-portal" component={ClientPortalPage} />
       <Route path="/admin-portal" component={AdminPortalPage} />
+      <Route path="/clinic-portal" component={ClinicPortalPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {

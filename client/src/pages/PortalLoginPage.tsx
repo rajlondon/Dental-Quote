@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Lock, Mail, User } from "lucide-react";
+import { Lock, Mail, User, Hospital } from "lucide-react";
 
 // Form schema for login
 const loginSchema = z.object({
@@ -20,7 +20,7 @@ const loginSchema = z.object({
 
 // Form schema for test credentials
 const testCredentialsSchema = z.object({
-  userType: z.enum(["client", "admin"]),
+  userType: z.enum(["client", "admin", "clinic"]),
 });
 
 const PortalLoginPage: React.FC = () => {
@@ -91,12 +91,18 @@ const PortalLoginPage: React.FC = () => {
           description: "You are now logged in as a test client user.",
         });
         navigate("/client-portal");
-      } else {
+      } else if (values.userType === "admin") {
         toast({
           title: "Admin Test Login Successful",
           description: "You are now logged in as a test admin user.",
         });
         navigate("/admin-portal");
+      } else if (values.userType === "clinic") {
+        toast({
+          title: "Clinic Test Login Successful",
+          description: "You are now logged in as a test clinic user.",
+        });
+        navigate("/clinic-portal");
       }
     } catch (error) {
       toast({
@@ -241,6 +247,22 @@ const PortalLoginPage: React.FC = () => {
                                 <div className="text-left">
                                   <div className="font-medium">{t("portal.login.admin", "Admin")}</div>
                                   <div className="text-xs text-neutral-500">{t("portal.login.admin_desc", "Staff Portal")}</div>
+                                </div>
+                              </Button>
+                            </div>
+                            <div className="mt-4">
+                              <Button
+                                type="button"
+                                variant={field.value === "clinic" ? "default" : "outline"}
+                                className={`flex items-center justify-center gap-2 h-20 w-full ${
+                                  field.value === "clinic" ? "ring-2 ring-primary" : ""
+                                }`}
+                                onClick={() => field.onChange("clinic")}
+                              >
+                                <Hospital className="h-5 w-5" />
+                                <div className="text-left">
+                                  <div className="font-medium">{t("portal.login.clinic", "Clinic")}</div>
+                                  <div className="text-xs text-neutral-500">{t("portal.login.clinic_desc", "Clinic Management Portal")}</div>
                                 </div>
                               </Button>
                             </div>
