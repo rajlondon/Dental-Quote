@@ -1,244 +1,359 @@
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
-import { Mail, Lock, ArrowRight, LogIn, UserCircle2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import logo from '@assets/logo.png';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Lock, Mail, User } from "lucide-react";
+
+// Form schema for login
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+// Form schema for test credentials
+const testCredentialsSchema = z.object({
+  userType: z.enum(["client", "admin"]),
+});
 
 const PortalLoginPage: React.FC = () => {
   const { t } = useTranslation();
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  
+  // Login form
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  // This is a simple mock authentication function
-  // In a real app, this would validate credentials against the server
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Test credentials form
+  const testCredentialsForm = useForm<z.infer<typeof testCredentialsSchema>>({
+    resolver: zodResolver(testCredentialsSchema),
+    defaultValues: {
+      userType: "client",
+    },
+  });
+
+  // Handle login form submission
+  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
-    setError('');
     
-    // Using setTimeout to simulate network request
-    setTimeout(() => {
-      // Test credentials
-      if (email === 'test@example.com' && password === 'password123') {
-        toast({
-          title: t('auth.login_success', 'Login Successful'),
-          description: t('auth.welcome_back', 'Welcome back to Istanbul Dental Smile!'),
-        });
-        
-        // In a real app, would store auth token in localStorage or cookies
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', email);
-        
-        // Redirect to client portal
-        setLocation('/client-portal');
-      } else {
-        setError(t('auth.invalid_credentials', 'Invalid email or password. Please try again.'));
-      }
+    try {
+      // Here we would typically make an API call to authenticate the user
+      console.log("Login attempt with:", values);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For now, show toast and redirect to client portal
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to Istanbul Dental Smile!",
+      });
+      
+      navigate("/client-portal");
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  // Handle test credentials form submission
+  const onTestCredentialsSubmit = async (values: z.infer<typeof testCredentialsSchema>) => {
+    setIsLoading(true);
+    
+    try {
+      console.log("Test login with user type:", values.userType);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (values.userType === "client") {
+        toast({
+          title: "Client Test Login Successful",
+          description: "You are now logged in as a test client user.",
+        });
+        navigate("/client-portal");
+      } else {
+        toast({
+          title: "Admin Test Login Successful",
+          description: "You are now logged in as a test admin user.",
+        });
+        navigate("/admin-portal");
+      }
+    } catch (error) {
+      toast({
+        title: "Test Login Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Hero Header */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-blue-900 to-blue-700 text-white">
-        <div className="container px-4 md:px-6">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
-            <div className="space-y-4">
-              <div className="inline-block rounded-lg bg-blue-800 px-3 py-1 text-sm">
-                {t('auth.portal_access', 'Patient Portal Access')}
-              </div>
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                {t('auth.login_title', 'Access Your Dental Care Journey')}
-              </h1>
-              <p className="text-gray-200 md:text-xl">
-                {t('auth.portal_desc', 'Securely login to manage your dental treatments, view your personalized care plan, and communicate with your dental team.')}
-              </p>
-            </div>
+    <div className="bg-neutral-50 min-h-screen flex items-center justify-center p-4">
+      <div className="container max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+        {/* Left Column - Login Forms */}
+        <div className="flex flex-col justify-center">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-primary mb-2">
+              {t("portal.login.title", "Patient & Admin Portal")}
+            </h1>
+            <p className="text-neutral-600">
+              {t("portal.login.subtitle", "Access your dental treatment information and communicate with our team.")}
+            </p>
+          </div>
+
+          <Tabs defaultValue="login" className="w-full max-w-md">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
+              <TabsTrigger value="test">{t("portal.login.test_access", "Test Access")}</TabsTrigger>
+            </TabsList>
             
-            <div className="flex items-center justify-center">
-              <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                  <div className="flex justify-center mb-4">
-                    <img src={logo} alt="Istanbul Dental Smile" className="h-10" />
-                  </div>
-                  <CardTitle className="text-2xl text-center">
-                    {t('auth.login', 'Login to Patient Portal')}
-                  </CardTitle>
-                  <CardDescription className="text-center">
-                    {t('auth.enter_credentials', 'Enter your credentials to access your account')}
+            {/* Regular Login Tab */}
+            <TabsContent value="login">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("portal.login.signin", "Sign In")}</CardTitle>
+                  <CardDescription>
+                    {t("portal.login.signin_desc", "Enter your credentials to access your account")}
                   </CardDescription>
                 </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  {error && (
-                    <Alert variant="destructive" className="mb-4 text-sm">
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">{t('auth.email', 'Email')}</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="you@example.com"
-                          className="pl-10"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password">{t('auth.password', 'Password')}</Label>
-                        <a 
-                          href="#" 
-                          className="text-sm text-blue-600 hover:underline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toast({
-                              title: t('auth.password_reset', 'Password Reset'),
-                              description: t('auth.reset_instructions', 'Please contact our support team to reset your password.'),
-                            });
-                          }}
-                        >
-                          {t('auth.forgot', 'Forgot password?')}
-                        </a>
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          id="password"
-                          type="password"
-                          className="pl-10"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-b-transparent border-white"></div>
-                          {t('auth.logging_in', 'Logging in...')}
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="h-4 w-4 mr-2" />
-                          {t('auth.login', 'Login')}
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-gray-500">
-                        {t('auth.demo_info', 'Demo Information')}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm">
-                    <div className="font-medium text-blue-800 mb-1">{t('auth.test_credentials', 'Test Credentials:')}</div>
-                    <div className="grid grid-cols-[80px_1fr] gap-1 text-blue-700">
-                      <span className="font-medium">Email:</span>
-                      <code className="font-mono">test@example.com</code>
-                      <span className="font-medium">Password:</span>
-                      <code className="font-mono">password123</code>
-                    </div>
-                  </div>
+                <CardContent>
+                  <Form {...loginForm}>
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                      <FormField
+                        control={loginForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("form.email", "Email Address")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  placeholder="you@example.com" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={loginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("portal.login.password", "Password")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? t("portal.login.signing_in", "Signing in...") : t("portal.login.signin", "Sign In")}
+                      </Button>
+                    </form>
+                  </Form>
                 </CardContent>
-                
-                <CardFooter className="flex justify-center">
-                  <p className="text-center text-sm text-gray-500">
-                    <a 
-                      href="mailto:info@istanbuldentalsmile.co.uk"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {t('auth.need_help', 'Need help? Contact our support team')}
-                    </a>
-                  </p>
+                <CardFooter className="flex justify-between">
+                  <Button variant="link" className="px-0">
+                    {t("portal.login.forgot_password", "Forgot password?")}
+                  </Button>
                 </CardFooter>
               </Card>
-            </div>
-          </div>
+            </TabsContent>
+            
+            {/* Test Access Tab */}
+            <TabsContent value="test">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("portal.login.test_access", "Test Access")}</CardTitle>
+                  <CardDescription>
+                    {t("portal.login.test_desc", "Use test credentials to explore the portal")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...testCredentialsForm}>
+                    <form onSubmit={testCredentialsForm.handleSubmit(onTestCredentialsSubmit)} className="space-y-4">
+                      <FormField
+                        control={testCredentialsForm.control}
+                        name="userType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("portal.login.user_type", "Select User Type")}</FormLabel>
+                            <div className="grid grid-cols-2 gap-4">
+                              <Button
+                                type="button"
+                                variant={field.value === "client" ? "default" : "outline"}
+                                className={`flex items-center justify-center gap-2 h-20 ${
+                                  field.value === "client" ? "ring-2 ring-primary" : ""
+                                }`}
+                                onClick={() => field.onChange("client")}
+                              >
+                                <User className="h-5 w-5" />
+                                <div className="text-left">
+                                  <div className="font-medium">{t("portal.login.client", "Client")}</div>
+                                  <div className="text-xs text-neutral-500">{t("portal.login.client_desc", "Patient Portal")}</div>
+                                </div>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={field.value === "admin" ? "default" : "outline"}
+                                className={`flex items-center justify-center gap-2 h-20 ${
+                                  field.value === "admin" ? "ring-2 ring-primary" : ""
+                                }`}
+                                onClick={() => field.onChange("admin")}
+                              >
+                                <Lock className="h-5 w-5" />
+                                <div className="text-left">
+                                  <div className="font-medium">{t("portal.login.admin", "Admin")}</div>
+                                  <div className="text-xs text-neutral-500">{t("portal.login.admin_desc", "Staff Portal")}</div>
+                                </div>
+                              </Button>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? t("portal.login.accessing", "Accessing...") : t("portal.login.access_portal", "Access Portal")}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
-      </section>
-      
-      {/* Features */}
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                {t('auth.portal_features', 'Your Patient Portal Benefits')}
+        
+        {/* Right Column - Hero/Explainer */}
+        <div className="hidden md:flex flex-col justify-center">
+          <div className="bg-primary/5 border border-primary/10 rounded-lg p-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/20 z-0" />
+            
+            <div className="relative z-10">
+              <h2 className="text-2xl font-bold text-primary mb-4">
+                {t("portal.login.welcome", "Welcome to Istanbul Dental Smile Portal")}
               </h2>
-              <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl">
-                {t('auth.features_desc', 'Istanbul Dental Smile\'s patient portal gives you full control over your dental care journey.')}
-              </p>
-            </div>
-          </div>
-          
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 lg:gap-12 mt-8">
-            <div className="flex flex-col items-center space-y-2 rounded-lg border border-gray-200 p-6 shadow-sm">
-              <div className="rounded-full bg-blue-100 p-3">
-                <UserCircle2 className="h-6 w-6 text-blue-700" />
+              
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <h3 className="font-medium text-primary mb-2">
+                    {t("portal.login.client_features", "Patient Portal Features")}
+                  </h3>
+                  <ul className="text-sm text-neutral-600 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_treatment_plan", "View and approve your treatment plan")}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_chat", "Chat with your dental team")}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_docs", "Upload and manage your documents")}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_appts", "Schedule and manage appointments")}
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <h3 className="font-medium text-primary mb-2">
+                    {t("portal.login.admin_features", "Admin Portal Features")}
+                  </h3>
+                  <ul className="text-sm text-neutral-600 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_patients", "Manage patient accounts and inquiries")}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_quotes", "Create and send treatment quotes")}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_bookings", "Track bookings and appointments")}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="bg-primary/10 p-1 rounded mt-0.5">
+                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      {t("portal.login.feature_analytics", "View analytics and performance metrics")}
+                    </li>
+                  </ul>
+                </div>
               </div>
-              <h3 className="text-xl font-bold">{t('auth.feature1_title', 'Personalized Care')}</h3>
-              <p className="text-center text-gray-500">
-                {t('auth.feature1_desc', 'Access your personalized treatment plan and track your dental care journey.')}
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-2 rounded-lg border border-gray-200 p-6 shadow-sm">
-              <div className="rounded-full bg-blue-100 p-3">
-                <Mail className="h-6 w-6 text-blue-700" />
-              </div>
-              <h3 className="text-xl font-bold">{t('auth.feature2_title', 'Direct Communication')}</h3>
-              <p className="text-center text-gray-500">
-                {t('auth.feature2_desc', 'Message your dental team directly and get answers to your questions.')}
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-2 rounded-lg border border-gray-200 p-6 shadow-sm">
-              <div className="rounded-full bg-blue-100 p-3">
-                <ArrowRight className="h-6 w-6 text-blue-700" />
-              </div>
-              <h3 className="text-xl font-bold">{t('auth.feature3_title', 'Streamlined Travel')}</h3>
-              <p className="text-center text-gray-500">
-                {t('auth.feature3_desc', 'Manage your travel details and accommodations for your dental tourism journey.')}
-              </p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
