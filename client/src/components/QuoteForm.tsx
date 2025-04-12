@@ -19,6 +19,7 @@ import { CalendarIcon } from "lucide-react";
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 
 // Defined specific dental treatment options
 const dentalTreatments = [
@@ -54,6 +55,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const QuoteForm: React.FC = () => {
   const { t } = useTranslation();
+  const [location, setLocation] = useLocation();
   const [showOtherField, setShowOtherField] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -203,12 +205,32 @@ const QuoteForm: React.FC = () => {
                       
                       // Handle success
                       setIsSubmitting(false);
-                      setIsSubmitted(true);
-                      form.reset();
+                      
+                      // Extract treatment name for the URL
+                      const treatmentValue = data.specificTreatment.replace('dental_', '');
+                      const treatmentLabel = t(`form.treatments.${treatmentValue}`);
+                      
+                      // Create query parameters to pass to the quote page
+                      const queryParams = new URLSearchParams({
+                        treatment: treatmentLabel,
+                        travelMonth: data.startDate ? format(data.startDate, 'MMMM yyyy') : 'Flexible',
+                        budget: data.budget ? `£${data.budget} - £${parseInt(data.budget) + 1000}` : 'Flexible',
+                        name: data.name,
+                        email: data.email,
+                        phone: data.phone
+                      }).toString();
+                      
+                      // Show success toast
                       toast({
-                        title: t('form.success.toastTitle'),
-                        description: t('form.success.toastMessage'),
+                        title: "Quote Generated!",
+                        description: "We're taking you to your personalized dental clinic options",
                       });
+                      
+                      // Reset form after successful submission
+                      form.reset();
+                      
+                      // Redirect to the quote page
+                      setLocation(`/your-quote?${queryParams}`);
                     } catch (err) {
                       // Handle errors
                       setIsSubmitting(false);
