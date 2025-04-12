@@ -53,10 +53,10 @@ const GeneralDentistryTab: React.FC = () => {
               </p>
               <div className="bg-green-50 px-3 py-1 rounded text-sm inline-flex items-center">
                 <Banknote className="h-3 w-3 mr-1 text-green-600" />
-                <span className="font-medium text-green-800">Save up to 65% vs UK prices</span>
+                <span className="font-medium text-green-800">FREE with consultation</span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                UK avg: £50-90 | Turkey from: £20-35
+                UK avg: £50-90 | Turkey: Included at no cost
               </p>
             </div>
           </div>

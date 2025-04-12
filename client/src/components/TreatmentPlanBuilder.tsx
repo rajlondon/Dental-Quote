@@ -181,6 +181,60 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
       },
     ],
   },
+  {
+    id: 'general',
+    name: 'General Dentistry',
+    treatments: [
+      { 
+        id: 'dental_checkup_cleaning', 
+        name: 'Dental Check-up & Cleaning', 
+        priceGBP: 30, 
+        priceUSD: 40,
+        guarantee: 'N/A',
+        notes: 'Comprehensive examination, professional cleaning, and preventative care advice.'
+      },
+      { 
+        id: 'dental_xrays', 
+        name: 'Dental X-rays (Panoramic)', 
+        priceGBP: 0, 
+        priceUSD: 0,
+        guarantee: 'N/A',
+        notes: 'Included FREE with consultation. Full-mouth panoramic X-ray for comprehensive diagnosis.'
+      },
+      { 
+        id: 'tooth_fillings', 
+        name: 'Tooth Fillings (Composite)', 
+        priceGBP: 35, 
+        priceUSD: 45,
+        guarantee: '2-year',
+        notes: 'High-quality composite (tooth-colored) fillings to repair cavities and tooth damage.'
+      },
+      { 
+        id: 'teeth_whitening', 
+        name: 'Professional Teeth Whitening', 
+        priceGBP: 90, 
+        priceUSD: 120,
+        guarantee: '1-year',
+        notes: 'In-office professional whitening treatment for a brighter, more confident smile.'
+      },
+      { 
+        id: 'root_canal', 
+        name: 'Root Canal Treatment', 
+        priceGBP: 100, 
+        priceUSD: 130,
+        guarantee: '2-year',
+        notes: 'Modern, minimally painful root canal therapy to save damaged teeth.'
+      },
+      { 
+        id: 'tooth_extraction', 
+        name: 'Tooth Extraction', 
+        priceGBP: 40, 
+        priceUSD: 55,
+        guarantee: 'N/A',
+        notes: 'Simple extraction of visible tooth. Surgical extractions may cost more.'
+      },
+    ],
+  },
 ];
 
 interface TreatmentPlanBuilderProps {
