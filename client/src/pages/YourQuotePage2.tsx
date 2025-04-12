@@ -21,6 +21,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { 
   Check, 
   ChevronRight, 
@@ -542,15 +543,87 @@ const YourQuotePage: React.FC = () => {
                       onTreatmentsChange={handleTreatmentPlanChange}
                     />
                     
+                    {/* Future Enhancements Section */}
+                    <div className="mt-8 border-t pt-6 border-gray-200">
+                      <h3 className="text-lg font-semibold mb-4">Future Enhancements & Add-ons</h3>
+                      <p className="text-gray-600 text-sm mb-4">
+                        These options can be added to your treatment plan after your initial consultation. 
+                        Your dental advisor will provide more details during your free consultation.
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-3 border rounded-md">
+                          <div className="flex items-center">
+                            <Sparkles className="h-5 w-5 text-blue-500 mr-3" />
+                            <div>
+                              <p className="font-medium">Teeth Whitening</p>
+                              <p className="text-xs text-gray-500">Professional whitening after treatment</p>
+                            </div>
+                          </div>
+                          <Switch />
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 border rounded-md">
+                          <div className="flex items-center">
+                            <Hotel className="h-5 w-5 text-blue-500 mr-3" />
+                            <div>
+                              <p className="font-medium">Premium Accommodation</p>
+                              <p className="text-xs text-gray-500">5-star hotel with medical concierge</p>
+                            </div>
+                          </div>
+                          <Switch />
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 border rounded-md">
+                          <div className="flex items-center">
+                            <Car className="h-5 w-5 text-blue-500 mr-3" />
+                            <div>
+                              <p className="font-medium">Private Transportation</p>
+                              <p className="text-xs text-gray-500">Dedicated driver for all appointments</p>
+                            </div>
+                          </div>
+                          <Switch />
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 border rounded-md">
+                          <div className="flex items-center">
+                            <Plane className="h-5 w-5 text-blue-500 mr-3" />
+                            <div>
+                              <p className="font-medium">Flight Booking Assistance</p>
+                              <p className="text-xs text-gray-500">Help finding the best flights</p>
+                            </div>
+                          </div>
+                          <Switch />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6 bg-blue-50 p-4 rounded-md flex items-start">
+                        <Info className="h-5 w-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-blue-700">AI Treatment Recommendation</p>
+                          <p className="text-xs text-blue-600 mt-1">
+                            Our AI can analyze your dental X-rays and suggest optimal treatments based on your specific condition.
+                            This service is available after your initial consultation.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
                     {treatmentItems.length > 0 && (
-                      <div className="mt-6 flex justify-end">
-                        <Button 
-                          onClick={() => setCurrentStep('patient-info')}
-                          className="flex items-center gap-2"
-                        >
-                          Continue to Next Step
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <div className="mt-6 flex justify-end">
+                          <Button 
+                            onClick={() => setCurrentStep('patient-info')}
+                            className="flex items-center gap-2 py-6 px-5 text-lg"
+                            size="lg"
+                          >
+                            Match Me with Clinics & View Packages
+                            <ChevronRight className="h-5 w-5 ml-1" />
+                          </Button>
+                        </div>
+                        <div className="mt-2 text-center text-sm text-gray-500">
+                          See packages, reviews, and book with a verified clinic. Your treatment plan can still be updated after consultation.
+                        </div>
                       </div>
                     )}
                   </CardContent>
