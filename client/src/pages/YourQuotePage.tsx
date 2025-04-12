@@ -694,11 +694,21 @@ const FAQSection: React.FC = () => {
 };
 
 const CTASection: React.FC<{ 
-  selectedClinic: ClinicInfo | null 
-}> = ({ selectedClinic }) => {
+  selectedClinic: ClinicInfo | null,
+  treatmentItems?: PlanTreatmentItem[]
+}> = ({ selectedClinic, treatmentItems = [] }) => {
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const userName = searchParams.get('name')?.split(' ')[0];
   const treatment = searchParams.get('treatment');
+  
+  // Calculate total from treatment items if available
+  const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
+  const hasCustomPlan = treatmentItems.length > 0;
+  
+  // Format the deposit amount with commas for thousands
+  const formatCurrency = (amount: number) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
   
   return (
     <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
@@ -707,7 +717,7 @@ const CTASection: React.FC<{
           {userName ? `${userName}, Ready to Transform Your Smile?` : 'Ready to Transform Your Smile?'}
         </h2>
         
-        <p className="text-blue-100 mb-8">
+        <p className="text-blue-100 mb-4">
           {selectedClinic ? (
             <>
               Book your {treatment || 'dental treatment'} at {selectedClinic.name} today with just a £200 deposit. 
@@ -721,7 +731,15 @@ const CTASection: React.FC<{
           )}
         </p>
         
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
+        {hasCustomPlan && (
+          <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
+            <h3 className="text-lg font-semibold mb-1">Your Treatment Plan Total</h3>
+            <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
+            <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
+          </div>
+        )}
+        
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
           <Button 
             className="bg-white text-blue-700 hover:bg-blue-50"
             size="lg"
@@ -741,10 +759,36 @@ const CTASection: React.FC<{
           </Button>
         </div>
         
-        <p className="text-sm text-blue-200 mt-6">
-          Your £200 deposit is fully refundable if you cancel more than 7 days before your consultation,
-          and is deducted from your final treatment cost.
-        </p>
+        <div className="mt-6 flex justify-center">
+          <div className="inline-block text-left bg-blue-500/30 rounded-lg p-4 max-w-md">
+            <h4 className="font-medium mb-2 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Booking Process
+            </h4>
+            <ul className="text-sm text-blue-100 space-y-2">
+              <li className="flex items-start">
+                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
+                Pay £200 deposit to secure your appointment
+              </li>
+              <li className="flex items-start">
+                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
+                Receive confirmation and pre-travel guidance
+              </li>
+              <li className="flex items-start">
+                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
+                Attend consultation and finalize treatment plan
+              </li>
+              <li className="flex items-start">
+                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
+                Pay remaining balance directly to the clinic
+              </li>
+            </ul>
+            <p className="text-xs text-blue-200 mt-3">
+              Your £200 deposit is fully refundable if you cancel more than 7 days before your consultation,
+              and is deducted from your final treatment cost.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -787,12 +831,42 @@ const YourQuotePage: React.FC = () => {
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
   
+  // Treatment Plan Builder State
+  const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
+  
+  // Edit Quote Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   // Get the selected clinic object based on ID
   const selectedClinic = CLINIC_DATA.find(clinic => clinic.id === selectedClinicId) || null;
   
-  // Function to reset the quote
+  // Function to open edit quote modal
   const handleEditQuote = () => {
-    setLocation('/');
+    setIsEditModalOpen(true);
+  };
+  
+  // Function to save updated quote parameters
+  const handleSaveQuoteParams = (params: QuoteParams) => {
+    setQuoteParams(params);
+    toast({
+      title: "Quote Updated",
+      description: "Your quote preferences have been updated.",
+    });
+  };
+  
+  // Function to handle treatment plan changes
+  const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
+    setTreatmentItems(items);
+    
+    // Update clinics based on new treatment selections
+    if (items.length > 0) {
+      // Calculation logic would go here to update clinic recommendations
+      // For now we'll just show a toast
+      toast({
+        title: "Treatment Plan Updated",
+        description: "Clinic recommendations have been refreshed.",
+      });
+    }
   };
   
   useEffect(() => {
@@ -805,6 +879,23 @@ const YourQuotePage: React.FC = () => {
       title: "Quote Generated",
       description: "Here are your personalized clinic options based on your requirements.",
     });
+    
+    // Initialize with a default treatment if the user came from selecting a specific treatment
+    if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
+      const initialTreatment: PlanTreatmentItem = {
+        id: `default_${Date.now()}`,
+        category: 'implants', // Default category, would be determined by mapping in real app
+        name: quoteParams.treatment,
+        quantity: 1,
+        priceGBP: 450, // Default price, would be determined by API in real app
+        priceUSD: 580, // Default price, would be determined by API in real app
+        subtotalGBP: 450,
+        subtotalUSD: 580,
+        guarantee: '5-year'
+      };
+      
+      setTreatmentItems([initialTreatment]);
+    }
   }, []);
   
   return (
@@ -847,6 +938,20 @@ const YourQuotePage: React.FC = () => {
             onEditQuote={handleEditQuote}
           />
           
+          {/* Treatment Plan Builder section */}
+          <TreatmentPlanBuilder 
+            initialTreatments={treatmentItems}
+            onTreatmentsChange={handleTreatmentPlanChange}
+          />
+          
+          {/* Edit Quote Modal */}
+          <EditQuoteModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            initialParams={quoteParams}
+            onSave={handleSaveQuoteParams}
+          />
+          
           {/* Clinic comparison section */}
           <div className="mb-10">
             <div className="flex items-end justify-between mb-4">
@@ -883,7 +988,7 @@ const YourQuotePage: React.FC = () => {
           <FAQSection />
           
           {/* Final CTA section */}
-          <CTASection selectedClinic={selectedClinic} />
+          <CTASection selectedClinic={selectedClinic} treatmentItems={treatmentItems} />
         </div>
       </main>
       
