@@ -1,141 +1,192 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Calendar, ClipboardList, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarDays, Users, FileText, Clock, TrendingUp } from 'lucide-react';
 
-const ClinicDashboardSection: React.FC = () => {
-  const { t } = useTranslation();
+export default function ClinicDashboardSection() {
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['/api/portal/dashboard'],
+    retry: 1,
+  });
 
-  // Sample data - in a real app, this would come from an API
-  const stats = [
-    {
-      title: t("clinic.dashboard.patients", "Patients"),
-      value: "124",
-      icon: <Users className="h-5 w-5 text-primary" />,
-      change: "+12%",
-      changeType: "positive"
-    },
-    {
-      title: t("clinic.dashboard.quotes", "Quotes"),
-      value: "38",
-      icon: <ClipboardList className="h-5 w-5 text-primary" />,
-      change: "+5%",
-      changeType: "positive"
-    },
-    {
-      title: t("clinic.dashboard.appointments", "Appointments"),
-      value: "27",
-      icon: <Calendar className="h-5 w-5 text-primary" />,
-      change: "+8%",
-      changeType: "positive"
-    },
-    {
-      title: t("clinic.dashboard.revenue", "Revenue"),
-      value: "£24,560",
-      icon: <BarChart3 className="h-5 w-5 text-primary" />,
-      change: "+15%",
-      changeType: "positive"
-    }
-  ];
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-4 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-4">
+        <h3 className="text-lg font-semibold">Error loading dashboard data</h3>
+        <p>Please try refreshing the page or contact support if the problem persists.</p>
+      </div>
+    );
+  }
+
+  // Use default values if data is not available
+  const dashboardData = stats?.stats || {
+    pendingAppointments: 0,
+    totalPatients: 0,
+    activeQuotes: 0,
+    upcomingAppointments: [],
+    recentQuotes: []
+  };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("clinic.dashboard.title", "Clinic Dashboard")}</CardTitle>
-          <CardDescription>
-            {t("clinic.dashboard.description", "Overview of your clinic's performance and recent activity")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat, index) => (
-              <Card key={index} className="border border-border">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="bg-primary/10 p-2 rounded-full">{stat.icon}</span>
-                    <span className={`text-xs font-medium ${
-                      stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {stat.change}
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <h3 className="text-2xl font-bold">{stat.value}</h3>
-                    <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <DashboardCard 
+          title="Pending Appointments" 
+          value={dashboardData.pendingAppointments} 
+          description="Appointments awaiting confirmation"
+          icon={<Clock className="h-5 w-5 text-blue-600" />}
+        />
+        <DashboardCard 
+          title="Total Patients" 
+          value={dashboardData.totalPatients} 
+          description="Patients associated with your clinic"
+          icon={<Users className="h-5 w-5 text-emerald-600" />}
+        />
+        <DashboardCard 
+          title="Active Quotes" 
+          value={dashboardData.activeQuotes} 
+          description="Quotes awaiting response"
+          icon={<FileText className="h-5 w-5 text-yellow-600" />}
+        />
+        <DashboardCard 
+          title="Revenue" 
+          value={`£${dashboardData.monthlyRevenue || 0}`} 
+          description="Current month revenue"
+          icon={<TrendingUp className="h-5 w-5 text-green-600" />}
+        />
+      </div>
 
-          <div className="mt-8">
-            <Tabs defaultValue="upcoming">
-              <TabsList className="mb-4">
-                <TabsTrigger value="upcoming">
-                  {t("clinic.dashboard.upcoming_appts", "Upcoming Appointments")}
-                </TabsTrigger>
-                <TabsTrigger value="recent">
-                  {t("clinic.dashboard.recent_quotes", "Recent Quotes")}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="upcoming" className="space-y-4">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="space-y-6">
-                      {[1, 2, 3].map((_, index) => (
-                        <div key={index} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                          <div className="flex items-center gap-4">
-                            <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
-                              <Users className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium">John D.</h4>
-                              <p className="text-sm text-muted-foreground">Dental Implant Consultation</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-medium">10:30 AM</div>
-                            <div className="text-sm text-muted-foreground">15 Apr 2025</div>
-                          </div>
-                        </div>
-                      ))}
+      <Tabs defaultValue="upcoming" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="upcoming">Upcoming Appointments</TabsTrigger>
+          <TabsTrigger value="quotes">Recent Quotes</TabsTrigger>
+        </TabsList>
+        <TabsContent value="upcoming" className="space-y-4">
+          {dashboardData.upcomingAppointments?.length > 0 ? (
+            <div className="divide-y divide-gray-200 rounded-md border">
+              {dashboardData.upcomingAppointments.map((appointment: any) => (
+                <div key={appointment.id} className="flex items-center justify-between p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{appointment.patientName}</p>
+                    <p className="text-sm text-gray-500">{new Date(appointment.startTime).toLocaleString()}</p>
+                  </div>
+                  <Button variant="outline" size="sm">View</Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center p-8 text-center border rounded-md border-dashed">
+              <div className="space-y-2">
+                <CalendarDays className="mx-auto h-8 w-8 text-gray-400" />
+                <h3 className="text-lg font-semibold">No upcoming appointments</h3>
+                <p className="text-sm text-gray-500">New appointments will appear here when scheduled.</p>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="quotes" className="space-y-4">
+          {dashboardData.recentQuotes?.length > 0 ? (
+            <div className="divide-y divide-gray-200 rounded-md border">
+              {dashboardData.recentQuotes.map((quote: any) => (
+                <div key={quote.id} className="flex items-center justify-between p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{quote.patientName}</p>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex h-2 w-2 rounded-full ${getStatusColor(quote.status)}`} />
+                      <p className="text-sm text-gray-500">
+                        {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)} • 
+                        {new Date(quote.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="recent" className="space-y-4">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="space-y-6">
-                      {[1, 2, 3].map((_, index) => (
-                        <div key={index} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                          <div className="flex items-center gap-4">
-                            <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
-                              <ClipboardList className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium">Sarah M.</h4>
-                              <p className="text-sm text-muted-foreground">Full Mouth Restoration</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-medium">£4,860</div>
-                            <div className="text-sm text-muted-foreground">12 Apr 2025</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </CardContent>
-      </Card>
+                  </div>
+                  <Button variant="outline" size="sm">View</Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center p-8 text-center border rounded-md border-dashed">
+              <div className="space-y-2">
+                <FileText className="mx-auto h-8 w-8 text-gray-400" />
+                <h3 className="text-lg font-semibold">No recent quotes</h3>
+                <p className="text-sm text-gray-500">New quotes will appear here when received.</p>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
-};
+}
 
-export default ClinicDashboardSection;
+interface DashboardCardProps {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: React.ReactNode;
+}
+
+function DashboardCard({ title, value, description, icon }: DashboardCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function getStatusColor(status: string): string {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return 'bg-yellow-500';
+    case 'approved':
+      return 'bg-green-500';
+    case 'rejected':
+    case 'declined':
+      return 'bg-red-500';
+    case 'scheduled':
+      return 'bg-blue-500';
+    case 'completed':
+      return 'bg-purple-500';
+    default:
+      return 'bg-gray-500';
+  }
+}

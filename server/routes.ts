@@ -18,6 +18,9 @@ import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 import { upload, handleUploadError, type UploadedFile } from "./file-upload";
 import { createPaymentIntent, createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
 import Stripe from "stripe";
+// Import authentication and portal routes
+import { setupAuth } from "./auth";
+import portalRoutes from "./routes/portal-routes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,6 +50,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
   app.use('/images', express.static(path.join(__dirname, '../public/images')));
   app.use('/favicon.ico', express.static(path.join(__dirname, '../public/favicon.ico')));
+  
+  // Setup authentication
+  setupAuth(app);
+  
+  // Register portal routes for clinic, admin, and client portal functionality
+  app.use(portalRoutes);
   
   // EmailJS Config endpoint
   app.get("/api/config/emailjs", (_req, res) => {

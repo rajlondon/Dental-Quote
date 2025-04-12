@@ -1,15 +1,10 @@
 import { Request, Response, Router, NextFunction } from "express";
 import { storage } from "../storage";
-import { z } from "zod";
-import { ZodError } from "zod-validation-error";
+import { z, ZodError } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import {
   insertQuoteRequestSchema,
-  insertBookingSchema,
-  insertMessageSchema,
-  insertNotificationSchema,
-  insertFileSchema,
-  insertAppointmentSchema
+  insertUserSchema
 } from "@shared/schema";
 
 const router = Router();
@@ -325,7 +320,7 @@ router.get("/api/portal/bookings", requireAuth, async (req, res) => {
 // Create booking from quote
 router.post("/api/portal/bookings", requireRole(["admin"]), async (req, res) => {
   try {
-    const bookingSchema = insertBookingSchema.extend({
+    const bookingSchema = z.object(InsertBooking).extend({
       quoteRequestId: z.number()
     });
     
