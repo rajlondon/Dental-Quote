@@ -185,7 +185,7 @@ const Home: React.FC = () => {
   
   // Set page title
   useEffect(() => {
-    document.title = "MyDentalFly - Compare Dental Treatment Options in Turkey";
+    document.title = "MyDentalFly - Compare Dental Clinics. Book With Confidence. Fly With a Smile.";
   }, []);
   
   return (

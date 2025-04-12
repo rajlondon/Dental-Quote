@@ -149,6 +149,9 @@ const Hero: React.FC = () => {
               Quality Dental Care <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">Without the Premium</span>
             </h1>
             
+            <h2 className="text-xl md:text-2xl text-primary font-medium mb-3 tracking-wide">
+              Compare Dental Clinics. Book With Confidence. Fly With a Smile.
+            </h2>
             <p className="text-lg text-gray-700 mb-8 leading-relaxed max-w-xl lg:mx-0 mx-auto">
               Compare verified Turkish dental clinics. Save up to 70% on UK prices with transparent quotes and personalized service.
             </p>
