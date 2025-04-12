@@ -14,6 +14,7 @@ import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
 import BookingPage from "@/pages/BookingPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
+import AdminPortalPage from "@/pages/AdminPortalPage";
 import PortalLoginPage from "@/pages/PortalLoginPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/portal" component={PortalLoginPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/client-portal" component={ClientPortalPage} />
+      <Route path="/admin-portal" component={AdminPortalPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {
