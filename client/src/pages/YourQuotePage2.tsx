@@ -286,8 +286,8 @@ const YourQuotePage: React.FC = () => {
             </h1>
           ) : (
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Building Your Treatment Plan</h1>
-              <p className="text-gray-600 mb-6">Choose your treatments below to get the most accurate price estimate. Your final treatment plan will be confirmed after consultation and X-rays with your chosen clinic.</p>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">Build Your Treatment Plan</h1>
+              <p className="text-gray-600 mb-6">Create your dental treatment plan and see your potential savings.</p>
             </div>
           )}
           

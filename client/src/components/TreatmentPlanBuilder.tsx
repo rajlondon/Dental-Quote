@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MinusCircle, Info, AlertCircle } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
+import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 // Define TreatmentData structure
 export interface TreatmentItem {
@@ -37,7 +39,7 @@ export interface TreatmentCategory {
 const TREATMENT_CATEGORIES: TreatmentCategory[] = [
   {
     id: 'implants',
-    name: 'Implants',
+    name: 'Dental Implants',
     treatments: [
       { 
         id: 'dental_implant_standard', 
@@ -73,7 +75,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
   },
   {
     id: 'crowns_veneers',
-    name: 'Crowns & Veneers',
+    name: 'Veneers & Crowns',
     treatments: [
       { 
         id: 'porcelain_crown', 
@@ -114,7 +116,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
   },
   {
     id: 'whitening',
-    name: 'Whitening',
+    name: 'Teeth Whitening',
     treatments: [
       { 
         id: 'zoom_whitening', 
@@ -134,7 +136,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
   },
   {
     id: 'dentures',
-    name: 'Dentures',
+    name: 'Dentures & All-on-4',
     treatments: [
       { 
         id: 'partial_denture', 
@@ -558,11 +560,62 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </div>
               <div className="mt-4 flex flex-col">
                 <Button className="w-full">
-                  View Matching Clinics
+                  View Matching Clinics & Request Final Quote
                 </Button>
                 <p className="text-xs text-center text-gray-500 mt-2">
-                  Select a clinic to review, speak with directly, and confirm your treatment plan.
+                  We'll help you compare verified clinics and send your treatment plan to them for review.
                 </p>
+              </div>
+                
+              {/* Future Enhancements */}
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-700">Add to your package</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50">
+                    <div className="mr-2">
+                      <Plane className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Add Flights</p>
+                      <p className="text-xs text-gray-500">From £150 - £300 return</p>
+                    </div>
+                    <Switch />
+                  </div>
+                  <div className="flex items-center border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50">
+                    <div className="mr-2">
+                      <Hotel className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Add Hotel Stay</p>
+                      <p className="text-xs text-gray-500">From £40/night (4-star)</p>
+                    </div>
+                    <Switch />
+                  </div>
+                </div>
+                <div className="mt-3 bg-yellow-50 p-3 rounded-md border border-yellow-100">
+                  <div className="flex">
+                    <div className="mr-2 flex-shrink-0">
+                      <Sparkles className="h-5 w-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">AI Recommendations</p>
+                      <p className="text-xs text-yellow-700 mb-2">Patients like you often combine these treatments:</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="bg-white cursor-pointer hover:bg-yellow-100">
+                          Dental Implant + Crown
+                        </Badge>
+                        <Badge variant="outline" className="bg-white cursor-pointer hover:bg-yellow-100">
+                          Cleaning + Whitening
+                        </Badge>
+                        <Badge variant="outline" className="bg-white cursor-pointer hover:bg-yellow-100">
+                          Root Canal + Crown
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

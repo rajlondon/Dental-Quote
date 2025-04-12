@@ -1,0 +1,81 @@
+**Document: MyDentalFly - My Quote Page Specification**
+
+---
+
+## Purpose:
+The "My Quote" page is the heart of the quote-building journey for prospective patients. It should allow them to build their dental treatment plan in a clear, educational, and trust-driven manner before showing specific clinic results.
+
+This page focuses on user education, transparency, and guiding them to request a quote based on average Istanbul prices vs UK prices.
+
+---
+
+## Page Layout Structure
+
+### 1. Header:
+- Back to Home link
+- Page Title: "Build Your Treatment Plan"
+- Simple subtitle: "Create your dental treatment plan and see your potential savings."
+
+---
+
+### 2. Treatment Plan Builder (Main Section)
+
+#### Categories (Tabbed Layout or Accordion Style):
+- Dental Implants
+- Veneers & Crowns
+- Teeth Whitening
+- Full Mouth Reconstruction
+- Dentures & All-on-4
+- General Dentistry (Fillings, Root Canal, Cleaning)
+
+#### Within Each Category:
+- Treatment Name
+- Small Info Icon / Tooltip with short explanation
+- Guarantee Range ("5-10 Year Guarantee")
+- Recommended Use / Notes
+
+##### Action:
+- Add Treatment Button (with quantity selector once added)
+
+---
+
+### 3. Estimated Pricing Box (Right Sidebar or Floating Box)
+
+#### Content:
+- Total Estimated Cost: "£700 - £1500" (Dynamic based on treatments selected)
+- UK Equivalent Cost: "£2500 - £3500"
+- Savings Message: "Save up to 60% vs UK pricing"
+
+##### Notes Section:
+"This is an estimated treatment cost based on Istanbul market prices. Final pricing will be provided after consultation with your chosen clinic and medical review."
+
+---
+
+### 4. Next Step CTA:
+Primary Button:
+"View Matching Clinics & Request Final Quote"
+
+Secondary Text:
+"We'll help you compare verified clinics and send your treatment plan to them for review."
+
+---
+
+## Additional Considerations
+
+- No clinic-specific pricing shown at this stage.
+- Educational layout with trust markers.
+- Optionally add:
+  - "How to Get an Accurate Quote" link
+  - FAQ dropdown area for common questions.
+
+---
+
+## Future Enhancements (Optional)
+- AI Recommendation Engine ("Most Common Treatment Combinations")
+- "Add Flights" or "Add Hotel" toggles to build travel package
+
+---
+
+## Goal:
+Keep the My Quote page clean, clear, medically professional, and focused on building trust while guiding the user to complete their quote journey.
+
