@@ -818,10 +818,73 @@ const WhatsAppButton: React.FC = () => {
   );
 };
 
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation, Link } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ScrollToTop from '@/components/ScrollToTop';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Check, 
+  ChevronRight, 
+  MapPin, 
+  Star, 
+  Clock, 
+  Calendar, 
+  Download, 
+  Mail, 
+  CreditCard,
+  Hotel,
+  Car,
+  Shield,
+  Plane,
+  Sparkles,
+  Info,
+  ArrowLeft,
+  Edit3,
+  RefreshCcw,
+  MessageCircle,
+  CheckCircle,
+  Pencil
+} from 'lucide-react';
+import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
+import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
+import EditQuoteModal from '@/components/EditQuoteModal';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from "@/components/ui/table";
+
+// Import the new components
+import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
+import TreatmentGuide from '@/components/TreatmentGuide';
+
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   
@@ -834,11 +897,15 @@ const YourQuotePage: React.FC = () => {
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
   
+  // Patient Info State
+  const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
+  
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  // Get the selected clinic object based on ID
-  const selectedClinic = CLINIC_DATA.find(clinic => clinic.id === selectedClinicId) || null;
+  // Quote steps tracking
+  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'review'>('build-plan');
+  const [isQuoteReady, setIsQuoteReady] = useState(false);
   
   // Function to open edit quote modal
   const handleEditQuote = () => {
@@ -858,26 +925,47 @@ const YourQuotePage: React.FC = () => {
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
     
-    // Update clinics based on new treatment selections
     if (items.length > 0) {
-      // Calculation logic would go here to update clinic recommendations
-      // For now we'll just show a toast
       toast({
         title: "Treatment Plan Updated",
-        description: "Clinic recommendations have been refreshed.",
+        description: "Your treatment plan has been updated.",
       });
     }
+  };
+  
+  // Function to handle patient info form submission
+  const handlePatientInfoSubmit = (data: PatientInfo) => {
+    setPatientInfo(data);
+    setCurrentStep('review');
+    setIsQuoteReady(true);
+    
+    toast({
+      title: "Information Saved",
+      description: "Your personal information has been saved successfully.",
+    });
+    
+    // Scroll to the top of the review section
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Calculate totals
+  const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
+  const totalUSD = treatmentItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
+  
+  // Format currency with commas
+  const formatCurrency = (amount: number) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   
   useEffect(() => {
     // In a real implementation, we would parse query parameters here
     // and fetch real data from an API
-    document.title = "Your Dental Treatment Quote | MyDentalFly";
+    document.title = "Build Your Dental Treatment Quote | MyDentalFly";
     
     // Show welcome toast when the page loads
     toast({
-      title: "Quote Generated",
-      description: "Here are your personalized clinic options based on your requirements.",
+      title: "Let's Build Your Quote",
+      description: "Start by creating your custom treatment plan below.",
     });
     
     // Initialize with a default treatment if the user came from selecting a specific treatment
@@ -895,6 +983,21 @@ const YourQuotePage: React.FC = () => {
       };
       
       setTreatmentItems([initialTreatment]);
+    }
+    
+    // Initialize patient info from URL parameters if available
+    if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone')) {
+      setPatientInfo({
+        fullName: searchParams.get('name') || '',
+        email: searchParams.get('email') || '',
+        phone: searchParams.get('phone') || '',
+        travelMonth: searchParams.get('travelMonth') || '',
+        departureCity: '',
+        hasXrays: false,
+        hasCtScan: false,
+        additionalNotes: '',
+        preferredContactMethod: 'email'
+      });
     }
   }, []);
   
@@ -919,30 +1022,155 @@ const YourQuotePage: React.FC = () => {
             </Button>
           </div>
           
+          {/* Page header */}
           {searchParams.get('name') ? (
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
               Hello, {searchParams.get('name')?.split(' ')[0]}!
             </h1>
           ) : (
-            <h1 className="text-3xl md:text-4xl font-bold mb-6">Your Personalized Quote</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-6">Build Your Treatment Plan</h1>
           )}
           
           {searchParams.get('name') && (
-            <p className="text-gray-600 mb-6 text-lg">Here's your personalized dental treatment quote</p>
+            <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
           
-          {/* Quote summary section */}
-          <QuoteSummary 
-            params={quoteParams} 
-            selectedClinic={selectedClinic}
-            onEditQuote={handleEditQuote}
-          />
+          {/* Progress tracker */}
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">Your Quote Progress</h2>
+                  <p className="text-gray-600 text-sm">Follow these steps to get your personalized quote</p>
+                </div>
+                
+                {isQuoteReady && (
+                  <div className="mt-4 sm:mt-0">
+                    <Button 
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Quote PDF
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div 
+                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
+                    ${currentStep === 'build-plan' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                  `}
+                  onClick={() => setCurrentStep('build-plan')}
+                >
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
+                    currentStep === 'build-plan' ? 'bg-blue-500' : 
+                    treatmentItems.length > 0 ? 'bg-green-500' : 'bg-gray-300'
+                  }`}>
+                    {treatmentItems.length > 0 ? <Check className="h-5 w-5" /> : '1'}
+                  </div>
+                  <div>
+                    <p className="font-medium">Build Treatment Plan</p>
+                    <p className="text-xs text-gray-600">{treatmentItems.length} treatments added</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
+                    ${currentStep === 'patient-info' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                    ${treatmentItems.length === 0 ? 'opacity-50' : ''}
+                  `}
+                  onClick={() => treatmentItems.length > 0 && setCurrentStep('patient-info')}
+                >
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
+                    currentStep === 'patient-info' ? 'bg-blue-500' : 
+                    patientInfo ? 'bg-green-500' : 'bg-gray-300'
+                  }`}>
+                    {patientInfo ? <Check className="h-5 w-5" /> : '2'}
+                  </div>
+                  <div>
+                    <p className="font-medium">Your Information</p>
+                    <p className="text-xs text-gray-600">
+                      {patientInfo ? 'Information saved' : 'Add your details'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
+                    ${currentStep === 'review' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                    ${!patientInfo ? 'opacity-50' : ''}
+                  `}
+                  onClick={() => patientInfo && setCurrentStep('review')}
+                >
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
+                    currentStep === 'review' ? 'bg-blue-500' : 
+                    isQuoteReady ? 'bg-green-500' : 'bg-gray-300'
+                  }`}>
+                    {isQuoteReady ? <Check className="h-5 w-5" /> : '3'}
+                  </div>
+                  <div>
+                    <p className="font-medium">Review & Submit</p>
+                    <p className="text-xs text-gray-600">
+                      {isQuoteReady ? 'Quote ready' : 'Complete first two steps'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
-          {/* Treatment Plan Builder section */}
-          <TreatmentPlanBuilder 
-            initialTreatments={treatmentItems}
-            onTreatmentsChange={handleTreatmentPlanChange}
-          />
+          {/* Quote Parameters Summary (always visible) */}
+          <div className="mb-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-lg">Quote Preferences</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleEditQuote}
+                    className="flex items-center gap-2 text-xs h-8"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Edit
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Treatment</p>
+                    <p className="font-medium">{quoteParams.treatment}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Travel Month</p>
+                    <p className="font-medium">{quoteParams.travelMonth}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Budget Range</p>
+                    <p className="font-medium">{quoteParams.budget}</p>
+                  </div>
+                </div>
+                
+                {treatmentItems.length > 0 && (
+                  <div className="flex justify-end mt-4">
+                    <div className="bg-blue-50 py-2 px-4 rounded-md">
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span className="text-gray-700">Total:</span>
+                        <span className="font-bold">£{formatCurrency(totalGBP)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4 text-xs text-gray-500">
+                        <span>USD:</span>
+                        <span>${formatCurrency(totalUSD)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
           
           {/* Edit Quote Modal */}
           <EditQuoteModal
@@ -952,43 +1180,292 @@ const YourQuotePage: React.FC = () => {
             onSave={handleSaveQuoteParams}
           />
           
-          {/* Clinic comparison section */}
-          <div className="mb-10">
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <h2 className="text-2xl font-bold">Recommended Clinics</h2>
-                <p className="text-gray-600">Based on your requirements and preferences</p>
-              </div>
+          {/* Step 1: Build Treatment Plan (conditionally displayed) */}
+          {currentStep === 'build-plan' && (
+            <>
+              {/* Treatment Guide - Educational Component */}
+              <TreatmentGuide />
               
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="flex items-center text-blue-600"
-                onClick={() => setSelectedClinicId(null)}
-              >
-                <RefreshCcw className="mr-2 h-3 w-3" />
-                Reset Selection
-              </Button>
-            </div>
-            
-            {CLINIC_DATA.map((clinic) => (
-              <ClinicCard
-                key={clinic.id}
-                clinic={clinic}
-                isSelected={selectedClinicId === clinic.id}
-                onSelect={() => setSelectedClinicId(clinic.id)}
-              />
-            ))}
-          </div>
+              {/* Treatment Plan Builder */}
+              <div className="mb-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-xl font-bold">
+                      <Pencil className="mr-2 h-5 w-5 text-blue-500" />
+                      Build Your Treatment Plan
+                    </CardTitle>
+                    <CardDescription>
+                      Add all the treatments you're interested in to get a comprehensive quote
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TreatmentPlanBuilder 
+                      initialTreatments={treatmentItems}
+                      onTreatmentsChange={handleTreatmentPlanChange}
+                    />
+                    
+                    {treatmentItems.length > 0 && (
+                      <div className="mt-6 flex justify-end">
+                        <Button 
+                          onClick={() => setCurrentStep('patient-info')}
+                          className="flex items-center gap-2"
+                        >
+                          Continue to Next Step
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
           
-          {/* Educational section */}
-          <EducationalSection />
+          {/* Step 2: Patient Information (conditionally displayed) */}
+          {currentStep === 'patient-info' && (
+            <>
+              <PatientInfoForm
+                initialData={patientInfo || {
+                  fullName: searchParams.get('name') || '',
+                  email: searchParams.get('email') || '',
+                  phone: searchParams.get('phone') || '',
+                  travelMonth: searchParams.get('travelMonth') || '',
+                }}
+                onSubmit={handlePatientInfoSubmit}
+              />
+              
+              <div className="flex justify-between">
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentStep('build-plan')}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Treatment Plan
+                </Button>
+              </div>
+            </>
+          )}
+          
+          {/* Step 3: Review and Submit (conditionally displayed) */}
+          {currentStep === 'review' && (
+            <>
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-xl font-bold">
+                    <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                    Your Quote is Ready
+                  </CardTitle>
+                  <CardDescription>
+                    Review your treatment plan and personal information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Treatment Summary */}
+                    <div>
+                      <h3 className="font-semibold text-gray-700 mb-3">Treatment Summary</h3>
+                      <div className="bg-gray-50 p-4 rounded-md">
+                        {treatmentItems.length > 0 ? (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Treatment</TableHead>
+                                <TableHead className="text-center">Qty</TableHead>
+                                <TableHead className="text-right">Price</TableHead>
+                                <TableHead className="text-right">Subtotal</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {treatmentItems.map((item) => (
+                                <TableRow key={item.id}>
+                                  <TableCell className="font-medium">{item.name}</TableCell>
+                                  <TableCell className="text-center">{item.quantity}</TableCell>
+                                  <TableCell className="text-right">£{item.priceGBP}</TableCell>
+                                  <TableCell className="text-right">£{item.subtotalGBP}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                            <TableFooter>
+                              <TableRow>
+                                <TableCell colSpan={3}>Total</TableCell>
+                                <TableCell className="text-right">£{formatCurrency(totalGBP)}</TableCell>
+                              </TableRow>
+                            </TableFooter>
+                          </Table>
+                        ) : (
+                          <p>No treatments added yet.</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Patient Information */}
+                    {patientInfo && (
+                      <div>
+                        <h3 className="font-semibold text-gray-700 mb-3">Your Information</h3>
+                        <div className="bg-gray-50 p-4 rounded-md">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Name</p>
+                              <p>{patientInfo.fullName}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Email</p>
+                              <p>{patientInfo.email}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Phone</p>
+                              <p>{patientInfo.phone}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Travel Month</p>
+                              <p>{patientInfo.travelMonth || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Departure City</p>
+                              <p>{patientInfo.departureCity || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Contact Preference</p>
+                              <p className="capitalize">{patientInfo.preferredContactMethod}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <p className="text-sm font-medium text-gray-500">Dental Records</p>
+                            <div className="flex flex-wrap gap-3 mt-1">
+                              <Badge variant={patientInfo.hasXrays ? "default" : "outline"}>
+                                {patientInfo.hasXrays ? 'Has X-Rays' : 'No X-Rays'}
+                              </Badge>
+                              <Badge variant={patientInfo.hasCtScan ? "default" : "outline"}>
+                                {patientInfo.hasCtScan ? 'Has CT Scan' : 'No CT Scan'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {patientInfo.additionalNotes && (
+                            <div className="mt-4">
+                              <p className="text-sm font-medium text-gray-500">Additional Notes</p>
+                              <p className="text-sm mt-1">{patientInfo.additionalNotes}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Next Steps */}
+                    <div className="bg-blue-50 p-4 rounded-md">
+                      <h3 className="font-semibold text-blue-800 mb-2">Next Steps</h3>
+                      <ol className="space-y-2">
+                        <li className="flex items-start">
+                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
+                            <span className="text-xs">1</span>
+                          </div>
+                          <p className="text-blue-700">Our dental experts will review your treatment plan within 24 hours</p>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
+                            <span className="text-xs">2</span>
+                          </div>
+                          <p className="text-blue-700">You will receive a detailed quote from our partner clinics via email</p>
+                        </li>
+                        <li className="flex items-start">
+                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
+                            <span className="text-xs">3</span>
+                          </div>
+                          <p className="text-blue-700">A dental advisor will contact you to discuss the options and answer questions</p>
+                        </li>
+                      </ol>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Button 
+                          variant="outline"
+                          onClick={() => setCurrentStep('build-plan')}
+                          className="flex items-center gap-2"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit Treatment Plan
+                        </Button>
+                        
+                        <Button 
+                          variant="outline"
+                          onClick={() => setCurrentStep('patient-info')}
+                          className="flex items-center gap-2"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit Information
+                        </Button>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Button 
+                          variant="default"
+                          className="flex items-center gap-2"
+                        >
+                          <Mail className="h-4 w-4" />
+                          Email Quote
+                        </Button>
+                        
+                        <Button 
+                          variant="default"
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download PDF
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Call to Action */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
+                <div className="max-w-3xl mx-auto text-center">
+                  <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                    Ready to Get Started?
+                  </h2>
+                  
+                  <p className="text-blue-100 mb-6">
+                    Pay a £200 refundable deposit to secure your consultation and have our concierge team handle all your travel arrangements.
+                  </p>
+                  
+                  {totalGBP > 0 && (
+                    <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
+                      <h3 className="text-lg font-semibold mb-1">Your Treatment Plan Total</h3>
+                      <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
+                      <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <Button 
+                      className="bg-white text-blue-700 hover:bg-blue-50"
+                      size="lg"
+                    >
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Pay £200 Deposit & Book Now
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      className="border-white text-white hover:bg-blue-700"
+                      size="lg"
+                    >
+                      <MessageCircle className="mr-2 h-5 w-5" />
+                      Speak to a Dental Advisor
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
           
           {/* FAQ Section */}
           <FAQSection />
-          
-          {/* Final CTA section */}
-          <CTASection selectedClinic={selectedClinic} treatmentItems={treatmentItems} />
         </div>
       </main>
       

@@ -12,7 +12,7 @@ import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
-import YourQuotePage from "@/pages/YourQuotePage";
+import YourQuotePage from "@/pages/YourQuotePage2";
 import BookingPage from "@/pages/BookingPage";
 import ClientPortalPage from "@/pages/ClientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
