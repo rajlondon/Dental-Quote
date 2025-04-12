@@ -45,6 +45,8 @@ import {
   Pencil
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
+import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
+import EditQuoteModal from '@/components/EditQuoteModal';
 
 // Types
 interface ClinicInfo {
