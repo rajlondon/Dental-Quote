@@ -619,6 +619,10 @@ const TreatmentGuide: React.FC = () => {
             </div>
           </TabsContent>
           
+          <TabsContent value="general" className="pt-4">
+            <GeneralDentistryTab />
+          </TabsContent>
+          
           <TabsContent value="other" className="pt-4">
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Other Dental Treatments</h3>
