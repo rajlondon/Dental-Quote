@@ -1,0 +1,113 @@
+**Document for Replit Development: MyDentalFly — My Quote Page Structure & User Journey**
+
+---
+
+## Purpose:
+To guide users through building their treatment plan in a clear, educational, and reassuring way, before showing clinic-specific prices.
+
+We aim to:
+- Educate users on treatment combinations
+- Provide example case studies
+- Allow users to build a simple treatment plan
+- Show a cost *range* only
+- Only display prices & clinics after clicking "Match Me with Clinics"
+
+---
+
+## My Quote Page Layout:
+
+### 1. Quote Summary Card (Top Section)
+Displays:
+- Treatment(s) selected so far
+- Preferred Travel Month
+- Budget Range (optional)
+
+Action: Button "Edit Details"
+
+---
+
+### 2. Educational Section: "How Others Built Their Treatment Plan"
+
+Feature short example cards:
+
+Example 1:
+Mr Roberts
+- Treatment: Dental Implants + Bone Graft + Root Canal
+- Reason: Missing teeth and bone loss after extractions.
+
+Example 2:
+Sarah
+- Treatment: Veneers + Teeth Whitening
+- Reason: Smile aesthetics improvement.
+
+Example 3:
+James
+- Treatment: Full Mouth Rehab
+- Reason: Complete restoration after years of dental neglect.
+
+---
+
+### 3. Build Your Treatment Plan (Main Section)
+
+Structured Categories:
+- Implants
+- Crowns & Veneers
+- Root Canal Treatments
+- Extractions
+- Bone Grafts
+- Full Mouth Rehab
+- Cosmetic Add-Ons (optional)
+
+Allow user to:
+- Add treatment type
+- Choose quantity (where relevant)
+- Optional Notes (for context e.g. "upper left molar")
+
+---
+
+### 4. Estimated Cost Section (Right Side Card)
+
+Show only a cost *range* based on their selection:
+Example:
+> Estimated Cost Range: £1,500 - £4,500
+
+Add subtext:
+> "Based on Istanbul average treatment prices. Your clinic will confirm exact pricing after consultation & review of your X-rays."
+
+---
+
+### 5. Call To Action (Bottom Section)
+
+Big sticky button:
+
+> "Match Me with Clinics & View Packages"
+
+Subtext:
+> "See packages, reviews, and book with a verified clinic. Your treatment plan can still be updated after consultation."
+
+---
+
+## After Clicking CTA:
+User is taken to:
+
+### Clinic Comparison Page
+- Show matching clinics
+- Display clinic-specific pricing
+- Show packages, reviews, benefits, photos
+
+User can:
+- Select Clinic
+- Proceed to Booking
+
+---
+
+## Final Notes for Replit:
+- This page must remain extremely clean, medical-looking, and easy to navigate.
+- The focus is education + simplicity.
+- Prices must not show until after "Match Me with Clinics" is pressed.
+- The treatment plan builder should be intuitive — more like a guided assistant than a complex form.
+
+---
+
+End of Document.
+

@@ -42,7 +42,8 @@ import {
   RefreshCcw,
   MessageCircle,
   CheckCircle,
-  Pencil
+  Pencil,
+  User
 } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
@@ -381,12 +382,12 @@ const YourQuotePage: React.FC = () => {
             </div>
           </div>
           
-          {/* Quote Parameters Summary (always visible) */}
+          {/* Quote Summary Card (Top Section) */}
           <div className="mb-8">
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">Quote Preferences</CardTitle>
+                  <CardTitle className="text-lg">Quote Summary</CardTitle>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -394,18 +395,22 @@ const YourQuotePage: React.FC = () => {
                     className="flex items-center gap-2 text-xs h-8"
                   >
                     <Pencil className="h-3 w-3" />
-                    Edit
+                    Edit Details
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Treatment</p>
-                    <p className="font-medium">{quoteParams.treatment}</p>
+                    <p className="text-sm font-medium text-gray-500">Treatment(s) Selected</p>
+                    <p className="font-medium">
+                      {treatmentItems.length > 0 
+                        ? treatmentItems.map(item => item.name).join(', ') 
+                        : quoteParams.treatment}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Travel Month</p>
+                    <p className="text-sm font-medium text-gray-500">Preferred Travel Month</p>
                     <p className="font-medium">{quoteParams.travelMonth}</p>
                   </div>
                   <div>
@@ -418,12 +423,11 @@ const YourQuotePage: React.FC = () => {
                   <div className="flex justify-end mt-4">
                     <div className="bg-blue-50 py-2 px-4 rounded-md">
                       <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-gray-700">Total:</span>
-                        <span className="font-bold">£{formatCurrency(totalGBP)}</span>
+                        <span className="text-gray-700">Estimated Cost Range:</span>
+                        <span className="font-bold">£{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</span>
                       </div>
-                      <div className="flex justify-between gap-4 text-xs text-gray-500">
-                        <span>USD:</span>
-                        <span>${formatCurrency(totalUSD)}</span>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Based on Istanbul average treatment prices. Your clinic will confirm exact pricing after consultation & review of your X-rays.
                       </div>
                     </div>
                   </div>
@@ -443,43 +447,73 @@ const YourQuotePage: React.FC = () => {
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
             <>
-              {/* Educational Info Boxes */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border border-blue-100">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center">
-                      <Shield className="w-4 h-4 mr-2 text-blue-500" />
-                      Implants
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600">Clinic Preferred Brands – All Lifetime Guarantee</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="border border-blue-100">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center">
-                      <Sparkles className="w-4 h-4 mr-2 text-blue-500" />
-                      Veneers
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600">Cosmetic Options vs. Functional Strength</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="border border-blue-100">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center">
-                      <Star className="w-4 h-4 mr-2 text-blue-500" />
-                      Crowns
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600">Durability vs. Aesthetics Guidance</p>
-                  </CardContent>
-                </Card>
+              {/* Educational Section: How Others Built Their Treatment Plan */}
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-3">How Others Built Their Treatment Plan</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="border border-blue-100 hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center">
+                        <User className="w-4 h-4 mr-2 text-blue-500" />
+                        Mr. Roberts
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Treatment:</p>
+                          <p className="text-sm font-medium">Dental Implants + Bone Graft + Root Canal</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Reason:</p>
+                          <p className="text-sm text-gray-700">Missing teeth and bone loss after extractions.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border border-blue-100 hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center">
+                        <User className="w-4 h-4 mr-2 text-blue-500" />
+                        Sarah
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Treatment:</p>
+                          <p className="text-sm font-medium">Veneers + Teeth Whitening</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Reason:</p>
+                          <p className="text-sm text-gray-700">Smile aesthetics improvement.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border border-blue-100 hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center">
+                        <User className="w-4 h-4 mr-2 text-blue-500" />
+                        James
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Treatment:</p>
+                          <p className="text-sm font-medium">Full Mouth Rehab</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Reason:</p>
+                          <p className="text-sm text-gray-700">Complete restoration after years of dental neglect.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
               
               <div className="mb-6 bg-blue-50 border border-blue-100 p-3 rounded-md text-sm flex items-center">
