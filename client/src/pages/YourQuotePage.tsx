@@ -395,19 +395,37 @@ const QuoteSummary: React.FC<{
   const [isDownloading, setIsDownloading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
   
+  // Extract user info from URL query parameters
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  const userName = searchParams.get('name');
+  const userEmail = searchParams.get('email');
+  const userPhone = searchParams.get('phone');
+  
   // Placeholder for download and email functions
   const handleDownloadQuote = () => {
-    toast({
-      title: "PDF Download",
-      description: "Your quote PDF is being generated. It will download automatically.",
-    });
+    setIsDownloading(true);
+    
+    // Simulate PDF generation delay
+    setTimeout(() => {
+      setIsDownloading(false);
+      toast({
+        title: "PDF Download",
+        description: "Your quote PDF is being generated. It will download automatically.",
+      });
+    }, 1500);
   };
   
   const handleEmailQuote = () => {
-    toast({
-      title: "Email Sent",
-      description: "Your quote has been emailed to you.",
-    });
+    setIsEmailing(true);
+    
+    // Simulate email sending delay
+    setTimeout(() => {
+      setIsEmailing(false);
+      toast({
+        title: "Email Sent",
+        description: `Your quote has been emailed to ${userEmail || 'you'}.`,
+      });
+    }, 1500);
   };
   
   // Calculate UK price comparison (simplified for this example)
@@ -433,6 +451,31 @@ const QuoteSummary: React.FC<{
       </CardHeader>
       
       <CardContent className="pt-4">
+        {/* User Information Section - only show if we have user info from form */}
+        {userName && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-md">
+            <h3 className="text-md font-medium mb-3 text-blue-900">Your Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm font-medium text-blue-700">Name</p>
+                <p className="text-base font-semibold mt-1">{userName}</p>
+              </div>
+              {userEmail && (
+                <div>
+                  <p className="text-sm font-medium text-blue-700">Email</p>
+                  <p className="text-base font-semibold mt-1">{userEmail}</p>
+                </div>
+              )}
+              {userPhone && (
+                <div>
+                  <p className="text-sm font-medium text-blue-700">Phone</p>
+                  <p className="text-base font-semibold mt-1">{userPhone}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gray-50 p-3 rounded-md">
             <h3 className="text-sm font-semibold text-gray-700 mb-1">Treatment</h3>
@@ -683,10 +726,13 @@ const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
+  // Parse URL query parameters
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
-    treatment: 'Dental Implants (2 Teeth)',
-    travelMonth: 'June 2025',
-    budget: '£1,500 - £2,500'
+    treatment: searchParams.get('treatment') || 'Dental Implants',
+    travelMonth: searchParams.get('travelMonth') || 'Flexible',
+    budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
   
   // Get the selected clinic object based on ID
