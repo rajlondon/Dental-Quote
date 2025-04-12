@@ -220,6 +220,16 @@ const QuoteForm: React.FC = () => {
                         phone: data.phone
                       }).toString();
                       
+                      // Log the queryParams for debugging
+                      console.log("Form submitted with parameters:", {
+                        treatment: treatmentLabel,
+                        travelMonth: data.startDate ? format(data.startDate, 'MMMM yyyy') : 'Flexible',
+                        budget: data.budget ? `£${data.budget} - £${parseInt(data.budget) + 1000}` : 'Flexible',
+                        name: data.name,
+                        email: data.email,
+                        phone: data.phone
+                      });
+                      
                       // Show success toast
                       toast({
                         title: "Quote Generated!",

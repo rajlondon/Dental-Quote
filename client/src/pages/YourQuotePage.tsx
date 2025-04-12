@@ -38,7 +38,11 @@ import {
   Info,
   ArrowLeft,
   Edit3,
-  RefreshCcw
+  RefreshCcw,
+  MessageCircle,
+  CheckCircle,
+  HeartHandshake,
+  Pencil
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 
@@ -690,12 +694,29 @@ const FAQSection: React.FC = () => {
 const CTASection: React.FC<{ 
   selectedClinic: ClinicInfo | null 
 }> = ({ selectedClinic }) => {
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  const userName = searchParams.get('name')?.split(' ')[0];
+  const treatment = searchParams.get('treatment');
+  
   return (
     <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
       <div className="max-w-3xl mx-auto text-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Transform Your Smile?</h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">
+          {userName ? `${userName}, Ready to Transform Your Smile?` : 'Ready to Transform Your Smile?'}
+        </h2>
+        
         <p className="text-blue-100 mb-8">
-          Book your dental treatment today with just a £200 deposit. Your concierge will handle all arrangements for a stress-free experience.
+          {selectedClinic ? (
+            <>
+              Book your {treatment || 'dental treatment'} at {selectedClinic.name} today with just a £200 deposit. 
+              Your personal concierge will handle all arrangements for a stress-free experience.
+            </>
+          ) : (
+            <>
+              Select a clinic above and book your dental treatment today with just a £200 deposit.
+              Your concierge will handle all arrangements for a stress-free experience.
+            </>
+          )}
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -714,11 +735,40 @@ const CTASection: React.FC<{
             size="lg"
           >
             <Mail className="mr-2 h-5 w-5" />
-            Contact Us For Help
+            Contact a Dental Advisor
           </Button>
         </div>
+        
+        <p className="text-sm text-blue-200 mt-6">
+          Your £200 deposit is fully refundable if you cancel more than 7 days before your consultation,
+          and is deducted from your final treatment cost.
+        </p>
       </div>
     </div>
+  );
+};
+
+// WhatsApp floating button component
+const WhatsAppButton: React.FC = () => {
+  return (
+    <a
+      href="https://wa.me/447572445856?text=Hello%20MyDentalFly,%20I%20need%20assistance%20with%20my%20dental%20treatment%20quote."
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 bg-green-500 text-white rounded-full p-3 shadow-lg hover:bg-green-600 transition-colors z-50 flex items-center justify-center"
+      aria-label="Chat on WhatsApp"
+    >
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="28" 
+        height="28" 
+        viewBox="0 0 24 24" 
+        fill="currentColor" 
+        className="mr-0"
+      >
+        <path d="M17.6 6.32C16.27 4.985 14.448 4.24 12.525 4.24C8.59 4.24 5.395 7.435 5.395 11.37C5.395 12.619 5.74 13.839 6.395 14.895L5.34 18.84L9.37 17.805C10.388 18.405 11.443 18.72 12.525 18.72C16.46 18.72 19.655 15.525 19.655 11.59C19.655 9.667 18.91 7.845 17.6 6.535V6.32ZM12.525 17.56C11.555 17.56 10.598 17.245 9.765 16.735L9.535 16.6L7.121 17.215L7.75 14.85L7.6 14.62C6.98 13.731 6.642 12.625 6.642 11.59C6.642 8.115 9.265 5.28 12.525 5.28C14.133 5.28 15.635 5.91 16.752 7.025C17.87 8.14 18.5 9.645 18.5 11.37C18.5 14.845 15.877 17.56 12.525 17.56ZM15.407 13.075C15.2 12.985 14.122 12.46 13.942 12.39C13.765 12.32 13.63 12.285 13.5 12.495C13.368 12.705 12.965 13.185 12.84 13.32C12.7 13.455 12.602 13.502 12.395 13.365C12.188 13.275 11.495 13.02 10.68 12.305C10.047 11.755 9.627 11.065 9.485 10.855C9.35 10.645 9.467 10.525 9.582 10.41C9.685 10.305 9.8 10.15 9.917 10.015C10.035 9.88 10.068 9.79 10.137 9.655C10.205 9.52 10.175 9.385 10.123 9.295C10.07 9.205 9.645 8.127 9.477 7.707C9.35 7.27 9.142 7.35 9.01 7.35C8.875 7.35 8.742 7.325 8.61 7.325C8.478 7.325 8.267 7.376 8.09 7.586C7.915 7.796 7.354 8.322 7.354 9.399C7.354 10.477 8.142 11.5 8.26 11.67C8.377 11.805 9.627 13.705 11.5 14.63C11.94 14.827 12.282 14.942 12.547 15.027C12.993 15.172 13.395 15.152 13.725 15.099C14.09 15.039 14.96 14.572 15.143 14.072C15.323 13.572 15.323 13.152 15.257 13.057C15.19 12.962 15.077 12.937 14.87 12.827L15.407 13.075Z"/>
+      </svg>
+    </a>
   );
 };
 
@@ -759,6 +809,7 @@ const YourQuotePage: React.FC = () => {
     <>
       <Navbar />
       <ScrollToTop />
+      <WhatsAppButton />
       
       <main className="min-h-screen bg-gray-50 pt-24 pb-12">
         <div className="container mx-auto px-4">
@@ -775,7 +826,17 @@ const YourQuotePage: React.FC = () => {
             </Button>
           </div>
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-6">Your Personalized Quote</h1>
+          {searchParams.get('name') ? (
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              Hello, {searchParams.get('name')?.split(' ')[0]}!
+            </h1>
+          ) : (
+            <h1 className="text-3xl md:text-4xl font-bold mb-6">Your Personalized Quote</h1>
+          )}
+          
+          {searchParams.get('name') && (
+            <p className="text-gray-600 mb-6 text-lg">Here's your personalized dental treatment quote</p>
+          )}
           
           {/* Quote summary section */}
           <QuoteSummary 
