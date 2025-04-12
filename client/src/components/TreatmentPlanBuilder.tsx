@@ -536,7 +536,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           
           {/* Totals */}
           <div className="flex justify-end">
-            <div className="w-full md:w-72 bg-blue-50 rounded-md p-4">
+            <div className="w-full md:w-96 bg-blue-50 rounded-md p-4">
               <div className="flex justify-between mb-2">
                 <span className="text-gray-700">Total Estimated Cost:</span>
                 <span className="font-bold text-blue-700">£{totalGBP}</span>
@@ -545,8 +545,24 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <span>USD Equivalent:</span>
                 <span>${totalUSD}</span>
               </div>
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <span>Average UK Cost:</span>
+                <span>£{Math.round(totalGBP * 2.5)}</span>
+              </div>
+              <div className="bg-green-100 text-green-800 px-3 py-2 rounded mt-2 text-sm flex items-center">
+                <span className="font-bold">You Save: £{Math.round(totalGBP * 2.5 - totalGBP)}</span>
+                <span className="text-xs ml-2">({Math.round((1 - totalGBP/(totalGBP * 2.5)) * 100)}% vs UK prices)</span>
+              </div>
               <div className="mt-4 text-xs text-gray-600">
                 <p>This is your estimated treatment price based on your selections. Final pricing will be confirmed after consultation and review of your dental records.</p>
+              </div>
+              <div className="mt-4 flex flex-col">
+                <Button className="w-full">
+                  View Matching Clinics
+                </Button>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  Select a clinic to review, speak with directly, and confirm your treatment plan.
+                </p>
               </div>
             </div>
           </div>

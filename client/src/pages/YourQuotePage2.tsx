@@ -285,7 +285,10 @@ const YourQuotePage: React.FC = () => {
               Hello, {searchParams.get('name')?.split(' ')[0]}!
             </h1>
           ) : (
-            <h1 className="text-3xl md:text-4xl font-bold mb-6">Build Your Treatment Plan</h1>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">Building Your Treatment Plan</h1>
+              <p className="text-gray-600 mb-6">Choose your treatments below to get the most accurate price estimate. Your final treatment plan will be confirmed after consultation and X-rays with your chosen clinic.</p>
+            </div>
           )}
           
           {searchParams.get('name') && (
@@ -440,6 +443,50 @@ const YourQuotePage: React.FC = () => {
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
             <>
+              {/* Educational Info Boxes */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border border-blue-100">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center">
+                      <Shield className="w-4 h-4 mr-2 text-blue-500" />
+                      Implants
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">Clinic Preferred Brands – All Lifetime Guarantee</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border border-blue-100">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center">
+                      <Sparkles className="w-4 h-4 mr-2 text-blue-500" />
+                      Veneers
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">Cosmetic Options vs. Functional Strength</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border border-blue-100">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center">
+                      <Star className="w-4 h-4 mr-2 text-blue-500" />
+                      Crowns
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">Durability vs. Aesthetics Guidance</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="mb-6 bg-blue-50 border border-blue-100 p-3 rounded-md text-sm flex items-center">
+                <Info className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                <p>Don't have X-rays or a CT scan? No problem – these can be taken at your consultation in Turkey at no extra cost.</p>
+              </div>
+              
               {/* Treatment Guide - Educational Component */}
               <TreatmentGuide />
               

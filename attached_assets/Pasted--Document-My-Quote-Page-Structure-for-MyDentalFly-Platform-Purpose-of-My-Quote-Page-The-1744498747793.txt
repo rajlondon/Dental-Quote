@@ -1,0 +1,96 @@
+**Document: My Quote Page Structure for MyDentalFly Platform**
+
+---
+
+# Purpose of My Quote Page
+
+The "My Quote" page is the core experience after the user enters basic details on the homepage. It must:
+
+- Guide the user to build their dental treatment quote
+- Educate them on treatment choices
+- Display estimated pricing transparently
+- Look professional, clinical, and trustworthy
+- Encourage moving forward to clinic selection
+
+---
+
+## Section 1: Quote Summary Header
+
+Title: *"Building Your Treatment Plan"*
+
+Subtext: "Choose your treatments below to get the most accurate price estimate. Your final treatment plan will be confirmed after consultation and X-rays with your chosen clinic."
+
+---
+
+## Section 2: Educational Info Boxes
+
+Three expandable info sections with icon:
+
+- Implants: "Clinic Preferred Brands – All Lifetime Guarantee"
+- Veneers: "Cosmetic Options vs. Functional Strength"
+- Crowns: "Durability vs. Aesthetics Guidance"
+
+Optional Banner: "Don't have X-rays or a CT scan? No problem – upload later after booking."
+
+---
+
+## Section 3: Treatment Builder
+
+### Category Tabs or Expandable Sections:
+
+- Dental Implants
+- Veneers & Crowns
+- Full Mouth Packages
+- Other Treatments (Whitening, Fillings, Dentures, etc.)
+
+Each treatment listed with:
+
+| Treatment | Quantity Input | Price Range | Notes |
+|-----------|----------------|-------------|-------|
+| Dental Implant (Premium) | Input Field | £400 - £800 | Lifetime Guarantee |
+| Zirconium Crown | Input Field | £150 - £300 | Aesthetic Strength |
+| Veneer | Input Field | £200 - £400 | Cosmetic Customization |
+
++ Add Another Treatment Button
+
+---
+
+## Section 4: Live Quote Summary
+
+Display dynamically:
+
+- Estimated Treatment Total
+- Estimated Flights & Accommodation (Optional Pre-filled Range)
+- Estimated Istanbul Total Cost
+- Average UK Cost Comparison
+- Highlighted Savings Box (Percentage or Value)
+
+---
+
+## Section 5: Call to Action
+
+Primary Button: *"View Matching Clinics"*
+
+Text below: "Select a clinic to review, speak with directly, and confirm your treatment plan."
+
+---
+
+# Design Notes
+
+- Clean, medical, modern UI
+- No clutter, only essential info visible
+- Price ranges clear and honest
+- Educational info non-intrusive but accessible
+
+---
+
+# Future Expansion
+
+- AI Recommendations based on user input
+- Smart Packages Auto-filled
+- Upsell Concierge Service Option
+
+---
+
+Prepared for Replit Developer Implementation.
+
