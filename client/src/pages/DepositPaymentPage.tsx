@@ -194,7 +194,7 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-3">Treatment Summary</h2>
               <div className="space-y-2 mb-4">
-                {treatments.map((treatment) => (
+                {treatments.map((treatment: TreatmentItem) => (
                   <div key={treatment.id} className="flex justify-between">
                     <span className="text-gray-700">
                       {treatment.name} {treatment.quantity > 1 && `x${treatment.quantity}`}

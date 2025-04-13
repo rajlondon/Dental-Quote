@@ -191,9 +191,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       setTimeout(() => {
         try {
           setIsLoadingQuote(false);
-          setLocation('/patient-info');
+          // Redirect to the deposit payment page instead of patient info
+          setLocation('/deposit-payment');
         } catch (error) {
-          console.error("Error navigating to patient info page:", error);
+          console.error("Error navigating to deposit payment page:", error);
           setIsLoadingQuote(false);
         }
       }, 1000);

@@ -49,8 +49,12 @@ function Router() {
       <Route path="/admin-portal" component={AdminPortalPage} />
       <Route path="/clinic-portal" component={ClinicPortalPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
-      <Route path="/deposit-payment" component={DepositPaymentPage} />
-      <Route path="/payment-confirmation" component={PaymentConfirmationPage} />
+      <Route path="/deposit-payment">
+        {() => <DepositPaymentPage />}
+      </Route>
+      <Route path="/payment-confirmation">
+        {() => <PaymentConfirmationPage />}
+      </Route>
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {
