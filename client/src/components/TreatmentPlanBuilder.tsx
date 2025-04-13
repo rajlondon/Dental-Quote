@@ -421,7 +421,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           ) : (
             <Button onClick={() => setShowAddForm(true)} size="sm">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Custom Treatment
+              Add Special Treatment
             </Button>
           )}
         </div>
@@ -1397,7 +1397,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               <div className="py-4">
                 <Button onClick={() => setShowAddForm(true)} variant="outline" className="w-full py-6 border-dashed">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Custom Treatment
+                  Add Special Treatment
                 </Button>
               </div>
             </TabsContent>
@@ -1406,10 +1406,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
       </div>
       
-      {/* Add Custom Treatment Form (Modal style) */}
+      {/* Add Special Treatment Form (Modal style) */}
       {showAddForm && (
         <div className="bg-gray-50 p-4 rounded-md mt-6 border border-gray-200">
-          <h3 className="text-lg font-medium mb-4">Add a Custom Treatment</h3>
+          <h3 className="text-lg font-medium mb-4">Add a Special Treatment</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
@@ -1617,7 +1617,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   size="lg" 
                   onClick={() => onTreatmentsChange && onTreatmentsChange(treatments)}
                 >
-                  Continue With Your Plan <ArrowRight className="h-4 w-4 ml-2" />
+                  Continue With My Treatment Plan <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
                 <p className="text-xs text-center text-gray-500 mt-2">
                   Compare prices from verified Istanbul dental clinics
