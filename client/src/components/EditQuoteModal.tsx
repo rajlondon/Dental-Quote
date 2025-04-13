@@ -66,11 +66,32 @@ const EditQuoteModal: React.FC<EditQuoteModalProps> = ({
   onSave 
 }) => {
   const [params, setParams] = useState<QuoteParams>(initialParams);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    initialParams.travelMonth !== 'Flexible' 
-      ? new Date(initialParams.travelMonth) 
-      : undefined
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    if (!initialParams.travelMonth || initialParams.travelMonth === 'Flexible') {
+      return undefined;
+    }
+    
+    try {
+      // Try to parse the date if it's in "Month Year" format (e.g., "April 2025")
+      const parts = initialParams.travelMonth.split(' ');
+      if (parts.length === 2) {
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const monthIndex = monthNames.findIndex(m => m.toLowerCase() === parts[0].toLowerCase());
+        const year = parseInt(parts[1]);
+        
+        if (monthIndex !== -1 && !isNaN(year)) {
+          return new Date(year, monthIndex, 1);
+        }
+      }
+      
+      // Fallback to standard date parsing for other formats
+      const date = new Date(initialParams.travelMonth);
+      return isNaN(date.getTime()) ? undefined : date;
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      return undefined;
+    }
+  });
 
   const handleSave = () => {
     onSave(params);
