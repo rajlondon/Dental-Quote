@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRight, Check, Star, MapPin, Award, ShieldCheck, Clock, Languages, Phone, Calendar, ChevronRight, MessageCircle, FileCheck, Plane, CreditCard, HeartPulse, Stethoscope, User, Smile } from 'lucide-react';
+import { ArrowRight, Check, Star, MapPin, Award, ShieldCheck, Clock, Languages, Phone, Calendar, ChevronRight, MessageCircle, FileCheck, Plane, CreditCard, HeartPulse, Stethoscope, User, Smile, Building2, Home, Sparkles, Zap, Construction, Target, Columns, Gem } from 'lucide-react';
 import clinicsData from '@/data/clinics.json';
 import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import WhatsAppButton from '@/components/WhatsAppButton';
@@ -273,29 +273,75 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
                   <div className="md:col-span-1">
-                    <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative">
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        {clinic.tier === 'premium' ? (
-                          <div className="flex flex-col items-center">
-                            <Award className="h-12 w-12 mb-2 text-blue-500" />
-                            <span className="text-sm font-medium text-blue-700">{clinic.name}</span>
-                            <span className="text-xs text-blue-500 mt-1">Premium Clinic</span>
+                    {clinic.id === 'dentspa' ? (
+                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative border border-amber-200">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="relative w-40 h-40">
+                              <div className="absolute inset-4 rounded-full bg-amber-500/10 animate-pulse"></div>
+                              <Award className="absolute inset-0 m-auto h-16 w-16 text-amber-600" />
+                              <Sparkles className="absolute top-3 right-3 h-6 w-6 text-amber-500" />
+                              <Gem className="absolute bottom-6 left-6 h-8 w-8 text-amber-600/70" />
+                            </div>
                           </div>
-                        ) : clinic.tier === 'mid-tier' ? (
-                          <div className="flex flex-col items-center">
-                            <Building2 className="h-12 w-12 mb-2 text-blue-400" />
-                            <span className="text-sm font-medium text-blue-600">{clinic.name}</span>
-                            <span className="text-xs text-blue-400 mt-1">Standard Clinic</span>
+                          <div className="absolute bottom-4 w-full text-center">
+                            <span className="text-sm font-bold text-amber-800 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
+                            <div className="text-xs text-amber-600 mt-1 font-medium">Premium Clinic Experience</div>
                           </div>
-                        ) : (
-                          <div className="flex flex-col items-center">
-                            <Home className="h-12 w-12 mb-2 text-green-500" />
-                            <span className="text-sm font-medium text-green-700">{clinic.name}</span>
-                            <span className="text-xs text-green-500 mt-1">Budget-Friendly Clinic</span>
-                          </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
+                    ) : clinic.id === 'beyazada' ? (
+                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative border border-blue-200">
+                        <div className="absolute inset-0">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="relative w-40 h-40">
+                              <div className="absolute inset-8 rounded-full bg-blue-500/10 border-8 border-blue-200/50"></div>
+                              <Target className="absolute inset-0 m-auto h-14 w-14 text-blue-500" />
+                              <Smile className="absolute top-4 right-4 h-6 w-6 text-blue-500/70" />
+                            </div>
+                          </div>
+                          <div className="absolute bottom-4 w-full text-center">
+                            <span className="text-sm font-bold text-blue-700 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
+                            <div className="text-xs text-blue-500 mt-1 font-medium">Standard Clinic Experience</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : clinic.id === 'maltepe' ? (
+                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center relative border border-purple-200">
+                        <div className="absolute inset-0">
+                          <div className="grid grid-cols-2 h-full">
+                            <div className="bg-gradient-to-br from-indigo-100/50 to-indigo-200/30 flex items-center justify-center">
+                              <Stethoscope className="h-12 w-12 text-indigo-500" />
+                            </div>
+                            <div className="bg-gradient-to-tl from-purple-100/50 to-purple-200/30 flex items-center justify-center">
+                              <HeartPulse className="h-12 w-12 text-purple-500" />
+                            </div>
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-white/80 rounded-full p-2">
+                              <Award className="h-12 w-12 text-indigo-600" />
+                            </div>
+                          </div>
+                          <div className="absolute bottom-4 w-full text-center">
+                            <span className="text-sm font-bold text-indigo-800 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
+                            <div className="text-xs text-indigo-600 mt-1 font-medium">Premium Clinic Experience</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center relative border border-green-200">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <div className="relative w-40 h-40 flex items-center justify-center">
+                            <Columns className="h-16 w-16 text-green-500" />
+                            <Zap className="absolute top-4 right-4 h-6 w-6 text-green-600" />
+                          </div>
+                          <div className="absolute bottom-4 w-full text-center">
+                            <span className="text-sm font-bold text-green-700 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
+                            <div className="text-xs text-green-600 mt-1 font-medium">Affordable Clinic Experience</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     <h2 className="text-xl font-bold mb-1">{clinic.name}</h2>
                     
