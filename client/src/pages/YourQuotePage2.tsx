@@ -222,19 +222,8 @@ const YourQuotePage: React.FC = () => {
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
     
-    // Advance to the next step if there are treatment items
-    if (items.length > 0) {
-      setCurrentStep('patient-info');
-      
-      // Scroll to the top of the page for better UX
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      toast({
-        title: "Treatment Plan Updated",
-        description: "Your treatment plan has been updated. Please provide your information.",
-        duration: 3000,
-      });
-    }
+    // Only store the treatments, don't auto-advance to the next step
+    // The user will click the "Get My Personalised Quote" button to advance manually
   };
   
   // Function to handle patient info form submission
@@ -467,6 +456,7 @@ const YourQuotePage: React.FC = () => {
                 </div>
                 
                 <div 
+                  data-step="patient-info"
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'patient-info' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
                     ${treatmentItems.length === 0 ? 'opacity-50' : ''}

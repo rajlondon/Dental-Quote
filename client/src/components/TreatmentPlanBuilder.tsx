@@ -1623,7 +1623,20 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <Button 
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" 
                   size="lg" 
-                  onClick={() => onTreatmentsChange && onTreatmentsChange(treatments)}
+                  onClick={() => {
+                    // Save treatments first
+                    if (onTreatmentsChange) {
+                      onTreatmentsChange(treatments);
+                    }
+                    
+                    // Find the patientInfo section and click it to advance to the next step
+                    const patientInfoStep = document.querySelector('[data-step="patient-info"]');
+                    if (patientInfoStep) {
+                      (patientInfoStep as HTMLElement).click();
+                      // Scroll to the top of the page
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
                 >
                   Get My Personalised Quote <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
