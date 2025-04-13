@@ -297,134 +297,7 @@ const YourQuotePage: React.FC = () => {
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
           
-          {/* Example Treatment Plans Section */}
-          <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold mb-4">How Others Built Their Treatment Plan</h2>
-              <p className="text-gray-600 mb-6">Real examples from our patients who found the right dental solutions in Istanbul</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Patient Example 1 */}
-                <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="bg-blue-50 p-4">
-                    <div className="flex items-center mb-3">
-                      <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
-                      <div>
-                        <h3 className="font-semibold">Mr. Roberts</h3>
-                        <p className="text-sm text-gray-500">London, UK</p>
-                      </div>
-                    </div>
-                    <p className="text-sm">
-                      <span className="font-semibold">Treatment Plan:</span> Needed Dental Implants & Bone Graft due to missing teeth and bone loss after extractions.
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">3 Dental Implants</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">Bone Graft Procedure</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">CT Scan & X-rays</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 text-sm">
-                      <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£2,200</span></p>
-                      <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£7,500</span></p>
-                      <p className="text-green-600 font-semibold mt-1">Saved over £5,300</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Patient Example 2 */}
-                <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="bg-blue-50 p-4">
-                    <div className="flex items-center mb-3">
-                      <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
-                      <div>
-                        <h3 className="font-semibold">Sarah</h3>
-                        <p className="text-sm text-gray-500">Manchester, UK</p>
-                      </div>
-                    </div>
-                    <p className="text-sm">
-                      <span className="font-semibold">Treatment Plan:</span> Chose Veneers & Whitening to improve her smile aesthetics.
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">8 Porcelain Veneers</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">Professional Teeth Whitening</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">Digital Smile Design</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 text-sm">
-                      <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£1,850</span></p>
-                      <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£5,200</span></p>
-                      <p className="text-green-600 font-semibold mt-1">Saved over £3,350</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Patient Example 3 */}
-                <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="bg-blue-50 p-4">
-                    <div className="flex items-center mb-3">
-                      <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
-                      <div>
-                        <h3 className="font-semibold">James</h3>
-                        <p className="text-sm text-gray-500">Edinburgh, UK</p>
-                      </div>
-                    </div>
-                    <p className="text-sm">
-                      <span className="font-semibold">Treatment Plan:</span> Required Full Mouth Reconstruction due to years of dental neglect.
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">Full Mouth Reconstruction</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">8 Dental Implants</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Check className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-sm">16 Zirconia Crowns</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 text-sm">
-                      <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£6,500</span></p>
-                      <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£19,800</span></p>
-                      <p className="text-green-600 font-semibold mt-1">Saved over £13,300</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* X-ray note banner */}
-              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-md p-4 flex items-center">
-                <Info className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0" />
-                <p className="text-sm text-gray-700">
-                  Don't have X-rays or a CT scan? No problem. You can upload them later after booking. Many Istanbul clinics provide free X-rays during your first consultation.
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Removed the Example Treatment Plans Section from here - will add later after treatment plan builder */}
           
           {/* Progress tracker */}
           <div className="mb-8">
@@ -585,82 +458,13 @@ const YourQuotePage: React.FC = () => {
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
             <>
-              {/* Educational Section: How Others Built Their Treatment Plan */}
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-3">How Others Built Their Treatment Plan</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="border border-blue-100 hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center">
-                        <User className="w-4 h-4 mr-2 text-blue-500" />
-                        Mr. Roberts
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">Treatment:</p>
-                          <p className="text-sm font-medium">Dental Implants + Bone Graft + Root Canal</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">Reason:</p>
-                          <p className="text-sm text-gray-700">Missing teeth and bone loss after extractions.</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="border border-blue-100 hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center">
-                        <User className="w-4 h-4 mr-2 text-blue-500" />
-                        Sarah
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">Treatment:</p>
-                          <p className="text-sm font-medium">Veneers + Teeth Whitening</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">Reason:</p>
-                          <p className="text-sm text-gray-700">Smile aesthetics improvement.</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="border border-blue-100 hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center">
-                        <User className="w-4 h-4 mr-2 text-blue-500" />
-                        James
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">Treatment:</p>
-                          <p className="text-sm font-medium">Full Mouth Rehab</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">Reason:</p>
-                          <p className="text-sm text-gray-700">Complete restoration after years of dental neglect.</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+              {/* Treatment Guide - Educational Component */}
+              <TreatmentGuide />
               
               <div className="mb-6 bg-blue-50 border border-blue-100 p-3 rounded-md text-sm flex items-center">
                 <Info className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
                 <p>Don't have X-rays or a CT scan? No problem – these can be taken at your consultation in Turkey at no extra cost.</p>
               </div>
-              
-              {/* Treatment Guide - Educational Component */}
-              <TreatmentGuide />
               
               {/* Treatment Plan Builder */}
               <div className="mb-8">
@@ -680,71 +484,7 @@ const YourQuotePage: React.FC = () => {
                       onTreatmentsChange={handleTreatmentPlanChange}
                     />
                     
-                    {/* Future Enhancements Section */}
-                    <div className="mt-8 border-t pt-6 border-gray-200">
-                      <h3 className="text-lg font-semibold mb-4">Future Enhancements & Add-ons</h3>
-                      <p className="text-gray-600 text-sm mb-4">
-                        These options can be added to your treatment plan after your initial consultation. 
-                        Your dental advisor will provide more details during your free consultation.
-                      </p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between p-3 border rounded-md">
-                          <div className="flex items-center">
-                            <Sparkles className="h-5 w-5 text-blue-500 mr-3" />
-                            <div>
-                              <p className="font-medium">Teeth Whitening</p>
-                              <p className="text-xs text-gray-500">Professional whitening after treatment</p>
-                            </div>
-                          </div>
-                          <Switch />
-                        </div>
-                        
-                        <div className="flex items-center justify-between p-3 border rounded-md">
-                          <div className="flex items-center">
-                            <Hotel className="h-5 w-5 text-blue-500 mr-3" />
-                            <div>
-                              <p className="font-medium">Premium Accommodation</p>
-                              <p className="text-xs text-gray-500">5-star hotel with medical concierge</p>
-                            </div>
-                          </div>
-                          <Switch />
-                        </div>
-                        
-                        <div className="flex items-center justify-between p-3 border rounded-md">
-                          <div className="flex items-center">
-                            <Car className="h-5 w-5 text-blue-500 mr-3" />
-                            <div>
-                              <p className="font-medium">Private Transportation</p>
-                              <p className="text-xs text-gray-500">Dedicated driver for all appointments</p>
-                            </div>
-                          </div>
-                          <Switch />
-                        </div>
-                        
-                        <div className="flex items-center justify-between p-3 border rounded-md">
-                          <div className="flex items-center">
-                            <Plane className="h-5 w-5 text-blue-500 mr-3" />
-                            <div>
-                              <p className="font-medium">Flight Booking Assistance</p>
-                              <p className="text-xs text-gray-500">Help finding the best flights</p>
-                            </div>
-                          </div>
-                          <Switch />
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6 bg-blue-50 p-4 rounded-md flex items-start">
-                        <Info className="h-5 w-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-blue-700">AI Treatment Recommendation</p>
-                          <p className="text-xs text-blue-600 mt-1">
-                            Our AI can analyze your dental X-rays and suggest optimal treatments based on your specific condition.
-                            This service is available after your initial consultation.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Note: Future Enhancements Section removed as requested */}
                     
                     {treatmentItems.length > 0 && (
                       <div>

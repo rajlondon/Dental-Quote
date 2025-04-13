@@ -1029,7 +1029,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="mt-3 pt-2 border-t border-blue-100">
                       <p className="text-xs text-gray-500">
-                        Based on Istanbul average treatment prices. Your selected clinic will confirm exact pricing after consultation.
+                        Based on Istanbul average treatment prices. We'll show you precise costs with your matched clinics in the following page.
                       </p>
                     </div>
                   </div>
@@ -1280,28 +1280,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <Switch />
                   </div>
                 </div>
-                <div className="mt-3 bg-yellow-50 p-3 rounded-md border border-yellow-100">
-                  <div className="flex">
-                    <div className="mr-2 flex-shrink-0">
-                      <Sparkles className="h-5 w-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-yellow-800">AI Recommendations</p>
-                      <p className="text-xs text-yellow-700 mb-2">Patients like you often combine these treatments:</p>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-white cursor-pointer hover:bg-yellow-100">
-                          Dental Implant + Crown
-                        </Badge>
-                        <Badge variant="outline" className="bg-white cursor-pointer hover:bg-yellow-100">
-                          Cleaning + Whitening
-                        </Badge>
-                        <Badge variant="outline" className="bg-white cursor-pointer hover:bg-yellow-100">
-                          Root Canal + Crown
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* AI Recommendation section removed as requested to avoid user confusion */}
               </div>
             </div>
           </div>
