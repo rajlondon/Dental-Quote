@@ -78,7 +78,7 @@ const QuoteForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to quote results page with query parameters
-    window.location.href = `/your-quote-2?country=${country}&city=${city}&treatment=${treatmentType}&travelMonth=${travelMonth}&budget=${budgetRange}`;
+    window.location.href = `/your-quote?country=${country}&city=${city}&treatment=${treatmentType}&travelMonth=${travelMonth}&budget=${budgetRange}`;
   };
   
   return (
@@ -251,7 +251,7 @@ const Hero: React.FC = () => {
               </Button>
               
               <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                <Link href="/your-quote-2">
+                <Link href="/your-quote">
                   See All Treatments
                 </Link>
               </Button>
