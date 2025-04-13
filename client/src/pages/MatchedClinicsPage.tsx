@@ -80,16 +80,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
       // Find the matching treatment in the clinic data
       let matchingTreatment = null;
       
-      if (clinic.treatments[category]) {
+      // Use type assertion to handle dynamic property access
+      const categoryTreatments = (clinic.treatments as any)[category];
+      
+      if (categoryTreatments) {
         // Try to find by exact name match first
-        matchingTreatment = clinic.treatments[category].find(t => 
+        matchingTreatment = categoryTreatments.find((t: any) => 
           t.name.toLowerCase() === treatment.name.toLowerCase()
         );
         
         // If no exact match, try to find something similar
         if (!matchingTreatment) {
           const keywords = treatment.name.toLowerCase().split(' ');
-          for (const t of clinic.treatments[category]) {
+          for (const t of categoryTreatments) {
             // Check if any of the keywords match
             if (keywords.some(keyword => 
               t.name.toLowerCase().includes(keyword) && 
@@ -189,7 +192,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
           </div>
           
           <div className="mt-4 md:mt-0">
-            <WhatsAppButton text="I need help choosing a clinic" className="w-full md:w-auto" />
+            <WhatsAppButton 
+              phoneNumber="447123456789" 
+              message="I need help choosing a clinic for my dental treatment in Istanbul." 
+              className="w-full md:w-auto" 
+            />
           </div>
         </div>
         
@@ -241,12 +248,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
                   <div className="md:col-span-1">
-                    <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gray-100">
-                      <img 
-                        src={defaultClinicImage} 
-                        alt={clinic.name} 
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gray-100 flex items-center justify-center">
+                      <div className="text-gray-400 flex flex-col items-center">
+                        <MapPin className="h-12 w-12 mb-2" />
+                        <span className="text-sm">{clinic.name}</span>
+                      </div>
                     </div>
                     
                     <h2 className="text-xl font-bold mb-1">{clinic.name}</h2>
@@ -469,11 +475,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
                       <div className="space-y-6">
                         <h3 className="text-lg font-semibold">Treatment Options</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {Object.entries(clinic.treatments).map(([category, treatments]) => (
+                          {Object.entries(clinic.treatments as any).map(([category, treatments]) => (
                             <div key={category} className="bg-white rounded-lg p-4 border">
                               <h4 className="font-medium mb-3 capitalize">{category.replace('_', ' & ')}</h4>
                               <div className="space-y-2">
-                                {treatments.map((treatment, i) => (
+                                {(treatments as any[]).map((treatment: any, i: number) => (
                                   <div key={i} className="flex justify-between text-sm">
                                     <span>{treatment.name}</span>
                                     <span className="font-medium">
@@ -494,12 +500,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {clinic.doctors.map((doctor, i) => (
                             <div key={i} className="bg-white rounded-lg overflow-hidden border">
-                              <div className="aspect-square overflow-hidden bg-gray-100">
-                                <img 
-                                  src={defaultDoctorImage} 
-                                  alt={doctor.name} 
-                                  className="w-full h-full object-cover"
-                                />
+                              <div className="aspect-square overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <div className="text-gray-400 flex flex-col items-center">
+                                  <User className="h-16 w-16 mb-2" />
+                                  <span className="text-sm">Dr. Profile</span>
+                                </div>
                               </div>
                               <div className="p-4">
                                 <h4 className="font-semibold mb-1">{doctor.name}</h4>
@@ -787,7 +792,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
               Back to Treatment Plan
             </Button>
             
-            <WhatsAppButton text="I need help choosing a clinic" className="w-full sm:w-auto" />
+            <WhatsAppButton 
+              phoneNumber="447123456789" 
+              message="I need help choosing a clinic for my dental treatment in Istanbul." 
+              className="w-full sm:w-auto" 
+            />
           </div>
         </div>
       </div>
