@@ -39,6 +39,13 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/payment-confirmation`,
+          payment_method_data: {
+            billing_details: {
+              // Use metadata from parent component if available
+              name: localStorage.getItem('patientInfo') ? JSON.parse(localStorage.getItem('patientInfo') || '{}').fullName : '',
+              email: localStorage.getItem('patientInfo') ? JSON.parse(localStorage.getItem('patientInfo') || '{}').email : '',
+            },
+          },
         },
       });
       

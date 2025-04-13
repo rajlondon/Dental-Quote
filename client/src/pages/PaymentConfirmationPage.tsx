@@ -14,7 +14,21 @@ import {
   HeartHandshake
 } from 'lucide-react';
 
-const PaymentConfirmationPage = () => {
+interface PaymentConfirmationPageProps {
+  clinicName?: string;
+  treatmentTotalGBP?: number;
+  depositAmount?: number;
+  onPaymentSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+const PaymentConfirmationPage: React.FC<PaymentConfirmationPageProps> = ({ 
+  clinicName,
+  treatmentTotalGBP,
+  depositAmount = 200,
+  onPaymentSuccess,
+  onCancel
+}) => {
   const [, setLocation] = useLocation();
   
   // Get patient information from localStorage
@@ -68,6 +82,16 @@ const PaymentConfirmationPage = () => {
                 </div>
               </div>
               
+              {clinicName && (
+                <div className="flex items-start gap-3">
+                  <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Selected Clinic</h3>
+                    <p className="font-medium">{clinicName}</p>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
@@ -82,9 +106,19 @@ const PaymentConfirmationPage = () => {
                 <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Deposit Amount</h3>
-                  <p className="font-medium">£200</p>
+                  <p className="font-medium">£{depositAmount}</p>
                 </div>
               </div>
+              
+              {treatmentTotalGBP && (
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Estimated Treatment Total</h3>
+                    <p className="font-medium">£{treatmentTotalGBP}</p>
+                  </div>
+                </div>
+              )}
               
               <div className="flex items-start gap-3">
                 <Calendar className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
