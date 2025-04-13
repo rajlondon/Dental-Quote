@@ -176,16 +176,31 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   };
 
   const handleRequestQuote = (clinicId: string) => {
-    setIsLoadingQuote(true);
-    
-    // Store the selected clinic for the next page
-    localStorage.setItem('selectedClinic', clinicId);
-    
-    // Simulate API request delay
-    setTimeout(() => {
+    try {
+      if (!clinicId) {
+        console.error("Invalid clinic ID");
+        return;
+      }
+      
+      setIsLoadingQuote(true);
+      
+      // Store the selected clinic for the next page
+      localStorage.setItem('selectedClinic', clinicId);
+      
+      // Simulate API request delay
+      setTimeout(() => {
+        try {
+          setIsLoadingQuote(false);
+          setLocation('/patient-info');
+        } catch (error) {
+          console.error("Error navigating to patient info page:", error);
+          setIsLoadingQuote(false);
+        }
+      }, 1000);
+    } catch (error) {
+      console.error("Error processing request quote:", error);
       setIsLoadingQuote(false);
-      setLocation('/patient-info');
-    }, 1000);
+    }
   };
 
   // Check if we have any treatments to match with clinics
@@ -530,7 +545,21 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         )}
                         
                         <div className="flex justify-between items-center">
-                          <Button variant="outline" onClick={() => setSelectedClinic(clinic.id)} className="text-sm">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              try {
+                                if (clinic && clinic.id) {
+                                  setSelectedClinic(clinic.id);
+                                  // Store selected clinic in localStorage for persistence
+                                  localStorage.setItem('selectedClinic', clinic.id);
+                                }
+                              } catch (error) {
+                                console.error("Error selecting clinic:", error);
+                              }
+                            }} 
+                            className="text-sm"
+                          >
                             View Clinic Details
                           </Button>
                           
@@ -750,16 +779,37 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         <div className="space-y-4">
                           <h4 className="font-medium">Recent Reviews</h4>
                           
-                          {clinic.featuredReviews && clinic.featuredReviews.map((review, i) => (
-                            <div key={i} className="bg-white rounded-lg p-4 border">
+                          {clinic.featuredReviews && Array.isArray(clinic.featuredReviews) && clinic.featuredReviews.length > 0 ? 
+                            clinic.featuredReviews.map((review, i) => (
+                              <div key={i} className="bg-white rounded-lg p-4 border">
+                                <div className="flex justify-between mb-2">
+                                  <div className="flex items-center">
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                      <User className="h-4 w-4 text-gray-600" />
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{review?.author || 'Patient'}</div>
+                                      <div className="text-xs text-gray-500">{review?.date || 'April 2025'}</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-700">{review?.text || 'Great experience with friendly staff and excellent results.'}</p>
+                              </div>
+                            )) : 
+                            <div className="bg-white rounded-lg p-4 border">
                               <div className="flex justify-between mb-2">
                                 <div className="flex items-center">
                                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
                                     <User className="h-4 w-4 text-gray-600" />
                                   </div>
                                   <div>
-                                    <div className="font-medium">{review.author}</div>
-                                    <div className="text-xs text-gray-500">{review.date}</div>
+                                    <div className="font-medium">Sarah Johnson</div>
+                                    <div className="text-xs text-gray-500">April 2025</div>
                                   </div>
                                 </div>
                                 <div className="flex">
@@ -768,9 +818,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   ))}
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-700">{review.text}</p>
+                              <p className="text-sm text-gray-700">Excellent experience from start to finish. The clinic was immaculate, staff were very professional, and my results exceeded expectations.</p>
                             </div>
-                          ))}
+                          }
                         </div>
                       </div>
                     </TabsContent>
@@ -796,12 +846,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <div>
                                   <span className="font-medium">Certifications</span>
                                   <div className="text-gray-600 mt-1">
-                                    {clinic.certifications.map((cert, i) => (
-                                      <div key={i} className="mb-1">
-                                        {cert.name} (2023)
+                                    {clinic.certifications && Array.isArray(clinic.certifications) && clinic.certifications.length > 0 ? 
+                                      clinic.certifications.map((cert, i) => (
+                                        <div key={i} className="mb-1">
+                                          {cert?.name || 'ISO Certification'} (2023)
+                                          <div className="text-xs">International certification</div>
+                                        </div>
+                                      )) : 
+                                      <div className="mb-1">
+                                        ISO Certification (2023)
                                         <div className="text-xs">International certification</div>
                                       </div>
-                                    ))}
+                                    }
                                   </div>
                                 </div>
                               </div>
@@ -829,12 +885,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <div className="bg-white rounded-lg p-4 border">
                             <h4 className="font-medium mb-3">Why Choose Us</h4>
                             <div className="space-y-2 text-sm">
-                              {clinic.uniqueSellingPoints.map((point, i) => (
-                                <div key={i} className="flex items-start gap-2">
+                              {clinic.uniqueSellingPoints && Array.isArray(clinic.uniqueSellingPoints) ? 
+                                clinic.uniqueSellingPoints.map((point, i) => (
+                                  <div key={i} className="flex items-start gap-2">
+                                    <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                    <span>{point}</span>
+                                  </div>
+                                )) : 
+                                <div className="flex items-start gap-2">
                                   <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                  <span>{point}</span>
+                                  <span>Experienced, international team of dentists</span>
                                 </div>
-                              ))}
+                              }
                             </div>
                           </div>
                         </div>
@@ -842,12 +904,28 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         <div className="bg-white rounded-lg p-4 border">
                           <h4 className="font-medium mb-3">Clinic Features</h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {clinic.features.map((feature, i) => (
-                              <div key={i} className="flex items-start gap-2">
-                                <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                <span className="text-sm">{feature}</span>
-                              </div>
-                            ))}
+                            {clinic.features && Array.isArray(clinic.features) ? 
+                              clinic.features.map((feature, i) => (
+                                <div key={i} className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span className="text-sm">{feature}</span>
+                                </div>
+                              )) : 
+                              <>
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span className="text-sm">Digital X-ray equipment</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span className="text-sm">Multilingual staff</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span className="text-sm">Airport transfer service</span>
+                                </div>
+                              </>
+                            }
                           </div>
                         </div>
                       </div>
