@@ -1,0 +1,102 @@
+**Document for Replit Development: MyDentalFly — Final "My Quote" Page Specification**
+
+---
+
+## Purpose:
+To provide a simple, medically professional, and trust-driven quote building experience. The user selects treatments using tick-boxes, guided by educational examples, and only sees price ranges until they request matching clinics.
+
+---
+
+## Page Layout Structure:
+
+### 1. Header Section
+- Page Title: "Build Your Treatment Plan"
+- Subheading: "Choose your treatments below to get a clear quote estimate. Your final treatment plan will be confirmed after consultation with your chosen clinic."
+- Back to Homepage Link
+
+---
+
+### 2. Example Treatment Plans (Education Section)
+
+Show 3 Example Cases:
+
+- Mr Roberts — "Needed Dental Implants & Bone Graft due to missing teeth and bone loss after extractions."
+- Sarah — "Chose Veneers & Whitening to improve her smile aesthetics."
+- James — "Required Full Mouth Reconstruction due to years of dental neglect."
+
+Optional small banner:
+"Don't have X-rays or a CT scan? No problem. Upload it later after booking."
+
+---
+
+### 3. Treatment Plan Builder (Main Section)
+
+Organized by Treatment Categories (Collapsible or Tab View):
+
+#### Categories:
+- Dental Implants
+- Veneers & Crowns
+- Root Canal Treatments
+- Bone Grafts
+- Teeth Whitening
+- Full Mouth Rehab
+- General Dentistry (Fillings, Cleaning, etc.)
+
+##### Treatment Selection:
+Each treatment listed with:
+- Tick Box to Add to Quote
+- Optional Quantity Selector (if relevant)
+- Tooltip or small info icon explaining the treatment
+- Guarantee information or clinic note (example: "Lifetime Guarantee on Implants")
+
+---
+
+### 4. Estimated Cost Range (Right Side or Bottom Section)
+
+Display:
+> "Estimated Total Treatment Cost: £1,500 - £4,500"
+
+Subtext:
+> "Based on average Istanbul treatment prices. Your selected clinic will confirm exact pricing after consultation and review of your X-rays."
+
+Comparison Line:
+> "Typical UK Equivalent: £2,500 - £5,000"
+
+Savings Highlight:
+> "Save up to 60% compared to UK prices"
+
+---
+
+### 5. Final CTA Button (Sticky Footer or Bottom Section)
+
+Big Button:
+> "Match Me With Clinics & View Packages"
+
+Subtext:
+> "See clinics, packages, and complete your booking with a refundable £200 deposit."
+
+---
+
+## Design Notes:
+
+- Clean, medical aesthetic
+- No individual clinic pricing shown at this stage
+- Emphasis on clarity, education, and simplicity
+- Keep the process fast and frictionless
+
+---
+
+## Next Page After This:
+After pressing "Match Me With Clinics":
+
+Take user to *Clinic Comparison Page* with:
+- Matching Clinics
+- Packages
+- Pricing per clinic
+- Reviews & Photos
+- Proceed to Booking Flow
+
+---
+
+End of Document.
+
