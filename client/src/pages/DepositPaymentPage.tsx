@@ -54,6 +54,16 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   const depositAmount = 200; // £200 fixed deposit
   
   const handlePayDeposit = () => {
+    // Make sure we have an email before showing the Stripe form
+    if (!patientInfo.email) {
+      toast({
+        title: "Missing Information",
+        description: "Please go back and provide your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setShowStripeForm(true);
   };
   
