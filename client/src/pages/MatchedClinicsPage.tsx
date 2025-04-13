@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, Check, Info, CreditCard, MessageCircle, Mail, Download, ChevronRight, Clock } from 'lucide-react';
 import { TreatmentItem as PlanTreatmentItem } from '../components/TreatmentPlanBuilder';
 import { type PatientInfo } from '../components/PatientInfoForm';
+import WhatsAppButton from '@/components/WhatsAppButton';
 
 // Dummy data for clinic matching
 interface Clinic {
@@ -128,11 +129,33 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={onEmailQuote} variant="outline" size="sm" className="flex items-center gap-2">
+            <Button 
+              onClick={() => {
+                if (selectedClinicId) {
+                  onEmailQuote();
+                } else {
+                  alert('Please select a clinic first to email your personalized quote');
+                }
+              }} 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+            >
               <Mail className="h-4 w-4" />
               Email Quote
             </Button>
-            <Button onClick={onQuoteDownload} variant="outline" size="sm" className="flex items-center gap-2">
+            <Button 
+              onClick={() => {
+                if (selectedClinicId) {
+                  onQuoteDownload();
+                } else {
+                  alert('Please select a clinic first to download your personalized quote');
+                }
+              }} 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+            >
               <Download className="h-4 w-4" />
               Download PDF
             </Button>
@@ -335,13 +358,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         
         {selectedClinicId && (
           <div className="flex gap-3">
-            <Button 
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Ask a Question
-            </Button>
+            <WhatsAppButton 
+              phoneNumber="447572445856" 
+              message={`Hello! I have a question about my dental treatment at ${selectedClinicId === 'clinic1' ? 'Istanbul Dental Care' : selectedClinicId === 'clinic2' ? 'DentGroup Istanbul' : 'Maltepe Dental Clinic'}. Can you help me?`}
+              className="inline-block"
+            />
             <Button 
               onClick={handleProceedToPayment}
               className="flex items-center gap-2"
