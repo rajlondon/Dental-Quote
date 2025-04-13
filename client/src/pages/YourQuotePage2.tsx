@@ -75,66 +75,103 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 // FAQ Section
 const FAQSection: React.FC = () => {
   return (
-    <div className="mb-10">
-      <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
-      
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="item-1">
-          <AccordionTrigger className="text-lg">
-            How does the dental tourism process work?
-          </AccordionTrigger>
-          <AccordionContent className="text-gray-600">
-            <p>
-              After submitting your quote request, you'll receive a detailed treatment plan from our partner clinics. Once you choose a clinic, you'll pay a £200 deposit to secure your booking. Our concierge team will help with travel arrangements, and you'll pay the remaining balance directly to the clinic after your consultation in Istanbul.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
+    <Card className="mb-12">
+      <CardHeader className="border-b border-gray-100 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-full bg-blue-50">
+            <MessageCircle className="h-6 w-6 text-blue-500" />
+          </div>
+          <div>
+            <CardTitle className="text-2xl">Frequently Asked Questions</CardTitle>
+            <CardDescription>Everything you need to know about dental treatment in Istanbul</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
+                <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
+                  How does the dental tourism process work?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 px-4 pt-2 pb-4 bg-gray-50">
+                  <p>
+                    After submitting your quote request, you'll receive a detailed treatment plan from our partner clinics. Once you choose a clinic, you'll pay a £200 deposit to secure your booking. Our concierge team will help with travel arrangements, and you'll pay the remaining balance directly to the clinic after your consultation in Istanbul.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-2" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
+                <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
+                  How much can I save compared to UK dental prices?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 px-4 pt-2 pb-4 bg-gray-50">
+                  <p>
+                    Patients typically save 50-70% on dental treatment costs in Turkey compared to the UK. For example, a single dental implant might cost £2,000-£3,000 in the UK but only £600-£850 in Istanbul. The exact savings depend on your specific treatment plan.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-3" className="border border-gray-100 rounded-lg overflow-hidden">
+                <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
+                  Is the £200 deposit refundable?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 px-4 pt-2 pb-4 bg-gray-50">
+                  <p>
+                    Yes, the £200 deposit is fully refundable if you cancel more than 7 days before your scheduled consultation. If you proceed with treatment, this deposit is deducted from your final treatment cost.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+          
+          <div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-4" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
+                <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
+                  How long will I need to stay in Istanbul?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 px-4 pt-2 pb-4 bg-gray-50">
+                  <p>
+                    The length of stay depends on your treatment plan. For dental implants, you'll typically need two trips: 3-4 days for the initial implant placement, then 5-7 days for the final restoration after healing (3-6 months later). For cosmetic treatments like veneers, a single 5-7 day trip is usually sufficient.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-5" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
+                <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
+                  What about aftercare and guarantees?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 px-4 pt-2 pb-4 bg-gray-50">
+                  <p>
+                    All our partner clinics offer guarantees on their work, ranging from 3 to 10 years depending on the treatment and clinic. For aftercare, you'll receive detailed post-treatment instructions, and the clinics provide remote follow-up support. If you have any issues, our UK-based team can help coordinate with the clinic.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-6" className="border border-gray-100 rounded-lg overflow-hidden">
+                <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
+                  What if I need follow-up treatment?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 px-4 pt-2 pb-4 bg-gray-50">
+                  <p>
+                    Most clinics have partnerships with UK dentists who can provide follow-up care if needed. For more significant issues, our clinics will cover your return flights if treatment is required within the guarantee period. MyDentalFly's patient care team is also available to assist with any post-treatment concerns.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </div>
         
-        <AccordionItem value="item-2">
-          <AccordionTrigger className="text-lg">
-            How much can I save compared to UK dental prices?
-          </AccordionTrigger>
-          <AccordionContent className="text-gray-600">
-            <p>
-              Patients typically save 50-70% on dental treatment costs in Turkey compared to the UK. For example, a single dental implant might cost £2,000-£3,000 in the UK but only £600-£850 in Istanbul. The exact savings depend on your specific treatment plan.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="item-3">
-          <AccordionTrigger className="text-lg">
-            How long will I need to stay in Istanbul?
-          </AccordionTrigger>
-          <AccordionContent className="text-gray-600">
-            <p>
-              The length of stay depends on your treatment plan. For dental implants, you'll typically need two trips: 3-4 days for the initial implant placement, then 5-7 days for the final restoration after healing (3-6 months later). For cosmetic treatments like veneers, a single 5-7 day trip is usually sufficient.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="item-4">
-          <AccordionTrigger className="text-lg">
-            What about aftercare and guarantees?
-          </AccordionTrigger>
-          <AccordionContent className="text-gray-600">
-            <p>
-              All our partner clinics offer guarantees on their work, ranging from 3 to 10 years depending on the treatment and clinic. For aftercare, you'll receive detailed post-treatment instructions, and the clinics provide remote follow-up support. If you have any issues, our UK-based team can help coordinate with the clinic.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="item-5">
-          <AccordionTrigger className="text-lg">
-            Is the £200 deposit refundable?
-          </AccordionTrigger>
-          <AccordionContent className="text-gray-600">
-            <p>
-              Yes, the £200 deposit is fully refundable if you cancel more than 7 days before your scheduled consultation. If you proceed with treatment, this deposit is deducted from your final treatment cost.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </div>
+        <div className="flex justify-center mt-8">
+          <Button variant="outline" className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Ask Another Question
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
