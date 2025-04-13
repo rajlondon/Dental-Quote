@@ -187,6 +187,8 @@ const QuoteForm: React.FC = () => {
                         name: data.name,
                         email: data.email,
                         phone: data.phone,
+                        country: data.country,
+                        city: data.city,
                         treatment: `${data.treatmentType} - ${data.specificTreatment}`,
                         otherTreatment: data.otherTreatment || 'Not specified',
                         budget: data.budget || 'Not specified',
@@ -224,6 +226,8 @@ const QuoteForm: React.FC = () => {
                       // Create query parameters to pass to the quote page
                       const queryParams = new URLSearchParams({
                         treatment: treatmentLabel,
+                        country: data.country,
+                        city: data.city,
                         travelMonth: data.startDate ? format(data.startDate, 'MMMM yyyy') : 'Flexible',
                         budget: data.budget ? `£${data.budget} - £${parseInt(data.budget) + 1000}` : 'Flexible',
                         name: data.name,
@@ -233,6 +237,8 @@ const QuoteForm: React.FC = () => {
                       
                       // Log the queryParams for debugging
                       console.log("Form submitted with parameters:", {
+                        country: data.country,
+                        city: data.city,
                         treatment: treatmentLabel,
                         travelMonth: data.startDate ? format(data.startDate, 'MMMM yyyy') : 'Flexible',
                         budget: data.budget ? `£${data.budget} - £${parseInt(data.budget) + 1000}` : 'Flexible',
