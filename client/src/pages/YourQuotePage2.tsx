@@ -506,6 +506,137 @@ const YourQuotePage: React.FC = () => {
                   </CardContent>
                 </Card>
               </div>
+              
+              {/* How Others Built Their Treatment Plan - moved below button as requested */}
+              {treatmentItems.length > 0 && (
+                <div className="mt-12 mb-10">
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <h2 className="text-xl font-bold mb-4">How Others Built Their Treatment Plan</h2>
+                    <p className="text-gray-600 mb-6">Real examples from our patients who found the right dental solutions in Istanbul</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Patient Example 1 */}
+                      <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="bg-blue-50 p-4">
+                          <div className="flex items-center mb-3">
+                            <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
+                            <div>
+                              <h3 className="font-semibold">Mr. Roberts</h3>
+                              <p className="text-sm text-gray-500">London, UK</p>
+                            </div>
+                          </div>
+                          <p className="text-sm">
+                            <span className="font-semibold">Treatment Plan:</span> Needed Dental Implants & Bone Graft due to missing teeth and bone loss after extractions.
+                          </p>
+                        </div>
+                        <div className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">3 Dental Implants</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">Bone Graft Procedure</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">CT Scan & X-rays</span>
+                            </div>
+                          </div>
+                          <div className="mt-4 text-sm">
+                            <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£2,200</span></p>
+                            <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£7,500</span></p>
+                            <p className="text-green-600 font-semibold mt-1">Saved over £5,300</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Patient Example 2 */}
+                      <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="bg-blue-50 p-4">
+                          <div className="flex items-center mb-3">
+                            <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
+                            <div>
+                              <h3 className="font-semibold">Sarah</h3>
+                              <p className="text-sm text-gray-500">Manchester, UK</p>
+                            </div>
+                          </div>
+                          <p className="text-sm">
+                            <span className="font-semibold">Treatment Plan:</span> Chose Veneers & Whitening to improve her smile aesthetics.
+                          </p>
+                        </div>
+                        <div className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">8 Porcelain Veneers</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">Professional Teeth Whitening</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">Digital Smile Design</span>
+                            </div>
+                          </div>
+                          <div className="mt-4 text-sm">
+                            <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£1,850</span></p>
+                            <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£5,200</span></p>
+                            <p className="text-green-600 font-semibold mt-1">Saved over £3,350</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Patient Example 3 */}
+                      <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="bg-blue-50 p-4">
+                          <div className="flex items-center mb-3">
+                            <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
+                            <div>
+                              <h3 className="font-semibold">James</h3>
+                              <p className="text-sm text-gray-500">Edinburgh, UK</p>
+                            </div>
+                          </div>
+                          <p className="text-sm">
+                            <span className="font-semibold">Treatment Plan:</span> Required Full Mouth Reconstruction due to years of dental neglect.
+                          </p>
+                        </div>
+                        <div className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">Full Mouth Reconstruction</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">8 Dental Implants</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-2" />
+                              <span className="text-sm">16 Zirconia Crowns</span>
+                            </div>
+                          </div>
+                          <div className="mt-4 text-sm">
+                            <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£6,500</span></p>
+                            <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£19,800</span></p>
+                            <p className="text-green-600 font-semibold mt-1">Saved over £13,300</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* X-ray note banner */}
+                    <div className="mt-6 bg-gray-50 border border-gray-200 rounded-md p-4 flex items-center">
+                      <Info className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0" />
+                      <p className="text-sm text-gray-700">
+                        Don't have X-rays or a CT scan? No problem. You can upload them later after booking. Many Istanbul clinics provide free X-rays during your first consultation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
           
