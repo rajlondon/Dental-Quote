@@ -9,6 +9,7 @@ import clinicsData from "@/data/clinics.json";
 
 // Clinic Card Component
 const ClinicCard = ({ 
+  id,
   name, 
   image, 
   rating, 
@@ -17,6 +18,7 @@ const ClinicCard = ({
   category,
   featured = false
 }: { 
+  id?: string;
   name: string;
   image: string;
   rating: number;
@@ -140,7 +142,7 @@ const ClinicCard = ({
           </span>
         </div>
         
-        <Link href={`/clinic/${name.toLowerCase().replace(/\s+/g, '-')}`}>
+        <Link href={`/clinic/${id || name.toLowerCase().replace(/\s+/g, '-')}`}>
           <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
             View Clinic
           </Button>
@@ -205,61 +207,42 @@ const HowItWorksSection = () => {
 };
 
 const HomePage: React.FC = () => {
-  // Sample clinic data - in production this would come from your database
-  const popularClinics = [
-    { 
-      name: "DentGroup Istanbul", 
-      image: "/images/clinics/dentgroup.jpg", 
-      rating: 4.8, 
-      reviewCount: 245, 
-      location: "Istanbul, Turkey", 
-      category: "Premium Clinic" 
-    },
-    { 
-      name: "Istanbul Dental Care", 
-      image: "/images/clinics/istanbul-dental.jpg", 
-      rating: 4.5, 
-      reviewCount: 178, 
-      location: "Istanbul, Turkey", 
-      category: "Affordable Care" 
-    },
-    { 
-      name: "Maltepe Dental Clinic", 
-      image: "/images/clinics/maltepe.jpg", 
-      rating: 4.9, 
-      reviewCount: 320, 
-      location: "Istanbul, Turkey", 
-      category: "Luxury Experience",
-      featured: true
-    },
-    { 
-      name: "Dentakay Istanbul", 
-      image: "/images/clinics/dentakay.jpg", 
-      rating: 4.7, 
-      reviewCount: 210, 
-      location: "Istanbul, Turkey", 
-      category: "All-Inclusive" 
+  // Transform clinic data for the clinic cards
+  const popularClinics = clinicsData.map(clinic => {
+    let category;
+    switch(clinic.tier) {
+      case 'premium':
+        category = 'Luxury Experience';
+        break;
+      case 'standard':
+        category = 'Premium Clinic';
+        break;
+      case 'affordable':
+        category = 'Affordable Care';
+        break;
+      default:
+        category = 'Quality Dental Care';
     }
-  ];
+    
+    return {
+      id: clinic.id,
+      name: clinic.name,
+      image: "", // Using stylized placeholders instead of images
+      rating: clinic.ratings.overall,
+      reviewCount: clinic.ratings.reviews,
+      location: `${clinic.location.area}, ${clinic.location.city}`,
+      category: category,
+      featured: clinic.tier === 'premium'
+    };
+  });
   
-  const newClinics = [
-    { 
-      name: "Crown Dental Istanbul", 
-      image: "/images/clinics/crown.jpg", 
-      rating: 4.6, 
-      reviewCount: 42, 
-      location: "Istanbul, Turkey", 
-      category: "New Facility" 
-    },
-    { 
-      name: "Dental Excellence Turkey", 
-      image: "/images/clinics/excellence.jpg", 
-      rating: 4.7, 
-      reviewCount: 35, 
-      location: "Istanbul, Turkey", 
-      category: "Technology Focus" 
-    }
-  ];
+  // The new clinics section will show two random clinics for demo purposes
+  const shuffled = [...popularClinics].sort(() => 0.5 - Math.random());
+  const newClinics = shuffled.slice(0, 2).map(clinic => ({
+    ...clinic,
+    featured: false,
+    category: clinic.category + ' (New)'
+  }));
   
   // Set page title
   useEffect(() => {
@@ -280,6 +263,7 @@ const HomePage: React.FC = () => {
             {popularClinics.map((clinic, index) => (
               <ClinicCard 
                 key={index}
+                id={clinic.id}
                 name={clinic.name} 
                 image={clinic.image}
                 rating={clinic.rating}
@@ -302,6 +286,7 @@ const HomePage: React.FC = () => {
             {newClinics.map((clinic, index) => (
               <ClinicCard 
                 key={index}
+                id={clinic.id}
                 name={clinic.name} 
                 image={clinic.image}
                 rating={clinic.rating}
