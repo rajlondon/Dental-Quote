@@ -50,7 +50,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 2500, 
         priceUSD: 3200,
         guarantee: '5-year',
-        notes: 'UK average price. Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.'
+        notes: 'UK average price. These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.'
       },
       { 
         id: 'dental_implant_premium', 
@@ -449,11 +449,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>Approximate Price Range</span>
+                        <span>Istanbul Average Prices</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -506,7 +506,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -523,11 +523,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>Approximate Price Range</span>
+                        <span>Istanbul Average Prices</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -580,7 +580,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -597,11 +597,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>Approximate Price Range</span>
+                        <span>Istanbul Average Prices</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -654,7 +654,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -671,11 +671,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>Approximate Price Range</span>
+                        <span>Istanbul Average Prices</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -728,7 +728,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -745,11 +745,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>Approximate Price Range</span>
+                        <span>Istanbul Average Prices</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -802,7 +802,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -819,11 +819,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>Approximate Price Range</span>
+                        <span>Istanbul Average Prices</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -876,7 +876,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
