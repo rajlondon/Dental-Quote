@@ -208,7 +208,7 @@ const HowItWorksSection = () => {
 
 const HomePage: React.FC = () => {
   // Transform clinic data for the clinic cards
-  const popularClinics = clinicsData.map(clinic => {
+  const formattedClinics = clinicsData.map(clinic => {
     let category;
     switch(clinic.tier) {
       case 'premium':
@@ -232,17 +232,30 @@ const HomePage: React.FC = () => {
       reviewCount: clinic.ratings.reviews,
       location: `${clinic.location.area}, ${clinic.location.city}`,
       category: category,
-      featured: clinic.tier === 'premium'
+      featured: clinic.tier === 'premium',
+      tier: clinic.tier
     };
   });
   
+  // Filter clinics for different sections
+  const popularClinics = formattedClinics;
+  
   // The new clinics section will show two random clinics for demo purposes
-  const shuffled = [...popularClinics].sort(() => 0.5 - Math.random());
+  const shuffled = [...formattedClinics].sort(() => 0.5 - Math.random());
   const newClinics = shuffled.slice(0, 2).map(clinic => ({
     ...clinic,
     featured: false,
     category: clinic.category + ' (New)'
   }));
+  
+  // Trending clinics - for demo we'll mark premium and clinics with high ratings as trending
+  const trendingClinics = formattedClinics
+    .filter(clinic => clinic.tier === 'premium' || clinic.rating >= 4.7)
+    .map(clinic => ({
+      ...clinic,
+      category: clinic.category + ' (Trending)'
+    }))
+    .slice(0, 3); // Show 3 trending clinics
   
   // Set page title
   useEffect(() => {
@@ -273,6 +286,55 @@ const HomePage: React.FC = () => {
                 featured={clinic.featured}
               />
             ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* Trending Clinics Section */}
+      <section className="py-12 bg-gradient-to-r from-indigo-50 to-blue-50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center mb-8">
+            <h2 className="text-3xl font-bold">Trending Clinics</h2>
+            <div className="ml-3 px-3 py-1 bg-primary/10 rounded-full text-primary text-sm font-medium">
+              <Sparkles className="w-4 h-4 inline mr-1 text-primary" />
+              Popular Now
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {trendingClinics.map((clinic, index) => (
+              <ClinicCard 
+                key={index}
+                id={clinic.id}
+                name={clinic.name} 
+                image={clinic.image}
+                rating={clinic.rating}
+                reviewCount={clinic.reviewCount}
+                location={clinic.location}
+                category={clinic.category}
+                featured={true}
+              />
+            ))}
+            
+            {/* Action card */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="h-48 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                <div className="text-center p-6">
+                  <div className="mx-auto mb-4 bg-white/80 p-3 rounded-full inline-flex">
+                    <Zap className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Fast-Track Your Smile</h3>
+                  <p className="text-sm text-gray-600">Get matched with top-rated clinics today</p>
+                </div>
+              </div>
+              <div className="p-4">
+                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
+                  <Link href="/quote">
+                    Get Your Quote
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
