@@ -371,7 +371,7 @@ const YourQuotePage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base font-medium text-gray-600">Estimated UK Price</CardTitle>
@@ -384,39 +384,15 @@ const YourQuotePage: React.FC = () => {
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-white border-gray-200">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-medium text-gray-600">Estimated Flights</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-bold">
-                        £200-250
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">Return flights from the UK</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-white border-gray-200">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-medium text-gray-600">Estimated Hotel</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-bold">
-                        £30-100
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">Per night, varies by location</p>
-                    </CardContent>
-                  </Card>
-                  
                   <Card className="bg-green-50 border-green-100">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-medium text-green-700">Estimated Savings</CardTitle>
+                      <CardTitle className="text-base font-medium text-green-700">Estimated Istanbul Price</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-2xl font-bold text-green-700">
-                        60-70%
+                        £{formatCurrency(Math.round(totalGBP * 0.35))}
                       </p>
-                      <p className="text-sm text-green-600 mt-1">vs UK dental prices</p>
+                      <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -435,29 +411,7 @@ const YourQuotePage: React.FC = () => {
           
           {/* Case Studies section removed as requested */}
           
-          {/* Ready to See Clinics CTA (Added per new spec) */}
-          {treatmentItems.length > 0 && !isQuoteReady && (
-            <div className="mb-8">
-              <Card className="bg-blue-50 border-blue-100">
-                <CardContent className="pt-6 pb-6">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-blue-800">Ready to See Clinics & Packages?</h3>
-                      <p className="text-blue-700 mt-1">Continue to view clinics that match your treatment needs</p>
-                    </div>
-                    <Button 
-                      size="lg" 
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => setCurrentStep('patient-info')}
-                    >
-                      View Matching Clinics
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {/* Ready to See Clinics CTA has been removed to streamline mobile experience */}
           
           {/* Progress tracker */}
           <div className="mb-8">
@@ -612,10 +566,10 @@ const YourQuotePage: React.FC = () => {
                         <div className="mt-6 flex justify-end">
                           <Button 
                             onClick={() => setCurrentStep('patient-info')}
-                            className="flex items-center gap-2 py-6 px-5 text-lg"
+                            className="flex items-center gap-2 py-5 px-4 text-base md:text-lg"
                             size="lg"
                           >
-                            View Matching Clinics & Request Final Quote
+                            Next: View Matching Clinics
                             <ChevronRight className="h-5 w-5 ml-1" />
                           </Button>
                         </div>
@@ -844,11 +798,11 @@ const YourQuotePage: React.FC = () => {
               </div>
               <Button 
                 onClick={() => setCurrentStep(patientInfo ? 'matched-clinics' : 'patient-info')}
-                className="py-6 px-8 text-lg w-full sm:w-auto"
+                className="py-4 px-6 text-base md:text-lg w-full sm:w-auto"
                 size="lg"
               >
-                View Matching Clinics & Request Final Quote
-                <ChevronRight className="h-5 w-5 ml-1" />
+                Next: View Clinics
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </div>

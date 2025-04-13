@@ -431,15 +431,15 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       <div className="grid grid-cols-1 gap-6">
         <div>
           <Tabs defaultValue="implants" className="w-full">
-            {/* Made more mobile-friendly with scrollable design */}
-            <div className="overflow-x-auto pb-2 mb-3">
-              <TabsList className="grid grid-cols-6 md:grid-cols-6 w-max min-w-full h-auto p-1 mb-2">
-                <TabsTrigger value="implants" className="py-2 whitespace-nowrap">Implants</TabsTrigger>
-                <TabsTrigger value="crowns_veneers" className="py-2 whitespace-nowrap">Veneers & Crowns</TabsTrigger>
-                <TabsTrigger value="whitening" className="py-2 whitespace-nowrap">Teeth Whitening</TabsTrigger>
-                <TabsTrigger value="full_mouth" className="py-2 whitespace-nowrap">Full Mouth Rehab</TabsTrigger>
-                <TabsTrigger value="general" className="py-2 whitespace-nowrap">General Dentistry</TabsTrigger>
-                <TabsTrigger value="other" className="py-2 whitespace-nowrap">Other Treatments</TabsTrigger>
+            {/* Improved mobile-friendly with scrollable design */}
+            <div className="overflow-x-auto pb-2 mb-3 -mx-1 px-1">
+              <TabsList className="flex flex-nowrap md:grid md:grid-cols-6 w-max min-w-full h-auto p-1 mb-2">
+                <TabsTrigger value="implants" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">Implants</TabsTrigger>
+                <TabsTrigger value="crowns_veneers" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">Veneers & Crowns</TabsTrigger>
+                <TabsTrigger value="whitening" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">Whitening</TabsTrigger>
+                <TabsTrigger value="full_mouth" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">Full Mouth</TabsTrigger>
+                <TabsTrigger value="general" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">General</TabsTrigger>
+                <TabsTrigger value="other" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">Other</TabsTrigger>
               </TabsList>
             </div>
             
@@ -463,7 +463,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </div>
               <div className="space-y-3">
                 {TREATMENT_CATEGORIES.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div key={treatment.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="pt-0.5">
                         <Checkbox 
@@ -485,16 +485,16 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
                           {treatment.name}
                         </label>
-                        <div className="flex items-center mt-1">
+                        <div className="flex flex-wrap items-center mt-1">
                           {treatment.guarantee && treatment.guarantee !== 'N/A' && (
-                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2 mb-1">
                               {treatment.guarantee} guarantee
                             </span>
                           )}
                           {treatment.notes && (
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600 mb-1">
                                   <Info className="h-3 w-3 mr-1" />
                                   <span>Info</span>
                                 </TooltipTrigger>
@@ -507,9 +507,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right mt-2 sm:mt-0">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Istanbul: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
