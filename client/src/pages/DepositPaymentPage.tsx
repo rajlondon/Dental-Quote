@@ -20,6 +20,9 @@ import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import StripePaymentWrapper from '@/components/payment/StripePaymentWrapper';
+import PatientInfoVerification from '@/components/payment/PatientInfoVerification';
+import { PatientInfo } from '@/components/PatientInfoForm';
+import { validatePatientInfo, standardizePatientInfo } from '@/utils/patientInfoValidator';
 
 interface DepositPaymentPageProps {
   treatmentItems?: TreatmentItem[];
@@ -35,6 +38,8 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [showStripeForm, setShowStripeForm] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verifiedPatientInfo, setVerifiedPatientInfo] = useState<Partial<PatientInfo> | null>(null);
   const { toast } = useToast();
   
   // Get data from localStorage if not provided via props
