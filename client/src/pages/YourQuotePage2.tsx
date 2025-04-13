@@ -783,30 +783,7 @@ const YourQuotePage: React.FC = () => {
           <FAQSection />
         </div>
         
-        {/* Sticky CTA Footer - Only visible when treatments are added and not in matched-clinics step */}
-        {treatmentItems.length > 0 && currentStep !== 'matched-clinics' && currentStep !== 'payment' && (
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg py-3 px-4 z-50">
-            <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
-              <div className="mb-3 sm:mb-0">
-                <p className="font-medium text-gray-800">Your Treatment Plan</p>
-                <div className="flex items-center">
-                  <p className="text-sm text-gray-600 mr-2">{treatmentItems.length} treatment{treatmentItems.length !== 1 ? 's' : ''} selected</p>
-                  {totalGBP > 0 && (
-                    <p className="text-sm font-semibold text-blue-600">Estimated: £{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</p>
-                  )}
-                </div>
-              </div>
-              <Button 
-                onClick={() => setCurrentStep(patientInfo ? 'matched-clinics' : 'patient-info')}
-                className="py-4 px-6 text-base md:text-lg w-full sm:w-auto"
-                size="lg"
-              >
-                Next: View Clinics
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Sticky footer removed to eliminate duplicate buttons */}
       </main>
       
       <Footer />
