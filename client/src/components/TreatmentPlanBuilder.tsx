@@ -69,6 +69,14 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         notes: 'UK average price. Includes 4 implants and a full arch restoration. Clinic prices vary based on materials used.'
       },
       { 
+        id: 'all_on_6_implants', 
+        name: 'All-on-6 Implants (Full Arch)', 
+        priceGBP: 14000, 
+        priceUSD: 18000,
+        guarantee: '10-year',
+        notes: 'UK average price. Includes 6 implants and a full arch restoration, providing additional support and stability, particularly in the upper jaw.'
+      },
+      { 
         id: 'bone_graft', 
         name: 'Bone Graft (Per Site)', 
         priceGBP: 650, 
@@ -1617,7 +1625,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   size="lg" 
                   onClick={() => onTreatmentsChange && onTreatmentsChange(treatments)}
                 >
-                  Continue With My Treatment Plan <ArrowRight className="h-4 w-4 ml-2" />
+                  Get My Personalised Quote <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
                 <p className="text-xs text-center text-gray-500 mt-2">
                   Compare prices from verified Istanbul dental clinics
