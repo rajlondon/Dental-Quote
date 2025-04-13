@@ -1,272 +1,213 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Lock, CreditCard, ShieldCheck, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { 
+  CheckCircle, 
+  Calendar, 
+  User, 
+  Mail, 
+  FileText, 
+  Info,
+  ArrowRight,
+  MessageCircle,
+  HeartHandshake
+} from 'lucide-react';
 
-interface PaymentConfirmationPageProps {
-  clinicName: string;
-  treatmentTotalGBP: number;
-  depositAmount?: number;
-  onPaymentSuccess: () => void;
-  onCancel: () => void;
-}
-
-const PaymentConfirmationPage: React.FC<PaymentConfirmationPageProps> = ({
-  clinicName,
-  treatmentTotalGBP,
-  depositAmount = 200,
-  onPaymentSuccess,
-  onCancel
-}) => {
+const PaymentConfirmationPage = () => {
   const [, setLocation] = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setShowSuccess(true);
-      
-      // Redirect to patient portal after successful payment
-      setTimeout(() => {
-        onPaymentSuccess();
-      }, 3000);
-    }, 2000);
+  // Get patient information from localStorage
+  const patientInfoStr = localStorage.getItem('patientInfo');
+  const patientInfo = patientInfoStr ? JSON.parse(patientInfoStr) : {
+    fullName: 'Patient',
+    email: 'patient@example.com'
   };
   
-  // Format card number with spaces
-  const formatCardNumber = (value: string) => {
-    const val = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = val.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-    
-    for (let i = 0; i < match.length; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return value;
-    }
-  };
+  // Generate a reference number
+  const referenceNumber = `MDF-${Math.floor(100000 + Math.random() * 900000)}`;
   
-  // Handle card number input
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCardNumber(formatCardNumber(value));
-  };
-  
-  // Format expiry date
-  const formatExpiryDate = (value: string) => {
-    const val = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    if (val.length > 2) {
-      return `${val.substring(0, 2)}/${val.substring(2, 4)}`;
-    }
-    return val;
-  };
-  
-  // Handle expiry date input
-  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setExpiryDate(formatExpiryDate(value));
-  };
-  
-  if (showSuccess) {
-    return (
-      <div className="max-w-md mx-auto my-12">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto bg-green-100 p-3 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl">Payment Successful!</CardTitle>
-            <CardDescription>
-              Thank you for your deposit. You will receive a confirmation email shortly.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-center">
-            <p>Your account is being set up. You'll be redirected to your patient portal in a moment.</p>
-            <div className="animate-pulse text-sm text-blue-600">Redirecting to Patient Portal...</div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Store the reference number in localStorage
+  useEffect(() => {
+    localStorage.setItem('paymentReference', referenceNumber);
+  }, [referenceNumber]);
   
   return (
-    <div className="max-w-4xl mx-auto my-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Lock className="mr-2 h-5 w-5 text-blue-500" />
-                Secure Payment
-              </CardTitle>
-              <CardDescription>
-                Pay your £{depositAmount} refundable deposit to secure your booking with {clinicName}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardName">Cardholder Name</Label>
-                  <Input 
-                    id="cardName" 
-                    placeholder="Name as it appears on card"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)} 
-                    required
-                  />
+    <main className="container mx-auto py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="bg-green-100 p-4 rounded-full">
+              <CheckCircle className="h-16 w-16 text-green-600" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
+          <p className="text-gray-600 max-w-xl mx-auto">
+            Your £200 deposit has been received and your dental treatment plan is now confirmed.
+          </p>
+        </div>
+        
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Your Booking Details</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <User className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Patient Name</h3>
+                  <p className="font-medium">{patientInfo.fullName}</p>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <div className="relative">
-                    <Input 
-                      id="cardNumber" 
-                      placeholder="1234 5678 9012 3456"
-                      maxLength={19}
-                      value={cardNumber}
-                      onChange={handleCardNumberChange}
-                      required
-                    />
-                    <CreditCard className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-                  </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <Mail className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Email Address</h3>
+                  <p className="font-medium">{patientInfo.email}</p>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Input 
-                      id="expiryDate" 
-                      placeholder="MM/YY"
-                      maxLength={5}
-                      value={expiryDate}
-                      onChange={handleExpiryDateChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input 
-                      id="cvv" 
-                      placeholder="123"
-                      maxLength={3}
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value.replace(/[^0-9]/g, ''))}
-                      required
-                    />
-                  </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Reference Number</h3>
+                  <p className="font-medium">{referenceNumber}</p>
                 </div>
-                
-                <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Important Information</AlertTitle>
-                  <AlertDescription className="text-sm">
-                    Your £{depositAmount} deposit is fully refundable if canceled 14+ days before your appointment. 
-                    If you proceed with treatment, this amount will be deducted from your final bill.
-                  </AlertDescription>
-                </Alert>
-                
-                <div className="flex justify-between pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                  >
-                    Back
-                  </Button>
-                  <Button 
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="min-w-[150px]"
-                  >
-                    {isSubmitting ? 'Processing...' : `Pay £${depositAmount}`}
-                  </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Deposit Amount</h3>
+                  <p className="font-medium">£200</p>
                 </div>
-              </form>
-            </CardContent>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <Calendar className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Booking Date</h3>
+                  <p className="font-medium">{new Date().toLocaleDateString('en-GB')}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <HeartHandshake className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                  <p className="text-green-600 font-medium">Confirmed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-3">What Happens Next?</h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">1</div>
+              <div>
+                <h3 className="font-medium">Patient Portal Setup</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  You'll receive an email within 24 hours with your login details for the MyDentalFly patient portal.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">2</div>
+              <div>
+                <h3 className="font-medium">Dental Specialist Consultation</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  You'll be able to schedule your complimentary video consultation with your dental specialist 
+                  through the patient portal.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">3</div>
+              <div>
+                <h3 className="font-medium">Treatment Planning</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  After your consultation, you'll receive a detailed treatment timeline and can choose 
+                  your preferred dates for your dental trip.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">4</div>
+              <div>
+                <h3 className="font-medium">Travel Arrangement Support</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Our concierge team will assist you with flight, accommodation, and local transport arrangements.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <Card className="p-5 border-green-200 bg-green-50">
+            <div className="flex items-start gap-3">
+              <User className="h-6 w-6 text-green-600 shrink-0" />
+              <div>
+                <h3 className="font-semibold">Access Your Patient Portal</h3>
+                <p className="text-sm text-gray-700 mt-1 mb-3">
+                  Manage your dental treatment, access your records, and communicate with your care team.
+                </p>
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => setLocation('/patient-portal')}
+                >
+                  Go to Patient Portal
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-5 border-blue-200 bg-blue-50">
+            <div className="flex items-start gap-3">
+              <MessageCircle className="h-6 w-6 text-blue-600 shrink-0" />
+              <div>
+                <h3 className="font-semibold">Contact Our Concierge Team</h3>
+                <p className="text-sm text-gray-700 mt-1 mb-3">
+                  Have questions about your booking? Our team is here to help you every step of the way.
+                </p>
+                <Button 
+                  variant="outline"
+                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
+                  onClick={() => setLocation('/contact')}
+                >
+                  Contact Support
+                </Button>
+              </div>
+            </div>
           </Card>
         </div>
         
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Booking Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Selected Clinic</p>
-                <p className="font-semibold">{clinicName}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Treatment Total</p>
-                <p className="font-semibold">£{treatmentTotalGBP.toLocaleString()}</p>
-                <p className="text-xs text-gray-500">Final price confirmed after consultation</p>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <div className="flex justify-between items-center">
-                  <p className="font-medium">Refundable Deposit</p>
-                  <p className="font-bold">£{depositAmount}</p>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  This amount will be deducted from your total treatment cost
-                </p>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <ShieldCheck className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Secure Payment</span>
-                </div>
-                <div className="flex items-center">
-                  <ShieldCheck className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">100% Refundable (14+ days before appointment)</span>
-                </div>
-                <div className="flex items-center">
-                  <ShieldCheck className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Instant Patient Portal Access</span>
-                </div>
-              </div>
-              
-              <div className="pt-4">
-                <Alert variant="default" className="bg-green-50 text-green-800 border-green-200">
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertTitle>After Payment</AlertTitle>
-                  <AlertDescription className="text-sm">
-                    You'll get immediate access to your Patient Portal where you can upload dental records, 
-                    communicate with your clinic, and arrange your consultation.
-                  </AlertDescription>
-                </Alert>
-              </div>
-              
-            </CardContent>
-          </Card>
+        <div className="text-center">
+          <p className="text-sm text-gray-500 mb-4">
+            A confirmation email has been sent to {patientInfo.email} with all these details.
+          </p>
+          
+          <Button 
+            onClick={() => setLocation('/')}
+            variant="outline"
+            className="mx-auto"
+          >
+            Return to Homepage
+          </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 
