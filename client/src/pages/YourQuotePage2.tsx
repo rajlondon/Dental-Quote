@@ -182,9 +182,13 @@ const YourQuotePage: React.FC = () => {
     setTreatmentItems(items);
     
     if (items.length > 0) {
+      // Get treatment names for the toast message
+      const treatmentNames = items.map(item => item.name);
+      const treatmentCount = items.length;
+      
       toast({
         title: "Treatment Plan Updated",
-        description: "Your treatment plan has been updated.",
+        description: `${treatmentCount} ${treatmentCount === 1 ? 'treatment' : 'treatments'} added to your plan.`,
       });
     }
   };
