@@ -40,7 +40,7 @@ const blogPostsData: Record<string, BlogPost> = {
       
       <p>Perhaps the most compelling reason to consider Istanbul for dental treatment is the remarkable cost advantage. Patients from Western Europe, the UK, and North America can save between 50-70% on dental procedures compared to their home countries. This substantial saving applies across all treatments, from basic procedures like fillings to more complex interventions such as implants, veneers, and full smile makeovers.</p>
       
-      <p>For example, a single dental implant that might cost €3,000-5,000 in Germany or the UK typically costs just €700-1,200 in Istanbul. A full set of porcelain veneers could save you thousands of euros, all while receiving treatment that meets or exceeds international standards.</p>
+      <p>For example, a single dental implant that might cost £2,500-4,000 in the UK typically costs just £600-1,000 in Istanbul. A full set of porcelain veneers could save you thousands of pounds, all while receiving treatment that meets or exceeds international standards.</p>
       
       <h2>2. World-Class Dental Facilities with Advanced Technology</h2>
       

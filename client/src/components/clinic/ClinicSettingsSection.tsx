@@ -318,7 +318,7 @@ const ClinicSettingsSection: React.FC = () => {
                         <div>{t("clinic.settings.treatments.category", "Category")}</div>
                         <div>{t("clinic.settings.treatments.price_gbp", "Price (£)")}</div>
                         <div>{t("clinic.settings.treatments.price_usd", "Price ($)")}</div>
-                        <div>{t("clinic.settings.treatments.price_eur", "Price (€)")}</div>
+                        <div>{t("clinic.settings.treatments.price_gbp", "Price (£)")}</div>
                         <div>{t("clinic.settings.treatments.actions", "Actions")}</div>
                       </div>
                       {treatments.map((treatment) => (
@@ -327,7 +327,7 @@ const ClinicSettingsSection: React.FC = () => {
                           <div>{treatment.category}</div>
                           <div>£{treatment.priceGBP}</div>
                           <div>${treatment.priceUSD}</div>
-                          <div>€{treatment.priceEUR}</div>
+                          <div>£{treatment.priceEUR}</div>
                           <div className="flex space-x-2">
                             <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                               <Edit className="h-4 w-4" />
@@ -441,9 +441,9 @@ const ClinicSettingsSection: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="priceEUR">{t("clinic.settings.treatments.price_eur", "Price (EUR)")}</Label>
+                      <Label htmlFor="priceEUR">{t("clinic.settings.treatments.price_gbp2", "Price (GBP)")}</Label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
                         <Input 
                           id="priceEUR" 
                           type="number" 

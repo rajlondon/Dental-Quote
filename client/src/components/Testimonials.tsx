@@ -24,7 +24,7 @@ const testimonials: Testimonial[] = [
   },
   {
     id: "2",
-    quote: "My dental implant procedure in Istanbul was seamless from start to finish. The clinic was state-of-the-art, the dentists were highly skilled, and the aftercare was excellent. I saved over €4,000 compared to prices back home.",
+    quote: "My dental implant procedure in Istanbul was seamless from start to finish. The clinic was state-of-the-art, the dentists were highly skilled, and the aftercare was excellent. I saved over £3,500 compared to prices back home.",
     image: userMaleAvatar,
     name: "Thomas K.",
     treatment: "Dental Implants",
