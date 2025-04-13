@@ -3,11 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles } from 'lucide-react';
+import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Define TreatmentData structure
 export interface TreatmentItem {
@@ -326,27 +329,721 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     return treatment?.notes;
   };
   
+  // New direct add treatment without modal
+  const handleDirectAddTreatment = (treatment: any, categoryId: string) => {
+    // Check if treatment is already in the list
+    const existingTreatment = treatments.find(
+      t => t.name === treatment.name
+    );
+    
+    if (existingTreatment) {
+      // Increment quantity if already in list
+      handleQuantityChange(existingTreatment.id, existingTreatment.quantity + 1);
+      return;
+    }
+    
+    // Add new treatment
+    const newTreatment: TreatmentItem = {
+      id: `${treatment.id}_${Date.now()}`, // Unique ID
+      category: categoryId,
+      name: treatment.name,
+      quantity: 1,
+      priceGBP: treatment.priceGBP,
+      priceUSD: treatment.priceUSD,
+      subtotalGBP: treatment.priceGBP,
+      subtotalUSD: treatment.priceUSD,
+      guarantee: treatment.guarantee,
+    };
+    
+    setTreatments([...treatments, newTreatment]);
+  };
+  
+  // Check if a treatment is already in the list
+  const isTreatmentSelected = (treatmentName: string): boolean => {
+    return treatments.some(t => t.name === treatmentName);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Build Your Treatment Plan</h2>
+    <div className="bg-white rounded-lg shadow p-6 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Build Your Treatment Plan</h2>
+          <p className="text-gray-600 text-sm">Select treatments from the categories below</p>
+        </div>
         
-        {showAddForm ? (
-          <Button variant="outline" onClick={resetForm} size="sm">
-            Cancel
-          </Button>
-        ) : (
-          <Button onClick={() => setShowAddForm(true)} size="sm">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Treatment
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {treatments.length > 0 && (
+            <div className="bg-blue-50 px-3 py-2 rounded text-sm font-medium text-blue-700">
+              {treatments.length} treatment{treatments.length !== 1 ? 's' : ''} added
+            </div>
+          )}
+          
+          {showAddForm ? (
+            <Button variant="outline" onClick={resetForm} size="sm">
+              Cancel
+            </Button>
+          ) : (
+            <Button onClick={() => setShowAddForm(true)} size="sm">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Custom Treatment
+            </Button>
+          )}
+        </div>
       </div>
       
-      {/* Add Treatment Form */}
+      {/* Treatment Categories Tabs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Tabs defaultValue="implants" className="w-full">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto p-1 mb-6">
+              <TabsTrigger value="implants" className="py-2">Dental Implants</TabsTrigger>
+              <TabsTrigger value="crowns_veneers" className="py-2">Veneers & Crowns</TabsTrigger>
+              <TabsTrigger value="root_canal" className="py-2">Root Canal</TabsTrigger>
+              <TabsTrigger value="bone_graft" className="py-2">Bone Grafts</TabsTrigger>
+              <TabsTrigger value="whitening" className="py-2">Teeth Whitening</TabsTrigger>
+              <TabsTrigger value="full_mouth" className="py-2">Full Mouth Rehab</TabsTrigger>
+              <TabsTrigger value="general" className="py-2">General Dentistry</TabsTrigger>
+              <TabsTrigger value="other" className="py-2">Other Treatments</TabsTrigger>
+            </TabsList>
+            
+            {/* Dental Implants Tab */}
+            <TabsContent value="implants" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Dental Implants</h3>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id={treatment.id}
+                        checked={isTreatmentSelected(treatment.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleDirectAddTreatment(treatment, 'implants');
+                          } else {
+                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                            if (matchingTreatment) {
+                              handleRemoveTreatment(matchingTreatment.id);
+                            }
+                          }
+                        }}
+                      />
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">£{treatment.priceGBP}</div>
+                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Veneers & Crowns Tab */}
+            <TabsContent value="crowns_veneers" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Veneers & Crowns</h3>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'crowns_veneers')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id={treatment.id}
+                        checked={isTreatmentSelected(treatment.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleDirectAddTreatment(treatment, 'crowns_veneers');
+                          } else {
+                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                            if (matchingTreatment) {
+                              handleRemoveTreatment(matchingTreatment.id);
+                            }
+                          }
+                        }}
+                      />
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">£{treatment.priceGBP}</div>
+                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Teeth Whitening Tab */}
+            <TabsContent value="whitening" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Teeth Whitening</h3>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'whitening')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id={treatment.id}
+                        checked={isTreatmentSelected(treatment.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleDirectAddTreatment(treatment, 'whitening');
+                          } else {
+                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                            if (matchingTreatment) {
+                              handleRemoveTreatment(matchingTreatment.id);
+                            }
+                          }
+                        }}
+                      />
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">£{treatment.priceGBP}</div>
+                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Full Mouth Reconstruction Tab */}
+            <TabsContent value="full_mouth" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Full Mouth Reconstruction</h3>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'full_mouth')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id={treatment.id}
+                        checked={isTreatmentSelected(treatment.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleDirectAddTreatment(treatment, 'full_mouth');
+                          } else {
+                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                            if (matchingTreatment) {
+                              handleRemoveTreatment(matchingTreatment.id);
+                            }
+                          }
+                        }}
+                      />
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">£{treatment.priceGBP}</div>
+                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* General Dentistry Tab */}
+            <TabsContent value="general" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">General Dentistry</h3>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'general')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id={treatment.id}
+                        checked={isTreatmentSelected(treatment.name)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleDirectAddTreatment(treatment, 'general');
+                          } else {
+                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                            if (matchingTreatment) {
+                              handleRemoveTreatment(matchingTreatment.id);
+                            }
+                          }
+                        }}
+                      />
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">
+                        {treatment.priceGBP === 0 ? 'FREE' : `£${treatment.priceGBP}`}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {treatment.priceUSD === 0 ? '' : `$${treatment.priceUSD}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Root Canal Tab */}
+            <TabsContent value="root_canal" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Root Canal Treatments</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      id="standard_root_canal"
+                      checked={isTreatmentSelected("Standard Root Canal")}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleDirectAddTreatment({
+                            id: 'standard_root_canal',
+                            name: 'Standard Root Canal',
+                            priceGBP: 100,
+                            priceUSD: 130,
+                            guarantee: '2-year',
+                            notes: 'Standard root canal treatment for single-rooted teeth'
+                          }, 'root_canal');
+                        } else {
+                          const matchingTreatment = treatments.find(t => t.name === "Standard Root Canal");
+                          if (matchingTreatment) {
+                            handleRemoveTreatment(matchingTreatment.id);
+                          }
+                        }
+                      }}
+                    />
+                    <div>
+                      <label htmlFor="standard_root_canal" className="font-medium cursor-pointer text-gray-800">
+                        Standard Root Canal
+                      </label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                          2-year guarantee
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                              <Info className="h-3 w-3 mr-1" />
+                              <span>Info</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Standard root canal treatment for single-rooted teeth</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">£100</div>
+                    <div className="text-xs text-gray-500">$130</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      id="complex_root_canal"
+                      checked={isTreatmentSelected("Complex Root Canal")}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleDirectAddTreatment({
+                            id: 'complex_root_canal',
+                            name: 'Complex Root Canal',
+                            priceGBP: 180,
+                            priceUSD: 230,
+                            guarantee: '2-year',
+                            notes: 'Complex root canal treatment for multi-rooted teeth'
+                          }, 'root_canal');
+                        } else {
+                          const matchingTreatment = treatments.find(t => t.name === "Complex Root Canal");
+                          if (matchingTreatment) {
+                            handleRemoveTreatment(matchingTreatment.id);
+                          }
+                        }
+                      }}
+                    />
+                    <div>
+                      <label htmlFor="complex_root_canal" className="font-medium cursor-pointer text-gray-800">
+                        Complex Root Canal
+                      </label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                          2-year guarantee
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                              <Info className="h-3 w-3 mr-1" />
+                              <span>Info</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Complex root canal treatment for multi-rooted teeth</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">£180</div>
+                    <div className="text-xs text-gray-500">$230</div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Bone Graft Tab */}
+            <TabsContent value="bone_graft" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Bone Grafts</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      id="simple_bone_graft"
+                      checked={isTreatmentSelected("Simple Bone Graft")}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleDirectAddTreatment({
+                            id: 'simple_bone_graft',
+                            name: 'Simple Bone Graft',
+                            priceGBP: 280,
+                            priceUSD: 360,
+                            guarantee: '5-year',
+                            notes: 'Small-volume bone graft procedure for single tooth area'
+                          }, 'bone_graft');
+                        } else {
+                          const matchingTreatment = treatments.find(t => t.name === "Simple Bone Graft");
+                          if (matchingTreatment) {
+                            handleRemoveTreatment(matchingTreatment.id);
+                          }
+                        }
+                      }}
+                    />
+                    <div>
+                      <label htmlFor="simple_bone_graft" className="font-medium cursor-pointer text-gray-800">
+                        Simple Bone Graft
+                      </label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                          5-year guarantee
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                              <Info className="h-3 w-3 mr-1" />
+                              <span>Info</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Small-volume bone graft procedure for single tooth area</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">£280</div>
+                    <div className="text-xs text-gray-500">$360</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      id="complex_bone_graft"
+                      checked={isTreatmentSelected("Complex Bone Graft")}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleDirectAddTreatment({
+                            id: 'complex_bone_graft',
+                            name: 'Complex Bone Graft',
+                            priceGBP: 450,
+                            priceUSD: 580,
+                            guarantee: '5-year',
+                            notes: 'Large-volume or multiple area bone graft procedure'
+                          }, 'bone_graft');
+                        } else {
+                          const matchingTreatment = treatments.find(t => t.name === "Complex Bone Graft");
+                          if (matchingTreatment) {
+                            handleRemoveTreatment(matchingTreatment.id);
+                          }
+                        }
+                      }}
+                    />
+                    <div>
+                      <label htmlFor="complex_bone_graft" className="font-medium cursor-pointer text-gray-800">
+                        Complex Bone Graft
+                      </label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                          5-year guarantee
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                              <Info className="h-3 w-3 mr-1" />
+                              <span>Info</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Large-volume or multiple area bone graft procedure</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">£450</div>
+                    <div className="text-xs text-gray-500">$580</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      id="sinus_lift"
+                      checked={isTreatmentSelected("Sinus Lift")}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleDirectAddTreatment({
+                            id: 'sinus_lift',
+                            name: 'Sinus Lift',
+                            priceGBP: 550,
+                            priceUSD: 700,
+                            guarantee: '5-year',
+                            notes: 'Sinus lift procedure to increase bone volume in upper jaw'
+                          }, 'bone_graft');
+                        } else {
+                          const matchingTreatment = treatments.find(t => t.name === "Sinus Lift");
+                          if (matchingTreatment) {
+                            handleRemoveTreatment(matchingTreatment.id);
+                          }
+                        }
+                      }}
+                    />
+                    <div>
+                      <label htmlFor="sinus_lift" className="font-medium cursor-pointer text-gray-800">
+                        Sinus Lift
+                      </label>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                          5-year guarantee
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                              <Info className="h-3 w-3 mr-1" />
+                              <span>Info</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Sinus lift procedure to increase bone volume in upper jaw</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">£550</div>
+                    <div className="text-xs text-gray-500">$700</div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Other Treatments Tab */}
+            <TabsContent value="other" className="border rounded-md p-4">
+              <h3 className="font-semibold mb-3">Other Treatments</h3>
+              <div className="py-4">
+                <Button onClick={() => setShowAddForm(true)} variant="outline" className="w-full py-6 border-dashed">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Custom Treatment
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        {/* Estimated Cost Range (Right Side) */}
+        <div className="md:col-span-1">
+          <Card className="bg-gray-50 border">
+            <div className="p-5">
+              <h3 className="font-bold text-lg mb-4">Your Treatment Plan</h3>
+              
+              {/* Empty State */}
+              {treatments.length === 0 ? (
+                <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-md">
+                  <p className="text-gray-500 mb-2">No treatments added yet</p>
+                  <p className="text-xs text-gray-500">Select treatments from the categories</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2 mb-4">
+                    {treatments.map((treatment) => (
+                      <div key={treatment.id} className="flex justify-between items-center p-2 bg-white rounded border">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <span className="font-medium text-sm">{treatment.name}</span>
+                            {treatment.quantity > 1 && (
+                              <span className="ml-1 text-xs text-gray-500">x{treatment.quantity}</span>
+                            )}
+                          </div>
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs text-gray-500">{treatment.guarantee} guarantee</span>
+                          )}
+                        </div>
+                        <div className="flex items-center">
+                          <span className="mr-3 text-sm font-medium">£{treatment.subtotalGBP}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-800"
+                            onClick={() => handleRemoveTreatment(treatment.id)}
+                          >
+                            <MinusCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                
+                  {/* Cost Summary */}
+                  <div className="rounded-md bg-blue-50 p-4 mt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-700 font-medium">Estimated Cost Range:</span>
+                      <span className="font-bold">£{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-t border-blue-100 pt-2 mt-2">
+                      <span className="text-gray-700">Typical UK Equivalent:</span>
+                      <span className="text-gray-500 line-through">£{Math.round(totalGBP * 2.5)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-t border-blue-100 pt-2 mt-2">
+                      <span className="text-green-600 font-medium">Potential Savings:</span>
+                      <span className="text-green-600 font-semibold">Up to 60%</span>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-blue-100">
+                      <p className="text-xs text-gray-500">
+                        Based on Istanbul average treatment prices. Your selected clinic will confirm exact pricing after consultation.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </Card>
+        </div>
+      </div>
+      
+      {/* Add Custom Treatment Form (Modal style) */}
       {showAddForm && (
-        <div className="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
-          <h3 className="text-lg font-medium mb-4">Add a Treatment</h3>
+        <div className="bg-gray-50 p-4 rounded-md mt-6 border border-gray-200">
+          <h3 className="text-lg font-medium mb-4">Add a Custom Treatment</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
@@ -426,17 +1123,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </AlertDescription>
             </Alert>
           )}
-        </div>
-      )}
-      
-      {/* Empty State */}
-      {treatments.length === 0 && !showAddForm && (
-        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-md">
-          <p className="text-gray-500 mb-2">No treatments added yet</p>
-          <Button onClick={() => setShowAddForm(true)} variant="outline" size="sm">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Your First Treatment
-          </Button>
         </div>
       )}
       
