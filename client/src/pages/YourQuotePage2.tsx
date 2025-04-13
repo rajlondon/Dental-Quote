@@ -379,7 +379,7 @@ const YourQuotePage: React.FC = () => {
                 )}
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'build-plan' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -421,13 +421,13 @@ const YourQuotePage: React.FC = () => {
                 
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
-                    ${currentStep === 'review' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                    ${currentStep === 'matched-clinics' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
                     ${!patientInfo ? 'opacity-50' : ''}
                   `}
-                  onClick={() => patientInfo && setCurrentStep('review')}
+                  onClick={() => patientInfo && setCurrentStep('matched-clinics')}
                 >
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
-                    currentStep === 'review' ? 'bg-blue-500' : 
+                    currentStep === 'matched-clinics' ? 'bg-blue-500' : 
                     isQuoteReady ? 'bg-green-500' : 'bg-gray-300'
                   }`}>
                     {isQuoteReady ? <Check className="h-5 w-5" /> : '3'}
@@ -436,6 +436,27 @@ const YourQuotePage: React.FC = () => {
                     <p className="font-medium">Matched Clinics</p>
                     <p className="text-xs text-gray-600">
                       {isQuoteReady ? 'View treatment packages' : 'Complete first two steps'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
+                    ${currentStep === 'payment' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                    ${!selectedClinicId ? 'opacity-50' : ''}
+                  `}
+                  onClick={() => selectedClinicId && setCurrentStep('payment')}
+                >
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
+                    currentStep === 'payment' ? 'bg-blue-500' : 
+                    selectedClinicId ? 'bg-green-500' : 'bg-gray-300'
+                  }`}>
+                    {selectedClinicId ? <Check className="h-5 w-5" /> : '4'}
+                  </div>
+                  <div>
+                    <p className="font-medium">Payment</p>
+                    <p className="text-xs text-gray-600">
+                      {selectedClinicId ? 'Secure your booking' : 'Select a clinic first'}
                     </p>
                   </div>
                 </div>
@@ -726,232 +747,48 @@ const YourQuotePage: React.FC = () => {
             </>
           )}
           
-          {/* Step 3: Review and Submit (conditionally displayed) */}
-          {currentStep === 'review' && (
-            <>
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-xl font-bold">
-                    <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-                    Your Quote is Ready
-                  </CardTitle>
-                  <CardDescription>
-                    Review your treatment plan and personal information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {/* Treatment Summary */}
-                    <div>
-                      <h3 className="font-semibold text-gray-700 mb-3">Treatment Summary</h3>
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        {treatmentItems.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Treatment</TableHead>
-                                <TableHead className="text-center">Qty</TableHead>
-                                <TableHead className="text-right">Price</TableHead>
-                                <TableHead className="text-right">Subtotal</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {treatmentItems.map((item) => (
-                                <TableRow key={item.id}>
-                                  <TableCell className="font-medium">{item.name}</TableCell>
-                                  <TableCell className="text-center">{item.quantity}</TableCell>
-                                  <TableCell className="text-right">£{item.priceGBP}</TableCell>
-                                  <TableCell className="text-right">£{item.subtotalGBP}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                            <TableFooter>
-                              <TableRow>
-                                <TableCell colSpan={3}>Total</TableCell>
-                                <TableCell className="text-right">£{formatCurrency(totalGBP)}</TableCell>
-                              </TableRow>
-                            </TableFooter>
-                          </Table>
-                        ) : (
-                          <p>No treatments added yet.</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Patient Information */}
-                    {patientInfo && (
-                      <div>
-                        <h3 className="font-semibold text-gray-700 mb-3">Your Information</h3>
-                        <div className="bg-gray-50 p-4 rounded-md">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Name</p>
-                              <p>{patientInfo.fullName}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Email</p>
-                              <p>{patientInfo.email}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Phone</p>
-                              <p>{patientInfo.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Travel Month</p>
-                              <p>{patientInfo.travelMonth || 'Not specified'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Departure City</p>
-                              <p>{patientInfo.departureCity || 'Not specified'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Contact Preference</p>
-                              <p className="capitalize">{patientInfo.preferredContactMethod}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-4">
-                            <p className="text-sm font-medium text-gray-500">Dental Records</p>
-                            <div className="flex flex-wrap gap-3 mt-1">
-                              <Badge variant={patientInfo.hasXrays ? "default" : "outline"}>
-                                {patientInfo.hasXrays ? 'Has X-Rays' : 'No X-Rays'}
-                              </Badge>
-                              <Badge variant={patientInfo.hasCtScan ? "default" : "outline"}>
-                                {patientInfo.hasCtScan ? 'Has CT Scan' : 'No CT Scan'}
-                              </Badge>
-                              <Badge variant={patientInfo.hasDentalPhotos ? "default" : "outline"}>
-                                {patientInfo.hasDentalPhotos ? 'Has Dental Photos' : 'No Dental Photos'}
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          {patientInfo.additionalNotesForClinic && (
-                            <div className="mt-4">
-                              <p className="text-sm font-medium text-gray-500">Additional Notes for Clinic</p>
-                              <p className="text-sm mt-1">{patientInfo.additionalNotesForClinic}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Next Steps */}
-                    <div className="bg-blue-50 p-4 rounded-md">
-                      <h3 className="font-semibold text-blue-800 mb-2">Next Steps</h3>
-                      <ol className="space-y-2">
-                        <li className="flex items-start">
-                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
-                            <span className="text-xs">1</span>
-                          </div>
-                          <p className="text-blue-700">Our dental experts will review your treatment plan within 24 hours</p>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
-                            <span className="text-xs">2</span>
-                          </div>
-                          <p className="text-blue-700">You will receive a detailed quote from our partner clinics via email</p>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
-                            <span className="text-xs">3</span>
-                          </div>
-                          <p className="text-blue-700">A dental advisor will contact you to discuss the options and answer questions</p>
-                        </li>
-                      </ol>
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <Button 
-                          variant="outline"
-                          onClick={() => setCurrentStep('build-plan')}
-                          className="flex items-center gap-2"
-                        >
-                          <Pencil className="h-4 w-4" />
-                          Edit Treatment Plan
-                        </Button>
-                        
-                        <Button 
-                          variant="outline"
-                          onClick={() => setCurrentStep('patient-info')}
-                          className="flex items-center gap-2"
-                        >
-                          <Pencil className="h-4 w-4" />
-                          Edit Information
-                        </Button>
-                      </div>
-                      
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <Button 
-                          variant="default"
-                          className="flex items-center gap-2"
-                        >
-                          <Mail className="h-4 w-4" />
-                          Email Quote
-                        </Button>
-                        
-                        <Button 
-                          variant="default"
-                          className="flex items-center gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download PDF
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Call to Action */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
-                <div className="max-w-3xl mx-auto text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                    Ready to Get Started?
-                  </h2>
-                  
-                  <p className="text-blue-100 mb-6">
-                    Pay a £200 refundable deposit to secure your consultation and have our concierge team handle all your travel arrangements.
-                  </p>
-                  
-                  {totalGBP > 0 && (
-                    <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
-                      <h3 className="text-lg font-semibold mb-1">Your Treatment Plan Total</h3>
-                      <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
-                      <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col sm:flex-row justify-center gap-4">
-                    <Button 
-                      className="bg-white text-blue-700 hover:bg-blue-50"
-                      size="lg"
-                    >
-                      <CreditCard className="mr-2 h-5 w-5" />
-                      Pay £200 Deposit & Book Now
-                    </Button>
-                    
-                    <Button 
-                      variant="outline"
-                      className="border-white text-white hover:bg-blue-700"
-                      size="lg"
-                    >
-                      <MessageCircle className="mr-2 h-5 w-5" />
-                      Speak to a Dental Advisor
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
+          {/* Step 3: Matched Clinics (conditionally displayed) */}
+          {currentStep === 'matched-clinics' && patientInfo && (
+            <MatchedClinicsPage
+              treatmentItems={treatmentItems}
+              patientInfo={patientInfo}
+              totalGBP={totalGBP}
+              onSelectClinic={handleSelectClinic}
+              onBackToInfo={() => setCurrentStep('patient-info')}
+              onQuoteDownload={() => {
+                toast({
+                  title: "Download Started",
+                  description: "Your quote PDF is being downloaded.",
+                });
+              }}
+              onEmailQuote={() => {
+                toast({
+                  title: "Quote Sent",
+                  description: "Your quote has been sent to your email address.",
+                });
+              }}
+            />
+          )}
+          
+          {/* Step 4: Payment (conditionally displayed) */}
+          {currentStep === 'payment' && selectedClinicId && (
+            <PaymentConfirmationPage
+              clinicName={selectedClinicId === 'clinic1' ? 'Istanbul Dental Care' : 
+                         selectedClinicId === 'clinic2' ? 'DentGroup Istanbul' : 
+                         'Maltepe Dental Clinic'}
+              treatmentTotalGBP={totalGBP}
+              depositAmount={200}
+              onPaymentSuccess={handlePaymentSuccess}
+              onCancel={() => setCurrentStep('matched-clinics')}
+            />
           )}
           
           {/* FAQ Section */}
           <FAQSection />
         </div>
         
-        {/* Sticky CTA Footer - Only visible when treatments are added and not in review step */}
-        {treatmentItems.length > 0 && currentStep !== 'review' && (
+        {/* Sticky CTA Footer - Only visible when treatments are added and not in matched-clinics step */}
+        {treatmentItems.length > 0 && currentStep !== 'matched-clinics' && currentStep !== 'payment' && (
           <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg py-3 px-4 z-50">
             <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
               <div className="mb-3 sm:mb-0">
@@ -964,7 +801,7 @@ const YourQuotePage: React.FC = () => {
                 </div>
               </div>
               <Button 
-                onClick={() => setCurrentStep(patientInfo ? 'review' : 'patient-info')}
+                onClick={() => setCurrentStep(patientInfo ? 'matched-clinics' : 'patient-info')}
                 className="py-6 px-8 text-lg w-full sm:w-auto"
                 size="lg"
               >
