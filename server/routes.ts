@@ -327,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Metadata received:', metadata);
       
       // Create the payment intent for the £200 deposit
-      const paymentIntentData = await createDepositPaymentIntent(email, currency);
+      const paymentIntentData = await createDepositPaymentIntent(email, currency, metadata);
       
       if (!paymentIntentData) {
         return res.status(500).json({
