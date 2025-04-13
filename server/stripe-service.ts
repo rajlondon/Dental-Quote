@@ -7,8 +7,9 @@ if (!stripeSecretKey) {
   console.error('STRIPE_SECRET_KEY environment variable is not set');
 }
 
+// Use a supported API version
 const stripe = new Stripe(stripeSecretKey || '', {
-  apiVersion: '2025-03-31.basil', // Use the latest API version available
+  apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
 });
 
 /**
@@ -73,7 +74,7 @@ export async function createDepositPaymentIntent(
       },
       payment_method_types: ['card'],
       receipt_email: email,
-      description: 'Istanbul Dental Smile - Treatment Deposit',
+      description: 'MyDentalFly - Treatment Deposit',
     });
 
     // Return the client secret, which is used to complete the payment on the client
@@ -105,7 +106,7 @@ export async function createOrRetrieveCustomer(email: string): Promise<Stripe.Cu
     // Create a new customer if none exists
     const customer = await stripe.customers.create({
       email,
-      description: 'Istanbul Dental Smile Customer',
+      description: 'MyDentalFly Customer',
     });
     
     return customer;
