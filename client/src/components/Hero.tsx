@@ -83,7 +83,8 @@ const QuoteForm: React.FC = () => {
   
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full max-w-3xl mx-auto">
-      <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-6">Find Your Perfect Dental Treatment</h2>
+      <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3">Start Building Your Personalised Dental Quote</h2>
+      <p className="text-gray-600 text-sm mb-6">Tell us your main dental treatment or area you'd like help with. On the next page, you'll be able to build your full treatment plan, add specific procedures, and see what to expect.</p>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Location Selection (Country & City) */}
@@ -153,7 +154,7 @@ const QuoteForm: React.FC = () => {
             </label>
             <Select value={treatmentType} onValueChange={setTreatmentType}>
               <SelectTrigger id="treatment-type" className="w-full">
-                <SelectValue placeholder="Select treatment" />
+                <SelectValue placeholder="Choose your main treatment (e.g. Implants, Veneers, Full Smile Makeover)" />
               </SelectTrigger>
               <SelectContent>
                 {treatmentTypes.map((type) => (
