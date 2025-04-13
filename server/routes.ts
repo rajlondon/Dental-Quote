@@ -307,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a deposit payment intent (£200)
   app.post('/api/create-deposit-payment-intent', async (req, res) => {
     try {
-      const { email, currency = 'gbp' } = req.body;
+      const { email, currency = 'gbp', metadata = {} } = req.body;
       
       if (!email) {
         return res.status(400).json({
@@ -322,6 +322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Payment processing is not available'
         });
       }
+      
+      console.log('Creating deposit payment intent with email:', email);
+      console.log('Metadata received:', metadata);
       
       // Create the payment intent for the £200 deposit
       const paymentIntentData = await createDepositPaymentIntent(email, currency);

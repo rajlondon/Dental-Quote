@@ -50,28 +50,38 @@ export async function createPaymentIntent(
  * Create a deposit payment intent (£200 deposit)
  * @param email Customer email for the payment
  * @param currency Currency code (e.g., 'gbp', 'usd') 
+ * @param metadata Additional metadata to include with the payment
  * @returns The client secret for the payment intent
  */
 export async function createDepositPaymentIntent(
   email: string,
-  currency: string = 'gbp'
+  currency: string = 'gbp',
+  metadata: Record<string, string> = {}
 ): Promise<{ clientSecret: string; id: string }> {
   try {
+    console.log('Creating deposit payment intent for email:', email);
+    
     // Standard deposit amount is £200 in pennies
     const DEPOSIT_AMOUNT = 20000; // £200 in pennies
     
     // Create or retrieve a customer
     const customer = await createOrRetrieveCustomer(email);
     
+    // Merge default metadata with provided metadata
+    const paymentMetadata = {
+      type: 'deposit',
+      customerEmail: email,
+      ...metadata
+    };
+    
+    console.log('Using payment metadata:', paymentMetadata);
+    
     // Create a PaymentIntent with the deposit amount
     const paymentIntent = await stripe.paymentIntents.create({
       amount: DEPOSIT_AMOUNT,
       currency: currency.toLowerCase(),
       customer: customer.id,
-      metadata: {
-        type: 'deposit',
-        customerEmail: email
-      },
+      metadata: paymentMetadata,
       payment_method_types: ['card'],
       receipt_email: email,
       description: 'MyDentalFly - Treatment Deposit',

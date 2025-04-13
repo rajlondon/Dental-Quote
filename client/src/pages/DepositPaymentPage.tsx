@@ -48,25 +48,18 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   
   // Get patient info from localStorage
   const patientInfoStr = localStorage.getItem('patientInfo');
+  console.log('Raw patientInfo from localStorage:', patientInfoStr);
   const patientInfo = patientInfoStr ? JSON.parse(patientInfoStr) : {};
+  console.log('Parsed patientInfo:', patientInfo);
   
   const totalAmount = treatments.reduce((sum: number, item: any) => sum + item.subtotalGBP, 0);
   const depositAmount = 200; // £200 fixed deposit
   
   const handlePayDeposit = () => {
-    // Make sure we have an email before showing the Stripe form
-    if (!patientInfo.email) {
-      toast({
-        title: "Missing Information",
-        description: "Please go back and provide your email address first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     // Log the patient info for debugging
-    console.log('Patient info from localStorage:', patientInfo);
+    console.log('Patient info at payment time:', patientInfo);
     
+    // We don't need to check for email anymore as we have a fallback
     setShowStripeForm(true);
   };
   
