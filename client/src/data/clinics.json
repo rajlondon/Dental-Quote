@@ -1,0 +1,751 @@
+[
+  {
+    "id": "dentspa",
+    "name": "DentSpa Dental Clinic",
+    "location": {
+      "city": "Istanbul",
+      "area": "Teşvikiye",
+      "address": "Teşvikiye district, Istanbul, Turkey"
+    },
+    "description": "Recognized as one of the top facilities in Turkey, the award-winning DentSpa Dental Clinic offers a wide range of services to international patients seeking world-class care at affordable rates. Located in the upscale Teşvikiye district of Istanbul, the clinic works with a team of highly skilled specialists in implantology, prosthodontics, periodontics and oral surgery.",
+    "tier": "premium",
+    "priceModifier": 1.1,
+    "photos": [
+      "dentspa_exterior.jpg",
+      "dentspa_interior.jpg",
+      "dentspa_treatment_room.jpg"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Madina Gulverdiyeva",
+        "specialty": "Prosthodontics",
+        "experience": 14,
+        "education": "Ph.D. in Prosthodontics",
+        "languages": ["Azerbaijani", "Turkish", "English", "Russian"],
+        "specialties": ["prosthetic restorations", "implantology", "oral surgery", "aesthetic dentistry", "facial aesthetic treatments"]
+      },
+      {
+        "name": "Dr. Bürkan Berkay Baş",
+        "specialty": "Prosthodontics",
+        "experience": 9,
+        "education": "Prosthodontist",
+        "languages": ["Turkish", "English"],
+        "specialties": ["prosthodontics", "oral surgery", "implantology", "aesthetic dentistry"]
+      }
+    ],
+    "ratings": {
+      "overall": 4.67,
+      "reviews": 788,
+      "cleanliness": 4.60,
+      "communication": 4.63,
+      "value": 4.71,
+      "quality": 4.69,
+      "service": 4.73,
+      "comfort": 4.65
+    },
+    "certifications": [
+      {
+        "name": "European Awards in Medicine - Best Clinic in Dentistry",
+        "year": 2024,
+        "description": "Named Best Clinic in Dentistry in the category of Odontology"
+      }
+    ],
+    "features": [
+      "Modern facility with calming environment",
+      "Entertainment during treatment (TV, music)",
+      "Children's play area",
+      "Multilingual team",
+      "UK office for aftercare",
+      "50,000+ international patients served"
+    ],
+    "treatments": {
+      "implants": [
+        { 
+          "name": "Standard Titanium Dental Implant (implant only)",
+          "priceGBP": { "min": 430, "max": 1215 },
+          "priceUSD": { "min": 554, "max": 1566 }
+        },
+        { 
+          "name": "All-on-4 System with fixed acrylic bridge",
+          "priceGBP": { "min": 5880, "max": 6420 },
+          "priceUSD": { "min": 7575, "max": 8270 }
+        },
+        { 
+          "name": "All-on-5 System with fixed acrylic bridge",
+          "priceGBP": { "min": 7020, "max": 7650 },
+          "priceUSD": { "min": 9045, "max": 9850 }
+        },
+        { 
+          "name": "Zygomatic Implants with All-on-4 full arch",
+          "priceGBP": { "min": 2900, "max": 3620 },
+          "priceUSD": { "min": 3740, "max": 4665 }
+        }
+      ],
+      "crowns_veneers": [
+        { 
+          "name": "Zirconia Crown",
+          "priceGBP": { "min": 245, "max": 360 },
+          "priceUSD": { "min": 315, "max": 465 }
+        },
+        { 
+          "name": "Porcelain Veneer",
+          "priceGBP": { "min": 510, "max": 960 },
+          "priceUSD": { "min": 655, "max": 1235 }
+        },
+        { 
+          "name": "Zirconia Veneer",
+          "priceGBP": { "min": 375, "max": 720 },
+          "priceUSD": { "min": 483, "max": 927 }
+        },
+        { 
+          "name": "Composite Veneer (direct bonding)",
+          "priceGBP": { "min": 220, "max": 330 },
+          "priceUSD": { "min": 283, "max": 425 }
+        }
+      ],
+      "dentures": [
+        { 
+          "name": "Full Denture, Acrylic Teeth (upper or lower)",
+          "priceGBP": { "min": 1330, "max": 2370 },
+          "priceUSD": { "min": 1715, "max": 3055 }
+        },
+        { 
+          "name": "Full Denture Metal (upper or lower)",
+          "priceGBP": { "min": 1860, "max": 1860 },
+          "priceUSD": { "min": 2395, "max": 2395 }
+        },
+        { 
+          "name": "Partial Denture, Acrylic Frame",
+          "priceGBP": { "min": 930, "max": 1580 },
+          "priceUSD": { "min": 1198, "max": 2036 }
+        },
+        { 
+          "name": "Partial Denture, Metal Frame",
+          "priceGBP": { "min": 1490, "max": 1715 },
+          "priceUSD": { "min": 1920, "max": 2210 }
+        }
+      ],
+      "root_canal": [
+        { 
+          "name": "Root canal (anterior tooth)",
+          "priceGBP": { "min": 200, "max": 1055 },
+          "priceUSD": { "min": 258, "max": 1360 }
+        },
+        { 
+          "name": "Post/Core Build-up",
+          "priceGBP": { "min": 66, "max": 528 },
+          "priceUSD": { "min": 85, "max": 680 }
+        }
+      ],
+      "general": [
+        { 
+          "name": "Laser Teeth Whitening",
+          "priceGBP": { "min": 520, "max": 655 },
+          "priceUSD": { "min": 670, "max": 844 }
+        },
+        { 
+          "name": "Teeth Whitening, take home kit",
+          "priceGBP": { "min": 340, "max": 365 },
+          "priceUSD": { "min": 438, "max": 470 }
+        },
+        { 
+          "name": "Composite Filling",
+          "priceGBP": { "min": 120, "max": 266 },
+          "priceUSD": { "min": 155, "max": 343 }
+        },
+        { 
+          "name": "Extraction (simple)",
+          "priceGBP": { "min": 80, "max": 230 },
+          "priceUSD": { "min": 103, "max": 296 }
+        },
+        { 
+          "name": "Extraction (surgical or impacted)",
+          "priceGBP": { "min": 280, "max": 740 },
+          "priceUSD": { "min": 361, "max": 954 }
+        },
+        { 
+          "name": "Deep Cleaning, Scaling & Root Planing (per quadrant)",
+          "priceGBP": { "min": 120, "max": 265 },
+          "priceUSD": { "min": 155, "max": 341 }
+        }
+      ],
+      "diagnostics": [
+        { 
+          "name": "Initial Examination/Consultation",
+          "priceGBP": { "min": 86, "max": 170 },
+          "priceUSD": { "min": 111, "max": 219 }
+        },
+        { 
+          "name": "CT Scan/3D X-ray",
+          "priceGBP": { "min": 135, "max": 660 },
+          "priceUSD": { "min": 174, "max": 850 }
+        },
+        { 
+          "name": "Single X-Ray (bitewing or periapical)",
+          "priceGBP": { "min": 46, "max": 95 },
+          "priceUSD": { "min": 59, "max": 122 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Credit Card",
+      "Bank Transfer",
+      "Cash"
+    ],
+    "uniqueSellingPoints": [
+      "UK-based head offices for convenient aftercare",
+      "Award-winning clinic (European Awards in Medicine 2024)",
+      "Team includes PhD-qualified doctors and professors",
+      "Over 50,000 international patients served",
+      "Located in upscale district of Istanbul",
+      "Multilingual staff"
+    ],
+    "featuredReviews": [
+      {
+        "author": "Raouia",
+        "date": "April 2025",
+        "text": "Dr. Damla is an artist she made my smile brighter and beautiful my gum surgery was painless, fast, and perfect. Can say nothing more than I am happy and the staff are amazing. Thanks to all of you, and also to Sohaib, the person who took care of my inquiries until I made it to the client."
+      },
+      {
+        "author": "David",
+        "date": "April 2025",
+        "text": "Very good service. I came here for the first time for a General Consultation, filling and cleaning while my dad came here for the second time for a more complex treatment. I was amazed by the overall quality of service in this clinic. The doctors are very professional and take the time to do everything properly. I even had a question about the treatment done afterwards and they took me in and clarified everything with me. Amazing, very professional, they speak many languages and make everything possible for you to feel comfortable. Recommended."
+      },
+      {
+        "author": "Tyler",
+        "date": "March 2025",
+        "text": "Just completed my full smile at DentSpa, the staff took great care of me and my teeth turned out exactly how I envisioned. Sam was my right hand man."
+      }
+    ]
+  },
+  {
+    "id": "beyazada",
+    "name": "Beyaz Ada Dental Clinic",
+    "location": {
+      "city": "Istanbul",
+      "area": "Şişli",
+      "address": "Şişli district, Istanbul, Turkey"
+    },
+    "description": "Beyaz Ada Dental Clinic is a leading dental facility in Istanbul offering a range of advanced treatments including implants, veneers, crowns, and full mouth rehabilitation. The clinic specializes in cosmetic dentistry and serves international patients with high-quality care at competitive prices.",
+    "tier": "mid-tier",
+    "priceModifier": 1.0,
+    "photos": [
+      "beyazada_exterior.jpg",
+      "beyazada_interior.jpg",
+      "beyazada_treatment.jpg"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Mehmet Yılmaz",
+        "specialty": "Implantology",
+        "experience": 12,
+        "education": "DDS, Istanbul University",
+        "languages": ["Turkish", "English"],
+        "specialties": ["dental implants", "cosmetic dentistry", "full mouth rehabilitation"]
+      },
+      {
+        "name": "Dr. Ayşe Kaya",
+        "specialty": "Prosthodontics",
+        "experience": 8,
+        "education": "DDS, Specialist in Prosthodontics",
+        "languages": ["Turkish", "English", "German"],
+        "specialties": ["crowns", "veneers", "bridges", "smile design"]
+      }
+    ],
+    "ratings": {
+      "overall": 4.5,
+      "reviews": 450,
+      "cleanliness": 4.6,
+      "communication": 4.4,
+      "value": 4.7,
+      "quality": 4.5,
+      "service": 4.6,
+      "comfort": 4.4
+    },
+    "certifications": [
+      {
+        "name": "ISO 9001:2015",
+        "year": 2022,
+        "description": "Quality Management System certification"
+      },
+      {
+        "name": "Turkish Dental Association",
+        "year": 2015,
+        "description": "Approved Member"
+      }
+    ],
+    "features": [
+      "Modern clinic with latest technology",
+      "Digital dentistry and 3D scanning",
+      "Dedicated international patient coordinators",
+      "Hotel and airport transfer assistance",
+      "Same-day treatments available"
+    ],
+    "treatments": {
+      "implants": [
+        { 
+          "name": "Standard Titanium Dental Implant (implant only)",
+          "priceGBP": { "min": 390, "max": 1100 },
+          "priceUSD": { "min": 502, "max": 1417 }
+        },
+        { 
+          "name": "All-on-4 System with fixed acrylic bridge",
+          "priceGBP": { "min": 5350, "max": 5850 },
+          "priceUSD": { "min": 6890, "max": 7536 }
+        },
+        { 
+          "name": "All-on-6 System with fixed acrylic bridge",
+          "priceGBP": { "min": 6400, "max": 6950 },
+          "priceUSD": { "min": 8245, "max": 8954 }
+        }
+      ],
+      "crowns_veneers": [
+        { 
+          "name": "Zirconia Crown",
+          "priceGBP": { "min": 220, "max": 330 },
+          "priceUSD": { "min": 283, "max": 425 }
+        },
+        { 
+          "name": "Porcelain Veneer",
+          "priceGBP": { "min": 460, "max": 870 },
+          "priceUSD": { "min": 593, "max": 1121 }
+        },
+        { 
+          "name": "E-max Veneer",
+          "priceGBP": { "min": 340, "max": 650 },
+          "priceUSD": { "min": 438, "max": 838 }
+        },
+        { 
+          "name": "Composite Veneer (direct bonding)",
+          "priceGBP": { "min": 200, "max": 300 },
+          "priceUSD": { "min": 258, "max": 386 }
+        }
+      ],
+      "dentures": [
+        { 
+          "name": "Full Denture, Acrylic Teeth (upper or lower)",
+          "priceGBP": { "min": 1210, "max": 2150 },
+          "priceUSD": { "min": 1559, "max": 2770 }
+        },
+        { 
+          "name": "Partial Denture, Acrylic Frame",
+          "priceGBP": { "min": 840, "max": 1440 },
+          "priceUSD": { "min": 1082, "max": 1855 }
+        }
+      ],
+      "root_canal": [
+        { 
+          "name": "Root canal (anterior tooth)",
+          "priceGBP": { "min": 180, "max": 960 },
+          "priceUSD": { "min": 232, "max": 1237 }
+        },
+        { 
+          "name": "Post/Core Build-up",
+          "priceGBP": { "min": 60, "max": 480 },
+          "priceUSD": { "min": 77, "max": 618 }
+        }
+      ],
+      "general": [
+        { 
+          "name": "Laser Teeth Whitening",
+          "priceGBP": { "min": 470, "max": 600 },
+          "priceUSD": { "min": 605, "max": 773 }
+        },
+        { 
+          "name": "Teeth Whitening, take home kit",
+          "priceGBP": { "min": 310, "max": 330 },
+          "priceUSD": { "min": 399, "max": 425 }
+        },
+        { 
+          "name": "Composite Filling",
+          "priceGBP": { "min": 110, "max": 240 },
+          "priceUSD": { "min": 142, "max": 309 }
+        },
+        { 
+          "name": "Extraction (simple)",
+          "priceGBP": { "min": 75, "max": 210 },
+          "priceUSD": { "min": 97, "max": 271 }
+        },
+        { 
+          "name": "Deep Cleaning, Scaling & Root Planing (per quadrant)",
+          "priceGBP": { "min": 110, "max": 240 },
+          "priceUSD": { "min": 142, "max": 309 }
+        }
+      ],
+      "diagnostics": [
+        { 
+          "name": "Initial Examination/Consultation",
+          "priceGBP": { "min": 0, "max": 0 },
+          "priceUSD": { "min": 0, "max": 0 }
+        },
+        { 
+          "name": "CT Scan/3D X-ray",
+          "priceGBP": { "min": 0, "max": 0 },
+          "priceUSD": { "min": 0, "max": 0 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Credit Card",
+      "Bank Transfer",
+      "Cash",
+      "Installments (for Turkish credit cards)"
+    ],
+    "uniqueSellingPoints": [
+      "Free consultation and 3D scanning",
+      "Specialized in aesthetic dentistry",
+      "Customized treatment plans for each patient",
+      "5-year guarantee on dental work",
+      "Free airport pickup and hotel discounts"
+    ],
+    "featuredReviews": [
+      {
+        "author": "Sarah Thompson",
+        "date": "March 2025",
+        "text": "I traveled from the UK for veneers and couldn't be happier with the results. Dr. Ayşe was incredibly professional and took the time to understand exactly what I wanted. The clinic is modern and clean, and the staff made me feel comfortable throughout my stay."
+      },
+      {
+        "author": "Michael Johnson",
+        "date": "February 2025",
+        "text": "After researching dental implants in several countries, I chose Beyaz Ada and it was the best decision. The price was half of what I would pay at home, but the quality was excellent. My new implants feel and look just like natural teeth."
+      }
+    ]
+  },
+  {
+    "id": "maltepe",
+    "name": "Maltepe Dental Clinic",
+    "location": {
+      "city": "Istanbul",
+      "area": "Maltepe",
+      "address": "Maltepe district, Istanbul, Turkey"
+    },
+    "description": "Maltepe Dental Clinic is one of Istanbul's most prestigious dental facilities, offering a luxury experience combined with top-tier dental care. Specializing in high-end cosmetic dentistry and complex implant cases, the clinic caters to discerning international patients seeking the very best in dental treatment.",
+    "tier": "premium",
+    "priceModifier": 1.2,
+    "photos": [
+      "maltepe_exterior.jpg",
+      "maltepe_reception.jpg",
+      "maltepe_treatment_room.jpg"
+    ],
+    "doctors": [
+      {
+        "name": "Prof. Dr. Ahmet Kara",
+        "specialty": "Oral and Maxillofacial Surgery",
+        "experience": 25,
+        "education": "Professor, Ph.D. in Maxillofacial Surgery",
+        "languages": ["Turkish", "English", "French"],
+        "specialties": ["implantology", "bone grafting", "zygomatic implants", "complex reconstructions"]
+      },
+      {
+        "name": "Dr. Zeynep Yıldız",
+        "specialty": "Aesthetic Dentistry",
+        "experience": 15,
+        "education": "DDS, Master's in Aesthetic Dentistry",
+        "languages": ["Turkish", "English", "Italian"],
+        "specialties": ["smile design", "porcelain veneers", "full mouth rehabilitation"]
+      }
+    ],
+    "ratings": {
+      "overall": 4.9,
+      "reviews": 320,
+      "cleanliness": 5.0,
+      "communication": 4.8,
+      "value": 4.7,
+      "quality": 4.9,
+      "service": 4.9,
+      "comfort": 4.9
+    },
+    "certifications": [
+      {
+        "name": "JCI Accreditation",
+        "year": 2023,
+        "description": "Joint Commission International Accreditation for Healthcare Quality and Patient Safety"
+      },
+      {
+        "name": "ISO 9001:2015",
+        "year": 2020,
+        "description": "Quality Management System certification"
+      },
+      {
+        "name": "Global Healthcare Accreditation",
+        "year": 2022,
+        "description": "For Medical Travel Services"
+      }
+    ],
+    "features": [
+      "Luxury clinic with spa-like amenities",
+      "VIP private treatment rooms",
+      "Latest digital dentistry technology",
+      "Comprehensive concierge services",
+      "Luxury accommodation arrangements",
+      "Private airport transfers in premium vehicles",
+      "Dedicated international patient coordinator"
+    ],
+    "treatments": {
+      "implants": [
+        { 
+          "name": "Premium Titanium Dental Implant (Straumann/Nobel Biocare)",
+          "priceGBP": { "min": 650, "max": 1800 },
+          "priceUSD": { "min": 838, "max": 2320 }
+        },
+        { 
+          "name": "All-on-4 System with premium fixed bridge",
+          "priceGBP": { "min": 8500, "max": 12000 },
+          "priceUSD": { "min": 10955, "max": 15461 }
+        },
+        { 
+          "name": "All-on-6 System with premium fixed bridge",
+          "priceGBP": { "min": 9800, "max": 14000 },
+          "priceUSD": { "min": 12627, "max": 18038 }
+        },
+        { 
+          "name": "Zygomatic Implants with All-on-4",
+          "priceGBP": { "min": 12000, "max": 18000 },
+          "priceUSD": { "min": 15461, "max": 23191 }
+        }
+      ],
+      "crowns_veneers": [
+        { 
+          "name": "Premium Zirconia Crown",
+          "priceGBP": { "min": 450, "max": 680 },
+          "priceUSD": { "min": 580, "max": 876 }
+        },
+        { 
+          "name": "Premium Porcelain Veneer",
+          "priceGBP": { "min": 650, "max": 980 },
+          "priceUSD": { "min": 838, "max": 1263 }
+        },
+        { 
+          "name": "Premium E-max Veneer",
+          "priceGBP": { "min": 680, "max": 1100 },
+          "priceUSD": { "min": 876, "max": 1417 }
+        }
+      ],
+      "dentures": [
+        { 
+          "name": "Premium Full Denture (upper or lower)",
+          "priceGBP": { "min": 2400, "max": 3600 },
+          "priceUSD": { "min": 3092, "max": 4638 }
+        },
+        { 
+          "name": "Premium Partial Denture",
+          "priceGBP": { "min": 1800, "max": 2800 },
+          "priceUSD": { "min": 2319, "max": 3608 }
+        }
+      ],
+      "root_canal": [
+        { 
+          "name": "Root canal (advanced technology)",
+          "priceGBP": { "min": 380, "max": 760 },
+          "priceUSD": { "min": 490, "max": 979 }
+        }
+      ],
+      "general": [
+        { 
+          "name": "Premium Laser Teeth Whitening",
+          "priceGBP": { "min": 680, "max": 950 },
+          "priceUSD": { "min": 876, "max": 1224 }
+        },
+        { 
+          "name": "Premium Composite Filling",
+          "priceGBP": { "min": 180, "max": 350 },
+          "priceUSD": { "min": 232, "max": 451 }
+        }
+      ],
+      "diagnostics": [
+        { 
+          "name": "Comprehensive Examination with Specialist",
+          "priceGBP": { "min": 150, "max": 280 },
+          "priceUSD": { "min": 193, "max": 361 }
+        },
+        { 
+          "name": "3D CT Scan with Digital Treatment Planning",
+          "priceGBP": { "min": 280, "max": 450 },
+          "priceUSD": { "min": 361, "max": 580 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Credit Card",
+      "Bank Transfer",
+      "Cash",
+      "Cryptocurrency"
+    ],
+    "uniqueSellingPoints": [
+      "Team led by university professors and specialists",
+      "JCI accredited facility - highest international standard",
+      "Luxury treatment experience with private rooms",
+      "Complex case specialists (bone grafting, zygomatic implants)",
+      "Digital smile design with 3D visualization before treatment",
+      "Lifetime guarantee on selected treatments"
+    ],
+    "featuredReviews": [
+      {
+        "author": "Richard Bennett",
+        "date": "April 2025",
+        "text": "As someone who has always been anxious about dental work, my experience at Maltepe was exceptional. The luxury setting helped me relax, and Dr. Zeynep's expertise made my veneer procedure virtually painless. The results exceeded my expectations - completely worth the premium price."
+      },
+      {
+        "author": "Elizabeth Parker",
+        "date": "March 2025",
+        "text": "I had a complex case requiring bone grafting and multiple implants. Prof. Dr. Ahmet's expertise was evident throughout the process. The clinic's facilities are world-class, and the attention to detail was impeccable. My new teeth look and function perfectly."
+      }
+    ]
+  },
+  {
+    "id": "dentalcare",
+    "name": "Istanbul Dental Care",
+    "location": {
+      "city": "Istanbul",
+      "area": "Mecidiyeköy",
+      "address": "Mecidiyeköy district, Istanbul, Turkey"
+    },
+    "description": "Istanbul Dental Care provides affordable, quality dental treatments for international patients on a budget. The clinic focuses on essential treatments with good quality at very competitive prices, making dental care accessible to everyone.",
+    "tier": "affordable",
+    "priceModifier": 0.9,
+    "photos": [
+      "dentalcare_exterior.jpg",
+      "dentalcare_interior.jpg",
+      "dentalcare_treatment.jpg"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Ali Demir",
+        "specialty": "General Dentistry",
+        "experience": 10,
+        "education": "DDS, Istanbul University",
+        "languages": ["Turkish", "English"],
+        "specialties": ["general dentistry", "simple implantology", "crowns and bridges"]
+      },
+      {
+        "name": "Dr. Selin Öztürk",
+        "specialty": "Restorative Dentistry",
+        "experience": 7,
+        "education": "DDS",
+        "languages": ["Turkish", "English", "Basic German"],
+        "specialties": ["fillings", "crowns", "basic cosmetic procedures"]
+      }
+    ],
+    "ratings": {
+      "overall": 4.2,
+      "reviews": 380,
+      "cleanliness": 4.1,
+      "communication": 4.0,
+      "value": 4.6,
+      "quality": 4.1,
+      "service": 4.3,
+      "comfort": 4.0
+    },
+    "certifications": [
+      {
+        "name": "Turkish Dental Association",
+        "year": 2018,
+        "description": "Approved Member"
+      }
+    ],
+    "features": [
+      "Budget-friendly treatments",
+      "Basic modern equipment",
+      "English-speaking staff",
+      "Assistance with hotel bookings",
+      "Quick appointment scheduling"
+    ],
+    "treatments": {
+      "implants": [
+        { 
+          "name": "Standard Titanium Dental Implant",
+          "priceGBP": { "min": 350, "max": 990 },
+          "priceUSD": { "min": 451, "max": 1276 }
+        },
+        { 
+          "name": "All-on-4 System with acrylic bridge",
+          "priceGBP": { "min": 4800, "max": 5300 },
+          "priceUSD": { "min": 6184, "max": 6828 }
+        }
+      ],
+      "crowns_veneers": [
+        { 
+          "name": "Zirconia Crown",
+          "priceGBP": { "min": 200, "max": 300 },
+          "priceUSD": { "min": 258, "max": 386 }
+        },
+        { 
+          "name": "Porcelain Veneer",
+          "priceGBP": { "min": 420, "max": 790 },
+          "priceUSD": { "min": 541, "max": 1018 }
+        },
+        { 
+          "name": "Composite Veneer",
+          "priceGBP": { "min": 180, "max": 270 },
+          "priceUSD": { "min": 232, "max": 348 }
+        }
+      ],
+      "dentures": [
+        { 
+          "name": "Full Denture Acrylic",
+          "priceGBP": { "min": 1090, "max": 1940 },
+          "priceUSD": { "min": 1405, "max": 2500 }
+        }
+      ],
+      "root_canal": [
+        { 
+          "name": "Root canal treatment",
+          "priceGBP": { "min": 160, "max": 860 },
+          "priceUSD": { "min": 206, "max": 1108 }
+        }
+      ],
+      "general": [
+        { 
+          "name": "Teeth Whitening",
+          "priceGBP": { "min": 420, "max": 540 },
+          "priceUSD": { "min": 541, "max": 696 }
+        },
+        { 
+          "name": "Composite Filling",
+          "priceGBP": { "min": 99, "max": 220 },
+          "priceUSD": { "min": 128, "max": 283 }
+        },
+        { 
+          "name": "Extraction (simple)",
+          "priceGBP": { "min": 65, "max": 190 },
+          "priceUSD": { "min": 84, "max": 245 }
+        }
+      ],
+      "diagnostics": [
+        { 
+          "name": "Initial Examination",
+          "priceGBP": { "min": 0, "max": 0 },
+          "priceUSD": { "min": 0, "max": 0 }
+        },
+        { 
+          "name": "X-ray",
+          "priceGBP": { "min": 0, "max": 0 },
+          "priceUSD": { "min": 0, "max": 0 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Credit Card",
+      "Cash"
+    ],
+    "uniqueSellingPoints": [
+      "Most affordable prices in Istanbul",
+      "Free initial examination and X-rays",
+      "2-year guarantee on most treatments",
+      "Fast treatment completion - ideal for short visits",
+      "Transparent pricing with no hidden costs"
+    ],
+    "featuredReviews": [
+      {
+        "author": "John Smith",
+        "date": "March 2025",
+        "text": "I needed several crowns but was on a tight budget. Istanbul Dental Care provided excellent value for money. The treatment wasn't luxurious but the results were very good. Would recommend for those looking for affordable options."
+      },
+      {
+        "author": "Emma Wilson",
+        "date": "February 2025",
+        "text": "I was skeptical about dental tourism but decided to try Istanbul Dental Care for implants. The clinic is basic but clean, and Dr. Ali was very professional. I saved thousands compared to UK prices, and the quality is acceptable."
+      }
+    ]
+  }
+]
