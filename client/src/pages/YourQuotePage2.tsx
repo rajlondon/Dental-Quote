@@ -222,7 +222,19 @@ const YourQuotePage: React.FC = () => {
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
     
-    // We removed the toast notification on each update to avoid cluttering the UI
+    // Advance to the next step if there are treatment items
+    if (items.length > 0) {
+      setCurrentStep('patient-info');
+      
+      // Scroll to the top of the page for better UX
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      toast({
+        title: "Treatment Plan Updated",
+        description: "Your treatment plan has been updated. Please provide your information.",
+        duration: 3000,
+      });
+    }
   };
   
   // Function to handle patient info form submission
