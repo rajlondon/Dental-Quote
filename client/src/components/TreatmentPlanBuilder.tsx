@@ -1253,34 +1253,34 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </p>
               </div>
                 
-              {/* Future Enhancements */}
+              {/* Treatment Package Info */}
               <div className="mt-4 border-t border-gray-200 pt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-gray-700">Add to your package</h4>
+                  <h4 className="text-sm font-medium text-gray-700">Travel Information</h4>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50">
-                    <div className="mr-2">
-                      <Plane className="h-5 w-5 text-blue-500" />
+                <div className="bg-blue-50 rounded-md p-4">
+                  <div className="flex items-start">
+                    <div className="mr-3 mt-1">
+                      <Info className="h-5 w-5 text-blue-500" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Add Flights</p>
-                      <p className="text-xs text-gray-500">From £150 - £300 return</p>
+                    <div>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <span className="font-medium">All-inclusive packages available!</span> Clinics offer packages 
+                        that include hotel accommodation and airport transfers.
+                      </p>
+                      <div className="flex flex-col md:flex-row gap-4 mt-3">
+                        <div className="flex items-center">
+                          <Plane className="h-4 w-4 text-blue-500 mr-2" />
+                          <span className="text-xs text-gray-600">Typical flights: £150-£300 return from the UK</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Hotel className="h-4 w-4 text-blue-500 mr-2" />
+                          <span className="text-xs text-gray-600">Hotel stays often included in treatment packages</span>
+                        </div>
+                      </div>
                     </div>
-                    <Switch />
-                  </div>
-                  <div className="flex items-center border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50">
-                    <div className="mr-2">
-                      <Hotel className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Add Hotel Stay</p>
-                      <p className="text-xs text-gray-500">From £40/night (4-star)</p>
-                    </div>
-                    <Switch />
                   </div>
                 </div>
-                {/* AI Recommendation section removed as requested to avoid user confusion */}
               </div>
             </div>
           </div>
