@@ -266,7 +266,7 @@ const YourQuotePage: React.FC = () => {
         message="Hello! I'm interested in dental treatments with MyDentalFly and would like some information about my quote. Can you help me?"
       />
       
-      <main className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <main className="min-h-screen bg-gray-50 pt-24 pb-28">
         <div className="container mx-auto px-4">
           {/* Back button */}
           <div className="mb-6">
@@ -289,13 +289,142 @@ const YourQuotePage: React.FC = () => {
           ) : (
             <div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">Build Your Treatment Plan</h1>
-              <p className="text-gray-600 mb-6">Create your dental treatment plan and see your potential savings.</p>
+              <p className="text-gray-600 mb-6">Choose your treatments below to get a clear quote estimate. Your final treatment plan will be confirmed after consultation with your chosen clinic.</p>
             </div>
           )}
           
           {searchParams.get('name') && (
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
+          
+          {/* Example Treatment Plans Section */}
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-bold mb-4">How Others Built Their Treatment Plan</h2>
+              <p className="text-gray-600 mb-6">Real examples from our patients who found the right dental solutions in Istanbul</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Patient Example 1 */}
+                <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="bg-blue-50 p-4">
+                    <div className="flex items-center mb-3">
+                      <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
+                      <div>
+                        <h3 className="font-semibold">Mr. Roberts</h3>
+                        <p className="text-sm text-gray-500">London, UK</p>
+                      </div>
+                    </div>
+                    <p className="text-sm">
+                      <span className="font-semibold">Treatment Plan:</span> Needed Dental Implants & Bone Graft due to missing teeth and bone loss after extractions.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">3 Dental Implants</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">Bone Graft Procedure</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">CT Scan & X-rays</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-sm">
+                      <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£2,200</span></p>
+                      <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£7,500</span></p>
+                      <p className="text-green-600 font-semibold mt-1">Saved over £5,300</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Patient Example 2 */}
+                <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="bg-blue-50 p-4">
+                    <div className="flex items-center mb-3">
+                      <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
+                      <div>
+                        <h3 className="font-semibold">Sarah</h3>
+                        <p className="text-sm text-gray-500">Manchester, UK</p>
+                      </div>
+                    </div>
+                    <p className="text-sm">
+                      <span className="font-semibold">Treatment Plan:</span> Chose Veneers & Whitening to improve her smile aesthetics.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">8 Porcelain Veneers</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">Professional Teeth Whitening</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">Digital Smile Design</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-sm">
+                      <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£1,850</span></p>
+                      <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£5,200</span></p>
+                      <p className="text-green-600 font-semibold mt-1">Saved over £3,350</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Patient Example 3 */}
+                <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="bg-blue-50 p-4">
+                    <div className="flex items-center mb-3">
+                      <User className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full mr-3" />
+                      <div>
+                        <h3 className="font-semibold">James</h3>
+                        <p className="text-sm text-gray-500">Edinburgh, UK</p>
+                      </div>
+                    </div>
+                    <p className="text-sm">
+                      <span className="font-semibold">Treatment Plan:</span> Required Full Mouth Reconstruction due to years of dental neglect.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">Full Mouth Reconstruction</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">8 Dental Implants</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span className="text-sm">16 Zirconia Crowns</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-sm">
+                      <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£6,500</span></p>
+                      <p><span className="font-semibold">UK Equivalent:</span> <span className="text-gray-500 line-through">£19,800</span></p>
+                      <p className="text-green-600 font-semibold mt-1">Saved over £13,300</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* X-ray note banner */}
+              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-md p-4 flex items-center">
+                <Info className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0" />
+                <p className="text-sm text-gray-700">
+                  Don't have X-rays or a CT scan? No problem. You can upload them later after booking. Many Istanbul clinics provide free X-rays during your first consultation.
+                </p>
+              </div>
+            </div>
+          </div>
           
           {/* Progress tracker */}
           <div className="mb-8">
@@ -422,12 +551,20 @@ const YourQuotePage: React.FC = () => {
                 
                 {treatmentItems.length > 0 && (
                   <div className="flex justify-end mt-4">
-                    <div className="bg-blue-50 py-2 px-4 rounded-md">
-                      <div className="flex justify-between gap-4 text-sm">
+                    <div className="bg-blue-50 py-3 px-4 rounded-md">
+                      <div className="flex justify-between gap-4 text-sm mb-1">
                         <span className="text-gray-700">Estimated Cost Range:</span>
                         <span className="font-bold">£{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</span>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between gap-4 text-sm border-t border-blue-100 pt-1 mb-1">
+                        <span className="text-gray-700">Typical UK Equivalent:</span>
+                        <span className="text-gray-500 line-through">£{Math.round(totalGBP * 2.5)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4 text-sm mb-1">
+                        <span className="text-green-600 font-medium">Potential Savings:</span>
+                        <span className="text-green-600 font-semibold">Up to 60%</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2 pt-1 border-t border-blue-100">
                         Based on Istanbul average treatment prices. Your clinic will confirm exact pricing after consultation & review of your X-rays.
                       </div>
                     </div>
@@ -622,7 +759,7 @@ const YourQuotePage: React.FC = () => {
                           </Button>
                         </div>
                         <div className="mt-2 text-center text-sm text-gray-500">
-                          See packages, reviews, and book with a verified clinic. Your treatment plan can still be updated after consultation.
+                          See clinics, packages, and complete your booking with a refundable £200 deposit.
                         </div>
                       </div>
                     )}
@@ -878,6 +1015,31 @@ const YourQuotePage: React.FC = () => {
           {/* FAQ Section */}
           <FAQSection />
         </div>
+        
+        {/* Sticky CTA Footer - Only visible when treatments are added and not in review step */}
+        {treatmentItems.length > 0 && currentStep !== 'review' && (
+          <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg py-3 px-4 z-50">
+            <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+              <div className="mb-3 sm:mb-0">
+                <p className="font-medium text-gray-800">Your Treatment Plan</p>
+                <div className="flex items-center">
+                  <p className="text-sm text-gray-600 mr-2">{treatmentItems.length} treatment{treatmentItems.length !== 1 ? 's' : ''} selected</p>
+                  {totalGBP > 0 && (
+                    <p className="text-sm font-semibold text-blue-600">Estimated: £{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</p>
+                  )}
+                </div>
+              </div>
+              <Button 
+                onClick={() => setCurrentStep(patientInfo ? 'review' : 'patient-info')}
+                className="py-6 px-8 text-lg w-full sm:w-auto"
+                size="lg"
+              >
+                Match Me With Clinics & View Packages
+                <ChevronRight className="h-5 w-5 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
       
       <Footer />
