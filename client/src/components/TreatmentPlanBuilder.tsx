@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -1022,27 +1022,20 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     ))}
                   </div>
-                
-                  {/* Cost Summary */}
-                  <div className="rounded-md bg-blue-50 p-4 mt-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-700 font-medium">Estimated Cost Range:</span>
-                      <span className="font-bold">£{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm border-t border-blue-100 pt-2 mt-2">
-                      <span className="text-gray-700">Typical UK Equivalent:</span>
-                      <span className="text-gray-500 line-through">£{Math.round(totalGBP * 2.5)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm border-t border-blue-100 pt-2 mt-2">
-                      <span className="text-green-600 font-medium">Potential Savings:</span>
-                      <span className="text-green-600 font-semibold">Up to 60%</span>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-blue-100">
-                      <p className="text-xs text-gray-500">
-                        Based on Istanbul average treatment prices. We'll show you precise costs with your matched clinics in the following page.
-                      </p>
-                    </div>
+                  
+                  {/* Quick Summary */}
+                  <div className="mb-2 mt-4 text-center">
+                    <div className="text-sm text-gray-500">Estimated Total</div>
+                    <div className="text-lg font-bold">£{totalGBP}</div>
                   </div>
+                  
+                  {/* CTA Button */}
+                  <Button className="w-full mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" size="lg">
+                    View Matching Clinics <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    Compare prices across verified clinics
+                  </p>
                 </>
               )}
             </div>
@@ -1254,12 +1247,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               <div className="mt-4 text-xs text-gray-600">
                 <p>This is your estimated treatment price based on your selections. Final pricing will be confirmed after consultation and review of your dental records.</p>
               </div>
-              <div className="mt-4 flex flex-col">
-                <Button className="w-full">
-                  View Matching Clinics & Request Final Quote
-                </Button>
-                <p className="text-xs text-center text-gray-500 mt-2">
-                  We'll help you compare verified clinics and send your treatment plan to them for review.
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500">
+                  Click "View Matching Clinics" in the sidebar to proceed with your quote.
                 </p>
               </div>
                 
