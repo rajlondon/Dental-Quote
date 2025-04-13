@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator } from "lucide-react";
+import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
 
 // Clinic Card Component
@@ -24,14 +24,91 @@ const ClinicCard = ({
   category: string;
   featured?: boolean;
 }) => {
+  // Create a dynamic stylized placeholder based on clinic name and category
+  const getStylizedClinic = () => {
+    if (name.includes("DentGroup") || name.includes("Premium")) {
+      return (
+        <div className="w-full h-48 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative border border-blue-200">
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative w-32 h-32">
+                <div className="absolute inset-8 rounded-full bg-blue-500/10 border-8 border-blue-200/50"></div>
+                <Target className="absolute inset-0 m-auto h-14 w-14 text-blue-500" />
+                <Sparkles className="absolute top-2 right-2 h-6 w-6 text-blue-500/70" />
+              </div>
+            </div>
+            <div className="absolute bottom-4 w-full text-center">
+              <span className="text-sm font-bold text-blue-700 bg-white/80 px-3 py-1 rounded-full">{name}</span>
+              <div className="text-xs text-blue-500 mt-1 font-medium">Premium Dental Services</div>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (name.includes("Maltepe") || name.includes("Luxury")) {
+      return (
+        <div className="w-full h-48 bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center relative border border-purple-200">
+          <div className="absolute inset-0">
+            <div className="grid grid-cols-2 h-full">
+              <div className="bg-gradient-to-br from-indigo-100/50 to-indigo-200/30 flex items-center justify-center">
+                <Stethoscope className="h-12 w-12 text-indigo-500" />
+              </div>
+              <div className="bg-gradient-to-tl from-purple-100/50 to-purple-200/30 flex items-center justify-center">
+                <HeartPulse className="h-12 w-12 text-purple-500" />
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-white/80 rounded-full p-2">
+                <Award className="h-12 w-12 text-indigo-600" />
+              </div>
+            </div>
+            <div className="absolute bottom-4 w-full text-center">
+              <span className="text-sm font-bold text-indigo-800 bg-white/80 px-3 py-1 rounded-full">{name}</span>
+              <div className="text-xs text-indigo-600 mt-1 font-medium">Luxury Dental Experience</div>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (name.includes("Affordable") || name.includes("Istanbul Dental Care")) {
+      return (
+        <div className="w-full h-48 bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center relative border border-green-200">
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="relative w-32 h-32 flex items-center justify-center">
+              <Columns className="h-16 w-16 text-green-500" />
+              <Zap className="absolute top-2 right-2 h-6 w-6 text-green-600" />
+            </div>
+            <div className="absolute bottom-4 w-full text-center">
+              <span className="text-sm font-bold text-green-700 bg-white/80 px-3 py-1 rounded-full">{name}</span>
+              <div className="text-xs text-green-600 mt-1 font-medium">Affordable Dental Care</div>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="w-full h-48 bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative border border-amber-200">
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative w-32 h-32">
+                <div className="absolute inset-4 rounded-full bg-amber-500/10 animate-pulse"></div>
+                <Award className="absolute inset-0 m-auto h-16 w-16 text-amber-600" />
+                <Sparkles className="absolute top-3 right-3 h-6 w-6 text-amber-500" />
+                <Gem className="absolute bottom-6 left-6 h-8 w-8 text-amber-600/70" />
+              </div>
+            </div>
+            <div className="absolute bottom-4 w-full text-center">
+              <span className="text-sm font-bold text-amber-800 bg-white/80 px-3 py-1 rounded-full">{name}</span>
+              <div className="text-xs text-amber-600 mt-1 font-medium">Quality Dental Care</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
+  
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${featured ? 'ring-2 ring-primary' : ''}`}>
       <div className="relative">
-        <img 
-          src={image} 
-          alt={name} 
-          className="w-full h-48 object-cover" 
-        />
+        {getStylizedClinic()}
         {featured && (
           <div className="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded flex items-center">
             <Sparkles className="w-3 h-3 mr-1" />
@@ -126,7 +203,7 @@ const HowItWorksSection = () => {
   );
 };
 
-const Home: React.FC = () => {
+const HomePage: React.FC = () => {
   // Sample clinic data - in production this would come from your database
   const popularClinics = [
     { 
@@ -253,4 +330,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default HomePage;
