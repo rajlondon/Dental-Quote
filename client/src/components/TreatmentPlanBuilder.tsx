@@ -511,8 +511,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">£{treatment.priceGBP}</div>
-                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                      <Badge variant="outline" className="font-normal">
+                        Price varies by clinic
+                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -567,8 +568,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">£{treatment.priceGBP}</div>
-                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                      <Badge variant="outline" className="font-normal">
+                        Price varies by clinic
+                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -623,8 +625,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">£{treatment.priceGBP}</div>
-                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                      <Badge variant="outline" className="font-normal">
+                        Price varies by clinic
+                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -679,12 +682,13 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">
-                        {treatment.priceGBP === 0 ? 'FREE' : `£${treatment.priceGBP}`}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {treatment.priceUSD === 0 ? '' : `$${treatment.priceUSD}`}
-                      </div>
+                      {treatment.priceGBP === 0 ? (
+                        <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">FREE</Badge>
+                      ) : (
+                        <Badge variant="outline" className="font-normal">
+                          Price varies by clinic
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -741,8 +745,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">£100</div>
-                    <div className="text-xs text-gray-500">$130</div>
+                    <Badge variant="outline" className="font-normal">
+                      Price varies by clinic
+                    </Badge>
                   </div>
                 </div>
                 
@@ -792,8 +797,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">£180</div>
-                    <div className="text-xs text-gray-500">$230</div>
+                    <Badge variant="outline" className="font-normal">
+                      Price varies by clinic
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -849,8 +855,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">£280</div>
-                    <div className="text-xs text-gray-500">$360</div>
+                    <Badge variant="outline" className="font-normal">
+                      Price varies by clinic
+                    </Badge>
                   </div>
                 </div>
                 
@@ -900,8 +907,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">£450</div>
-                    <div className="text-xs text-gray-500">$580</div>
+                    <Badge variant="outline" className="font-normal">
+                      Price varies by clinic
+                    </Badge>
                   </div>
                 </div>
                 
@@ -951,8 +959,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">£550</div>
-                    <div className="text-xs text-gray-500">$700</div>
+                    <Badge variant="outline" className="font-normal">
+                      Price varies by clinic
+                    </Badge>
                   </div>
                 </div>
               </div>
