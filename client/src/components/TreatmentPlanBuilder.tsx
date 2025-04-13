@@ -392,8 +392,8 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       </div>
       
       {/* Treatment Categories Tabs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 gap-6">
+        <div>
           <Tabs defaultValue="implants" className="w-full">
             <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto p-1 mb-6">
               <TabsTrigger value="implants" className="py-2">Dental Implants</TabsTrigger>
@@ -979,68 +979,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
             </TabsContent>
           </Tabs>
         </div>
-        
-        {/* Estimated Cost Range (Right Side) */}
-        <div className="md:col-span-1">
-          <Card className="bg-gray-50 border">
-            <div className="p-5">
-              <h3 className="font-bold text-lg mb-4">Your Treatment Plan</h3>
-              
-              {/* Empty State */}
-              {treatments.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-md">
-                  <p className="text-gray-500 mb-2">No treatments added yet</p>
-                  <p className="text-xs text-gray-500">Select treatments from the categories</p>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-2 mb-4">
-                    {treatments.map((treatment) => (
-                      <div key={treatment.id} className="flex justify-between items-center p-2 bg-white rounded border">
-                        <div className="flex-1">
-                          <div className="flex items-center">
-                            <span className="font-medium text-sm">{treatment.name}</span>
-                            {treatment.quantity > 1 && (
-                              <span className="ml-1 text-xs text-gray-500">x{treatment.quantity}</span>
-                            )}
-                          </div>
-                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
-                            <span className="text-xs text-gray-500">{treatment.guarantee} guarantee</span>
-                          )}
-                        </div>
-                        <div className="flex items-center">
-                          <span className="mr-3 text-sm font-medium">£{treatment.subtotalGBP}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-red-600 hover:text-red-800"
-                            onClick={() => handleRemoveTreatment(treatment.id)}
-                          >
-                            <MinusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Quick Summary */}
-                  <div className="mb-2 mt-4 text-center">
-                    <div className="text-sm text-gray-500">Estimated Total</div>
-                    <div className="text-lg font-bold">£{totalGBP}</div>
-                  </div>
-                  
-                  {/* CTA Button */}
-                  <Button className="w-full mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" size="lg">
-                    View Matching Clinics <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                  <p className="text-xs text-center text-gray-500 mt-2">
-                    Compare prices across verified clinics
-                  </p>
-                </>
-              )}
-            </div>
-          </Card>
-        </div>
+
       </div>
       
       {/* Add Custom Treatment Form (Modal style) */}
@@ -1245,11 +1184,15 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <span className="text-xs ml-2">({Math.round((1 - totalGBP/(totalGBP * 2.5)) * 100)}% vs UK prices)</span>
               </div>
               <div className="mt-4 text-xs text-gray-600">
-                <p>This is your estimated treatment price based on your selections. Final pricing will be confirmed after consultation and review of your dental records.</p>
+                <p className="mb-2"><strong>IMPORTANT:</strong> These prices are estimates based on average Istanbul clinic rates. You will receive clinic-specific quotes in the next step.</p>
+                <p className="mb-2">Final pricing will be confirmed after your <strong>free online consultation</strong> with your chosen clinic and a review of your dental records.</p>
               </div>
-              <div className="mt-4 text-center">
-                <p className="text-xs text-gray-500">
-                  Click "View Matching Clinics" in the sidebar to proceed with your quote.
+              <div className="mt-4">
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" size="lg">
+                  View Matching Clinics <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  Compare prices from verified Istanbul dental clinics
                 </p>
               </div>
                 
