@@ -181,16 +181,7 @@ const YourQuotePage: React.FC = () => {
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
     
-    if (items.length > 0) {
-      // Get treatment names for the toast message
-      const treatmentNames = items.map(item => item.name);
-      const treatmentCount = items.length;
-      
-      toast({
-        title: "Treatment Plan Updated",
-        description: `${treatmentCount} ${treatmentCount === 1 ? 'treatment' : 'treatments'} added to your plan.`,
-      });
-    }
+    // We removed the toast notification on each update to avoid cluttering the UI
   };
   
   // Function to handle patient info form submission
@@ -221,12 +212,6 @@ const YourQuotePage: React.FC = () => {
     // In a real implementation, we would parse query parameters here
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
-    
-    // Show welcome toast when the page loads
-    toast({
-      title: "Let's Build Your Quote",
-      description: "Start by creating your custom treatment plan below.",
-    });
     
     // Initialize with a default treatment if the user came from selecting a specific treatment
     if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
