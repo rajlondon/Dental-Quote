@@ -454,8 +454,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">£{treatment.priceGBP}</div>
-                      <div className="text-xs text-gray-500">${treatment.priceUSD}</div>
+                      <Badge variant="outline" className="font-normal">
+                        Price varies by clinic
+                      </Badge>
                     </div>
                   </div>
                 ))}
