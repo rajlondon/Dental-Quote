@@ -221,7 +221,7 @@ const Hero: React.FC = () => {
               Compare Dental Clinics. Book With Confidence. Fly With a Smile.
             </h2>
             <p className="text-lg text-gray-700 mb-8 leading-relaxed max-w-xl lg:mx-0 mx-auto">
-              Compare verified Turkish dental clinics. Save up to 70% on UK prices with transparent quotes and personalized service.
+              MyDentalFly connects patients with trusted, top-rated dental clinics in Turkey and beyond — offering up to 70% savings compared to UK prices. We combine affordability with peace of mind, giving patients access to verified clinics, transparent pricing, and dedicated support. Our custom-built Patient Portal ensures clear communication, a smooth booking experience, and full visibility throughout your dental journey.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
