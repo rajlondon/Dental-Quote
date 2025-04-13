@@ -648,7 +648,9 @@ const YourQuotePage: React.FC = () => {
                   fullName: searchParams.get('name') || '',
                   email: searchParams.get('email') || '',
                   phone: searchParams.get('phone') || '',
-                  travelMonth: searchParams.get('travelMonth') || '',
+                  travelMonth: quoteParams.travelMonth || searchParams.get('travelMonth') || '',
+                  // Include the budget information if available
+                  additionalNotes: `Budget Range: ${quoteParams.budget || 'Not specified'}`
                 }}
                 onSubmit={handlePatientInfoSubmit}
               />
