@@ -78,7 +78,7 @@ const QuoteForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to quote results page with query parameters
-    window.location.href = `/your-quote?country=${country}&city=${city}&treatment=${treatmentType}&month=${travelMonth}&budget=${budgetRange}`;
+    window.location.href = `/your-quote?country=${country}&city=${city}&treatment=${treatmentType}&month=${travelMonth}`;
   };
   
   return (
@@ -145,11 +145,11 @@ const QuoteForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Treatment Type */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Main Treatment Type */}
           <div className="space-y-2">
             <label htmlFor="treatment-type" className="block text-sm font-medium text-gray-700">
-              Treatment Type
+              Main Treatment Type <span className="text-red-500">*</span>
             </label>
             <Select value={treatmentType} onValueChange={setTreatmentType}>
               <SelectTrigger id="treatment-type" className="w-full">
@@ -183,32 +183,13 @@ const QuoteForm: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-          
-          {/* Budget Range (Optional) */}
-          <div className="space-y-2">
-            <label htmlFor="budget-range" className="block text-sm font-medium text-gray-700">
-              Budget Range (Optional)
-            </label>
-            <Select value={budgetRange} onValueChange={setBudgetRange}>
-              <SelectTrigger id="budget-range" className="w-full">
-                <SelectValue placeholder="Select budget" />
-              </SelectTrigger>
-              <SelectContent>
-                {budgetRanges.map((budget) => (
-                  <SelectItem key={budget.value} value={budget.value}>
-                    {budget.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         
         {/* Submit Button */}
         <Button 
           type="submit"
           className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-semibold text-lg rounded-lg mt-4 flex items-center justify-center"
-          disabled={!country || !city}
+          disabled={!country || !city || !treatmentType}
         >
           Calculate My Quote
           <ArrowRightIcon className="ml-2 h-5 w-5" />
