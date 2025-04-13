@@ -98,9 +98,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     let totalPrice = 0;
 
     treatments.forEach(treatment => {
-      // Extract the base treatment ID without the timestamp
-      const baseTreatmentId = treatment.id.split('_').slice(0, 2).join('_');
-      const category = treatment.category;
+      // Extract the base treatment ID without the timestamp (if ID exists)
+      const baseTreatmentId = treatment.id ? treatment.id.split('_').slice(0, 2).join('_') : '';
+      const category = treatment.category || 'general'; // Default to 'general' if category is missing
       
       // Find the matching treatment in the clinic data
       let matchingTreatment = null;
