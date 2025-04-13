@@ -34,6 +34,8 @@ const dentalTreatments = [
 ];
 
 const formSchema = z.object({
+  country: z.string().min(1, "Country is required"),
+  city: z.string().min(1, "City is required"),
   treatmentType: z.string().min(1, "Treatment type is required"),
   specificTreatment: z.string().min(1, "Specific treatment is required"),
   otherTreatment: z.string().optional(),
@@ -60,11 +62,20 @@ const QuoteForm: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [specificTreatments, setSpecificTreatments] = useState<{ value: string; label: string }[]>(dentalTreatments);
+  const [selectedCountry, setSelectedCountry] = useState<string>("turkey");
+  const [availableCities, setAvailableCities] = useState<{ value: string; label: string; disabled?: boolean }[]>([
+    { value: "istanbul", label: "Istanbul" },
+    { value: "izmir", label: "Izmir", disabled: true },
+    { value: "antalya", label: "Antalya", disabled: true },
+    { value: "dalaman", label: "Dalaman", disabled: true },
+  ]);
   const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      country: "turkey",
+      city: "istanbul",
       treatmentType: "dental",
       specificTreatment: "",
       otherTreatment: "",
@@ -254,6 +265,73 @@ const QuoteForm: React.FC = () => {
                   })}
                 >
                   {/* All form fields will be processed via EmailJS */}
+                  
+                  {/* Country Selection */}
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country <span className="text-accent">*</span></FormLabel>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedCountry(value);
+                            // Reset city when country changes
+                            form.setValue("city", "");
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a country" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="turkey">Turkey</SelectItem>
+                            <SelectItem value="thailand" disabled>Thailand (Coming Soon)</SelectItem>
+                            <SelectItem value="mexico" disabled>Mexico (Coming Soon)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* City Selection - Only shown when a country is selected */}
+                  {selectedCountry && (
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City <span className="text-accent">*</span></FormLabel>
+                          <Select 
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a city" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {selectedCountry === "turkey" && availableCities.map((city) => (
+                                <SelectItem 
+                                  key={city.value} 
+                                  value={city.value}
+                                  disabled={city.disabled}
+                                >
+                                  {city.label} {city.disabled && "(Coming Soon)"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   
                   {/* Display only Dental Treatment Category */}
                   <div className="mb-4">
