@@ -1612,8 +1612,12 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <p className="mb-2">Final pricing will be confirmed after your <strong>free online consultation</strong> with your chosen clinic and a review of your dental records.</p>
               </div>
               <div className="mt-4">
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" size="lg">
-                  View Matching Clinics <ArrowRight className="h-4 w-4 ml-2" />
+                <Button 
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" 
+                  size="lg" 
+                  onClick={() => onTreatmentsChange && onTreatmentsChange(treatments)}
+                >
+                  Continue With Your Plan <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
                 <p className="text-xs text-center text-gray-500 mt-2">
                   Compare prices from verified Istanbul dental clinics

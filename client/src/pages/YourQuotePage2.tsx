@@ -563,16 +563,7 @@ const YourQuotePage: React.FC = () => {
                     
                     {treatmentItems.length > 0 && (
                       <div>
-                        <div className="mt-6 flex justify-end">
-                          <Button 
-                            onClick={() => setCurrentStep('patient-info')}
-                            className="flex items-center gap-2 py-5 px-4 text-base md:text-lg"
-                            size="lg"
-                          >
-                            Next: View Matching Clinics
-                            <ChevronRight className="h-5 w-5 ml-1" />
-                          </Button>
-                        </div>
+                        {/* Removed redundant "View Matching Clinics" button to simplify UI */}
                         <div className="mt-2 text-center text-sm text-gray-500">
                           See clinics, packages, and complete your booking with a refundable £200 deposit.
                         </div>
