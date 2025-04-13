@@ -17,10 +17,9 @@ import {
   CreditCard
 } from 'lucide-react';
 import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
-import { Elements, useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import StripePaymentWrapper from '@/components/payment/StripePaymentWrapper';
 
 interface DepositPaymentPageProps {
   treatmentItems?: TreatmentItem[];
@@ -35,6 +34,8 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
 }) => {
   const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [showStripeForm, setShowStripeForm] = useState(false);
+  const { toast } = useToast();
   
   // Get data from localStorage if not provided via props
   const storedTreatments = localStorage.getItem('treatmentPlan');
@@ -45,18 +46,36 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   const storedClinicId = localStorage.getItem('selectedClinic');
   const selectedClinicId = clinicId || storedClinicId;
   
-  const totalAmount = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
+  // Get patient info from localStorage
+  const patientInfoStr = localStorage.getItem('patientInfo');
+  const patientInfo = patientInfoStr ? JSON.parse(patientInfoStr) : {};
+  
+  const totalAmount = treatments.reduce((sum: number, item: any) => sum + item.subtotalGBP, 0);
   const depositAmount = 200; // £200 fixed deposit
   
   const handlePayDeposit = () => {
-    setIsLoading(true);
+    setShowStripeForm(true);
+  };
+  
+  const handlePaymentSuccess = () => {
+    toast({
+      title: "Payment Successful",
+      description: "Your deposit has been processed. Redirecting to confirmation...",
+      variant: "default",
+    });
     
-    // In a real app, this would redirect to a payment provider
     setTimeout(() => {
-      // After successful payment
-      setIsLoading(false);
       setLocation('/payment-confirmation');
     }, 1500);
+  };
+  
+  const handlePaymentCancel = () => {
+    setShowStripeForm(false);
+    toast({
+      title: "Payment Cancelled",
+      description: "You can try again when you're ready.",
+      variant: "default",
+    });
   };
   
   return (
@@ -203,44 +222,65 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
             <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
               <h2 className="text-xl font-semibold mb-3">Payment Summary</h2>
               
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Deposit amount:</span>
-                  <span className="font-semibold">£{depositAmount}</span>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center">
-                    <CreditCard className="h-4 w-4 mr-1 text-gray-500" />
-                    <span>Payment method:</span>
+              {!showStripeForm ? (
+                <>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Deposit amount:</span>
+                      <span className="font-semibold">£{depositAmount}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-1 text-gray-500" />
+                        <span>Payment method:</span>
+                      </div>
+                      <span>Credit/Debit Card</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1 text-gray-500" />
+                        <span>Processing time:</span>
+                      </div>
+                      <span>Immediate</span>
+                    </div>
                   </div>
-                  <span>Credit/Debit Card</span>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-1 text-gray-500" />
-                    <span>Processing time:</span>
+                  
+                  <Button 
+                    onClick={handlePayDeposit}
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                  >
+                    {isLoading ? 'Processing...' : 'Pay £200 Deposit Securely'}
+                    {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+                  </Button>
+                  
+                  <div className="flex justify-center mt-3">
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Shield className="h-3 w-3 mr-1" />
+                      <span>Secure payment processing</span>
+                    </div>
                   </div>
-                  <span>Immediate</span>
+                </>
+              ) : (
+                <div>
+                  <div className="mb-4">
+                    <StripePaymentWrapper 
+                      amount={depositAmount}
+                      description="MyDentalFly Treatment Deposit"
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onCancel={handlePaymentCancel}
+                      metadata={{
+                        patientName: patientInfo.fullName || '',
+                        patientEmail: patientInfo.email || '',
+                        clinicId: selectedClinicId || '',
+                        treatmentCount: treatments.length.toString()
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <Button 
-                onClick={handlePayDeposit}
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
-              >
-                {isLoading ? 'Processing...' : 'Pay £200 Deposit Securely'}
-                {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-              </Button>
-              
-              <div className="flex justify-center mt-3">
-                <div className="flex items-center text-xs text-gray-500">
-                  <Shield className="h-3 w-3 mr-1" />
-                  <span>Secure payment processing</span>
-                </div>
-              </div>
+              )}
             </Card>
             
             <div className="bg-gray-50 border rounded-lg p-4">

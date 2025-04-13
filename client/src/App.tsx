@@ -19,6 +19,8 @@ import AdminPortalPage from "@/pages/AdminPortalPage";
 import ClinicPortalPage from "@/pages/ClinicPortalPage";
 import PortalLoginPage from "@/pages/PortalLoginPage";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
+import DepositPaymentPage from "@/pages/DepositPaymentPage";
+import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -47,6 +49,8 @@ function Router() {
       <Route path="/admin-portal" component={AdminPortalPage} />
       <Route path="/clinic-portal" component={ClinicPortalPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
+      <Route path="/deposit-payment" component={DepositPaymentPage} />
+      <Route path="/payment-confirmation" component={PaymentConfirmationPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {
