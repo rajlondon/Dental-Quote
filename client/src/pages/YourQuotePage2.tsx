@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import MatchedClinicsPage from '@/pages/MatchedClinicsPage';
+import PaymentConfirmationPage from '@/pages/PaymentConfirmationPage';
 import { 
   Check, 
   ChevronRight, 
@@ -197,8 +199,9 @@ const YourQuotePage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Quote steps tracking
-  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'review'>('build-plan');
+  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'matched-clinics' | 'payment'>('build-plan');
   const [isQuoteReady, setIsQuoteReady] = useState(false);
+  const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
   
   // Function to open edit quote modal
   const handleEditQuote = () => {
@@ -224,7 +227,7 @@ const YourQuotePage: React.FC = () => {
   // Function to handle patient info form submission
   const handlePatientInfoSubmit = (data: PatientInfo) => {
     setPatientInfo(data);
-    setCurrentStep('review');
+    setCurrentStep('matched-clinics');
     setIsQuoteReady(true);
     
     toast({
@@ -232,8 +235,36 @@ const YourQuotePage: React.FC = () => {
       description: "Your personal information has been saved successfully.",
     });
     
-    // Scroll to the top of the review section
+    // Scroll to the top of the matched clinics section
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Function to handle clinic selection
+  const handleSelectClinic = (clinicId: string) => {
+    setSelectedClinicId(clinicId);
+    setCurrentStep('payment');
+    
+    toast({
+      title: "Clinic Selected",
+      description: "You've selected a clinic. Proceed to secure your booking.",
+    });
+    
+    // Scroll to the top of the payment section
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Function to handle payment completion
+  const handlePaymentSuccess = () => {
+    toast({
+      title: "Payment Successful",
+      description: "Your booking is confirmed! You'll be redirected to your patient portal.",
+      duration: 5000,
+    });
+    
+    // Redirect to patient portal after successful payment
+    setTimeout(() => {
+      setLocation('/patient-portal');
+    }, 3000);
   };
   
   // Calculate totals
