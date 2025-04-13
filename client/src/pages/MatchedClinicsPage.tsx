@@ -11,7 +11,24 @@ import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import WhatsAppButton from '@/components/WhatsAppButton';
 
 interface MatchedClinicsPageProps {
-  userTreatments?: TreatmentItem[];
+  treatmentItems?: TreatmentItem[];
+  patientInfo?: {
+    fullName: string;
+    email: string;
+    phone: string;
+    hasXrays: boolean;
+    hasCtScan: boolean;
+    hasDentalPhotos: boolean;
+    preferredContactMethod: 'email' | 'phone' | 'whatsapp';
+    travelMonth?: string;
+    departureCity?: string;
+    additionalNotesForClinic?: string;
+  };
+  totalGBP?: number;
+  onSelectClinic?: (clinicId: string) => void;
+  onBackToInfo?: () => void;
+  onQuoteDownload?: () => void;
+  onEmailQuote?: () => void;
 }
 
 interface ClinicTreatmentPrice {
@@ -23,15 +40,21 @@ interface ClinicTreatmentPrice {
   category: string;
 }
 
-const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments = [] }) => {
+const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ 
+  treatmentItems = [], 
+  patientInfo,
+  totalGBP,
+  onSelectClinic,
+  onBackToInfo
+}) => {
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const [location, setLocation] = useLocation();
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   
-  // Get treatments from localStorage if not provided as props
+  // Get treatments from props or localStorage
   useEffect(() => {
-    if (userTreatments.length === 0) {
+    if (treatmentItems.length === 0) {
       const storedTreatments = localStorage.getItem('treatmentPlan');
       if (storedTreatments) {
         try {
@@ -42,9 +65,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({ userTreatments 
         }
       }
     } else {
-      setTreatmentPlan(userTreatments);
+      setTreatmentPlan(treatmentItems);
     }
-  }, [userTreatments]);
+  }, [treatmentItems]);
 
   const getTierLabel = (tier: string) => {
     switch (tier) {
