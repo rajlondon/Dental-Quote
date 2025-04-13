@@ -167,10 +167,11 @@ const FAQSection: React.FC = () => {
         </div>
         
         <div className="flex justify-center mt-8">
-          <Button variant="outline" className="flex items-center gap-2">
-            <MessageCircle className="h-4 w-4" />
-            Ask Another Question
-          </Button>
+          <WhatsAppButton 
+            phoneNumber="447572445856" 
+            message="Hello! I have a question about my dental treatment quote. Can you help me?"
+            className=""
+          />
         </div>
       </CardContent>
     </Card>
@@ -464,7 +465,7 @@ const YourQuotePage: React.FC = () => {
             </div>
           </div>
           
-          {/* Quote Summary Card (Top Section) */}
+          {/* Quote Summary Card (Top Section) - Consolidated for Mobile */}
           <div className="mb-8">
             <Card>
               <CardHeader className="pb-2">
@@ -473,16 +474,16 @@ const YourQuotePage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={handleEditQuote}
+                    onClick={() => setCurrentStep('build-plan')}
                     className="flex items-center gap-2 text-xs h-8"
                   >
                     <Pencil className="h-3 w-3" />
-                    Edit Details
+                    Edit Quote
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Treatment(s) Selected</p>
                     <p className="font-medium">
@@ -495,29 +496,31 @@ const YourQuotePage: React.FC = () => {
                     <p className="text-sm font-medium text-gray-500">Preferred Travel Month</p>
                     <p className="font-medium">{quoteParams.travelMonth}</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Budget Range</p>
-                    <p className="font-medium">{quoteParams.budget}</p>
-                  </div>
                 </div>
                 
                 {treatmentItems.length > 0 && (
-                  <div className="flex justify-end mt-4">
+                  <div className="w-full mt-2">
                     <div className="bg-blue-50 py-3 px-4 rounded-md">
-                      <div className="flex justify-between gap-4 text-sm mb-1">
-                        <span className="text-gray-700">Estimated Cost Range:</span>
-                        <span className="font-bold">£{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 text-sm border-t border-blue-100 pt-1 mb-1">
-                        <span className="text-gray-700">Typical UK Equivalent:</span>
-                        <span className="text-gray-500 line-through">£{Math.round(totalGBP * 2.5)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 text-sm mb-1">
-                        <span className="text-green-600 font-medium">Potential Savings:</span>
-                        <span className="text-green-600 font-semibold">Up to 60%</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">Estimated Cost:</span>
+                          <span className="font-bold">£{Math.round(totalGBP * 0.8)} - £{Math.round(totalGBP * 1.2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">UK Equivalent:</span>
+                          <span className="text-gray-500 line-through">£{Math.round(totalGBP * 2.5)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-green-600 font-medium">Potential Savings:</span>
+                          <span className="text-green-600 font-semibold">Up to 60%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Total Estimated:</span>
+                          <span className="font-bold">£{Math.round(totalGBP)}</span>
+                        </div>
                       </div>
                       <div className="text-xs text-gray-500 mt-2 pt-1 border-t border-blue-100">
-                        Based on Istanbul average treatment prices. Your clinic will confirm exact pricing after consultation & review of your X-rays.
+                        Based on average treatment prices. Your chosen clinic will confirm exact pricing after consultation & review of your dental records.
                       </div>
                     </div>
                   </div>
@@ -573,7 +576,7 @@ const YourQuotePage: React.FC = () => {
                             className="flex items-center gap-2 py-6 px-5 text-lg"
                             size="lg"
                           >
-                            Match Me with Clinics & View Packages
+                            View Matching Clinics & Request Final Quote
                             <ChevronRight className="h-5 w-5 ml-1" />
                           </Button>
                         </div>
@@ -805,7 +808,7 @@ const YourQuotePage: React.FC = () => {
                 className="py-6 px-8 text-lg w-full sm:w-auto"
                 size="lg"
               >
-                Match Me With Clinics & View Packages
+                View Matching Clinics & Request Final Quote
                 <ChevronRight className="h-5 w-5 ml-1" />
               </Button>
             </div>
