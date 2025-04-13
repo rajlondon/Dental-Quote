@@ -45,7 +45,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   patientInfo,
   totalGBP,
   onSelectClinic,
-  onBackToInfo
+  onBackToInfo,
+  onQuoteDownload,
+  onEmailQuote
 }) => {
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
