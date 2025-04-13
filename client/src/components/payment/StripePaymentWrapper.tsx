@@ -19,6 +19,7 @@ interface StripePaymentWrapperProps {
   onPaymentSuccess: () => void;
   onCancel: () => void;
   metadata?: Record<string, string>;
+  isDeposit?: boolean;
 }
 
 const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
@@ -26,7 +27,8 @@ const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
   description,
   onPaymentSuccess,
   onCancel,
-  metadata = {}
+  metadata = {},
+  isDeposit = false
 }) => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +38,25 @@ const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
     const fetchPaymentIntent = async () => {
       try {
         setLoading(true);
-        const response = await apiRequest('POST', '/api/create-payment-intent', {
-          amount: amount,
-          description: description,
-          metadata: metadata
-        });
+        
+        // Determine which endpoint to use based on whether this is a deposit payment
+        const endpoint = isDeposit 
+          ? '/api/create-deposit-payment-intent'
+          : '/api/create-payment-intent';
+        
+        const payload = isDeposit
+          ? {
+              email: metadata.patientEmail || '',
+              currency: 'gbp',
+              metadata
+            }
+          : {
+              amount: amount,
+              description: description,
+              metadata: metadata
+            };
+        
+        const response = await apiRequest('POST', endpoint, payload);
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -58,7 +74,7 @@ const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
     };
 
     fetchPaymentIntent();
-  }, [amount, description, metadata]);
+  }, [amount, description, metadata, isDeposit]);
 
   if (loading) {
     return (

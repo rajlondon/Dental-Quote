@@ -271,6 +271,7 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
                       description="MyDentalFly Treatment Deposit"
                       onPaymentSuccess={handlePaymentSuccess}
                       onCancel={handlePaymentCancel}
+                      isDeposit={true}
                       metadata={{
                         patientName: patientInfo.fullName || '',
                         patientEmail: patientInfo.email || '',
