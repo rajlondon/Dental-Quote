@@ -273,10 +273,27 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
                   <div className="md:col-span-1">
-                    <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gray-100 flex items-center justify-center">
-                      <div className="text-gray-400 flex flex-col items-center">
-                        <MapPin className="h-12 w-12 mb-2" />
-                        <span className="text-sm">{clinic.name}</span>
+                    <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        {clinic.tier === 'premium' ? (
+                          <div className="flex flex-col items-center">
+                            <Award className="h-12 w-12 mb-2 text-blue-500" />
+                            <span className="text-sm font-medium text-blue-700">{clinic.name}</span>
+                            <span className="text-xs text-blue-500 mt-1">Premium Clinic</span>
+                          </div>
+                        ) : clinic.tier === 'mid-tier' ? (
+                          <div className="flex flex-col items-center">
+                            <Building2 className="h-12 w-12 mb-2 text-blue-400" />
+                            <span className="text-sm font-medium text-blue-600">{clinic.name}</span>
+                            <span className="text-xs text-blue-400 mt-1">Standard Clinic</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <Home className="h-12 w-12 mb-2 text-green-500" />
+                            <span className="text-sm font-medium text-green-700">{clinic.name}</span>
+                            <span className="text-xs text-green-500 mt-1">Budget-Friendly Clinic</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
