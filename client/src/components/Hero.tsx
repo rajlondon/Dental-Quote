@@ -8,9 +8,28 @@ import { Button } from "@/components/ui/button";
 // Create a booking.com-style quote form
 const QuoteForm: React.FC = () => {
   const { t } = useTranslation();
+  const [country, setCountry] = useState<string>("");
+  const [city, setCity] = useState<string>("");
   const [treatmentType, setTreatmentType] = useState<string>("");
   const [travelMonth, setTravelMonth] = useState<string>("");
   const [budgetRange, setBudgetRange] = useState<string>("");
+  
+  // Countries - supporting expansion plan
+  const countries = [
+    { value: "turkey", label: "Turkey" },
+    { value: "thailand", label: "Thailand (Coming Soon)", disabled: true },
+    { value: "mexico", label: "Mexico (Coming Soon)", disabled: true },
+  ];
+  
+  // Cities by country
+  const cities = {
+    turkey: [
+      { value: "istanbul", label: "Istanbul" },
+      { value: "antalya", label: "Antalya (Coming Soon)", disabled: true },
+      { value: "izmir", label: "Izmir (Coming Soon)", disabled: true },
+      { value: "dalaman", label: "Dalaman (Coming Soon)", disabled: true },
+    ]
+  };
   
   // Treatment types - these will be populated from your database in production
   const treatmentTypes = [
@@ -47,11 +66,19 @@ const QuoteForm: React.FC = () => {
     { value: "not-sure", label: "I'm not sure yet" }
   ];
   
+  // Get cities based on selected country
+  const getCitiesForCountry = () => {
+    if (country === "turkey") {
+      return cities.turkey;
+    }
+    return [];
+  };
+  
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to quote results page with query parameters
-    window.location.href = `/your-quote?treatment=${treatmentType}&month=${travelMonth}&budget=${budgetRange}`;
+    window.location.href = `/your-quote?country=${country}&city=${city}&treatment=${treatmentType}&month=${travelMonth}&budget=${budgetRange}`;
   };
   
   return (
@@ -59,6 +86,65 @@ const QuoteForm: React.FC = () => {
       <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-6">Find Your Perfect Dental Treatment</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Location Selection (Country & City) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Country Selection */}
+          <div className="space-y-2">
+            <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+              Country <span className="text-red-500">*</span>
+            </label>
+            <Select 
+              value={country} 
+              onValueChange={(value) => {
+                setCountry(value);
+                setCity(""); // Reset city when country changes
+              }}
+            >
+              <SelectTrigger id="country" className="w-full">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((option) => (
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value}
+                    disabled={option.disabled}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* City Selection - Only shown when country is selected */}
+          <div className="space-y-2">
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+              City <span className="text-red-500">*</span>
+            </label>
+            <Select 
+              value={city} 
+              onValueChange={setCity}
+              disabled={!country}
+            >
+              <SelectTrigger id="city" className="w-full">
+                <SelectValue placeholder={country ? "Select city" : "Select country first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {country && getCitiesForCountry().map((cityOption) => (
+                  <SelectItem 
+                    key={cityOption.value} 
+                    value={cityOption.value}
+                    disabled={cityOption.disabled}
+                  >
+                    {cityOption.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Treatment Type */}
           <div className="space-y-2">
@@ -122,6 +208,7 @@ const QuoteForm: React.FC = () => {
         <Button 
           type="submit"
           className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-semibold text-lg rounded-lg mt-4 flex items-center justify-center"
+          disabled={!country || !city}
         >
           Calculate My Quote
           <ArrowRightIcon className="ml-2 h-5 w-5" />
