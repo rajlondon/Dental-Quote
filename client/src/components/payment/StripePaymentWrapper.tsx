@@ -44,9 +44,14 @@ const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
           ? '/api/create-deposit-payment-intent'
           : '/api/create-payment-intent';
         
+        // Make sure we have the email for deposit payments
+        if (isDeposit && !metadata.patientEmail) {
+          throw new Error('Email address is required for deposit payments');
+        }
+        
         const payload = isDeposit
           ? {
-              email: metadata.patientEmail || '',
+              email: metadata.patientEmail,
               currency: 'gbp',
               metadata
             }
@@ -67,6 +72,11 @@ const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
         setClientSecret(data.clientSecret);
       } catch (err: any) {
         console.error('Payment setup error:', err);
+        console.log('Payment request details:', {
+          paymentType: isDeposit ? 'deposit' : 'regular',
+          patientEmail: metadata.patientEmail,
+          amount: amount
+        });
         setError(err.message || 'Failed to set up payment. Please try again later.');
       } finally {
         setLoading(false);

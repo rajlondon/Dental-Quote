@@ -64,6 +64,9 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
       return;
     }
     
+    // Log the patient info for debugging
+    console.log('Patient info from localStorage:', patientInfo);
+    
     setShowStripeForm(true);
   };
   
@@ -283,8 +286,8 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
                       onCancel={handlePaymentCancel}
                       isDeposit={true}
                       metadata={{
-                        patientName: patientInfo.fullName || '',
-                        patientEmail: patientInfo.email || '',
+                        patientName: patientInfo.name || patientInfo.fullName || 'Guest User',
+                        patientEmail: patientInfo.email || 'test@mydentalfly.com',
                         clinicId: selectedClinicId || '',
                         treatmentCount: treatments.length.toString()
                       }}
