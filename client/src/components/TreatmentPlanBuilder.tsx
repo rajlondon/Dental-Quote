@@ -506,7 +506,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -580,7 +580,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -654,7 +654,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -728,7 +728,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -745,7 +745,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>UK Average Prices for Comparison</span>
+                        <span>Approximate Price Range</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
@@ -802,7 +802,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -819,7 +819,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <TooltipTrigger asChild>
                       <div className="flex items-center text-blue-600 text-sm cursor-help">
                         <Info className="h-4 w-4 mr-1" />
-                        <span>UK Average Prices for Comparison</span>
+                        <span>Approximate Price Range</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
@@ -876,7 +876,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                        Starting from: €{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
