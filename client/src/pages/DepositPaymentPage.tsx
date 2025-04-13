@@ -60,12 +60,40 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   const totalAmount = treatments.reduce((sum: number, item: any) => sum + item.subtotalGBP, 0);
   const depositAmount = 200; // £200 fixed deposit
   
+  // Validate if we need verification
+  const { isValid } = validatePatientInfo(patientInfo);
+  
   const handlePayDeposit = () => {
     // Log the patient info for debugging
     console.log('Patient info at payment time:', patientInfo);
     
-    // We don't need to check for email anymore as we have a fallback
+    // If we need to verify patient info first, show the verification screen
+    // Otherwise, go straight to payment
+    if (!isValid && !verifiedPatientInfo) {
+      setShowVerification(true);
+    } else {
+      setShowStripeForm(true);
+    }
+  };
+  
+  const handleVerificationContinue = (updatedInfo: Partial<PatientInfo>) => {
+    // Save the verified info
+    setVerifiedPatientInfo(updatedInfo);
+    setShowVerification(false);
+    
+    // Save to localStorage for future use
+    localStorage.setItem('patientInfo', JSON.stringify(updatedInfo));
+    
+    // Log the verified information
+    console.log('Verified patient info:', updatedInfo);
+    
+    // Show payment form
     setShowStripeForm(true);
+  };
+  
+  const handleEditPatientInfo = () => {
+    // Redirect back to the patient info page
+    setLocation('/your-quote?step=patient-info');
   };
   
   const handlePaymentSuccess = () => {
@@ -75,6 +103,19 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
       variant: "default",
     });
     
+    // Make sure we have verified patient info at this point
+    const finalPatientInfo = verifiedPatientInfo || standardizePatientInfo(patientInfo);
+    
+    // Log the transaction
+    logTransaction({
+      type: 'deposit',
+      amount: depositAmount,
+      patientInfo: finalPatientInfo,
+      clinicId: selectedClinicId || '',
+      treatments: treatments,
+      timestamp: new Date().toISOString()
+    });
+    
     setTimeout(() => {
       setLocation('/payment-confirmation');
     }, 1500);
@@ -82,11 +123,23 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   
   const handlePaymentCancel = () => {
     setShowStripeForm(false);
+    setShowVerification(false);
     toast({
       title: "Payment Cancelled",
       description: "You can try again when you're ready.",
       variant: "default",
     });
+  };
+  
+  // Helper function to log transaction details
+  const logTransaction = (data: any) => {
+    // For now just log to console, but this could send to server in the future
+    console.log('Transaction logged:', data);
+    
+    // Store in localStorage for demonstration
+    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    transactions.push(data);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
   };
   
   return (
@@ -233,7 +286,13 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
             <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
               <h2 className="text-xl font-semibold mb-3">Payment Summary</h2>
               
-              {!showStripeForm ? (
+              {showVerification ? (
+                <PatientInfoVerification
+                  patientInfo={patientInfo}
+                  onContinue={handleVerificationContinue}
+                  onEdit={handleEditPatientInfo}
+                />
+              ) : !showStripeForm ? (
                 <>
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
@@ -284,8 +343,9 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
                       onCancel={handlePaymentCancel}
                       isDeposit={true}
                       metadata={{
-                        patientName: patientInfo.name || patientInfo.fullName || 'Guest User',
-                        patientEmail: patientInfo.email || 'test@mydentalfly.com',
+                        patientName: (verifiedPatientInfo?.fullName || patientInfo.name || patientInfo.fullName || 'Guest User'),
+                        patientEmail: (verifiedPatientInfo?.email || patientInfo.email || 'guest@mydentalfly.com'),
+                        patientPhone: (verifiedPatientInfo?.phone || patientInfo.phone || 'Not provided'),
                         clinicId: selectedClinicId || '',
                         treatmentCount: treatments.length.toString()
                       }}
