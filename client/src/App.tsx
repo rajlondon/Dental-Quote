@@ -18,6 +18,7 @@ import ClientPortalPage from "@/pages/ClientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
 import ClinicPortalPage from "@/pages/ClinicPortalPage";
 import PortalLoginPage from "@/pages/PortalLoginPage";
+import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/client-portal" component={ClientPortalPage} />
       <Route path="/admin-portal" component={AdminPortalPage} />
       <Route path="/clinic-portal" component={ClinicPortalPage} />
+      <Route path="/clinic/:id" component={ClinicDetailPage} />
       {/* Redirect test pages to the home page */}
       <Route path="/test">
         {() => {

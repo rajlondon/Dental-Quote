@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
+import clinicsData from "@/data/clinics.json";
 
 // Clinic Card Component
 const ClinicCard = ({ 
