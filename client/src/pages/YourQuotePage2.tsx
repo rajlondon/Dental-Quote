@@ -277,6 +277,7 @@ const YourQuotePage: React.FC = () => {
         departureCity: '',
         hasXrays: false,
         hasCtScan: false,
+        hasDentalPhotos: false,
         additionalNotesForClinic: '',
         preferredContactMethod: 'email'
       });
@@ -401,9 +402,9 @@ const YourQuotePage: React.FC = () => {
                     {isQuoteReady ? <Check className="h-5 w-5" /> : '3'}
                   </div>
                   <div>
-                    <p className="font-medium">Review & Submit</p>
+                    <p className="font-medium">Matched Clinics</p>
                     <p className="text-xs text-gray-600">
-                      {isQuoteReady ? 'Quote ready' : 'Complete first two steps'}
+                      {isQuoteReady ? 'View treatment packages' : 'Complete first two steps'}
                     </p>
                   </div>
                 </div>
@@ -787,13 +788,16 @@ const YourQuotePage: React.FC = () => {
                               <Badge variant={patientInfo.hasCtScan ? "default" : "outline"}>
                                 {patientInfo.hasCtScan ? 'Has CT Scan' : 'No CT Scan'}
                               </Badge>
+                              <Badge variant={patientInfo.hasDentalPhotos ? "default" : "outline"}>
+                                {patientInfo.hasDentalPhotos ? 'Has Dental Photos' : 'No Dental Photos'}
+                              </Badge>
                             </div>
                           </div>
                           
-                          {patientInfo.additionalNotes && (
+                          {patientInfo.additionalNotesForClinic && (
                             <div className="mt-4">
-                              <p className="text-sm font-medium text-gray-500">Additional Notes</p>
-                              <p className="text-sm mt-1">{patientInfo.additionalNotes}</p>
+                              <p className="text-sm font-medium text-gray-500">Additional Notes for Clinic</p>
+                              <p className="text-sm mt-1">{patientInfo.additionalNotesForClinic}</p>
                             </div>
                           )}
                         </div>
