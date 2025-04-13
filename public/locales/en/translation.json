@@ -26,15 +26,15 @@
     "cta": "Request a Free Quote"
   },
   "form": {
-    "title": "Get Your Free Dental Treatment Quote",
-    "description": "Tell us about your dental needs, and our team will create a personalized quote with vetted Istanbul dentists that match your requirements.",
+    "title": "Start Building Your Personalised Dental Quote",
+    "description": "Tell us your main dental treatment or area you'd like help with. On the next page, you'll be able to build your full treatment plan, add specific procedures, and see what to expect.",
     "name": "Full Name",
     "email": "Email Address",
     "phone": "Phone Number",
     "treatment": "Treatment Needed",
     "treatmentCategory": "Treatment Category",
     "dentalWork": "Dental Work",
-    "selectTreatment": "Select specific treatment",
+    "selectTreatment": "Choose your main treatment (e.g. Implants, Veneers, Full Smile Makeover)",
     "treatments": {
       "veneers": "Dental Veneers",
       "implants": "Dental Implants",
