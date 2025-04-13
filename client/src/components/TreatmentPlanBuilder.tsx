@@ -431,14 +431,17 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       <div className="grid grid-cols-1 gap-6">
         <div>
           <Tabs defaultValue="implants" className="w-full">
-            <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto p-1 mb-6">
-              <TabsTrigger value="implants" className="py-2">Implants</TabsTrigger>
-              <TabsTrigger value="crowns_veneers" className="py-2">Veneers & Crowns</TabsTrigger>
-              <TabsTrigger value="whitening" className="py-2">Teeth Whitening</TabsTrigger>
-              <TabsTrigger value="full_mouth" className="py-2">Full Mouth Rehab</TabsTrigger>
-              <TabsTrigger value="general" className="py-2">General Dentistry</TabsTrigger>
-              <TabsTrigger value="other" className="py-2">Other Treatments</TabsTrigger>
-            </TabsList>
+            {/* Made more mobile-friendly with scrollable design */}
+            <div className="overflow-x-auto pb-2 mb-3">
+              <TabsList className="grid grid-cols-6 md:grid-cols-6 w-max min-w-full h-auto p-1 mb-2">
+                <TabsTrigger value="implants" className="py-2 whitespace-nowrap">Implants</TabsTrigger>
+                <TabsTrigger value="crowns_veneers" className="py-2 whitespace-nowrap">Veneers & Crowns</TabsTrigger>
+                <TabsTrigger value="whitening" className="py-2 whitespace-nowrap">Teeth Whitening</TabsTrigger>
+                <TabsTrigger value="full_mouth" className="py-2 whitespace-nowrap">Full Mouth Rehab</TabsTrigger>
+                <TabsTrigger value="general" className="py-2 whitespace-nowrap">General Dentistry</TabsTrigger>
+                <TabsTrigger value="other" className="py-2 whitespace-nowrap">Other Treatments</TabsTrigger>
+              </TabsList>
+            </div>
             
             {/* Implants Tab */}
             <TabsContent value="implants" className="border rounded-md p-4">
