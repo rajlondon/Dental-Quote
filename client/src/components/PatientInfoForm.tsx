@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,8 +17,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { InfoIcon, Upload, Camera, BadgeCheck } from 'lucide-react';
+import { 
+  Select, 
+  SelectTrigger, 
+  SelectValue, 
+  SelectContent, 
+  SelectItem 
+} from '@/components/ui/select';
+import { InfoIcon, BadgeCheck } from 'lucide-react';
 
 // Form schema
 const formSchema = z.object({
@@ -29,7 +35,8 @@ const formSchema = z.object({
   departureCity: z.string().optional(),
   hasXrays: z.boolean().default(false),
   hasCtScan: z.boolean().default(false),
-  additionalNotes: z.string().optional(),
+  hasDentalPhotos: z.boolean().default(false),
+  additionalNotesForClinic: z.string().optional(),
   preferredContactMethod: z.enum(['email', 'phone', 'whatsapp']).default('email'),
 });
 
@@ -40,12 +47,23 @@ interface PatientInfoFormProps {
   onSubmit: (data: PatientInfo) => void;
 }
 
+const DEPARTURE_CITIES = [
+  'London', 'Manchester', 'Birmingham', 'Glasgow', 'Edinburgh', 'Leeds', 'Liverpool',
+  'Bristol', 'Newcastle', 'Sheffield', 'Belfast', 'Cardiff', 'Dublin', 'Cork', 'Galway',
+  'Amsterdam', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Brussels', 'Vienna', 'Stockholm',
+  'Copenhagen', 'Oslo', 'Helsinki', 'Zurich', 'Geneva', 'Barcelona', 'Lisbon'
+];
+
+const TRAVEL_MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June', 
+  'July', 'August', 'September', 'October', 'November', 'December',
+  'Flexible'
+];
+
 const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
   initialData = {},
   onSubmit,
 }) => {
-  const { toast } = useToast();
-  const [xrayFiles, setXrayFiles] = useState<File[]>([]);
   
   // Initialize the form with default values
   const form = useForm<PatientInfo>({
@@ -58,32 +76,14 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
       departureCity: initialData.departureCity || '',
       hasXrays: initialData.hasXrays || false,
       hasCtScan: initialData.hasCtScan || false,
-      additionalNotes: initialData.additionalNotes || '',
+      hasDentalPhotos: initialData.hasDentalPhotos || false,
+      additionalNotesForClinic: initialData.additionalNotesForClinic || '',
       preferredContactMethod: initialData.preferredContactMethod || 'email',
     },
   });
 
-  // Handle file uploads
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const fileArray = Array.from(files);
-      setXrayFiles(prev => [...prev, ...fileArray]);
-      
-      toast({
-        title: "Files Added",
-        description: `Added ${fileArray.length} file(s) to your quote`,
-      });
-    }
-  };
-
   const handleSubmitForm = (data: PatientInfo) => {
-    // Add files to form data if needed before submission
     onSubmit(data);
-  };
-
-  const removeFile = (index: number) => {
-    setXrayFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -147,9 +147,20 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Preferred Travel Month</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. June 2025" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a month" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TRAVEL_MONTHS.map((month) => (
+                          <SelectItem key={month} value={month}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -160,9 +171,20 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Departure City</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. London" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a city" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {DEPARTURE_CITIES.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -218,7 +240,7 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
             <div className="border-t border-gray-200 pt-6 space-y-4">
               <h3 className="font-medium text-gray-700">Dental Records</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="hasXrays"
@@ -235,7 +257,7 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                           I have dental X-Rays
                         </FormLabel>
                         <FormDescription>
-                          Recent panoramic or periapical X-Rays can help with your quote
+                          Recent panoramic or periapical X-Rays
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -258,7 +280,30 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                           I have CT Scans
                         </FormLabel>
                         <FormDescription>
-                          CT Scans provide better treatment planning for complex procedures
+                          3D imaging for complex procedures
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="hasDentalPhotos"
+                  render={({ field }) => (
+                    <FormItem className="flex items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="font-normal">
+                          I have dental photos
+                        </FormLabel>
+                        <FormDescription>
+                          Recent photos of your teeth/smile
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -266,78 +311,23 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                 />
               </div>
               
-              {/* File upload section */}
-              <div className="mt-6">
-                <div className="border-2 border-dashed border-gray-300 rounded-md p-6">
-                  <div className="flex justify-center mb-4">
-                    <div className="text-center">
-                      <Camera className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="mt-2">
-                        <div className="flex text-sm text-gray-600">
-                          <label
-                            htmlFor="file-upload"
-                            className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
-                          >
-                            <span>Upload X-Rays or CT Scans</span>
-                            <input
-                              id="file-upload"
-                              name="file-upload"
-                              type="file"
-                              className="sr-only"
-                              multiple
-                              accept="image/*, application/pdf"
-                              onChange={handleFileChange}
-                            />
-                          </label>
-                          <p className="pl-1">or drag and drop</p>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          PNG, JPG, PDF up to 10MB each
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Display uploaded files */}
-                  {xrayFiles.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Uploaded Files:</h4>
-                      <ul className="space-y-2">
-                        {xrayFiles.map((file, index) => (
-                          <li key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
-                            <div className="flex items-center">
-                              <Upload className="h-4 w-4 text-gray-400 mr-2" />
-                              <span className="text-sm truncate max-w-xs">{file.name}</span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                              </span>
-                            </div>
-                            <Button
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => removeFile(index)}
-                              className="h-8 w-8 p-0"
-                            >
-                              ×
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+              <div className="bg-blue-50 p-4 rounded-md flex items-start mt-4">
+                <InfoIcon className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5 mr-3" />
+                <div className="text-sm text-blue-800">
+                  <p>You can securely share your dental records directly with your chosen clinic through the Patient Portal after your quote is approved.</p>
                 </div>
               </div>
             </div>
             
             <FormField
               control={form.control}
-              name="additionalNotes"
+              name="additionalNotesForClinic"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>Additional Notes for Clinic</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Any other information you'd like us to know about your dental needs or travel preferences?" 
+                      placeholder="Share any specific concerns, previous dental work, or special requirements that might help the clinic better understand your needs." 
                       className="min-h-[100px]"
                       {...field} 
                     />

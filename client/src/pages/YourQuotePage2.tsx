@@ -277,7 +277,7 @@ const YourQuotePage: React.FC = () => {
         departureCity: '',
         hasXrays: false,
         hasCtScan: false,
-        additionalNotes: '',
+        additionalNotesForClinic: '',
         preferredContactMethod: 'email'
       });
     }
@@ -676,7 +676,7 @@ const YourQuotePage: React.FC = () => {
                   phone: searchParams.get('phone') || '',
                   travelMonth: quoteParams.travelMonth || searchParams.get('travelMonth') || '',
                   // Include the budget information if available
-                  additionalNotes: `Budget Range: ${quoteParams.budget || 'Not specified'}`
+                  additionalNotesForClinic: `Budget Range: ${quoteParams.budget || 'Not specified'}`
                 }}
                 onSubmit={handlePatientInfoSubmit}
               />
