@@ -669,9 +669,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="text-sm">Communication</span>
                                 <div className="flex items-center">
                                   <div className="w-24 h-2 bg-gray-200 rounded-full mr-2">
-                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(clinic.ratings.communication / 5) * 100}%` }}></div>
+                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(4.7 / 5) * 100}%` }}></div>
                                   </div>
-                                  <span className="text-sm font-medium">{clinic.ratings.communication}</span>
+                                  <span className="text-sm font-medium">4.7</span>
                                 </div>
                               </div>
                               
@@ -679,9 +679,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="text-sm">Value</span>
                                 <div className="flex items-center">
                                   <div className="w-24 h-2 bg-gray-200 rounded-full mr-2">
-                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(clinic.ratings.value / 5) * 100}%` }}></div>
+                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(4.9 / 5) * 100}%` }}></div>
                                   </div>
-                                  <span className="text-sm font-medium">{clinic.ratings.value}</span>
+                                  <span className="text-sm font-medium">4.9</span>
                                 </div>
                               </div>
                               
@@ -689,9 +689,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="text-sm">Quality</span>
                                 <div className="flex items-center">
                                   <div className="w-24 h-2 bg-gray-200 rounded-full mr-2">
-                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(clinic.ratings.quality / 5) * 100}%` }}></div>
+                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(4.8 / 5) * 100}%` }}></div>
                                   </div>
-                                  <span className="text-sm font-medium">{clinic.ratings.quality}</span>
+                                  <span className="text-sm font-medium">4.8</span>
                                 </div>
                               </div>
                               
@@ -699,9 +699,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="text-sm">Service</span>
                                 <div className="flex items-center">
                                   <div className="w-24 h-2 bg-gray-200 rounded-full mr-2">
-                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(clinic.ratings.service / 5) * 100}%` }}></div>
+                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(4.7 / 5) * 100}%` }}></div>
                                   </div>
-                                  <span className="text-sm font-medium">{clinic.ratings.service}</span>
+                                  <span className="text-sm font-medium">4.7</span>
                                 </div>
                               </div>
                               
@@ -709,9 +709,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="text-sm">Comfort</span>
                                 <div className="flex items-center">
                                   <div className="w-24 h-2 bg-gray-200 rounded-full mr-2">
-                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(clinic.ratings.comfort / 5) * 100}%` }}></div>
+                                    <div className="h-2 bg-green-500 rounded-full" style={{ width: `${(4.6 / 5) * 100}%` }}></div>
                                   </div>
-                                  <span className="text-sm font-medium">{clinic.ratings.comfort}</span>
+                                  <span className="text-sm font-medium">4.6</span>
                                 </div>
                               </div>
                             </div>
