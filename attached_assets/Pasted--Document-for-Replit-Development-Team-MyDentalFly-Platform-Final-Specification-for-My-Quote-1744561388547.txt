@@ -1,0 +1,107 @@
+**Document for Replit Development Team**
+
+# MyDentalFly Platform - Final Specification for "My Quote" Page
+
+## Objective:
+Create a simplified, educational, and trustworthy user flow for building a dental treatment plan quote. The focus is on:
+- User education
+- Quote transparency
+- Simplicity in the journey
+- No clinic prices shown until after quote is built
+
+## Homepage (Already Built)
+Simple Booking.com style form:
+- Treatment Type (Dropdown or Search)
+- Travel Month (Optional)
+- Budget Range (Optional)
+- CTA: Calculate My Quote
+
+---
+
+## My Quote Page (Key Modifications Required)
+
+### Section 1: Treatment Plan Builder
+Replace dropdowns with tick-box categories for treatments.
+
+#### Categories:
+- Implants
+- Veneers & Crowns
+- Teeth Whitening
+- Full Mouth Rehab
+- General Dentistry
+- Other Treatments
+
+User selects treatment(s) via tick box and quantity selector (+/-).
+
+Show only UK Average Price for education and comparison.
+
+Optional Tooltip (Info Icon):
+"Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays."
+
+---
+
+### Section 2: Cost Comparison Summary
+- Estimated Total UK Price: £X
+- Estimated Flights: £200-250
+- Estimated Hotel: £30-100 per night
+- Estimated Savings: 60-70% vs UK Prices
+
+### Optional Note:
+"Final clinic quote provided after consultation."
+
+---
+
+### Section 3: Example Case Studies
+Educational Section with 2-3 examples:
+- Mr. Roberts - Implants + Bone Graft
+- Sarah - Veneers + Whitening
+
+Explain why treatments were selected and typical costs.
+
+---
+
+### Section 4: CTA Section
+"Ready to See Clinics & Packages?"
+Button: View Matching Clinics
+
+---
+
+## After CTA Pressed
+User sees:
+- Clinics with Images, Ratings, Summary Details
+- Prices for Treatment Plan Range (based on clinic data)
+- Packages (Optional Add-ons by Clinic)
+- Reminder: "Final price will be confirmed after consultation and X-rays"
+
+---
+
+## Backend Data Structure for Clinics (To Use Google Sheet or Database)
+Fields:
+- Clinic Name
+- Location
+- Treatments Offered
+- Price Range per Treatment (Optional if available)
+- Certifications
+- Clinic Rating
+- Clinic Photos URL
+- Packages Description
+
+---
+
+## Additional Notes:
+- Patient Portal already exists
+- Booking Deposit £200 held securely (highlight UK based company for trust)
+- Communication via Patient Portal only after booking
+- X-ray and Document Upload happens inside Portal after booking
+
+---
+
+## Future Enhancements
+- Concierge Service Upsell
+- Featured Clinics / Promotions
+- Blog Content for SEO
+
+---
+
+Ready to implement. Please ask if anything needs clarification before development proceeds.
+

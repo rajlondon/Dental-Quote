@@ -356,7 +356,236 @@ const YourQuotePage: React.FC = () => {
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
           
-          {/* Removed the Example Treatment Plans Section from here - will add later after treatment plan builder */}
+          {/* Cost Comparison Summary (Added per new spec) */}
+          <div className="mb-8">
+            <Card>
+              <CardHeader className="border-b border-gray-100 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-green-50">
+                    <Sparkles className="h-6 w-6 text-green-500" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl">Cost Comparison Summary</CardTitle>
+                    <CardDescription>See how much you could save compared to UK dental treatments</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="bg-white border-gray-200">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base font-medium text-gray-600">Estimated UK Price</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">
+                        £{formatCurrency(totalGBP)}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">Based on UK average prices</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white border-gray-200">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base font-medium text-gray-600">Estimated Flights</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xl font-bold">
+                        £200-250
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">Return flights from the UK</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white border-gray-200">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base font-medium text-gray-600">Estimated Hotel</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xl font-bold">
+                        £30-100
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">Per night, varies by location</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-green-50 border-green-100">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base font-medium text-green-700">Estimated Savings</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold text-green-700">
+                        60-70%
+                      </p>
+                      <p className="text-sm text-green-600 mt-1">vs UK dental prices</p>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <div className="flex items-center gap-2">
+                    <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <p className="text-blue-700 text-sm">
+                      Final clinic quote will be provided after consultation. Each clinic has different pricing based on materials and techniques. You'll be presented with a range of options once you view matching clinics.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Example Case Studies (Added per new spec) */}
+          <div className="mb-8">
+            <Card>
+              <CardHeader className="border-b border-gray-100 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-purple-50">
+                    <User className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl">Example Case Studies</CardTitle>
+                    <CardDescription>Real patient examples with typical treatments and costs</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Case Study 1 */}
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <div className="bg-gray-50 p-4 border-b">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                          MR
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Mr. Roberts, 51</h3>
+                          <p className="text-gray-600 text-sm">Multiple Implants & Bone Grafts</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="mb-4">
+                        <h4 className="font-medium mb-2">Treatment Plan:</h4>
+                        <ul className="space-y-1 text-sm">
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>4 Dental Implants with Abutments</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>2 Bone Grafts</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>4 Porcelain Crowns</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>1 Root Canal Treatment</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">Cost Comparison:</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">UK Price:</span>
+                            <span className="font-semibold">£13,600</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Turkey Price:</span>
+                            <span className="font-semibold text-green-600">£4,250</span>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <span className="text-gray-600">Savings:</span>
+                            <span className="font-bold text-green-600">69%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Case Study 2 */}
+                  <div className="border rounded-lg overflow-hidden bg-white">
+                    <div className="bg-gray-50 p-4 border-b">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-lg">
+                          SJ
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Sarah Johnson, 34</h3>
+                          <p className="text-gray-600 text-sm">Veneers & Teeth Whitening</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="mb-4">
+                        <h4 className="font-medium mb-2">Treatment Plan:</h4>
+                        <ul className="space-y-1 text-sm">
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>8 E-max Veneers (Front Teeth)</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>Zoom Whitening Treatment</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>Professional Cleaning</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span>Take-Home Whitening Kit</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">Cost Comparison:</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">UK Price:</span>
+                            <span className="font-semibold">£5,450</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Turkey Price:</span>
+                            <span className="font-semibold text-green-600">£1,850</span>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <span className="text-gray-600">Savings:</span>
+                            <span className="font-bold text-green-600">66%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Ready to See Clinics CTA (Added per new spec) */}
+          {treatments.length > 0 && !isQuoteReady && (
+            <div className="mb-8">
+              <Card className="bg-blue-50 border-blue-100">
+                <CardContent className="pt-6 pb-6">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-blue-800">Ready to See Clinics & Packages?</h3>
+                      <p className="text-blue-700 mt-1">Continue to view clinics that match your treatment needs</p>
+                    </div>
+                    <Button 
+                      size="lg" 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setCurrentStep('patient-info')}
+                    >
+                      View Matching Clinics
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           
           {/* Progress tracker */}
           <div className="mb-8">

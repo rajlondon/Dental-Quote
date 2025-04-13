@@ -42,37 +42,47 @@ export interface TreatmentCategory {
 const TREATMENT_CATEGORIES: TreatmentCategory[] = [
   {
     id: 'implants',
-    name: 'Dental Implants',
+    name: 'Implants',
     treatments: [
       { 
         id: 'dental_implant_standard', 
         name: 'Dental Implant (Standard)', 
-        priceGBP: 450, 
-        priceUSD: 580,
+        priceGBP: 2500, 
+        priceUSD: 3200,
         guarantee: '5-year',
-        notes: 'Implant brand will be selected by the clinic based on quality, preference, and availability.'
+        notes: 'UK average price. Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.'
       },
       { 
         id: 'dental_implant_premium', 
         name: 'Dental Implant (Premium)', 
-        priceGBP: 650, 
-        priceUSD: 840,
+        priceGBP: 3000, 
+        priceUSD: 3850,
         guarantee: '10-year',
-        notes: 'Premium brands like Straumann or Nobel Biocare.'
+        notes: 'UK average price for premium brands like Straumann or Nobel Biocare. Clinic prices vary based on materials used.'
       },
       { 
         id: 'all_on_4_implants', 
-        name: 'All-on-4 Implants', 
-        priceGBP: 3800, 
-        priceUSD: 4900,
-        guarantee: '10-year' 
+        name: 'All-on-4 Implants (Full Arch)', 
+        priceGBP: 12000, 
+        priceUSD: 15400,
+        guarantee: '10-year',
+        notes: 'UK average price. Includes 4 implants and a full arch restoration. Clinic prices vary based on materials used.'
       },
       { 
-        id: 'all_on_6_implants', 
-        name: 'All-on-6 Implants', 
-        priceGBP: 4500, 
-        priceUSD: 5800,
-        guarantee: '10-year' 
+        id: 'bone_graft', 
+        name: 'Bone Graft (Per Site)', 
+        priceGBP: 650, 
+        priceUSD: 835,
+        guarantee: 'N/A',
+        notes: 'UK average price. May be required if your jaw bone lacks sufficient volume to support implants.'
+      },
+      { 
+        id: 'sinus_lift', 
+        name: 'Sinus Lift', 
+        priceGBP: 900, 
+        priceUSD: 1160,
+        guarantee: 'N/A',
+        notes: 'UK average price. May be needed for upper jaw implants when there is insufficient bone height.'
       },
     ],
   },
@@ -83,37 +93,42 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
       { 
         id: 'porcelain_crown', 
         name: 'Porcelain Crown', 
-        priceGBP: 180, 
-        priceUSD: 230,
-        guarantee: '3-year' 
+        priceGBP: 650, 
+        priceUSD: 835,
+        guarantee: '3-year',
+        notes: 'UK average price. Clinic prices vary based on materials used and specifications.'
       },
       { 
         id: 'zirconia_crown', 
         name: 'Zirconia Crown', 
-        priceGBP: 240, 
-        priceUSD: 310,
-        guarantee: '5-year' 
-      },
-      { 
-        id: 'emax_crown', 
-        name: 'E-max Crown', 
-        priceGBP: 260, 
-        priceUSD: 340,
-        guarantee: '5-year' 
+        priceGBP: 850, 
+        priceUSD: 1100,
+        guarantee: '5-year',
+        notes: 'UK average price. More durable than porcelain crowns and highly aesthetic.'
       },
       { 
         id: 'porcelain_veneer', 
         name: 'Porcelain Veneer', 
-        priceGBP: 190, 
-        priceUSD: 245,
-        guarantee: '3-year' 
+        priceGBP: 600, 
+        priceUSD: 770,
+        guarantee: '3-year',
+        notes: 'UK average price. Thin shells bonded to the front surface of teeth to improve appearance.'
       },
       { 
-        id: 'emax_veneer', 
-        name: 'E-max Veneer', 
-        priceGBP: 250, 
-        priceUSD: 320,
-        guarantee: '5-year' 
+        id: 'composite_veneer', 
+        name: 'Composite Veneer', 
+        priceGBP: 350, 
+        priceUSD: 450,
+        guarantee: '2-year',
+        notes: 'UK average price. A more affordable alternative to porcelain veneers.'
+      },
+      { 
+        id: 'inlay_onlay', 
+        name: 'Inlay/Onlay', 
+        priceGBP: 450, 
+        priceUSD: 580,
+        guarantee: '5-year',
+        notes: 'UK average price. Used when a tooth is too damaged for a filling but not enough for a crown.'
       },
     ],
   },
@@ -123,66 +138,57 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
     treatments: [
       { 
         id: 'zoom_whitening', 
-        name: 'Zoom Whitening', 
-        priceGBP: 220, 
-        priceUSD: 280,
-        guarantee: '1-year' 
+        name: 'Zoom Whitening (In-office)', 
+        priceGBP: 450, 
+        priceUSD: 580,
+        guarantee: '1-year',
+        notes: 'UK average price. Professional whitening treatment that uses light-activated technology.'
       },
       { 
         id: 'laser_whitening', 
         name: 'Laser Whitening', 
-        priceGBP: 260, 
-        priceUSD: 335,
-        guarantee: '1-year' 
-      },
-    ],
-  },
-  {
-    id: 'dentures',
-    name: 'Dentures & All-on-4',
-    treatments: [
-      { 
-        id: 'partial_denture', 
-        name: 'Partial Denture', 
-        priceGBP: 280, 
-        priceUSD: 360,
-        guarantee: '2-year' 
+        priceGBP: 550, 
+        priceUSD: 710,
+        guarantee: '1-year',
+        notes: 'UK average price. Uses laser light to activate the whitening solution for faster results.'
       },
       { 
-        id: 'full_denture', 
-        name: 'Full Denture', 
-        priceGBP: 380, 
-        priceUSD: 490,
-        guarantee: '3-year' 
-      },
-      { 
-        id: 'flexible_denture', 
-        name: 'Flexible Denture', 
-        priceGBP: 450, 
-        priceUSD: 580,
-        guarantee: '3-year' 
+        id: 'home_whitening_kit', 
+        name: 'Professional Home Whitening Kit', 
+        priceGBP: 250, 
+        priceUSD: 320,
+        guarantee: '1-year',
+        notes: 'UK average price. Custom-made trays with professional whitening gel for home use.'
       },
     ],
   },
   {
     id: 'full_mouth',
-    name: 'Full Mouth Reconstruction',
+    name: 'Full Mouth Rehab',
     treatments: [
       { 
         id: 'full_smile_makeover', 
         name: 'Full Smile Makeover', 
-        priceGBP: 2800, 
-        priceUSD: 3600,
+        priceGBP: 8000, 
+        priceUSD: 10300,
         guarantee: '5-year',
-        notes: 'Includes comprehensive treatment plan with multiple procedures.'
+        notes: 'UK average price. Comprehensive treatment plan combining multiple procedures for a complete smile transformation.'
       },
       { 
         id: 'hollywood_smile', 
-        name: 'Hollywood Smile', 
-        priceGBP: 3200, 
-        priceUSD: 4100,
+        name: 'Hollywood Smile (8-10 Veneers)', 
+        priceGBP: 5500, 
+        priceUSD: 7100,
         guarantee: '5-year',
-        notes: 'Premium full mouth transformation with the highest quality materials.'
+        notes: 'UK average price. Premium full mouth transformation with high-quality veneers or crowns.'
+      },
+      { 
+        id: 'full_mouth_restoration', 
+        name: 'Full Mouth Restoration', 
+        priceGBP: 12000, 
+        priceUSD: 15400,
+        guarantee: '5-year',
+        notes: 'UK average price. Complete restoration of all teeth to restore function and aesthetics.'
       },
     ],
   },
@@ -193,50 +199,80 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
       { 
         id: 'dental_checkup_cleaning', 
         name: 'Dental Check-up & Cleaning', 
-        priceGBP: 30, 
-        priceUSD: 40,
+        priceGBP: 80, 
+        priceUSD: 100,
         guarantee: 'N/A',
-        notes: 'Comprehensive examination, professional cleaning, and preventative care advice.'
-      },
-      { 
-        id: 'dental_xrays', 
-        name: 'Dental X-rays (Panoramic)', 
-        priceGBP: 0, 
-        priceUSD: 0,
-        guarantee: 'N/A',
-        notes: 'Included FREE with consultation. Full-mouth panoramic X-ray for comprehensive diagnosis.'
+        notes: 'UK average price. Comprehensive examination, professional cleaning, and preventative care advice.'
       },
       { 
         id: 'tooth_fillings', 
         name: 'Tooth Fillings (Composite)', 
-        priceGBP: 35, 
-        priceUSD: 45,
+        priceGBP: 120, 
+        priceUSD: 155,
         guarantee: '2-year',
-        notes: 'High-quality composite (tooth-colored) fillings to repair cavities and tooth damage.'
-      },
-      { 
-        id: 'teeth_whitening', 
-        name: 'Professional Teeth Whitening', 
-        priceGBP: 90, 
-        priceUSD: 120,
-        guarantee: '1-year',
-        notes: 'In-office professional whitening treatment for a brighter, more confident smile.'
+        notes: 'UK average price. High-quality composite (tooth-colored) fillings to repair cavities and tooth damage.'
       },
       { 
         id: 'root_canal', 
         name: 'Root Canal Treatment', 
-        priceGBP: 100, 
-        priceUSD: 130,
+        priceGBP: 500, 
+        priceUSD: 645,
         guarantee: '2-year',
-        notes: 'Modern, minimally painful root canal therapy to save damaged teeth.'
+        notes: 'UK average price. Modern, minimally painful root canal therapy to save damaged teeth.'
       },
       { 
         id: 'tooth_extraction', 
         name: 'Tooth Extraction', 
-        priceGBP: 40, 
-        priceUSD: 55,
+        priceGBP: 150, 
+        priceUSD: 195,
         guarantee: 'N/A',
-        notes: 'Simple extraction of visible tooth. Surgical extractions may cost more.'
+        notes: 'UK average price. Simple extraction of visible tooth. Surgical extractions may cost more.'
+      },
+      { 
+        id: 'dental_bridge', 
+        name: 'Dental Bridge (3-unit)', 
+        priceGBP: 1500, 
+        priceUSD: 1930,
+        guarantee: '5-year',
+        notes: 'UK average price. Fixed prosthetic device to replace missing teeth by joining artificial teeth to adjacent natural teeth.'
+      },
+    ],
+  },
+  {
+    id: 'other',
+    name: 'Other Treatments',
+    treatments: [
+      { 
+        id: 'orthodontics_invisalign', 
+        name: 'Invisalign Treatment', 
+        priceGBP: 4000, 
+        priceUSD: 5150,
+        guarantee: '1-year',
+        notes: 'UK average price. Clear aligner system to straighten teeth without traditional braces.'
+      },
+      { 
+        id: 'orthodontics_braces', 
+        name: 'Traditional Braces', 
+        priceGBP: 3000, 
+        priceUSD: 3850,
+        guarantee: '1-year',
+        notes: 'UK average price. Metal or ceramic brackets bonded to teeth to correct alignment.'
+      },
+      { 
+        id: 'gum_treatment', 
+        name: 'Periodontal (Gum) Treatment', 
+        priceGBP: 400, 
+        priceUSD: 515,
+        guarantee: 'N/A',
+        notes: 'UK average price. Specialized treatment for gum disease, including deep cleaning and medication.'
+      },
+      { 
+        id: 'night_guard', 
+        name: 'Night Guard/Splint', 
+        priceGBP: 250, 
+        priceUSD: 320,
+        guarantee: '1-year',
+        notes: 'UK average price. Custom-made device to prevent teeth grinding during sleep.'
       },
     ],
   },
@@ -395,44 +431,59 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       <div className="grid grid-cols-1 gap-6">
         <div>
           <Tabs defaultValue="implants" className="w-full">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto p-1 mb-6">
-              <TabsTrigger value="implants" className="py-2">Dental Implants</TabsTrigger>
+            <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto p-1 mb-6">
+              <TabsTrigger value="implants" className="py-2">Implants</TabsTrigger>
               <TabsTrigger value="crowns_veneers" className="py-2">Veneers & Crowns</TabsTrigger>
-              <TabsTrigger value="root_canal" className="py-2">Root Canal</TabsTrigger>
-              <TabsTrigger value="bone_graft" className="py-2">Bone Grafts</TabsTrigger>
               <TabsTrigger value="whitening" className="py-2">Teeth Whitening</TabsTrigger>
               <TabsTrigger value="full_mouth" className="py-2">Full Mouth Rehab</TabsTrigger>
               <TabsTrigger value="general" className="py-2">General Dentistry</TabsTrigger>
               <TabsTrigger value="other" className="py-2">Other Treatments</TabsTrigger>
             </TabsList>
             
-            {/* Dental Implants Tab */}
+            {/* Implants Tab */}
             <TabsContent value="implants" className="border rounded-md p-4">
-              <h3 className="font-semibold mb-3">Dental Implants</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Implants</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-blue-600 text-sm cursor-help">
+                        <Info className="h-4 w-4 mr-1" />
+                        <span>UK Average Prices for Comparison</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="space-y-3">
                 {TREATMENT_CATEGORIES.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
                   <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                     <div className="flex items-start gap-3">
-                      <Checkbox 
-                        id={treatment.id}
-                        checked={isTreatmentSelected(treatment.name)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            handleDirectAddTreatment(treatment, 'implants');
-                          } else {
-                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
-                            if (matchingTreatment) {
-                              handleRemoveTreatment(matchingTreatment.id);
+                      <div className="pt-0.5">
+                        <Checkbox 
+                          id={treatment.id}
+                          checked={isTreatmentSelected(treatment.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleDirectAddTreatment(treatment, 'implants');
+                            } else {
+                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                              if (matchingTreatment) {
+                                handleRemoveTreatment(matchingTreatment.id);
+                              }
                             }
-                          }
-                        }}
-                      />
+                          }}
+                        />
+                      </div>
                       <div>
                         <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
                           {treatment.name}
                         </label>
                         <div className="flex items-center mt-1">
-                          {treatment.guarantee && (
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
                             <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
                               {treatment.guarantee} guarantee
                             </span>
@@ -454,8 +505,378 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge variant="outline" className="font-normal">
-                        Price varies by clinic
+                      <Badge variant="outline" className="font-medium text-sm">
+                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Veneers & Crowns Tab */}
+            <TabsContent value="crowns_veneers" className="border rounded-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Veneers & Crowns</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-blue-600 text-sm cursor-help">
+                        <Info className="h-4 w-4 mr-1" />
+                        <span>UK Average Prices for Comparison</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'crowns_veneers')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="pt-0.5">
+                        <Checkbox 
+                          id={treatment.id}
+                          checked={isTreatmentSelected(treatment.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleDirectAddTreatment(treatment, 'crowns_veneers');
+                            } else {
+                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                              if (matchingTreatment) {
+                                handleRemoveTreatment(matchingTreatment.id);
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="font-medium text-sm">
+                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Teeth Whitening Tab */}
+            <TabsContent value="whitening" className="border rounded-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Teeth Whitening</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-blue-600 text-sm cursor-help">
+                        <Info className="h-4 w-4 mr-1" />
+                        <span>UK Average Prices for Comparison</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'whitening')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="pt-0.5">
+                        <Checkbox 
+                          id={treatment.id}
+                          checked={isTreatmentSelected(treatment.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleDirectAddTreatment(treatment, 'whitening');
+                            } else {
+                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                              if (matchingTreatment) {
+                                handleRemoveTreatment(matchingTreatment.id);
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="font-medium text-sm">
+                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Full Mouth Rehab Tab */}
+            <TabsContent value="full_mouth" className="border rounded-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Full Mouth Rehabilitation</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-blue-600 text-sm cursor-help">
+                        <Info className="h-4 w-4 mr-1" />
+                        <span>UK Average Prices for Comparison</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'full_mouth')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="pt-0.5">
+                        <Checkbox 
+                          id={treatment.id}
+                          checked={isTreatmentSelected(treatment.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleDirectAddTreatment(treatment, 'full_mouth');
+                            } else {
+                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                              if (matchingTreatment) {
+                                handleRemoveTreatment(matchingTreatment.id);
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="font-medium text-sm">
+                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* General Dentistry Tab */}
+            <TabsContent value="general" className="border rounded-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">General Dentistry</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-blue-600 text-sm cursor-help">
+                        <Info className="h-4 w-4 mr-1" />
+                        <span>UK Average Prices for Comparison</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'general')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="pt-0.5">
+                        <Checkbox 
+                          id={treatment.id}
+                          checked={isTreatmentSelected(treatment.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleDirectAddTreatment(treatment, 'general');
+                            } else {
+                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                              if (matchingTreatment) {
+                                handleRemoveTreatment(matchingTreatment.id);
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="font-medium text-sm">
+                        UK avg: £{treatment.priceGBP.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            {/* Other Treatments Tab */}
+            <TabsContent value="other" className="border rounded-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Other Treatments</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-blue-600 text-sm cursor-help">
+                        <Info className="h-4 w-4 mr-1" />
+                        <span>UK Average Prices for Comparison</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Clinic prices vary based on materials used. Final pricing will be confirmed after consultation and review of X-rays.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="space-y-3">
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'other')?.treatments.map((treatment) => (
+                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="pt-0.5">
+                        <Checkbox 
+                          id={treatment.id}
+                          checked={isTreatmentSelected(treatment.name)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleDirectAddTreatment(treatment, 'other');
+                            } else {
+                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
+                              if (matchingTreatment) {
+                                handleRemoveTreatment(matchingTreatment.id);
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
+                          {treatment.name}
+                        </label>
+                        <div className="flex items-center mt-1">
+                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
+                              {treatment.guarantee} guarantee
+                            </span>
+                          )}
+                          {treatment.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  <span>Info</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>{treatment.notes}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="font-medium text-sm">
+                        UK avg: £{treatment.priceGBP.toLocaleString()}
                       </Badge>
                     </div>
                   </div>
