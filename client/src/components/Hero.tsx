@@ -78,7 +78,7 @@ const QuoteForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to quote results page with query parameters
-    window.location.href = `/your-quote?country=${country}&city=${city}&treatment=${treatmentType}&month=${travelMonth}`;
+    window.location.href = `/your-quote-2?country=${country}&city=${city}&treatment=${treatmentType}&travelMonth=${travelMonth}&budget=${budgetRange}`;
   };
   
   return (
@@ -185,6 +185,25 @@ const QuoteForm: React.FC = () => {
           </div>
         </div>
         
+        {/* Budget Range */}
+        <div className="space-y-2">
+          <label htmlFor="budget-range" className="block text-sm font-medium text-gray-700">
+            Estimated Budget (Optional)
+          </label>
+          <Select value={budgetRange} onValueChange={setBudgetRange}>
+            <SelectTrigger id="budget-range" className="w-full">
+              <SelectValue placeholder="Select budget range" />
+            </SelectTrigger>
+            <SelectContent>
+              {budgetRanges.map((range) => (
+                <SelectItem key={range.value} value={range.value}>
+                  {range.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
         {/* Submit Button */}
         <Button 
           type="submit"
@@ -232,7 +251,7 @@ const Hero: React.FC = () => {
               </Button>
               
               <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                <Link href="/your-quote">
+                <Link href="/your-quote-2">
                   See All Treatments
                 </Link>
               </Button>

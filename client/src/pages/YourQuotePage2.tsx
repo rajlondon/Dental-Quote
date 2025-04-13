@@ -564,7 +564,7 @@ const YourQuotePage: React.FC = () => {
           </div>
           
           {/* Ready to See Clinics CTA (Added per new spec) */}
-          {treatments.length > 0 && !isQuoteReady && (
+          {treatmentItems.length > 0 && !isQuoteReady && (
             <div className="mb-8">
               <Card className="bg-blue-50 border-blue-100">
                 <CardContent className="pt-6 pb-6">
