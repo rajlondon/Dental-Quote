@@ -403,7 +403,11 @@ const YourQuotePage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
                     <p className="text-blue-700 text-sm">
-                      Final clinic quote will be provided after consultation. Each clinic has different pricing based on materials and techniques. You'll be presented with a range of options once you view matching clinics.
+                      Your final treatment quote will be confirmed by your chosen clinic after they've reviewed your dental information — including any X-rays, CT scans, or images you provide.
+                      
+                      Each clinic has its own pricing based on the materials they use and their treatment approach — these details will be discussed with you directly.
+                      
+                      Please note: Payment for treatment is only made in-person, after your consultation and examination at the clinic — ensuring the treatment plan is accurate, suitable, and fully agreed by you.
                     </p>
                   </div>
                 </div>

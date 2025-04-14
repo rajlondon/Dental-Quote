@@ -50,7 +50,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 875, 
         priceUSD: 1120,
         guarantee: '5-year',
-        notes: 'Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.'
+        notes: 'Actual prices vary based on materials used and clinic quality. Final quotes will be confirmed after your dental records are reviewed.'
       },
       { 
         id: 'dental_implant_premium', 
@@ -1615,7 +1615,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </div>
               <div className="mt-4 text-xs text-gray-600">
                 <p className="mb-2"><strong>IMPORTANT:</strong> These prices are estimates based on average Istanbul clinic rates. You will receive clinic-specific quotes in the next step.</p>
-                <p className="mb-2">Final pricing will be confirmed after your <strong>free online consultation</strong> with your chosen clinic and a review of your dental records.</p>
+                <p className="mb-2">Your final treatment quote will be confirmed by your chosen clinic after they've reviewed your dental information — including any X-rays, CT scans, or images you provide. Payment for treatment is only made in-person at the clinic, ensuring the treatment plan is accurate and agreed by you.</p>
               </div>
               <div className="mt-4">
                 <Button 
