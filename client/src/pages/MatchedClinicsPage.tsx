@@ -964,7 +964,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           
           <div className="flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setLocation('/quote')} className="w-full sm:w-auto">
-              Back to Treatment Plan
+              Back to Quote
             </Button>
             
             <WhatsAppButton 
