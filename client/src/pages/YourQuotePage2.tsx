@@ -375,13 +375,13 @@ const YourQuotePage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-medium text-gray-600">Estimated UK Price</CardTitle>
+                      <CardTitle className="text-base font-medium text-gray-600">Estimated UK Cost</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-2xl font-bold">
                         £{formatCurrency(totalGBP)}
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">Based on UK average prices</p>
+                      <p className="text-sm text-gray-500 mt-1">Estimated UK Cost</p>
                     </CardContent>
                   </Card>
                   
@@ -615,7 +615,7 @@ const YourQuotePage: React.FC = () => {
                           </div>
                           <div className="mt-4 text-sm">
                             <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£2,200</span></p>
-                            <p><span className="font-semibold">UK comparison price:</span> <span className="text-gray-500 line-through">£7,500</span></p>
+                            <p><span className="font-semibold">Estimated UK Cost:</span> <span className="text-gray-500 line-through">£7,500</span></p>
                             <p className="text-green-600 font-semibold mt-1">Saved over £5,300</p>
                           </div>
                         </div>

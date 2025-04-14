@@ -1950,12 +1950,12 @@ export default function PriceCalculator() {
                             Math.round(quote.totalGBP * 1.00)  // Vera Smile (Premium)
                           ][selectedClinic];
                           
-                          // Calculate UK average price
-                          const ukAvgPrice = (Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2;
+                          // Calculate Estimated UK Cost
+                          const estimatedUKCost = (Math.round(quote.totalGBP * 3.2) + Math.round(quote.totalGBP * 2.8))/2;
                           
                           // Calculate savings
-                          const savings = ukAvgPrice - selectedClinicPrice;
-                          const savingsPercent = Math.round((savings / ukAvgPrice) * 100);
+                          const savings = estimatedUKCost - selectedClinicPrice;
+                          const savingsPercent = Math.round((savings / estimatedUKCost) * 100);
                           
                           return (
                             <>
