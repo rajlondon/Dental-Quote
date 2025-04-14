@@ -352,6 +352,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add jsPDF Quote Generator V2 endpoint
+  app.post('/api/jspdf-quote-v2', (req, res) => {
+    try {
+      // Generate the PDF from the quote data
+      const quoteData = req.body;
+      
+      // Generate the PDF using the V2 generator function
+      const pdfBuffer = generateQuotePdfV2(quoteData);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=MyDentalFly_Quote.pdf');
+      
+      // Send the PDF buffer directly
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF with jsPDF v2:', error);
+      res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
