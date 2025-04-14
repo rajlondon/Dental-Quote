@@ -268,7 +268,7 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
                 ))}
               </div>
               <div className="flex justify-between pt-2 border-t">
-                <span className="font-medium">Total Estimated Cost:</span>
+                <span className="font-medium">Estimated Istanbul Price:</span>
                 <span className="font-semibold">£{totalAmount}</span>
               </div>
               <div className="flex justify-between pt-2 border-t mt-3 text-blue-700">
@@ -277,6 +277,7 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
               </div>
               <div className="bg-gray-50 rounded-lg p-3 mt-4 text-sm text-gray-600">
                 <p>The remaining balance of £{totalAmount - depositAmount} will be paid directly to the clinic on the day of your treatment.</p>
+                <p className="mt-2">Hotel stays are often included in treatment packages depending on the cost of your treatment.</p>
               </div>
             </Card>
           </div>

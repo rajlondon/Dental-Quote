@@ -131,7 +131,7 @@ export default function FAQPage() {
                 Do you arrange accommodation in Istanbul?
               </AccordionTrigger>
               <AccordionContent>
-                Yes, we can arrange your accommodation as part of our concierge service. We work with several partner hotels near our affiliated clinics, ranging from comfortable 3-star to luxury 5-star options. The cost of accommodation can be included in your treatment package or arranged separately based on your preferences.
+                Yes, we can arrange your accommodation as part of our concierge service. We work with several partner hotels near our affiliated clinics, ranging from comfortable 3-star to luxury 5-star options. Hotel stays are often included in treatment packages depending on the cost of your treatment, or accommodation can be arranged separately based on your preferences.
               </AccordionContent>
             </AccordionItem>
             

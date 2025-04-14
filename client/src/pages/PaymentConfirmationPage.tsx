@@ -114,8 +114,9 @@ const PaymentConfirmationPage: React.FC<PaymentConfirmationPageProps> = ({
                 <div className="flex items-start gap-3">
                   <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">Estimated Treatment Total</h3>
+                    <h3 className="text-sm font-medium text-gray-500">Estimated Istanbul Price</h3>
                     <p className="font-medium">£{treatmentTotalGBP}</p>
+                    <p className="text-xs text-gray-500 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                   </div>
                 </div>
               )}
