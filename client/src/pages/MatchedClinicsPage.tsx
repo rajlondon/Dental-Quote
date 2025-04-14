@@ -288,7 +288,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           const tierInfo = getTierLabel(clinic.tier);
           
           return (
-            <Card key={clinic.id} className="overflow-hidden">
+            <Card key={clinic.id} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
               <div className="border-b">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
