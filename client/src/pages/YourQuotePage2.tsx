@@ -750,16 +750,130 @@ const YourQuotePage: React.FC = () => {
               onSelectClinic={handleSelectClinic}
               onBackToInfo={() => setCurrentStep('patient-info')}
               onQuoteDownload={() => {
-                toast({
-                  title: "Download Started",
-                  description: "Your quote PDF is being downloaded.",
-                });
+                try {
+                  // Get the selected clinic data from localStorage
+                  const selectedClinicId = localStorage.getItem('selectedClinicId');
+                  const selectedClinicData = localStorage.getItem('selectedClinicData');
+                  const clinicData = selectedClinicData ? JSON.parse(selectedClinicData) : null;
+                  
+                  // Call PDF generation API with clinic-specific data
+                  fetch('/api/jspdf-quote-v2', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      items: treatmentItems,
+                      totalGBP: totalGBP,
+                      patientName: patientInfo?.fullName,
+                      patientEmail: patientInfo?.email,
+                      patientPhone: patientInfo?.phone,
+                      travelMonth: patientInfo?.travelMonth || 'year-round',
+                      departureCity: patientInfo?.departureCity || 'UK',
+                      selectedClinic: {
+                        id: selectedClinicId,
+                        name: clinicData?.name,
+                        treatments: clinicData?.treatments,
+                        totalPrice: clinicData?.totalPrice
+                      }
+                    }),
+                  })
+                  .then(response => response.blob())
+                  .then(blob => {
+                    // Create a download link for the PDF
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    
+                    // Generate a formatted filename with date
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    const patientName = patientInfo?.fullName?.replace(/\s+/g, '-') || 'patient';
+                    const clinicName = clinicData?.name?.replace(/\s+/g, '-') || 'dental-clinic';
+                    
+                    link.download = `MyDentalFly-Quote-${clinicName}-${patientName}-${dateStr}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    toast({
+                      title: "Download Started",
+                      description: "Your quote PDF is being downloaded.",
+                    });
+                  })
+                  .catch(error => {
+                    console.error('Error generating PDF:', error);
+                    toast({
+                      title: "Download Failed",
+                      description: "There was an error generating your PDF. Please try again.",
+                      variant: "destructive"
+                    });
+                  });
+                } catch (error) {
+                  console.error('Error preparing PDF data:', error);
+                  toast({
+                    title: "Download Failed",
+                    description: "There was an error preparing your PDF. Please try again.",
+                    variant: "destructive"
+                  });
+                }
               }}
               onEmailQuote={() => {
-                toast({
-                  title: "Quote Sent",
-                  description: "Your quote has been sent to your email address.",
-                });
+                try {
+                  // Get the selected clinic data from localStorage
+                  const selectedClinicId = localStorage.getItem('selectedClinicId');
+                  const selectedClinicData = localStorage.getItem('selectedClinicData');
+                  const clinicData = selectedClinicData ? JSON.parse(selectedClinicData) : null;
+                  
+                  // Call email API with clinic-specific data
+                  fetch('/api/email-quote', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      items: treatmentItems,
+                      totalGBP: totalGBP,
+                      patientName: patientInfo?.fullName,
+                      patientEmail: patientInfo?.email,
+                      patientPhone: patientInfo?.phone,
+                      travelMonth: patientInfo?.travelMonth || 'year-round',
+                      departureCity: patientInfo?.departureCity || 'UK',
+                      selectedClinic: {
+                        id: selectedClinicId,
+                        name: clinicData?.name,
+                        treatments: clinicData?.treatments,
+                        totalPrice: clinicData?.totalPrice
+                      }
+                    }),
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error('Failed to send email');
+                    }
+                    return response.json();
+                  })
+                  .then(data => {
+                    toast({
+                      title: "Quote Sent",
+                      description: `Your quote has been sent to ${patientInfo?.email}`,
+                    });
+                  })
+                  .catch(error => {
+                    console.error('Error sending email:', error);
+                    toast({
+                      title: "Email Failed",
+                      description: "There was an error sending your email. Please try again.",
+                      variant: "destructive"
+                    });
+                  });
+                } catch (error) {
+                  console.error('Error preparing email data:', error);
+                  toast({
+                    title: "Email Failed",
+                    description: "There was an error preparing your email. Please try again.",
+                    variant: "destructive"
+                  });
+                }
               }}
             />
           )}

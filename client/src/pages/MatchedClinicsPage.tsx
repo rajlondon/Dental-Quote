@@ -937,7 +937,51 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                     </TabsContent>
                   </Tabs>
                   
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-6 flex flex-col sm:flex-row justify-between gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          // Set the clinic ID before triggering the download
+                          if (onQuoteDownload) {
+                            // Store selected clinic data for PDF generation
+                            localStorage.setItem('selectedClinicId', clinic.id);
+                            localStorage.setItem('selectedClinicData', JSON.stringify({
+                              name: clinic.name,
+                              treatments: clinicTreatments,
+                              totalPrice: totalPrice
+                            }));
+                            onQuoteDownload();
+                          }
+                        }}
+                        className="flex items-center"
+                      >
+                        <FileCheck className="mr-2 h-4 w-4" />
+                        Download PDF
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          // Set the clinic ID before triggering the email
+                          if (onEmailQuote) {
+                            // Store selected clinic data for PDF generation
+                            localStorage.setItem('selectedClinicId', clinic.id);
+                            localStorage.setItem('selectedClinicData', JSON.stringify({
+                              name: clinic.name,
+                              treatments: clinicTreatments,
+                              totalPrice: totalPrice
+                            }));
+                            onEmailQuote();
+                          }
+                        }}
+                        className="flex items-center"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Email Quote
+                      </Button>
+                    </div>
+                    
                     <Button 
                       onClick={() => handleRequestQuote(clinic.id)} 
                       className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
