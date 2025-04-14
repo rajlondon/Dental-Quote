@@ -531,7 +531,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           </div>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          *UK prices based on average private clinic rates in London and Manchester
+          *UK costs based on average private clinic rates in London and Manchester
         </p>
       </div>
       

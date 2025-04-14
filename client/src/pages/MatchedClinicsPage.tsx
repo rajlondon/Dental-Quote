@@ -273,7 +273,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
           <div className="flex justify-between pt-2 border-t font-semibold">
             <span>Estimated Istanbul Price:</span>
-            <span>£{treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0)}</span>
+            <span>£{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.35)}</span>
           </div>
           <div className="text-xs text-gray-500 mt-1">
             Hotel stays often included in treatment packages depending on the cost of your treatment.
@@ -484,18 +484,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             
                             <div className="flex justify-between mt-3 font-bold">
                               <span>Estimated Istanbul Price:</span>
-                              <span>£{totalPrice}</span>
+                              <span>£{Math.round(totalPrice * 0.35)}</span>
                             </div>
                             
                             {/* Savings comparison */}
                             <div className="mt-3 bg-green-50 rounded p-3">
                               <div className="flex justify-between items-center">
                                 <div>
-                                  <div className="text-green-700 font-medium text-sm">Savings vs UK prices:</div>
+                                  <div className="text-green-700 font-medium text-sm">Savings vs UK costs:</div>
                                   <div className="text-xs text-gray-600">Average UK cost: £{Math.round(totalPrice * 2.5)}</div>
                                   <div className="text-xs text-gray-500 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</div>
                                 </div>
-                                <div className="text-green-700 font-bold">Save £{Math.round(totalPrice * 2.5) - totalPrice}</div>
+                                <div className="text-green-700 font-bold">Save £{Math.round(totalPrice * 2.5) - Math.round(totalPrice * 0.35)}</div>
                               </div>
                             </div>
                           </div>

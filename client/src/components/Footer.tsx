@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
                 </div>
               </Link>
               <p className="text-blue-200 text-sm md:text-base leading-relaxed">
-                MyDentalFly connects patients with top-rated dental clinics in Turkey, offering up to 70% savings compared to UK prices with the peace of mind of verified, quality care.
+                MyDentalFly connects patients with top-rated dental clinics in Turkey, offering up to 70% savings compared to UK costs with the peace of mind of verified, quality care.
               </p>
             </div>
             
