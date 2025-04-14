@@ -25,31 +25,22 @@ const TestPdfPage: React.FC = () => {
     });
     
     try {
-      // Create a new jsPDF instance
-      const doc = new jsPDF();
+      console.log("Starting PDF generation");
       
-      // Add content
-      doc.setFontSize(22);
-      doc.setTextColor(0, 100, 200);
-      doc.text("MyDentalFly Quote", 105, 20, { align: 'center' });
+      // Create a new jsPDF instance - specify 'p', 'mm', 'a4' to be explicit
+      const doc = new jsPDF('p', 'mm', 'a4');
+      console.log("jsPDF instance created");
       
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text("This is a test PDF generated directly on the client side using jsPDF.", 20, 40);
-      doc.text("Date: " + new Date().toLocaleDateString(), 20, 50);
+      // Add very simple content - minimum test
+      doc.text("Hello World PDF Test", 20, 20);
+      doc.text("Generated on: " + new Date().toISOString(), 20, 30);
       
-      // Add a border
-      doc.setDrawColor(0, 100, 200);
-      doc.setLineWidth(1);
-      doc.rect(10, 10, 190, 277);
+      console.log("PDF content added, saving...");
       
-      // Footer
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text("MyDentalFly.com - Compare Dental Clinics. Book With Confidence. Fly With a Smile.", 105, 280, { align: 'center' });
+      // Save with a simple name
+      doc.save("test.pdf");
       
-      // Save the PDF
-      doc.save("MyDentalFly_ClientTest.pdf");
+      console.log("PDF saved");
       
       toast({
         title: "PDF Generated",
