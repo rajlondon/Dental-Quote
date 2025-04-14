@@ -82,11 +82,11 @@ const QuoteForm: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-2xl mx-auto">
-      <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Start Building Your Personalised Dental Quote</h2>
-      <p className="text-gray-600 text-xs mb-4">Tell us what dental treatment you're interested in. You'll build your full plan in the next step.</p>
+    <div className="bg-white rounded-xl shadow-lg p-3 w-full max-w-xl mx-auto">
+      <h2 className="text-sm font-semibold text-gray-800 mb-1">Start Building Your Personalised Dental Quote</h2>
+      <p className="text-gray-600 text-xs mb-2">Tell us what dental treatment you're interested in.</p>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-2">
         {/* Location Selection (Country & City) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           {/* Country Selection */}
@@ -208,11 +208,11 @@ const QuoteForm: React.FC = () => {
         {/* Submit Button */}
         <Button 
           type="submit"
-          className="w-full bg-primary hover:bg-primary/90 text-white py-2 font-medium text-base rounded-lg mt-3 flex items-center justify-center"
+          className="w-full bg-primary hover:bg-primary/90 text-white h-8 text-sm py-0 font-medium rounded-lg mt-2 flex items-center justify-center"
           disabled={!country || !city || !treatmentType}
         >
           Calculate My Quote
-          <ArrowRightIcon className="ml-2 h-4 w-4" />
+          <ArrowRightIcon className="ml-1 h-3 w-3" />
         </Button>
       </form>
     </div>
@@ -223,35 +223,35 @@ const Hero: React.FC = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative bg-gradient-to-br from-blue-50 to-sky-100 py-8 md:py-12 flex items-center">
-      <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-center">
+    <section className="relative bg-gradient-to-br from-blue-50 to-sky-100 py-4 flex items-center min-h-0">
+      <div className="container mx-auto px-3 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
           {/* Hero Content */}
           <div className="order-2 lg:order-1 text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
-            <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <PlaneIcon className="h-4 w-4 mr-2" />
+            <div className="mb-2 inline-flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <PlaneIcon className="h-3 w-3 mr-1" />
               Dental Tourism Excellence
             </div>
             
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 leading-tight">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 leading-tight">
               Quality Dental Care <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">Without the Premium</span>
             </h1>
             
-            <h2 className="text-lg md:text-xl text-primary font-medium mb-2 tracking-wide">
-              Compare Dental Clinics. Book With Confidence. Fly With a Smile.
+            <h2 className="text-base text-primary font-medium mb-1 tracking-wide">
+              Compare Clinics. Book With Confidence. Fly With a Smile.
             </h2>
-            <p className="text-base text-gray-700 mb-5 leading-relaxed max-w-xl lg:mx-0 mx-auto">
-              MyDentalFly connects patients with trusted dental clinics in Turkey — offering up to 70% savings compared to UK prices. We provide verified clinics, transparent pricing, and dedicated support throughout your dental journey.
+            <p className="text-sm text-gray-700 mb-3 leading-relaxed max-w-xl lg:mx-0 mx-auto">
+              MyDentalFly connects patients with trusted dental clinics in Turkey — offering up to 70% savings compared to UK prices.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
-              <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-start mb-4">
+              <Button asChild className="bg-primary hover:bg-primary/90 text-white h-8 text-sm px-3 py-1">
                 <Link href="/how-it-works">
                   How It Works
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
+              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 h-8 text-sm px-3 py-1">
                 <Link href="/your-quote">
                   See All Treatments
                 </Link>
@@ -259,15 +259,15 @@ const Hero: React.FC = () => {
             </div>
             
             {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6 items-center text-sm text-gray-600">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-3 items-center text-xs text-gray-600">
               <div className="flex items-center">
-                <span className="font-semibold mr-2">100%</span> Satisfaction Guarantee
+                <span className="font-semibold mr-1">100%</span> Satisfaction
               </div>
               <div className="flex items-center">
-                <span className="font-semibold mr-2">24/7</span> Support
+                <span className="font-semibold mr-1">24/7</span> Support
               </div>
               <div className="flex items-center">
-                <span className="font-semibold mr-2">£200</span> Deposit Only
+                <span className="font-semibold mr-1">£200</span> Deposit
               </div>
             </div>
           </div>
