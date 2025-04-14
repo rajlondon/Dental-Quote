@@ -114,7 +114,7 @@ const Navbar: React.FC = () => {
             {t('navbar.contact', 'Contact')}
           </a>
           
-          <Link href="/test-pdf" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
+          <Link href="/simple-pdf-test" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             PDF Test Page
           </Link>
         </div>
