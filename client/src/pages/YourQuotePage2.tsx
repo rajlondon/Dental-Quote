@@ -379,7 +379,7 @@ const YourQuotePage: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-2xl font-bold">
-                        £{formatCurrency(totalGBP)}
+                        £{formatCurrency(Math.round(totalGBP / 0.35))}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">Estimated UK Cost</p>
                     </CardContent>
@@ -391,7 +391,7 @@ const YourQuotePage: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-2xl font-bold text-green-700">
-                        £{formatCurrency(Math.round(totalGBP * 0.35))}
+                        £{formatCurrency(Math.round(totalGBP))}
                       </p>
                       <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
                       <p className="text-xs text-green-600 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
