@@ -57,7 +57,8 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
   const patientInfo = patientInfoStr ? JSON.parse(patientInfoStr) : {};
   console.log('Parsed patientInfo:', patientInfo);
   
-  const totalAmount = treatments.reduce((sum: number, item: any) => sum + item.subtotalGBP, 0);
+  const ukCost = treatments.reduce((sum: number, item: any) => sum + item.subtotalGBP, 0);
+  const totalAmount = Math.round(ukCost * 0.35);
   const depositAmount = 200; // £200 fixed deposit
   
   // Validate if we need verification
