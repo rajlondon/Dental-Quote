@@ -15,7 +15,7 @@ const GeneralDentistryTab: React.FC = () => {
         <AlertCircle className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-800 text-sm">
           Including general dentistry treatments in your Turkish dental package often results in significant savings 
-          compared to UK prices, even after factoring in travel costs.
+          compared to UK costs, even after factoring in travel costs.
         </AlertDescription>
       </Alert>
 
@@ -32,7 +32,7 @@ const GeneralDentistryTab: React.FC = () => {
               </p>
               <div className="bg-green-50 px-3 py-1 rounded text-sm inline-flex items-center">
                 <Banknote className="h-3 w-3 mr-1 text-green-600" />
-                <span className="font-medium text-green-800">Save up to 70% vs UK prices</span>
+                <span className="font-medium text-green-800">Save up to 70% vs UK costs</span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 UK avg: £70-120 | Turkey from: £25-40
@@ -74,7 +74,7 @@ const GeneralDentistryTab: React.FC = () => {
               </p>
               <div className="bg-green-50 px-3 py-1 rounded text-sm inline-flex items-center">
                 <Banknote className="h-3 w-3 mr-1 text-green-600" />
-                <span className="font-medium text-green-800">Save up to 75% vs UK prices</span>
+                <span className="font-medium text-green-800">Save up to 75% vs UK costs</span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 UK avg: £100-250 | Turkey from: £30-60 per filling
@@ -95,7 +95,7 @@ const GeneralDentistryTab: React.FC = () => {
               </p>
               <div className="bg-green-50 px-3 py-1 rounded text-sm inline-flex items-center">
                 <Banknote className="h-3 w-3 mr-1 text-green-600" />
-                <span className="font-medium text-green-800">Save up to 70% vs UK prices</span>
+                <span className="font-medium text-green-800">Save up to 70% vs UK costs</span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 UK avg: £300-700 | Turkey from: £90-200
@@ -116,7 +116,7 @@ const GeneralDentistryTab: React.FC = () => {
               </p>
               <div className="bg-green-50 px-3 py-1 rounded text-sm inline-flex items-center">
                 <Banknote className="h-3 w-3 mr-1 text-green-600" />
-                <span className="font-medium text-green-800">Save up to 80% vs UK prices</span>
+                <span className="font-medium text-green-800">Save up to 80% vs UK costs</span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 UK avg: £500-1,000 | Turkey from: £100-200 per tooth
@@ -137,7 +137,7 @@ const GeneralDentistryTab: React.FC = () => {
               </p>
               <div className="bg-green-50 px-3 py-1 rounded text-sm inline-flex items-center">
                 <Banknote className="h-3 w-3 mr-1 text-green-600" />
-                <span className="font-medium text-green-800">Save up to 75% vs UK prices</span>
+                <span className="font-medium text-green-800">Save up to 75% vs UK costs</span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 UK avg: £100-300 (simple), £300-600 (surgical) | Turkey from: £40-150
