@@ -358,15 +358,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate the PDF from the quote data
       const quoteData = req.body;
       
-      // Generate the PDF using the V2 generator function
-      const pdfBuffer = generateQuotePdfV2(quoteData);
+      // Debug quoteData
+      console.log('Received quoteData:', JSON.stringify({
+        hasItems: Array.isArray(quoteData.items),
+        itemsCount: Array.isArray(quoteData.items) ? quoteData.items.length : 0,
+        totalGBP: quoteData.totalGBP,
+        patientName: quoteData.patientName,
+        patientEmail: quoteData.patientEmail,
+        clinics: quoteData.clinics ? quoteData.clinics.length : 0,
+        selectedClinicIndex: quoteData.selectedClinicIndex,
+      }));
+      
+      // Simulate PDF generation for testing first
+      const dummyPdf = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52, 10, 37, 226, 227, 207, 211, 10]); // PDF magic numbers
       
       // Set response headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename=MyDentalFly_Quote.pdf');
       
-      // Send the PDF buffer directly
-      res.send(pdfBuffer);
+      // Send the dummy PDF buffer
+      res.send(Buffer.from(dummyPdf));
     } catch (error) {
       console.error('Error generating PDF with jsPDF v2:', error);
       res.status(500).json({ error: 'Failed to generate PDF' });
