@@ -1610,7 +1610,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <span>£{Math.round(totalGBP * 2.5)}</span>
               </div>
               <div className="bg-green-100 text-green-800 px-3 py-2 rounded mt-2 text-sm flex items-center">
-                <span className="font-bold">You Save: £{Math.round(totalGBP * 2.5) - Math.round(totalGBP * 0.35)}</span>
+                <span className="font-bold">You Save: £{Math.round(totalGBP * 2.5) * 0.65}</span>
                 <span className="text-xs ml-2">({Math.round((1 - (totalGBP * 0.35)/(totalGBP * 2.5)) * 100)}% vs UK costs)</span>
               </div>
               <div className="mt-4 text-xs text-gray-600">
