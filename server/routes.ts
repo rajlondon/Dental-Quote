@@ -352,34 +352,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add jsPDF Quote Generator V2 endpoint
+  // Add simplified test PDF endpoint
   app.post('/api/jspdf-quote-v2', (req, res) => {
     try {
-      // Generate the PDF from the quote data
-      const quoteData = req.body;
+      // Log data for debugging
+      console.log('Received quote data in simplified endpoint');
       
-      // Debug quoteData
-      console.log('Received quoteData:', JSON.stringify({
-        hasItems: Array.isArray(quoteData.items),
-        itemsCount: Array.isArray(quoteData.items) ? quoteData.items.length : 0,
-        totalGBP: quoteData.totalGBP,
-        patientName: quoteData.patientName,
-        patientEmail: quoteData.patientEmail,
-        clinics: quoteData.clinics ? quoteData.clinics.length : 0,
-        selectedClinicIndex: quoteData.selectedClinicIndex,
-      }));
+      // Use the html-pdf-node library to generate a simple PDF
+      const pdf = require('html-pdf-node');
       
-      // Simulate PDF generation for testing first
-      const dummyPdf = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52, 10, 37, 226, 227, 207, 211, 10]); // PDF magic numbers
+      // Create a simple HTML page for testing
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>MyDentalFly Quote</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+              h1 { color: #2563eb; text-align: center; }
+              p { margin-bottom: 10px; }
+              .container { max-width: 800px; margin: 0 auto; }
+              .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>MyDentalFly Quote</h1>
+              <p>Thank you for requesting a quote from MyDentalFly.</p>
+              <p>This is a test PDF file to verify the download functionality is working.</p>
+              <p>In the actual implementation, this will be replaced with a detailed quote.</p>
+              <div class="footer">
+                <p>MyDentalFly.com - Compare Dental Clinics. Book With Confidence. Fly With a Smile.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
       
-      // Set response headers for PDF download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=MyDentalFly_Quote.pdf');
+      // Generate the PDF
+      const options = { format: 'A4' };
+      const file = { content: html };
       
-      // Send the dummy PDF buffer
-      res.send(Buffer.from(dummyPdf));
+      pdf.generatePdf(file, options).then(pdfBuffer => {
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=MyDentalFly_Quote.pdf');
+        
+        // Send the PDF buffer directly
+        res.send(pdfBuffer);
+      });
+      
     } catch (error) {
-      console.error('Error generating PDF with jsPDF v2:', error);
+      console.error('Error generating PDF with test endpoint:', error);
       res.status(500).json({ error: 'Failed to generate PDF' });
     }
   });

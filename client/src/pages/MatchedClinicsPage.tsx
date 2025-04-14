@@ -139,41 +139,27 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         description: "Preparing your quote PDF...",
       });
 
-      // Use axios with responseType blob like in the JSPDFGenerator component
-      axios.post('/api/jspdf-quote-v2', quoteData, {
-        responseType: 'blob'
-      })
-      .then((response: any) => {
-        // Create a download link for the PDF
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Generate formatted filename with date
-        const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const filename = `MyDentalFly_Quote_${formattedDate}.pdf`;
-        
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(link);
-        
-        toast({
-          title: "Download Started",
-          description: "Your quote PDF is being downloaded.",
-        });
-      })
-      .catch((error: any) => {
-        console.error('Error generating PDF:', error);
-        toast({
-          title: "Download Failed",
-          description: "There was an error generating your PDF. Please try again.",
-          variant: "destructive"
-        });
+      // Create a form to submit directly to the server instead of using AJAX
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/api/jspdf-quote-v2';
+      form.target = '_blank'; // Open in new tab or trigger download
+      
+      // Add the quote data as hidden fields
+      const dataInput = document.createElement('input');
+      dataInput.type = 'hidden';
+      dataInput.name = 'quoteData';
+      dataInput.value = JSON.stringify(quoteData);
+      form.appendChild(dataInput);
+      
+      // Submit the form
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      
+      toast({
+        title: "Download Started",
+        description: "Your quote PDF is being generated and will download shortly.",
       });
     } catch (error) {
       console.error('Error in downloadPdf:', error);
