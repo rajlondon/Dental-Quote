@@ -23,6 +23,8 @@ export interface TreatmentItem {
   subtotalGBP: number;
   subtotalUSD: number;
   guarantee?: string;
+  ukPriceGBP?: number;
+  ukPriceUSD?: number;
 }
 
 export interface TreatmentCategory {
@@ -321,19 +323,24 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const handleAddTreatment = () => {
     if (!selectedTreatment || !treatmentDetails) return;
     
-    const subtotalGBP = treatmentDetails.priceGBP * quantity;
-    const subtotalUSD = treatmentDetails.priceUSD * quantity;
+    // Calculate Istanbul prices (35% of UK costs)
+    const istanbulPriceGBP = Math.round(treatmentDetails.priceGBP * 0.35);
+    const istanbulPriceUSD = Math.round(treatmentDetails.priceUSD * 0.35);
+    const subtotalGBP = istanbulPriceGBP * quantity;
+    const subtotalUSD = istanbulPriceUSD * quantity;
     
     const newTreatment: TreatmentItem = {
       id: `${selectedTreatment}_${Date.now()}`, // Unique ID
       category: selectedCategory,
       name: treatmentDetails.name,
       quantity,
-      priceGBP: treatmentDetails.priceGBP,
-      priceUSD: treatmentDetails.priceUSD,
+      priceGBP: istanbulPriceGBP,
+      priceUSD: istanbulPriceUSD,
       subtotalGBP,
       subtotalUSD,
       guarantee: treatmentDetails.guarantee,
+      ukPriceGBP: treatmentDetails.priceGBP, // Store original UK price for comparison
+      ukPriceUSD: treatmentDetails.priceUSD,
     };
     
     setTreatments([...treatments, newTreatment]);
@@ -386,17 +393,23 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       return;
     }
     
-    // Add new treatment
+    // Calculate Istanbul prices (35% of UK costs)
+    const istanbulPriceGBP = Math.round(treatment.priceGBP * 0.35);
+    const istanbulPriceUSD = Math.round(treatment.priceUSD * 0.35);
+    
+    // Add new treatment with Istanbul prices
     const newTreatment: TreatmentItem = {
       id: `${treatment.id}_${Date.now()}`, // Unique ID
       category: categoryId,
       name: treatment.name,
       quantity: 1,
-      priceGBP: treatment.priceGBP,
-      priceUSD: treatment.priceUSD,
-      subtotalGBP: treatment.priceGBP,
-      subtotalUSD: treatment.priceUSD,
+      priceGBP: istanbulPriceGBP, // Use Istanbul price
+      priceUSD: istanbulPriceUSD, // Use Istanbul price
+      subtotalGBP: istanbulPriceGBP, // Use Istanbul price
+      subtotalUSD: istanbulPriceUSD, // Use Istanbul price
       guarantee: treatment.guarantee,
+      ukPriceGBP: treatment.priceGBP, // Store original UK price for comparison
+      ukPriceUSD: treatment.priceUSD,
     };
     
     setTreatments([...treatments, newTreatment]);
