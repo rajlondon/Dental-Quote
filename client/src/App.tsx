@@ -21,6 +21,7 @@ import PortalLoginPage from "@/pages/PortalLoginPage";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
+import TestPdfPage from "@/pages/TestPdfPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -55,7 +56,8 @@ function Router() {
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
       </Route>
-      {/* Redirect test pages to the home page */}
+      <Route path="/test-pdf" component={TestPdfPage} />
+      {/* Other test pages redirect to home */}
       <Route path="/test">
         {() => {
           window.location.href = "/";
@@ -64,13 +66,7 @@ function Router() {
       </Route>
       <Route path="/testpdf">
         {() => {
-          window.location.href = "/";
-          return null;
-        }}
-      </Route>
-      <Route path="/test-pdf">
-        {() => {
-          window.location.href = "/";
+          window.location.href = "/test-pdf";
           return null;
         }}
       </Route>
