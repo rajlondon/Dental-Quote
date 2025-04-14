@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { UserCircle2, Menu, X, Calculator } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
+import PDFTestButton from "@/components/PDFTestButton";
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
@@ -52,6 +53,7 @@ const Navbar: React.FC = () => {
           </a>
           
           <LanguageSwitcher />
+          <PDFTestButton />
         </div>
         
         <div className="md:hidden flex items-center gap-2">
