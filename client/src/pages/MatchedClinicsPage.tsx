@@ -951,19 +951,52 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       <Button 
                         variant="outline"
                         onClick={() => {
-                          // Set the clinic ID before triggering the download
+                          // Store selected clinic data for PDF generation first
+                          localStorage.setItem('selectedClinicId', clinic.id);
+                          localStorage.setItem('selectedClinicData', JSON.stringify({
+                            name: clinic.name,
+                            treatments: clinicTreatments,
+                            totalPrice: totalPrice
+                          }));
+                          
+                          // Then trigger download if handler exists
                           if (onQuoteDownload) {
-                            // Store selected clinic data for PDF generation
-                            localStorage.setItem('selectedClinicId', clinic.id);
-                            localStorage.setItem('selectedClinicData', JSON.stringify({
-                              name: clinic.name,
-                              treatments: clinicTreatments,
-                              totalPrice: totalPrice
-                            }));
                             onQuoteDownload();
+                          } else {
+                            console.log('PDF download handler not provided');
+                            // Fallback to direct download attempt
+                            try {
+                              fetch('/api/jspdf-quote-v2', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  items: treatmentPlan,
+                                  patientInfo: patientInfo || {},
+                                  selectedClinic: {
+                                    id: clinic.id,
+                                    name: clinic.name,
+                                    treatments: clinicTreatments,
+                                    totalPrice: totalPrice
+                                  }
+                                }),
+                              })
+                              .then(response => response.blob())
+                              .then(blob => {
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                const dateStr = new Date().toISOString().slice(0, 10);
+                                link.download = `MyDentalFly-Quote-${clinic.name.replace(/\s+/g, '-')}-${dateStr}.pdf`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              });
+                            } catch (error) {
+                              console.error('Error generating PDF:', error);
+                            }
                           }
                         }}
-                        className="flex items-center"
+                        className="flex items-center bg-white hover:bg-gray-50"
                       >
                         <FileCheck className="mr-2 h-4 w-4" />
                         Download PDF
@@ -972,19 +1005,23 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       <Button 
                         variant="outline"
                         onClick={() => {
-                          // Set the clinic ID before triggering the email
+                          // Store selected clinic data first
+                          localStorage.setItem('selectedClinicId', clinic.id);
+                          localStorage.setItem('selectedClinicData', JSON.stringify({
+                            name: clinic.name,
+                            treatments: clinicTreatments,
+                            totalPrice: totalPrice
+                          }));
+                          
+                          // Then trigger email handler if exists
                           if (onEmailQuote) {
-                            // Store selected clinic data for PDF generation
-                            localStorage.setItem('selectedClinicId', clinic.id);
-                            localStorage.setItem('selectedClinicData', JSON.stringify({
-                              name: clinic.name,
-                              treatments: clinicTreatments,
-                              totalPrice: totalPrice
-                            }));
                             onEmailQuote();
+                          } else {
+                            console.log('Email quote handler not provided');
+                            // Could add fallback email functionality here if needed
                           }
                         }}
-                        className="flex items-center"
+                        className="flex items-center bg-white hover:bg-gray-50"
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
                         Email Quote
