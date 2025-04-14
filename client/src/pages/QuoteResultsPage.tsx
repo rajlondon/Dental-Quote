@@ -850,7 +850,7 @@ const QuoteResultsPage: React.FC = () => {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{t('quote_results.benefits.savings', 'Significant Savings')}</h3>
-                <p className="text-gray-600">{t('quote_results.benefits.savings_desc', 'Save up to 70% compared to UK prices without compromising on quality or safety.')}</p>
+                <p className="text-gray-600">{t('quote_results.benefits.savings_desc', 'Save up to 70% compared to UK costs without compromising on quality or safety.')}</p>
               </div>
               
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
