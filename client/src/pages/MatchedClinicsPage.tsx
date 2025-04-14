@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { useLocation } from 'wouter';
+import { useToast } from "@/hooks/use-toast";
 
 interface TreatmentItem {
   id: string;
@@ -76,6 +77,111 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 }) => {
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
+  const { toast } = useToast();
+  
+  // New function to handle direct PDF download
+  const downloadPdf = (clinicId: string) => {
+    try {
+      // Get the clinic data
+      const clinic = clinicsData.find(c => c.id === clinicId);
+      if (!clinic) return;
+      
+      const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
+      
+      // Store in localStorage for compatibility with existing code
+      localStorage.setItem('selectedClinicId', clinicId);
+      localStorage.setItem('selectedClinicData', JSON.stringify({
+        name: clinic?.name,
+        treatments: clinicTreatments,
+        totalPrice: totalPrice
+      }));
+      
+      // If onQuoteDownload is provided, use that first
+      if (onQuoteDownload) {
+        onQuoteDownload();
+        return;
+      }
+      
+      // Prepare data for the API request
+      const quoteData = {
+        items: treatmentPlan.map(item => ({
+          treatment: item.name,
+          priceGBP: item.subtotalGBP / item.quantity,
+          priceUSD: Math.round((item.subtotalGBP / item.quantity) * 1.25), // Rough GBP to USD conversion
+          quantity: item.quantity,
+          subtotalGBP: item.subtotalGBP,
+          subtotalUSD: Math.round(item.subtotalGBP * 1.25), // Rough GBP to USD conversion
+          guarantee: "2-5 years"
+        })),
+        totalGBP: totalGBP,
+        totalUSD: Math.round(totalGBP * 1.25), // Rough GBP to USD conversion
+        patientName: patientInfo?.fullName || "",
+        patientEmail: patientInfo?.email || "",
+        patientPhone: patientInfo?.phone || "",
+        travelMonth: patientInfo?.travelMonth || "",
+        departureCity: patientInfo?.departureCity || "",
+        selectedClinic: {
+          name: clinic.name,
+          treatments: clinicTreatments,
+          totalPrice: totalPrice
+        }
+      };
+      
+      // Create filename with date
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const patientName = patientInfo?.fullName?.replace(/\s+/g, '-') || 'patient';
+      const clinicName = clinic?.name?.replace(/\s+/g, '-') || 'dental-clinic';
+      const filename = `MyDentalFly-Quote-${clinicName}-${patientName}-${dateStr}.pdf`;
+      
+      // Call direct PDF download endpoint
+      fetch('/api/direct-download-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteData: JSON.stringify(quoteData),
+          filename
+        }),
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download Started",
+          description: "Your quote PDF is being downloaded.",
+        });
+      })
+      .catch(error => {
+        console.error('Error generating PDF:', error);
+        toast({
+          title: "Download Failed",
+          description: "There was an error generating your PDF. Please try again.",
+          variant: "destructive"
+        });
+      });
+    } catch (error) {
+      console.error('Error in downloadPdf:', error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error preparing your PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
   
   // Mock data for clinics
   const treatmentPlan = treatmentItems;
@@ -345,22 +451,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             variant="outline"
             className="flex items-center" 
             onClick={() => {
-              if (onQuoteDownload) {
-                // Select the first clinic if none is selected
-                const clinicId = selectedClinic || clinicsData[0]?.id;
-                if (clinicId) {
-                  const clinic = clinicsData.find(c => c.id === clinicId);
-                  const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
-                  
-                  localStorage.setItem('selectedClinicId', clinicId);
-                  localStorage.setItem('selectedClinicData', JSON.stringify({
-                    name: clinic?.name,
-                    treatments: clinicTreatments,
-                    totalPrice: totalPrice
-                  }));
-                  
-                  onQuoteDownload();
-                }
+              // Select the first clinic if none is selected
+              const clinicId = selectedClinic || clinicsData[0]?.id;
+              if (clinicId) {
+                downloadPdf(clinicId);
               }
             }}
           >
@@ -670,20 +764,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <Button 
                             variant="outline" 
                             className="flex-1 md:flex-none"
-                            onClick={() => {
-                              if (onQuoteDownload) {
-                                const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-                                
-                                localStorage.setItem('selectedClinicId', clinic.id);
-                                localStorage.setItem('selectedClinicData', JSON.stringify({
-                                  name: clinic.name,
-                                  treatments: clinicTreatments,
-                                  totalPrice: totalPrice
-                                }));
-                                
-                                onQuoteDownload();
-                              }
-                            }}
+                            onClick={() => downloadPdf(clinic.id)}
                           >
                             <FileCheck className="mr-2 h-4 w-4" />
                             Download Quote
