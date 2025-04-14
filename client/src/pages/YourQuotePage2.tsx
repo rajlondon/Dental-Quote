@@ -394,6 +394,7 @@ const YourQuotePage: React.FC = () => {
                         £{formatCurrency(Math.round(totalGBP * 0.35))}
                       </p>
                       <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
+                      <p className="text-xs text-green-600 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                     </CardContent>
                   </Card>
                 </div>
