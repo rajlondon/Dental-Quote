@@ -735,7 +735,7 @@ const CTASection: React.FC<{
           <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
             <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
             <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
-            <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
+            <p className="text-sm text-blue-200">Final price confirmed after dental review, payment only in-person at clinic</p>
             <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
           </div>
         )}
@@ -1441,7 +1441,7 @@ const YourQuotePage: React.FC = () => {
                     <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
                       <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
                       <p className="text-2xl font-bold">£{formatCurrency(Math.round(totalGBP * 0.35))}</p>
-                      <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
+                      <p className="text-sm text-blue-200">Final price confirmed after dental review, payment only in-person at clinic</p>
                       <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                     </div>
                   )}

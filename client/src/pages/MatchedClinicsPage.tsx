@@ -502,7 +502,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             
                           <div className="text-xs text-gray-500 mt-2">
                             <p>
-                              * This is a personalized quote based on your treatment plan. Final pricing will be confirmed after your free online consultation.
+                              * This is a personalized quote based on your treatment plan. Your final treatment quote will be confirmed by your chosen clinic after they've reviewed your dental information. Payment is only made in-person after consultation.
                             </p>
                             {clinic.tier === 'premium' && (
                               <p className="mt-1">
