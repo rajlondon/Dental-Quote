@@ -54,6 +54,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [location, setLocation] = useLocation();
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   
+  // Debug logging
+  console.log("MatchedClinicsPage props:", { 
+    treatmentItemsCount: treatmentItems.length,
+    hasPatientInfo: !!patientInfo,
+    totalGBP,
+    hasOnQuoteDownload: !!onQuoteDownload,
+    hasOnEmailQuote: !!onEmailQuote
+  });
+  
   // Get treatments from props or localStorage
   useEffect(() => {
     if (treatmentItems.length === 0) {
