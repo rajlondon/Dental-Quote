@@ -1607,11 +1607,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </div>
               <div className="flex justify-between text-sm text-gray-500 mt-1">
                 <span>Estimated UK Cost:</span>
-                <span>£{Math.round(totalGBP * 2.5)}</span>
+                <span>£{totalGBP}</span>
               </div>
               <div className="bg-green-100 text-green-800 px-3 py-2 rounded mt-2 text-sm flex items-center">
-                <span className="font-bold">You Save: £{Math.round(totalGBP * 2.5) * 0.65}</span>
-                <span className="text-xs ml-2">({Math.round((1 - (totalGBP * 0.35)/(totalGBP * 2.5)) * 100)}% vs UK costs)</span>
+                <span className="font-bold">You Save: £{Math.round(totalGBP - (totalGBP * 0.35))}</span>
+                <span className="text-xs ml-2">({Math.round(((totalGBP - (totalGBP * 0.35))/totalGBP) * 100)}% vs UK costs)</span>
               </div>
               <div className="mt-4 text-xs text-gray-600">
                 <p className="mb-2"><strong>IMPORTANT:</strong> These prices are estimates based on average Istanbul clinic rates. You will receive clinic-specific quotes in the next step.</p>
