@@ -272,8 +272,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             ))}
           </div>
           <div className="flex justify-between pt-2 border-t font-semibold">
-            <span>Total Estimated Cost:</span>
+            <span>Estimated Istanbul Price:</span>
             <span>£{treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0)}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Hotel stays often included in treatment packages depending on the cost of your treatment.
           </div>
         </div>
       </div>

@@ -733,9 +733,10 @@ const CTASection: React.FC<{
         
         {hasCustomPlan && (
           <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
-            <h3 className="text-lg font-semibold mb-1">Your Treatment Plan Total</h3>
+            <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
             <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
             <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
+            <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
           </div>
         )}
         
@@ -1158,12 +1159,15 @@ const YourQuotePage: React.FC = () => {
                   <div className="flex justify-end mt-4">
                     <div className="bg-blue-50 py-2 px-4 rounded-md">
                       <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-gray-700">Total:</span>
+                        <span className="text-gray-700">Estimated Istanbul Price:</span>
                         <span className="font-bold">£{formatCurrency(totalGBP)}</span>
                       </div>
                       <div className="flex justify-between gap-4 text-xs text-gray-500">
                         <span>USD:</span>
                         <span>${formatCurrency(totalUSD)}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Hotel stays often included in treatment packages depending on the cost of your treatment.
                       </div>
                     </div>
                   </div>
@@ -1435,9 +1439,10 @@ const YourQuotePage: React.FC = () => {
                   
                   {totalGBP > 0 && (
                     <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
-                      <h3 className="text-lg font-semibold mb-1">Your Treatment Plan Total</h3>
+                      <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
                       <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
                       <p className="text-sm text-blue-200">Final price confirmed after consultation</p>
+                      <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                     </div>
                   )}
                   
