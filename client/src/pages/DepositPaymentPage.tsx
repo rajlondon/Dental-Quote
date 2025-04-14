@@ -163,7 +163,7 @@ const DepositPaymentPage: React.FC<DepositPaymentPageProps> = ({
                   </div>
                   <div>
                     <h3 className="font-medium">Personalized Treatment Plan</h3>
-                    <p className="text-sm text-gray-600">Your comprehensive dental plan with treatments worth approximately £{totalAmount}</p>
+                    <p className="text-sm text-gray-600">Your comprehensive dental plan with Estimated Istanbul Price of £{totalAmount}</p>
                   </div>
                 </div>
                 
