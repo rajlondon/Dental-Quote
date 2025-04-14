@@ -464,7 +464,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
+                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -537,7 +537,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
+                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -611,7 +611,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
+                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -685,7 +685,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
+                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -759,7 +759,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
+                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -833,7 +833,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.</p>
+                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
