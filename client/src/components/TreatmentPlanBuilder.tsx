@@ -503,8 +503,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600 mb-1">
-                                  <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  <Info className="h-3 w-3" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -578,7 +577,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -652,7 +651,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -726,7 +725,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -800,7 +799,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -874,7 +873,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -931,7 +930,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -988,7 +987,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -1045,7 +1044,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -1102,7 +1101,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3 mr-1" />
-                                  <span>Info</span>
+                                  
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -1166,7 +1165,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3 mr-1" />
-                              <span>Info</span>
+                              
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Standard root canal treatment for single-rooted teeth</p>
@@ -1218,7 +1217,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3 mr-1" />
-                              <span>Info</span>
+                              
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Complex root canal treatment for multi-rooted teeth</p>
@@ -1276,7 +1275,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3 mr-1" />
-                              <span>Info</span>
+                              
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Small-volume bone graft procedure for single tooth area</p>
@@ -1328,7 +1327,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3 mr-1" />
-                              <span>Info</span>
+                              
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Large-volume or multiple area bone graft procedure</p>
@@ -1380,7 +1379,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3 mr-1" />
-                              <span>Info</span>
+                              
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Sinus lift procedure to increase bone volume in upper jaw</p>
@@ -1600,7 +1599,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           <div className="flex justify-end">
             <div className="w-full md:w-96 bg-blue-50 rounded-md p-4">
               <div className="flex justify-between mb-2">
-                <span className="text-gray-700">Total Estimated Cost:</span>
+                <span className="text-gray-700">Estimated Istanbul Price:</span>
                 <span className="font-bold text-blue-700">£{totalGBP}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
@@ -1608,7 +1607,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <span>${totalUSD}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-500 mt-1">
-                <span>Average UK Cost:</span>
+                <span>Estimated UK Cost:</span>
                 <span>£{Math.round(totalGBP * 2.5)}</span>
               </div>
               <div className="bg-green-100 text-green-800 px-3 py-2 rounded mt-2 text-sm flex items-center">
