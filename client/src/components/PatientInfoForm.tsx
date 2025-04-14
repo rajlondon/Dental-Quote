@@ -348,7 +348,7 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
               </div>
             </div>
             
-            <Button type="submit" className="w-full">Save Your Information</Button>
+            <Button type="submit" className="w-full">Save & See My Matched Clinics</Button>
           </form>
         </Form>
       </CardContent>
