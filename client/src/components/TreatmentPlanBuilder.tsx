@@ -1581,6 +1581,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         <span className="block text-xs text-gray-500">
                           ${treatment.priceUSD}
                         </span>
+                        {treatment.ukPriceGBP && (
+                          <span className="block text-xs text-green-600">
+                            (UK: £{treatment.ukPriceGBP})
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -1611,20 +1616,20 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           <div className="flex justify-end">
             <div className="w-full md:w-96 bg-blue-50 rounded-md p-4">
               <div className="flex justify-between mb-2">
-                <span className="text-gray-700">Estimated Istanbul Price:</span>
-                <span className="font-bold text-blue-700">£{Math.round(totalGBP * 0.35)}</span>
+                <span className="text-gray-700">Your Istanbul Price:</span>
+                <span className="font-bold text-blue-700">£{Math.round(totalGBP)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>USD Equivalent:</span>
-                <span>${Math.round(totalUSD * 0.35)}</span>
+                <span>${Math.round(totalUSD)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-500 mt-1">
-                <span>Estimated UK Cost:</span>
-                <span>£{totalGBP}</span>
+                <span>Equivalent UK Cost:</span>
+                <span>£{Math.round(totalGBP / 0.35)}</span>
               </div>
               <div className="bg-green-100 text-green-800 px-3 py-2 rounded mt-2 text-sm flex items-center">
-                <span className="font-bold">You Save: £{Math.round(totalGBP - (totalGBP * 0.35))}</span>
-                <span className="text-xs ml-2">({Math.round(((totalGBP - (totalGBP * 0.35))/totalGBP) * 100)}% vs UK costs)</span>
+                <span className="font-bold">You Save: £{Math.round((totalGBP / 0.35) - totalGBP)}</span>
+                <span className="text-xs ml-2">({Math.round(65)}% vs UK costs)</span>
               </div>
               <div className="mt-4 text-xs text-gray-600">
                 <p className="mb-2"><strong>IMPORTANT:</strong> These prices are estimates based on average Istanbul clinic rates. You will receive clinic-specific quotes in the next step.</p>
