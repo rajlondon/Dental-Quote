@@ -178,7 +178,7 @@ const ClientPdfGenerator: React.FC<ClientPdfGeneratorProps> = ({
         filename: `MyDentalFly_Quote_${clinic.name.replace(/\s+/g, '-')}-${patientName.split(' ')[0]}-${formattedDate.replace(/\//g, '-')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as 'portrait' }
       };
       
       console.log("Starting conversion with html2pdf");
