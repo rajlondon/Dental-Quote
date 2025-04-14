@@ -25,6 +25,7 @@ import {
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
+import axios from 'axios';
 
 interface TreatmentItem {
   id: string;
@@ -101,8 +102,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         onQuoteDownload();
         return;
       }
-      
-      // Prepare data for the API request
+
+      // Use the same format as the working JSPDFGenerator component
       const quoteData = {
         items: treatmentPlan.map(item => ({
           treatment: item.name,
@@ -118,43 +119,47 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         patientName: patientInfo?.fullName || "",
         patientEmail: patientInfo?.email || "",
         patientPhone: patientInfo?.phone || "",
-        travelMonth: patientInfo?.travelMonth || "",
-        departureCity: patientInfo?.departureCity || "",
-        selectedClinic: {
-          name: clinic.name,
-          treatments: clinicTreatments,
-          totalPrice: totalPrice
-        }
+        travelMonth: patientInfo?.travelMonth || "year-round", // Ensure a fallback value
+        departureCity: patientInfo?.departureCity || "UK", // Ensure a fallback value
+        clinics: [
+          {
+            name: clinic.name,
+            priceGBP: totalPrice,
+            extras: clinic.features?.slice(0, 3).join(", ") || "",
+            location: `${clinic.location.area}, ${clinic.location.city}`,
+            guarantee: clinic.guarantees?.implants || "5 years",
+            rating: clinic.ratings?.overall.toString() || "4.8"
+          }
+        ],
+        selectedClinicIndex: 0 // First (and only) clinic in the array
       };
       
-      // Create filename with date
-      const dateStr = new Date().toISOString().slice(0, 10);
-      const patientName = patientInfo?.fullName?.replace(/\s+/g, '-') || 'patient';
-      const clinicName = clinic?.name?.replace(/\s+/g, '-') || 'dental-clinic';
-      const filename = `MyDentalFly-Quote-${clinicName}-${patientName}-${dateStr}.pdf`;
-      
-      // Call the existing PDF quote generator endpoint
-      fetch('/api/jspdf-quote-v2', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(quoteData),
+      toast({
+        title: "Generating PDF",
+        description: "Preparing your quote PDF...",
+      });
+
+      // Use axios with responseType blob like in the JSPDFGenerator component
+      axios.post('/api/jspdf-quote-v2', quoteData, {
+        responseType: 'blob'
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}`);
-        }
-        return response.blob();
-      })
-      .then(blob => {
-        // Create a download link
-        const url = window.URL.createObjectURL(blob);
+      .then((response: any) => {
+        // Create a download link for the PDF
+        const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.download = filename;
+        
+        // Generate formatted filename with date
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const filename = `MyDentalFly_Quote_${formattedDate}.pdf`;
+        
+        link.setAttribute('download', filename);
         document.body.appendChild(link);
         link.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
         document.body.removeChild(link);
         
         toast({
@@ -162,7 +167,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           description: "Your quote PDF is being downloaded.",
         });
       })
-      .catch(error => {
+      .catch((error: any) => {
         console.error('Error generating PDF:', error);
         toast({
           title: "Download Failed",
