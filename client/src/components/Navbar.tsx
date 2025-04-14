@@ -53,7 +53,11 @@ const Navbar: React.FC = () => {
           </a>
           
           <Link href="/simple-pdf-test" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            PDF Test Page
+            Simple PDF Test
+          </Link>
+          
+          <Link href="/enhanced-pdf-test" className="text-neutral-600 hover:text-primary transition-colors text-xs">
+            Enhanced PDF Test
           </Link>
           
           <LanguageSwitcher />
@@ -115,7 +119,11 @@ const Navbar: React.FC = () => {
           </a>
           
           <Link href="/simple-pdf-test" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            PDF Test Page
+            Simple PDF Test
+          </Link>
+          
+          <Link href="/enhanced-pdf-test" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
+            Enhanced PDF Test
           </Link>
         </div>
       </div>

@@ -23,6 +23,7 @@ import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
 import TestPdfPage from "@/pages/TestPdfPage";
 import SimpleTestPdf from "@/pages/SimpleTestPdf";
+import EnhancedPdfTest from "@/pages/EnhancedPdfTest";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -59,6 +60,7 @@ function Router() {
       </Route>
       <Route path="/test-pdf" component={TestPdfPage} />
       <Route path="/simple-pdf-test" component={SimpleTestPdf} />
+      <Route path="/enhanced-pdf-test" component={EnhancedPdfTest} />
       {/* Other test pages redirect to home */}
       <Route path="/test">
         {() => {
