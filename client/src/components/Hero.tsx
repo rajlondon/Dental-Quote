@@ -82,16 +82,16 @@ const QuoteForm: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full max-w-3xl mx-auto">
-      <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3">Start Building Your Personalised Dental Quote</h2>
-      <p className="text-gray-600 text-sm mb-6">Tell us your main dental treatment or area you'd like help with. On the next page, you'll be able to build your full treatment plan, add specific procedures, and see what to expect.</p>
+    <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-2xl mx-auto">
+      <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Start Building Your Personalised Dental Quote</h2>
+      <p className="text-gray-600 text-xs mb-4">Tell us what dental treatment you're interested in. You'll build your full plan in the next step.</p>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Location Selection (Country & City) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           {/* Country Selection */}
-          <div className="space-y-2">
-            <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-1">
+            <label htmlFor="country" className="block text-xs font-medium text-gray-700">
               Country <span className="text-red-500">*</span>
             </label>
             <Select 
@@ -101,7 +101,7 @@ const QuoteForm: React.FC = () => {
                 setCity(""); // Reset city when country changes
               }}
             >
-              <SelectTrigger id="country" className="w-full">
+              <SelectTrigger id="country" className="w-full h-9 text-sm">
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent>
@@ -119,8 +119,8 @@ const QuoteForm: React.FC = () => {
           </div>
           
           {/* City Selection - Only shown when country is selected */}
-          <div className="space-y-2">
-            <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-1">
+            <label htmlFor="city" className="block text-xs font-medium text-gray-700">
               City <span className="text-red-500">*</span>
             </label>
             <Select 
@@ -128,7 +128,7 @@ const QuoteForm: React.FC = () => {
               onValueChange={setCity}
               disabled={!country}
             >
-              <SelectTrigger id="city" className="w-full">
+              <SelectTrigger id="city" className="w-full h-9 text-sm">
                 <SelectValue placeholder={country ? "Select city" : "Select country first"} />
               </SelectTrigger>
               <SelectContent>
@@ -146,15 +146,15 @@ const QuoteForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Main Treatment Type */}
-          <div className="space-y-2">
-            <label htmlFor="treatment-type" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-1">
+            <label htmlFor="treatment-type" className="block text-xs font-medium text-gray-700">
               Main Treatment Type <span className="text-red-500">*</span>
             </label>
             <Select value={treatmentType} onValueChange={setTreatmentType}>
-              <SelectTrigger id="treatment-type" className="w-full">
-                <SelectValue placeholder="Choose your main treatment (e.g. Implants, Veneers, Full Smile Makeover)" />
+              <SelectTrigger id="treatment-type" className="w-full h-9 text-sm">
+                <SelectValue placeholder="Choose treatment" />
               </SelectTrigger>
               <SelectContent>
                 {treatmentTypes.map((type) => (
@@ -167,12 +167,12 @@ const QuoteForm: React.FC = () => {
           </div>
           
           {/* Travel Month */}
-          <div className="space-y-2">
-            <label htmlFor="travel-month" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-1">
+            <label htmlFor="travel-month" className="block text-xs font-medium text-gray-700">
               Preferred Travel Month
             </label>
             <Select value={travelMonth} onValueChange={setTravelMonth}>
-              <SelectTrigger id="travel-month" className="w-full">
+              <SelectTrigger id="travel-month" className="w-full h-9 text-sm">
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
@@ -187,12 +187,12 @@ const QuoteForm: React.FC = () => {
         </div>
         
         {/* Budget Range */}
-        <div className="space-y-2">
-          <label htmlFor="budget-range" className="block text-sm font-medium text-gray-700">
+        <div className="space-y-1">
+          <label htmlFor="budget-range" className="block text-xs font-medium text-gray-700">
             Estimated Budget (Optional)
           </label>
           <Select value={budgetRange} onValueChange={setBudgetRange}>
-            <SelectTrigger id="budget-range" className="w-full">
+            <SelectTrigger id="budget-range" className="w-full h-9 text-sm">
               <SelectValue placeholder="Select budget range" />
             </SelectTrigger>
             <SelectContent>
@@ -208,11 +208,11 @@ const QuoteForm: React.FC = () => {
         {/* Submit Button */}
         <Button 
           type="submit"
-          className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-semibold text-lg rounded-lg mt-4 flex items-center justify-center"
+          className="w-full bg-primary hover:bg-primary/90 text-white py-2 font-medium text-base rounded-lg mt-3 flex items-center justify-center"
           disabled={!country || !city || !treatmentType}
         >
           Calculate My Quote
-          <ArrowRightIcon className="ml-2 h-5 w-5" />
+          <ArrowRightIcon className="ml-2 h-4 w-4" />
         </Button>
       </form>
     </div>
@@ -223,9 +223,9 @@ const Hero: React.FC = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative bg-gradient-to-br from-blue-50 to-sky-100 min-h-[80vh] flex items-center pt-20 pb-16">
+    <section className="relative bg-gradient-to-br from-blue-50 to-sky-100 py-8 md:py-12 flex items-center">
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-center">
           {/* Hero Content */}
           <div className="order-2 lg:order-1 text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
             <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
@@ -233,15 +233,15 @@ const Hero: React.FC = () => {
               Dental Tourism Excellence
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 leading-tight">
               Quality Dental Care <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">Without the Premium</span>
             </h1>
             
-            <h2 className="text-xl md:text-2xl text-primary font-medium mb-3 tracking-wide">
+            <h2 className="text-lg md:text-xl text-primary font-medium mb-2 tracking-wide">
               Compare Dental Clinics. Book With Confidence. Fly With a Smile.
             </h2>
-            <p className="text-lg text-gray-700 mb-8 leading-relaxed max-w-xl lg:mx-0 mx-auto">
-              MyDentalFly connects patients with trusted, top-rated dental clinics in Turkey and beyond — offering up to 70% savings compared to UK prices. We combine affordability with peace of mind, giving patients access to verified clinics, transparent pricing, and dedicated support. Our custom-built Patient Portal ensures clear communication, a smooth booking experience, and full visibility throughout your dental journey.
+            <p className="text-base text-gray-700 mb-5 leading-relaxed max-w-xl lg:mx-0 mx-auto">
+              MyDentalFly connects patients with trusted dental clinics in Turkey — offering up to 70% savings compared to UK prices. We provide verified clinics, transparent pricing, and dedicated support throughout your dental journey.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
