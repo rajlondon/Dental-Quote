@@ -652,7 +652,7 @@ const YourQuotePage: React.FC = () => {
                           </div>
                           <div className="mt-4 text-sm">
                             <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£1,850</span></p>
-                            <p><span className="font-semibold">UK comparison price:</span> <span className="text-gray-500 line-through">£5,200</span></p>
+                            <p><span className="font-semibold">Estimated UK Cost:</span> <span className="text-gray-500 line-through">£5,200</span></p>
                             <p className="text-green-600 font-semibold mt-1">Saved over £3,350</p>
                           </div>
                         </div>
@@ -689,7 +689,7 @@ const YourQuotePage: React.FC = () => {
                           </div>
                           <div className="mt-4 text-sm">
                             <p><span className="font-semibold">Istanbul Cost:</span> <span className="text-green-600">£6,500</span></p>
-                            <p><span className="font-semibold">UK comparison price:</span> <span className="text-gray-500 line-through">£19,800</span></p>
+                            <p><span className="font-semibold">Estimated UK Cost:</span> <span className="text-gray-500 line-through">£19,800</span></p>
                             <p className="text-green-600 font-semibold mt-1">Saved over £13,300</p>
                           </div>
                         </div>

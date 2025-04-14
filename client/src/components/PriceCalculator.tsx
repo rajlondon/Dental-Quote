@@ -1882,7 +1882,7 @@ export default function PriceCalculator() {
                       {/* UK vs Istanbul Price Comparison - now separate section */}
                       <div className="p-4 bg-primary/5 rounded-lg">
                         <h4 className="font-semibold text-primary mb-2">Cost Comparison: UK vs Istanbul</h4>
-                        <p className="text-sm mb-3">See how much you can save compared to UK prices:</p>
+                        <p className="text-sm mb-3">See how much you can save compared to UK costs:</p>
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {(() => {
                             // Get the selected clinic data using the new clinic information
@@ -1961,7 +1961,7 @@ export default function PriceCalculator() {
                             <>
                               <div className="mt-3 text-center text-primary font-semibold">
                                 Your Savings: £{Math.round(savings).toLocaleString()} 
-                                ({savingsPercent}% off UK prices)
+                                ({savingsPercent}% off UK costs)
                               </div>
                               <div className="text-xs text-center mt-2">
                                 * Pricing data sourced from Gemini deep research of average UK clinic rates
@@ -2291,7 +2291,7 @@ export default function PriceCalculator() {
                               {/* UK Savings Panel */}
                               <div className="rounded-lg border border-gray-200 overflow-hidden">
                                 <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
-                                  <h5 className="font-medium text-sm text-primary">Average savings compared to UK prices</h5>
+                                  <h5 className="font-medium text-sm text-primary">Average savings compared to UK costs</h5>
                                 </div>
                                 
                                 <div className="p-3">
@@ -2570,7 +2570,7 @@ export default function PriceCalculator() {
                           £{Math.round((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2 - htmlQuoteData.totalGBP).toLocaleString()}
                         </td>
                         <td className="px-4 py-3 border-b border-neutral-200 text-green-700">
-                          {Math.round(((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2 - htmlQuoteData.totalGBP) / ((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2) * 100)}% off UK prices
+                          {Math.round(((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2 - htmlQuoteData.totalGBP) / ((Math.round(htmlQuoteData.totalGBP * 3.2) + Math.round(htmlQuoteData.totalGBP * 2.8))/2) * 100)}% off UK costs
                         </td>
                       </tr>
                     </tbody>
