@@ -277,8 +277,16 @@ const Hero: React.FC = () => {
   return (
     <section className="relative py-6 md:py-10 overflow-hidden">
       {/* Background with pattern and gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white to-blue-50 opacity-90"></div>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMxODJCNDAiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PHBhdGggZD0iTTM2IDM0aDd2N2gtN3pNMTcgMzRoN3Y3aC03ek0zNiAxNWg3djdoLTd6TTE3IDE1aDd2N2gtN3pNMjcgMjRoN3Y3aC03eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30 mix-blend-overlay"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-white to-blue-50 opacity-85"></div>
+      
+      {/* Large decorative medical cross - bottom right */}
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTcwIDQwdjMwSDQwdjIwaDMwdjMwaDIwdi0zMGgzMHYtMjBoLTMwVjQwSDcweiIgZmlsbD0iIzNiODJmNiIgZmlsbC1vcGFjaXR5PSIwLjA2Ii8+PC9zdmc+')] bg-no-repeat opacity-70 transform rotate-12"></div>
+      
+      {/* Medical themed pattern - more visible */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMzQjgyRjYiIGZpbGwtb3BhY2l0eT0iMC4xMiI+PHBhdGggZD0iTTM4IDM4aDR2NGgtNHpNMzggMzhoLTR2LTRoNHY0em0wLTh2NGg0di00aC00em0wLTRoNHY0aC00di00em0tOCAwdjRoNHYtNGgtNHptMCAxMmg0di00aC00djR6Ii8+PGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iNjAiIHI9IjIiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjIwIiByPSIyIi8+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-60"></div>
+      
+      {/* Small decorative medical cross - top left */}
+      <div className="absolute top-0 left-0 w-60 h-60 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDMwdjIwSDMwdjIwaDIwdjIwaDIwVjcwaDIwVjUwSDcwVjMwSDUweiIgZmlsbD0iIzNiODJmNiIgZmlsbC1vcGFjaXR5PSIwLjA0Ii8+PC9zdmc+')] bg-no-repeat opacity-80 transform -rotate-12"></div>
       
       <div className="container mx-auto px-4 relative">
         {/* Top Section - Heading and Brief Description */}
@@ -308,7 +316,7 @@ const Hero: React.FC = () => {
         </div>
         
         {/* Bottom Section - Form with Trust Badges */}
-        <div className="bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAwZmYiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iMiIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMTAiIHI9IjIiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyIi8+PGNpcmNsZSBjeD0iMTAiIGN5PSIzMCIgcj0iMiIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjIiLz48L2c+PC9nPjwvc3ZnPg==')] rounded-xl shadow-xl p-5 md:p-7 max-w-5xl mx-auto border border-gray-100">
+        <div className="bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMzQjgyRjYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMTUiIGN5PSIxNSIgcj0iMyIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iMTUiIHI9IjMiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIzIi8+PGNpcmNsZSBjeD0iMTUiIGN5PSI0NSIgcj0iMyIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iNDUiIHI9IjMiLz48cGF0aCBkPSJNMjggMTVoNHYtNGgtNHY0em0wIDEwaDR2LTRoLTR2NHptMCAxMGg0di00aC00djR6Ii8+PC9nPjwvZz48L3N2Zz4=')] rounded-xl shadow-xl p-5 md:p-7 max-w-5xl mx-auto border border-gray-100">
           {/* Medical Indicator */}
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex items-center justify-center h-14 w-14 rounded-full bg-white shadow-lg border-2 border-primary/20">
