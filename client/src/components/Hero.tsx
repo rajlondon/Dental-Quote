@@ -94,14 +94,21 @@ const QuoteForm: React.FC = () => {
   
   return (
     <form onSubmit={handleSubmit} className="relative">
+      {/* Mobile Form with Card-based Layout */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-        {/* Responsive layout - stacks on mobile, horizontal on desktop */}
-        <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 col-span-full">
+        {/* Responsive layout - cards on mobile, horizontal on desktop */}
+        <div className="space-y-5 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 col-span-full">
+        
           {/* Country Selection */}
-          <div className="md:col-span-1">
-            <label htmlFor="country" className="block text-sm font-medium text-gray-600 mb-1.5">
-              Treatment Country
-            </label>
+          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
+            <div className="flex items-center mb-2">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
+                <PlaneIcon className="h-3 w-3 text-primary" />
+              </div>
+              <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                Treatment Country
+              </label>
+            </div>
             <div className="relative">
               <Select 
                 value={country} 
@@ -126,17 +133,19 @@ const QuoteForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                <PlaneIcon className="h-4 w-4" />
-              </div>
             </div>
           </div>
           
           {/* City Selection */}
-          <div className="md:col-span-1">
-            <label htmlFor="city" className="block text-sm font-medium text-gray-600 mb-1.5">
-              City
-            </label>
+          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
+            <div className="flex items-center mb-2">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
+                <MapPin className="h-3 w-3 text-primary" />
+              </div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                City
+              </label>
+            </div>
             <div className="relative">
               <Select 
                 value={city} 
@@ -159,17 +168,19 @@ const QuoteForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                <MapPin className="h-4 w-4" />
-              </div>
             </div>
           </div>
 
           {/* Main Treatment Type */}
-          <div className="md:col-span-1">
-            <label htmlFor="treatment-type" className="block text-sm font-medium text-gray-600 mb-1.5">
-              Treatment Type
-            </label>
+          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
+            <div className="flex items-center mb-2">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
+                <BriefcaseMedical className="h-3 w-3 text-primary" />
+              </div>
+              <label htmlFor="treatment-type" className="block text-sm font-medium text-gray-700">
+                Treatment Type
+              </label>
+            </div>
             <div className="relative">
               <Select value={treatmentType} onValueChange={setTreatmentType}>
                 <SelectTrigger id="treatment-type" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
@@ -183,17 +194,19 @@ const QuoteForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                <BriefcaseMedical className="h-4 w-4" />
-              </div>
             </div>
           </div>
           
           {/* Travel Month */}
-          <div className="md:col-span-1">
-            <label htmlFor="travel-month" className="block text-sm font-medium text-gray-600 mb-1.5">
-              Travel Month
-            </label>
+          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
+            <div className="flex items-center mb-2">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
+                <Calendar className="h-3 w-3 text-primary" />
+              </div>
+              <label htmlFor="travel-month" className="block text-sm font-medium text-gray-700">
+                Travel Month
+              </label>
+            </div>
             <div className="relative">
               <Select value={travelMonth} onValueChange={setTravelMonth}>
                 <SelectTrigger id="travel-month" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
@@ -207,20 +220,14 @@ const QuoteForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                <Calendar className="h-4 w-4" />
-              </div>
             </div>
           </div>
           
           {/* Submit Button */}
-          <div className="md:col-span-1">
-            <label className="invisible block text-sm font-medium text-gray-600 mb-1.5">
-              Get Quote
-            </label>
+          <div className="md:col-span-1 flex flex-col justify-end">
             <Button 
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-[42px] rounded-md flex items-center justify-center shadow-md transition-all"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-[42px] md:h-[42px] rounded-md flex items-center justify-center shadow-md transition-all"
               disabled={!country || !city || !treatmentType}
             >
               <span className="mr-2">Get My Quote</span>
@@ -230,10 +237,35 @@ const QuoteForm: React.FC = () => {
         </div>
       </div>
       
-      {/* Optional hint text */}
-      <p className="text-xs text-gray-500 mt-3 text-center">
-        Free, no-obligation quote. Receive your personalized treatment plan within 24 hours.
-      </p>
+      {/* Feature badges */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="flex items-center justify-center">
+          <div className="bg-blue-50 rounded-full px-4 py-1.5 inline-flex items-center border border-blue-100">
+            <Shield className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+            <p className="text-xs text-gray-700">
+              <span className="font-medium">Free, no-obligation</span> quote
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center">
+          <div className="bg-green-50 rounded-full px-4 py-1.5 inline-flex items-center border border-green-100">
+            <Clock className="h-3.5 w-3.5 text-green-500 mr-1.5" />
+            <p className="text-xs text-gray-700">
+              <span className="font-medium">Response within</span> 24 hours
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center">
+          <div className="bg-primary/5 rounded-full px-4 py-1.5 inline-flex items-center border border-primary/10">
+            <BriefcaseMedical className="h-3.5 w-3.5 text-primary mr-1.5" />
+            <p className="text-xs text-gray-700">
+              <span className="font-medium">Includes full</span> treatment plan
+            </p>
+          </div>
+        </div>
+      </div>
     </form>
     
   );
@@ -246,15 +278,28 @@ const Hero: React.FC = () => {
     <section className="relative bg-gradient-to-b from-white to-blue-50 py-6 md:py-8">
       <div className="container mx-auto px-4">
         {/* Top Section - Heading and Brief Description */}
-        <div className="text-center mb-6 md:mb-8">
-          <div className="inline-flex items-center justify-center mb-3">
-            <div className="h-[6px] w-16 bg-gradient-to-r from-primary/70 to-primary rounded-full mx-auto"></div>
+        <div className="text-center mb-8 md:mb-10">
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
+            <div className="h-1 w-20 bg-primary rounded-full mx-1"></div>
+            <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight leading-tight">
-            Quality Dental Care <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Without the Premium</span>
+          
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight leading-tight">
+            <span className="block mb-1">Quality Dental Care</span>
+            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Without the Premium Price</span>
           </h1>
-          <p className="text-gray-700 mx-auto max-w-xl font-light text-sm md:text-base">
-            Premium clinics in Turkey with up to 70% savings on UK prices
+          
+          <div className="flex items-center justify-center mb-4">
+            <div className="px-4 py-1.5 bg-primary/10 rounded-full inline-flex items-center">
+              <PoundSterling className="h-4 w-4 text-primary mr-2" />
+              <span className="text-sm text-gray-800 font-medium">Save up to 70% on UK dental costs</span>
+            </div>
+          </div>
+          
+          <p className="text-gray-600 mx-auto max-w-2xl font-light text-sm md:text-base leading-relaxed">
+            MyDentalFly connects you with premium accredited dental clinics in Turkey, offering 
+            the same high-quality treatments available in the UK at a fraction of the cost.
           </p>
         </div>
         
@@ -267,24 +312,35 @@ const Hero: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-5 pb-4 border-b border-gray-100">
-            <h2 className="text-lg font-medium text-gray-800 mb-3 md:mb-0">
+          <div className="flex flex-col mb-6 pb-4 border-b border-gray-100">
+            <h2 className="text-lg font-medium text-gray-800 mb-4 text-center">
               Request Your Personalised Dental Quote
             </h2>
             
             {/* Trust Badges */}
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 md:justify-end">
-              <div className="flex items-center px-3 py-1.5 bg-green-50 rounded-full">
-                <Check className="h-4 w-4 text-green-500 mr-2" />
-                <span className="text-xs md:text-sm text-gray-700"><span className="font-medium">100%</span> Satisfaction</span>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-col items-center bg-green-50 rounded-xl p-3 border border-green-100">
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-green-100 mb-1">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
+                <span className="text-xs text-center text-gray-700 font-medium">100% Satisfaction</span>
+                <span className="text-[10px] text-gray-500">Guaranteed</span>
               </div>
-              <div className="flex items-center px-3 py-1.5 bg-blue-50 rounded-full">
-                <Clock className="h-4 w-4 text-blue-500 mr-2" />
-                <span className="text-xs md:text-sm text-gray-700"><span className="font-medium">24/7</span> Support</span>
+              
+              <div className="flex flex-col items-center bg-blue-50 rounded-xl p-3 border border-blue-100">
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 mb-1">
+                  <HeartPulse className="h-4 w-4 text-blue-600" />
+                </div>
+                <span className="text-xs text-center text-gray-700 font-medium">Premium Care</span>
+                <span className="text-[10px] text-gray-500">Best UK Standards</span>
               </div>
-              <div className="flex items-center px-3 py-1.5 bg-primary/10 rounded-full">
-                <PoundSterling className="h-4 w-4 text-primary mr-2" />
-                <span className="text-xs md:text-sm text-gray-700"><span className="font-medium">£200</span> Deposit</span>
+              
+              <div className="flex flex-col items-center bg-primary/5 rounded-xl p-3 border border-primary/10">
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 mb-1">
+                  <PoundSterling className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-xs text-center text-gray-700 font-medium">70% Savings</span>
+                <span className="text-[10px] text-gray-500">vs UK Prices</span>
               </div>
             </div>
           </div>
