@@ -82,16 +82,16 @@ const QuoteForm: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-xl shadow-lg p-3 w-full max-w-xl mx-auto">
-      <h2 className="text-sm font-semibold text-gray-800 mb-1">Start Building Your Personalised Dental Quote</h2>
-      <p className="text-gray-600 text-xs mb-2">Tell us what dental treatment you're interested in.</p>
+    <div className="bg-white rounded-xl shadow-lg p-2 w-full max-w-full mx-auto">
+      <h2 className="text-xs font-semibold text-gray-800 mb-1">Start Building Your Personalised Dental Quote</h2>
+      <p className="text-gray-600 text-[10px] mb-1">Tell us what dental treatment you're interested in.</p>
       
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-1">
         {/* Location Selection (Country & City) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
           {/* Country Selection */}
-          <div className="space-y-1">
-            <label htmlFor="country" className="block text-xs font-medium text-gray-700">
+          <div className="space-y-0">
+            <label htmlFor="country" className="block text-[10px] font-medium text-gray-700">
               Country <span className="text-red-500">*</span>
             </label>
             <Select 
@@ -101,7 +101,7 @@ const QuoteForm: React.FC = () => {
                 setCity(""); // Reset city when country changes
               }}
             >
-              <SelectTrigger id="country" className="w-full h-9 text-sm">
+              <SelectTrigger id="country" className="w-full h-7 text-xs">
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent>
@@ -119,8 +119,8 @@ const QuoteForm: React.FC = () => {
           </div>
           
           {/* City Selection - Only shown when country is selected */}
-          <div className="space-y-1">
-            <label htmlFor="city" className="block text-xs font-medium text-gray-700">
+          <div className="space-y-0">
+            <label htmlFor="city" className="block text-[10px] font-medium text-gray-700">
               City <span className="text-red-500">*</span>
             </label>
             <Select 
@@ -128,7 +128,7 @@ const QuoteForm: React.FC = () => {
               onValueChange={setCity}
               disabled={!country}
             >
-              <SelectTrigger id="city" className="w-full h-9 text-sm">
+              <SelectTrigger id="city" className="w-full h-7 text-xs">
                 <SelectValue placeholder={country ? "Select city" : "Select country first"} />
               </SelectTrigger>
               <SelectContent>
@@ -146,14 +146,14 @@ const QuoteForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {/* Main Treatment Type */}
-          <div className="space-y-1">
-            <label htmlFor="treatment-type" className="block text-xs font-medium text-gray-700">
+          <div className="space-y-0">
+            <label htmlFor="treatment-type" className="block text-[10px] font-medium text-gray-700">
               Main Treatment Type <span className="text-red-500">*</span>
             </label>
             <Select value={treatmentType} onValueChange={setTreatmentType}>
-              <SelectTrigger id="treatment-type" className="w-full h-9 text-sm">
+              <SelectTrigger id="treatment-type" className="w-full h-7 text-xs">
                 <SelectValue placeholder="Choose treatment" />
               </SelectTrigger>
               <SelectContent>
@@ -167,12 +167,12 @@ const QuoteForm: React.FC = () => {
           </div>
           
           {/* Travel Month */}
-          <div className="space-y-1">
-            <label htmlFor="travel-month" className="block text-xs font-medium text-gray-700">
+          <div className="space-y-0">
+            <label htmlFor="travel-month" className="block text-[10px] font-medium text-gray-700">
               Preferred Travel Month
             </label>
             <Select value={travelMonth} onValueChange={setTravelMonth}>
-              <SelectTrigger id="travel-month" className="w-full h-9 text-sm">
+              <SelectTrigger id="travel-month" className="w-full h-7 text-xs">
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
@@ -187,12 +187,12 @@ const QuoteForm: React.FC = () => {
         </div>
         
         {/* Budget Range */}
-        <div className="space-y-1">
-          <label htmlFor="budget-range" className="block text-xs font-medium text-gray-700">
+        <div className="space-y-0">
+          <label htmlFor="budget-range" className="block text-[10px] font-medium text-gray-700">
             Estimated Budget (Optional)
           </label>
           <Select value={budgetRange} onValueChange={setBudgetRange}>
-            <SelectTrigger id="budget-range" className="w-full h-9 text-sm">
+            <SelectTrigger id="budget-range" className="w-full h-7 text-xs">
               <SelectValue placeholder="Select budget range" />
             </SelectTrigger>
             <SelectContent>
@@ -223,35 +223,35 @@ const Hero: React.FC = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative bg-gradient-to-br from-blue-50 to-sky-100 py-4 flex items-center min-h-0">
-      <div className="container mx-auto px-3 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
+    <section className="relative bg-gradient-to-br from-blue-50 to-sky-100 py-2 flex items-center min-h-0">
+      <div className="w-full max-w-[99%] mx-auto px-0 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 items-center">
           {/* Hero Content */}
-          <div className="order-2 lg:order-1 text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
-            <div className="mb-2 inline-flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+          <div className="order-2 lg:order-1 text-center lg:text-left lg:pl-2">
+            <div className="mb-1 inline-flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
               <PlaneIcon className="h-3 w-3 mr-1" />
               Dental Tourism Excellence
             </div>
             
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 leading-tight">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 leading-tight">
               Quality Dental Care <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">Without the Premium</span>
             </h1>
             
-            <h2 className="text-base text-primary font-medium mb-1 tracking-wide">
+            <h2 className="text-sm md:text-base text-primary font-medium mb-1 tracking-wide">
               Compare Clinics. Book With Confidence. Fly With a Smile.
             </h2>
-            <p className="text-sm text-gray-700 mb-3 leading-relaxed max-w-xl lg:mx-0 mx-auto">
+            <p className="text-xs text-gray-700 mb-2 leading-relaxed">
               MyDentalFly connects patients with trusted dental clinics in Turkey — offering up to 70% savings compared to UK prices.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-start mb-4">
-              <Button asChild className="bg-primary hover:bg-primary/90 text-white h-8 text-sm px-3 py-1">
+            <div className="flex sm:flex-row gap-2 justify-center lg:justify-start mb-2">
+              <Button asChild className="bg-primary hover:bg-primary/90 text-white h-7 text-xs px-2 py-0">
                 <Link href="/how-it-works">
                   How It Works
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 h-8 text-sm px-3 py-1">
+              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 h-7 text-xs px-2 py-0">
                 <Link href="/your-quote">
                   See All Treatments
                 </Link>
@@ -259,14 +259,14 @@ const Hero: React.FC = () => {
             </div>
             
             {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-3 items-center text-xs text-gray-600">
-              <div className="flex items-center">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-2 items-center text-xs text-gray-600">
+              <div className="flex items-center text-[10px]">
                 <span className="font-semibold mr-1">100%</span> Satisfaction
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center text-[10px]">
                 <span className="font-semibold mr-1">24/7</span> Support
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center text-[10px]">
                 <span className="font-semibold mr-1">£200</span> Deposit
               </div>
             </div>
