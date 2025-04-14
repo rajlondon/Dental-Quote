@@ -133,16 +133,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       const clinicName = clinic?.name?.replace(/\s+/g, '-') || 'dental-clinic';
       const filename = `MyDentalFly-Quote-${clinicName}-${patientName}-${dateStr}.pdf`;
       
-      // Call direct PDF download endpoint
-      fetch('/api/direct-download-pdf', {
+      // Call the existing PDF quote generator endpoint
+      fetch('/api/jspdf-quote-v2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          quoteData: JSON.stringify(quoteData),
-          filename
-        }),
+        body: JSON.stringify(quoteData),
       })
       .then(response => {
         if (!response.ok) {
