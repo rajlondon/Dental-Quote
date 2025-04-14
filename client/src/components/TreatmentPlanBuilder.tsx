@@ -47,10 +47,10 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
       { 
         id: 'dental_implant_standard', 
         name: 'Dental Implant (Standard)', 
-        priceGBP: 2500, 
-        priceUSD: 3200,
+        priceGBP: 875, 
+        priceUSD: 1120,
         guarantee: '5-year',
-        notes: 'UK average price. These are average prices in Istanbul. Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.'
+        notes: 'Actual prices vary based on materials used and clinic quality. Final pricing will be confirmed after consultation.'
       },
       { 
         id: 'dental_implant_premium', 
@@ -58,7 +58,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 3000, 
         priceUSD: 3850,
         guarantee: '10-year',
-        notes: 'UK average price for premium brands like Straumann or Nobel Biocare. Clinic prices vary based on materials used.'
+        notes: 'for premium brands like Straumann or Nobel Biocare. Clinic prices vary based on materials used.'
       },
       { 
         id: 'all_on_4_implants', 
@@ -66,7 +66,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 12000, 
         priceUSD: 15400,
         guarantee: '10-year',
-        notes: 'UK average price. Includes 4 implants and a full arch restoration. Clinic prices vary based on materials used.'
+        notes: ' Includes 4 implants and a full arch restoration. Clinic prices vary based on materials used.'
       },
       { 
         id: 'all_on_6_implants', 
@@ -74,7 +74,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 14000, 
         priceUSD: 18000,
         guarantee: '10-year',
-        notes: 'UK average price. Includes 6 implants and a full arch restoration, providing additional support and stability, particularly in the upper jaw.'
+        notes: ' Includes 6 implants and a full arch restoration, providing additional support and stability, particularly in the upper jaw.'
       },
       { 
         id: 'bone_graft', 
@@ -82,7 +82,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 650, 
         priceUSD: 835,
         guarantee: 'N/A',
-        notes: 'UK average price. May be required if your jaw bone lacks sufficient volume to support implants.'
+        notes: ' May be required if your jaw bone lacks sufficient volume to support implants.'
       },
       { 
         id: 'sinus_lift', 
@@ -90,7 +90,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 900, 
         priceUSD: 1160,
         guarantee: 'N/A',
-        notes: 'UK average price. May be needed for upper jaw implants when there is insufficient bone height.'
+        notes: ' May be needed for upper jaw implants when there is insufficient bone height.'
       },
     ],
   },
@@ -104,7 +104,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 650, 
         priceUSD: 835,
         guarantee: '3-year',
-        notes: 'UK average price. Clinic prices vary based on materials used and specifications.'
+        notes: ' Clinic prices vary based on materials used and specifications.'
       },
       { 
         id: 'zirconia_crown', 
@@ -112,7 +112,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 850, 
         priceUSD: 1100,
         guarantee: '5-year',
-        notes: 'UK average price. More durable than porcelain crowns and highly aesthetic.'
+        notes: ' More durable than porcelain crowns and highly aesthetic.'
       },
       { 
         id: 'porcelain_veneer', 
@@ -120,7 +120,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 600, 
         priceUSD: 770,
         guarantee: '3-year',
-        notes: 'UK average price. Thin shells bonded to the front surface of teeth to improve appearance.'
+        notes: ' Thin shells bonded to the front surface of teeth to improve appearance.'
       },
       { 
         id: 'composite_veneer', 
@@ -128,7 +128,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 350, 
         priceUSD: 450,
         guarantee: '2-year',
-        notes: 'UK average price. A more affordable alternative to porcelain veneers.'
+        notes: ' A more affordable alternative to porcelain veneers.'
       },
       { 
         id: 'inlay_onlay', 
@@ -136,7 +136,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 450, 
         priceUSD: 580,
         guarantee: '5-year',
-        notes: 'UK average price. Used when a tooth is too damaged for a filling but not enough for a crown.'
+        notes: ' Used when a tooth is too damaged for a filling but not enough for a crown.'
       },
     ],
   },
@@ -150,7 +150,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 450, 
         priceUSD: 580,
         guarantee: '1-year',
-        notes: 'UK average price. Professional whitening treatment that uses light-activated technology.'
+        notes: ' Professional whitening treatment that uses light-activated technology.'
       },
       { 
         id: 'laser_whitening', 
@@ -158,7 +158,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 550, 
         priceUSD: 710,
         guarantee: '1-year',
-        notes: 'UK average price. Uses laser light to activate the whitening solution for faster results.'
+        notes: ' Uses laser light to activate the whitening solution for faster results.'
       },
       { 
         id: 'home_whitening_kit', 
@@ -166,7 +166,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 250, 
         priceUSD: 320,
         guarantee: '1-year',
-        notes: 'UK average price. Custom-made trays with professional whitening gel for home use.'
+        notes: ' Custom-made trays with professional whitening gel for home use.'
       },
     ],
   },
@@ -180,7 +180,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 8000, 
         priceUSD: 10300,
         guarantee: '5-year',
-        notes: 'UK average price. Comprehensive treatment plan combining multiple procedures for a complete smile transformation.'
+        notes: ' Comprehensive treatment plan combining multiple procedures for a complete smile transformation.'
       },
       { 
         id: 'hollywood_smile', 
@@ -188,7 +188,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 5500, 
         priceUSD: 7100,
         guarantee: '5-year',
-        notes: 'UK average price. Premium full mouth transformation with high-quality veneers or crowns.'
+        notes: ' Premium full mouth transformation with high-quality veneers or crowns.'
       },
       { 
         id: 'full_mouth_restoration', 
@@ -196,7 +196,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 12000, 
         priceUSD: 15400,
         guarantee: '5-year',
-        notes: 'UK average price. Complete restoration of all teeth to restore function and aesthetics.'
+        notes: ' Complete restoration of all teeth to restore function and aesthetics.'
       },
     ],
   },
@@ -210,7 +210,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 80, 
         priceUSD: 100,
         guarantee: 'N/A',
-        notes: 'UK average price. Comprehensive examination, professional cleaning, and preventative care advice.'
+        notes: ' Comprehensive examination, professional cleaning, and preventative care advice.'
       },
       { 
         id: 'tooth_fillings', 
@@ -218,7 +218,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 120, 
         priceUSD: 155,
         guarantee: '2-year',
-        notes: 'UK average price. High-quality composite (tooth-colored) fillings to repair cavities and tooth damage.'
+        notes: ' High-quality composite (tooth-colored) fillings to repair cavities and tooth damage.'
       },
       { 
         id: 'root_canal', 
@@ -226,7 +226,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 500, 
         priceUSD: 645,
         guarantee: '2-year',
-        notes: 'UK average price. Modern, minimally painful root canal therapy to save damaged teeth.'
+        notes: ' Modern, minimally painful root canal therapy to save damaged teeth.'
       },
       { 
         id: 'tooth_extraction', 
@@ -234,7 +234,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 150, 
         priceUSD: 195,
         guarantee: 'N/A',
-        notes: 'UK average price. Simple extraction of visible tooth. Surgical extractions may cost more.'
+        notes: ' Simple extraction of visible tooth. Surgical extractions may cost more.'
       },
       { 
         id: 'dental_bridge', 
@@ -242,7 +242,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 1500, 
         priceUSD: 1930,
         guarantee: '5-year',
-        notes: 'UK average price. Fixed prosthetic device to replace missing teeth by joining artificial teeth to adjacent natural teeth.'
+        notes: ' Fixed prosthetic device to replace missing teeth by joining artificial teeth to adjacent natural teeth.'
       },
     ],
   },
@@ -256,7 +256,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 4000, 
         priceUSD: 5150,
         guarantee: '1-year',
-        notes: 'UK average price. Clear aligner system to straighten teeth without traditional braces.'
+        notes: ' Clear aligner system to straighten teeth without traditional braces.'
       },
       { 
         id: 'orthodontics_braces', 
@@ -264,7 +264,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 3000, 
         priceUSD: 3850,
         guarantee: '1-year',
-        notes: 'UK average price. Metal or ceramic brackets bonded to teeth to correct alignment.'
+        notes: ' Metal or ceramic brackets bonded to teeth to correct alignment.'
       },
       { 
         id: 'gum_treatment', 
@@ -272,7 +272,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 400, 
         priceUSD: 515,
         guarantee: 'N/A',
-        notes: 'UK average price. Specialized treatment for gum disease, including deep cleaning and medication.'
+        notes: ' Specialized treatment for gum disease, including deep cleaning and medication.'
       },
       { 
         id: 'night_guard', 
@@ -280,7 +280,7 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
         priceGBP: 250, 
         priceUSD: 320,
         guarantee: '1-year',
-        notes: 'UK average price. Custom-made device to prevent teeth grinding during sleep.'
+        notes: ' Custom-made device to prevent teeth grinding during sleep.'
       },
     ],
   },
