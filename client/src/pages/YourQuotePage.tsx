@@ -352,7 +352,7 @@ const ClinicCard: React.FC<{
             <div className="mb-4">
               <div className="flex items-start mb-1">
                 <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-gray-700">£200 deposit, remainder after consultation</span>
+                <span className="text-xs text-gray-700">£200 deposit, remainder paid in-person at clinic after consultation</span>
               </div>
               <div className="flex items-start mb-1">
                 <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
@@ -663,7 +663,7 @@ const FAQSection: React.FC = () => {
         
         <AccordionItem value="item-3" className="border rounded-md mb-3 border-gray-200">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <span className="text-base font-medium">Will my quote change after consultation?</span>
+            <span className="text-base font-medium">Will my quote change after my dental review?</span>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
             <p className="text-gray-700">

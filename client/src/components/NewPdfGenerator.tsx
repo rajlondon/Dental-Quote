@@ -278,7 +278,7 @@ const generateSmileJourneyPdf = ({
   // Disclaimer
   doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
-  doc.text('Disclaimer: Prices may adjust slightly based on your X-ray and final treatment plan after consultation.', margin, yPos);
+  doc.text('Disclaimer: Your final treatment quote will be confirmed by your chosen clinic after they\'ve reviewed your dental information. Payment for treatment is only made in-person at the clinic.', margin, yPos);
   
   // Footer
   const footerPosition = pageHeight - 15;
