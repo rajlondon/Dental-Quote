@@ -516,7 +516,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-left sm:text-right mt-2 sm:mt-0">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Istanbul: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Istanbul: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -590,7 +590,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -664,7 +664,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -738,7 +738,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -812,7 +812,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
@@ -886,7 +886,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.4).toLocaleString()}
+                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
