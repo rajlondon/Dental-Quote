@@ -51,6 +51,9 @@ function Router() {
       <Route path="/client-portal" component={ClientPortalPage} />
       <Route path="/admin-portal" component={AdminPortalPage} />
       <Route path="/clinic-portal" component={ClinicPortalPage} />
+      <Route path="/clinic">
+        {() => <Redirect to="/clinic-portal" />}
+      </Route>
       <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/deposit-payment">
         {() => <DepositPaymentPage />}
