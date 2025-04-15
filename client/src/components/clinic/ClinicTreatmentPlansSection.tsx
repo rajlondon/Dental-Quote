@@ -66,15 +66,20 @@ import type { TreatmentPlan, TreatmentItem } from '@/types/clientPortal';
 // Helper function to convert clinical treatment items to builder format
 // Using any[] as the return type because it's easier than defining the exact shape
 // In a real app with more strict typing, we would create a proper interface
+// Convert treatment items to builder-compatible format with all required fields
 const convertToBuilderItems = (items: TreatmentItem[] | undefined): any[] => {
-  if (!items) return [];
+  if (!items || !Array.isArray(items)) return [];
   
   return items.map(item => ({
     id: item.id,
     category: 'Dental',
     name: item.treatment,
-    quantity: item.quantity,
-    priceGBP: item.priceGBP
+    quantity: item.quantity || 1,
+    priceGBP: item.priceGBP,
+    priceUSD: item.priceUSD || Math.round(item.priceGBP * 1.3), // Default conversion if missing
+    subtotalGBP: item.subtotalGBP || item.priceGBP * (item.quantity || 1),
+    subtotalUSD: item.subtotalUSD || (item.priceUSD || Math.round(item.priceGBP * 1.3)) * (item.quantity || 1),
+    guarantee: item.guarantee || "Standard guarantee"
   }));
 };
 
@@ -1741,8 +1746,15 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                   
                   // Update the plan with the new treatments
                   if (selectedPlan) {
-                    // If editing existing plan, append to existing treatments
-                    const existingItems = selectedPlan.treatmentPlan.items || [];
+                    // Ensure the treatment plan has an initialized items array
+                    const treatmentPlan = selectedPlan.treatmentPlan || {
+                      items: [],
+                      totalGBP: 0,
+                      totalUSD: 0
+                    };
+                    
+                    // Get existing items, ensuring it's an array
+                    const existingItems = treatmentPlan.items || [];
                     
                     // Check for duplicate treatments by name instead of by ID
                     // This ensures we don't add the same treatment type multiple times
@@ -1770,7 +1782,7 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     const updatedPlan = {
                       ...selectedPlan,
                       treatmentPlan: {
-                        ...selectedPlan.treatmentPlan,
+                        ...treatmentPlan,
                         items: combinedItems,
                         totalGBP,
                         totalUSD
@@ -1778,7 +1790,14 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     };
                     
                     // Debug log the update
-                    console.log("Updating plan with new treatments:", updatedPlan);
+                    console.log("Updating plan with new treatments:", {
+                      existingItemsCount: existingItems.length,
+                      newItemsCount: uniqueNewItems.length,
+                      totalItemsCount: combinedItems.length,
+                      totalGBP,
+                      totalUSD,
+                      updatedPlan
+                    });
                     
                     // Update state
                     setSelectedPlan(updatedPlan);
