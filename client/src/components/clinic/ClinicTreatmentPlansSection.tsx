@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Quote } from '@/types/clientPortal';
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -60,8 +62,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
 import TreatmentPlanBuilder, { TreatmentItem as BuilderTreatmentItem } from '@/components/TreatmentPlanBuilder';
-import { useToast } from '@/hooks/use-toast';
-import type { TreatmentPlan, TreatmentItem } from '@/types/clientPortal';
+import type { TreatmentPlan } from '@/types/clientPortal';
 
 // Helper function to convert clinical treatment items to builder format
 // Using any[] as the return type because it's easier than defining the exact shape
@@ -381,6 +382,74 @@ interface TreatmentPlanItem {
   startDate: string | null;
 }
 
+// Sample patient quotes data (in a real app, this would come from an API)
+const samplePatientQuotes: Quote[] = [
+  {
+    id: 'Q1',
+    patientId: 101,
+    patientName: 'John Smith',
+    patientEmail: 'john.smith@example.com',
+    treatments: [
+      {
+        id: 'QT1',
+        treatment: 'Dental Implant (Premium)',
+        priceGBP: 650,
+        priceUSD: 845,
+        quantity: 2,
+        subtotalGBP: 1300,
+        subtotalUSD: 1690,
+        guarantee: '10 years'
+      },
+      {
+        id: 'QT2',
+        treatment: 'Zirconia Crown',
+        priceGBP: 220,
+        priceUSD: 286,
+        quantity: 3,
+        subtotalGBP: 660,
+        subtotalUSD: 858,
+        guarantee: '5 years'
+      }
+    ],
+    totalGBP: 1960,
+    totalUSD: 2548,
+    homeCountry: 'UK',
+    homeCountryTotalGBP: 5600,
+    travelInfo: {
+      departureCity: 'London',
+      arrivalCity: 'Istanbul',
+      travelMonth: 'May',
+      transfersArranged: true
+    },
+    createdAt: '2025-03-10T09:45:00Z',
+    status: 'pending'
+  },
+  {
+    id: 'Q2',
+    patientId: 102,
+    patientName: 'Sarah Johnson',
+    patientEmail: 'sarah.j@example.com',
+    treatments: [
+      {
+        id: 'QT3',
+        treatment: 'Full Mouth Veneers',
+        priceGBP: 3200,
+        priceUSD: 4160,
+        quantity: 1,
+        subtotalGBP: 3200,
+        subtotalUSD: 4160,
+        guarantee: '5 years'
+      }
+    ],
+    totalGBP: 3200,
+    totalUSD: 4160,
+    homeCountry: 'Germany',
+    homeCountryTotalGBP: 9000,
+    createdAt: '2025-03-12T14:20:00Z',
+    status: 'viewed'
+  }
+];
+
 const ClinicTreatmentPlansSection: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
@@ -396,6 +465,8 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   const [selectedCatalogItems, setSelectedCatalogItems] = useState<string[]>([]);
   const [catalogSearchTerm, setCatalogSearchTerm] = useState('');
   const [catalogFilterCategory, setCatalogFilterCategory] = useState('all');
+  const [showQuotesDialog, setShowQuotesDialog] = useState(false);
+  const [patientQuotes, setPatientQuotes] = useState<Quote[]>(samplePatientQuotes);
   
   // Status badge styles
   const statusStyles = {
@@ -433,6 +504,53 @@ const ClinicTreatmentPlansSection: React.FC = () => {
     toast({
       title: t("clinic.treatment_plans.new_plan_started", "New Treatment Plan"),
       description: t("clinic.treatment_plans.new_plan_started_desc", "You're now creating a new treatment plan."),
+    });
+  };
+  
+  // Function to import a quote into a treatment plan
+  const handleImportQuote = (quote: Quote) => {
+    // Create a new treatment plan from the quote
+    const newPlan: TreatmentPlanItem = {
+      id: `TP${Math.floor(Math.random() * 10000)}`,
+      patientName: quote.patientName,
+      patientId: quote.patientId,
+      treatmentPlan: {
+        items: quote.treatments.map(treatment => ({
+          ...treatment,
+          id: `T${Math.floor(Math.random() * 10000)}`, // Generate new ID for each treatment
+        })),
+        totalGBP: quote.totalGBP,
+        totalUSD: quote.totalUSD,
+        notes: `Imported from patient quote #${quote.id} created on ${new Date(quote.createdAt).toLocaleDateString()}`,
+        guaranteeDetails: "All work guaranteed by Istanbul Dental Smile",
+        version: 1,
+        lastUpdated: new Date().toISOString(),
+        approvedByPatient: false,
+        approvedByClinic: false
+      },
+      depositPaid: false,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      startDate: null
+    };
+    
+    // Update state
+    setSelectedPlan(newPlan);
+    setCurrentView('builder');
+    setShowQuotesDialog(false);
+    
+    // Update patient quote status to "converted"
+    const updatedQuotes = patientQuotes.map(q => 
+      q.id === quote.id ? { ...q, status: 'converted' as const } : q
+    );
+    setPatientQuotes(updatedQuotes);
+    
+    toast({
+      title: t("clinic.treatment_plans.quote_imported", "Quote Imported"),
+      description: t(
+        "clinic.treatment_plans.quote_imported_desc", 
+        "Patient quote has been imported as a treatment plan. You can now edit it."
+      ),
     });
   };
   
