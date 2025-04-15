@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,15 +9,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Search, Send, Paperclip, User, Phone, Calendar, 
   Video, MoreVertical, Image, FileText, ArrowRight,
-  CheckCircle2 
+  CheckCircle2, Languages, Globe 
 } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 const ClinicMessagesSection: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const [messageText, setMessageText] = useState<string>('');
+  const [autoTranslate, setAutoTranslate] = useState<boolean>(true);
+  const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
   
   // Sample conversations data - in a real app, this would come from an API
   const conversations = [
@@ -124,10 +131,76 @@ const ClinicMessagesSection: React.FC = () => {
     completed: "bg-gray-100 text-gray-800"
   };
 
+  // Simulated translation function 
+  // In a real app, this would be an API call to a translation service
+  const translateText = (text: string, targetLang: string): string => {
+    // This is a demo function that simulates translation for demonstration purposes
+    if (targetLang === 'tr') {
+      // Sample English to Turkish translations for demo
+      const translations: Record<string, string> = {
+        "Hello, I have some questions about my upcoming treatment.": 
+          "Merhaba, yaklaşan tedavim hakkında bazı sorularım var.",
+        "Hello James, of course! How can I help you today?": 
+          "Merhaba James, tabii ki! Bugün size nasıl yardımcı olabilirim?",
+        "When should I arrive for my appointment? And is there anything I should bring with me?": 
+          "Randevum için ne zaman gelmeliyim? Ve yanımda getirmem gereken bir şey var mı?",
+        "We recommend arriving 15 minutes early to complete any paperwork. Please bring your passport or ID, and any medical records or x-rays related to your dental history if you have them. If you've already sent us your x-rays, you don't need to bring them again.": 
+          "Evrak işlemlerini tamamlamak için 15 dakika erken gelmenizi öneririz. Lütfen pasaportunuzu veya kimliğinizi ve diş geçmişinizle ilgili tıbbi kayıtlarınızı veya röntgenlerinizi varsa getirin. Röntgenlerinizi zaten bize gönderdiyseniz, tekrar getirmenize gerek yok.",
+        "When should I arrive for my appointment?": 
+          "Randevum için ne zaman gelmeliyim?",
+        "Thank you for your message. Our support team will get back to you as soon as possible, usually within 2 hours during business hours.":
+          "Mesajınız için teşekkürler. Destek ekibimiz en kısa sürede, genellikle mesai saatleri içinde 2 saat içinde size geri dönecektir."
+      };
+
+      return translations[text] || "Çeviri mevcut değil. (Translation not available)";
+    } else {
+      // Turkish to English translations
+      const translations: Record<string, string> = {
+        "Merhaba, yaklaşan tedavim hakkında bazı sorularım var.": 
+          "Hello, I have some questions about my upcoming treatment.",
+        "Merhaba James, tabii ki! Bugün size nasıl yardımcı olabilirim?": 
+          "Hello James, of course! How can I help you today?",
+        "Randevum için ne zaman gelmeliyim? Ve yanımda getirmem gereken bir şey var mı?": 
+          "When should I arrive for my appointment? And is there anything I should bring with me?",
+        "Evrak işlemlerini tamamlamak için 15 dakika erken gelmenizi öneririz. Lütfen pasaportunuzu veya kimliğinizi ve diş geçmişinizle ilgili tıbbi kayıtlarınızı veya röntgenlerinizi varsa getirin. Röntgenlerinizi zaten bize gönderdiyseniz, tekrar getirmenize gerek yok.": 
+          "We recommend arriving 15 minutes early to complete any paperwork. Please bring your passport or ID, and any medical records or x-rays related to your dental history if you have them. If you've already sent us your x-rays, you don't need to bring them again.",
+        "Randevum için ne zaman gelmeliyim?": 
+          "When should I arrive for my appointment?",
+        "Mesajınız için teşekkürler. Destek ekibimiz en kısa sürede, genellikle mesai saatleri içinde 2 saat içinde size geri dönecektir.":
+          "Thank you for your message. Our support team will get back to you as soon as possible, usually within 2 hours during business hours."
+      };
+
+      return translations[text] || "Translation not available. (Çeviri mevcut değil.)";
+    }
+  };
+
+  // Effect to load translations when messages change or language changes
+  useEffect(() => {
+    if (autoTranslate && i18n.language) {
+      const newTranslations: Record<string, string> = {};
+      
+      messages.forEach(message => {
+        const translateTo = i18n.language === 'en' ? 'tr' : 'en';
+        const translatedText = translateText(message.text, translateTo);
+        newTranslations[message.id] = translatedText;
+      });
+      
+      setTranslatedMessages(newTranslations);
+    }
+  }, [messages, i18n.language, autoTranslate]);
+
   const handleSendMessage = () => {
     if (messageText.trim()) {
-      // Here you would add the message to the conversation
+      // In a real app, this would send the message to the API
+      // and then add it to the conversation after confirmation
       console.log("Sending message:", messageText);
+      
+      // Show success toast
+      toast({
+        title: t("clinic.messages.message_sent", "Message Sent"),
+        description: t("clinic.messages.successfully_sent", "Your message has been sent to the patient."),
+      });
+      
       setMessageText('');
     }
   };
@@ -310,34 +383,81 @@ const ClinicMessagesSection: React.FC = () => {
               </div>
             </div>
             
+            {/* Translation toggle */}
+            <div className="flex justify-end items-center px-4 py-2 border-b">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="auto-translate" className="text-sm">
+                  {t("clinic.messages.auto_translate", "Auto-Translate Messages")}
+                </Label>
+                <Switch
+                  id="auto-translate"
+                  checked={autoTranslate}
+                  onCheckedChange={setAutoTranslate}
+                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Languages className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("clinic.messages.translation_tooltip", "When enabled, messages are automatically translated between English and Turkish.")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+            
             {/* Messages */}
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {messages.map((message) => (
-                  <div 
-                    key={message.id} 
-                    className={`flex ${message.sender === 'clinic' ? 'justify-end' : 'justify-start'}`}
-                  >
+                {messages.map((message) => {
+                  const isCurrentLanguageTurkish = i18n.language === 'tr';
+                  const hasTranslation = !!translatedMessages[message.id];
+                  
+                  return (
                     <div 
-                      className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                        message.sender === 'clinic' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted'
-                      }`}
+                      key={message.id} 
+                      className={`flex ${message.sender === 'clinic' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p>{message.text}</p>
                       <div 
-                        className={`text-xs mt-1 flex justify-end ${
+                        className={`max-w-[80%] px-4 py-2 rounded-lg ${
                           message.sender === 'clinic' 
-                            ? 'text-primary-foreground/70' 
-                            : 'text-muted-foreground'
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted'
                         }`}
                       >
-                        {message.time}
+                        {/* Original message */}
+                        <p>{message.text}</p>
+                        
+                        {/* Translation section shown when autoTranslate is on */}
+                        {autoTranslate && hasTranslation && (
+                          <>
+                            <Separator className="my-2 opacity-50" />
+                            <div className="flex items-center gap-1 text-xs mb-1 opacity-70">
+                              <Globe className="h-3 w-3" />
+                              {isCurrentLanguageTurkish 
+                                ? t("clinic.messages.english_translation", "English Translation:") 
+                                : t("clinic.messages.turkish_translation", "Turkish Translation:")}
+                            </div>
+                            <p className="text-sm opacity-90">{translatedMessages[message.id]}</p>
+                          </>
+                        )}
+                        
+                        <div 
+                          className={`text-xs mt-1 flex justify-end ${
+                            message.sender === 'clinic' 
+                              ? 'text-primary-foreground/70' 
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {message.time}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
             
