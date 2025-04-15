@@ -945,80 +945,137 @@ const ClinicTreatmentPlansSection: React.FC = () => {
           
           {currentView === 'builder' && (
             <div className="space-y-6">
-              <div className="bg-white p-4 rounded-md border">
-                <h3 className="text-lg font-medium mb-4">
-                  {t("clinic.treatment_plans.plan_for_patient", "Create Treatment Plan for Patient")}
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-6 rounded-md border shadow-sm">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t("clinic.treatment_plans.select_patient", "Select Patient")}
-                    </label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("clinic.treatment_plans.select_patient_placeholder", "Select a patient")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="patient1">John Smith</SelectItem>
-                        <SelectItem value="patient2">Emily Johnson</SelectItem>
-                        <SelectItem value="patient3">Michael Brown</SelectItem>
-                        <SelectItem value="patient4">Sarah Williams</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <h3 className="text-lg font-medium mb-1">
+                      {selectedPlan 
+                        ? t("clinic.treatment_plans.edit_patient_plan", "Edit Treatment Plan") 
+                        : t("clinic.treatment_plans.create_patient_plan", "Create New Treatment Plan")
+                      }
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedPlan 
+                        ? t("clinic.treatment_plans.edit_desc", "Make changes to the existing treatment plan for this patient") 
+                        : t("clinic.treatment_plans.create_desc", "Create a customized treatment plan for your patient")
+                      }
+                    </p>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t("clinic.treatment_plans.start_date", "Start Date")}
-                    </label>
-                    <Input 
-                      type="date" 
-                      className="w-full" 
+                  {selectedPlan && (
+                    <Badge className="px-3 py-1 text-sm" variant={selectedPlan.status === 'draft' ? 'outline' : 'default'}>
+                      {statusText[selectedPlan.status]}
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        {t("clinic.treatment_plans.select_patient", "Select Patient")}
+                      </label>
+                      <Select defaultValue={selectedPlan ? `patient${selectedPlan.patientId}` : undefined}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("clinic.treatment_plans.select_patient_placeholder", "Select a patient")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="patient1">John Smith</SelectItem>
+                          <SelectItem value="patient2">Emily Johnson</SelectItem>
+                          <SelectItem value="patient3">Michael Brown</SelectItem>
+                          <SelectItem value="patient4">Sarah Williams</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        {t("clinic.treatment_plans.plan_name", "Plan Name (Optional)")}
+                      </label>
+                      <Input 
+                        placeholder={t("clinic.treatment_plans.plan_name_placeholder", "e.g. Full Smile Makeover")}
+                        defaultValue={selectedPlan?.treatmentPlan.notes}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        {t("clinic.treatment_plans.start_date", "Start Date")}
+                      </label>
+                      <Input 
+                        type="date" 
+                        className="w-full"
+                        defaultValue={selectedPlan?.startDate ? selectedPlan.startDate.split('T')[0] : undefined}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        {t("clinic.treatment_plans.guarantee_details", "Guarantee Details (Optional)")}
+                      </label>
+                      <Input 
+                        placeholder={t("clinic.treatment_plans.guarantee_placeholder", "e.g. 5-year guarantee on all treatments")}
+                        defaultValue={selectedPlan?.treatmentPlan.guaranteeDetails}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-medium mb-1">
+                        {t("clinic.treatment_plans.selected_treatments", "Selected Treatments")}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {t("clinic.treatment_plans.treatments_helper", "Add treatments from your catalog to build the treatment plan")}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowCatalogDialog(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t("clinic.treatment_plans.add_from_catalog", "Add from Catalog")}
+                    </Button>
+                  </div>
+                  
+                  <div className="border rounded-md overflow-hidden">
+                    <TreatmentPlanBuilder 
+                      initialTreatments={convertToBuilderItems(selectedPlan?.treatmentPlan.items)} 
+                      onTreatmentsChange={(treatments: BuilderTreatmentItem[]) => {
+                        console.log("Treatments updated", treatments);
+                        // This would be handled by the API in a real app
+                      }}
                     />
                   </div>
                 </div>
-              </div>
-              
-              <div className="bg-white p-4 rounded-md border">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium">
-                    {t("clinic.treatment_plans.select_treatments", "Select Treatments")}
-                  </h3>
+                
+                <div className="flex justify-between pt-4 border-t">
+                  <Button variant="outline" onClick={handleBackToList}>
+                    {t("common.cancel", "Cancel")}
+                  </Button>
                   <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowCatalogDialog(true)}
+                    onClick={() => {
+                      toast({
+                        title: selectedPlan 
+                          ? t("clinic.treatment_plans.plan_updated", "Treatment Plan Updated") 
+                          : t("clinic.treatment_plans.plan_created", "Treatment Plan Created"),
+                        description: selectedPlan
+                          ? t("clinic.treatment_plans.plan_updated_desc", "The treatment plan has been updated successfully.") 
+                          : t("clinic.treatment_plans.plan_created_desc", "The treatment plan has been created successfully.")
+                      });
+                      handleBackToList();
+                    }}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t("clinic.treatment_plans.add_from_catalog", "Add from Catalog")}
+                    {selectedPlan 
+                      ? t("clinic.treatment_plans.update_plan", "Update Plan") 
+                      : t("clinic.treatment_plans.save_plan", "Save Plan")
+                    }
                   </Button>
                 </div>
-                
-                <TreatmentPlanBuilder 
-                  initialTreatments={convertToBuilderItems(selectedPlan?.treatmentPlan.items)} 
-                  onTreatmentsChange={(treatments: BuilderTreatmentItem[]) => {
-                    console.log("Treatments updated", treatments);
-                    // This would be handled by the API in a real app
-                  }}
-                />
-              </div>
-              
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handleBackToList}>
-                  {t("common.cancel", "Cancel")}
-                </Button>
-                <Button 
-                  onClick={() => {
-                    toast({
-                      title: t("clinic.treatment_plans.plan_created", "Treatment Plan Created"),
-                      description: t("clinic.treatment_plans.plan_created_desc", "The treatment plan has been created successfully."),
-                    });
-                    handleBackToList();
-                  }}
-                >
-                  {t("clinic.treatment_plans.save_plan", "Save Plan")}
-                </Button>
               </div>
             </div>
           )}
