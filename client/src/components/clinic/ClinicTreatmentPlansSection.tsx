@@ -1086,24 +1086,44 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                                           });
                                           // Update the plan with the new quantity
                                           if (selectedPlan) {
-                                            setSelectedPlan({
+                                            // Convert updated treatments to proper format
+                                            const updatedItems = updatedTreatments.map(t => ({
+                                              id: t.id,
+                                              treatment: t.name,
+                                              priceGBP: t.priceGBP,
+                                              priceUSD: t.priceUSD,
+                                              quantity: t.quantity,
+                                              subtotalGBP: t.subtotalGBP,
+                                              subtotalUSD: t.subtotalUSD,
+                                              guarantee: t.guarantee || "Standard guarantee"
+                                            }));
+                                            
+                                            // Calculate updated totals
+                                            const totalGBP = updatedItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
+                                            const totalUSD = updatedItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
+                                            
+                                            // Create updated plan
+                                            const updatedPlan = {
                                               ...selectedPlan,
                                               treatmentPlan: {
                                                 ...selectedPlan.treatmentPlan,
-                                                items: updatedTreatments.map(t => ({
-                                                  id: t.id,
-                                                  treatment: t.name,
-                                                  priceGBP: t.priceGBP,
-                                                  priceUSD: t.priceUSD,
-                                                  quantity: t.quantity,
-                                                  subtotalGBP: t.subtotalGBP,
-                                                  subtotalUSD: t.subtotalUSD,
-                                                  guarantee: t.guarantee || ""
-                                                })),
-                                                totalGBP: updatedTreatments.reduce((sum, item) => sum + item.subtotalGBP, 0),
-                                                totalUSD: updatedTreatments.reduce((sum, item) => sum + item.subtotalUSD, 0)
+                                                items: updatedItems,
+                                                totalGBP,
+                                                totalUSD
                                               }
+                                            };
+                                            
+                                            // Debug logging
+                                            console.log("Decreasing treatment quantity:", {
+                                              treatmentId: treatment.id,
+                                              treatmentName: treatment.name,
+                                              oldQuantity: treatment.quantity,
+                                              newQuantity: treatment.quantity - 1,
+                                              updatedPlan
                                             });
+                                            
+                                            // Update state
+                                            setSelectedPlan(updatedPlan);
                                           }
                                         }
                                       }}
@@ -1669,9 +1689,9 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     return;
                   }
                   
-                  // Convert to treatment items
+                  // Convert to treatment items with unique IDs to prevent duplicates
                   const newTreatmentItems = selectedTreatments.map(treatment => ({
-                    id: treatment.id,
+                    id: `${treatment.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Create truly unique ID
                     treatment: treatment.name,
                     priceGBP: treatment.priceGBP,
                     priceUSD: Math.round(treatment.priceGBP * 1.3), // Simple conversion for demo
@@ -1685,11 +1705,14 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                   if (selectedPlan) {
                     // If editing existing plan, append to existing treatments
                     const existingItems = selectedPlan.treatmentPlan.items || [];
-                    const existingIds = existingItems.map(item => item.id);
                     
-                    // Filter out any treatments that are already in the plan
+                    // Check for duplicate treatments by name instead of by ID
+                    // This ensures we don't add the same treatment type multiple times
+                    const existingTreatmentNames = existingItems.map(item => item.treatment);
+                    
+                    // Filter out any treatments that are already in the plan by name
                     const uniqueNewItems = newTreatmentItems.filter(item => 
-                      !existingIds.includes(item.id)
+                      !existingTreatmentNames.includes(item.treatment)
                     );
                     
                     if (uniqueNewItems.length === 0) {
