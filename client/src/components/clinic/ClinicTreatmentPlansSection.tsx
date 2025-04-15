@@ -1584,7 +1584,13 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sampleTreatments.map((treatment) => (
+                  {sampleTreatments
+                    .filter(treatment => 
+                      (catalogFilterCategory === 'all' || treatment.category === catalogFilterCategory) &&
+                      (treatment.name.toLowerCase().includes(catalogSearchTerm.toLowerCase()) ||
+                       treatment.description.toLowerCase().includes(catalogSearchTerm.toLowerCase()))
+                    )
+                    .map((treatment) => (
                     <TableRow key={treatment.id}>
                       <TableCell>
                         <Checkbox 
@@ -1631,7 +1637,8 @@ const ClinicTreatmentPlansSection: React.FC = () => {
           
           <DialogFooter className="flex items-center justify-between flex-col sm:flex-row gap-2">
             <div className="text-sm text-muted-foreground">
-              {t("clinic.treatment_plans.treatments_selected", "Selected treatments:")} 0
+              {t("clinic.treatment_plans.treatments_selected", "Selected treatments:")}{" "}
+              <span className="font-medium">{selectedCatalogItems.length}</span>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -1644,10 +1651,84 @@ const ClinicTreatmentPlansSection: React.FC = () => {
               <Button
                 type="button"
                 onClick={() => {
+                  // Get selected treatments from catalog
+                  const selectedTreatments = sampleTreatments.filter(t => 
+                    selectedCatalogItems.includes(t.id)
+                  );
+                  
+                  if (selectedTreatments.length === 0) {
+                    toast({
+                      title: t("clinic.treatment_plans.no_treatments_selected", "No Treatments Selected"),
+                      description: t("clinic.treatment_plans.select_treatments_first", "Please select treatments to add to the plan."),
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  // Convert to treatment items
+                  const newTreatmentItems = selectedTreatments.map(treatment => ({
+                    id: treatment.id,
+                    treatment: treatment.name,
+                    priceGBP: treatment.priceGBP,
+                    priceUSD: Math.round(treatment.priceGBP * 1.3), // Simple conversion for demo
+                    quantity: 1,
+                    subtotalGBP: treatment.priceGBP,
+                    subtotalUSD: Math.round(treatment.priceGBP * 1.3),
+                    guarantee: treatment.guaranteePeriod || "Standard guarantee"
+                  }));
+                  
+                  // Update the plan with the new treatments
+                  if (selectedPlan) {
+                    // If editing existing plan, append to existing treatments
+                    const existingItems = selectedPlan.treatmentPlan.items || [];
+                    const existingIds = existingItems.map(item => item.id);
+                    
+                    // Filter out any treatments that are already in the plan
+                    const uniqueNewItems = newTreatmentItems.filter(item => 
+                      !existingIds.includes(item.id)
+                    );
+                    
+                    if (uniqueNewItems.length === 0) {
+                      toast({
+                        title: t("clinic.treatment_plans.already_added", "Treatments Already in Plan"),
+                        description: t("clinic.treatment_plans.already_added_desc", "All selected treatments are already in the plan."),
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
+                    const combinedItems = [...existingItems, ...uniqueNewItems];
+                    const totalGBP = combinedItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
+                    const totalUSD = combinedItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
+                    
+                    setSelectedPlan({
+                      ...selectedPlan,
+                      treatmentPlan: {
+                        ...selectedPlan.treatmentPlan,
+                        items: combinedItems,
+                        totalGBP,
+                        totalUSD
+                      }
+                    });
+                  } else {
+                    // For new plans, this would be handled differently
+                    // We would need to create a new plan with these treatments
+                    // But for now, we'll just show a toast
+                    toast({
+                      title: t("clinic.treatment_plans.create_plan_first", "Create Plan First"),
+                      description: t("clinic.treatment_plans.create_plan_first_desc", "Please create a new plan before adding treatments."),
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
                   toast({
                     title: t("clinic.treatment_plans.treatments_added", "Treatments Added"),
                     description: t("clinic.treatment_plans.treatments_added_desc", "Selected treatments have been added to the plan."),
                   });
+                  
+                  // Reset selection and close dialog
+                  setSelectedCatalogItems([]);
                   setShowCatalogDialog(false);
                 }}
               >
