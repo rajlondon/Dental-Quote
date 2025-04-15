@@ -152,10 +152,7 @@ export function FileUploader({
 
         try {
           const response = await apiRequest('POST', '/api/files/upload', formData, {
-            headers: {
-              // Don't set Content-Type here as it will be set automatically for FormData
-            },
-            onUploadProgress: (progressEvent) => {
+            onUploadProgress: (progressEvent: any) => {
               if (progressEvent.total) {
                 const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                 setProgress(percentCompleted);

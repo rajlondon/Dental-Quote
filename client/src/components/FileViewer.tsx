@@ -3,7 +3,7 @@ import {
   FileIcon, 
   Image, 
   FileText, 
-  FileMedical, 
+  Stethoscope, // Using Stethoscope instead of FileMedical
   Trash2, 
   Download, 
   Eye, 
@@ -35,6 +35,7 @@ export interface File {
   createdAt: string;
   userId: number;
   uploadedById?: number;
+  fileSize?: number;
 }
 
 export interface FileViewerProps {
@@ -70,9 +71,7 @@ export function FileViewer({
     setDownloadingFileId(fileId);
     
     try {
-      const response = await apiRequest('GET', `/api/files/download/${fileId}`, null, {
-        responseType: 'blob'
-      });
+      const response = await apiRequest('GET', `/api/files/download/${fileId}`);
       
       if (!response.ok) {
         throw new Error('Failed to download file');
@@ -167,7 +166,7 @@ export function FileViewer({
     } else if (file.mimetype === 'application/pdf') {
       return <FileText className="h-6 w-6 text-red-500" />;
     } else if (file.mimetype === 'application/dicom' || file.fileCategory === 'xray') {
-      return <FileMedical className="h-6 w-6 text-green-500" />;
+      return <Stethoscope className="h-6 w-6 text-green-500" />;
     }
     
     return <FileIcon className="h-6 w-6 text-gray-500" />;
@@ -256,7 +255,7 @@ export function FileViewer({
                       {file.originalName || file.filename}
                     </p>
                     <div className="flex gap-2 text-xs text-muted-foreground">
-                      <span>{formatFileSize(file.fileSize as number)}</span>
+                      <span>{formatFileSize(file.fileSize)}</span>
                       <span>•</span>
                       <span>{new Date(file.createdAt).toLocaleDateString()}</span>
                       {file.visibility && (
