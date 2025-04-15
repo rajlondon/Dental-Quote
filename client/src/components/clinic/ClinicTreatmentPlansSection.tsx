@@ -1656,6 +1656,10 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     selectedCatalogItems.includes(t.id)
                   );
                   
+                  // Debug logging
+                  console.log("Selected catalog items:", selectedCatalogItems);
+                  console.log("Selected treatments to add:", selectedTreatments);
+                  
                   if (selectedTreatments.length === 0) {
                     toast({
                       title: t("clinic.treatment_plans.no_treatments_selected", "No Treatments Selected"),
@@ -1701,7 +1705,8 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     const totalGBP = combinedItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
                     const totalUSD = combinedItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
                     
-                    setSelectedPlan({
+                    // Create updated plan
+                    const updatedPlan = {
                       ...selectedPlan,
                       treatmentPlan: {
                         ...selectedPlan.treatmentPlan,
@@ -1709,7 +1714,13 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                         totalGBP,
                         totalUSD
                       }
-                    });
+                    };
+                    
+                    // Debug log the update
+                    console.log("Updating plan with new treatments:", updatedPlan);
+                    
+                    // Update state
+                    setSelectedPlan(updatedPlan);
                   } else {
                     // For new plans, this would be handled differently
                     // We would need to create a new plan with these treatments
