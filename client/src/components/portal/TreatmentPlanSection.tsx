@@ -143,6 +143,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
   useEffect(() => {
     // Process treatment plan to add UK price comparisons
     const treatmentPlanWithUKComparisons = addUKPriceComparisons(treatmentPlan);
+    console.log("Treatment plan with UK comparisons:", treatmentPlanWithUKComparisons);
     setTreatmentPlan(treatmentPlanWithUKComparisons);
   }, []);
   
@@ -154,6 +155,11 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
       minimumFractionDigits: 0,
     }).format(amount);
   };
+  
+  // States for deposit flow
+  const [showDepositDialog, setShowDepositDialog] = useState(false);
+  const [isPayingDeposit, setIsPayingDeposit] = useState(false);
+  const [depositPaid, setDepositPaid] = useState(false);
   
   // Function to handle treatment plan approval
   const handleApproveTreatmentPlan = () => {
@@ -171,6 +177,28 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
       toast({
         title: t('portal.treatment_plan.approved', 'Treatment Plan Approved'),
         description: t('portal.treatment_plan.approved_desc', 'Your treatment plan has been approved successfully.'),
+      });
+      
+      // Show deposit dialog after approval
+      setTimeout(() => {
+        setShowDepositDialog(true);
+      }, 500);
+    }, 1500);
+  };
+  
+  // Function to handle deposit payment
+  const handlePayDeposit = () => {
+    setIsPayingDeposit(true);
+    
+    // In a real app, this would integrate with Stripe
+    setTimeout(() => {
+      setDepositPaid(true);
+      setIsPayingDeposit(false);
+      setShowDepositDialog(false);
+      
+      toast({
+        title: 'Deposit Paid',
+        description: 'Your £200 refundable deposit has been successfully processed.',
       });
     }, 1500);
   };
@@ -588,28 +616,78 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 w-full">
               <div className="flex">
                 <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                <div>
+                <div className="w-full">
                   <p className="text-sm font-medium text-green-800">
                     {t('portal.treatment_plan.approved_status', 'Treatment Plan Approved')}
                   </p>
                   <p className="text-xs text-green-700 mt-1">
                     {t('portal.treatment_plan.next_steps', 'Your treatment plan has been approved. The clinic will contact you to schedule your appointments.')}
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 bg-white"
-                    onClick={() => {
-                      // Navigate to appointments in a real app
-                      toast({
-                        title: t('portal.treatment_plan.scheduling', 'Appointments'),
-                        description: t('portal.treatment_plan.schedule_desc', 'Appointment scheduling will be available soon.'),
-                      });
-                    }}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {t('portal.treatment_plan.schedule', 'Schedule Appointments')}
-                  </Button>
+                  
+                  {/* Deposit section */}
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      {depositPaid ? (
+                        <div className="flex items-center mt-2 bg-green-100 rounded-lg p-2">
+                          <div className="bg-green-200 p-1 rounded-full mr-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-700" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-green-800">£200 Deposit Paid</p>
+                            <p className="text-xs text-green-700">Refundable if canceled 14+ days before appointment</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center mt-2 bg-blue-50 rounded-lg p-2">
+                          <div className="bg-blue-100 p-1 rounded-full mr-2">
+                            <PiggyBank className="h-4 w-4 text-blue-700" />
+                          </div>
+                          <div className="mr-4">
+                            <p className="text-xs font-medium text-blue-800">£200 Refundable Deposit Required</p>
+                            <p className="text-xs text-blue-700">Secures your appointment and is deducted from final cost</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      {depositPaid ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-white"
+                          onClick={() => {
+                            // Navigate to appointments in a real app
+                            toast({
+                              title: t('portal.treatment_plan.scheduling', 'Appointments'),
+                              description: t('portal.treatment_plan.schedule_desc', 'Appointment scheduling will be available soon.'),
+                            });
+                          }}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Schedule Appointment
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => setShowDepositDialog(true)}
+                        >
+                          <PiggyBank className="h-4 w-4 mr-2" />
+                          Pay Deposit Now
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {depositPaid && (
+                    <div className="mt-3">
+                      <p className="text-xs text-green-700">
+                        Your appointment is confirmed for <span className="font-medium">May 15-19, 2025</span>. 
+                        For any changes, please contact the MyDentalFly team at least 14 days before to maintain deposit refund eligibility.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
