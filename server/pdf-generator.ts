@@ -25,6 +25,19 @@ interface Review {
   treatment?: string;
 }
 
+// Interface for dental chart data
+interface ToothData {
+  id: number;
+  name: string;
+  position?: string;
+  section?: string;
+  selected?: boolean;
+  treatments?: string[];
+  condition?: string | null;
+  treatment?: string | null;
+  notes?: string;
+}
+
 interface QuoteData {
   items: QuoteItem[];
   totalGBP: number;
@@ -42,6 +55,7 @@ interface QuoteData {
   londonConsult?: 'yes' | 'no';
   londonConsultCostGBP?: number;
   londonConsultCostUSD?: number;
+  dentalChart?: ToothData[]; // Added dental chart data
 }
 
 // Original function - this stays the same
