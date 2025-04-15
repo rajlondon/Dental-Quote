@@ -21,9 +21,6 @@ import PortalLoginPage from "@/pages/PortalLoginPage";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
-import TestPdfPage from "@/pages/TestPdfPage";
-import SimpleTestPdf from "@/pages/SimpleTestPdf";
-import EnhancedPdfTest from "@/pages/EnhancedPdfTest";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -61,19 +58,10 @@ function Router() {
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
       </Route>
-      <Route path="/test-pdf" component={TestPdfPage} />
-      <Route path="/simple-pdf-test" component={SimpleTestPdf} />
-      <Route path="/enhanced-pdf-test" component={EnhancedPdfTest} />
-      {/* Other test pages redirect to home */}
+      {/* PDF test routes removed */}
       <Route path="/test">
         {() => {
           window.location.href = "/";
-          return null;
-        }}
-      </Route>
-      <Route path="/testpdf">
-        {() => {
-          window.location.href = "/test-pdf";
           return null;
         }}
       </Route>
