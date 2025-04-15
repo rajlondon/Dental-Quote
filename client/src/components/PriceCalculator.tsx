@@ -21,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
 import JSPDFGenerator from "./JSPDFGenerator";
-import { DentalChart } from "./DentalChart";
+import { DentalChart } from "@/components/DentalChart";
 
 // Define interface for clinic comparison
 interface ClinicComparison {
