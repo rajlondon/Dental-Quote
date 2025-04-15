@@ -1435,7 +1435,7 @@ export default function PriceCalculator() {
                                         className="mt-1 mr-3"
                                       />
                                       <div>
-                                        <h4 className="font-semibold">Istanbul Dental Smile (Full Concierge)</h4>
+                                        <h4 className="font-semibold">MyDentalFly.com (Full Concierge)</h4>
                                         <p className="text-sm text-neutral-600 mt-1">
                                           We'll handle everything from clinic booking to accommodation and transportation
                                         </p>
@@ -2455,7 +2455,7 @@ export default function PriceCalculator() {
                     </p>
                   </div>
                   <div className="mt-2 md:mt-0 bg-green-50 p-2 rounded-md border border-green-200">
-                    <p className="text-sm text-green-600">Your Savings with Istanbul Dental Smile:</p>
+                    <p className="text-sm text-green-600">Your Savings with MyDentalFly.com:</p>
                     <p className="text-xl font-bold text-green-700">
                       £{(htmlQuoteData.totalGBP * 1.75).toLocaleString()} (65% saving)
                     </p>
@@ -2560,7 +2560,7 @@ export default function PriceCalculator() {
                         <td className="px-4 py-3 border-b border-neutral-200">Price without travel costs</td>
                       </tr>
                       <tr className="bg-primary/5 font-medium">
-                        <td className="px-4 py-3 border-b border-neutral-200">Istanbul Dental Smile</td>
+                        <td className="px-4 py-3 border-b border-neutral-200">MyDentalFly.com</td>
                         <td className="px-4 py-3 border-b border-neutral-200 text-right">£{htmlQuoteData.totalGBP.toLocaleString()}</td>
                         <td className="px-4 py-3 border-b border-neutral-200">Includes flights, hotel & transfers</td>
                       </tr>
@@ -2616,14 +2616,14 @@ export default function PriceCalculator() {
               <div className="bg-primary/5 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold text-primary mb-2">Next Steps</h3>
                 <ol className="space-y-2 pl-5 list-decimal">
-                  <li className="pl-2">Contact Istanbul Dental Smile to confirm your treatment plan</li>
+                  <li className="pl-2">Contact MyDentalFly.com to confirm your treatment plan</li>
                   <li className="pl-2">Book your flight to Istanbul for your chosen dates</li>
                   <li className="pl-2">We will arrange airport transfer and accommodation options</li>
                 </ol>
                 
                 <div className="mt-4 bg-white p-4 rounded-lg border border-neutral-200">
                   <p className="font-medium">Ready to Book?</p>
-                  <p>Email us at <strong>info@istanbuldentalsmile.com</strong> or message us on WhatsApp: <strong>+447572445856</strong></p>
+                  <p>Email us at <strong>info@mydentalfly.com</strong> or message us on WhatsApp: <strong>+447572445856</strong></p>
                   <p className="text-sm text-neutral-500 mt-2">We'll handle your travel, treatment, and care — all you do is show up and smile!</p>
                 </div>
               </div>

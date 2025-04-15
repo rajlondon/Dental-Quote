@@ -175,7 +175,7 @@ export default function TeamPage() {
                   Get a Free Quote
                 </a>
                 <a
-                  href="mailto:info@istanbuldentalsmile.com"
+                  href="mailto:info@mydentalfly.com"
                   className="py-3 px-6 rounded-lg bg-white border border-primary text-primary hover:bg-primary/5 transition-colors text-center"
                 >
                   Contact Us
