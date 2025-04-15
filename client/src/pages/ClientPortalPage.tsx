@@ -10,7 +10,8 @@ import {
   Users, 
   LogOut,
   Menu,
-  X
+  X,
+  Stethoscope
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
 import AppointmentsSection from '@/components/portal/AppointmentsSection';
 import SupportSection from '@/components/portal/SupportSection';
 import ProfileSection from '@/components/portal/ProfileSection';
+import DentalChartSection from '@/components/portal/DentalChartSection';
 
 // Temporary Mock Data
 const mockUserData = {
@@ -56,6 +58,7 @@ const navItems = [
   { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, id: 'dashboard' },
   { label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, id: 'messages', notificationCount: 3 },
   { label: 'Treatment Plan', icon: <FileText className="h-5 w-5" />, id: 'treatment_plan' },
+  { label: 'Dental Chart', icon: <Stethoscope className="h-5 w-5" />, id: 'dental_chart' },
   { label: 'Appointments', icon: <Calendar className="h-5 w-5" />, id: 'appointments' },
   { label: 'Documents', icon: <FileText className="h-5 w-5" />, id: 'documents' },
   { label: 'Support', icon: <UserCog className="h-5 w-5" />, id: 'support' },
@@ -103,6 +106,8 @@ const ClientPortalPage: React.FC = () => {
         return <ProfileSection />;
       case 'treatment_plan':
         return <TreatmentPlanSection />;
+      case 'dental_chart':
+        return <DentalChartSection />;
       default:
         return <DashboardSection setActiveSection={setActiveSection} />;
     }
