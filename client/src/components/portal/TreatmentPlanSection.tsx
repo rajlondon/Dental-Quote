@@ -21,7 +21,8 @@ import {
   Percent,
   History,
   Receipt,
-  PlusCircle
+  PlusCircle,
+  CreditCard
 } from 'lucide-react';
 import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -752,6 +753,121 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
         </DialogContent>
       </Dialog>
 
+      {/* Deposit Payment Dialog */}
+      <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <PiggyBank className="h-5 w-5 mr-2 text-blue-500" />
+              Secure Your Treatment with £200 Deposit
+            </DialogTitle>
+            <DialogDescription>
+              Your deposit secures your treatment slot and is fully refundable if canceled 14+ days before your appointment.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold mb-2 flex items-center">
+                <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                Deposit Contract
+              </h3>
+              
+              <div className="bg-white border rounded-md p-4 text-sm">
+                <p className="font-semibold mb-2">MyDentalFly.com Deposit Agreement</p>
+                <p className="mb-2">This agreement confirms that the patient agrees to pay a £200 deposit to secure their dental treatment as described in the approved treatment plan.</p>
+                
+                <div className="space-y-2 mb-3">
+                  <p className="font-medium">Key Terms:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>The £200 deposit will be deducted from your final treatment cost</li>
+                    <li>100% refundable if canceled 14+ days before your scheduled appointment</li>
+                    <li>50% refundable if canceled 7-13 days before your scheduled appointment</li>
+                    <li>Non-refundable if canceled less than 7 days before your scheduled appointment</li>
+                  </ul>
+                </div>
+                
+                <p>By clicking "Pay Deposit Now", you confirm you have read and understood these terms.</p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold mb-2 flex items-center">
+                <CreditCard className="h-4 w-4 mr-2 text-gray-600" />
+                Payment Details
+              </h3>
+              
+              <div className="p-4 border rounded-md bg-white">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="font-medium">Refundable Deposit</p>
+                    <p className="text-gray-500 text-sm">Secures your treatment appointment</p>
+                  </div>
+                  <div className="text-xl font-bold">£200</div>
+                </div>
+                
+                {/* This would be replaced with actual Stripe payment form */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-sm mb-1">Card Number</label>
+                      <div className="border rounded-md p-2 bg-gray-50">
+                        <div className="flex items-center">
+                          <span className="text-gray-400">••••</span>
+                          <span className="mx-1 text-gray-400">••••</span>
+                          <span className="mx-1 text-gray-400">••••</span>
+                          <span className="mx-1">4242</span>
+                          <CreditCard className="ml-auto h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Expiration</label>
+                      <div className="border rounded-md p-2 bg-gray-50">
+                        <span>12/25</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">CVC</label>
+                      <div className="border rounded-md p-2 bg-gray-50">
+                        <span className="text-gray-400">•••</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDepositDialog(false)}
+              disabled={isPayingDeposit}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={handlePayDeposit}
+              disabled={isPayingDeposit}
+            >
+              {isPayingDeposit ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-b-transparent border-white"></div>
+                  Processing Payment...
+                </>
+              ) : (
+                <>
+                  <PiggyBank className="h-4 w-4 mr-2" />
+                  Pay Deposit Now
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-3xl">
