@@ -204,6 +204,26 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
     }, 1500);
   };
   
+  // Function to handle deposit cancellation
+  const handleCancelDeposit = () => {
+    setShowDepositDialog(false);
+    
+    // Show toast with warning about pricing guarantee
+    toast({
+      title: 'Deposit Payment Postponed',
+      description: 'Remember: Current pricing is guaranteed for 14 days only. After that, prices may change based on availability.',
+      variant: 'destructive',
+    });
+    
+    // After a brief delay, show a reminder toast about the deposit
+    setTimeout(() => {
+      toast({
+        title: 'Payment Reminder',
+        description: 'You can pay your deposit anytime from your treatment plan page by clicking "Pay Deposit Now".',
+      });
+    }, 3000);
+  };
+  
   // Function to download treatment plan as PDF
   const handleDownloadPlan = () => {
     // In a real app, this would download the PDF
@@ -216,10 +236,35 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
   return (
     <div className="flex flex-col h-full">
       <Card className="flex flex-col h-full">
+        {/* Pricing expiration warning - shows after approval, before deposit */}
+        {treatmentPlan.approvedByPatient && !depositPaid && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-medium text-amber-800">Pricing Valid for Limited Time</h4>
+              <p className="text-xs text-amber-700 mt-1">
+                Your approved treatment plan prices are guaranteed for 14 days only. Please secure your booking 
+                with a £200 deposit to lock in these rates.
+              </p>
+              <div className="mt-2">
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="h-8 bg-amber-600 hover:bg-amber-700"
+                  onClick={() => setShowDepositDialog(true)}
+                >
+                  <PiggyBank className="h-3.5 w-3.5 mr-1.5" />
+                  Pay £200 Deposit Now
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle>{t('portal.treatment_plan.title', 'Treatment Plan')}</CardTitle>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)}>
                 <PencilLine className="h-4 w-4 mr-2" />
                 Edit
@@ -229,10 +274,27 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                 {t('portal.treatment_plan.download', 'Download')}
               </Button>
               {treatmentPlan.approvedByPatient ? (
-                <Badge className="bg-green-600">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  {t('portal.treatment_plan.approved_badge', 'Approved')}
-                </Badge>
+                depositPaid ? (
+                  <Badge className="bg-green-600">
+                    <PiggyBank className="h-3 w-3 mr-1" />
+                    Deposit Paid
+                  </Badge>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                    <Badge className="bg-green-600">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      {t('portal.treatment_plan.approved_badge', 'Approved')}
+                    </Badge>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowDepositDialog(true)}
+                      className="whitespace-nowrap"
+                    >
+                      <PiggyBank className="h-4 w-4 mr-2" />
+                      Pay Deposit
+                    </Button>
+                  </div>
+                )
               ) : (
                 <Button 
                   size="sm" 
@@ -774,8 +836,25 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
               </h3>
               
               <div className="bg-white border rounded-md p-4 text-sm">
-                <p className="font-semibold mb-2">MyDentalFly.com Deposit Agreement</p>
+                <div className="flex justify-between items-start">
+                  <p className="font-semibold mb-2">MyDentalFly.com Deposit Agreement</p>
+                  <div className="bg-amber-50 px-2 py-1 rounded text-xs flex items-center">
+                    <Clock className="h-3 w-3 text-amber-500 mr-1" />
+                    <span className="text-amber-700 font-medium">Expires in 14 days</span>
+                  </div>
+                </div>
+                
                 <p className="mb-2">This agreement confirms that the patient agrees to pay a £200 deposit to secure their dental treatment as described in the approved treatment plan.</p>
+                
+                <div className="bg-gray-50 p-3 rounded-md border mb-3">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-gray-700">
+                      <span className="font-medium">Important:</span> The prices in your treatment plan are only guaranteed for 14 days from approval ({new Date(treatmentPlan.lastUpdated).toLocaleDateString()}). 
+                      After this period, prices may change based on clinic availability and material costs.
+                    </p>
+                  </div>
+                </div>
                 
                 <div className="space-y-2 mb-3">
                   <p className="font-medium">Key Terms:</p>
@@ -842,10 +921,10 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              onClick={() => setShowDepositDialog(false)}
+              onClick={handleCancelDeposit}
               disabled={isPayingDeposit}
             >
-              Cancel
+              Remind Me Later
             </Button>
             <Button
               variant="default"
