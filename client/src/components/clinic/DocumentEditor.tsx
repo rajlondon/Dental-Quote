@@ -77,7 +77,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
     if (document) {
       setName(document.name);
       setCategory(document.category);
-      setPatientId(document.patientId || '');
+      setPatientId(document.patientId || 'none');
       setShared(document.shared);
       setDescription(document.description || '');
     }
@@ -93,7 +93,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
       ...document,
       name,
       category,
-      patientId: patientId || undefined,
+      patientId: patientId === 'none' ? undefined : patientId,
       shared,
       description: description || undefined
     };
@@ -181,7 +181,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 <SelectValue placeholder={t("clinic.documents.select_patient", "Select a patient")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="none">
                   {t("clinic.documents.no_patient", "No patient (general document)")}
                 </SelectItem>
                 <SelectItem value="PT001">John Smith</SelectItem>
