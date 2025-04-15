@@ -277,29 +277,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(files.createdAt));
   }
 
-  async getTreatmentPlanByQuoteRequestId(quoteRequestId: number): Promise<TreatmentPlan | undefined> {
-    const [plan] = await db
-      .select()
-      .from(treatmentPlans)
-      .where(eq(treatmentPlans.quoteRequestId, quoteRequestId))
-      .orderBy(desc(treatmentPlans.createdAt))
-      .limit(1);
-    return plan;
-  }
 
-  async createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan> {
-    const [plan] = await db.insert(treatmentPlans).values(data).returning();
-    return plan;
-  }
-
-  async updateTreatmentPlan(id: number, data: Partial<TreatmentPlan>): Promise<TreatmentPlan | undefined> {
-    const [plan] = await db
-      .update(treatmentPlans)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(treatmentPlans.id, id))
-      .returning();
-    return plan;
-  }
 
   // === Bookings ===
   async getBooking(id: number): Promise<Booking | undefined> {
