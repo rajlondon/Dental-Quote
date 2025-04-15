@@ -444,8 +444,32 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   
   // Function to edit a treatment plan
   const handleEditPlan = (plan: TreatmentPlanItem) => {
-    setSelectedPlan(plan);
+    // Create a deep copy of the plan to ensure we don't modify the original directly
+    const planCopy = JSON.parse(JSON.stringify(plan)) as TreatmentPlanItem;
+    
+    // Ensure the treatment plan has properly initialized items
+    if (!planCopy.treatmentPlan.items) {
+      planCopy.treatmentPlan.items = [];
+    }
+    
+    // Make sure all items have the required fields
+    planCopy.treatmentPlan.items = planCopy.treatmentPlan.items.map(item => ({
+      ...item,
+      quantity: item.quantity || 1,
+      subtotalGBP: item.subtotalGBP || item.priceGBP * (item.quantity || 1),
+      subtotalUSD: item.subtotalUSD || (item.priceUSD || Math.round(item.priceGBP * 1.3)) * (item.quantity || 1),
+      guarantee: item.guarantee || "Standard guarantee"
+    }));
+    
+    // Set state and change view
+    console.log("Editing plan:", planCopy);
+    setSelectedPlan(planCopy);
     setCurrentView('builder');
+    
+    toast({
+      title: t("clinic.treatment_plans.editing_plan", "Editing Treatment Plan"),
+      description: t("clinic.treatment_plans.editing_plan_desc", "You can now edit this treatment plan."),
+    });
   };
   
   // Function to delete a treatment plan
@@ -1745,8 +1769,60 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                   }));
                   
                   // Update the plan with the new treatments
-                  if (selectedPlan) {
-                    // Ensure the treatment plan has an initialized items array
+                  if (currentView === 'builder') {
+                    // If we're in builder mode but don't have a selected plan, create a new one
+                    if (!selectedPlan) {
+                      const newPlan: TreatmentPlanItem = {
+                        id: `TP${Math.floor(Math.random() * 1000)}`,
+                        patientName: "New Patient",
+                        patientId: Math.floor(Math.random() * 1000),
+                        treatmentPlan: {
+                          items: [],
+                          totalGBP: 0,
+                          totalUSD: 0,
+                          notes: "",
+                          guaranteeDetails: "",
+                          version: 1,
+                          lastUpdated: new Date().toISOString(),
+                          approvedByPatient: false,
+                          approvedByClinic: false
+                        },
+                        depositPaid: false,
+                        status: 'draft',
+                        createdAt: new Date().toISOString(),
+                        startDate: null
+                      };
+                      setSelectedPlan(newPlan);
+                      
+                      // Process with this new plan
+                      const existingItems: TreatmentItem[] = [];
+                      const combinedItems = [...existingItems, ...newTreatmentItems];
+                      const totalGBP = combinedItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
+                      const totalUSD = combinedItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
+                      
+                      const updatedPlan = {
+                        ...newPlan,
+                        treatmentPlan: {
+                          ...newPlan.treatmentPlan,
+                          items: combinedItems,
+                          totalGBP,
+                          totalUSD
+                        }
+                      };
+                      
+                      console.log("Creating new plan with treatments:", updatedPlan);
+                      setSelectedPlan(updatedPlan);
+                      setShowCatalogDialog(false);
+                      
+                      toast({
+                        title: t("clinic.treatment_plans.plan_created", "Treatment Plan Created"),
+                        description: t("clinic.treatment_plans.treatments_added_desc", "Selected treatments have been added to a new plan."),
+                      });
+                      
+                      return;
+                    }
+                    
+                    // For existing plans, ensure the treatment plan has an initialized items array
                     const treatmentPlan = selectedPlan.treatmentPlan || {
                       items: [],
                       totalGBP: 0,
