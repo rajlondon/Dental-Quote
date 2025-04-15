@@ -471,11 +471,11 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   
   // Status badge styles
   const statusStyles = {
-    "draft": "bg-gray-100 text-gray-800",
-    "pending_approval": "bg-yellow-100 text-yellow-800",
-    "active": "bg-green-100 text-green-800",
-    "completed": "bg-blue-100 text-blue-800",
-    "cancelled": "bg-red-100 text-red-800"
+    "draft": "bg-gray-100 text-gray-800 border border-gray-200",
+    "pending_approval": "bg-yellow-100 text-yellow-800 border border-yellow-200",
+    "active": "bg-green-100 text-green-800 border border-green-200",
+    "completed": "bg-blue-100 text-blue-800 border border-blue-200",
+    "cancelled": "bg-red-100 text-red-800 border border-red-200"
   };
   
   // Status display text mapping
@@ -666,30 +666,53 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Tabs 
-                  defaultValue="all" 
-                  className="w-full sm:w-auto" 
-                  value={filterStatus}
-                  onValueChange={setFilterStatus}
-                >
-                  <TabsList className="grid grid-cols-3 sm:grid-cols-5 h-auto p-1">
-                    <TabsTrigger value="all" className="text-xs h-8">
+                <div className="w-full sm:w-auto">
+                  <label className="block text-sm font-medium mb-1.5">
+                    {t("clinic.treatment_plans.filter_by_status", "Filter by Status")}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant={filterStatus === 'all' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setFilterStatus('all')}
+                      className="h-9 px-3"
+                    >
                       {t("clinic.treatment_plans.filter.all", "All")}
-                    </TabsTrigger>
-                    <TabsTrigger value="draft" className="text-xs h-8">
+                    </Button>
+                    <Button 
+                      variant={filterStatus === 'draft' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setFilterStatus('draft')}
+                      className="h-9 px-3 border-gray-200"
+                    >
                       {t("clinic.treatment_plans.filter.draft", "Draft")}
-                    </TabsTrigger>
-                    <TabsTrigger value="pending_approval" className="text-xs h-8">
+                    </Button>
+                    <Button 
+                      variant={filterStatus === 'pending_approval' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setFilterStatus('pending_approval')}
+                      className="h-9 px-3 border-yellow-200"
+                    >
                       {t("clinic.treatment_plans.filter.pending", "Pending")}
-                    </TabsTrigger>
-                    <TabsTrigger value="active" className="text-xs h-8">
+                    </Button>
+                    <Button 
+                      variant={filterStatus === 'active' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setFilterStatus('active')}
+                      className="h-9 px-3 border-green-200"
+                    >
                       {t("clinic.treatment_plans.filter.active", "Active")}
-                    </TabsTrigger>
-                    <TabsTrigger value="completed" className="text-xs h-8">
+                    </Button>
+                    <Button 
+                      variant={filterStatus === 'completed' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setFilterStatus('completed')}
+                      className="h-9 px-3 border-blue-200"
+                    >
                       {t("clinic.treatment_plans.filter.completed", "Completed")}
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                    </Button>
+                  </div>
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button className="w-full sm:w-auto gap-2" onClick={handleCreateNewPlan}>
@@ -951,12 +974,12 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                     }).format(plan.treatmentPlan.totalGBP)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[plan.status]}`}>
+                    <div className="flex flex-col md:flex-row gap-2">
+                      <span className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap ${statusStyles[plan.status]}`}>
                         {statusText[plan.status]}
                       </span>
                       {plan.depositPaid && (
-                        <Badge className="bg-blue-600">
+                        <Badge className="bg-blue-600 whitespace-nowrap">
                           {t("clinic.treatment_plans.deposit_paid", "Deposit Paid")}
                         </Badge>
                       )}
