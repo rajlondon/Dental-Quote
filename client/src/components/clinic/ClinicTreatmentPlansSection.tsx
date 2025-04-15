@@ -42,13 +42,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TreatmentPlanViewer from '@/components/TreatmentPlanViewer';
-import TreatmentPlanBuilder from '@/components/TreatmentPlanBuilder';
+import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
+import TreatmentPlanBuilder, { TreatmentItem as BuilderTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import { useToast } from '@/hooks/use-toast';
 import type { TreatmentPlan, TreatmentItem } from '@/types/clientPortal';
 
 // Sample treatment plans data - in a real app, this would come from an API
-const sampleTreatmentPlans = [
+const sampleTreatmentPlans: TreatmentPlanItem[] = [
   {
     id: "TP001",
     patientName: "James Wilson",
@@ -86,7 +86,7 @@ const sampleTreatmentPlans = [
       approvedByClinic: true
     },
     depositPaid: true,
-    status: "active",
+    status: "active" as const,
     createdAt: "2025-04-01T09:00:00Z",
     startDate: "2025-05-10T09:00:00Z"
   },
@@ -117,7 +117,7 @@ const sampleTreatmentPlans = [
       approvedByClinic: true
     },
     depositPaid: true,
-    status: "active",
+    status: "active" as const,
     createdAt: "2025-04-05T14:30:00Z",
     startDate: "2025-04-20T09:00:00Z"
   },
@@ -158,7 +158,7 @@ const sampleTreatmentPlans = [
       approvedByClinic: true
     },
     depositPaid: false,
-    status: "pending_approval",
+    status: "pending_approval" as const,
     createdAt: "2025-04-06T09:30:00Z",
     startDate: "2025-05-15T10:00:00Z"
   },
@@ -199,7 +199,7 @@ const sampleTreatmentPlans = [
       approvedByClinic: true
     },
     depositPaid: true,
-    status: "active",
+    status: "active" as const,
     createdAt: "2025-03-25T13:45:00Z",
     startDate: "2025-04-28T09:00:00Z"
   },
@@ -230,7 +230,7 @@ const sampleTreatmentPlans = [
       approvedByClinic: true
     },
     depositPaid: false,
-    status: "draft",
+    status: "draft" as const,
     createdAt: "2025-04-08T11:30:00Z",
     startDate: null
   }
@@ -609,19 +609,11 @@ const ClinicTreatmentPlansSection: React.FC = () => {
           
           {currentView === 'builder' && (
             <TreatmentPlanBuilder 
-              patientId={selectedPlan?.patientId} 
-              existingPlan={selectedPlan?.treatmentPlan}
-              onSave={(plan) => {
-                toast({
-                  title: t("clinic.treatment_plans.saved", "Treatment Plan Saved"),
-                  description: t("clinic.treatment_plans.saved_desc", "The treatment plan has been saved successfully."),
-                });
-                
-                // In a real app, this would save to the API
-                // Here we just go back to the list view
-                setCurrentView('list');
+              initialTreatments={selectedPlan?.treatmentPlan.items} 
+              onTreatmentsChange={(treatments) => {
+                console.log("Treatments updated", treatments);
+                // This would be handled by the API in a real app
               }}
-              onCancel={handleBackToList}
             />
           )}
           
@@ -630,7 +622,7 @@ const ClinicTreatmentPlansSection: React.FC = () => {
               treatmentPlanId={parseInt(selectedPlan.id.replace('TP', ''))} 
               canUploadFiles={true}
               patientView={false}
-              onFileUploaded={(file) => {
+              onFileUploaded={(file: {filename: string}) => {
                 toast({
                   title: t("clinic.treatment_plans.file_uploaded", "File Uploaded"),
                   description: t("clinic.treatment_plans.file_uploaded_desc", "The file has been uploaded successfully."),
