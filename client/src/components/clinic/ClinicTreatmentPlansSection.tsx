@@ -48,6 +48,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { TreatmentPlan, TreatmentItem } from '@/types/clientPortal';
 
 // Helper function to convert clinical treatment items to builder format
+// Using any[] as the return type because it's easier than defining the exact shape
+// In a real app with more strict typing, we would create a proper interface
 const convertToBuilderItems = (items: TreatmentItem[] | undefined): any[] => {
   if (!items) return [];
   
