@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { useEffect, useState } from 'react';
 // Import logo from assets folder
-import logoPath from '@/assets/istanbul-dental-smile-logo.png';
+import logoPath from '@/assets/my-dental-fly-logo.png';
 import { useTranslation } from 'react-i18next';
 import 'jspdf/dist/polyfills.es.js';
 import { getFlightEstimateForCity } from '@/services/flightEstimatesService';
@@ -538,7 +538,7 @@ const generateQuotePdf = ({
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(10);
   doc.setTextColor(70, 70, 70);
-  doc.text('Istanbul Dental Smile made the whole process simple and stress-free.', margin + 15, yPos);
+  doc.text('MyDentalFly.com made the whole process simple and stress-free.', margin + 15, yPos);
   yPos += 8;
   doc.text('The quality of care was exceptional, and I couldn\'t be happier with my new smile!', margin + 15, yPos);
   

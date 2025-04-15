@@ -86,7 +86,7 @@ const mockMessages: Message[] = [
     bookingId: 123,
     senderId: 1,
     senderType: 'admin',
-    content: "Hello! This is Destina from Istanbul Dental Smile. I wanted to let you know that I'll be your personal concierge throughout your dental journey. I can help coordinate your travel plans, accommodation, and answer any questions about Istanbul.",
+    content: "Hello! This is Destina from MyDentalFly. I wanted to let you know that I'll be your personal concierge throughout your dental journey. I can help coordinate your travel plans, accommodation, and answer any questions about Istanbul.",
     createdAt: '2025-04-08T15:30:22Z',
     readAt: '2025-04-08T15:45:10Z'
   },
@@ -285,7 +285,7 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123 }) 
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-xs font-medium">
-                                {message.senderType === 'admin' ? 'Istanbul Dental Smile' : 'DentGroup Istanbul'}
+                                {message.senderType === 'admin' ? 'MyDentalFly.com' : 'DentGroup Istanbul'}
                               </span>
                             </div>
                           )}
