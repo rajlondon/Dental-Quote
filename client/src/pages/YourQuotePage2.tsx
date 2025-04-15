@@ -411,6 +411,26 @@ const YourQuotePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
+                
+                <div className="mt-4 flex items-center p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                  <div className="bg-blue-600 text-white rounded-md p-2 mr-3">
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-blue-800">New: Interactive Dental Chart</h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Use our new dental chart tool to visually indicate your dental conditions and desired treatments.
+                    </p>
+                  </div>
+                  <a 
+                    href="/dental-chart" 
+                    className="ml-3 whitespace-nowrap bg-white hover:bg-blue-50 text-blue-600 text-xs font-medium px-3 py-1.5 rounded border border-blue-200 transition-colors"
+                  >
+                    Open Dental Chart
+                  </a>
+                </div>
               </CardContent>
             </Card>
           </div>
