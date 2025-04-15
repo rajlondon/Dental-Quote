@@ -834,43 +834,140 @@ const ClinicDocumentsSection: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="flex-1 min-h-[400px] overflow-hidden flex flex-col items-center justify-center border rounded-md bg-gray-50 p-4">
-            <div className="text-center p-6">
-              <div className="mx-auto mb-4">
-                {selectedDocument && (
-                  selectedDocument.type === 'pdf' ? (
-                    <div className="p-4 bg-red-50 rounded-full inline-block">
-                      <FileText className="h-16 w-16 text-red-500" />
-                    </div>
-                  ) : selectedDocument.type.startsWith('doc') ? (
-                    <div className="p-4 bg-blue-50 rounded-full inline-block">
-                      <FileText className="h-16 w-16 text-blue-700" />
-                    </div>
-                  ) : selectedDocument.type === 'jpg' ? (
-                    <div className="p-4 bg-blue-50 rounded-full inline-block">
-                      <Image className="h-16 w-16 text-blue-500" />
-                    </div>
+          <div className="flex-1 min-h-[400px] overflow-hidden flex flex-col border rounded-md bg-gray-50 p-4">
+            {selectedDocument ? (
+              selectedDocument.type === 'jpg' || selectedDocument.type === 'png' || selectedDocument.type === 'jpeg' ? (
+                // Image Preview
+                <div className="flex-1 flex items-center justify-center overflow-auto">
+                  {/* In a real app, you would use the actual image source from an API */}
+                  {selectedDocument.thumbnail ? (
+                    <img 
+                      src={selectedDocument.thumbnail} 
+                      alt={selectedDocument.name}
+                      className="max-w-full max-h-full object-contain"
+                    />
                   ) : (
-                    <div className="p-4 bg-gray-100 rounded-full inline-block">
-                      <FileQuestion className="h-16 w-16 text-gray-500" />
+                    // Fallback for when no thumbnail is available
+                    <div className="text-center p-6">
+                      <div className="p-4 bg-blue-50 rounded-full inline-block mb-4">
+                        <Image className="h-16 w-16 text-blue-500" />
+                      </div>
+                      <h3 className="text-lg font-medium mb-2">
+                        {t("clinic.documents.image_preview", "Image Preview")}
+                      </h3>
+                      <p className="text-muted-foreground mb-6">
+                        {t("clinic.documents.image_preview_not_available", "Image preview is not available. The file might be processing or unavailable.")}
+                      </p>
+                      <Button 
+                        onClick={() => selectedDocument && handleDownload(selectedDocument)}
+                        className="gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        {t("clinic.documents.download_image", "Download Image")}
+                      </Button>
                     </div>
-                  )
-                )}
+                  )}
+                </div>
+              ) : selectedDocument.type === 'pdf' ? (
+                // PDF Preview - In a real app, you might use a PDF viewer library like react-pdf
+                <div className="flex-1 flex flex-col">
+                  <div className="bg-gray-800 p-3 flex items-center justify-between mb-3 rounded-t-md">
+                    <div className="text-white font-medium truncate">
+                      {selectedDocument.name}
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600 hover:text-white"
+                      onClick={() => selectedDocument && handleDownload(selectedDocument)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {t("clinic.documents.download", "Download")}
+                    </Button>
+                  </div>
+                  
+                  <div className="flex-1 bg-white flex items-center justify-center border">
+                    <div className="text-center p-6">
+                      <div className="p-4 bg-red-50 rounded-full inline-block mb-4">
+                        <FileText className="h-16 w-16 text-red-500" />
+                      </div>
+                      <h3 className="text-lg font-medium mb-2">
+                        {t("clinic.documents.pdf_preview", "PDF Preview")}
+                      </h3>
+                      <p className="text-muted-foreground mb-2">
+                        {t("clinic.documents.pdf_pages", "This document has multiple pages.")}
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        {t("clinic.documents.pdf_preview_note", "For better viewing experience, download the document.")}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center bg-gray-100 p-2 rounded-b-md mt-3">
+                    <div className="text-sm text-gray-500">
+                      {t("clinic.documents.page_indicator", "Page 1 of 3")}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" disabled>
+                        {t("clinic.documents.previous_page", "Previous")}
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        {t("clinic.documents.next_page", "Next")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // Other File Types
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <div className="mx-auto mb-4">
+                      {selectedDocument.type.startsWith('doc') ? (
+                        <div className="p-4 bg-blue-50 rounded-full inline-block">
+                          <FileText className="h-16 w-16 text-blue-700" />
+                        </div>
+                      ) : selectedDocument.type === 'zip' || selectedDocument.type === 'rar' ? (
+                        <div className="p-4 bg-yellow-50 rounded-full inline-block">
+                          <Archive className="h-16 w-16 text-yellow-600" />
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-gray-100 rounded-full inline-block">
+                          <FileQuestion className="h-16 w-16 text-gray-500" />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">
+                      {t("clinic.documents.preview_not_available", "Preview not available")}
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      {t("clinic.documents.preview_description", "This document type cannot be previewed directly. Please download the file to view its contents.")}
+                    </p>
+                    <Button 
+                      onClick={() => selectedDocument && handleDownload(selectedDocument)}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      {t("clinic.documents.download_to_view", "Download to View")}
+                    </Button>
+                  </div>
+                </div>
+              )
+            ) : (
+              // No document selected (shouldn't normally happen)
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center p-6">
+                  <div className="p-4 bg-gray-100 rounded-full inline-block mb-4">
+                    <FileQuestion className="h-16 w-16 text-gray-500" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">
+                    {t("clinic.documents.no_document_selected", "No Document Selected")}
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    {t("clinic.documents.select_document", "Please select a document to preview.")}
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t("clinic.documents.preview_not_available", "Preview not available")}
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                {t("clinic.documents.preview_description", "This document type cannot be previewed directly. Please download the file to view its contents.")}
-              </p>
-              <Button 
-                onClick={() => selectedDocument && handleDownload(selectedDocument)}
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {t("clinic.documents.download_to_view", "Download to View")}
-              </Button>
-            </div>
+            )}
           </div>
           
           <div className="mt-4 pt-4 border-t">
