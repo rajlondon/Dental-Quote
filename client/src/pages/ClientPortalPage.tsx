@@ -24,10 +24,9 @@ import { useToast } from '@/hooks/use-toast';
 import MessagingSection from '@/components/portal/MessagingSection';
 import DocumentsSection from '@/components/portal/DocumentsSection';
 import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
-// These will be built later:
-// import AppointmentsSection from '@/components/portal/AppointmentsSection';
-// import SupportSection from '@/components/portal/SupportSection';
-// import TravelSection from '@/components/portal/TravelSection';
+import AppointmentsSection from '@/components/portal/AppointmentsSection';
+import SupportSection from '@/components/portal/SupportSection';
+import ProfileSection from '@/components/portal/ProfileSection';
 
 // Temporary Mock Data
 const mockUserData = {
@@ -95,13 +94,13 @@ const ClientPortalPage: React.FC = () => {
       case 'messages':
         return <MessagingSection />;
       case 'appointments':
-        return <PlaceholderSection title="Appointments" />;
+        return <AppointmentsSection />;
       case 'documents':
         return <DocumentsSection />;
       case 'support':
-        return <PlaceholderSection title="Support" />;
+        return <SupportSection />;
       case 'profile':
-        return <PlaceholderSection title="My Details" />;
+        return <ProfileSection />;
       case 'treatment_plan':
         return <TreatmentPlanSection />;
       default:
