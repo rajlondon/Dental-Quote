@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -384,6 +385,7 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<TreatmentPlanItem | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [selectedTreatment, setSelectedTreatment] = useState<TreatmentCatalogItem | null>(null);
   
   // Status badge styles
@@ -942,13 +944,83 @@ const ClinicTreatmentPlansSection: React.FC = () => {
           {currentView === 'list' && renderTreatmentPlansTable()}
           
           {currentView === 'builder' && (
-            <TreatmentPlanBuilder 
-              initialTreatments={convertToBuilderItems(selectedPlan?.treatmentPlan.items)} 
-              onTreatmentsChange={(treatments: BuilderTreatmentItem[]) => {
-                console.log("Treatments updated", treatments);
-                // This would be handled by the API in a real app
-              }}
-            />
+            <div className="space-y-6">
+              <div className="bg-white p-4 rounded-md border">
+                <h3 className="text-lg font-medium mb-4">
+                  {t("clinic.treatment_plans.plan_for_patient", "Create Treatment Plan for Patient")}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t("clinic.treatment_plans.select_patient", "Select Patient")}
+                    </label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("clinic.treatment_plans.select_patient_placeholder", "Select a patient")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="patient1">John Smith</SelectItem>
+                        <SelectItem value="patient2">Emily Johnson</SelectItem>
+                        <SelectItem value="patient3">Michael Brown</SelectItem>
+                        <SelectItem value="patient4">Sarah Williams</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t("clinic.treatment_plans.start_date", "Start Date")}
+                    </label>
+                    <Input 
+                      type="date" 
+                      className="w-full" 
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-4 rounded-md border">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium">
+                    {t("clinic.treatment_plans.select_treatments", "Select Treatments")}
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowCatalogDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("clinic.treatment_plans.add_from_catalog", "Add from Catalog")}
+                  </Button>
+                </div>
+                
+                <TreatmentPlanBuilder 
+                  initialTreatments={convertToBuilderItems(selectedPlan?.treatmentPlan.items)} 
+                  onTreatmentsChange={(treatments: BuilderTreatmentItem[]) => {
+                    console.log("Treatments updated", treatments);
+                    // This would be handled by the API in a real app
+                  }}
+                />
+              </div>
+              
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleBackToList}>
+                  {t("common.cancel", "Cancel")}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    toast({
+                      title: t("clinic.treatment_plans.plan_created", "Treatment Plan Created"),
+                      description: t("clinic.treatment_plans.plan_created_desc", "The treatment plan has been created successfully."),
+                    });
+                    handleBackToList();
+                  }}
+                >
+                  {t("clinic.treatment_plans.save_plan", "Save Plan")}
+                </Button>
+              </div>
+            </div>
           )}
           
           {currentView === 'viewer' && selectedPlan && (
@@ -1207,6 +1279,125 @@ const ClinicTreatmentPlansSection: React.FC = () => {
               <Edit className="h-4 w-4 mr-2" />
               {t("clinic.treatment_plans.edit", "Edit")}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Treatment Catalog Selection Dialog */}
+      <Dialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog}>
+        <DialogContent className="max-w-4xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Database className="h-5 w-5 mr-2" />
+              {t("clinic.treatment_plans.select_from_catalog", "Select Treatments from Catalog")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("clinic.treatment_plans.select_from_catalog_desc", "Select treatments to add to the patient's treatment plan.")}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  className="pl-10" 
+                  placeholder={t("clinic.treatment_plans.search_treatments", "Search treatments...")} 
+                />
+              </div>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder={t("clinic.treatment_plans.filter_category", "Filter by category")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("clinic.treatment_plans.all_categories", "All Categories")}</SelectItem>
+                  <SelectItem value="implants">{t("clinic.treatment_plans.categories.implants", "Dental Implants")}</SelectItem>
+                  <SelectItem value="cosmetic">{t("clinic.treatment_plans.categories.cosmetic", "Cosmetic Dentistry")}</SelectItem>
+                  <SelectItem value="prosthetics">{t("clinic.treatment_plans.categories.prosthetics", "Prosthetics")}</SelectItem>
+                  <SelectItem value="orthodontics">{t("clinic.treatment_plans.categories.orthodontics", "Orthodontics")}</SelectItem>
+                  <SelectItem value="general">{t("clinic.treatment_plans.categories.general", "General Dentistry")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <ScrollArea className="h-[50vh] rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead>{t("clinic.treatment_plans.treatment_name", "Treatment Name")}</TableHead>
+                    <TableHead>{t("clinic.treatment_plans.category", "Category")}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t("clinic.treatment_plans.duration", "Duration")}</TableHead>
+                    <TableHead>{t("clinic.treatment_plans.price", "Price (GBP)")}</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sampleTreatments.map((treatment) => (
+                    <TableRow key={treatment.id}>
+                      <TableCell>
+                        <input 
+                          type="checkbox" 
+                          id={`select-${treatment.id}`} 
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{treatment.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {treatment.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{treatment.duration}</TableCell>
+                      <TableCell>
+                        {new Intl.NumberFormat(i18n.language === 'tr' ? 'tr-TR' : 'en-GB', { 
+                          style: 'currency', 
+                          currency: 'GBP',
+                          minimumFractionDigits: 0
+                        }).format(treatment.priceGBP)}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setSelectedTreatment(treatment)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
+          
+          <DialogFooter className="flex items-center justify-between flex-col sm:flex-row gap-2">
+            <div className="text-sm text-muted-foreground">
+              {t("clinic.treatment_plans.treatments_selected", "Selected treatments:")} 0
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCatalogDialog(false)}
+              >
+                {t("common.cancel", "Cancel")}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  toast({
+                    title: t("clinic.treatment_plans.treatments_added", "Treatments Added"),
+                    description: t("clinic.treatment_plans.treatments_added_desc", "Selected treatments have been added to the plan."),
+                  });
+                  setShowCatalogDialog(false);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t("clinic.treatment_plans.add_selected", "Add Selected")}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
