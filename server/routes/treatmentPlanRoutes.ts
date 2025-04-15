@@ -1,6 +1,7 @@
 import express from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
+import { InsertTreatmentPlan, TreatmentPlan } from '@shared/schema';
 
 const router = express.Router();
 
