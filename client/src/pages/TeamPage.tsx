@@ -9,7 +9,7 @@ const teamMembers = [
     id: "raj-singh",
     name: "Raj Singh",
     role: "Managing Director",
-    bio: `Raj Singh founded Istanbul Dental Smile after years of helping people navigate healthcare decisions across the UK. Born to Scottish parents and raised in Glasgow, Raj later moved to London where he worked in wills and estate planning, as well as the hair, dental care, and back pain sectors. He holds a BA in Legal Services from Glasgow Caledonian University.
+    bio: `Raj Singh founded MyDentalFly.com after years of helping people navigate healthcare decisions across the UK. Born to Scottish parents and raised in Glasgow, Raj later moved to London where he worked in wills and estate planning, as well as the hair, dental care, and back pain sectors. He holds a BA in Legal Services from Glasgow Caledonian University.
 
 A true people person at heart, Raj's mission is to make dental travel feel effortless, safe, and rewarding. He personally visits and vets every clinic in Istanbul that the company partners with, ensuring clients receive only the highest standards of quality, hygiene, and care.
 
@@ -22,14 +22,14 @@ Raj is based between London and Istanbul and speaks English, Hindi, Punjabi, and
     id: "destina-yasar",
     name: "Destina Yasar",
     role: "Chief Patient Coordinator",
-    bio: `Destina Yasar oversees all patient coordination at Istanbul Dental Smile, ensuring seamless experiences from initial inquiry to post-treatment care. Born and raised in Istanbul, Destina brings invaluable local knowledge and cultural understanding to the team.
+    bio: `Destina Yasar oversees all patient coordination at MyDentalFly.com, ensuring seamless experiences from initial inquiry to post-treatment care. Born and raised in Istanbul, Destina brings invaluable local knowledge and cultural understanding to the team.
 
 With a background in healthcare administration and tourism management, Destina excels at creating personalized treatment plans that consider both clinical needs and travel preferences. Her warm, empathetic approach has helped hundreds of international patients navigate their dental tourism journey with confidence.
 
 Destina is fluent in Turkish, English, and German, making her the perfect liaison between international patients and Istanbul's top dental professionals.`,
     image: "/images/team/destina.jpg",
     languages: ["Turkish", "English", "German"],
-    contactEmail: "destina@istanbuldentalsmile.com"
+    contactEmail: "destina@mydentalfly.com"
   }
 ];
 
@@ -39,8 +39,8 @@ export default function TeamPage() {
   return (
     <>
       <Helmet>
-        <title>Meet Our Team | Istanbul Dental Smile</title>
-        <meta name="description" content="Meet the Istanbul Dental Smile team - dedicated professionals committed to providing exceptional dental tourism experiences in Istanbul, Turkey." />
+        <title>Meet Our Team | MyDentalFly.com</title>
+        <meta name="description" content="Meet the MyDentalFly.com team - dedicated professionals committed to providing exceptional dental tourism experiences in Istanbul, Turkey." />
       </Helmet>
       
       <Navbar />
@@ -115,7 +115,7 @@ export default function TeamPage() {
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h2 className="text-3xl font-bold text-primary mb-4">Our Core Values</h2>
               <p className="text-lg text-neutral-600">
-                These principles guide everything we do at Istanbul Dental Smile, from patient interactions to clinic partnerships.
+                These principles guide everything we do at MyDentalFly.com, from patient interactions to clinic partnerships.
               </p>
             </div>
             

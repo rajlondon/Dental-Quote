@@ -14,7 +14,7 @@ const HowItWorks: React.FC = () => {
         {/* Hero Section */}
         <section className="bg-primary text-white py-24">
           <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">How Istanbul Dental Smile Works</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">How MyDentalFly.com Works</h1>
             <p className="text-xl max-w-3xl mx-auto text-center">
               Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.
             </p>
@@ -27,7 +27,7 @@ const HowItWorks: React.FC = () => {
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold mb-6 text-primary">Your Premium Dental Tourism Partner</h2>
               <p className="text-lg text-neutral-700 mb-6">
-                Istanbul Dental Smile is the UK's leading price comparison and concierge service for dental treatments in Turkey. We combine transparent pricing, carefully vetted top-rated clinics, and comprehensive travel planning to provide you with a complete 5-star experience.
+                MyDentalFly.com is the UK's leading price comparison and concierge service for dental treatments in Turkey. We combine transparent pricing, carefully vetted top-rated clinics, and comprehensive travel planning to provide you with a complete 5-star experience.
               </p>
               <p className="text-lg text-neutral-700 mb-6">
                 While saving up to 70% on your dental costs compared to UK prices, you'll receive treatment of equal or better quality than you're accustomed to back home. Best of all, you'll know the price before you even get on the plane.
@@ -103,7 +103,7 @@ const HowItWorks: React.FC = () => {
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold mb-8 text-primary">Why Choose Istanbul Dental Smile?</h2>
+              <h2 className="text-3xl font-bold mb-8 text-primary">Why Choose MyDentalFly.com?</h2>
               
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
