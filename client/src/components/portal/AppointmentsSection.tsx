@@ -46,6 +46,7 @@ interface Appointment {
   status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
   notes?: string;
   virtualOption?: boolean;
+  meetLink?: string;
 }
 
 // Mock data for appointments
@@ -60,7 +61,8 @@ const mockAppointments: Appointment[] = [
     doctorName: "Dr. Mehmet Yilmaz",
     status: "confirmed",
     notes: "Please arrive 15 minutes early to complete paperwork. Bring any recent X-rays if available.",
-    virtualOption: true
+    virtualOption: true,
+    meetLink: "https://meet.google.com/abc-defg-hij"
   },
   {
     id: "2",
@@ -166,17 +168,25 @@ const AppointmentsSection: React.FC = () => {
   };
   
   // Function to join virtual appointment
-  const handleJoinVirtual = () => {
-    // In a real app, this would launch the video call
-    setShowVirtualDialog(true);
-    
-    // Mock video call initiation
-    setTimeout(() => {
+  const handleJoinVirtual = (appointment: Appointment) => {
+    if (appointment.meetLink) {
+      // Open Google Meet in a new tab
+      window.open(appointment.meetLink, '_blank');
+      
+      toast({
+        title: "Google Meet",
+        description: "Opening your virtual appointment in Google Meet...",
+      });
+    } else {
+      // If no meet link exists, show the virtual dialog
+      setShowVirtualDialog(true);
+      setSelectedAppointment(appointment);
+      
       toast({
         title: "Video Call",
         description: "Setting up your virtual appointment...",
       });
-    }, 1000);
+    }
   };
   
   return (
@@ -259,10 +269,10 @@ const AppointmentsSection: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={handleJoinVirtual}
+                                  onClick={() => handleJoinVirtual(appointment)}
                                 >
                                   <Video className="h-4 w-4 mr-2" />
-                                  Virtual Option
+                                  {appointment.meetLink ? "Join Google Meet" : "Virtual Option"}
                                 </Button>
                               )}
                             </div>
@@ -336,10 +346,10 @@ const AppointmentsSection: React.FC = () => {
                                   size="sm" 
                                   variant="outline"
                                   className="mt-2"
-                                  onClick={handleJoinVirtual}
+                                  onClick={() => handleJoinVirtual(appointment)}
                                 >
                                   <Video className="h-4 w-4 mr-2" />
-                                  Virtual Option
+                                  {appointment.meetLink ? "Join Google Meet" : "Virtual Option"}
                                 </Button>
                               )}
                             </div>
@@ -606,7 +616,7 @@ const AppointmentsSection: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Video className="h-5 w-5 mr-2 text-blue-500" />
-              Virtual Appointment
+              Google Meet Consultation
             </DialogTitle>
             <DialogDescription>
               Connect with your dental professional online
@@ -617,7 +627,10 @@ const AppointmentsSection: React.FC = () => {
             <div className="rounded-lg bg-blue-50 p-4">
               <h3 className="text-sm font-medium mb-2">About to join virtual consultation</h3>
               <p className="text-sm text-blue-800 mb-4">
-                Your virtual consultation with Dr. Mehmet Yilmaz is about to begin. Please ensure your camera and microphone are working properly.
+                {selectedAppointment && (
+                  <>Your virtual consultation with {selectedAppointment.doctorName} is about to begin. You'll be redirected to Google Meet.</>
+                )}
+                Please ensure your camera and microphone are working properly.
               </p>
               
               <div className="bg-white rounded-md border p-3 space-y-2">
@@ -665,14 +678,20 @@ const AppointmentsSection: React.FC = () => {
             <Button
               onClick={() => {
                 setShowVirtualDialog(false);
+                
+                // If the selected appointment has a Google Meet link, open it
+                if (selectedAppointment?.meetLink) {
+                  window.open(selectedAppointment.meetLink, '_blank');
+                }
+                
                 toast({
-                  title: "Joining Virtual Appointment",
-                  description: "Connecting to your doctor...",
+                  title: "Joining Google Meet",
+                  description: "Connecting to your virtual consultation...",
                 });
               }}
             >
               <Video className="h-4 w-4 mr-2" />
-              Join Now
+              Join Google Meet
             </Button>
           </DialogFooter>
         </DialogContent>
