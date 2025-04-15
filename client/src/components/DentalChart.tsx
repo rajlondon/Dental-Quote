@@ -302,7 +302,12 @@ export function DentalChart({
         
         {/* Simple Instructions */}
         <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm text-blue-800">
-          Tap on any tooth to mark conditions or treatments
+          <p className="mb-1"><strong>How to use:</strong></p>
+          <ul className="list-disc pl-5">
+            <li>Tap on any tooth to mark conditions or treatments</li>
+            <li>Mobile view shows a simplified list format</li>
+            <li>All your changes are saved automatically</li>
+          </ul>
         </div>
         
         {/* Desktop View - Full Dental Chart */}
@@ -457,7 +462,25 @@ export function DentalChart({
             <DialogTitle>
               {selectedTooth ? `Tooth ${selectedTooth.id} - ${selectedTooth.name}` : 'Select Tooth'}
             </DialogTitle>
+            <p className="text-gray-500 text-sm pt-1">
+              Select options for this tooth
+            </p>
           </DialogHeader>
+          
+          {/* Visual Indicator of Selected Tooth */}
+          {selectedTooth && (
+            <div className="flex justify-center items-center p-2">
+              <div 
+                className="h-20 w-20 flex items-center justify-center rounded-full border-4 border-gray-400 font-bold text-xl"
+                style={{ 
+                  backgroundColor: getToothColor(selectedTooth), 
+                  color: getTextColor(getToothColor(selectedTooth)) 
+                }}
+              >
+                {selectedTooth.id}
+              </div>
+            </div>
+          )}
           
           <Tabs defaultValue="condition" onValueChange={(value) => setSelectedMode(value as 'condition' | 'treatment')}>
             <TabsList className="grid w-full grid-cols-2">
