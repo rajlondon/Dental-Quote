@@ -117,7 +117,7 @@ export default function ServerPdfGenerator({
       // Create a link and click it to download the PDF
       const a = document.createElement('a');
       a.href = url;
-      a.download = `IstanbulDentalSmile_Quote_${format(new Date(), 'MM-dd-yyyy')}.pdf`;
+      a.download = `MyDentalFly_Quote_${format(new Date(), 'MM-dd-yyyy')}.pdf`;
       document.body.appendChild(a);
       a.click();
       

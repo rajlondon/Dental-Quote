@@ -860,7 +860,7 @@ const generateQuotePdf = ({
   doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
   doc.text('www.mydentalfly.com', pageWidth / 2, yPos, { align: 'center' });
   yPos += 5;
-  doc.text('+447572445856 | Istanbul, Turkey', pageWidth / 2, yPos, { align: 'center' });
+  doc.text('+447572445856 | MyDentalFly.com', pageWidth / 2, yPos, { align: 'center' });
   
   // Save the PDF with a formatted date in the filename
   const formattedDateForFile = formattedDate.replace(/\//g, '-');

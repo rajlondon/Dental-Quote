@@ -10,7 +10,7 @@ export default function PricingPage() {
   
   // Set page title when component mounts
   useEffect(() => {
-    document.title = `${t('pricing.pricing_title')} | Istanbul Dental Smile`;
+    document.title = `${t('pricing.pricing_title')} | MyDentalFly.com`;
   }, [t]);
   
   return (

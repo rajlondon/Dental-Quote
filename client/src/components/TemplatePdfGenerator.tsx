@@ -148,7 +148,7 @@ export default function TemplatePdfGenerator({
       // Create a download link and trigger download
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
-      const filename = `IstanbulDentalSmile_Quote_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
+      const filename = `MyDentalFly_Quote_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
       
       link.href = url;
       link.setAttribute('download', filename);
