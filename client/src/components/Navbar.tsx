@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { UserCircle2, Menu, X, Calculator } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
-import PDFTestButton from "@/components/PDFTestButton";
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
@@ -52,16 +51,7 @@ const Navbar: React.FC = () => {
             {t('navbar.contact', 'Contact')}
           </a>
           
-          <Link href="/simple-pdf-test" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            Simple PDF Test
-          </Link>
-          
-          <Link href="/enhanced-pdf-test" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            Enhanced PDF Test
-          </Link>
-          
           <LanguageSwitcher />
-          <PDFTestButton />
         </div>
         
         <div className="md:hidden flex items-center gap-2">
@@ -117,14 +107,6 @@ const Navbar: React.FC = () => {
           <a href="#contact" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.contact', 'Contact')}
           </a>
-          
-          <Link href="/simple-pdf-test" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            Simple PDF Test
-          </Link>
-          
-          <Link href="/enhanced-pdf-test" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            Enhanced PDF Test
-          </Link>
         </div>
       </div>
     </nav>
