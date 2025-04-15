@@ -272,192 +272,180 @@ export function DentalChart({
   return (
     <div className="dental-chart-container">
       <div>
+        {/* Simple Header with Reset Button */}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Your Dental Chart</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              const resetTeeth = teeth.map(tooth => ({
+                ...tooth,
+                condition: null,
+                treatment: null,
+                notes: ''
+              }));
+              setTeeth(resetTeeth);
+              if (onTeethUpdate) {
+                onTeethUpdate(resetTeeth);
+              }
+              localStorage.removeItem('dentalChartData');
+              toast({
+                title: "Dental Chart Reset",
+                description: "All teeth have been reset to normal",
+              });
+            }}
+          >
+            Reset
+          </Button>
+        </div>
         
-        {/* Legend and Reset Button */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-medium text-gray-700">Dental Chart</h3>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                const resetTeeth = teeth.map(tooth => ({
-                  ...tooth,
-                  condition: null,
-                  treatment: null,
-                  notes: ''
-                }));
-                setTeeth(resetTeeth);
-                if (onTeethUpdate) {
-                  onTeethUpdate(resetTeeth);
-                }
-                localStorage.removeItem('dentalChartData');
-                toast({
-                  title: "Dental Chart Reset",
-                  description: "All teeth have been reset to normal",
-                });
-              }}
-            >
-              Reset Chart
-            </Button>
+        {/* Simple Instructions */}
+        <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm text-blue-800">
+          Tap on any tooth to mark conditions or treatments
+        </div>
+        
+        {/* Desktop View - Full Dental Chart */}
+        <div className="hidden md:block">
+          {/* Upper Teeth Row */}
+          <div className="flex justify-center gap-1 mb-4">
+            {teeth.slice(0, 16).map(tooth => {
+              const bgColor = getToothColor(tooth);
+              const textColor = getTextColor(bgColor);
+              
+              return (
+                <button
+                  key={tooth.id}
+                  onClick={() => handleToothClick(tooth)}
+                  className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-base"
+                  style={{ 
+                    backgroundColor: bgColor,
+                    color: textColor
+                  }}
+                  title={getToothTooltip(tooth)}
+                >
+                  {tooth.id}
+                </button>
+              );
+            })}
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-1 mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
-            <div className="text-xs font-medium text-gray-700 col-span-2 sm:col-span-2 md:col-span-4 mb-1 pb-1 border-b border-gray-200">
-              Tooth Conditions:
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-yellow-300"></div>
-              <span className="text-xs">Chipped</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-gray-300"></div>
-              <span className="text-xs">Missing</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-red-500"></div>
-              <span className="text-xs">Painful</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-purple-300"></div>
-              <span className="text-xs">Discolored</span>
-            </div>
-            
-            <div className="text-xs font-medium text-gray-700 col-span-2 sm:col-span-2 md:col-span-4 mt-2 mb-1 pb-1 border-b border-gray-200">
-              Treatment Options:
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-green-500"></div>
-              <span className="text-xs">Implant</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-              <span className="text-xs">Crown</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-cyan-500"></div>
-              <span className="text-xs">Veneer</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-full bg-teal-500"></div>
-              <span className="text-xs">Filling</span>
-            </div>
-          </div>
-          
-          <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 text-xs text-blue-700 mb-4">
-            <p className="mb-1"><strong>How to use:</strong> Tap on any tooth to mark its condition or required treatment.</p>
-            <p>Each tooth is numbered according to the universal numbering system (1-32).</p>
+          {/* Lower Teeth Row */}
+          <div className="flex justify-center gap-1 mb-3">
+            {teeth.slice(16).map(tooth => {
+              const bgColor = getToothColor(tooth);
+              const textColor = getTextColor(bgColor);
+              
+              return (
+                <button
+                  key={tooth.id}
+                  onClick={() => handleToothClick(tooth)}
+                  className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-base"
+                  style={{ 
+                    backgroundColor: bgColor,
+                    color: textColor
+                  }}
+                  title={getToothTooltip(tooth)}
+                >
+                  {tooth.id}
+                </button>
+              );
+            })}
           </div>
         </div>
         
-        {/* Responsive Dental Chart */}
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Upper Teeth</h3>
-          
-          {/* Upper Teeth - Quadrant 1 (1-8) */}
-          <div className="mb-3">
-            <div className="flex flex-wrap justify-center gap-1 mb-1">
-              {teeth.slice(0, 8).map(tooth => {
-                const bgColor = getToothColor(tooth);
-                const textColor = getTextColor(bgColor);
-                
-                return (
-                  <button
-                    key={tooth.id}
-                    onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-12 md:w-12 md:h-14 border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-sm md:text-base"
-                    style={{ 
-                      backgroundColor: bgColor,
-                      color: textColor
-                    }}
-                    title={getToothTooltip(tooth)}
-                  >
-                    {tooth.id}
-                  </button>
-                );
-              })}
+        {/* Mobile View - Simplified List */}
+        <div className="block md:hidden">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Left Side - Upper Teeth */}
+            <div>
+              <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Upper Teeth</h4>
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-4">
+                {teeth.slice(0, 16).map(tooth => {
+                  const bgColor = getToothColor(tooth);
+                  const textColor = getTextColor(bgColor);
+                  
+                  return (
+                    <button
+                      key={tooth.id}
+                      onClick={() => handleToothClick(tooth)}
+                      className="flex items-center w-full p-2 border-b border-gray-100"
+                      style={{ backgroundColor: bgColor || "transparent" }}
+                    >
+                      <div className="flex justify-center items-center h-8 w-8 rounded-full border-2 border-gray-400 mr-2 font-bold" style={{ color: textColor }}>
+                        {tooth.id}
+                      </div>
+                      <div className="text-left text-xs">
+                        <div className="font-medium">{tooth.name}</div>
+                        {(tooth.condition || tooth.treatment) && (
+                          <div className="text-xs text-gray-600">
+                            {tooth.condition && tooth.condition !== 'normal' ? conditionOptions.find(o => o.value === tooth.condition)?.label : ''}
+                            {tooth.condition && tooth.treatment && ' • '}
+                            {tooth.treatment && tooth.treatment !== 'none' ? treatmentOptions.find(o => o.value === tooth.treatment)?.label : ''}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="text-center text-xs text-gray-500">Upper Right</div>
+            
+            {/* Right Side - Lower Teeth */}
+            <div>
+              <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Lower Teeth</h4>
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                {teeth.slice(16).map(tooth => {
+                  const bgColor = getToothColor(tooth);
+                  const textColor = getTextColor(bgColor);
+                  
+                  return (
+                    <button
+                      key={tooth.id}
+                      onClick={() => handleToothClick(tooth)}
+                      className="flex items-center w-full p-2 border-b border-gray-100"
+                      style={{ backgroundColor: bgColor || "transparent" }}
+                    >
+                      <div className="flex justify-center items-center h-8 w-8 rounded-full border-2 border-gray-400 mr-2 font-bold" style={{ color: textColor }}>
+                        {tooth.id}
+                      </div>
+                      <div className="text-left text-xs">
+                        <div className="font-medium">{tooth.name}</div>
+                        {(tooth.condition || tooth.treatment) && (
+                          <div className="text-xs text-gray-600">
+                            {tooth.condition && tooth.condition !== 'normal' ? conditionOptions.find(o => o.value === tooth.condition)?.label : ''}
+                            {tooth.condition && tooth.treatment && ' • '}
+                            {tooth.treatment && tooth.treatment !== 'none' ? treatmentOptions.find(o => o.value === tooth.treatment)?.label : ''}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           
-          {/* Upper Teeth - Quadrant 2 (9-16) */}
-          <div className="mb-4">
-            <div className="flex flex-wrap justify-center gap-1 mb-1">
-              {teeth.slice(8, 16).map(tooth => {
-                const bgColor = getToothColor(tooth);
-                const textColor = getTextColor(bgColor);
-                
-                return (
-                  <button
-                    key={tooth.id}
-                    onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-12 md:w-12 md:h-14 border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-sm md:text-base"
-                    style={{ 
-                      backgroundColor: bgColor,
-                      color: textColor
-                    }}
-                    title={getToothTooltip(tooth)}
-                  >
-                    {tooth.id}
-                  </button>
-                );
-              })}
+          {/* Color Legend - Mobile */}
+          <div className="mt-4 bg-gray-50 p-2 rounded-md border border-gray-100">
+            <div className="grid grid-cols-4 gap-1">
+              <div className="flex items-center">
+                <div className="h-3 w-3 rounded-full bg-yellow-300 mr-1"></div>
+                <span className="text-xs">Chipped</span>
+              </div>
+              <div className="flex items-center">
+                <div className="h-3 w-3 rounded-full bg-red-500 mr-1"></div>
+                <span className="text-xs">Painful</span>
+              </div>
+              <div className="flex items-center">
+                <div className="h-3 w-3 rounded-full bg-blue-500 mr-1"></div>
+                <span className="text-xs">Crown</span>
+              </div>
+              <div className="flex items-center">
+                <div className="h-3 w-3 rounded-full bg-green-500 mr-1"></div>
+                <span className="text-xs">Implant</span>
+              </div>
             </div>
-            <div className="text-center text-xs text-gray-500">Upper Left</div>
-          </div>
-          
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Lower Teeth</h3>
-          
-          {/* Lower Teeth - Quadrant 3 (17-24) */}
-          <div className="mb-3">
-            <div className="flex flex-wrap justify-center gap-1 mb-1">
-              {teeth.slice(16, 24).map(tooth => {
-                const bgColor = getToothColor(tooth);
-                const textColor = getTextColor(bgColor);
-                
-                return (
-                  <button
-                    key={tooth.id}
-                    onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-12 md:w-12 md:h-14 border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-sm md:text-base"
-                    style={{ 
-                      backgroundColor: bgColor,
-                      color: textColor
-                    }}
-                    title={getToothTooltip(tooth)}
-                  >
-                    {tooth.id}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="text-center text-xs text-gray-500">Lower Left</div>
-          </div>
-          
-          {/* Lower Teeth - Quadrant 4 (25-32) */}
-          <div>
-            <div className="flex flex-wrap justify-center gap-1 mb-1">
-              {teeth.slice(24, 32).map(tooth => {
-                const bgColor = getToothColor(tooth);
-                const textColor = getTextColor(bgColor);
-                
-                return (
-                  <button
-                    key={tooth.id}
-                    onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-12 md:w-12 md:h-14 border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-sm md:text-base"
-                    style={{ 
-                      backgroundColor: bgColor,
-                      color: textColor
-                    }}
-                    title={getToothTooltip(tooth)}
-                  >
-                    {tooth.id}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="text-center text-xs text-gray-500">Lower Right</div>
           </div>
         </div>
       </div>
