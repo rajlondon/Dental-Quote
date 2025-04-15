@@ -58,8 +58,32 @@ function Router() {
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
       </Route>
-      {/* PDF test routes removed */}
+      {/* Redirect all test routes to home */}
       <Route path="/test">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
+      <Route path="/test-pdf">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
+      <Route path="/simple-pdf-test">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
+      <Route path="/enhanced-pdf-test">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
+      <Route path="/testpdf">
         {() => {
           window.location.href = "/";
           return null;
