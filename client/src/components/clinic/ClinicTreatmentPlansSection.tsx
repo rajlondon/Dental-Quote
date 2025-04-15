@@ -17,7 +17,7 @@ import {
   DialogDescription,
   DialogClose
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { 
   Search, 
   Plus, 
@@ -46,7 +46,8 @@ import {
   Info,
   Heart,
   Stethoscope,
-  ClipboardList
+  ClipboardList,
+  Minus
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -1024,33 +1025,98 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                 </div>
                 
                 <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium mb-1">
-                        {t("clinic.treatment_plans.selected_treatments", "Selected Treatments")}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("clinic.treatment_plans.treatments_helper", "Add treatments from your catalog to build the treatment plan")}
-                      </p>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-medium mb-1">
+                          {t("clinic.treatment_plans.selected_treatments", "Selected Treatments")}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {t("clinic.treatment_plans.treatments_helper", "Add treatments from your catalog to build the treatment plan")}
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => setShowCatalogDialog(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t("clinic.treatment_plans.add_from_catalog", "Add from Catalog")}
+                      </Button>
                     </div>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setShowCatalogDialog(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t("clinic.treatment_plans.add_from_catalog", "Add from Catalog")}
-                    </Button>
-                  </div>
-                  
-                  <div className="border rounded-md overflow-hidden">
-                    <TreatmentPlanBuilder 
-                      initialTreatments={convertToBuilderItems(selectedPlan?.treatmentPlan.items)} 
-                      onTreatmentsChange={(treatments: BuilderTreatmentItem[]) => {
-                        console.log("Treatments updated", treatments);
-                        // This would be handled by the API in a real app
-                      }}
-                      hideHeader={true}
-                    />
+                    
+                    {/* Selected Treatments Table */}
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("clinic.treatment_plans.treatment_name", "Treatment")}</TableHead>
+                            <TableHead>{t("clinic.treatment_plans.quantity", "Quantity")}</TableHead>
+                            <TableHead>{t("clinic.treatment_plans.price", "Price")}</TableHead>
+                            <TableHead>{t("clinic.treatment_plans.subtotal", "Subtotal")}</TableHead>
+                            <TableHead></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {convertToBuilderItems(selectedPlan?.treatmentPlan.items)?.length ? (
+                            convertToBuilderItems(selectedPlan?.treatmentPlan.items).map((treatment) => (
+                              <TableRow key={treatment.id}>
+                                <TableCell className="font-medium">{treatment.name}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center space-x-2">
+                                    <Button variant="outline" size="icon" className="h-8 w-8 p-0">
+                                      <Minus className="h-3 w-3" />
+                                    </Button>
+                                    <span>{treatment.quantity}</span>
+                                    <Button variant="outline" size="icon" className="h-8 w-8 p-0">
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {new Intl.NumberFormat(i18n.language === 'tr' ? 'tr-TR' : 'en-GB', { 
+                                    style: 'currency', 
+                                    currency: 'GBP',
+                                    minimumFractionDigits: 0
+                                  }).format(treatment.priceGBP)}
+                                </TableCell>
+                                <TableCell>
+                                  {new Intl.NumberFormat(i18n.language === 'tr' ? 'tr-TR' : 'en-GB', { 
+                                    style: 'currency', 
+                                    currency: 'GBP',
+                                    minimumFractionDigits: 0
+                                  }).format(treatment.subtotalGBP)}
+                                </TableCell>
+                                <TableCell>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Trash className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                                {t("clinic.treatment_plans.no_treatments", "No treatments added yet. Click 'Add from Catalog' to select treatments.")}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                        <TableFooter>
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-right font-medium">
+                              {t("clinic.treatment_plans.total", "Total")}:
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              {new Intl.NumberFormat(i18n.language === 'tr' ? 'tr-TR' : 'en-GB', { 
+                                style: 'currency', 
+                                currency: 'GBP',
+                                minimumFractionDigits: 0
+                              }).format(selectedPlan?.treatmentPlan.totalGBP || 0)}
+                            </TableCell>
+                            <TableCell></TableCell>
+                          </TableRow>
+                        </TableFooter>
+                      </Table>
+                    </div>
                   </div>
                 </div>
                 
