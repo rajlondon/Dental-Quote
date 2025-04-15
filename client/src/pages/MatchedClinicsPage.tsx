@@ -754,10 +754,30 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <Button 
                             className="flex-1 md:flex-none" 
                             onClick={() => {
+                              // Save the selected clinic in localStorage
                               setSelectedClinic(clinic.id);
+                              localStorage.setItem('selectedClinicId', clinic.id);
+                              
+                              // Save clinic pricing data for use in the portal
+                              const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+                              localStorage.setItem('selectedClinicData', JSON.stringify({
+                                name: clinic.name,
+                                treatments: clinicTreatments,
+                                totalPrice: totalPrice
+                              }));
+                              
+                              // Call the onSelectClinic callback if provided
                               if (onSelectClinic) {
                                 onSelectClinic(clinic.id);
                               }
+                              
+                              // Redirect to the patient portal login page
+                              setLocation('/portal');
+                              
+                              toast({
+                                title: "Clinic Selected",
+                                description: "Please log in to your patient portal to continue with your booking.",
+                              });
                             }}
                           >
                             <Heart className="mr-2 h-4 w-4" />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Lock, Mail, User, Hospital } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Check, Lock, Mail, Phone, User, Hospital } from "lucide-react";
 
 // Form schema for login
 const loginSchema = z.object({
@@ -23,11 +24,41 @@ const testCredentialsSchema = z.object({
   userType: z.enum(["client", "admin", "clinic"]),
 });
 
+// Form schema for registration
+const registerSchema = z.object({
+  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  phone: z.string().min(5, { message: "Please enter a valid phone number" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 const PortalLoginPage: React.FC = () => {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
+  const [selectedClinicName, setSelectedClinicName] = useState<string | null>(null);
+  
+  // Check if user has selected a clinic (coming from the matched clinics page)
+  useEffect(() => {
+    const clinicId = localStorage.getItem('selectedClinicId');
+    if (clinicId) {
+      try {
+        const clinicData = JSON.parse(localStorage.getItem('selectedClinicData') || '{}');
+        if (clinicData.name) {
+          setHasSelectedClinic(true);
+          setSelectedClinicName(clinicData.name);
+        }
+      } catch (error) {
+        console.error('Error parsing clinic data:', error);
+      }
+    }
+  }, []);
   
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
