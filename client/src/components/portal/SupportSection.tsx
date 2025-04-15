@@ -13,7 +13,9 @@ import {
   HeadphonesIcon,
   ImageIcon,
   FileIcon,
-  AlertCircle
+  AlertCircle,
+  Globe,
+  Languages
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -210,7 +212,7 @@ const faqItems = [
 ];
 
 const SupportSection: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(mockSupportTickets);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -220,7 +222,55 @@ const SupportSection: React.FC = () => {
   const [newTicketMessage, setNewTicketMessage] = useState('');
   const [newTicketCategory, setNewTicketCategory] = useState('General');
   const [showContactDialog, setShowContactDialog] = useState(false);
+  const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
+  const [autoTranslate, setAutoTranslate] = useState<boolean>(true);
   const messageEndRef = useRef<null | HTMLDivElement>(null);
+  
+  // Simulated translation function 
+  // In a real app, this would be an API call to a translation service
+  const translateText = (text: string, targetLang: string): string => {
+    // This is a demo function that simulates translation for demo purposes
+    if (targetLang === 'tr') {
+      // Sample English to Turkish translations for demo
+      const translations: Record<string, string> = {
+        "Hello! Thank you for reaching out. Yes, the dental implant treatment includes both the implant fixture and the crown. The pricing shown in your treatment plan covers both components. Is there anything else you'd like to know about your treatment?": 
+          "Merhaba! İletişime geçtiğiniz için teşekkür ederiz. Evet, diş implantı tedavisi hem implant fikstürünü hem de kronunu içerir. Tedavi planınızda gösterilen fiyat her iki bileşeni de kapsar. Tedaviniz hakkında bilmek istediğiniz başka bir şey var mı?",
+        "I'm sorry to hear you're having trouble with the payment. Could you please provide more details about the error message you're seeing? Also, have you tried using a different card or payment method?": 
+          "Ödeme konusunda sorun yaşadığınızı duyduğuma üzüldüm. Lütfen gördüğünüz hata mesajı hakkında daha fazla ayrıntı sağlayabilir misiniz? Ayrıca, farklı bir kart veya ödeme yöntemi kullanmayı denediniz mi?",
+        "Of course, we understand that travel plans can change. We have availability on May 14th or May 15th. Would either of those dates work for you?": 
+          "Elbette, seyahat planlarının değişebileceğini anlıyoruz. 14 Mayıs veya 15 Mayıs'ta müsaitlik var. Bu tarihlerden herhangi biri size uygun mu?",
+        "Great! I've rescheduled your appointment for May 15th at 10:00 AM. You'll receive an email confirmation shortly, and your portal calendar has been updated. Is there anything else you need help with?": 
+          "Harika! Randevunuzu 15 Mayıs saat 10:00 olarak yeniden planladım. Kısa süre içinde bir e-posta onayı alacaksınız ve portal takviminiz güncellenmiştir. Başka yardıma ihtiyacınız var mı?",
+        "Thank you for your message. Our support team will get back to you as soon as possible, usually within 2 hours during business hours.":
+          "Mesajınız için teşekkürler. Destek ekibimiz en kısa sürede, genellikle mesai saatleri içinde 2 saat içinde size geri dönecektir.",
+        "Thank you for contacting MyDentalFly support. We've received your ticket and will respond as soon as possible, typically within 2 hours during business hours.":
+          "MyDentalFly desteğiyle iletişime geçtiğiniz için teşekkür ederiz. Biletinizi aldık ve mümkün olan en kısa sürede, genellikle mesai saatleri içinde 2 saat içinde yanıt vereceğiz."
+      };
+
+      return translations[text] || "Çeviri mevcut değil. (Translation not available)";
+    } else {
+      // Turkish to English translations would be implemented here
+      // This is just a placeholder, as we're focusing on clinic-to-patient direction
+      return "English translation would appear here";
+    }
+  };
+  
+  // Effect to load translations when selected ticket changes or language changes
+  useEffect(() => {
+    if (autoTranslate && i18n.language && selectedTicket) {
+      const newTranslations: Record<string, string> = {};
+      
+      selectedTicket.messages.forEach(message => {
+        if (message.sender === 'support') {
+          // Only translate messages from support/clinic staff
+          const translatedText = translateText(message.text, 'tr');
+          newTranslations[message.id] = translatedText;
+        }
+      });
+      
+      setTranslatedMessages(newTranslations);
+    }
+  }, [selectedTicket, i18n.language, autoTranslate]);
   
   // Function to format date
   const formatDate = (dateStr: string) => {
@@ -507,59 +557,94 @@ const SupportSection: React.FC = () => {
                   </div>
                 </div>
                 
+                {/* Translation toggle */}
+                <div className="flex justify-end items-center px-4 py-2 border-b">
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-7 px-2 gap-1"
+                      onClick={() => setAutoTranslate(!autoTranslate)}
+                    >
+                      <Languages className="h-3.5 w-3.5" />
+                      {autoTranslate 
+                        ? t("portal.messages.translations_on", "Translations: On") 
+                        : t("portal.messages.translations_off", "Translations: Off")}
+                    </Button>
+                  </div>
+                </div>
+                
                 {/* Message content */}
                 <ScrollArea className="flex-grow p-4">
                   <div className="space-y-4">
-                    {selectedTicket.messages.map(message => (
-                      <div 
-                        key={message.id} 
-                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
+                    {selectedTicket.messages.map(message => {
+                      const hasTranslation = message.sender === 'support' && 
+                                             autoTranslate && 
+                                             !!translatedMessages[message.id];
+                                             
+                      return (
                         <div 
-                          className={`
-                            max-w-[80%] rounded-lg p-3 shadow-sm
-                            ${message.sender === 'user' 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-gray-100 text-gray-800 border'
-                            }
-                          `}
+                          key={message.id} 
+                          className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <div className="mb-1">
-                            <span className="font-medium">
-                              {message.sender === 'user' ? 'You' : 'MyDentalFly Support'}
-                            </span>
-                          </div>
-                          <p>{message.text}</p>
-                          
-                          {message.attachments && message.attachments.length > 0 && (
-                            <div className="mt-2 space-y-2">
-                              {message.attachments.map(attachment => (
-                                <div 
-                                  key={attachment.id} 
-                                  className={`
-                                    flex items-center rounded px-2 py-1
-                                    ${message.sender === 'user' 
-                                      ? 'bg-blue-500 text-white' 
-                                      : 'bg-gray-200 text-gray-800'
-                                    }
-                                  `}
-                                >
-                                  {attachment.type === 'image' 
-                                    ? <ImageIcon className="h-4 w-4 mr-1" /> 
-                                    : <FileIcon className="h-4 w-4 mr-1" />
-                                  }
-                                  <span className="text-sm truncate">{attachment.name}</span>
-                                </div>
-                              ))}
+                          <div 
+                            className={`
+                              max-w-[80%] rounded-lg p-3 shadow-sm
+                              ${message.sender === 'user' 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-gray-100 text-gray-800 border'
+                              }
+                            `}
+                          >
+                            <div className="mb-1">
+                              <span className="font-medium">
+                                {message.sender === 'user' ? 'You' : 'MyDentalFly Support'}
+                              </span>
                             </div>
-                          )}
+                            <p>{message.text}</p>
+                            
+                            {/* Show translation for support messages when available */}
+                            {hasTranslation && (
+                              <>
+                                <Separator className="my-2 opacity-70" />
+                                <div className="flex items-center gap-1 text-xs mb-1 text-gray-500">
+                                  <Globe className="h-3 w-3" />
+                                  {t("portal.messages.turkish_translation", "Turkish Translation:")}
+                                </div>
+                                <p className="text-sm italic text-gray-700">{translatedMessages[message.id]}</p>
+                              </>
+                            )}
                           
-                          <div className={`text-xs mt-1 ${message.sender === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
-                            {formatTime(message.timestamp)}
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="mt-2 space-y-2">
+                                {message.attachments.map(attachment => (
+                                  <div 
+                                    key={attachment.id} 
+                                    className={`
+                                      flex items-center rounded px-2 py-1
+                                      ${message.sender === 'user' 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'bg-gray-200 text-gray-800'
+                                      }
+                                    `}
+                                  >
+                                    {attachment.type === 'image' 
+                                      ? <ImageIcon className="h-4 w-4 mr-1" /> 
+                                      : <FileIcon className="h-4 w-4 mr-1" />
+                                    }
+                                    <span className="text-sm truncate">{attachment.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            <div className={`text-xs mt-1 ${message.sender === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
+                              {formatTime(message.timestamp)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div ref={messageEndRef} />
                   </div>
                 </ScrollArea>
