@@ -219,7 +219,7 @@ export default function BlogPost() {
   
   useEffect(() => {
     // Set page title
-    document.title = `Blog | Istanbul Dental Smile`;
+    document.title = `Blog | MyDentalFly.com`;
     
     if (params) {
       const postId = params.id;
@@ -229,7 +229,7 @@ export default function BlogPost() {
         if (currentPost) {
           setPost(currentPost);
           // Update title with blog post title
-          document.title = `${currentPost.title} | Istanbul Dental Smile`;
+          document.title = `${currentPost.title} | MyDentalFly.com`;
           
           // Get related posts if the current post has related posts
           if (currentPost.related && Array.isArray(currentPost.related)) {

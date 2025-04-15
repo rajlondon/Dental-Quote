@@ -51,7 +51,7 @@ export default function Blog() {
   
   // Set page title when component mounts
   useEffect(() => {
-    document.title = `${t('blog.title')} | Istanbul Dental Smile`;
+    document.title = `${t('blog.title')} | MyDentalFly.com`;
   }, [t]);
 
   // Filter posts by category

@@ -523,7 +523,7 @@ const ClinicTreatmentPlansSection: React.FC = () => {
         totalGBP: quote.totalGBP,
         totalUSD: quote.totalUSD,
         notes: `Imported from patient quote #${quote.id} created on ${new Date(quote.createdAt).toLocaleDateString()}`,
-        guaranteeDetails: "All work guaranteed by Istanbul Dental Smile",
+        guaranteeDetails: "All work guaranteed by MyDentalFly.com",
         version: 1,
         lastUpdated: new Date().toISOString(),
         approvedByPatient: false,

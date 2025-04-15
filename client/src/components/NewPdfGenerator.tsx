@@ -285,11 +285,11 @@ const generateSmileJourneyPdf = ({
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 104, 139); // #00688B blue
-  doc.text('Istanbul Dental Smile | +44 7572 445856 | www.istanbuldentalsmile.com', pageWidth / 2, footerPosition, { align: 'center' });
+  doc.text('MyDentalFly.com | +44 7572 445856 | www.mydentalfly.com', pageWidth / 2, footerPosition, { align: 'center' });
   
   // Save the PDF
   const formattedDateForFile = formattedDate.replace(/\s/g, '-');
-  const filename = `IstanbulDentalSmile_Quote_${formattedDateForFile}.pdf`;
+  const filename = `MyDentalFly_Quote_${formattedDateForFile}.pdf`;
   doc.save(filename);
   
   if (onComplete) {

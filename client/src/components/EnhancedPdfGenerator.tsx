@@ -139,7 +139,7 @@ const EnhancedPdfGenerator: React.FC<EnhancedPdfGeneratorProps> = ({
       // Estimated flight cost
       const flightCost = "£150-£300";
 
-      // Create an HTML template for the PDF using the Istanbul Dental Smile format
+      // Create an HTML template for the PDF using the MyDentalFly.com format
       const element = document.createElement('div');
       element.innerHTML = `
         <div style="padding: 20px; font-family: 'Roboto', Arial, sans-serif; color: #333;">
