@@ -67,6 +67,13 @@ const Navbar: React.FC = () => {
             {t('navbar.get_quote', 'Quote')}
           </Link>
           
+          <Link href="/dental-chart" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-2 py-1 rounded-md flex items-center text-xs">
+            <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
+            </svg>
+            Chart
+          </Link>
+          
           <LanguageSwitcher />
           
           <button 
@@ -93,6 +100,10 @@ const Navbar: React.FC = () => {
         <div className="px-3 py-2 space-y-2">
           <Link href="/your-quote" className="block text-primary font-medium hover:text-primary/80 transition-colors text-xs">
             {t('navbar.get_quote', 'Get a Quote')}
+          </Link>
+          
+          <Link href="/dental-chart" className="block text-blue-600 hover:text-blue-700 transition-colors text-xs font-medium">
+            Dental Chart
           </Link>
           
           <Link href="/portal" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
