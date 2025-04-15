@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import PriceCalculator from '@/components/PriceCalculator';
+import { DentalChart } from '@/components/DentalChart';
 import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -25,6 +26,20 @@ export default function PricingPage() {
         </div>
         
         <Separator className="my-8" />
+        
+        <div className="mb-10 p-6 bg-white border border-blue-100 rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-center mb-6 text-blue-800">Interactive Dental Chart</h2>
+          <p className="text-center mb-6 text-gray-700">
+            Click on your teeth to indicate conditions (pain, chipped, missing) or 
+            desired treatments (implants, crowns, veneers). This helps us understand your needs better.
+          </p>
+          <DentalChart 
+            onTeethUpdate={(teethData) => {
+              console.log('Teeth data updated:', teethData);
+              localStorage.setItem('dentalChartData', JSON.stringify(teethData));
+            }}
+          />
+        </div>
         
         <PriceCalculator />
 
