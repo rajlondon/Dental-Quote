@@ -1191,7 +1191,8 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
     hasLondonConsult = false,
     londonConsult = 'no',
     londonConsultCostGBP,
-    londonConsultCostUSD
+    londonConsultCostUSD,
+    dentalChart = [] // Extract dental chart data with default empty array
   } = quoteData;
 
   // Debug travel info
@@ -1916,6 +1917,186 @@ export function generateQuotePdfV2(quoteData: QuoteData): Buffer {
   doc.setTextColor(80, 80, 80);
   doc.text('* Pricing data sourced from Gemini deep research of average UK prices', 105, yPos, { align: 'center' });
   yPos += 10;
+  
+  // DENTAL CHART SECTION
+  if (dentalChart && dentalChart.length > 0) {
+    // Always start dental chart section on a new page for better layout
+    yPos = addNewPage();
+    
+    // Section title with highlight box
+    doc.setFillColor(primaryColor);
+    doc.rect(20, yPos, 170, 12, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Dental Chart Information', 105, yPos+8, { align: 'center' });
+    yPos += 20;
+
+    // Introduction to dental chart
+    doc.setTextColor(darkTextColor);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Below is the detailed information from your dental chart:', 20, yPos);
+    yPos += 15;
+    
+    // Create table headers for dental chart
+    const chartTableX = 20;
+    const chartTableWidth = 170;
+    
+    // Table headers
+    doc.setFillColor(primaryColor);
+    doc.setTextColor(255, 255, 255);
+    doc.rect(chartTableX, yPos, chartTableWidth, 10, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Tooth', chartTableX + 20, yPos+6.5, { align: 'center' });
+    doc.text('Condition', chartTableX + 60, yPos+6.5, { align: 'center' });
+    doc.text('Treatment', chartTableX + 100, yPos+6.5, { align: 'center' });
+    doc.text('Notes', chartTableX + 140, yPos+6.5, { align: 'center' });
+    yPos += 10;
+    
+    // Group teeth by section for better readability
+    const upperTeeth = dentalChart.filter(tooth => tooth.id <= 16);
+    const lowerTeeth = dentalChart.filter(tooth => tooth.id > 16);
+    
+    // Count teeth with conditions or treatments
+    const teethWithData = dentalChart.filter(tooth => 
+      tooth.condition || tooth.treatment || (tooth.notes && tooth.notes.trim() !== '')
+    );
+    
+    if (teethWithData.length === 0) {
+      // No teeth with data
+      doc.setTextColor(darkTextColor);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(10);
+      doc.text('No specific tooth conditions or treatments were identified in the dental chart.', 105, yPos+5, { align: 'center' });
+      yPos += 15;
+    } else {
+      // Process upper teeth first
+      let relevantUpperTeeth = upperTeeth.filter(tooth => 
+        tooth.condition || tooth.treatment || (tooth.notes && tooth.notes.trim() !== '')
+      );
+      
+      if (relevantUpperTeeth.length > 0) {
+        doc.setFillColor(lightBgColor);
+        doc.rect(chartTableX, yPos, chartTableWidth, 8, 'F');
+        
+        doc.setTextColor(primaryColor);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('UPPER TEETH', 105, yPos+5, { align: 'center' });
+        yPos += 8;
+        
+        // Display upper teeth with data
+        doc.setTextColor(darkTextColor);
+        doc.setFont('helvetica', 'normal');
+        
+        relevantUpperTeeth.forEach((tooth, index) => {
+          // Skip if no data for this tooth
+          if (!tooth.condition && !tooth.treatment && (!tooth.notes || tooth.notes.trim() === '')) {
+            return;
+          }
+          
+          // Create alternating row background
+          const isAlternateRow = index % 2 !== 0;
+          if (isAlternateRow) {
+            doc.setFillColor(245, 245, 245);
+            doc.rect(chartTableX, yPos, chartTableWidth, 8, 'F');
+          }
+          
+          // Add tooth data
+          doc.text(tooth.name, chartTableX + 20, yPos+5, { align: 'center' });
+          doc.text(tooth.condition || 'N/A', chartTableX + 60, yPos+5, { align: 'center' });
+          doc.text(tooth.treatment || 'N/A', chartTableX + 100, yPos+5, { align: 'center' });
+          
+          // Handle notes with potential wrapping
+          const notes = tooth.notes || '';
+          if (notes.length > 20) {
+            // For longer notes, truncate with ellipsis
+            doc.text(notes.substring(0, 17) + '...', chartTableX + 140, yPos+5, { align: 'center' });
+          } else {
+            doc.text(notes, chartTableX + 140, yPos+5, { align: 'center' });
+          }
+          
+          yPos += 8;
+          
+          // Add new page if needed
+          if (yPos > 270) {
+            yPos = addNewPage();
+          }
+        });
+      }
+      
+      // Process lower teeth
+      let relevantLowerTeeth = lowerTeeth.filter(tooth => 
+        tooth.condition || tooth.treatment || (tooth.notes && tooth.notes.trim() !== '')
+      );
+      
+      if (relevantLowerTeeth.length > 0) {
+        // Add spacing
+        yPos += 5;
+        
+        doc.setFillColor(lightBgColor);
+        doc.rect(chartTableX, yPos, chartTableWidth, 8, 'F');
+        
+        doc.setTextColor(primaryColor);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('LOWER TEETH', 105, yPos+5, { align: 'center' });
+        yPos += 8;
+        
+        // Display lower teeth with data
+        doc.setTextColor(darkTextColor);
+        doc.setFont('helvetica', 'normal');
+        
+        relevantLowerTeeth.forEach((tooth, index) => {
+          // Skip if no data for this tooth
+          if (!tooth.condition && !tooth.treatment && (!tooth.notes || tooth.notes.trim() === '')) {
+            return;
+          }
+          
+          // Create alternating row background
+          const isAlternateRow = index % 2 !== 0;
+          if (isAlternateRow) {
+            doc.setFillColor(245, 245, 245);
+            doc.rect(chartTableX, yPos, chartTableWidth, 8, 'F');
+          }
+          
+          // Add tooth data
+          doc.text(tooth.name, chartTableX + 20, yPos+5, { align: 'center' });
+          doc.text(tooth.condition || 'N/A', chartTableX + 60, yPos+5, { align: 'center' });
+          doc.text(tooth.treatment || 'N/A', chartTableX + 100, yPos+5, { align: 'center' });
+          
+          // Handle notes with potential wrapping
+          const notes = tooth.notes || '';
+          if (notes.length > 20) {
+            // For longer notes, truncate with ellipsis
+            doc.text(notes.substring(0, 17) + '...', chartTableX + 140, yPos+5, { align: 'center' });
+          } else {
+            doc.text(notes, chartTableX + 140, yPos+5, { align: 'center' });
+          }
+          
+          yPos += 8;
+          
+          // Add new page if needed
+          if (yPos > 270) {
+            yPos = addNewPage();
+          }
+        });
+      }
+    }
+    
+    // Add a note about the dental chart
+    yPos += 10;
+    doc.setTextColor(darkTextColor);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.text('Note: This dental chart information is based on your self-assessment and will be verified by the dentist', 105, yPos, { align: 'center' });
+    doc.text('during your consultation. The final treatment plan may vary based on professional examination.', 105, yPos+5, { align: 'center' });
+    yPos += 15;
+  }
   
   // TESTIMONIALS SECTION
   if (yPos > 230) { // If not enough space left, start a new page

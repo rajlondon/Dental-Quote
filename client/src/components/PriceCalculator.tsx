@@ -601,6 +601,10 @@ export default function PriceCalculator() {
           ...allClinics.filter((_, idx) => idx !== selectedClinic) // Add the others
         ];
         
+        // Get dental chart data from localStorage
+        const dentalChartData = localStorage.getItem('dentalChartData');
+        const parsedDentalChart = dentalChartData ? JSON.parse(dentalChartData) : null;
+        
         quoteData = {
           items: quote.items,
           totalGBP: selectedClinicTotalGBP,
@@ -620,7 +624,9 @@ export default function PriceCalculator() {
           londonConsult: form.getValues('londonConsult'),
           replacingExisting: form.getValues('replacingExisting'),
           preferredBrands: form.getValues('preferredBrands'),
-          budgetRange: form.getValues('budgetRange') || ''
+          budgetRange: form.getValues('budgetRange') || '',
+          // Include dental chart data if available
+          dentalChart: parsedDentalChart
         };
       } 
       // Or we're in the dialog view
@@ -629,6 +635,10 @@ export default function PriceCalculator() {
           travelMonth: htmlQuoteData.travelMonth,
           departureCity: htmlQuoteData.departureCity
         });
+        
+        // Get dental chart data from localStorage
+        const dentalChartData = localStorage.getItem('dentalChartData');
+        const parsedDentalChart = dentalChartData ? JSON.parse(dentalChartData) : null;
         
         quoteData = {
           items: htmlQuoteData.items,
@@ -666,7 +676,9 @@ export default function PriceCalculator() {
             }
           ],
           hasXrays: htmlQuoteData.hasXrays,
-          xrayCount: htmlQuoteData.xrayCount
+          xrayCount: htmlQuoteData.xrayCount,
+          // Include dental chart data if available
+          dentalChart: parsedDentalChart
         };
       } else {
         toast({
