@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 interface Tooth {
   id: number;
@@ -17,13 +18,84 @@ interface Tooth {
 interface DentalChartProps {
   onTeethUpdate?: (teeth: Tooth[]) => void;
   initialTeeth?: Tooth[];
+  patientEmail?: string;
+  patientName?: string;
+  chartId?: string;
+  readOnly?: boolean;
 }
 
-export function DentalChart({ onTeethUpdate, initialTeeth }: DentalChartProps) {
+export function DentalChart({ 
+  onTeethUpdate, 
+  initialTeeth, 
+  patientEmail, 
+  patientName,
+  chartId,
+  readOnly = false 
+}: DentalChartProps) {
   const { toast } = useToast();
   const [selectedTooth, setSelectedTooth] = useState<Tooth | null>(null);
   const [selectedMode, setSelectedMode] = useState<'condition' | 'treatment'>('condition');
   const [openDialog, setOpenDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [serverChartId, setServerChartId] = useState<string | null>(chartId || null);
+  
+  // Load dental chart data from server if chartId or patientEmail is provided
+  useEffect(() => {
+    const fetchDentalChartData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // If we have a specific chart ID, fetch that chart
+        if (chartId) {
+          const response = await axios.get(`/api/get-dental-chart?chartId=${chartId}`);
+          if (response.data.success && response.data.chartData) {
+            setTeeth(response.data.chartData.dentalChartData);
+            setServerChartId(chartId);
+            toast({
+              title: "Dental Chart Loaded",
+              description: "Your saved dental chart has been loaded.",
+            });
+          }
+        } 
+        // If we have a patient email, fetch their most recent chart
+        else if (patientEmail) {
+          const response = await axios.get(`/api/get-dental-chart?patientEmail=${patientEmail}`);
+          if (response.data.success && response.data.charts && response.data.charts.length > 0) {
+            // Sort charts by createdAt date and get the most recent one
+            const sortedCharts = response.data.charts.sort((a: any, b: any) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            
+            const mostRecentChart = sortedCharts[0];
+            setTeeth(mostRecentChart.dentalChartData);
+            setServerChartId(mostRecentChart.chartId);
+            toast({
+              title: "Dental Chart Loaded",
+              description: "Your most recent dental chart has been loaded.",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load dental chart data:", error);
+        // If we can't load from server, try to load from localStorage as fallback
+        const localData = localStorage.getItem('dentalChartData');
+        if (localData) {
+          setTeeth(JSON.parse(localData));
+          toast({
+            title: "Local Dental Chart Loaded",
+            description: "Using your locally saved dental chart.",
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Only try to fetch if we have a chartId or patientEmail
+    if (chartId || patientEmail) {
+      fetchDentalChartData();
+    }
+  }, [chartId, patientEmail, toast]);
   
   // Default teeth array with all 32 adult teeth
   const [teeth, setTeeth] = useState<Tooth[]>(initialTeeth || [

@@ -325,8 +325,25 @@ export default function PriceCalculator() {
     // Add dental chart data to the quote result if available
     if (dentalChartData) {
       console.log('Including dental chart data in quote submission');
-      // In a real implementation, you would add this to your quote data
-      // For now we're just storing it in localStorage
+      try {
+        // Send the dental chart data to the server to be saved with the quote
+        const response = await axios.post('/api/save-dental-chart', {
+          patientEmail: data.email,
+          patientName: data.name,
+          dentalChartData: JSON.parse(dentalChartData),
+          quoteId: new Date().getTime().toString() // Generate a temporary quote ID
+        });
+        
+        if (response.data.success) {
+          console.log('Dental chart data saved successfully');
+          toast({
+            title: "Dental Chart Saved",
+            description: "Your dental information has been saved with your quote",
+          });
+        }
+      } catch (error) {
+        console.error('Error saving dental chart data:', error);
+      }
     }
     
     // Check if X-rays were uploaded

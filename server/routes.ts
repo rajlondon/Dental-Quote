@@ -425,6 +425,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dental chart storage and retrieval
+  // Simple in-memory storage for dental chart data (replace with database in production)
+  const dentalChartStorage = new Map<string, any>();
+  
+  // Save dental chart data
+  app.post('/api/save-dental-chart', async (req: Request, res: Response) => {
+    try {
+      const { patientEmail, patientName, dentalChartData, quoteId } = req.body;
+      
+      if (!patientEmail || !dentalChartData) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required data (patientEmail or dentalChartData)' 
+        });
+      }
+      
+      // Create a unique key for this dental chart
+      // In a real implementation, this would be associated with a user account or quote ID
+      const key = `${patientEmail.toLowerCase()}_${quoteId || Date.now()}`;
+      
+      // Store the dental chart data
+      dentalChartStorage.set(key, {
+        patientEmail,
+        patientName, 
+        dentalChartData,
+        createdAt: new Date().toISOString(),
+        quoteId
+      });
+      
+      console.log(`Dental chart data saved for ${patientName} (${patientEmail})`);
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Dental chart data saved successfully',
+        chartId: key
+      });
+    } catch (error) {
+      console.error('Error saving dental chart data:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to save dental chart data' 
+      });
+    }
+  });
+  
+  // Retrieve dental chart data
+  app.get('/api/get-dental-chart', async (req: Request, res: Response) => {
+    try {
+      const { patientEmail, chartId } = req.query;
+      
+      // If chartId is provided, retrieve by chartId
+      if (chartId && typeof chartId === 'string') {
+        const chartData = dentalChartStorage.get(chartId);
+        
+        if (!chartData) {
+          return res.status(404).json({ 
+            success: false, 
+            error: 'Dental chart not found' 
+          });
+        }
+        
+        return res.status(200).json({ 
+          success: true, 
+          chartData 
+        });
+      }
+      
+      // If email is provided, retrieve all charts for this email
+      if (patientEmail && typeof patientEmail === 'string') {
+        const email = patientEmail.toLowerCase();
+        const charts = Array.from(dentalChartStorage.entries())
+          .filter(([key, data]) => data.patientEmail.toLowerCase() === email)
+          .map(([key, data]) => ({ chartId: key, ...data }));
+        
+        if (charts.length === 0) {
+          return res.status(404).json({ 
+            success: false, 
+            error: 'No dental charts found for this patient' 
+          });
+        }
+        
+        return res.status(200).json({ 
+          success: true, 
+          charts 
+        });
+      }
+      
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required query parameter (patientEmail or chartId)' 
+      });
+    } catch (error) {
+      console.error('Error retrieving dental chart data:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to retrieve dental chart data' 
+      });
+    }
+  });
+  
+  // Get list of all patient dental charts (for clinic access)
+  // In a real implementation, this would be protected by authentication
+  app.get('/api/all-dental-charts', async (req: Request, res: Response) => {
+    try {
+      // For demonstration purposes, this endpoint is not secured
+      // In a production environment, this would require clinic authentication
+      
+      // Convert the Map to an array of objects
+      const allCharts = Array.from(dentalChartStorage.entries())
+        .map(([key, data]) => ({
+          chartId: key,
+          patientName: data.patientName,
+          patientEmail: data.patientEmail,
+          createdAt: data.createdAt,
+          quoteId: data.quoteId
+        }));
+      
+      return res.status(200).json({ 
+        success: true, 
+        charts: allCharts 
+      });
+    } catch (error) {
+      console.error('Error retrieving all dental charts:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to retrieve dental chart list' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
