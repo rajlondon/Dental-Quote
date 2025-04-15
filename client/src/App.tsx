@@ -21,6 +21,7 @@ import PortalLoginPage from "@/pages/PortalLoginPage";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
+import DentalChartPage from "@/pages/DentalChartPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
+      <Route path="/dental-chart" component={DentalChartPage} />
       <Route path="/booking" component={BookingPage} />
       <Route path="/portal" component={PortalLoginPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
