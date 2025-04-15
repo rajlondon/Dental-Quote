@@ -21,6 +21,7 @@ import {
 import ClinicDashboardSection from '@/components/clinic/ClinicDashboardSection';
 import ClinicPatientsSection from '@/components/clinic/ClinicPatientsSection';
 import ClinicQuotesSection from '@/components/clinic/ClinicQuotesSection';
+import ClinicTreatmentPlansSection from '@/components/clinic/ClinicTreatmentPlansSection';
 import ClinicAppointmentsSection from '@/components/clinic/ClinicAppointmentsSection';
 import ClinicMessagesSection from '@/components/clinic/ClinicMessagesSection';
 import ClinicDocumentsSection from '@/components/clinic/ClinicDocumentsSection';
