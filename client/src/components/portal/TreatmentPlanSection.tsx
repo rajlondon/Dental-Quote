@@ -417,23 +417,23 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                     <TabsContent value="savings">
                       {/* UK Price Comparison View */}
                       <div className="bg-gray-50 rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-14 px-4 py-3 bg-gray-100 text-sm font-medium">
+                        <div className="grid grid-cols-12 px-4 py-3 bg-gray-100 text-sm font-medium">
                           <div className="col-span-4">Treatment</div>
-                          <div className="col-span-2 text-center">Qty</div>
+                          <div className="col-span-1 text-center">Qty</div>
                           <div className="col-span-3 text-right">UK Price</div>
                           <div className="col-span-3 text-right">Our Price</div>
-                          <div className="col-span-2 text-right">Savings</div>
+                          <div className="col-span-1 text-right">Savings</div>
                         </div>
                         
                         {treatmentPlan.items.map((item, index) => (
                           <div 
                             key={item.id} 
-                            className={`grid grid-cols-14 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                            className={`grid grid-cols-12 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
                           >
                             <div className="col-span-4">
                               <div className="font-medium">{item.treatment}</div>
                             </div>
-                            <div className="col-span-2 text-center self-center">{item.quantity}</div>
+                            <div className="col-span-1 text-center self-center">{item.quantity}</div>
                             <div className="col-span-3 text-right self-center">
                               {item.homeCountryPriceGBP && (
                                 <>
@@ -446,10 +446,10 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                               <div>{formatCurrency(item.priceGBP, 'GBP')}</div>
                               <div className="text-xs text-gray-500">{formatCurrency(item.subtotalGBP, 'GBP')} total</div>
                             </div>
-                            <div className="col-span-2 text-right self-center">
+                            <div className="col-span-1 text-right self-center">
                               {item.savingsPercentage && (
                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  {item.savingsPercentage}% off
+                                  {item.savingsPercentage}%
                                 </Badge>
                               )}
                             </div>
@@ -457,8 +457,8 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                         ))}
                         
                         {/* Total row with savings */}
-                        <div className="grid grid-cols-14 px-4 py-4 bg-blue-50 text-sm font-medium border-t border-blue-100">
-                          <div className="col-span-6 text-right">Total</div>
+                        <div className="grid grid-cols-12 px-4 py-4 bg-blue-50 text-sm font-medium border-t border-blue-100">
+                          <div className="col-span-5 text-right">Total</div>
                           <div className="col-span-3 text-right">
                             <div className="font-bold">{formatCurrency(treatmentPlan.totalHomeCountryGBP || 0, 'GBP')}</div>
                             <div className="text-xs text-gray-500">UK Price</div>
@@ -467,8 +467,8 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                             <div className="font-bold">{formatCurrency(treatmentPlan.totalGBP, 'GBP')}</div>
                             <div className="text-xs text-gray-500">Turkey Price</div>
                           </div>
-                          <div className="col-span-2 text-right">
-                            <div className="text-green-600 font-bold">{treatmentPlan.totalSavingsPercentage}% off</div>
+                          <div className="col-span-1 text-right">
+                            <div className="text-green-600 font-bold">{treatmentPlan.totalSavingsPercentage}%</div>
                           </div>
                         </div>
                         

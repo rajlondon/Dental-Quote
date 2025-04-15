@@ -195,7 +195,17 @@ const AppointmentsSection: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>My Appointments</CardTitle>
-            <Button size="sm">
+            <Button 
+              size="sm"
+              onClick={() => {
+                toast({
+                  title: "Scheduling Appointment",
+                  description: "Opening appointment scheduler...",
+                });
+                // Open the booking page in a new tab
+                window.open('/booking', '_blank');
+              }}
+            >
               <Calendar className="h-4 w-4 mr-2" />
               Schedule New
             </Button>
@@ -288,7 +298,16 @@ const AppointmentsSection: React.FC = () => {
                         <p className="text-gray-500 max-w-md mx-auto mb-6">
                           You don't have any upcoming appointments scheduled. Would you like to schedule one?
                         </p>
-                        <Button>
+                        <Button
+                          onClick={() => {
+                            toast({
+                              title: "Scheduling Appointment",
+                              description: "Opening appointment scheduler...",
+                            });
+                            // Open the booking page in a new tab
+                            window.open('/booking', '_blank');
+                          }}
+                        >
                           <Calendar className="h-4 w-4 mr-2" />
                           Schedule New Appointment
                         </Button>
