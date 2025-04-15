@@ -61,9 +61,9 @@ export default function DentalChartPage() {
                     description: "Your dental chart information has been saved. Proceeding to quote builder."
                   });
                   
-                  // Redirect to the pricing page after a short delay
+                  // Redirect to the new quote builder page after a short delay
                   setTimeout(() => {
-                    setLocation('/pricing');
+                    setLocation('/your-quote');
                   }, 1500);
                 }}
               >
@@ -73,7 +73,7 @@ export default function DentalChartPage() {
               <Button 
                 variant="outline"
                 onClick={() => {
-                  setLocation('/pricing');
+                  setLocation('/your-quote');
                 }}
               >
                 Skip & Continue to Quote Builder
