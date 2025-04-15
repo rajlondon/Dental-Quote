@@ -82,7 +82,40 @@ const DentalChartSection: React.FC = () => {
             patientEmail: 'john.doe@example.com',
             createdAt: new Date().toISOString(),
             quoteId: 'Q123456',
-            dentalChartData: {}
+            dentalChartData: [
+              { id: 1, name: 'Upper Right Third Molar (1)', condition: null, treatment: null, notes: '' },
+              { id: 2, name: 'Upper Right Second Molar (2)', condition: null, treatment: null, notes: '' },
+              { id: 3, name: 'Upper Right First Molar (3)', condition: null, treatment: null, notes: '' },
+              { id: 4, name: 'Upper Right Second Premolar (4)', condition: null, treatment: null, notes: '' },
+              { id: 5, name: 'Upper Right First Premolar (5)', condition: null, treatment: null, notes: '' },
+              { id: 6, name: 'Upper Right Canine (6)', condition: null, treatment: null, notes: '' },
+              { id: 7, name: 'Upper Right Lateral Incisor (7)', condition: null, treatment: null, notes: '' },
+              { id: 8, name: 'Upper Right Central Incisor (8)', condition: null, treatment: null, notes: '' },
+              { id: 9, name: 'Upper Left Central Incisor (9)', condition: null, treatment: null, notes: '' },
+              { id: 10, name: 'Upper Left Lateral Incisor (10)', condition: null, treatment: null, notes: '' },
+              { id: 11, name: 'Upper Left Canine (11)', condition: null, treatment: null, notes: '' },
+              { id: 12, name: 'Upper Left First Premolar (12)', condition: null, treatment: null, notes: '' },
+              { id: 13, name: 'Upper Left Second Premolar (13)', condition: null, treatment: null, notes: '' },
+              { id: 14, name: 'Upper Left First Molar (14)', condition: null, treatment: null, notes: '' },
+              { id: 15, name: 'Upper Left Second Molar (15)', condition: null, treatment: null, notes: '' },
+              { id: 16, name: 'Upper Left Third Molar (16)', condition: null, treatment: null, notes: '' },
+              { id: 17, name: 'Lower Left Third Molar (17)', condition: null, treatment: null, notes: '' },
+              { id: 18, name: 'Lower Left Second Molar (18)', condition: null, treatment: null, notes: '' },
+              { id: 19, name: 'Lower Left First Molar (19)', condition: null, treatment: null, notes: '' },
+              { id: 20, name: 'Lower Left Second Premolar (20)', condition: null, treatment: null, notes: '' },
+              { id: 21, name: 'Lower Left First Premolar (21)', condition: null, treatment: null, notes: '' },
+              { id: 22, name: 'Lower Left Canine (22)', condition: null, treatment: null, notes: '' },
+              { id: 23, name: 'Lower Left Lateral Incisor (23)', condition: null, treatment: null, notes: '' },
+              { id: 24, name: 'Lower Left Central Incisor (24)', condition: null, treatment: null, notes: '' },
+              { id: 25, name: 'Lower Right Central Incisor (25)', condition: null, treatment: null, notes: '' },
+              { id: 26, name: 'Lower Right Lateral Incisor (26)', condition: null, treatment: null, notes: '' },
+              { id: 27, name: 'Lower Right Canine (27)', condition: null, treatment: null, notes: '' },
+              { id: 28, name: 'Lower Right First Premolar (28)', condition: null, treatment: null, notes: '' },
+              { id: 29, name: 'Lower Right Second Premolar (29)', condition: null, treatment: null, notes: '' },
+              { id: 30, name: 'Lower Right First Molar (30)', condition: null, treatment: null, notes: '' },
+              { id: 31, name: 'Lower Right Second Molar (31)', condition: null, treatment: null, notes: '' },
+              { id: 32, name: 'Lower Right Third Molar (32)', condition: null, treatment: null, notes: '' }
+            ]
           }
         ];
         setCharts(mockCharts);
@@ -104,7 +137,40 @@ const DentalChartSection: React.FC = () => {
           patientEmail: 'john.doe@example.com',
           createdAt: new Date().toISOString(),
           quoteId: 'Q123456',
-          dentalChartData: {}
+          dentalChartData: [
+            { id: 1, name: 'Upper Right Third Molar (1)', condition: null, treatment: null, notes: '' },
+            { id: 2, name: 'Upper Right Second Molar (2)', condition: null, treatment: null, notes: '' },
+            { id: 3, name: 'Upper Right First Molar (3)', condition: null, treatment: null, notes: '' },
+            { id: 4, name: 'Upper Right Second Premolar (4)', condition: null, treatment: null, notes: '' },
+            { id: 5, name: 'Upper Right First Premolar (5)', condition: null, treatment: null, notes: '' },
+            { id: 6, name: 'Upper Right Canine (6)', condition: null, treatment: null, notes: '' },
+            { id: 7, name: 'Upper Right Lateral Incisor (7)', condition: null, treatment: null, notes: '' },
+            { id: 8, name: 'Upper Right Central Incisor (8)', condition: null, treatment: null, notes: '' },
+            { id: 9, name: 'Upper Left Central Incisor (9)', condition: null, treatment: null, notes: '' },
+            { id: 10, name: 'Upper Left Lateral Incisor (10)', condition: null, treatment: null, notes: '' },
+            { id: 11, name: 'Upper Left Canine (11)', condition: null, treatment: null, notes: '' },
+            { id: 12, name: 'Upper Left First Premolar (12)', condition: null, treatment: null, notes: '' },
+            { id: 13, name: 'Upper Left Second Premolar (13)', condition: null, treatment: null, notes: '' },
+            { id: 14, name: 'Upper Left First Molar (14)', condition: null, treatment: null, notes: '' },
+            { id: 15, name: 'Upper Left Second Molar (15)', condition: null, treatment: null, notes: '' },
+            { id: 16, name: 'Upper Left Third Molar (16)', condition: null, treatment: null, notes: '' },
+            { id: 17, name: 'Lower Left Third Molar (17)', condition: null, treatment: null, notes: '' },
+            { id: 18, name: 'Lower Left Second Molar (18)', condition: null, treatment: null, notes: '' },
+            { id: 19, name: 'Lower Left First Molar (19)', condition: null, treatment: null, notes: '' },
+            { id: 20, name: 'Lower Left Second Premolar (20)', condition: null, treatment: null, notes: '' },
+            { id: 21, name: 'Lower Left First Premolar (21)', condition: null, treatment: null, notes: '' },
+            { id: 22, name: 'Lower Left Canine (22)', condition: null, treatment: null, notes: '' },
+            { id: 23, name: 'Lower Left Lateral Incisor (23)', condition: null, treatment: null, notes: '' },
+            { id: 24, name: 'Lower Left Central Incisor (24)', condition: null, treatment: null, notes: '' },
+            { id: 25, name: 'Lower Right Central Incisor (25)', condition: null, treatment: null, notes: '' },
+            { id: 26, name: 'Lower Right Lateral Incisor (26)', condition: null, treatment: null, notes: '' },
+            { id: 27, name: 'Lower Right Canine (27)', condition: null, treatment: null, notes: '' },
+            { id: 28, name: 'Lower Right First Premolar (28)', condition: null, treatment: null, notes: '' },
+            { id: 29, name: 'Lower Right Second Premolar (29)', condition: null, treatment: null, notes: '' },
+            { id: 30, name: 'Lower Right First Molar (30)', condition: null, treatment: null, notes: '' },
+            { id: 31, name: 'Lower Right Second Molar (31)', condition: null, treatment: null, notes: '' },
+            { id: 32, name: 'Lower Right Third Molar (32)', condition: null, treatment: null, notes: '' }
+          ]
         }
       ];
       setCharts(mockCharts);
