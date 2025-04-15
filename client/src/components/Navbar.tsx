@@ -35,19 +35,37 @@ const Navbar: React.FC = () => {
             {t('navbar.get_quote', 'Get a Quote')}
           </Link>
           
-          <Link href="/dental-chart" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1 rounded-md flex items-center text-xs">
-            <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
-            </svg>
-            Dental Chart
-          </Link>
+          <div className="relative group">
+            <Link href="/dental-chart" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1 rounded-md flex items-center text-xs">
+              <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
+              </svg>
+              Dental Chart
+            </Link>
+            <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-1 py-1 z-50">
+              <Link href="/dental-chart" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
+                Interactive Dental Chart
+              </Link>
+              <Link href="/my-dental-chart" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
+                My Saved Dental Charts
+              </Link>
+            </div>
+          </div>
           
           <Link href="/portal" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           
-          <Link href="/clinic-portal" className="text-neutral-600 hover:text-primary transition-colors text-xs">
+          <Link href="/clinic-portal" className="text-neutral-600 hover:text-primary transition-colors text-xs group relative">
             {t('navbar.clinic_login', 'Clinic Login')}
+            <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-1 py-1 right-0 z-50">
+              <Link href="/clinic-portal" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
+                Clinic Dashboard
+              </Link>
+              <Link href="/clinic-dental-charts" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
+                Patient Dental Charts
+              </Link>
+            </div>
           </Link>
           
           <Link href="/how-it-works" className="text-neutral-600 hover:text-primary transition-colors text-xs">

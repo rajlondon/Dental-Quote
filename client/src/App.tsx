@@ -22,6 +22,8 @@ import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
 import DentalChartPage from "@/pages/DentalChartPage";
+import PatientDentalChart from "@/pages/PatientDentalChart";
+import ClinicDentalCharts from "@/pages/ClinicDentalCharts";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -44,6 +46,8 @@ function Router() {
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
       <Route path="/dental-chart" component={DentalChartPage} />
+      <Route path="/my-dental-chart" component={PatientDentalChart} />
+      <Route path="/clinic-dental-charts" component={ClinicDentalCharts} />
       <Route path="/booking" component={BookingPage} />
       <Route path="/portal" component={PortalLoginPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
