@@ -734,9 +734,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       </div>
                       
                       <div className="mt-auto">
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap justify-end">
                           <Button 
-                            className="flex-1 md:flex-none" 
+                            className="md:w-auto" 
                             onClick={() => {
                               // Save the selected clinic in localStorage
                               setSelectedClinic(clinic.id);
@@ -767,8 +767,6 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             <Heart className="mr-2 h-4 w-4" />
                             Select This Clinic
                           </Button>
-                          
-                          {/* Download and email quote buttons removed as this functionality is now handled in portals */}
                         </div>
                       </div>
                     </div>
