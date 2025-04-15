@@ -261,7 +261,7 @@ const SupportSection: React.FC = () => {
     };
     
     // Update the selected ticket with the new message
-    const updatedTicket = {
+    const updatedTicket: SupportTicket = {
       ...selectedTicket,
       messages: [...selectedTicket.messages, newMessage],
       lastActivity: new Date().toISOString(),
