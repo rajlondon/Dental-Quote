@@ -151,14 +151,9 @@ export function FileUploader({
         if (treatmentPlanId) formData.append('treatmentPlanId', treatmentPlanId.toString());
 
         try {
-          const response = await apiRequest('POST', '/api/files/upload', formData, {
-            onUploadProgress: (progressEvent: any) => {
-              if (progressEvent.total) {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setProgress(percentCompleted);
-              }
-            }
-          });
+          // Modified to match apiRequest signature - custom config without the upload progress tracking
+          // Will rely on the standard progress instead
+          const response = await apiRequest('POST', '/api/files/upload', formData);
 
           if (!response.ok) {
             const errorData = await response.json();

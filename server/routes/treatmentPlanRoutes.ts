@@ -146,11 +146,23 @@ router.post('/', hasAdminOrClinicAccess, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden - You can only create treatment plans for your clinic' });
     }
     
-    // Add the creator ID
-    treatmentPlanData.createdById = user.id;
+    // Prepare the treatment plan data with the required fields
+    const treatmentPlanToCreate: InsertTreatmentPlan = {
+      patientId: treatmentPlanData.patientId,
+      clinicId: treatmentPlanData.clinicId,
+      createdById: user.id,
+      status: treatmentPlanData.status,
+      treatmentDetails: treatmentPlanData.treatmentDetails || {}, // Ensure we have an object even if null was passed
+      currency: treatmentPlanData.currency,
+      notes: treatmentPlanData.notes,
+      quoteRequestId: treatmentPlanData.quoteRequestId,
+      estimatedTotalCost: treatmentPlanData.estimatedTotalCost ? 
+        treatmentPlanData.estimatedTotalCost.toString() : null, // Convert to string to match schema
+      portalStatus: treatmentPlanData.portalStatus
+    };
     
     // Create the treatment plan
-    const newTreatmentPlan = await storage.createTreatmentPlan(treatmentPlanData);
+    const newTreatmentPlan = await storage.createTreatmentPlan(treatmentPlanToCreate);
     
     // If this treatment plan is for a quote request, update the quote request status
     if (treatmentPlanData.quoteRequestId) {
@@ -198,8 +210,15 @@ router.patch('/:id', hasAdminOrClinicAccess, async (req, res) => {
     
     const updateData = schema.parse(req.body);
     
+    // Convert estimatedTotalCost to string if it exists (to match schema)
+    const finalUpdateData: Partial<TreatmentPlan> = {
+      ...updateData,
+      estimatedTotalCost: updateData.estimatedTotalCost !== undefined ? 
+        updateData.estimatedTotalCost.toString() : undefined
+    };
+
     // Update the treatment plan
-    const updatedPlan = await storage.updateTreatmentPlan(treatmentPlanId, updateData);
+    const updatedPlan = await storage.updateTreatmentPlan(treatmentPlanId, finalUpdateData);
     
     if (!updatedPlan) {
       return res.status(404).json({ error: 'Treatment plan not found' });
