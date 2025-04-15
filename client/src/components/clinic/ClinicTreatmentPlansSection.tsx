@@ -388,6 +388,9 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
   const [selectedTreatment, setSelectedTreatment] = useState<TreatmentCatalogItem | null>(null);
+  const [selectedCatalogItems, setSelectedCatalogItems] = useState<string[]>([]);
+  const [catalogSearchTerm, setCatalogSearchTerm] = useState('');
+  const [catalogFilterCategory, setCatalogFilterCategory] = useState('all');
   
   // Status badge styles
   const statusStyles = {
@@ -1546,9 +1549,14 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                 <Input 
                   className="pl-10" 
                   placeholder={t("clinic.treatment_plans.search_treatments", "Search treatments...")} 
+                  value={catalogSearchTerm}
+                  onChange={(e) => setCatalogSearchTerm(e.target.value)}
                 />
               </div>
-              <Select defaultValue="all">
+              <Select 
+                value={catalogFilterCategory} 
+                onValueChange={setCatalogFilterCategory}
+              >
                 <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder={t("clinic.treatment_plans.filter_category", "Filter by category")} />
                 </SelectTrigger>
@@ -1579,10 +1587,16 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                   {sampleTreatments.map((treatment) => (
                     <TableRow key={treatment.id}>
                       <TableCell>
-                        <input 
-                          type="checkbox" 
-                          id={`select-${treatment.id}`} 
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        <Checkbox 
+                          id={`select-${treatment.id}`}
+                          checked={selectedCatalogItems.includes(treatment.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedCatalogItems([...selectedCatalogItems, treatment.id]);
+                            } else {
+                              setSelectedCatalogItems(selectedCatalogItems.filter(id => id !== treatment.id));
+                            }
+                          }}
                         />
                       </TableCell>
                       <TableCell className="font-medium">{treatment.name}</TableCell>
