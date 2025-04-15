@@ -79,7 +79,7 @@ const formatTreatmentName = (name: string): string => {
 };
 
 // PDF generation function
-const generateQuotePdf = ({
+export const generateQuotePdf = ({
   items,
   totalGBP,
   totalUSD,

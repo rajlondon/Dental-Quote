@@ -29,6 +29,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { generateQuotePdf } from '@/components/PdfGenerator';
 import { 
   Dialog, 
   DialogContent, 
@@ -226,11 +227,50 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
   
   // Function to download treatment plan as PDF
   const handleDownloadPlan = () => {
-    // In a real app, this would download the PDF
     toast({
-      title: t('portal.treatment_plan.downloading', 'Downloading Treatment Plan'),
-      description: t('portal.treatment_plan.download_started', 'Your download has started.'),
+      title: t('portal.treatment_plan.generating', 'Generating Treatment Plan PDF'),
+      description: t('portal.treatment_plan.please_wait', 'Please wait while we generate your PDF...'),
     });
+    
+    // Get the first name from the full name (if available) for a personalized PDF
+    const user = {
+      name: 'John Doe', // This would come from user context in a real app
+      email: 'patient@example.com',
+      phone: '+44 1234 567890',
+    };
+    
+    // Get travel info if it exists
+    const travelInfo = {
+      departureCity: 'London',
+      travelMonth: 'June',
+    };
+    
+    try {
+      // Call the PDF generator with treatment plan data
+      generateQuotePdf({
+        items: treatmentPlan.items,
+        totalGBP: treatmentPlan.totalGBP,
+        totalUSD: treatmentPlan.totalUSD,
+        patientName: user.name,
+        patientEmail: user.email,
+        patientPhone: user.phone,
+        departureCity: travelInfo.departureCity,
+        travelMonth: travelInfo.travelMonth,
+        onComplete: () => {
+          toast({
+            title: t('portal.treatment_plan.download_complete', 'PDF Generated Successfully'),
+            description: t('portal.treatment_plan.download_desc', 'Your treatment plan PDF has been generated and downloaded.'),
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: t('portal.treatment_plan.pdf_error', 'PDF Generation Error'),
+        description: t('portal.treatment_plan.pdf_error_desc', 'There was an error generating your PDF. Please try again.'),
+        variant: 'destructive',
+      });
+    }
   };
   
   return (
