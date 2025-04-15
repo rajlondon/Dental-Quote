@@ -6,6 +6,7 @@ import Backend from 'i18next-http-backend';
 // Define available languages
 export const languages = {
   en: { nativeName: 'English', flag: '🇬🇧' },
+  tr: { nativeName: 'Türkçe', flag: '🇹🇷' },
   de: { nativeName: 'Deutsch', flag: '🇩🇪' },
   fr: { nativeName: 'Français', flag: '🇫🇷' },
   es: { nativeName: 'Español', flag: '🇪🇸' },

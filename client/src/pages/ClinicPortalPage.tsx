@@ -4,6 +4,13 @@ import { Link } from 'wouter';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
@@ -22,7 +29,7 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 
 const ClinicPortalPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
@@ -152,6 +159,32 @@ const ClinicPortalPage: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-3">
+              {/* Language Switcher */}
+              <div className="mr-2">
+                <Select
+                  defaultValue={i18n.language}
+                  onValueChange={(value) => {
+                    i18n.changeLanguage(value);
+                  }}
+                >
+                  <SelectTrigger className="w-[130px] h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">
+                      <div className="flex items-center">
+                        <span className="mr-2">🇬🇧</span> {t("language.en", "English")}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="tr">
+                      <div className="flex items-center">
+                        <span className="mr-2">🇹🇷</span> {t("language.tr", "Türkçe")}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/" className="flex items-center gap-1">
                   {t("clinic.back_to_site", "Back to Website")}
