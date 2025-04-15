@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Dialog, 
   DialogContent, 
@@ -31,7 +32,10 @@ import {
   Trash,
   Download,
   Send,
-  Eye
+  Eye,
+  Database,
+  ListChecks,
+  Copy
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -63,6 +67,92 @@ const convertToBuilderItems = (items: TreatmentItem[] | undefined): any[] => {
 };
 
 // Sample treatment plans data - in a real app, this would come from an API
+// Sample treatments data for the clinic's catalog
+interface TreatmentCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  duration: string;
+  materials: string[];
+  priceGBP: number;
+}
+
+const sampleTreatments: TreatmentCatalogItem[] = [
+  {
+    id: "T001",
+    name: "Dental Implant (Straumann)",
+    category: "implants",
+    description: "Premium Swiss dental implant system with lifetime guarantee on the implant fixture",
+    duration: "2-3 sessions",
+    materials: ["Straumann", "Titanium", "Premium"],
+    priceGBP: 550
+  },
+  {
+    id: "T002",
+    name: "Dental Implant (MIS)",
+    category: "implants",
+    description: "High-quality Israeli implant system with excellent long-term performance",
+    duration: "2-3 sessions",
+    materials: ["MIS", "Titanium", "Standard"],
+    priceGBP: 450
+  },
+  {
+    id: "T003",
+    name: "Porcelain Crown",
+    category: "prosthetics",
+    description: "Highly durable and aesthetic crown made from E-max porcelain",
+    duration: "2 sessions",
+    materials: ["E-max", "Porcelain", "Premium"],
+    priceGBP: 175
+  },
+  {
+    id: "T004",
+    name: "Zirconia Crown",
+    category: "prosthetics",
+    description: "Ultra-strong and natural-looking crown made from zirconia",
+    duration: "2 sessions",
+    materials: ["Zirconia", "Premium"],
+    priceGBP: 190
+  },
+  {
+    id: "T005",
+    name: "Porcelain Veneer",
+    category: "cosmetic",
+    description: "Thin porcelain shell designed to improve the appearance of front teeth",
+    duration: "2 sessions",
+    materials: ["Porcelain", "E-max"],
+    priceGBP: 220
+  },
+  {
+    id: "T006",
+    name: "Root Canal Treatment",
+    category: "general",
+    description: "Procedure to remove infected pulp and save the tooth",
+    duration: "1-2 sessions",
+    materials: ["Standard"],
+    priceGBP: 195
+  },
+  {
+    id: "T007",
+    name: "Bone Graft",
+    category: "implants",
+    description: "Procedure to build up bone structure for implant placement",
+    duration: "1 session",
+    materials: ["Synthetic Bone", "Membrane"],
+    priceGBP: 300
+  },
+  {
+    id: "T008",
+    name: "All-on-4 Full Arch",
+    category: "implants",
+    description: "Complete full arch restoration using 4 implants",
+    duration: "Multiple sessions",
+    materials: ["Straumann", "Zirconia", "Premium"],
+    priceGBP: 3500
+  }
+];
+
 const sampleTreatmentPlans: TreatmentPlanItem[] = [
   {
     id: "TP001",
@@ -372,47 +462,208 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   // Render treatment plans table
   const renderTreatmentPlansTable = () => (
     <>
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-        {/* Search and filter section */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input 
-              className="pl-10 w-full sm:w-80" 
-              placeholder={t("clinic.treatment_plans.search", "Search treatment plans...")} 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Tabs 
-            defaultValue="all" 
-            className="w-full sm:w-auto" 
-            value={filterStatus}
-            onValueChange={setFilterStatus}
-          >
-            <TabsList className="grid grid-cols-3 sm:grid-cols-5 h-auto p-1">
-              <TabsTrigger value="all" className="text-xs h-8">
-                {t("clinic.treatment_plans.filter.all", "All")}
-              </TabsTrigger>
-              <TabsTrigger value="draft" className="text-xs h-8">
-                {t("clinic.treatment_plans.filter.draft", "Draft")}
-              </TabsTrigger>
-              <TabsTrigger value="pending_approval" className="text-xs h-8">
-                {t("clinic.treatment_plans.filter.pending", "Pending")}
-              </TabsTrigger>
-              <TabsTrigger value="active" className="text-xs h-8">
-                {t("clinic.treatment_plans.filter.active", "Active")}
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs h-8">
-                {t("clinic.treatment_plans.filter.completed", "Completed")}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        <Button className="w-full sm:w-auto gap-2" onClick={handleCreateNewPlan}>
-          <Plus className="h-4 w-4" />
-          {t("clinic.treatment_plans.create_plan", "Create Treatment Plan")}
-        </Button>
+      <div className="flex flex-col gap-6 mb-6">
+        {/* Top row with tabs for section switch */}
+        <Tabs defaultValue="plans" className="w-full">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="plans">
+              <ListChecks className="h-4 w-4 mr-2" />
+              {t("clinic.treatment_plans.patient_plans", "Patient Plans")}
+            </TabsTrigger>
+            <TabsTrigger value="catalog">
+              <Database className="h-4 w-4 mr-2" />
+              {t("clinic.treatment_plans.treatment_catalog", "Treatment Catalog")}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="plans" className="mt-4">
+            {/* Patient plans controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-auto">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    className="pl-10 w-full sm:w-80" 
+                    placeholder={t("clinic.treatment_plans.search", "Search treatment plans...")} 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Tabs 
+                  defaultValue="all" 
+                  className="w-full sm:w-auto" 
+                  value={filterStatus}
+                  onValueChange={setFilterStatus}
+                >
+                  <TabsList className="grid grid-cols-3 sm:grid-cols-5 h-auto p-1">
+                    <TabsTrigger value="all" className="text-xs h-8">
+                      {t("clinic.treatment_plans.filter.all", "All")}
+                    </TabsTrigger>
+                    <TabsTrigger value="draft" className="text-xs h-8">
+                      {t("clinic.treatment_plans.filter.draft", "Draft")}
+                    </TabsTrigger>
+                    <TabsTrigger value="pending_approval" className="text-xs h-8">
+                      {t("clinic.treatment_plans.filter.pending", "Pending")}
+                    </TabsTrigger>
+                    <TabsTrigger value="active" className="text-xs h-8">
+                      {t("clinic.treatment_plans.filter.active", "Active")}
+                    </TabsTrigger>
+                    <TabsTrigger value="completed" className="text-xs h-8">
+                      {t("clinic.treatment_plans.filter.completed", "Completed")}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              <Button className="w-full sm:w-auto gap-2" onClick={handleCreateNewPlan}>
+                <Plus className="h-4 w-4" />
+                {t("clinic.treatment_plans.create_plan", "Create Treatment Plan")}
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="catalog" className="mt-4">
+            {/* Treatment catalog controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-auto">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    className="pl-10 w-full sm:w-80" 
+                    placeholder={t("clinic.treatment_plans.search_treatments", "Search treatments...")} 
+                  />
+                </div>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-full sm:w-44">
+                    <SelectValue placeholder={t("clinic.treatment_plans.filter_category", "Filter by category")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("clinic.treatment_plans.all_categories", "All Categories")}</SelectItem>
+                    <SelectItem value="implants">{t("clinic.treatment_plans.categories.implants", "Dental Implants")}</SelectItem>
+                    <SelectItem value="cosmetic">{t("clinic.treatment_plans.categories.cosmetic", "Cosmetic Dentistry")}</SelectItem>
+                    <SelectItem value="prosthetics">{t("clinic.treatment_plans.categories.prosthetics", "Prosthetics")}</SelectItem>
+                    <SelectItem value="orthodontics">{t("clinic.treatment_plans.categories.orthodontics", "Orthodontics")}</SelectItem>
+                    <SelectItem value="general">{t("clinic.treatment_plans.categories.general", "General Dentistry")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button className="w-full sm:w-auto gap-2" onClick={() => {
+                // In a real app, this would open a dialog to add a new treatment
+                toast({
+                  title: t("clinic.treatment_plans.add_treatment", "Add Treatment"),
+                  description: t("clinic.treatment_plans.add_treatment_desc", "Treatment creation form would open here."),
+                });
+              }}>
+                <Plus className="h-4 w-4" />
+                {t("clinic.treatment_plans.add_treatment", "Add Treatment")}
+              </Button>
+            </div>
+            
+            {/* Treatment catalog table */}
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("clinic.treatment_plans.treatment_name", "Treatment Name")}</TableHead>
+                    <TableHead>{t("clinic.treatment_plans.category", "Category")}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t("clinic.treatment_plans.description", "Description")}</TableHead>
+                    <TableHead>{t("clinic.treatment_plans.duration", "Duration")}</TableHead>
+                    <TableHead>{t("clinic.treatment_plans.materials", "Materials")}</TableHead>
+                    <TableHead>{t("clinic.treatment_plans.price", "Price (GBP)")}</TableHead>
+                    <TableHead className="w-[100px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sampleTreatments.map((treatment) => (
+                    <TableRow key={treatment.id}>
+                      <TableCell className="font-medium">{treatment.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {treatment.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell max-w-md">
+                        <span className="line-clamp-1">{treatment.description}</span>
+                      </TableCell>
+                      <TableCell>{treatment.duration}</TableCell>
+                      <TableCell>
+                        {treatment.materials.map((material, idx) => (
+                          <Badge key={idx} className="mr-1 mb-1 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20">
+                            {material}
+                          </Badge>
+                        ))}
+                      </TableCell>
+                      <TableCell>
+                        {new Intl.NumberFormat(i18n.language === 'tr' ? 'tr-TR' : 'en-GB', { 
+                          style: 'currency', 
+                          currency: 'GBP',
+                          minimumFractionDigits: 0
+                        }).format(treatment.priceGBP)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>{t("clinic.treatment_plans.actions", "Actions")}</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => {
+                              toast({
+                                title: t("clinic.treatment_plans.edit", "Edit"),
+                                description: t("clinic.treatment_plans.edit_desc", "Editing treatment: ") + treatment.name,
+                              });
+                            }}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              {t("clinic.treatment_plans.edit", "Edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              toast({
+                                title: t("clinic.treatment_plans.duplicate", "Duplicate"),
+                                description: t("clinic.treatment_plans.duplicate_desc", "Duplicating treatment: ") + treatment.name,
+                              });
+                            }}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              {t("clinic.treatment_plans.duplicate", "Duplicate")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600" onClick={() => {
+                              toast({
+                                title: t("clinic.treatment_plans.delete", "Delete"),
+                                description: t("clinic.treatment_plans.delete_desc", "Deleting treatment: ") + treatment.name,
+                                variant: "destructive"
+                              });
+                            }}>
+                              <Trash className="h-4 w-4 mr-2" />
+                              {t("clinic.treatment_plans.delete", "Delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* Pagination for treatment catalog */}
+            <div className="flex items-center justify-between mt-4">
+              <Button variant="outline" size="sm" disabled>
+                {t("common.previous", "Previous")}
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                {t("common.pagination", "Showing {{start}} to {{end}} of {{total}} items", { 
+                  start: 1, 
+                  end: sampleTreatments.length,
+                  total: sampleTreatments.length
+                })}
+              </div>
+              <Button variant="outline" size="sm" disabled>
+                {t("common.next", "Next")}
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Treatment plans table */}
