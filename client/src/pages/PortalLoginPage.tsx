@@ -60,6 +60,47 @@ const PortalLoginPage: React.FC = () => {
     }
   }, []);
   
+  // Registration form
+  const registerForm = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+  
+  // Handle registration form submission
+  const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
+    setIsLoading(true);
+    
+    try {
+      // Here we would typically make an API call to register the user
+      console.log("Registration attempt with:", values);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // For now, show toast and redirect to client portal
+      toast({
+        title: "Registration Successful",
+        description: "Welcome to MyDentalFly! You're now logged in.",
+      });
+      
+      navigate("/client-portal");
+    } catch (error) {
+      toast({
+        title: "Registration Failed",
+        description: "There was a problem with your registration. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -91,7 +132,7 @@ const PortalLoginPage: React.FC = () => {
       // For now, show toast and redirect to client portal
       toast({
         title: "Login Successful",
-        description: "Welcome back to Istanbul Dental Smile!",
+        description: "Welcome back to MyDentalFly!",
       });
       
       navigate("/client-portal");
@@ -160,10 +201,22 @@ const PortalLoginPage: React.FC = () => {
             </p>
           </div>
 
+          {/* Display clinic notification if selected */}
+          {hasSelectedClinic && (
+            <Alert className="mb-6 bg-primary/10 border-primary/20">
+              <Check className="h-4 w-4 text-primary" />
+              <AlertTitle>You selected {selectedClinicName}</AlertTitle>
+              <AlertDescription>
+                Please log in or create an account to continue with your booking.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Tabs defaultValue="login" className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
-              <TabsTrigger value="test">{t("portal.login.test_access", "Test Access")}</TabsTrigger>
+              <TabsTrigger value="register">{t("portal.login.register", "Register")}</TabsTrigger>
+              <TabsTrigger value="test">{t("portal.login.test_access", "Test")}</TabsTrigger>
             </TabsList>
             
             {/* Regular Login Tab */}
@@ -230,6 +283,139 @@ const PortalLoginPage: React.FC = () => {
                     {t("portal.login.forgot_password", "Forgot password?")}
                   </Button>
                 </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            {/* Registration Tab */}
+            <TabsContent value="register">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("portal.login.register", "Create an Account")}</CardTitle>
+                  <CardDescription>
+                    {t("portal.login.register_desc", "Register to access your dental treatment plan")}
+                    {hasSelectedClinic && (
+                      <span className="block mt-1 text-primary font-medium">
+                        You've selected {selectedClinicName} for your treatment
+                      </span>
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...registerForm}>
+                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                      <FormField
+                        control={registerForm.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("form.name", "Full Name")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  placeholder="John Smith" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("form.email", "Email Address")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  placeholder="you@example.com" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("form.phone", "Phone Number")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Phone className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  placeholder="+44 123 456 7890" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("portal.login.password", "Password")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("portal.login.confirm_password", "Confirm Password")}</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? t("portal.login.registering", "Creating account...") : t("portal.login.register", "Create Account")}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
               </Card>
             </TabsContent>
             
@@ -319,7 +505,7 @@ const PortalLoginPage: React.FC = () => {
             
             <div className="relative z-10">
               <h2 className="text-2xl font-bold text-primary mb-4">
-                {t("portal.login.welcome", "Welcome to Istanbul Dental Smile Portal")}
+                {t("portal.login.welcome", "Welcome to MyDentalFly Patient Portal")}
               </h2>
               
               <div className="space-y-4">
