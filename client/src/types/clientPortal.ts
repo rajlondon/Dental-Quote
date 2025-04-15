@@ -121,6 +121,21 @@ export interface Appointment {
   createdAt: string;
 }
 
+export interface Quote {
+  id: string;
+  patientId: number;
+  patientName: string;
+  patientEmail: string;
+  treatments: TreatmentItem[];
+  totalGBP: number;
+  totalUSD: number;
+  homeCountry?: string;
+  homeCountryTotalGBP?: number;
+  travelInfo?: TravelInfo;
+  createdAt: string;
+  status: 'pending' | 'viewed' | 'converted' | 'expired';
+}
+
 export interface Document {
   id: number;
   bookingId: number;
