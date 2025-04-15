@@ -56,8 +56,10 @@ const Navbar: React.FC = () => {
             {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           
-          <Link href="/clinic-portal" className="text-neutral-600 hover:text-primary transition-colors text-xs group relative">
-            {t('navbar.clinic_login', 'Clinic Login')}
+          <div className="relative group">
+            <span className="text-neutral-600 hover:text-primary transition-colors text-xs cursor-pointer">
+              {t('navbar.clinic_login', 'Clinic Login')}
+            </span>
             <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-1 py-1 right-0 z-50">
               <Link href="/clinic-portal" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
                 Clinic Dashboard
@@ -66,7 +68,7 @@ const Navbar: React.FC = () => {
                 Patient Dental Charts
               </Link>
             </div>
-          </Link>
+          </div>
           
           <Link href="/how-it-works" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.howItWorks', 'How It Works')}
@@ -121,7 +123,11 @@ const Navbar: React.FC = () => {
           </Link>
           
           <Link href="/dental-chart" className="block text-blue-600 hover:text-blue-700 transition-colors text-xs font-medium">
-            Dental Chart
+            Interactive Dental Chart
+          </Link>
+          
+          <Link href="/my-dental-chart" className="block text-blue-500 hover:text-blue-600 transition-colors text-xs">
+            My Saved Dental Charts
           </Link>
           
           <Link href="/portal" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
@@ -130,6 +136,10 @@ const Navbar: React.FC = () => {
           
           <Link href="/clinic-portal" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.clinic_login', 'Clinic Login')}
+          </Link>
+          
+          <Link href="/clinic-dental-charts" className="block pl-4 text-gray-500 hover:text-primary transition-colors text-xs">
+            Patient Dental Charts
           </Link>
           
           <Link href="/how-it-works" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
