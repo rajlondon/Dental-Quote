@@ -1062,11 +1062,94 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                                 <TableCell className="font-medium">{treatment.name}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center space-x-2">
-                                    <Button variant="outline" size="icon" className="h-8 w-8 p-0">
+                                    <Button 
+                                      variant="outline" 
+                                      size="icon" 
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => {
+                                        if (treatment.quantity > 1) {
+                                          // Create new updated list with decreased quantity
+                                          const updatedTreatments = convertToBuilderItems(selectedPlan?.treatmentPlan.items).map(t => {
+                                            if (t.id === treatment.id) {
+                                              const newQuantity = t.quantity - 1;
+                                              return {
+                                                ...t,
+                                                quantity: newQuantity,
+                                                subtotalGBP: t.priceGBP * newQuantity,
+                                                subtotalUSD: t.priceUSD * newQuantity
+                                              };
+                                            }
+                                            return t;
+                                          });
+                                          // Update the plan with the new quantity
+                                          if (selectedPlan) {
+                                            setSelectedPlan({
+                                              ...selectedPlan,
+                                              treatmentPlan: {
+                                                ...selectedPlan.treatmentPlan,
+                                                items: updatedTreatments.map(t => ({
+                                                  id: t.id,
+                                                  treatment: t.name,
+                                                  priceGBP: t.priceGBP,
+                                                  priceUSD: t.priceUSD,
+                                                  quantity: t.quantity,
+                                                  subtotalGBP: t.subtotalGBP,
+                                                  subtotalUSD: t.subtotalUSD,
+                                                  guarantee: t.guarantee || ""
+                                                })),
+                                                totalGBP: updatedTreatments.reduce((sum, item) => sum + item.subtotalGBP, 0),
+                                                totalUSD: updatedTreatments.reduce((sum, item) => sum + item.subtotalUSD, 0)
+                                              }
+                                            });
+                                          }
+                                        }
+                                      }}
+                                      disabled={treatment.quantity <= 1}
+                                    >
                                       <Minus className="h-3 w-3" />
                                     </Button>
-                                    <span>{treatment.quantity}</span>
-                                    <Button variant="outline" size="icon" className="h-8 w-8 p-0">
+                                    <span className="w-5 text-center">{treatment.quantity}</span>
+                                    <Button 
+                                      variant="outline" 
+                                      size="icon" 
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => {
+                                        // Create new updated list with increased quantity
+                                        const updatedTreatments = convertToBuilderItems(selectedPlan?.treatmentPlan.items).map(t => {
+                                          if (t.id === treatment.id) {
+                                            const newQuantity = t.quantity + 1;
+                                            return {
+                                              ...t,
+                                              quantity: newQuantity,
+                                              subtotalGBP: t.priceGBP * newQuantity,
+                                              subtotalUSD: t.priceUSD * newQuantity
+                                            };
+                                          }
+                                          return t;
+                                        });
+                                        // Update the plan with the new quantity
+                                        if (selectedPlan) {
+                                          setSelectedPlan({
+                                            ...selectedPlan,
+                                            treatmentPlan: {
+                                              ...selectedPlan.treatmentPlan,
+                                              items: updatedTreatments.map(t => ({
+                                                id: t.id,
+                                                treatment: t.name,
+                                                priceGBP: t.priceGBP,
+                                                priceUSD: t.priceUSD,
+                                                quantity: t.quantity,
+                                                subtotalGBP: t.subtotalGBP,
+                                                subtotalUSD: t.subtotalUSD,
+                                                guarantee: t.guarantee || ""
+                                              })),
+                                              totalGBP: updatedTreatments.reduce((sum, item) => sum + item.subtotalGBP, 0),
+                                              totalUSD: updatedTreatments.reduce((sum, item) => sum + item.subtotalUSD, 0)
+                                            }
+                                          });
+                                        }
+                                      }}
+                                    >
                                       <Plus className="h-3 w-3" />
                                     </Button>
                                   </div>
@@ -1086,7 +1169,43 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                                   }).format(treatment.subtotalGBP)}
                                 </TableCell>
                                 <TableCell>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      // Filter out the treatment being deleted
+                                      const updatedTreatments = convertToBuilderItems(selectedPlan?.treatmentPlan.items)
+                                        .filter(t => t.id !== treatment.id);
+                                      
+                                      // Update the plan without the deleted treatment
+                                      if (selectedPlan) {
+                                        setSelectedPlan({
+                                          ...selectedPlan,
+                                          treatmentPlan: {
+                                            ...selectedPlan.treatmentPlan,
+                                            items: updatedTreatments.map(t => ({
+                                              id: t.id,
+                                              treatment: t.name,
+                                              priceGBP: t.priceGBP,
+                                              priceUSD: t.priceUSD,
+                                              quantity: t.quantity,
+                                              subtotalGBP: t.subtotalGBP,
+                                              subtotalUSD: t.subtotalUSD,
+                                              guarantee: t.guarantee || ""
+                                            })),
+                                            totalGBP: updatedTreatments.reduce((sum, item) => sum + item.subtotalGBP, 0),
+                                            totalUSD: updatedTreatments.reduce((sum, item) => sum + item.subtotalUSD, 0)
+                                          }
+                                        });
+                                        
+                                        toast({
+                                          title: t("clinic.treatment_plans.treatment_removed", "Treatment Removed"),
+                                          description: `${treatment.name} ${t("clinic.treatment_plans.removed_from_plan", "has been removed from the plan")}`
+                                        });
+                                      }
+                                    }}
+                                  >
                                     <Trash className="h-4 w-4 text-red-500" />
                                   </Button>
                                 </TableCell>
