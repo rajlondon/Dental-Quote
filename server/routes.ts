@@ -21,6 +21,8 @@ import Stripe from "stripe";
 // Import authentication and portal routes
 import { setupAuth } from "./auth";
 import portalRoutes from "./routes/portal-routes";
+import fileRoutes from "./routes/fileRoutes";
+import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +58,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register portal routes for clinic, admin, and client portal functionality
   app.use(portalRoutes);
+  
+  // Register file upload/management routes
+  app.use('/api/files', fileRoutes);
+  
+  // Create the uploads directory for files if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  // Serve uploaded files statically (with authentication middleware to be added)
+  app.use('/uploads', express.static(uploadsDir));
   
   // EmailJS Config endpoint
   app.get("/api/config/emailjs", (_req, res) => {

@@ -169,7 +169,7 @@ router.get('/download/:id', isAuthenticated, async (req, res) => {
     }
     
     // Construct the absolute path
-    const filePath = path.join(process.cwd(), file.fileUrl);
+    const filePath = path.join(process.cwd(), file.fileUrl || '');
     
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
