@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   CheckCircle2, 
@@ -11,7 +11,16 @@ import {
   ThumbsUp, 
   Clock, 
   Info,
-  FileUp
+  FileUp,
+  Edit,
+  PencilLine,
+  BarChart3,
+  Briefcase,
+  Plane,
+  PiggyBank,
+  Percent,
+  History,
+  Receipt
 } from 'lucide-react';
 import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,9 +48,17 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import type { TreatmentPlan, TreatmentItem } from '@/types/clientPortal';
+import type { TreatmentPlan, TreatmentItem, TreatmentPlanVersion } from '@/types/clientPortal';
+import { addUKPriceComparisons } from '@/data/treatmentPrices';
 
 // Mock data for development
 const mockTreatmentPlan: TreatmentPlan = {

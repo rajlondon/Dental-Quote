@@ -29,14 +29,32 @@ export type BookingStatus =
   | 'aftercare' 
   | 'cancelled';
 
+export interface TreatmentPlanVersion {
+  versionNumber: number;
+  timestamp: string;
+  editedBy: string;
+  editedById: number;
+  editedByRole: 'patient' | 'clinic' | 'admin';
+  changes: string; // Description of changes made
+  previousTreatmentPlan?: Partial<TreatmentPlan>; // Reference to previous version for comparison
+}
+
 export interface TreatmentPlan {
   items: TreatmentItem[];
   totalGBP: number;
   totalUSD: number;
+  totalHomeCountryGBP?: number; // Total price in home country
+  homeCountry?: 'UK' | 'Germany' | 'France' | 'Netherlands' | 'Italy' | 'Spain'; // Patient's home country
+  totalSavingsGBP?: number; // Total savings compared to home country
+  totalSavingsPercentage?: number; // Percentage saved
   notes?: string;
   guaranteeDetails?: string;
   version: number;
+  versionHistory?: TreatmentPlanVersion[];
   lastUpdated: string;
+  lastEditedBy?: string;
+  lastEditedById?: number;
+  lastEditedByRole?: 'patient' | 'clinic' | 'admin';
   approvedByPatient: boolean;
   approvedByClinic: boolean;
 }
@@ -46,9 +64,13 @@ export interface TreatmentItem {
   treatment: string;
   priceGBP: number;
   priceUSD: number;
+  homeCountryPriceGBP?: number; // Price in home country for comparison
   quantity: number;
   subtotalGBP: number;
   subtotalUSD: number;
+  homeCountrySubtotalGBP?: number; // Subtotal in home country currency
+  savingsGBP?: number; // Amount saved per item
+  savingsPercentage?: number; // Percentage saved per item
   guarantee: string;
 }
 
