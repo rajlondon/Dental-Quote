@@ -348,22 +348,22 @@ const ClinicAppointmentsSection: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <div className="flex">
-                <TabsList className="grid grid-cols-2">
-                  <TabsTrigger 
-                    value="day" 
-                    onClick={() => setActiveView('day')}
-                    className={activeView === 'day' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
-                  >
-                    Day
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="week" 
-                    onClick={() => setActiveView('week')}
-                    className={activeView === 'week' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
-                  >
-                    Week
-                  </TabsTrigger>
-                </TabsList>
+                <Tabs defaultValue="day">
+                  <TabsList className="grid grid-cols-2">
+                    <TabsTrigger 
+                      value="day" 
+                      onClick={() => setActiveView('day')}
+                    >
+                      Day
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="week" 
+                      onClick={() => setActiveView('week')}
+                    >
+                      Week
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               <div className="relative">
