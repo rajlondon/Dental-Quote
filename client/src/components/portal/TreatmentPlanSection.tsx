@@ -20,7 +20,8 @@ import {
   PiggyBank,
   Percent,
   History,
-  Receipt
+  Receipt,
+  PlusCircle
 } from 'lucide-react';
 import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,6 +136,15 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
   const [isApproving, setIsApproving] = useState(false);
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlan>(mockTreatmentPlan);
   const [showTreatmentPlanViewer, setShowTreatmentPlanViewer] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('summary');
+  
+  // Apply UK price comparisons when component mounts
+  useEffect(() => {
+    // Process treatment plan to add UK price comparisons
+    const treatmentPlanWithUKComparisons = addUKPriceComparisons(treatmentPlan);
+    setTreatmentPlan(treatmentPlanWithUKComparisons);
+  }, []);
   
   // Function to format currency
   const formatCurrency = (amount: number, currency: 'GBP' | 'USD') => {
@@ -181,6 +191,10 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
           <div className="flex items-center justify-between">
             <CardTitle>{t('portal.treatment_plan.title', 'Treatment Plan')}</CardTitle>
             <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)}>
+                <PencilLine className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
               <Button variant="outline" size="sm" onClick={handleDownloadPlan}>
                 <Download className="h-4 w-4 mr-2" />
                 {t('portal.treatment_plan.download', 'Download')}
@@ -246,59 +260,158 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
             <ScrollArea className="h-[calc(65vh-8rem)]">
               <div className="px-6 py-4">
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center">
+                    <Receipt className="h-5 w-5 mr-2 text-blue-500" />
                     {t('portal.treatment_plan.treatment_details', 'Treatment Details')}
                   </h3>
                   
-                  <div className="bg-gray-50 rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-12 px-4 py-3 bg-gray-100 text-sm font-medium">
-                      <div className="col-span-5">{t('portal.treatment_plan.treatment', 'Treatment')}</div>
-                      <div className="col-span-2 text-center">{t('portal.treatment_plan.quantity', 'Qty')}</div>
-                      <div className="col-span-2 text-right">{t('portal.treatment_plan.price_per_unit', 'Price')}</div>
-                      <div className="col-span-3 text-right">{t('portal.treatment_plan.subtotal', 'Subtotal')}</div>
-                    </div>
+                  <Tabs defaultValue="details" className="mb-4">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="details">Treatment Details</TabsTrigger>
+                      <TabsTrigger value="savings">UK Price Comparison</TabsTrigger>
+                    </TabsList>
                     
-                    {treatmentPlan.items.map((item, index) => (
-                      <div 
-                        key={item.id} 
-                        className={`grid grid-cols-12 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                      >
-                        <div className="col-span-5">
-                          <div className="font-medium">{item.treatment}</div>
-                          <div className="text-gray-500 text-xs mt-1">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="flex items-center">
-                                  <ShieldCheck className="h-3 w-3 text-green-600 mr-1" />
-                                  <span>{t('portal.treatment_plan.guaranteed', 'Guaranteed')}</span>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>{item.guarantee}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                    <TabsContent value="details">
+                      <div className="bg-gray-50 rounded-lg overflow-hidden">
+                        <div className="grid grid-cols-12 px-4 py-3 bg-gray-100 text-sm font-medium">
+                          <div className="col-span-5">{t('portal.treatment_plan.treatment', 'Treatment')}</div>
+                          <div className="col-span-2 text-center">{t('portal.treatment_plan.quantity', 'Qty')}</div>
+                          <div className="col-span-2 text-right">{t('portal.treatment_plan.price_per_unit', 'Price')}</div>
+                          <div className="col-span-3 text-right">{t('portal.treatment_plan.subtotal', 'Subtotal')}</div>
+                        </div>
+                        
+                        {treatmentPlan.items.map((item, index) => (
+                          <div 
+                            key={item.id} 
+                            className={`grid grid-cols-12 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                          >
+                            <div className="col-span-5">
+                              <div className="font-medium">{item.treatment}</div>
+                              <div className="text-gray-500 text-xs mt-1">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="flex items-center">
+                                      <ShieldCheck className="h-3 w-3 text-green-600 mr-1" />
+                                      <span>{t('portal.treatment_plan.guaranteed', 'Guaranteed')}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{item.guarantee}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </div>
+                            <div className="col-span-2 text-center self-center">{item.quantity}</div>
+                            <div className="col-span-2 text-right self-center">
+                              <div>{formatCurrency(item.priceGBP, 'GBP')}</div>
+                              <div className="text-xs text-gray-500">{formatCurrency(item.priceUSD, 'USD')}</div>
+                            </div>
+                            <div className="col-span-3 text-right self-center">
+                              <div>{formatCurrency(item.subtotalGBP, 'GBP')}</div>
+                              <div className="text-xs text-gray-500">{formatCurrency(item.subtotalUSD, 'USD')}</div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <div className="grid grid-cols-12 px-4 py-3 bg-blue-50 text-sm font-medium border-t border-blue-100">
+                          <div className="col-span-9 text-right">{t('portal.treatment_plan.total', 'Total')}</div>
+                          <div className="col-span-3 text-right">
+                            <div className="font-bold">{formatCurrency(treatmentPlan.totalGBP, 'GBP')}</div>
+                            <div className="text-gray-600">{formatCurrency(treatmentPlan.totalUSD, 'USD')}</div>
                           </div>
                         </div>
-                        <div className="col-span-2 text-center self-center">{item.quantity}</div>
-                        <div className="col-span-2 text-right self-center">
-                          <div>{formatCurrency(item.priceGBP, 'GBP')}</div>
-                          <div className="text-xs text-gray-500">{formatCurrency(item.priceUSD, 'USD')}</div>
-                        </div>
-                        <div className="col-span-3 text-right self-center">
-                          <div>{formatCurrency(item.subtotalGBP, 'GBP')}</div>
-                          <div className="text-xs text-gray-500">{formatCurrency(item.subtotalUSD, 'USD')}</div>
-                        </div>
                       </div>
-                    ))}
+                    </TabsContent>
                     
-                    <div className="grid grid-cols-12 px-4 py-3 bg-blue-50 text-sm font-medium border-t border-blue-100">
-                      <div className="col-span-9 text-right">{t('portal.treatment_plan.total', 'Total')}</div>
-                      <div className="col-span-3 text-right">
-                        <div className="font-bold">{formatCurrency(treatmentPlan.totalGBP, 'GBP')}</div>
-                        <div className="text-gray-600">{formatCurrency(treatmentPlan.totalUSD, 'USD')}</div>
+                    <TabsContent value="savings">
+                      {/* UK Price Comparison View */}
+                      <div className="bg-gray-50 rounded-lg overflow-hidden">
+                        <div className="grid grid-cols-14 px-4 py-3 bg-gray-100 text-sm font-medium">
+                          <div className="col-span-4">Treatment</div>
+                          <div className="col-span-2 text-center">Qty</div>
+                          <div className="col-span-3 text-right">UK Price</div>
+                          <div className="col-span-3 text-right">Our Price</div>
+                          <div className="col-span-2 text-right">Savings</div>
+                        </div>
+                        
+                        {treatmentPlan.items.map((item, index) => (
+                          <div 
+                            key={item.id} 
+                            className={`grid grid-cols-14 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                          >
+                            <div className="col-span-4">
+                              <div className="font-medium">{item.treatment}</div>
+                            </div>
+                            <div className="col-span-2 text-center self-center">{item.quantity}</div>
+                            <div className="col-span-3 text-right self-center">
+                              {item.homeCountryPriceGBP && (
+                                <>
+                                  <div>{formatCurrency(item.homeCountryPriceGBP, 'GBP')}</div>
+                                  <div className="text-xs text-gray-500">{formatCurrency(item.homeCountrySubtotalGBP || 0, 'GBP')} total</div>
+                                </>
+                              )}
+                            </div>
+                            <div className="col-span-3 text-right self-center">
+                              <div>{formatCurrency(item.priceGBP, 'GBP')}</div>
+                              <div className="text-xs text-gray-500">{formatCurrency(item.subtotalGBP, 'GBP')} total</div>
+                            </div>
+                            <div className="col-span-2 text-right self-center">
+                              {item.savingsPercentage && (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  {item.savingsPercentage}% off
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Total row with savings */}
+                        <div className="grid grid-cols-14 px-4 py-4 bg-blue-50 text-sm font-medium border-t border-blue-100">
+                          <div className="col-span-6 text-right">Total</div>
+                          <div className="col-span-3 text-right">
+                            <div className="font-bold">{formatCurrency(treatmentPlan.totalHomeCountryGBP || 0, 'GBP')}</div>
+                            <div className="text-xs text-gray-500">UK Price</div>
+                          </div>
+                          <div className="col-span-3 text-right">
+                            <div className="font-bold">{formatCurrency(treatmentPlan.totalGBP, 'GBP')}</div>
+                            <div className="text-xs text-gray-500">Turkey Price</div>
+                          </div>
+                          <div className="col-span-2 text-right">
+                            <div className="text-green-600 font-bold">{treatmentPlan.totalSavingsPercentage}% off</div>
+                          </div>
+                        </div>
+                        
+                        {/* Savings highlight box */}
+                        <div className="p-4 bg-green-50 border-t border-green-100">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-green-100 p-2 rounded-full">
+                              <PiggyBank className="h-6 w-6 text-green-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-green-800">Total Savings: {formatCurrency(treatmentPlan.totalSavingsGBP || 0, 'GBP')}</h4>
+                              <p className="text-sm text-green-700">
+                                You save {treatmentPlan.totalSavingsPercentage}% compared to UK prices for the same treatments
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {treatmentPlan.totalSavingsGBP && treatmentPlan.totalSavingsGBP > 0 && (
+                            <div className="mt-3">
+                              <div className="text-xs text-green-700 mb-1">Savings amount</div>
+                              <Progress 
+                                value={treatmentPlan.totalSavingsPercentage} 
+                                className="h-2 bg-green-200"
+                              />
+                              <div className="flex justify-between text-xs mt-1">
+                                <span>0%</span>
+                                <span>{treatmentPlan.totalSavingsPercentage}%</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
                 
                 {treatmentPlan.notes && (
@@ -353,7 +466,8 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-blue-500" />
                     {t('portal.treatment_plan.timeline', 'Treatment Timeline')}
                   </h3>
                   
@@ -362,34 +476,80 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                       <div className="relative border-l-2 border-blue-200 pl-5 pb-2">
                         <div className="mb-8 relative">
                           <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">{t('portal.treatment_plan.day1', 'Day 1: Initial Consultation')}</h4>
+                          <h4 className="font-medium">Free Online Consultation</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Meet with your dentist for evaluation, X-rays and 3D scans if needed. Your treatment plan will be confirmed.
+                            Choose a time and date in the appointment section. You'll receive email confirmations and calendar invites.
                           </p>
+                          <div className="mt-2">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              Before Travel
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="mb-8 relative">
+                          <div className="absolute -left-[25px] bg-yellow-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
+                          <h4 className="font-medium">Review & Confirm Treatment Plan</h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            After your consultation, review your detailed treatment plan. Click "Approve Plan" and pay a £200 refundable deposit to secure your booking.
+                          </p>
+                          <div className="mt-2">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              Before Travel
+                            </Badge>
+                          </div>
                         </div>
                         
                         <div className="mb-8 relative">
                           <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">{t('portal.treatment_plan.day2', 'Day 2-3: Preparation')}</h4>
+                          <h4 className="font-medium">Day 1: Arrival & Initial Consultation</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Implant placement (if applicable) and preparation of teeth for crowns or other restorations.
+                            Fill out the new patient form (bring passport/ID). X-rays and a full consultation will be done. Any treatment changes will be discussed, with you having full control. Check the price list in your treatment plan for transparency.
                           </p>
+                          <div className="mt-2">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              In Istanbul
+                            </Badge>
+                          </div>
                         </div>
                         
                         <div className="mb-8 relative">
                           <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">{t('portal.treatment_plan.day4', 'Day 4-5: Laboratory Work')}</h4>
+                          <h4 className="font-medium">Days 1-2: Treatment & Recovery</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Custom crowns, veneers, or other restorations are prepared in the laboratory.
+                            Treatment begins. Healing and medicine will be provided by the clinic. Rest at your hotel where special dietary needs (e.g., soft foods) can be accommodated.
                           </p>
+                          <div className="mt-2">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              In Istanbul
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="mb-8 relative">
+                          <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
+                          <h4 className="font-medium">Day 3: Clinic Check-up & Laboratory Work</h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Return to the clinic for a check-up. Any laboratory work for custom dental pieces will be processed.
+                          </p>
+                          <div className="mt-2">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              In Istanbul
+                            </Badge>
+                          </div>
                         </div>
                         
                         <div className="relative">
-                          <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">{t('portal.treatment_plan.day6', 'Day 6-7: Final Placement')}</h4>
+                          <div className="absolute -left-[25px] bg-green-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
+                          <h4 className="font-medium">Day 4: Final Placement</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Permanent placement of crowns or restorations, final adjustments, and post-treatment instructions.
+                            Final placement of any crowns, veneers, or other restorations. Final adjustments and post-treatment care instructions will be provided.
                           </p>
+                          <div className="mt-2">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              In Istanbul
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -457,6 +617,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
         </CardFooter>
       </Card>
       
+      {/* Approve Dialog */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent>
           <DialogHeader>
@@ -508,6 +669,153 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
                   {t('portal.treatment_plan.confirm_approve', 'Confirm Approval')}
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2 text-blue-500" />
+              Edit Treatment Plan
+            </DialogTitle>
+            <DialogDescription>
+              Make changes to your treatment plan. All changes will be tracked in the version history.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="treatments" className="mb-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="treatments">Treatments</TabsTrigger>
+              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="history">Version History</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="treatments" className="max-h-[60vh] overflow-y-auto p-1">
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium mb-2">Current Treatment Items</h3>
+                  
+                  <div className="space-y-3">
+                    {treatmentPlan.items.map((item, index) => (
+                      <div key={item.id} className="flex items-center justify-between bg-white p-3 rounded-md border">
+                        <div>
+                          <div className="font-medium">{item.treatment}</div>
+                          <div className="text-sm text-gray-500">
+                            {item.quantity} × {formatCurrency(item.priceGBP, 'GBP')} = {formatCurrency(item.subtotalGBP, 'GBP')}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <PencilLine className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button className="mt-4 w-full" variant="outline">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Add Treatment Item
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="notes" className="max-h-[60vh] overflow-y-auto p-1">
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium mb-2">Treatment Notes</h3>
+                  <textarea 
+                    className="w-full min-h-[120px] rounded-md border border-input bg-white p-3 text-sm"
+                    defaultValue={treatmentPlan.notes}
+                    placeholder="Enter treatment notes here..."
+                  />
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium mb-2">Guarantee Details</h3>
+                  <textarea 
+                    className="w-full min-h-[120px] rounded-md border border-input bg-white p-3 text-sm"
+                    defaultValue={treatmentPlan.guaranteeDetails}
+                    placeholder="Enter guarantee details here..."
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="history" className="max-h-[60vh] overflow-y-auto p-1">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <History className="h-4 w-4 mr-2 text-blue-500" />
+                  Version History
+                </h3>
+                
+                <div className="relative border-l-2 border-gray-200 pl-5 space-y-6">
+                  {treatmentPlan.versionHistory ? (
+                    treatmentPlan.versionHistory.map((version, index) => (
+                      <div key={index} className="relative">
+                        <div className="absolute -left-[15px] bg-blue-500 rounded-full h-3 w-3 mt-1.5 border-2 border-white"></div>
+                        <div className="mb-1">
+                          <span className="text-sm font-medium">Version {version.versionNumber}</span>
+                          <span className="text-xs text-gray-500 ml-2">
+                            {new Date(version.timestamp).toLocaleDateString()} {new Date(version.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-gray-600">Edited by: </span>
+                          <span className="font-medium">{version.editedBy}</span>
+                          <Badge className="ml-2 text-xs" variant="outline">{version.editedByRole}</Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{version.changes}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-3 text-center text-sm text-gray-500">
+                      No version history available
+                    </div>
+                  )}
+                  
+                  {/* Current version */}
+                  <div className="relative">
+                    <div className="absolute -left-[15px] bg-green-500 rounded-full h-3 w-3 mt-1.5 border-2 border-white"></div>
+                    <div className="mb-1">
+                      <span className="text-sm font-medium">Version {treatmentPlan.version} (Current)</span>
+                      <span className="text-xs text-gray-500 ml-2">
+                        {new Date(treatmentPlan.lastUpdated).toLocaleDateString()} {new Date(treatmentPlan.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-gray-600">Edited by: </span>
+                      <span className="font-medium">{treatmentPlan.lastEditedBy || 'Clinic Staff'}</span>
+                      <Badge className="ml-2 text-xs" variant="outline">{treatmentPlan.lastEditedByRole || 'clinic'}</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Initial treatment plan created</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                // In a real app, this would save the edited treatment plan
+                toast({
+                  title: "Treatment Plan Updated",
+                  description: "Your changes have been saved and a new version has been created.",
+                });
+                setShowEditDialog(false);
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
