@@ -48,13 +48,16 @@ import {
   FileCode,
   FileArchive as Archive,
   FileX,
-  FileQuestion
+  FileQuestion,
+  Edit
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import DocumentEditor from './DocumentEditor';
+import DocumentViewer from './DocumentViewer';
 
 interface Document {
   id: string;
@@ -81,6 +84,8 @@ const ClinicDocumentsSection: React.FC = () => {
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showViewerDialog, setShowViewerDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [dragActive, setDragActive] = useState(false);
   
@@ -370,6 +375,18 @@ const ClinicDocumentsSection: React.FC = () => {
     }
   };
   
+  // Handle document editing
+  const handleEditDocument = (updatedDocument: Document) => {
+    // In a real app, this would update the document on the server
+    toast({
+      title: t("clinic.documents.updated", "Document Updated"),
+      description: t("clinic.documents.update_success", "Document details have been updated successfully."),
+    });
+    
+    // Update local state if needed
+    setSelectedDocument(null);
+  };
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -583,13 +600,27 @@ const ClinicDocumentsSection: React.FC = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>{t("clinic.documents.actions", "Actions")}</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handlePreview(document)}>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedDocument(document);
+                                  setShowViewerDialog(true);
+                                }}
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
-                                {t("clinic.documents.preview", "Preview")}
+                                {t("clinic.documents.view", "View")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDownload(document)}>
                                 <Download className="h-4 w-4 mr-2" />
                                 {t("clinic.documents.download", "Download")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedDocument(document);
+                                  setShowEditDialog(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                {t("clinic.documents.edit", "Edit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => {
