@@ -618,7 +618,7 @@ const generateQuotePdf = ({
   doc.setTextColor(0, 0, 0);
   
   // Using standard characters instead of special symbols like checkmarks
-  doc.text('1. Contact Istanbul Dental Smile to confirm your treatment plan', margin, yPos);
+  doc.text('1. Contact MyDentalFly.com to confirm your treatment plan', margin, yPos);
   
   yPos += 7;
   doc.text('2. Book your flight to Istanbul for your chosen dates', margin, yPos);
@@ -645,7 +645,7 @@ const generateQuotePdf = ({
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text('Email us at info@istanbuldentalsmile.com or message us on WhatsApp: +447572445856', margin + 5, yPos + 15);
+  doc.text('Email us at info@mydentalfly.com or message us on WhatsApp: +447572445856', margin + 5, yPos + 15);
   doc.text('We\'ll handle your travel, treatment, and care — all you do is show up and smile!', margin + 5, yPos + 25);
   
   // Add footer - check if we need a new page
@@ -676,9 +676,9 @@ const generateQuotePdf = ({
   // Left side - Contact info
   doc.text('Phone: +447572445856', margin, yPos);
   yPos += 5;
-  doc.text('Email: info@istanbuldentalsmile.com', margin, yPos);
+  doc.text('Email: info@mydentalfly.com', margin, yPos);
   yPos += 5;
-  doc.text('Web: www.istanbuldentalsmile.com', margin, yPos);
+  doc.text('Web: www.mydentalfly.com', margin, yPos);
   
   // Right side - Quote validity
   doc.setFont('helvetica', 'bold');
@@ -732,7 +732,7 @@ const generateQuotePdf = ({
   doc.setFont('helvetica', 'normal');
   const materialsText = 
   "When choosing your perfect provider, the materials and laboratory the clinic uses are sometimes overlooked. Premium " +
-  "materials and a top laboratory are essential for achieving the most natural and aesthetic look. At Istanbul Dental Smile, " +
+  "materials and a top laboratory are essential for achieving the most natural and aesthetic look. At MyDentalFly.com, " +
   "your maximum satisfaction and natural look is our top priority. This is why we only work with the best laboratories in " +
   "Istanbul and use only premium products, such as a Zirconium Premium system. This is based on a unique shading " +
   "technology, meaning that its color is not on the surface but comes from within. This unique technology helps to preserve " +
@@ -858,13 +858,13 @@ const generateQuotePdf = ({
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
-  doc.text('www.istanbuldentalsmile.com', pageWidth / 2, yPos, { align: 'center' });
+  doc.text('www.mydentalfly.com', pageWidth / 2, yPos, { align: 'center' });
   yPos += 5;
   doc.text('+447572445856 | Istanbul, Turkey', pageWidth / 2, yPos, { align: 'center' });
   
   // Save the PDF with a formatted date in the filename
   const formattedDateForFile = formattedDate.replace(/\//g, '-');
-  const filename = `IstanbulDentalSmile_Quote_${formattedDateForFile}.pdf`;
+  const filename = `MyDentalFly_Quote_${formattedDateForFile}.pdf`;
   doc.save(filename);
   
   if (onComplete) {
