@@ -39,6 +39,16 @@ interface ClinicComparison {
   extras: string;
 }
 
+// Interface for dental chart data
+interface ToothData {
+  id: number;
+  name: string;
+  position: string;
+  section: string;
+  selected: boolean;
+  treatments: string[];
+}
+
 interface PdfGeneratorProps {
   items: QuoteItem[];
   totalGBP: number;
@@ -49,6 +59,7 @@ interface PdfGeneratorProps {
   travelMonth?: string;
   departureCity?: string;
   clinics?: ClinicComparison[];
+  dentalChart?: ToothData[];
   onComplete?: () => void;
 }
 
@@ -89,6 +100,7 @@ export const generateQuotePdf = ({
   travelMonth = '',
   departureCity = '',
   clinics = [],
+  dentalChart = [],
   onComplete,
 }: PdfGeneratorProps) => {
   // Calculate UK comparison price (usually 2.5-3x higher)
@@ -341,6 +353,89 @@ export const generateQuotePdf = ({
   
   // Total USD (center aligned)
   doc.text(`$${grandTotalUSD.toLocaleString()}`, colPositions[2].x + colPositions[2].width / 2, yPos, { align: 'center' });
+  
+  // Add dental chart visualization if available
+  if (dentalChart && dentalChart.length > 0) {
+    // Check if we need a new page (if close to bottom)
+    if (yPos > 200) {
+      doc.addPage();
+      yPos = 40;
+    } else {
+      yPos += 25;
+    }
+    
+    // Add dental chart section title
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 104, 139); // #00688B Strong teal blue
+    doc.text('Dental Treatment Visualization', margin, yPos);
+    
+    yPos += 10;
+    
+    // Section background
+    doc.setFillColor(245, 250, 255); // Light blue background
+    doc.rect(margin, yPos - 5, contentWidth, 80, 'F');
+    doc.setDrawColor(178, 144, 79); // #B2904F Elegant gold
+    doc.setLineWidth(0.5);
+    doc.rect(margin, yPos - 5, contentWidth, 80, 'S');
+    
+    // Create a simplified visual representation of the dental chart
+    const selectedTeeth = dentalChart.filter(tooth => tooth.selected);
+    
+    // Add descriptive text
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    
+    if (selectedTeeth.length > 0) {
+      doc.text('The following teeth will receive treatment:', margin + 5, yPos);
+      
+      yPos += 8;
+      
+      // Group teeth by section (Upper/Lower)
+      const upperTeeth = selectedTeeth.filter(tooth => tooth.section === 'Upper');
+      const lowerTeeth = selectedTeeth.filter(tooth => tooth.section === 'Lower');
+      
+      // Upper teeth section
+      if (upperTeeth.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Upper Teeth:', margin + 10, yPos);
+        doc.setFont('helvetica', 'normal');
+        
+        yPos += 6;
+        
+        // Create a nicely formatted list of upper teeth with their treatments
+        upperTeeth.forEach(tooth => {
+          const treatments = tooth.treatments.join(', ');
+          doc.addImage(TICK_ICON_BASE64, 'PNG', margin + 10, yPos - 4, 4, 4);
+          doc.text(`Tooth ${tooth.id} (${tooth.name}): ${treatments}`, margin + 20, yPos);
+          yPos += 6;
+        });
+      }
+      
+      // Lower teeth section
+      if (lowerTeeth.length > 0) {
+        yPos += 2;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Lower Teeth:', margin + 10, yPos);
+        doc.setFont('helvetica', 'normal');
+        
+        yPos += 6;
+        
+        // Create a nicely formatted list of lower teeth with their treatments
+        lowerTeeth.forEach(tooth => {
+          const treatments = tooth.treatments.join(', ');
+          doc.addImage(TICK_ICON_BASE64, 'PNG', margin + 10, yPos - 4, 4, 4);
+          doc.text(`Tooth ${tooth.id} (${tooth.name}): ${treatments}`, margin + 20, yPos);
+          yPos += 6;
+        });
+      }
+    } else {
+      doc.text('No specific teeth have been selected for treatment.', margin + 5, yPos);
+      doc.text('Your dental plan may include general procedures that apply to all teeth,', margin + 5, yPos + 8);
+      doc.text('or your dentist will determine the specific teeth during your consultation.', margin + 5, yPos + 16);
+    }
+  }
   
   // Add clinic comparison section if clinics are provided
   if (clinics && clinics.length > 0) {

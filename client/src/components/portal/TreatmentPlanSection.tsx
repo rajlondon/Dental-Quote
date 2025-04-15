@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { generateQuotePdf } from '@/components/PdfGenerator';
+import { ToothData } from '@/types/clientPortal';
 import { 
   Dialog, 
   DialogContent, 
@@ -62,6 +63,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { TreatmentPlan, TreatmentItem, TreatmentPlanVersion } from '@/types/clientPortal';
 import { addUKPriceComparisons } from '@/data/treatmentPrices';
+
+// Mock dental chart data for development
+const mockDentalChart: ToothData[] = [
+  { id: 11, name: 'Central Incisor', position: 'Upper Right', section: 'Upper', selected: true, treatments: ['Porcelain Crown'] },
+  { id: 12, name: 'Lateral Incisor', position: 'Upper Right', section: 'Upper', selected: false, treatments: [] },
+  { id: 21, name: 'Central Incisor', position: 'Upper Left', section: 'Upper', selected: true, treatments: ['Porcelain Crown'] },
+  { id: 22, name: 'Lateral Incisor', position: 'Upper Left', section: 'Upper', selected: false, treatments: [] },
+  { id: 14, name: 'First Premolar', position: 'Upper Right', section: 'Upper', selected: true, treatments: ['Dental Implant'] },
+  { id: 24, name: 'First Premolar', position: 'Upper Left', section: 'Upper', selected: true, treatments: ['Dental Implant'] },
+  { id: 36, name: 'First Molar', position: 'Lower Left', section: 'Lower', selected: false, treatments: [] },
+  { id: 46, name: 'First Molar', position: 'Lower Right', section: 'Lower', selected: false, treatments: [] }
+];
 
 // Mock data for development
 const mockTreatmentPlan: TreatmentPlan = {
