@@ -78,7 +78,7 @@ export default function PythonPdfGenerator({
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `IstanbulDentalSmile_Quote_${quoteData.quoteNumber}.pdf`);
+      link.setAttribute('download', `MyDentalFly_Quote_${quoteData.quoteNumber}.pdf`);
       document.body.appendChild(link);
       link.click();
       

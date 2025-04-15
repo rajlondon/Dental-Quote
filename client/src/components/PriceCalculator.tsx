@@ -697,7 +697,7 @@ export default function PriceCalculator() {
         const filenameInput = document.createElement('input');
         filenameInput.type = 'hidden';
         filenameInput.name = 'filename';
-        filenameInput.value = `IstanbulDentalSmile_Quote_${formattedDate}_${sanitizedName}.pdf`;
+        filenameInput.value = `MyDentalFly_Quote_${formattedDate}_${sanitizedName}.pdf`;
         form.appendChild(filenameInput);
         
         // Add timestamp to bust cache
@@ -778,7 +778,7 @@ export default function PriceCalculator() {
       const today = new Date();
       const datePart = today.toISOString().slice(0, 10).replace(/-/g, '');
       const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const quoteNumber = `IDS-${datePart}-${randomPart}`;
+      const quoteNumber = `MDF-${datePart}-${randomPart}`;
       
       // Format date appropriately
       const date = today.toLocaleDateString('en-GB', {

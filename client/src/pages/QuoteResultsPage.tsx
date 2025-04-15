@@ -310,7 +310,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       // Generate formatted filename with date
       const now = new Date();
       const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
-      const filename = `IstanbulDentalSmile_Quote_${formattedDate}.pdf`;
+      const filename = `MyDentalFly_Quote_${formattedDate}.pdf`;
       
       link.setAttribute('download', filename);
       document.body.appendChild(link);
