@@ -92,7 +92,7 @@ export const fileService = {
     if (!file) return undefined;
     
     // Check visibility permissions
-    if (this.canAccessFile(file, userId, userRole)) {
+    if (await this.canAccessFile(file, userId, userRole)) {
       return file;
     }
     
@@ -102,25 +102,65 @@ export const fileService = {
   // Get files for a treatment plan
   async getFilesByTreatmentPlanId(treatmentPlanId: number, userId: number, userRole: string): Promise<File[]> {
     const files = await storage.getFilesByTreatmentPlanId(treatmentPlanId);
-    return files.filter(file => this.canAccessFile(file, userId, userRole));
+    
+    // Check permissions for each file using Promise.all
+    const accessibleFiles = await Promise.all(
+      files.map(async (file) => {
+        const canAccess = await this.canAccessFile(file, userId, userRole);
+        return canAccess ? file : null;
+      })
+    );
+    
+    // Filter out null entries (files user can't access)
+    return accessibleFiles.filter((file): file is File => file !== null);
   },
   
   // Get files for a booking
   async getFilesByBookingId(bookingId: number, userId: number, userRole: string): Promise<File[]> {
     const files = await storage.getFilesByBookingId(bookingId);
-    return files.filter(file => this.canAccessFile(file, userId, userRole));
+    
+    // Check permissions for each file using Promise.all
+    const accessibleFiles = await Promise.all(
+      files.map(async (file) => {
+        const canAccess = await this.canAccessFile(file, userId, userRole);
+        return canAccess ? file : null;
+      })
+    );
+    
+    // Filter out null entries (files user can't access)
+    return accessibleFiles.filter((file): file is File => file !== null);
   },
   
   // Get files for a quote request (e.g., x-rays)
   async getFilesByQuoteRequestId(quoteRequestId: number, userId: number, userRole: string): Promise<File[]> {
     const files = await storage.getFilesByQuoteRequestId(quoteRequestId);
-    return files.filter(file => this.canAccessFile(file, userId, userRole));
+    
+    // Check permissions for each file using Promise.all
+    const accessibleFiles = await Promise.all(
+      files.map(async (file) => {
+        const canAccess = await this.canAccessFile(file, userId, userRole);
+        return canAccess ? file : null;
+      })
+    );
+    
+    // Filter out null entries (files user can't access)
+    return accessibleFiles.filter((file): file is File => file !== null);
   },
   
   // Get files uploaded by a user
   async getFilesByUserId(userId: number, requestingUserId: number, userRole: string): Promise<File[]> {
     const files = await storage.getFilesByUserId(userId);
-    return files.filter(file => this.canAccessFile(file, requestingUserId, userRole));
+    
+    // Check permissions for each file using Promise.all
+    const accessibleFiles = await Promise.all(
+      files.map(async (file) => {
+        const canAccess = await this.canAccessFile(file, requestingUserId, userRole);
+        return canAccess ? file : null;
+      })
+    );
+    
+    // Filter out null entries (files user can't access)
+    return accessibleFiles.filter((file): file is File => file !== null);
   },
   
   // Delete a file (both DB record and physical file)
@@ -130,7 +170,8 @@ export const fileService = {
     if (!file) return false;
     
     // Check permissions (only owner, admin, or clinic staff for their clinic's files)
-    if (!this.canModifyFile(file, userId, userRole)) {
+    const canModify = await this.canModifyFile(file, userId, userRole);
+    if (!canModify) {
       return false;
     }
     
@@ -154,15 +195,16 @@ export const fileService = {
     if (!file) return undefined;
     
     // Check permissions
-    if (!this.canModifyFile(file, userId, userRole)) {
+    const canModify = await this.canModifyFile(file, userId, userRole);
+    if (!canModify) {
       return undefined;
     }
     
     return storage.updateFile(id, updateData);
   },
   
-  // Check if a user can access a file based on visibility and roles
-  canAccessFile(file: File, userId: number, userRole: string): boolean {
+  // Enhanced file access checking with proper treatment plan permissions
+  async canAccessFile(file: File, userId: number, userRole: string): Promise<boolean> {
     // Public files are accessible to everyone
     if (file.visibility === 'public') return true;
     
@@ -174,17 +216,30 @@ export const fileService = {
     
     // Check clinic staff access (for files related to their clinic)
     if (userRole === 'clinic_staff') {
-      // Check if the file is related to a booking/treatment at their clinic
-      // This would require an additional DB lookup in a real implementation
-      if (file.visibility === 'clinic') return true;
+      // If file is marked for clinic visibility, likely accessible
+      if (file.visibility === 'clinic') {
+        // For treatment plan files, verify it's at the staff's clinic
+        if (file.treatmentPlanId) {
+          const treatmentPlan = await storage.getTreatmentPlan(file.treatmentPlanId);
+          // Added proper clinic staff permission check
+          return treatmentPlan ? treatmentPlan.clinicId === userId : false;
+        }
+        return true;
+      }
+    }
+    
+    // If file belongs to a treatment plan, check if user is the patient
+    if (file.treatmentPlanId && userRole === 'patient') {
+      const treatmentPlan = await storage.getTreatmentPlan(file.treatmentPlanId);
+      return treatmentPlan ? treatmentPlan.patientId === userId : false;
     }
     
     // For 'private' files, only the owner can access
     return false;
   },
   
-  // Check if a user can modify a file
-  canModifyFile(file: File, userId: number, userRole: string): boolean {
+  // Enhanced file modification permissions
+  async canModifyFile(file: File, userId: number, userRole: string): Promise<boolean> {
     // Admin can modify all files
     if (userRole === 'admin') return true;
     
@@ -192,9 +247,15 @@ export const fileService = {
     if (file.userId === userId) return true;
     
     // Clinic staff can modify files related to their clinic
-    if (userRole === 'clinic_staff' && file.visibility === 'clinic') {
-      // Additional check for clinic ID would be needed in a real implementation
-      return true;
+    if (userRole === 'clinic_staff') {
+      // For treatment plan files, verify it's at the staff's clinic
+      if (file.treatmentPlanId) {
+        const treatmentPlan = await storage.getTreatmentPlan(file.treatmentPlanId);
+        return treatmentPlan ? treatmentPlan.clinicId === userId : false;
+      }
+      
+      // For general clinic visibility files
+      if (file.visibility === 'clinic') return true;
     }
     
     return false;

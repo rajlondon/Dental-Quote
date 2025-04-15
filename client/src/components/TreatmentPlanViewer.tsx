@@ -66,7 +66,7 @@ export function TreatmentPlanViewer({
     enabled: !!treatmentPlanId
   });
 
-  // Query to fetch files associated with the treatment plan
+  // Query to fetch files associated with the treatment plan with enhanced error handling
   const {
     data: files = [],
     isLoading: isLoadingFiles,
@@ -75,13 +75,21 @@ export function TreatmentPlanViewer({
   } = useQuery({
     queryKey: ['/api/files/treatmentPlan', treatmentPlanId],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/files/treatmentPlan/${treatmentPlanId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch treatment plan files');
+      try {
+        const response = await apiRequest('GET', `/api/files/treatmentPlan/${treatmentPlanId}`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch treatment plan files');
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching treatment plan files:', error);
+        throw error;
       }
-      return response.json();
     },
-    enabled: !!treatmentPlanId
+    enabled: !!treatmentPlanId,
+    retry: 1, // Only retry once to avoid infinite loops on permission issues
+    staleTime: 30000 // Cache results for 30 seconds
   });
 
   // Mutation to delete a file
@@ -104,11 +112,14 @@ export function TreatmentPlanViewer({
     
     toast({
       title: 'File Uploaded',
-      description: 'The file has been successfully uploaded',
+      description: 'The file has been successfully uploaded to treatment plan',
     });
     
     // Refetch files to get the updated list
     refetchFiles();
+    
+    // Also refetch the treatment plan to update any related data
+    refetchPlan();
     
     if (onFileUploaded) {
       onFileUploaded(fileData);
@@ -126,7 +137,29 @@ export function TreatmentPlanViewer({
   };
 
   const handleDeleteFile = (fileId: number) => {
-    deleteFileMutation.mutate(fileId);
+    // Ask for confirmation before deleting
+    if (window.confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+      toast({
+        title: 'Deleting File',
+        description: 'Please wait while we delete the file...'
+      });
+      
+      deleteFileMutation.mutate(fileId, {
+        onSuccess: () => {
+          toast({
+            title: 'File Deleted',
+            description: 'The file has been successfully removed from the treatment plan',
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: 'Delete Failed',
+            description: error instanceof Error ? error.message : 'An unknown error occurred',
+            variant: 'destructive'
+          });
+        }
+      });
+    }
   };
 
   // Format currency amounts
