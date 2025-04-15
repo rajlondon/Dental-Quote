@@ -38,7 +38,14 @@ import {
   Copy,
   Upload,
   Layers,
-  Settings
+  Settings,
+  Timer,
+  Shield,
+  Star,
+  Info,
+  Heart,
+  Stethoscope,
+  ClipboardList
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -665,6 +672,10 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>{t("clinic.treatment_plans.actions", "Actions")}</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setSelectedTreatment(treatment)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              {t("clinic.treatment_plans.view", "View Details")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               toast({
                                 title: t("clinic.treatment_plans.edit", "Edit"),
