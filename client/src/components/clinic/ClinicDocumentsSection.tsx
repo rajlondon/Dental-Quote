@@ -71,6 +71,7 @@ interface Document {
   patientName?: string;
   shared: boolean;
   thumbnail?: string;
+  description?: string;
 }
 
 const ClinicDocumentsSection: React.FC = () => {
@@ -1168,6 +1169,35 @@ const ClinicDocumentsSection: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Document Editor */}
+      <DocumentEditor
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        document={selectedDocument}
+        onSave={handleEditDocument}
+      />
+      
+      {/* Document Viewer */}
+      <DocumentViewer
+        open={showViewerDialog}
+        onOpenChange={setShowViewerDialog}
+        document={selectedDocument}
+        onDownload={handleDownload}
+        onEdit={(document) => {
+          setShowViewerDialog(false);
+          setTimeout(() => {
+            setSelectedDocument(document);
+            setShowEditDialog(true);
+          }, 100);
+        }}
+        onShare={(document) => {
+          setShowViewerDialog(false);
+          setTimeout(() => {
+            setSelectedDocument(document);
+            setShowShareDialog(true);
+          }, 100);
+        }}
+      />
     </div>
   );
 };
