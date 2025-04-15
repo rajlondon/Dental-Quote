@@ -1057,6 +1057,159 @@ const ClinicTreatmentPlansSection: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Treatment Detail Dialog */}
+      <Dialog open={!!selectedTreatment} onOpenChange={(open) => !open && setSelectedTreatment(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <ClipboardList className="h-5 w-5 mr-2" />
+              {selectedTreatment?.name || t("clinic.treatment_plans.treatment_detail", "Treatment Details")}
+              {selectedTreatment?.isPopular && (
+                <Badge className="ml-2 bg-amber-500">
+                  <Star className="h-3 w-3 mr-1" fill="currentColor" />
+                  {t("clinic.treatment_plans.popular", "Popular")}
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedTreatment?.description || t("clinic.treatment_plans.treatment_detail_desc", "View detailed information about this treatment.")}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedTreatment && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left column */}
+                <div className="space-y-4">
+                  <div className="border rounded-md p-4 bg-white">
+                    <h3 className="font-medium mb-2 flex items-center">
+                      <Info className="h-4 w-4 mr-2 text-primary" />
+                      {t("clinic.treatment_plans.basic_info", "Basic Information")}
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">{t("clinic.treatment_plans.category", "Category")}:</span>
+                        <Badge variant="outline" className="capitalize">
+                          {selectedTreatment.category}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">{t("clinic.treatment_plans.price", "Price")}:</span>
+                        <span className="font-medium">
+                          {new Intl.NumberFormat(i18n.language === 'tr' ? 'tr-TR' : 'en-GB', { 
+                            style: 'currency', 
+                            currency: 'GBP',
+                            minimumFractionDigits: 0
+                          }).format(selectedTreatment.priceGBP)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">{t("clinic.treatment_plans.duration", "Duration")}:</span>
+                        <span className="flex items-center">
+                          <Clock className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                          {selectedTreatment.duration}
+                        </span>
+                      </div>
+                      {selectedTreatment.guaranteePeriod && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">{t("clinic.treatment_plans.guarantee", "Guarantee")}:</span>
+                          <span className="flex items-center">
+                            <Shield className="h-3.5 w-3.5 mr-1 text-green-600" />
+                            {selectedTreatment.guaranteePeriod}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-md p-4 bg-white">
+                    <h3 className="font-medium mb-2 flex items-center">
+                      <Layers className="h-4 w-4 mr-2 text-primary" />
+                      {t("clinic.treatment_plans.materials", "Materials")}
+                    </h3>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTreatment.materials.map((material, idx) => (
+                        <Badge key={idx} className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20">
+                          {material}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right column */}
+                <div className="space-y-4">
+                  {selectedTreatment.preparationTime && (
+                    <div className="border rounded-md p-4 bg-white">
+                      <h3 className="font-medium mb-2 flex items-center">
+                        <Timer className="h-4 w-4 mr-2 text-primary" />
+                        {t("clinic.treatment_plans.preparation", "Preparation")}
+                      </h3>
+                      <p className="text-sm">{selectedTreatment.preparationTime}</p>
+                    </div>
+                  )}
+                  
+                  {selectedTreatment.recoveryTime && (
+                    <div className="border rounded-md p-4 bg-white">
+                      <h3 className="font-medium mb-2 flex items-center">
+                        <Heart className="h-4 w-4 mr-2 text-primary" />
+                        {t("clinic.treatment_plans.recovery", "Recovery")}
+                      </h3>
+                      <p className="text-sm">{selectedTreatment.recoveryTime}</p>
+                    </div>
+                  )}
+                  
+                  {selectedTreatment.technicalDetails && (
+                    <div className="border rounded-md p-4 bg-white">
+                      <h3 className="font-medium mb-2 flex items-center">
+                        <Settings className="h-4 w-4 mr-2 text-primary" />
+                        {t("clinic.treatment_plans.technical", "Technical Details")}
+                      </h3>
+                      <p className="text-sm">{selectedTreatment.technicalDetails}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {selectedTreatment.clinicNotes && (
+                <div className="border rounded-md p-4 bg-yellow-50">
+                  <h3 className="font-medium mb-2 flex items-center">
+                    <Stethoscope className="h-4 w-4 mr-2 text-amber-600" />
+                    {t("clinic.treatment_plans.clinic_notes", "Clinic Notes")}
+                  </h3>
+                  <p className="text-sm">{selectedTreatment.clinicNotes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedTreatment(null)}
+            >
+              {t("common.close", "Close")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                // This would open the edit form
+                if (!selectedTreatment) return;
+                toast({
+                  title: t("clinic.treatment_plans.edit", "Edit"),
+                  description: t("clinic.treatment_plans.edit_desc", "Editing treatment: ") + selectedTreatment.name,
+                });
+                setSelectedTreatment(null);
+              }}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {t("clinic.treatment_plans.edit", "Edit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
