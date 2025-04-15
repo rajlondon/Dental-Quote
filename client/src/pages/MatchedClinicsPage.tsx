@@ -435,35 +435,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </div>
           </div>
           
-          {selectedClinic ? (
-            // Use the ClientPdfGenerator when a clinic is selected
-            <ClientPdfGenerator
-              items={treatmentPlan}
-              totalGBP={ukTotal}
-              patientName={patientInfo?.fullName || 'Patient Name'}
-              patientEmail={patientInfo?.email || 'patient@example.com'}
-              patientPhone={patientInfo?.phone || '1234567890'}
-              clinic={clinicsData.find(c => c.id === selectedClinic) || clinicsData[0]}
-              clinicTotal={getClinicPricing(selectedClinic, treatmentPlan).totalPrice}
-              buttonText="Download Quote PDF"
-              className="flex items-center"
-            />
-          ) : (
-            // If no clinic is selected, show a button that prompts selection
-            <Button 
-              variant="outline"
-              className="flex items-center" 
-              onClick={() => {
-                toast({
-                  title: "No Clinic Selected",
-                  description: "Please click 'Select Clinic' on one of the clinic cards below first.",
-                });
-              }}
-            >
-              <FileCheck className="mr-2 h-4 w-4" />
-              Download Quote PDF
-            </Button>
-          )}
+          <Button 
+            variant="outline"
+            className="flex items-center" 
+            onClick={() => {
+              toast({
+                title: "Quote Details Available in Portal",
+                description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
+              });
+            }}
+          >
+            <FileCheck className="mr-2 h-4 w-4" />
+            View Quote in Portal
+          </Button>
         </div>
       </div>
     
@@ -784,28 +768,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             Select This Clinic
                           </Button>
                           
-                          <Button 
-                            variant="outline" 
-                            className="flex-1 md:flex-none"
-                            onClick={() => downloadPdf(clinic.id)}
-                          >
-                            <FileCheck className="mr-2 h-4 w-4" />
-                            Download Quote
-                          </Button>
-                          
-                          <Button 
-                            variant="outline" 
-                            className="flex-1 md:flex-none"
-                            onClick={() => {
-                              if (onEmailQuote) {
-                                localStorage.setItem('selectedClinicId', clinic.id);
-                                onEmailQuote();
-                              }
-                            }}
-                          >
-                            <Mail className="mr-2 h-4 w-4" />
-                            Email Quote
-                          </Button>
+                          {/* Download and email quote buttons removed as this functionality is now handled in portals */}
                         </div>
                       </div>
                     </div>
