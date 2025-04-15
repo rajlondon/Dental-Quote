@@ -238,6 +238,44 @@ export class DatabaseStorage implements IStorage {
       .where(eq(treatmentPlans.clinicId, clinicId))
       .orderBy(desc(treatmentPlans.createdAt));
   }
+  
+  async getTreatmentPlanByQuoteRequestId(quoteRequestId: number): Promise<TreatmentPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.quoteRequestId, quoteRequestId));
+    return plan;
+  }
+  
+  async createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan> {
+    const [plan] = await db.insert(treatmentPlans).values(data).returning();
+    return plan;
+  }
+  
+  async updateTreatmentPlan(id: number, data: Partial<TreatmentPlan>): Promise<TreatmentPlan | undefined> {
+    // Convert number to string for estimatedTotalCost if needed
+    const formattedData = {
+      ...data,
+      estimatedTotalCost: data.estimatedTotalCost !== undefined ? 
+        String(data.estimatedTotalCost) : undefined,
+      updatedAt: new Date()
+    };
+    
+    const [plan] = await db
+      .update(treatmentPlans)
+      .set(formattedData)
+      .where(eq(treatmentPlans.id, id))
+      .returning();
+    return plan;
+  }
+  
+  async getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]> {
+    return db
+      .select()
+      .from(files)
+      .where(eq(files.treatmentPlanId, treatmentPlanId))
+      .orderBy(desc(files.createdAt));
+  }
 
   async getTreatmentPlanByQuoteRequestId(quoteRequestId: number): Promise<TreatmentPlan | undefined> {
     const [plan] = await db
