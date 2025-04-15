@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom utility classes */
+.border-l-12 {
+  border-left-width: 12px;
+}
+
 @layer base {
   * {
     @apply border-border;

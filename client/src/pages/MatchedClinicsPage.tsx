@@ -778,10 +778,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               {clinic.ratings && clinic.doctors && (
                 <div className="p-6">
                   <Tabs defaultValue="ratings">
-                    <TabsList className="mb-4">
+                    <TabsList className="mb-4 flex flex-wrap">
                       <TabsTrigger value="ratings">Clinic Ratings</TabsTrigger>
                       <TabsTrigger value="doctors">Doctors & Staff</TabsTrigger>
                       <TabsTrigger value="amenities">Amenities</TabsTrigger>
+                      <TabsTrigger value="before-after">Before & After</TabsTrigger>
+                      <TabsTrigger value="videos">Videos</TabsTrigger>
+                      <TabsTrigger value="reviews">More Reviews</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="ratings">
@@ -1057,6 +1060,241 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               <p>A detailed guarantee certificate will be provided with your treatment package.</p>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="before-after">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-lg p-4 border">
+                          <h4 className="font-medium mb-3">Dental Implants</h4>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <div className="text-xs font-medium mb-1 text-gray-500">Before</div>
+                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                  <div className="text-center px-3">
+                                    <div className="text-gray-400 mb-2">
+                                      <span className="text-xs">Missing teeth image</span>
+                                    </div>
+                                    <span className="text-xs text-blue-500">Before treatment</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium mb-1 text-gray-500">After</div>
+                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                  <div className="text-center px-3">
+                                    <div className="text-gray-400 mb-2">
+                                      <span className="text-xs">Dental implants image</span>
+                                    </div>
+                                    <span className="text-xs text-blue-500">After treatment</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-sm">
+                              <p>Dental implants treatment result, 3 months after surgery.</p>
+                              <p className="text-xs text-gray-500 mt-1">Patient reported improved chewing ability and confidence.</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded-lg p-4 border">
+                          <h4 className="font-medium mb-3">Veneers & Crowns</h4>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <div className="text-xs font-medium mb-1 text-gray-500">Before</div>
+                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                  <div className="text-center px-3">
+                                    <div className="text-gray-400 mb-2">
+                                      <span className="text-xs">Discolored teeth image</span>
+                                    </div>
+                                    <span className="text-xs text-blue-500">Before treatment</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium mb-1 text-gray-500">After</div>
+                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                                  <div className="text-center px-3">
+                                    <div className="text-gray-400 mb-2">
+                                      <span className="text-xs">Veneers image</span>
+                                    </div>
+                                    <span className="text-xs text-blue-500">After treatment</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-sm">
+                              <p>Complete smile makeover with porcelain veneers.</p>
+                              <p className="text-xs text-gray-500 mt-1">Treatment completed in just 5 days during patient's stay in Istanbul.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 text-center">
+                        <Button variant="outline" size="sm">
+                          View More Before & After Cases
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="videos">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-lg p-4 border">
+                          <h4 className="font-medium mb-3">Clinic Tour</h4>
+                          <div className="space-y-4">
+                            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                              <div className="text-center px-6 py-8">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                  <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-blue-500 border-b-8 border-b-transparent ml-1"></div>
+                                </div>
+                                <div className="text-gray-500 mb-2">
+                                  <span className="text-sm">Clinic Tour Video</span>
+                                </div>
+                                <span className="text-xs text-blue-500">Click to play</span>
+                              </div>
+                            </div>
+                            <div className="text-sm">
+                              <p>Take a virtual tour of our state-of-the-art dental facility in Istanbul.</p>
+                              <p className="text-xs text-gray-500 mt-1">See our treatment rooms, waiting areas, and meet our staff.</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded-lg p-4 border">
+                          <h4 className="font-medium mb-3">Patient Testimonial Video</h4>
+                          <div className="space-y-4">
+                            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
+                              <div className="text-center px-6 py-8">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                  <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-blue-500 border-b-8 border-b-transparent ml-1"></div>
+                                </div>
+                                <div className="text-gray-500 mb-2">
+                                  <span className="text-sm">UK Patient Review</span>
+                                </div>
+                                <span className="text-xs text-blue-500">Click to play</span>
+                              </div>
+                            </div>
+                            <div className="text-sm">
+                              <p>Hear from Sarah from Manchester about her dental treatment experience.</p>
+                              <p className="text-xs text-gray-500 mt-1">Full smile makeover with dental implants and veneers.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 text-center">
+                        <Button variant="outline" size="sm">
+                          View More Videos
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="reviews">
+                      <div className="bg-white rounded-lg p-6 border mb-6">
+                        <h4 className="font-medium mb-4">Patient Reviews</h4>
+                        <div className="space-y-6">
+                          <div className="border-b pb-5">
+                            <div className="flex items-start gap-4">
+                              <div className="rounded-full bg-blue-100 p-2 mt-1">
+                                <User className="h-6 w-6 text-blue-500" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center mb-1">
+                                  <div className="font-medium mr-2">James W.</div>
+                                  <div className="text-xs text-gray-500">London, UK</div>
+                                  <div className="flex ml-auto">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm mb-2">
+                                  "I was extremely nervous about getting dental work abroad, but the entire experience exceeded my expectations. From airport pickup to the final check-up, everything was professional and well-organized. My dental implants look and feel completely natural."
+                                </p>
+                                <div className="text-xs text-gray-500">Treatment: Dental Implants • April 2025</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="border-b pb-5">
+                            <div className="flex items-start gap-4">
+                              <div className="rounded-full bg-blue-100 p-2 mt-1">
+                                <User className="h-6 w-6 text-blue-500" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center mb-1">
+                                  <div className="font-medium mr-2">Emma T.</div>
+                                  <div className="text-xs text-gray-500">Manchester, UK</div>
+                                  <div className="flex ml-auto">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`h-3 w-3 ${i < 4 ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm mb-2">
+                                  "I saved over £8,000 compared to UK prices for my veneers. The quality is excellent, and the hotel accommodation was lovely. The clinic was modern with state-of-the-art equipment. My only minor issue was sometimes communication was a bit difficult with some staff."
+                                </p>
+                                <div className="text-xs text-gray-500">Treatment: Veneers • March 2025</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="border-b pb-5">
+                            <div className="flex items-start gap-4">
+                              <div className="rounded-full bg-blue-100 p-2 mt-1">
+                                <User className="h-6 w-6 text-blue-500" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center mb-1">
+                                  <div className="font-medium mr-2">Robert M.</div>
+                                  <div className="text-xs text-gray-500">Edinburgh, UK</div>
+                                  <div className="flex ml-auto">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm mb-2">
+                                  "The entire experience was superb from start to finish. My dentist was extremely knowledgeable and took time to explain every procedure. I combined my treatment with a mini holiday in Istanbul which was fantastic. The clinic arranged all my transfers and accommodation."
+                                </p>
+                                <div className="text-xs text-gray-500">Treatment: Full Mouth Restoration • February 2025</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-start gap-4">
+                              <div className="rounded-full bg-blue-100 p-2 mt-1">
+                                <User className="h-6 w-6 text-blue-500" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center mb-1">
+                                  <div className="font-medium mr-2">Sophia L.</div>
+                                  <div className="text-xs text-gray-500">Bristol, UK</div>
+                                  <div className="flex ml-auto">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`h-3 w-3 ${i < 5 ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm mb-2">
+                                  "I was initially worried about language barriers, but the clinic staff spoke excellent English. My treatment was completed faster than expected, and the results are amazing. The aftercare service has been great too - they follow up regularly to check how I'm doing."
+                                </p>
+                                <div className="text-xs text-gray-500">Treatment: Crowns & Root Canal • January 2025</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-6 text-center">
+                          <Button variant="outline" size="sm">
+                            Load More Reviews
+                          </Button>
                         </div>
                       </div>
                     </TabsContent>
