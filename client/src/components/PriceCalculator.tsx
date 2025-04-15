@@ -917,14 +917,22 @@ export default function PriceCalculator() {
                           </div>
                           
                           {/* Interactive Dental Chart */}
-                          <DentalChart 
-                            onTeethUpdate={(teethData) => {
-                              console.log('Teeth data updated:', teethData);
-                              // Here you can store the teeth data in your form or state
-                              // For example, you could add it to localStorage or your form data
-                              localStorage.setItem('dentalChartData', JSON.stringify(teethData));
-                            }}
-                          />
+                          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                              Interactive Dental Chart
+                            </h3>
+                            <p className="text-sm text-blue-700 mb-4">
+                              Click on teeth to indicate conditions (chipped, painful, missing) or desired treatments (implants, crowns, veneers).
+                            </p>
+                            <DentalChart 
+                              onTeethUpdate={(teethData) => {
+                                console.log('Teeth data updated:', teethData);
+                                // Here you can store the teeth data in your form or state
+                                // For example, you could add it to localStorage or your form data
+                                localStorage.setItem('dentalChartData', JSON.stringify(teethData));
+                              }}
+                            />
+                          </div>
                           
                           {form.watch('treatments').map((_, index) => (
                             <div key={index} className="flex flex-col sm:flex-row gap-3 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">

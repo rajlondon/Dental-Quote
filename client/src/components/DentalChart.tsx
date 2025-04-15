@@ -199,15 +199,36 @@ export function DentalChart({ onTeethUpdate, initialTeeth }: DentalChartProps) {
   
   return (
     <div className="dental-chart-container">
-      <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">Interactive Dental Chart</h3>
-        <p className="text-sm text-blue-700 mb-4">
-          Click on any tooth to indicate its condition or needed treatment. This helps us understand your dental needs better.
-        </p>
+      <div>
         
-        {/* Legend */}
-        <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">Legend:</p>
+        {/* Legend and Reset Button */}
+        <div className="mb-4 flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm font-medium text-gray-700">Legend:</p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const resetTeeth = teeth.map(tooth => ({
+                  ...tooth,
+                  condition: null,
+                  treatment: null,
+                  notes: ''
+                }));
+                setTeeth(resetTeeth);
+                if (onTeethUpdate) {
+                  onTeethUpdate(resetTeeth);
+                }
+                localStorage.removeItem('dentalChartData');
+                toast({
+                  title: "Dental Chart Reset",
+                  description: "All teeth have been reset to normal",
+                });
+              }}
+            >
+              Reset Chart
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center px-2 py-1 text-xs rounded bg-yellow-300 text-yellow-800">Chipped</span>
             <span className="inline-flex items-center px-2 py-1 text-xs rounded bg-gray-300 text-gray-800">Missing</span>
@@ -229,7 +250,7 @@ export function DentalChart({ onTeethUpdate, initialTeeth }: DentalChartProps) {
               <button
                 key={tooth.id}
                 onClick={() => handleToothClick(tooth)}
-                className="flex items-center justify-center w-10 h-12 border border-gray-300 rounded-t-full"
+                className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-lg"
                 style={{ 
                   backgroundColor: bgColor,
                   color: textColor
@@ -252,7 +273,7 @@ export function DentalChart({ onTeethUpdate, initialTeeth }: DentalChartProps) {
               <button
                 key={tooth.id}
                 onClick={() => handleToothClick(tooth)}
-                className="flex items-center justify-center w-10 h-12 border border-gray-300 rounded-b-full"
+                className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-lg"
                 style={{ 
                   backgroundColor: bgColor,
                   color: textColor
