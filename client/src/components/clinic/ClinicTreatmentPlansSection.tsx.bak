@@ -2044,7 +2044,5 @@ const ClinicTreatmentPlansSection: React.FC = () => {
         onImportQuote={handleImportQuote}
       />
     </div>
-  );
-};
 
 export default ClinicTreatmentPlansSection;
