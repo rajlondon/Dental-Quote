@@ -47,6 +47,19 @@ import TreatmentPlanBuilder, { TreatmentItem as BuilderTreatmentItem } from '@/c
 import { useToast } from '@/hooks/use-toast';
 import type { TreatmentPlan, TreatmentItem } from '@/types/clientPortal';
 
+// Helper function to convert clinical treatment items to builder format
+const convertToBuilderItems = (items: TreatmentItem[] | undefined): any[] => {
+  if (!items) return [];
+  
+  return items.map(item => ({
+    id: item.id,
+    category: 'Dental',
+    name: item.treatment,
+    quantity: item.quantity,
+    priceGBP: item.priceGBP
+  }));
+};
+
 // Sample treatment plans data - in a real app, this would come from an API
 const sampleTreatmentPlans: TreatmentPlanItem[] = [
   {
@@ -609,8 +622,8 @@ const ClinicTreatmentPlansSection: React.FC = () => {
           
           {currentView === 'builder' && (
             <TreatmentPlanBuilder 
-              initialTreatments={selectedPlan?.treatmentPlan.items} 
-              onTreatmentsChange={(treatments) => {
+              initialTreatments={convertToBuilderItems(selectedPlan?.treatmentPlan.items)} 
+              onTreatmentsChange={(treatments: BuilderTreatmentItem[]) => {
                 console.log("Treatments updated", treatments);
                 // This would be handled by the API in a real app
               }}

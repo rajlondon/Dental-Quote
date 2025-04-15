@@ -39,6 +39,7 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'dashboard', label: t("clinic.nav.dashboard", "Dashboard"), icon: <Building className="h-5 w-5" /> },
     { id: 'patients', label: t("clinic.nav.patients", "Patients"), icon: <Users className="h-5 w-5" /> },
     { id: 'quotes', label: t("clinic.nav.quotes", "Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
+    { id: 'treatmentplans', label: t("clinic.nav.treatment_plans", "Treatment Plans"), icon: <FileText className="h-5 w-5" /> },
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
     { id: 'documents', label: t("clinic.nav.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
@@ -56,6 +57,8 @@ const ClinicPortalPage: React.FC = () => {
         return <ClinicPatientsSection />;
       case 'quotes':
         return <ClinicQuotesSection />;
+      case 'treatmentplans':
+        return <ClinicTreatmentPlansSection />;
       case 'appointments':
         return <ClinicAppointmentsSection />;
       case 'messages':
