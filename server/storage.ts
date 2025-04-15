@@ -1,11 +1,12 @@
 import { db } from "./db";
-import { eq, and, desc, asc, or, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, or, isNull, sql } from "drizzle-orm";
 import createMemoryStore from "memorystore";
 import session from "express-session";
 import {
   users, User, InsertUser,
   quoteRequests, QuoteRequest, InsertQuoteRequest,
   quoteVersions, QuoteVersion, InsertQuoteVersion,
+  treatmentPlans, TreatmentPlan, InsertTreatmentPlan,
   bookings, Booking, InsertBooking,
   payments, Payment, InsertPayment,
   appointments, Appointment, InsertAppointment,
@@ -22,7 +23,7 @@ const MemoryStore = createMemoryStore(session);
 // Storage interface for all database operations
 export interface IStorage {
   // Session store for authentication
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using express-session store
 
   // User management
   getUser(id: number): Promise<User | undefined>;
@@ -42,6 +43,15 @@ export interface IStorage {
   getQuoteVersions(quoteRequestId: number): Promise<QuoteVersion[]>;
   getLatestQuoteVersion(quoteRequestId: number): Promise<QuoteVersion | undefined>;
   createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion>;
+  
+  // Treatment plans
+  getTreatmentPlan(id: number): Promise<TreatmentPlan | undefined>;
+  getTreatmentPlansByPatientId(patientId: number): Promise<TreatmentPlan[]>;
+  getTreatmentPlansByClinicId(clinicId: number): Promise<TreatmentPlan[]>;
+  getTreatmentPlanByQuoteRequestId(quoteRequestId: number): Promise<TreatmentPlan | undefined>;
+  createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan>;
+  updateTreatmentPlan(id: number, data: Partial<TreatmentPlan>): Promise<TreatmentPlan | undefined>;
+  getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]>;
   
   // Bookings
   getBooking(id: number): Promise<Booking | undefined>;
@@ -96,7 +106,7 @@ export interface IStorage {
 
 // Database implementation of IStorage
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using express-session store
 
   constructor() {
     this.sessionStore = new MemoryStore({
@@ -201,6 +211,60 @@ export class DatabaseStorage implements IStorage {
   async createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion> {
     const [version] = await db.insert(quoteVersions).values(data).returning();
     return version;
+  }
+
+  // === Treatment Plans ===
+  async getTreatmentPlan(id: number): Promise<TreatmentPlan | undefined> {
+    const [plan] = await db.select().from(treatmentPlans).where(eq(treatmentPlans.id, id));
+    return plan;
+  }
+
+  async getTreatmentPlansByPatientId(patientId: number): Promise<TreatmentPlan[]> {
+    return db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.patientId, patientId))
+      .orderBy(desc(treatmentPlans.createdAt));
+  }
+
+  async getTreatmentPlansByClinicId(clinicId: number): Promise<TreatmentPlan[]> {
+    return db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.clinicId, clinicId))
+      .orderBy(desc(treatmentPlans.createdAt));
+  }
+
+  async getTreatmentPlanByQuoteRequestId(quoteRequestId: number): Promise<TreatmentPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.quoteRequestId, quoteRequestId))
+      .orderBy(desc(treatmentPlans.createdAt))
+      .limit(1);
+    return plan;
+  }
+
+  async createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan> {
+    const [plan] = await db.insert(treatmentPlans).values(data).returning();
+    return plan;
+  }
+
+  async updateTreatmentPlan(id: number, data: Partial<TreatmentPlan>): Promise<TreatmentPlan | undefined> {
+    const [plan] = await db
+      .update(treatmentPlans)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(treatmentPlans.id, id))
+      .returning();
+    return plan;
+  }
+
+  async getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]> {
+    return db
+      .select()
+      .from(files)
+      .where(eq(files.treatmentPlanId, treatmentPlanId))
+      .orderBy(desc(files.createdAt));
   }
 
   // === Bookings ===
