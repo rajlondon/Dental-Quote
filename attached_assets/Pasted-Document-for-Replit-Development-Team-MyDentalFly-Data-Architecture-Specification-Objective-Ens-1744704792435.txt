@@ -1,0 +1,184 @@
+Document for Replit Development Team
+
+MyDentalFly — Data Architecture Specification
+
+Objective:
+
+Ensure all platform data (Patients, Clinics, Admin, Treatment Plans) is stored securely, structured correctly, and updated consistently across all three portals (Patient Portal, Clinic Portal, Admin Portal).
+
+Recommended Data Storage:
+
+Use a secure relational database such as PostgreSQL or equivalent. All patient medical documents (X-rays, CT scans) should be stored in GDPR-compliant storage (AWS S3, Supabase Storage, or Replit secure storage if available).
+
+Data Tables & Structure:
+
+1. Patients Table (User Table)
+
+Field
+
+Notes
+
+ID
+
+Unique Identifier
+
+Full Name
+
+Text Field
+
+Email
+
+Unique Field
+
+Phone Number
+
+International Format
+
+Treatment Plan ID
+
+Foreign Key - Links to Treatment Plans Table
+
+Portal Status
+
+Active / In Progress / Completed
+
+Date Created
+
+Auto Timestamp
+
+2. Clinics Table
+
+Field
+
+Notes
+
+Clinic ID
+
+Unique Identifier
+
+Clinic Name
+
+Text Field
+
+Treatments Offered
+
+JSON or Linked Table
+
+Packages Offered
+
+JSON Field
+
+Certifications
+
+Text or Document Links
+
+Clinic Contact Info
+
+Only visible after deposit / booking confirmation
+
+Reviews Rating
+
+Numeric Average
+
+Images Links
+
+For clinic profile display
+
+3. Treatment Plans Table
+
+Field
+
+Notes
+
+Treatment Plan ID
+
+Unique Identifier
+
+Patient ID
+
+Foreign Key
+
+Clinic ID
+
+Foreign Key
+
+Created By
+
+Auto-filled: Patient or Clinic
+
+Status
+
+Draft / Finalised / In Treatment / Completed
+
+Treatment Details
+
+JSON Array of Selected Treatments
+
+Estimated Total Cost
+
+Text or Numeric
+
+Notes
+
+Clinic Comments
+
+Last Updated
+
+Auto Timestamp
+
+4. File Storage
+
+Secure Storage of:
+
+X-rays
+
+CT Scans
+
+Photos
+
+Medical Records
+
+Files should be stored with naming conventions linked to Patient ID + Treatment Plan ID.
+
+Role-based access controls:
+
+Only Admin + Clinic assigned to patient can view documents.
+
+Data Sync & Update Rules:
+
+When Patient builds initial quote → Draft Treatment Plan created.
+
+Clinic can edit Treatment Plan post-consultation (auto-tracked changes).
+
+Patient notified of updates.
+
+Patient accepts Treatment Plan → Payment Triggered.
+
+Patient Portal always displays latest version of Treatment Plan.
+
+Admin Portal has full change logs for transparency.
+
+GDPR & Data Protection Compliance
+
+Data encrypted at rest and in transit.
+
+Secure storage compliant with GDPR (EU servers recommended).
+
+Consent checkbox required at quote submission:
+
+"I consent to MyDentalFly storing my medical information securely and sharing it with my chosen clinic for the purpose of treatment planning."
+
+Auto-delete policy for sensitive documents after X years unless consent renewed.
+
+Additional Notes:
+
+Use clear terminology across the platform: "Patients" (not Clients).
+
+Treatment Plan = Core Object linking Patient and Clinic.
+
+Clinics should not be able to access or download patient documents until the booking process is confirmed.
+
+All communication logged within the Patient Portal for transparency.
+
+End of Document.
+
