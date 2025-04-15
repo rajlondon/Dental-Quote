@@ -266,6 +266,8 @@ export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many })
     fields: [treatmentPlans.quoteRequestId],
     references: [quoteRequests.id],
   }),
+  files: many(files, { relationName: "treatment_plan_files" }),
+  booking: many(bookings),
 }));
 
 // === BOOKINGS ===
@@ -320,6 +322,10 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   clinic: one(clinics, {
     fields: [bookings.clinicId],
     references: [clinics.id],
+  }),
+  treatmentPlan: one(treatmentPlans, {
+    fields: [bookings.treatmentPlanId],
+    references: [treatmentPlans.id],
   }),
   assignedAdmin: one(users, {
     fields: [bookings.assignedAdminId],
@@ -415,6 +421,7 @@ export const files = pgTable("files", {
   userId: integer("user_id").notNull().references(() => users.id),
   bookingId: integer("booking_id").references(() => bookings.id),
   quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id),
+  treatmentPlanId: integer("treatment_plan_id").references(() => treatmentPlans.id),
   uploadedById: integer("uploaded_by_id").references(() => users.id),
   // File info
   filename: varchar("filename", { length: 255 }).notNull(),
@@ -444,6 +451,11 @@ export const filesRelations = relations(files, ({ one }) => ({
     fields: [files.quoteRequestId],
     references: [quoteRequests.id],
     relationName: "quote_xrays",
+  }),
+  treatmentPlan: one(treatmentPlans, {
+    fields: [files.treatmentPlanId],
+    references: [treatmentPlans.id],
+    relationName: "treatment_plan_files",
   }),
   uploadedBy: one(users, {
     fields: [files.uploadedById],
@@ -527,6 +539,10 @@ export type QuoteRequest = typeof quoteRequests.$inferSelect;
 
 export type InsertQuoteVersion = Omit<typeof quoteVersions.$inferInsert, "id" | "createdAt">;
 export type QuoteVersion = typeof quoteVersions.$inferSelect;
+
+// Treatment plan types
+export type InsertTreatmentPlan = Omit<typeof treatmentPlans.$inferInsert, "id" | "createdAt" | "updatedAt">;
+export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
 
 // Booking types
 export type InsertBooking = Omit<typeof bookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
