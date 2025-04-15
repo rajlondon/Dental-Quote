@@ -35,7 +35,10 @@ import {
   Eye,
   Database,
   ListChecks,
-  Copy
+  Copy,
+  Upload,
+  Layers,
+  Settings
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -76,6 +79,12 @@ interface TreatmentCatalogItem {
   duration: string;
   materials: string[];
   priceGBP: number;
+  guaranteePeriod?: string;  // Optional guarantee period in years
+  isPopular?: boolean;       // Flag for popular treatments
+  clinicNotes?: string;      // Internal notes for clinic staff
+  preparationTime?: string;  // Time needed for preparation
+  recoveryTime?: string;     // Expected recovery time
+  technicalDetails?: string; // Technical specifications
 }
 
 const sampleTreatments: TreatmentCatalogItem[] = [
@@ -86,7 +95,13 @@ const sampleTreatments: TreatmentCatalogItem[] = [
     description: "Premium Swiss dental implant system with lifetime guarantee on the implant fixture",
     duration: "2-3 sessions",
     materials: ["Straumann", "Titanium", "Premium"],
-    priceGBP: 550
+    priceGBP: 550,
+    guaranteePeriod: "Lifetime on fixture, 5 years on crown",
+    isPopular: true,
+    clinicNotes: "Use Straumann tissue-level implants for posterior and bone-level for anterior region",
+    preparationTime: "1-2 weeks for fabrication",
+    recoveryTime: "3-5 days for initial healing, 3-6 months for osseointegration",
+    technicalDetails: "4.1mm diameter, 10-12mm length, SLA surface treatment"
   },
   {
     id: "T002",
@@ -362,6 +377,7 @@ const ClinicTreatmentPlansSection: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<TreatmentPlanItem | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const [selectedTreatment, setSelectedTreatment] = useState<TreatmentCatalogItem | null>(null);
   
   // Status badge styles
   const statusStyles = {
@@ -546,16 +562,57 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full sm:w-auto gap-2" onClick={() => {
-                // In a real app, this would open a dialog to add a new treatment
-                toast({
-                  title: t("clinic.treatment_plans.add_treatment", "Add Treatment"),
-                  description: t("clinic.treatment_plans.add_treatment_desc", "Treatment creation form would open here."),
-                });
-              }}>
-                <Plus className="h-4 w-4" />
-                {t("clinic.treatment_plans.add_treatment", "Add Treatment")}
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button className="w-full sm:w-auto gap-2" onClick={() => {
+                  // In a real app, this would open a dialog to add a new treatment
+                  toast({
+                    title: t("clinic.treatment_plans.add_treatment", "Add Treatment"),
+                    description: t("clinic.treatment_plans.add_treatment_desc", "Treatment creation form would open here."),
+                  });
+                }}>
+                  <Plus className="h-4 w-4" />
+                  {t("clinic.treatment_plans.add_treatment", "Add Treatment")}
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      <FileText className="h-4 w-4 mr-2" />
+                      {t("clinic.treatment_plans.import_export", "Import/Export")}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => {
+                      toast({
+                        title: t("clinic.treatment_plans.import", "Import Treatments"),
+                        description: t("clinic.treatment_plans.import_desc", "Import treatments from CSV or Excel file."),
+                      });
+                    }}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t("clinic.treatment_plans.import", "Import Treatments")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      toast({
+                        title: t("clinic.treatment_plans.export", "Export Treatments"),
+                        description: t("clinic.treatment_plans.export_desc", "Treatments exported to CSV file."),
+                      });
+                    }}>
+                      <Download className="h-4 w-4 mr-2" />
+                      {t("clinic.treatment_plans.export", "Export Treatments")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <Button variant="ghost" className="w-full sm:w-auto" onClick={() => {
+                  toast({
+                    title: t("clinic.treatment_plans.manage_materials", "Manage Materials"),
+                    description: t("clinic.treatment_plans.manage_materials_desc", "Material management interface would open here."),
+                  });
+                }}>
+                  <Layers className="h-4 w-4 mr-2" />
+                  {t("clinic.treatment_plans.manage_materials", "Manage Materials")}
+                </Button>
+              </div>
             </div>
             
             {/* Treatment catalog table */}
