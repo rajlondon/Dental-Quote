@@ -74,10 +74,14 @@ export interface IStorage {
   updatePayment(id: number, data: Partial<Payment>): Promise<Payment | undefined>;
   
   // Files
+  getFile(id: number): Promise<File | undefined>;
   getFilesByBookingId(bookingId: number): Promise<File[]>;
   getFilesByQuoteRequestId(quoteRequestId: number): Promise<File[]>;
   getFilesByUserId(userId: number): Promise<File[]>;
+  getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]>;
   createFile(data: InsertFile): Promise<File>;
+  updateFile(id: number, data: Partial<File>): Promise<File | undefined>;
+  deleteFile(id: number): Promise<void>;
   
   // Messages
   getMessagesByBookingId(bookingId: number): Promise<Message[]>;
@@ -259,14 +263,6 @@ export class DatabaseStorage implements IStorage {
     return plan;
   }
 
-  async getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]> {
-    return db
-      .select()
-      .from(files)
-      .where(eq(files.treatmentPlanId, treatmentPlanId))
-      .orderBy(desc(files.createdAt));
-  }
-
   // === Bookings ===
   async getBooking(id: number): Promise<Booking | undefined> {
     const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
@@ -384,6 +380,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // === Files ===
+  async getFile(id: number): Promise<File | undefined> {
+    const [file] = await db.select().from(files).where(eq(files.id, id));
+    return file;
+  }
+  
   async getFilesByBookingId(bookingId: number): Promise<File[]> {
     return db
       .select()
@@ -407,10 +408,31 @@ export class DatabaseStorage implements IStorage {
       .where(eq(files.userId, userId))
       .orderBy(desc(files.createdAt));
   }
+  
+  async getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]> {
+    return db
+      .select()
+      .from(files)
+      .where(eq(files.treatmentPlanId, treatmentPlanId))
+      .orderBy(desc(files.createdAt));
+  }
 
   async createFile(data: InsertFile): Promise<File> {
     const [file] = await db.insert(files).values(data).returning();
     return file;
+  }
+  
+  async updateFile(id: number, data: Partial<File>): Promise<File | undefined> {
+    const [file] = await db
+      .update(files)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(files.id, id))
+      .returning();
+    return file;
+  }
+  
+  async deleteFile(id: number): Promise<void> {
+    await db.delete(files).where(eq(files.id, id));
   }
 
   // === Messages ===
