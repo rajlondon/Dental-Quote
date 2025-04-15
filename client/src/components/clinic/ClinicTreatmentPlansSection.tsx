@@ -1049,6 +1049,7 @@ const ClinicTreatmentPlansSection: React.FC = () => {
                         console.log("Treatments updated", treatments);
                         // This would be handled by the API in a real app
                       }}
+                      hideHeader={true}
                     />
                   </div>
                 </div>

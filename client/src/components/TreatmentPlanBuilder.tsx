@@ -291,11 +291,13 @@ const TREATMENT_CATEGORIES: TreatmentCategory[] = [
 interface TreatmentPlanBuilderProps {
   initialTreatments?: TreatmentItem[];
   onTreatmentsChange?: (treatments: TreatmentItem[]) => void;
+  hideHeader?: boolean; // Add option to hide the "Build Your Treatment Plan" header
 }
 
 const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({ 
   initialTreatments = [], 
-  onTreatmentsChange 
+  onTreatmentsChange,
+  hideHeader = false
 }) => {
   const [treatments, setTreatments] = useState<TreatmentItem[]>(initialTreatments);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -422,31 +424,33 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Build Your Treatment Plan</h2>
-          <p className="text-gray-600 text-sm">Select treatments from the categories below</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {treatments.length > 0 && (
-            <div className="bg-blue-50 px-3 py-2 rounded text-sm font-medium text-blue-700">
-              {treatments.length} treatment{treatments.length !== 1 ? 's' : ''} added
-            </div>
-          )}
+      {!hideHeader && (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Build Your Treatment Plan</h2>
+            <p className="text-gray-600 text-sm">Select treatments from the categories below</p>
+          </div>
           
-          {showAddForm ? (
-            <Button variant="outline" onClick={resetForm} size="sm">
-              Cancel
-            </Button>
-          ) : (
-            <Button onClick={() => setShowAddForm(true)} size="sm">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Special Treatment
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {treatments.length > 0 && (
+              <div className="bg-blue-50 px-3 py-2 rounded text-sm font-medium text-blue-700">
+                {treatments.length} treatment{treatments.length !== 1 ? 's' : ''} added
+              </div>
+            )}
+            
+            {showAddForm ? (
+              <Button variant="outline" onClick={resetForm} size="sm">
+                Cancel
+              </Button>
+            ) : (
+              <Button onClick={() => setShowAddForm(true)} size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Special Treatment
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Treatment Categories Tabs */}
       <div className="grid grid-cols-1 gap-6">
