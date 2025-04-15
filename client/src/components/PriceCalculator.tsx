@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
 import JSPDFGenerator from "./JSPDFGenerator";
+import { DentalChart } from "./DentalChart";
 
 // Define interface for clinic comparison
 interface ClinicComparison {
@@ -315,8 +316,18 @@ export default function PriceCalculator() {
       { londonConsult: data.londonConsult as 'yes' | 'no' }
     );
     
+    // Get dental chart data if available
+    const dentalChartData = localStorage.getItem('dentalChartData');
+    
     // Store the quote data with user information in state
     setQuote(quoteResult);
+    
+    // Add dental chart data to the quote result if available
+    if (dentalChartData) {
+      console.log('Including dental chart data in quote submission');
+      // In a real implementation, you would add this to your quote data
+      // For now we're just storing it in localStorage
+    }
     
     // Check if X-rays were uploaded
     const xrayStatus = data.xrayFiles && data.xrayFiles.length > 0;
@@ -434,7 +445,9 @@ export default function PriceCalculator() {
         londonConsult: data.londonConsult,
         replacingExisting: data.replacingExisting,
         preferredBrands: data.preferredBrands,
-        budgetRange: data.budgetRange || ''
+        budgetRange: data.budgetRange || '',
+        // Include dental chart data if available
+        dentalChartData: dentalChartData ? JSON.parse(dentalChartData) : undefined
       };
       
       // Send notification to server - don't await or handle errors to avoid blocking UI
@@ -884,6 +897,7 @@ export default function PriceCalculator() {
                                 <li>Enter the quantity (number of teeth) for each treatment</li>
                                 <li>Add multiple treatments if needed using the "Add Treatment" button</li>
                                 <li>Fill in your contact and travel information</li>
+                                <li>Use the interactive dental chart below to mark specific teeth conditions or treatments</li>
                               </ol>
                               
                               <div className="bg-primary/5 p-3 rounded mt-2">
@@ -901,6 +915,16 @@ export default function PriceCalculator() {
                               </div>
                             </div>
                           </div>
+                          
+                          {/* Interactive Dental Chart */}
+                          <DentalChart 
+                            onTeethUpdate={(teethData) => {
+                              console.log('Teeth data updated:', teethData);
+                              // Here you can store the teeth data in your form or state
+                              // For example, you could add it to localStorage or your form data
+                              localStorage.setItem('dentalChartData', JSON.stringify(teethData));
+                            }}
+                          />
                           
                           {form.watch('treatments').map((_, index) => (
                             <div key={index} className="flex flex-col sm:flex-row gap-3 items-start bg-white p-3 rounded-lg mb-3 border border-neutral-200 shadow-sm">
