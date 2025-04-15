@@ -162,3 +162,12 @@ export interface SupportRequest {
   createdAt: string;
   resolvedAt?: string;
 }
+
+export interface ToothData {
+  id: number;
+  name: string;
+  position: string;
+  section: string;
+  selected: boolean;
+  treatments: string[];
+}

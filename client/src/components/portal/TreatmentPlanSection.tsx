@@ -259,7 +259,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
     };
     
     try {
-      // Call the PDF generator with treatment plan data
+      // Call the PDF generator with treatment plan data including dental chart
       generateQuotePdf({
         items: treatmentPlan.items,
         totalGBP: treatmentPlan.totalGBP,
@@ -269,6 +269,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId =
         patientPhone: user.phone,
         departureCity: travelInfo.departureCity,
         travelMonth: travelInfo.travelMonth,
+        dentalChart: mockDentalChart, // Pass the dental chart data
         onComplete: () => {
           toast({
             title: t('portal.treatment_plan.download_complete', 'PDF Generated Successfully'),
