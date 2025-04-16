@@ -98,8 +98,8 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
     }
   };
   
-  // Handle booking consultation
-  const handleBookConsultation = async (clinicId: string, clinicName: string) => {
+  // Handle choosing a clinic
+  const handleChooseClinic = async (clinicId: string, clinicName: string) => {
     try {
       // Set loading state
       setLoadingStates(prev => ({
@@ -108,32 +108,34 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
       }));
       
       toast({
-        title: "Booking Consultation",
-        description: `Processing your consultation request with ${clinicName}...`,
+        title: "Processing Selection",
+        description: `Setting up your connection with ${clinicName}...`,
       });
       
-      // Call service to book consultation
-      const booking = await clinicService.bookConsultation(clinicId, clinicName);
+      // Mock patient details (in a real app, this would be from the user's account)
+      const patientDetails = {
+        name: "John Doe",
+        email: "john.doe@example.com",
+        phone: "+44 7123 456789"
+      };
       
-      // Format date for display
-      const formattedDate = new Date(booking.dateTime).toLocaleString('en-GB', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      // Call the API to establish a connection with the clinic
+      await clinicService.selectClinic(clinicId, patientDetails, {
+        treatments: treatments
       });
+      
+      // Redirect to messages section with this clinic preselected
+      window.location.href = `#/patient-portal/messages?clinic=${clinicId}`;
       
       toast({
-        title: "Consultation Booked",
-        description: `Your consultation has been scheduled for ${formattedDate}. Details have been sent to your email.`,
+        title: "Clinic Selected",
+        description: `You are now connected with ${clinicName}. You can now discuss your treatment options.`,
       });
     } catch (error) {
-      console.error('Error booking consultation:', error);
+      console.error('Error selecting clinic:', error);
       toast({
-        title: "Booking Error",
-        description: "Failed to book consultation. Please try again.",
+        title: "Selection Error",
+        description: "Failed to connect with clinic. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -248,7 +250,7 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                     )}
                   </Button>
                   <Button
-                    onClick={() => handleBookConsultation(clinic.id, clinic.name)}
+                    onClick={() => handleChooseClinic(clinic.id, clinic.name)}
                     disabled={loadingStates[clinic.id]?.booking}
                   >
                     {loadingStates[clinic.id]?.booking ? (
@@ -257,10 +259,10 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Booking...
+                        Processing...
                       </>
                     ) : (
-                      "Book Consultation"
+                      "Choose This Clinic"
                     )}
                   </Button>
                 </div>

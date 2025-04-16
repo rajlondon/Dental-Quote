@@ -33,13 +33,15 @@ interface GenerateQuoteRequest {
   };
 }
 
-interface BookConsultationRequest {
+interface SelectClinicRequest {
   clinicId: string;
   patientDetails: {
     name: string;
     email: string;
     phone: string;
   };
+  quoteId?: string;
+  treatments?: TreatmentItem[];
 }
 
 export function registerClinicRoutes(app: Express): void {
@@ -242,47 +244,47 @@ export function registerClinicRoutes(app: Express): void {
     }
   });
   
-  // Book a consultation with a clinic
-  app.post('/api/book-consultation', (req: Request, res: Response) => {
+  // Select a clinic and establish a patient-clinic connection
+  app.post('/api/select-clinic', (req: Request, res: Response) => {
     try {
-      const { clinicId, patientDetails } = req.body as BookConsultationRequest;
+      const { clinicId, patientDetails, quoteId, treatments } = req.body as SelectClinicRequest;
       
       if (!clinicId || !patientDetails) {
         return res.status(400).json({ error: 'Missing required parameters' });
       }
       
-      // In a real app, this would create a consultation record in the database
-      // and potentially integrate with a calendar service
+      // In a real app, this would:
+      // 1. Create a patient-clinic relationship in the database
+      // 2. Share the patient's dental chart with the clinic
+      // 3. Create an initial messaging thread
+      // 4. Grant access permissions for the quote/treatment plan
       
-      // Mock consultation details
-      const consultationDate = new Date();
-      consultationDate.setDate(consultationDate.getDate() + 2); // 2 days from now
+      // Generate a unique connection ID
+      const connectionId = `connection_${Date.now()}`;
       
-      // Format to a readable date/time string
-      const formattedDateTime = consultationDate.toLocaleString('en-GB', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      const consultation = {
-        consultationId: `consult_${Date.now()}`,
+      // Mock response data
+      const connection = {
+        connectionId,
         clinicId,
+        patientEmail: patientDetails.email,
         patientName: patientDetails.name,
-        dateTime: formattedDateTime,
-        meetingLink: 'https://meet.google.com/abc-defg-hij'
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        sharedData: {
+          treatments: !!treatments,
+          dentalChart: true,
+          quoteId: quoteId || null
+        }
       };
       
       res.status(200).json({
         success: true,
-        consultation
+        connection,
+        message: "You're now connected with this clinic. You can send messages and share your treatment plan."
       });
     } catch (error) {
-      console.error('Error booking consultation:', error);
-      res.status(500).json({ error: 'Failed to book consultation' });
+      console.error('Error selecting clinic:', error);
+      res.status(500).json({ error: 'Failed to establish connection with clinic' });
     }
   });
 }
