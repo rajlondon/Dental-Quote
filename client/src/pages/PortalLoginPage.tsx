@@ -89,7 +89,7 @@ const PortalLoginPage: React.FC = () => {
       // Simplify routing approach - direct navigation to client portal without parameters
       localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
       console.log("Redirecting to client portal with simplified navigation");
-      window.location.href = "/#/client-portal";
+      window.location.href = "/client-portal";
     } catch (error) {
       toast({
         title: "Registration Failed",
@@ -138,7 +138,7 @@ const PortalLoginPage: React.FC = () => {
       // Simplify routing approach - direct navigation to client portal without parameters
       localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
       console.log("Redirecting to client portal with simplified navigation");
-      window.location.href = "/#/client-portal";
+      window.location.href = "/client-portal";
     } catch (error) {
       toast({
         title: "Login Failed",
@@ -165,22 +165,25 @@ const PortalLoginPage: React.FC = () => {
           title: "Client Test Login Successful",
           description: "You are now logged in as a test client user.",
         });
-        // Simplest direct navigation approach
-        window.location.href = '/#/client-portal';
+        
+        // Direct navigation to client portal
+        window.location.href = '/client-portal';
         
       } else if (values.userType === "admin") {
         toast({
           title: "Admin Test Login Successful",
           description: "You are now logged in as a test admin user.",
         });
-        window.location.href = '/#/admin-portal';
+        
+        window.location.href = '/admin-portal';
         
       } else if (values.userType === "clinic") {
         toast({
           title: "Clinic Test Login Successful",
           description: "You are now logged in as a test clinic user.",
         });
-        window.location.href = '/#/clinic-portal';
+        
+        window.location.href = '/clinic-portal';
       }
     } catch (error) {
       toast({
@@ -492,28 +495,79 @@ const PortalLoginPage: React.FC = () => {
           <div className="bg-gradient-to-br from-primary/5 to-primary/20 p-6 rounded-xl border border-primary/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-1/2 h-full bg-white/20 transform translate-x-1/3 skew-x-12" />
             
-            <h2 className="text-2xl font-bold text-primary mb-6">Portal Features</h2>
+            <h2 className="text-2xl font-bold text-primary mb-6">
+              {t("portal.login.benefits.title", "Your Dental Journey in One Place")}
+            </h2>
             
-            <div className="space-y-4">
-              <div className="bg-white/90 p-4 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-lg text-primary mb-2">Dental Treatment Plans</h3>
-                <p className="text-neutral-700">
-                  Access your personalized treatment plan, pricing, and appointment schedule in one secure location.
-                </p>
+            <div className="space-y-4 relative z-10">
+              <div className="flex items-start space-x-3">
+                <div className="bg-white p-2 rounded-full shadow-sm">
+                  <Check className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {t("portal.login.benefits.treatment_plans", "View Your Treatment Plans")}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t("portal.login.benefits.treatment_plans_desc", "Access detailed treatment plans from your selected clinics")}
+                  </p>
+                </div>
               </div>
               
-              <div className="bg-white/90 p-4 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-lg text-primary mb-2">Direct Messaging</h3>
-                <p className="text-neutral-700">
-                  Connect securely with your dental clinic through our encrypted messaging system for consultations and follow-ups.
-                </p>
+              <div className="flex items-start space-x-3">
+                <div className="bg-white p-2 rounded-full shadow-sm">
+                  <Check className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {t("portal.login.benefits.compare", "Compare Clinic Treatments")}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t("portal.login.benefits.compare_desc", "Side-by-side comparison of treatment options and prices")}
+                  </p>
+                </div>
               </div>
               
-              <div className="bg-white/90 p-4 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-lg text-primary mb-2">Treatment Tracking</h3>
-                <p className="text-neutral-700">
-                  Track the progress of your dental procedures, view detailed treatment plans, and access post-care instructions.
-                </p>
+              <div className="flex items-start space-x-3">
+                <div className="bg-white p-2 rounded-full shadow-sm">
+                  <Check className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {t("portal.login.benefits.communicate", "Direct Communication")}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t("portal.login.benefits.communicate_desc", "Message your dental providers directly within the platform")}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <div className="bg-white p-2 rounded-full shadow-sm">
+                  <Check className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {t("portal.login.benefits.book", "Book & Manage Appointments")}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t("portal.login.benefits.book_desc", "Schedule consultations and treatments with ease")}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <div className="bg-white p-2 rounded-full shadow-sm">
+                  <Check className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {t("portal.login.benefits.secure", "Secure & Confidential")}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t("portal.login.benefits.secure_desc", "All your dental records and communications are encrypted and secure")}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
