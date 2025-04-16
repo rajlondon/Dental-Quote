@@ -102,7 +102,8 @@ const PortalLoginPage: React.FC = () => {
       const clinicId = localStorage.getItem('selectedClinicId');
       if (clinicId) {
         console.log("Redirecting to messages with clinic ID:", clinicId);
-        navigateToClientPortal("messages", clinicId);
+        // Use direct URL approach - more reliable for hash-based routing
+        window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
       } else {
         navigateToClientPortal();
       }
@@ -155,7 +156,8 @@ const PortalLoginPage: React.FC = () => {
       const clinicId = localStorage.getItem('selectedClinicId');
       if (clinicId) {
         console.log("Redirecting to messages with clinic ID:", clinicId);
-        navigateToClientPortal("messages", clinicId);
+        // Use direct URL approach - more reliable for hash-based routing
+        window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
       } else {
         navigateToClientPortal();
       }
@@ -187,24 +189,26 @@ const PortalLoginPage: React.FC = () => {
         });
         // If we have a selected clinic, route to messages section with that clinic
         const clinicId = localStorage.getItem('selectedClinicId');
+        
+        // DIRECT URL APPROACH - More reliable than using the helper functions
         if (clinicId) {
           console.log("Redirecting to messages with clinic ID:", clinicId);
-          navigateToClientPortal("messages", clinicId);
+          window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
         } else {
-          navigateToClientPortal();
+          window.location.href = '/#/client-portal';
         }
       } else if (values.userType === "admin") {
         toast({
           title: "Admin Test Login Successful",
           description: "You are now logged in as a test admin user.",
         });
-        navigateToAdminPortal();
+        window.location.href = '/#/admin-portal';
       } else if (values.userType === "clinic") {
         toast({
           title: "Clinic Test Login Successful",
           description: "You are now logged in as a test clinic user.",
         });
-        navigateToClinicPortal();
+        window.location.href = '/#/clinic-portal';
       }
     } catch (error) {
       toast({
