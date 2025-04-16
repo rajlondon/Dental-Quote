@@ -123,17 +123,33 @@ const mockMessages: Message[] = [
 
 interface MessagingSectionProps {
   bookingId?: number;
+  clinicId?: string;
 }
 
-const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123 }) => {
+const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, clinicId }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const location = window.location.hash;
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeClinic, setActiveClinic] = useState<string | null>(clinicId || null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check URL parameters for clinic selection
+  useEffect(() => {
+    // Parse clinic from URL if present (e.g., #/messages?clinic=clinic_001)
+    if (!clinicId && location.includes('?clinic=')) {
+      const params = new URLSearchParams(location.split('?')[1]);
+      const urlClinicId = params.get('clinic');
+      if (urlClinicId) {
+        setActiveClinic(urlClinicId);
+        console.log(`Setting active clinic from URL: ${urlClinicId}`);
+      }
+    }
+  }, [location, clinicId]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
