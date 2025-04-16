@@ -156,7 +156,7 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
       // Redirect to messages section with this clinic preselected
       // Use the correct hash-based routing format
       setTimeout(() => {
-        window.location.href = `/patient-portal/messages?clinic=${clinicId}`;
+        window.location.href = `/#/patient-portal/messages?clinic=${clinicId}`;
       }, 1000);
       
       toast({
@@ -254,7 +254,7 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                 <Button 
                   variant="outline" 
                   className="flex items-center gap-1"
-                  onClick={() => window.location.href = "/patient-portal/messages?clinic=" + clinic.id}
+                  onClick={() => window.location.href = "/#/patient-portal/messages?clinic=" + clinic.id}
                 >
                   <MessageSquare className="h-4 w-4 mr-1" />
                   Message Clinic
