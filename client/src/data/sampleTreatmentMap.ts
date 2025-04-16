@@ -149,7 +149,9 @@ export const sampleTreatmentMap: TreatmentMap = {
 };
 
 // Sample clinic data
-export const sampleClinics = [
+import { Clinic } from "../types/treatmentMapper";
+
+export const sampleClinics: Clinic[] = [
   {
     id: "clinic_001",
     name: "Istanbul Dental Excellence",
@@ -160,7 +162,9 @@ export const sampleClinics = [
       "hotel_included": true,
       "free_consultation": true,
       "multilingual_staff": true,
-      "warranty": true
+      "warranty": true,
+      "spa_facilities": false,
+      "hotel_discount": false
     }
   },
   {
@@ -174,7 +178,8 @@ export const sampleClinics = [
       "free_consultation": true,
       "multilingual_staff": true,
       "warranty": true,
-      "spa_facilities": true
+      "spa_facilities": true,
+      "hotel_discount": false
     }
   },
   {
@@ -187,7 +192,9 @@ export const sampleClinics = [
       "hotel_discount": true,
       "free_consultation": true,
       "multilingual_staff": true,
-      "warranty": true
+      "warranty": true,
+      "spa_facilities": false,
+      "hotel_included": false
     }
   }
 ];

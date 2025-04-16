@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ClinicTreatmentComparison from '../components/ClinicTreatmentComparison';
 import { sampleTreatmentMap, sampleClinics, clinicFeatures } from '../data/sampleTreatmentMap';
+import { Clinic } from '../types/treatmentMapper';
 
 const TreatmentComparisonPage: React.FC = () => {
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([
@@ -40,7 +41,7 @@ const TreatmentComparisonPage: React.FC = () => {
           <ClinicTreatmentComparison
             treatmentMap={sampleTreatmentMap}
             clinics={sampleClinics}
-            clinicFeatures={clinicFeatures}
+            clinicFeatures={clinicFeatures as any}
             selectedTreatments={selectedTreatments}
             onSelectTreatment={handleSelectTreatment}
           />
