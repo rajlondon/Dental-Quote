@@ -175,7 +175,7 @@ const Question: React.FC<QuestionProps> = ({
 interface StepByStepTreatmentBuilderProps {
   onTreatmentsChange?: (treatments: TreatmentItem[]) => void;
   initialTreatments?: TreatmentItem[];
-  onComplete?: (dentalChartData: any, treatments: TreatmentItem[]) => void;
+  onComplete?: (dentalChartData: { id: number; name: string; condition: string | null; treatment: string | null; notes: string }[], treatments: TreatmentItem[]) => void;
 }
 
 const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
@@ -186,10 +186,19 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   const { toast } = useToast();
   // Step tracking
   const [currentStep, setCurrentStep] = useState(0);
-  const [teeth, setTeeth] = useState<any[]>([]);
-  const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
-  const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null);
-  const [toothDialogOpen, setToothDialogOpen] = useState(false);
+  // Define the Tooth type to match DentalChart component
+  type Tooth = {
+    id: number;
+    name: string;
+    condition: string | null;
+    treatment: string | null;
+    notes: string;
+  };
+  const [teeth, setTeeth] = useState<Tooth[]>([]);
+  // We don't need these state variables anymore since the DentalChart component manages them internally
+  // const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
+  // const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null);
+  // const [toothDialogOpen, setToothDialogOpen] = useState(false);
   
   // User answers
   const [selectedConcerns, setSelectedConcerns] = useState<string[]>([]);
@@ -225,7 +234,7 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   }, [treatments, onTreatmentsChange]);
   
   // Handle dental chart updates
-  const handleTeethUpdate = (updatedTeeth: any[]) => {
+  const handleTeethUpdate = (updatedTeeth: Tooth[]) => {
     setTeeth(updatedTeeth);
   };
   
@@ -339,137 +348,31 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                 </div>
                 
                 <div className="mt-4">
-                  {/* Insert simplified dental chart here to make it appear */}
-                  <div className="hidden md:block">
-                    {/* Upper Teeth Row - Simplified version as placeholder */}
-                    <div className="flex justify-center gap-1 mb-4">
-                      {Array.from({ length: 16 }).map((_, index) => {
-                        const toothNumber = index + 1;
-                        const toothHasIssue = teeth.some(t => t.number === toothNumber);
-                        
-                        return (
-                          <button
-                            key={`upper-${toothNumber}`}
-                            className={`flex items-center justify-center w-12 h-14 border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-base relative`}
-                            style={{ 
-                              backgroundColor: toothHasIssue ? '#fdf2f8' : '#ffffff',
-                            }}
-                            onClick={() => {
-                              setSelectedTooth(toothNumber);
-                              setToothDialogOpen(true);
-                            }}
-                          >
-                            {toothNumber}
-                            {toothHasIssue && (
-                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                                <span className="text-white text-[8px]">!</span>
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* Lower Teeth Row - Simplified version as placeholder */}
-                    <div className="flex justify-center gap-1 mb-3">
-                      {Array.from({ length: 16 }).map((_, index) => {
-                        const toothNumber = index + 17;
-                        const toothHasIssue = teeth.some(t => t.number === toothNumber);
-                        
-                        return (
-                          <button
-                            key={`lower-${toothNumber}`}
-                            className={`flex items-center justify-center w-12 h-14 border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-base relative`}
-                            style={{ 
-                              backgroundColor: toothHasIssue ? '#fdf2f8' : '#ffffff',
-                            }}
-                            onClick={() => {
-                              setSelectedTooth(toothNumber);
-                              setToothDialogOpen(true);
-                            }}
-                          >
-                            {toothNumber}
-                            {toothHasIssue && (
-                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                                <span className="text-white text-[8px]">!</span>
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {/* Use the existing DentalChart component */}
+                  <div className="max-w-5xl mx-auto">
+                    <DentalChart 
+                      onTeethUpdate={handleTeethUpdate}
+                      initialTeeth={teeth}
+                    />
                   </div>
-                  
-                  {/* Mobile View - Simplified */}
-                  <div className="block md:hidden">
-                    <div className="grid grid-cols-2 gap-2">
-                      {/* Left Side - Upper Teeth */}
-                      <div>
-                        <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Upper Teeth</h4>
-                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-4">
-                          {Array.from({ length: 16 }).map((_, index) => {
-                            const toothNumber = index + 1;
-                            const toothHasIssue = teeth.some(t => t.number === toothNumber);
-                            
-                            return (
-                              <button
-                                key={`mobile-upper-${toothNumber}`}
-                                className={`flex items-center w-full p-2 border-b border-gray-100 ${toothHasIssue ? 'bg-primary/5' : ''}`}
-                                onClick={() => {
-                                  setSelectedTooth(toothNumber);
-                                  setToothDialogOpen(true);
-                                }}
-                              >
-                                <div className={`flex justify-center items-center h-8 w-8 rounded-full border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} mr-2 font-bold`}>
-                                  {toothNumber}
-                                </div>
-                                <div className="text-left text-xs">
-                                  Upper tooth {toothNumber}
-                                </div>
-                                {toothHasIssue && (
-                                  <div className="ml-auto flex items-center text-primary">
-                                    <Check className="h-4 w-4" />
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      
-                      {/* Right Side - Lower Teeth */}
-                      <div>
-                        <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Lower Teeth</h4>
-                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                          {Array.from({ length: 16 }).map((_, index) => {
-                            const toothNumber = index + 17;
-                            const toothHasIssue = teeth.some(t => t.number === toothNumber);
-                            
-                            return (
-                              <button
-                                key={`mobile-lower-${toothNumber}`}
-                                className={`flex items-center w-full p-2 border-b border-gray-100 ${toothHasIssue ? 'bg-primary/5' : ''}`}
-                                onClick={() => {
-                                  setSelectedTooth(toothNumber);
-                                  setToothDialogOpen(true);
-                                }}
-                              >
-                                <div className={`flex justify-center items-center h-8 w-8 rounded-full border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} mr-2 font-bold`}>
-                                  {toothNumber}
-                                </div>
-                                <div className="text-left text-xs">
-                                  Lower tooth {toothNumber}
-                                </div>
-                                {toothHasIssue && (
-                                  <div className="ml-auto flex items-center text-primary">
-                                    <Check className="h-4 w-4" />
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+
+                  <div className="flex justify-between mt-6">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setTeeth([]);
+                        toast({
+                          title: "Dental Chart Reset",
+                          description: "All tooth selections have been cleared.",
+                        });
+                      }}
+                    >
+                      Clear Chart
+                    </Button>
+                    <div>
+                      <Badge variant="outline" className="mr-2">
+                        {teeth.length} teeth selected
+                      </Badge>
                     </div>
                   </div>
                 </div>
