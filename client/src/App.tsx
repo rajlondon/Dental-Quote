@@ -24,6 +24,9 @@ import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
 import DentalChartPage from "@/pages/DentalChartPage";
 import PatientDentalChart from "@/pages/PatientDentalChart";
 import ClinicDentalCharts from "@/pages/ClinicDentalCharts";
+import ClinicTreatmentMapperPage from "@/pages/ClinicTreatmentMapperPage";
+import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
+import TreatmentComparisonPage from "@/pages/TreatmentComparisonPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -54,6 +57,8 @@ function Router() {
       <Route path="/client-portal" component={ClientPortalPage} />
       <Route path="/admin-portal" component={AdminPortalPage} />
       <Route path="/clinic-portal" component={ClinicPortalPage} />
+      <Route path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} />
+      <Route path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} />
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>
