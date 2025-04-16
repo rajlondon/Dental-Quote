@@ -75,8 +75,30 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
         description: `Preparing your quote for ${clinicName}. This may take a moment...`,
       });
       
+      // Calculate total price for this clinic's treatments
+      const mappedTreatments = getMappedTreatmentsForClinic(treatments, clinicId);
+      const { totalPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
+      
+      // Mock patient details (in a real implementation this would come from the user's account)
+      const patientDetails = {
+        name: "John Doe",
+        email: "john.doe@example.com",
+        phone: "+44 7123 456789"
+      };
+      
       // Call service to generate and download quote
-      await clinicService.generateClinicQuote(clinicId, clinicName, treatments);
+      const quoteData = await clinicService.generateQuote(
+        clinicId, 
+        clinicName, 
+        mappedTreatments, 
+        totalPrice,
+        patientDetails
+      );
+      
+      // Open the PDF in a new tab
+      if (quoteData?.url) {
+        window.open(quoteData.url, '_blank');
+      }
       
       toast({
         title: "Quote Generated",
