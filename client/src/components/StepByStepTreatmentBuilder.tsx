@@ -355,25 +355,12 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                       initialTeeth={teeth}
                     />
                   </div>
-
-                  <div className="flex justify-between mt-6">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setTeeth([]);
-                        toast({
-                          title: "Dental Chart Reset",
-                          description: "All tooth selections have been cleared.",
-                        });
-                      }}
-                    >
-                      Clear Chart
-                    </Button>
-                    <div>
-                      <Badge variant="outline" className="mr-2">
-                        {teeth.length} teeth selected
-                      </Badge>
-                    </div>
+                  
+                  {/* Badge showing selected teeth count - this is additional beyond what's in the DentalChart */}
+                  <div className="flex justify-end mt-2">
+                    <Badge variant="outline" className="mr-2">
+                      {teeth.length} teeth selected
+                    </Badge>
                   </div>
                 </div>
               </div>
