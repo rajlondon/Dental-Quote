@@ -271,6 +271,118 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
     setTeeth(updatedTeeth);
   };
   
+  // Generate recommended treatments based on user responses
+  const generateRecommendedTreatments = useCallback(() => {
+    // Start with an empty array of recommended treatments
+    let recommendedTreatments: TreatmentItem[] = [];
+    const treatmentIds = new Set<string>();
+    
+    // Helper to add a treatment if not already added
+    const addTreatment = (treatmentId: string) => {
+      if (!treatmentIds.has(treatmentId)) {
+        // Find the treatment in the treatment categories
+        for (const category of TREATMENT_CATEGORIES) {
+          const treatment = category.treatments.find(t => t.id === treatmentId);
+          if (treatment) {
+            const newTreatment: TreatmentItem = {
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: treatment.name,
+              price: Math.round(treatment.priceGBP * 0.35),
+              priceUSD: Math.round(treatment.priceUSD * 0.35),
+              quantity: 1,
+              category: category.id,
+              customItem: false,
+              notes: ''
+            };
+            recommendedTreatments.push(newTreatment);
+            treatmentIds.add(treatmentId);
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    
+    // 1. First, check concerns and add related treatments
+    for (const concernId of selectedConcerns) {
+      const concern = ORAL_HEALTH_CONCERNS.find(c => c.id === concernId);
+      if (concern && concern.relatedTreatments) {
+        concern.relatedTreatments.forEach(treatmentId => {
+          addTreatment(treatmentId);
+        });
+      }
+    }
+    
+    // 2. Check dental chart selections and add appropriate treatments
+    const teethWithIssues = teeth.filter(tooth => tooth.condition || tooth.treatment);
+    
+    // Check if there are missing teeth
+    const missingTeeth = teeth.filter(tooth => tooth.condition === 'missing');
+    if (missingTeeth.length > 0) {
+      if (missingTeeth.length >= 5) {
+        // For multiple missing teeth, suggest All-on-4 or dentures
+        addTreatment('all_on_4_implants');
+        addTreatment('digital_denture');
+      } else {
+        // For fewer missing teeth, suggest individual implants
+        addTreatment('dental_implant_standard');
+      }
+    }
+    
+    // Check for cosmetic issues
+    const cosmeticTeeth = teeth.filter(tooth => tooth.condition === 'cosmetic');
+    if (cosmeticTeeth.length > 0) {
+      if (cosmeticTeeth.length >= 6) {
+        // For multiple teeth with cosmetic issues, suggest veneers
+        addTreatment('veneers_porcelain');
+      } else {
+        // For fewer teeth, suggest crowns or bonding
+        addTreatment('crown_porcelain');
+      }
+    }
+    
+    // Check for teeth with pain
+    const painTeeth = teeth.filter(tooth => tooth.condition === 'pain');
+    if (painTeeth.length > 0) {
+      addTreatment('root_canal');
+    }
+    
+    // 3. Check patient goals and add relevant treatments
+    if (desiredOutcomes.includes('appearance')) {
+      addTreatment('teeth_whitening_zoom');
+      addTreatment('veneers_porcelain');
+    }
+    
+    if (desiredOutcomes.includes('function')) {
+      if (teethWithIssues.length > 5) {
+        addTreatment('full_mouth_rehabilitation');
+      }
+    }
+    
+    // 4. If there are no specific treatments recommended, add a default treatment
+    if (recommendedTreatments.length === 0) {
+      if (budgetRange[0] > 5000) {
+        // Higher budget customers
+        addTreatment('full_mouth_rehabilitation');
+        addTreatment('dental_implant_premium');
+      } else {
+        // Standard budget customers
+        addTreatment('dental_check_up');
+        addTreatment('teeth_whitening_zoom');
+      }
+    }
+    
+    return recommendedTreatments;
+  }, [selectedConcerns, teeth, desiredOutcomes, budgetRange]);
+  
+  // Update treatments when moving to the final step
+  useEffect(() => {
+    if (currentStep === 5 && treatments.length === 0) {
+      const recommendedTreatments = generateRecommendedTreatments();
+      setTreatments(recommendedTreatments);
+    }
+  }, [currentStep, generateRecommendedTreatments, treatments.length]);
+  
   // Handle final submission
   const handleComplete = () => {
     if (onComplete) {
