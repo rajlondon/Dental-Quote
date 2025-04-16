@@ -86,6 +86,59 @@ export function calculateTotalPriceForMappedTreatments(
  * @param clinicIds Array of available clinic IDs
  * @returns The ID of the most price-competitive clinic
  */
+/**
+ * Converts mapped treatments to TreatmentItem[] format for API consumption
+ * @param mappedTreatments The mapped treatments from a clinic
+ * @returns Properly formatted TreatmentItem array
+ */
+export function convertMappedTreatmentsToTreatmentItems(
+  mappedTreatments: {
+    standardName: string;
+    clinicVariant: ClinicTreatmentVariant | undefined;
+    quantity: number;
+  }[]
+): {
+  id: string;
+  category: string;
+  name: string;
+  quantity: number;
+  priceGBP: number;
+  priceUSD: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  clinicVariant?: {
+    name: string;
+    description: string;
+    priceGBP: number;
+  };
+}[] {
+  return mappedTreatments.map((item, index) => {
+    // Extract price from clinic variant
+    const priceGBP = item.clinicVariant 
+      ? parseFloat(item.clinicVariant.price.replace(/[^0-9.]/g, '')) 
+      : 0;
+    
+    // Approximate USD conversion (1.3 exchange rate)
+    const priceUSD = priceGBP * 1.3;
+
+    return {
+      id: `treatment_${index}`,
+      category: 'Unknown', // Default category
+      name: item.standardName,
+      quantity: item.quantity,
+      priceGBP,
+      priceUSD,
+      subtotalGBP: priceGBP * item.quantity,
+      subtotalUSD: priceUSD * item.quantity,
+      clinicVariant: item.clinicVariant ? {
+        name: item.clinicVariant.name,
+        description: item.clinicVariant.description || 'Standard treatment',
+        priceGBP
+      } : undefined
+    };
+  });
+}
+
 export function findMostCompetitivePricedClinic(
   treatments: TreatmentItem[],
   clinicIds: string[]

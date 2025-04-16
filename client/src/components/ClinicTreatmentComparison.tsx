@@ -8,7 +8,11 @@ import { ClinicTreatmentDisplay, ClinicTreatmentsList, TreatmentVariantsComparis
 import { TreatmentItem } from './TreatmentPlanBuilder';
 import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
 import { treatmentMapperService } from '@/services/treatmentMapperService';
-import { getMappedTreatmentsForClinic, calculateTotalPriceForMappedTreatments } from '@/utils/treatmentMapperUtils';
+import { 
+  getMappedTreatmentsForClinic, 
+  calculateTotalPriceForMappedTreatments,
+  convertMappedTreatmentsToTreatmentItems
+} from '@/utils/treatmentMapperUtils';
 import { useToast } from '@/hooks/use-toast';
 import { clinicService } from '@/services/clinicService';
 
@@ -77,7 +81,7 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
       
       // Calculate total price for this clinic's treatments
       const mappedTreatments = getMappedTreatmentsForClinic(treatments, clinicId);
-      const { totalPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
+      const { totalMaxPrice: totalPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
       
       // Mock patient details (in a real implementation this would come from the user's account)
       const patientDetails = {
@@ -86,11 +90,14 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
         phone: "+44 7123 456789"
       };
       
+      // Convert the mapped treatments to TreatmentItem format
+      const treatmentItems = convertMappedTreatmentsToTreatmentItems(mappedTreatments);
+
       // Call service to generate and download quote
       const quoteData = await clinicService.generateQuote(
         clinicId, 
         clinicName, 
-        mappedTreatments, 
+        treatmentItems, 
         totalPrice,
         patientDetails
       );
@@ -147,7 +154,10 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
       });
       
       // Redirect to messages section with this clinic preselected
-      window.location.href = `#/patient-portal/messages?clinic=${clinicId}`;
+      // Use the correct hash-based routing format
+      setTimeout(() => {
+        window.location.href = `/patient-portal/messages?clinic=${clinicId}`;
+      }, 1000);
       
       toast({
         title: "Clinic Selected",
@@ -244,7 +254,7 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                 <Button 
                   variant="outline" 
                   className="flex items-center gap-1"
-                  onClick={() => window.location.href = "#/patient-portal/messages?clinic=" + clinic.id}
+                  onClick={() => window.location.href = "/patient-portal/messages?clinic=" + clinic.id}
                 >
                   <MessageSquare className="h-4 w-4 mr-1" />
                   Message Clinic
