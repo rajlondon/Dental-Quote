@@ -24,6 +24,7 @@ import portalRoutes from "./routes/portal-routes";
 import fileRoutes from "./routes/fileRoutes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
+import { registerClinicRoutes } from "./clinic-api";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +69,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Setup treatment mapper API routes
   setupTreatmentMapperApi(app);
+  
+  // Register clinic API routes for quote generation and consultation booking
+  registerClinicRoutes(app);
   
   // Create the uploads directory for files if it doesn't exist
   const uploadsDir = path.join(process.cwd(), 'uploads');
