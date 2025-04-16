@@ -49,6 +49,7 @@ import {
   User
 } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
+import StepByStepTreatmentBuilder from '@/components/StepByStepTreatmentBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
 import {
   Table,
@@ -581,12 +582,18 @@ const YourQuotePage: React.FC = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <TreatmentPlanBuilder 
+                    <StepByStepTreatmentBuilder 
                       initialTreatments={treatmentItems}
                       onTreatmentsChange={handleTreatmentPlanChange}
+                      onComplete={(dentalChartData, treatments) => {
+                        handleTreatmentPlanChange(treatments);
+                        setCurrentStep('patient-info');
+                        // Scroll to the patient info section
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                     />
                     
-                    {/* Note: Future Enhancements Section removed as requested */}
+                    {/* Note: Traditional TreatmentPlanBuilder replaced with StepByStepTreatmentBuilder */}
                     
                     {treatmentItems.length > 0 && (
                       <div>

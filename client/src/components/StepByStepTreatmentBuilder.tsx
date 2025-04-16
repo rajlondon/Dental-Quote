@@ -12,15 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Info, Tooth, Smile, Heart, AlertTriangle, Check, ArrowRight, HelpCircle, Brain, Timer } from 'lucide-react';
+import { Info, Smile, Heart, AlertTriangle, Check, ArrowRight, HelpCircle, Timer } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem } from '@/components/TreatmentPlanBuilder';
-import DentalChart from '@/components/DentalChart';
+import { DentalChart } from '@/components/DentalChart';
 
 // Define symptom tags that users can select
 const SYMPTOM_TAGS = [
   { id: 'pain', label: 'Pain', icon: <AlertTriangle className="h-3 w-3" /> },
   { id: 'cosmetic', label: 'Cosmetic', icon: <Smile className="h-3.5 w-3.5" /> },
-  { id: 'function', label: 'Function', icon: <Tooth className="h-3.5 w-3.5" /> },
+  { id: 'function', label: 'Function', icon: <Info className="h-3.5 w-3.5" /> },
   { id: 'sensitivity', label: 'Sensitivity', icon: <Heart className="h-3.5 w-3.5" /> },
   { id: 'missing', label: 'Missing', icon: <Info className="h-3.5 w-3.5" /> }
 ];
@@ -31,7 +31,7 @@ const ORAL_HEALTH_CONCERNS = [
     id: 'missing_teeth', 
     label: 'Missing Teeth', 
     description: 'I have gaps from missing teeth and want to replace them',
-    icon: <Tooth className="h-10 w-10 text-primary/70" />,
+    icon: <Info className="h-10 w-10 text-primary/70" />,
     relatedTreatments: ['dental_implant_standard', 'dental_bridge', 'all_on_4_implants']
   },
   { 
@@ -45,7 +45,7 @@ const ORAL_HEALTH_CONCERNS = [
     id: 'chewing_function', 
     label: 'Difficulty Chewing', 
     description: 'I have trouble chewing or biting food comfortably',
-    icon: <Brain className="h-10 w-10 text-primary/70" />,
+    icon: <Info className="h-10 w-10 text-primary/70" />,
     relatedTreatments: ['dental_implant_standard', 'porcelain_crown', 'zirconia_crown']
   },
   { 
