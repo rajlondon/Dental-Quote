@@ -73,7 +73,8 @@ const AdminPortalPage: React.FC = () => {
       title: "Logged Out",
       description: "You have been successfully logged out",
     });
-    navigate("/portal");
+    // Use direct URL navigation for reliability
+    window.location.href = '/#/portal-login';
   };
 
   const toggleMobileMenu = () => {

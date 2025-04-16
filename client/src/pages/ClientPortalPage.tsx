@@ -84,12 +84,12 @@ const ClientPortalPage: React.FC = () => {
 
   // Handle logout
   const handleLogout = () => {
-    // Implementation will be added later
     toast({
       title: t('portal.logout_success', 'Successfully logged out'),
       description: t('portal.logout_message', 'You have been logged out of your account.'),
     });
-    setLocation('/');
+    // Use direct URL navigation for reliability
+    window.location.href = '/#/portal-login';
   };
 
   // Check URL for section parameter with more robust parsing

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -32,8 +33,21 @@ import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 
 const ClinicPortalPage: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  // Handle logout
+  const handleLogout = () => {
+    toast({
+      title: t('portal.logout_success', 'Successfully logged out'),
+      description: t('portal.logout_message', 'You have been logged out of your account.'),
+    });
+    
+    // Use direct URL navigation for reliability
+    window.location.href = '/#/portal-login';
+  };
 
   // Clinic navigation items
   const navItems = [
@@ -147,12 +161,14 @@ const ClinicPortalPage: React.FC = () => {
 
           {/* Logout section */}
           <div className="p-4 border-t">
-            <Link href="/portal">
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <LogOut className="h-4 w-4" />
-                {t("clinic.nav.logout", "Log out")}
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              {t("clinic.nav.logout", "Log out")}
+            </Button>
           </div>
         </div>
       </div>
