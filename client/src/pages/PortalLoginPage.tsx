@@ -97,15 +97,10 @@ const PortalLoginPage: React.FC = () => {
         description: "Welcome to MyDentalFly! You're now logged in.",
       });
       
-      // If we have a selected clinic, route to messages section with that clinic
-      const clinicId = localStorage.getItem('selectedClinicId');
-      if (clinicId) {
-        console.log("Redirecting to messages with clinic ID:", clinicId);
-        // Use direct URL approach - more reliable for hash-based routing
-        window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
-      } else {
-        window.location.href = "/#/client-portal";
-      }
+      // Simplify routing approach - direct navigation to client portal without parameters
+      localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
+      console.log("Redirecting to client portal with simplified navigation");
+      window.location.href = "/#/client-portal";
     } catch (error) {
       toast({
         title: "Registration Failed",
@@ -151,15 +146,10 @@ const PortalLoginPage: React.FC = () => {
         description: "Welcome back to MyDentalFly!",
       });
       
-      // If we have a selected clinic, route to messages section with that clinic
-      const clinicId = localStorage.getItem('selectedClinicId');
-      if (clinicId) {
-        console.log("Redirecting to messages with clinic ID:", clinicId);
-        // Use direct URL approach - more reliable for hash-based routing
-        window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
-      } else {
-        window.location.href = "/#/client-portal";
-      }
+      // Simplify routing approach - direct navigation to client portal without parameters
+      localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
+      console.log("Redirecting to client portal with simplified navigation");
+      window.location.href = "/#/client-portal";
     } catch (error) {
       toast({
         title: "Login Failed",
