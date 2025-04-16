@@ -162,7 +162,13 @@ const PortalLoginPage: React.FC = () => {
           title: "Client Test Login Successful",
           description: "You are now logged in as a test client user.",
         });
-        navigate("/client-portal");
+        // If we have a selected clinic, route to messages section with that clinic
+        const clinicId = localStorage.getItem('selectedClinicId');
+        if (clinicId) {
+          navigate("/client-portal?section=messages&clinic=" + clinicId);
+        } else {
+          navigate("/client-portal");
+        }
       } else if (values.userType === "admin") {
         toast({
           title: "Admin Test Login Successful",

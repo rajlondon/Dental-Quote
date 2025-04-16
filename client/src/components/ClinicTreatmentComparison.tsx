@@ -153,10 +153,13 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
         treatments: treatments
       });
       
-      // Redirect to messages section with this clinic preselected
-      // Use the correct hash-based routing format
+      // First store clinic ID in localStorage before redirecting
+      localStorage.setItem('selectedClinicId', clinicId);
+      localStorage.setItem('selectedClinicData', JSON.stringify({ name: clinicName }));
+      
+      // Then redirect to portal login page
       setTimeout(() => {
-        window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
+        window.location.href = '/#/portal-login';
       }, 1000);
       
       toast({
@@ -254,7 +257,11 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                 <Button 
                   variant="outline" 
                   className="flex items-center gap-1"
-                  onClick={() => window.location.href = `/#/client-portal?section=messages&clinic=${clinic.id}`}
+                  onClick={() => {
+                    localStorage.setItem('selectedClinicId', clinic.id);
+                    localStorage.setItem('selectedClinicData', JSON.stringify({ name: clinic.name }));
+                    window.location.href = '/#/portal-login';
+                  }}
                 >
                   <MessageSquare className="h-4 w-4 mr-1" />
                   Message Clinic
