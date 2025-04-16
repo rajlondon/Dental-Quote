@@ -272,108 +272,175 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   };
   
   // Generate recommended treatments based on user responses
-  const generateRecommendedTreatments = useCallback(() => {
+  const generateRecommendedTreatments = () => {
     // Start with an empty array of recommended treatments
     let recommendedTreatments: TreatmentItem[] = [];
-    const treatmentIds = new Set<string>();
     
-    // Helper to add a treatment if not already added
-    const addTreatment = (treatmentId: string) => {
-      if (!treatmentIds.has(treatmentId)) {
-        // Find the treatment in the treatment categories
-        for (const category of TREATMENT_CATEGORIES) {
-          const treatment = category.treatments.find(t => t.id === treatmentId);
-          if (treatment) {
-            const newTreatment: TreatmentItem = {
-              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              name: treatment.name,
-              price: Math.round(treatment.priceGBP * 0.35),
-              priceUSD: Math.round(treatment.priceUSD * 0.35),
-              quantity: 1,
-              category: category.id,
-              customItem: false,
-              notes: ''
-            };
-            recommendedTreatments.push(newTreatment);
-            treatmentIds.add(treatmentId);
-            return true;
-          }
-        }
-      }
-      return false;
-    };
+    // Add a sample treatment based on dental conditions
+    const teethWithIssues = teeth.filter(tooth => tooth.condition || tooth.treatment);
+    const missingTeeth = teeth.filter(tooth => tooth.condition === 'missing');
+    const cosmeticTeeth = teeth.filter(tooth => tooth.condition === 'cosmetic');
+    const painTeeth = teeth.filter(tooth => tooth.condition === 'pain');
     
-    // 1. First, check concerns and add related treatments
-    for (const concernId of selectedConcerns) {
-      const concern = ORAL_HEALTH_CONCERNS.find(c => c.id === concernId);
-      if (concern && concern.relatedTreatments) {
-        concern.relatedTreatments.forEach(treatmentId => {
-          addTreatment(treatmentId);
+    // Add implant treatments for missing teeth
+    if (missingTeeth.length > 0) {
+      if (missingTeeth.length >= 5) {
+        // For multiple missing teeth, suggest All-on-4 or dentures
+        recommendedTreatments.push({
+          id: `${Date.now()}-1`,
+          category: 'implants',
+          name: 'All-on-4 Implants (Full Arch)',
+          quantity: 1,
+          priceGBP: 4200, // 35% of UK price
+          priceUSD: 5390,
+          subtotalGBP: 4200,
+          subtotalUSD: 5390,
+          guarantee: '10-year'
+        });
+      } else {
+        // For fewer missing teeth, suggest individual implants
+        recommendedTreatments.push({
+          id: `${Date.now()}-2`,
+          category: 'implants',
+          name: 'Dental Implant (Standard)',
+          quantity: missingTeeth.length,
+          priceGBP: 306, // 35% of UK price
+          priceUSD: 392,
+          subtotalGBP: 306 * missingTeeth.length,
+          subtotalUSD: 392 * missingTeeth.length,
+          guarantee: '5-year'
         });
       }
     }
     
-    // 2. Check dental chart selections and add appropriate treatments
-    const teethWithIssues = teeth.filter(tooth => tooth.condition || tooth.treatment);
-    
-    // Check if there are missing teeth
-    const missingTeeth = teeth.filter(tooth => tooth.condition === 'missing');
-    if (missingTeeth.length > 0) {
-      if (missingTeeth.length >= 5) {
-        // For multiple missing teeth, suggest All-on-4 or dentures
-        addTreatment('all_on_4_implants');
-        addTreatment('digital_denture');
-      } else {
-        // For fewer missing teeth, suggest individual implants
-        addTreatment('dental_implant_standard');
-      }
-    }
-    
-    // Check for cosmetic issues
-    const cosmeticTeeth = teeth.filter(tooth => tooth.condition === 'cosmetic');
+    // Add crown/veneer treatments for cosmetic issues
     if (cosmeticTeeth.length > 0) {
       if (cosmeticTeeth.length >= 6) {
         // For multiple teeth with cosmetic issues, suggest veneers
-        addTreatment('veneers_porcelain');
+        recommendedTreatments.push({
+          id: `${Date.now()}-3`,
+          category: 'crowns_veneers',
+          name: 'Porcelain Veneer',
+          quantity: cosmeticTeeth.length,
+          priceGBP: 210, // 35% of UK price
+          priceUSD: 270,
+          subtotalGBP: 210 * cosmeticTeeth.length,
+          subtotalUSD: 270 * cosmeticTeeth.length,
+          guarantee: '3-year'
+        });
       } else {
-        // For fewer teeth, suggest crowns or bonding
-        addTreatment('crown_porcelain');
+        // For fewer teeth, suggest crowns
+        recommendedTreatments.push({
+          id: `${Date.now()}-4`,
+          category: 'crowns_veneers',
+          name: 'Porcelain Crown',
+          quantity: cosmeticTeeth.length,
+          priceGBP: 227, // 35% of UK price
+          priceUSD: 292,
+          subtotalGBP: 227 * cosmeticTeeth.length,
+          subtotalUSD: 292 * cosmeticTeeth.length,
+          guarantee: '3-year'
+        });
       }
     }
     
-    // Check for teeth with pain
-    const painTeeth = teeth.filter(tooth => tooth.condition === 'pain');
+    // Add root canal for teeth with pain
     if (painTeeth.length > 0) {
-      addTreatment('root_canal');
+      recommendedTreatments.push({
+        id: `${Date.now()}-5`,
+        category: 'general',
+        name: 'Root Canal Treatment',
+        quantity: painTeeth.length,
+        priceGBP: 105, // 35% of UK price
+        priceUSD: 135,
+        subtotalGBP: 105 * painTeeth.length,
+        subtotalUSD: 135 * painTeeth.length
+      });
     }
     
-    // 3. Check patient goals and add relevant treatments
-    if (desiredOutcomes.includes('appearance')) {
-      addTreatment('teeth_whitening_zoom');
-      addTreatment('veneers_porcelain');
+    // Add treatments based on selected concerns
+    if (selectedConcerns.includes('missing_teeth') && recommendedTreatments.length === 0) {
+      recommendedTreatments.push({
+        id: `${Date.now()}-6`,
+        category: 'implants',
+        name: 'Dental Implant (Standard)',
+        quantity: 1,
+        priceGBP: 306,
+        priceUSD: 392,
+        subtotalGBP: 306,
+        subtotalUSD: 392,
+        guarantee: '5-year'
+      });
     }
     
-    if (desiredOutcomes.includes('function')) {
-      if (teethWithIssues.length > 5) {
-        addTreatment('full_mouth_rehabilitation');
-      }
+    if (selectedConcerns.includes('cosmetic') && !recommendedTreatments.some(t => t.name.includes('Veneer'))) {
+      recommendedTreatments.push({
+        id: `${Date.now()}-7`,
+        category: 'crowns_veneers',
+        name: 'Porcelain Veneer',
+        quantity: 4,
+        priceGBP: 210,
+        priceUSD: 270,
+        subtotalGBP: 840,
+        subtotalUSD: 1080,
+        guarantee: '3-year'
+      });
     }
     
-    // 4. If there are no specific treatments recommended, add a default treatment
+    if (selectedConcerns.includes('pain') && !recommendedTreatments.some(t => t.name.includes('Root Canal'))) {
+      recommendedTreatments.push({
+        id: `${Date.now()}-8`,
+        category: 'general',
+        name: 'Root Canal Treatment',
+        quantity: 1,
+        priceGBP: 105,
+        priceUSD: 135,
+        subtotalGBP: 105,
+        subtotalUSD: 135
+      });
+    }
+    
+    // Based on desired outcomes
+    if (desiredOutcomes.includes('appearance') && !recommendedTreatments.some(t => t.name.includes('Whitening'))) {
+      recommendedTreatments.push({
+        id: `${Date.now()}-9`,
+        category: 'whitening',
+        name: 'Zoom Whitening Treatment',
+        quantity: 1,
+        priceGBP: 140,
+        priceUSD: 180,
+        subtotalGBP: 140,
+        subtotalUSD: 180
+      });
+    }
+    
+    // Add default treatment if nothing else is selected
     if (recommendedTreatments.length === 0) {
-      if (budgetRange[0] > 5000) {
-        // Higher budget customers
-        addTreatment('full_mouth_rehabilitation');
-        addTreatment('dental_implant_premium');
-      } else {
-        // Standard budget customers
-        addTreatment('dental_check_up');
-        addTreatment('teeth_whitening_zoom');
-      }
+      recommendedTreatments.push({
+        id: `${Date.now()}-10`,
+        category: 'general',
+        name: 'Dental Check-up & Cleaning',
+        quantity: 1,
+        priceGBP: 42,
+        priceUSD: 54,
+        subtotalGBP: 42,
+        subtotalUSD: 54
+      });
+      
+      recommendedTreatments.push({
+        id: `${Date.now()}-11`,
+        category: 'whitening',
+        name: 'Zoom Whitening Treatment',
+        quantity: 1,
+        priceGBP: 140,
+        priceUSD: 180,
+        subtotalGBP: 140,
+        subtotalUSD: 180
+      });
     }
     
     return recommendedTreatments;
-  }, [selectedConcerns, teeth, desiredOutcomes, budgetRange]);
+  };
   
   // Update treatments when moving to the final step
   useEffect(() => {
@@ -381,7 +448,7 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
       const recommendedTreatments = generateRecommendedTreatments();
       setTreatments(recommendedTreatments);
     }
-  }, [currentStep, generateRecommendedTreatments, treatments.length]);
+  }, [currentStep, treatments.length]);
   
   // Handle final submission
   const handleComplete = () => {
