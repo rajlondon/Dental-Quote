@@ -12,9 +12,36 @@ import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 const TreatmentComparisonPage: React.FC = () => {
   // Sample selected treatments
   const [selectedTreatments, setSelectedTreatments] = useState<TreatmentItem[]>([
-    { id: 'dental_implant_standard', name: 'Dental Implant (Standard)', quantity: 2 },
-    { id: 'porcelain_crown', name: 'Porcelain Crown', quantity: 3 },
-    { id: 'zoom_whitening', name: 'Zoom Whitening (In-office)', quantity: 1 },
+    { 
+      id: 'dental_implant_standard', 
+      name: 'Dental Implant (Standard)', 
+      quantity: 2,
+      category: 'Implants',
+      priceGBP: 1200,
+      priceUSD: 1500,
+      subtotalGBP: 2400,
+      subtotalUSD: 3000
+    },
+    { 
+      id: 'porcelain_crown', 
+      name: 'Porcelain Crown', 
+      quantity: 3,
+      category: 'Veneers & Crowns',
+      priceGBP: 500,
+      priceUSD: 650,
+      subtotalGBP: 1500,
+      subtotalUSD: 1950
+    },
+    { 
+      id: 'zoom_whitening', 
+      name: 'Zoom Whitening (In-office)', 
+      quantity: 1,
+      category: 'Whitening',
+      priceGBP: 300,
+      priceUSD: 400,
+      subtotalGBP: 300,
+      subtotalUSD: 400
+    },
   ]);
 
   return (

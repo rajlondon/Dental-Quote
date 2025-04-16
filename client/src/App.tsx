@@ -59,6 +59,7 @@ function Router() {
       <Route path="/clinic-portal" component={ClinicPortalPage} />
       <Route path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} />
       <Route path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} />
+      <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>
