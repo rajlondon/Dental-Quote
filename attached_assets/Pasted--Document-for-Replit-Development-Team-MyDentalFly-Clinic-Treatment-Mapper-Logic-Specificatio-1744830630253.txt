@@ -1,0 +1,90 @@
+**Document for Replit Development Team**
+
+# MyDentalFly - Clinic Treatment Mapper Logic Specification
+
+## Objective:
+Enable consistent user experience on the front end while allowing flexibility for clinic-specific treatment names and packages.
+
+Clinics use varied terminology, pricing, and bundling for similar treatments. This mapper will standardize how treatments are presented to users while maintaining accurate clinic-specific data on the backend.
+
+---
+
+## Core Idea:
+- The Patient sees standardized treatment names while building their quote.
+- The Clinic defines their own label, description, and price within the portal.
+- Mapping logic connects the two.
+
+---
+
+## Example Treatment Mapper Structure (JSON Format):
+```json
+{
+  "Dental Implant": {
+    "category": "Implants",
+    "clinic_variants": [
+      {
+        "clinic_id": "clinic_001",
+        "label": "Standard Titanium Dental Implant (implant only)",
+        "price": "£400 - £600",
+        "includes": ["implant"],
+        "optional_addons": ["abutment", "crown"]
+      },
+      {
+        "clinic_id": "clinic_002",
+        "label": "Implant + Abutment + Zirconia Crown Package",
+        "price": "£950",
+        "includes": ["implant", "abutment", "crown"],
+        "note": "Includes free consultation and 5-night hotel"
+      }
+    ]
+  },
+
+  "Porcelain Veneer": {
+    "category": "Veneers & Crowns",
+    "clinic_variants": [
+      {
+        "clinic_id": "clinic_003",
+        "label": "E.max Layered Porcelain Veneer",
+        "price": "£220",
+        "includes": ["veneer"]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## User Experience:
+1. User selects "Dental Implant" in quote builder.
+2. On results page, each clinic card shows:
+   - "This clinic offers: Standard Titanium Dental Implant (implant only)"
+   - Or "Package: Implant + Abutment + Crown"
+   - Price range or single figure
+   - Optional add-ons, guarantees, package info
+
+---
+
+## Backend Requirement:
+- Each clinic entry includes a field to map to one of the master treatments.
+- Clinics can add sub-labels, notes, and pricing tiers via their portal.
+- These get linked to standard categories used in quote builder.
+
+---
+
+## Admin Portal Sync:
+- Admin should be able to:
+  - Approve or clean mapped labels for consistency
+  - Manually adjust mappings if a clinic misclassifies a treatment
+
+---
+
+## Benefits:
+- Users see a clean and familiar quote journey.
+- Clinics retain their brand-specific treatment names.
+- Replit backend maintains structured consistency for accurate pricing, reporting, and display.
+
+---
+
+End of Document.
+
