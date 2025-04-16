@@ -105,7 +105,7 @@ const PortalLoginPage: React.FC = () => {
         // Use direct URL approach - more reliable for hash-based routing
         window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
       } else {
-        navigateToClientPortal();
+        window.location.href = "/#/client-portal";
       }
     } catch (error) {
       toast({
@@ -159,7 +159,7 @@ const PortalLoginPage: React.FC = () => {
         // Use direct URL approach - more reliable for hash-based routing
         window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
       } else {
-        navigateToClientPortal();
+        window.location.href = "/#/client-portal";
       }
     } catch (error) {
       toast({
