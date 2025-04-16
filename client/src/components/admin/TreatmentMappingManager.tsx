@@ -186,7 +186,7 @@ export const TreatmentMappingManager: React.FC<TreatmentMappingManagerProps> = (
                   </TableCell>
                   <TableCell>
                     {clinicVariant ? (
-                      <Badge variant="success" className="flex items-center gap-1">
+                      <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                         <CheckCircle className="h-3 w-3" />
                         Mapped
                       </Badge>
