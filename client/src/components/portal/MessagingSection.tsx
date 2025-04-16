@@ -140,8 +140,8 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
 
   // Check URL parameters for clinic selection
   useEffect(() => {
-    // Parse clinic from URL if present (e.g., #/messages?clinic=clinic_001)
-    if (!clinicId && location.includes('?clinic=')) {
+    // Parse clinic from URL if present (e.g., #/client-portal?section=messages&clinic=clinic_001)
+    if (!clinicId && location.includes('&clinic=')) {
       const params = new URLSearchParams(location.split('?')[1]);
       const urlClinicId = params.get('clinic');
       if (urlClinicId) {

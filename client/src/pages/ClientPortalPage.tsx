@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -91,6 +91,19 @@ const ClientPortalPage: React.FC = () => {
     });
     setLocation('/');
   };
+
+  // Check URL for section parameter
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('?section=')) {
+      const params = new URLSearchParams(hash.split('?')[1]);
+      const sectionParam = params.get('section');
+      if (sectionParam && navItems.some(item => item.id === sectionParam)) {
+        setActiveSection(sectionParam);
+        console.log(`Setting active section from URL: ${sectionParam}`);
+      }
+    }
+  }, []);
 
   // Render the appropriate section based on activeSection
   const renderActiveSection = () => {
