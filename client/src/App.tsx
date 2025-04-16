@@ -26,7 +26,7 @@ import PatientDentalChart from "@/pages/PatientDentalChart";
 import ClinicDentalCharts from "@/pages/ClinicDentalCharts";
 import ClinicTreatmentMapperPage from "@/pages/ClinicTreatmentMapperPage";
 import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
-import TreatmentComparisonPage from "@/pages/TreatmentComparisonPage";
+import TreatmentComparisonPage from "./pages/TreatmentComparisonPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";

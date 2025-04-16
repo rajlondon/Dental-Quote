@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ClinicTreatmentComparison } from '@/components/ClinicTreatmentComparison';
+import ClinicTreatmentComparison from '../../components/ClinicTreatmentComparison';
 import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import { useToast } from '@/hooks/use-toast';
 import { Download, FileDown, Share2 } from 'lucide-react';
@@ -182,7 +182,19 @@ const TreatmentComparisonSection: React.FC = () => {
         </TabsList>
         
         <TabsContent value="comparison">
-          <ClinicTreatmentComparison treatments={selectedTreatments} />
+          {/* Temporarily comment out until we properly adapt the interface 
+          <ClinicTreatmentComparison 
+            treatmentMap={{}}
+            clinics={[]}
+            selectedTreatments={['Dental Implant']}
+          /> */}
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">
+                Treatment comparison view is being configured
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="details">

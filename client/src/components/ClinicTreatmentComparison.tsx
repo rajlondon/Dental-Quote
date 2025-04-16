@@ -1,337 +1,423 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, CheckCircle, ChevronDown, ChevronUp, Download, Info, MessageSquare, Star } from 'lucide-react';
-import { ClinicTreatmentDisplay, ClinicTreatmentsList, TreatmentVariantsComparison } from './ClinicTreatmentDisplay';
-import { TreatmentItem } from './TreatmentPlanBuilder';
-import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
-import { treatmentMapperService } from '@/services/treatmentMapperService';
+import React, { useState, useMemo } from "react";
 import { 
-  getMappedTreatmentsForClinic, 
-  calculateTotalPriceForMappedTreatments,
-  convertMappedTreatmentsToTreatmentItems
-} from '@/utils/treatmentMapperUtils';
-import { useToast } from '@/hooks/use-toast';
-import { clinicService } from '@/services/clinicService';
-
-// Sample clinic data
-const SAMPLE_CLINICS = [
-  { id: 'clinic_001', name: 'Istanbul Smile Center', location: 'Istanbul, Turkey', rating: 4.8 },
-  { id: 'clinic_002', name: 'Premium Dental Istanbul', location: 'Istanbul, Turkey', rating: 4.7 },
-  { id: 'clinic_003', name: 'Dental Excellence Turkey', location: 'Istanbul, Turkey', rating: 4.9 },
-];
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Check, 
+  X, 
+  Plus, 
+  ChevronDown, 
+  ChevronUp, 
+  Info 
+} from "lucide-react";
+import { 
+  TreatmentMap, 
+  Clinic, 
+  ClinicFeature 
+} from "../types/treatmentMapper";
+import { 
+  getUniqueCategories, 
+  getTreatmentsByCategory, 
+  compareTreatmentsBetweenClinics
+} from "../utils/treatmentMapperUtils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface ClinicTreatmentComparisonProps {
-  treatments: TreatmentItem[];
+  treatmentMap: TreatmentMap;
+  clinics: Clinic[];
+  clinicFeatures?: ClinicFeature[];
+  selectedTreatments?: string[];
+  initialCategory?: string;
+  onSelectTreatment?: (treatmentName: string) => void;
 }
 
-export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps> = ({ 
-  treatments 
+const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps> = ({
+  treatmentMap,
+  clinics,
+  clinicFeatures = [],
+  selectedTreatments = [],
+  initialCategory,
+  onSelectTreatment,
 }) => {
-  const { toast } = useToast();
-  const [expandedClinics, setExpandedClinics] = useState<Record<string, boolean>>({});
-  const [compareModalOpen, setCompareModalOpen] = useState(false);
-  const [compareTreatment, setCompareTreatment] = useState<string | null>(null);
-  const [compareTreatmentVariants, setCompareTreatmentVariants] = useState<ClinicTreatmentVariant[]>([]);
-  const [loadingStates, setLoadingStates] = useState<Record<string, { download: boolean; booking: boolean }>>({});
+  // Get unique categories
+  const categories = useMemo(() => getUniqueCategories(treatmentMap), [treatmentMap]);
   
-  // Initialize all clinics as collapsed and loading states
-  useEffect(() => {
-    const initialExpandState: Record<string, boolean> = {};
-    const initialLoadingStates: Record<string, { download: boolean; booking: boolean }> = {};
-    
-    SAMPLE_CLINICS.forEach(clinic => {
-      initialExpandState[clinic.id] = false;
-      initialLoadingStates[clinic.id] = { download: false, booking: false };
-    });
-    
-    setExpandedClinics(initialExpandState);
-    setLoadingStates(initialLoadingStates);
-  }, []);
+  // Set the initial active category
+  const [activeCategory, setActiveCategory] = useState<string>(
+    initialCategory && categories.includes(initialCategory) 
+      ? initialCategory 
+      : categories[0] || ""
+  );
   
-  const toggleClinicExpand = (clinicId: string) => {
-    setExpandedClinics(prev => ({
+  // Get selected clinics for comparison (we'll use all available clinics for now)
+  const selectedClinicIds = useMemo(() => clinics.map(clinic => clinic.id), [clinics]);
+  
+  // Get treatments in the active category
+  const categoryTreatments = useMemo(
+    () => getTreatmentsByCategory(treatmentMap, activeCategory),
+    [treatmentMap, activeCategory]
+  );
+  
+  // For expanded treatment details
+  const [expandedTreatments, setExpandedTreatments] = useState<Record<string, boolean>>({});
+  
+  // Toggle expanded state for a treatment
+  const toggleExpanded = (treatmentName: string) => {
+    setExpandedTreatments(prev => ({
       ...prev,
-      [clinicId]: !prev[clinicId]
+      [treatmentName]: !prev[treatmentName]
     }));
   };
   
-  const handleCompareVariants = (standardName: string) => {
-    const variants = treatmentMapperService.getAllClinicVariants(standardName);
-    setCompareTreatment(standardName);
-    setCompareTreatmentVariants(variants);
-    setCompareModalOpen(true);
-  };
+  // Comparison data for selected treatments
+  const comparisonData = useMemo(() => {
+    if (selectedTreatments.length === 0) return [];
+    
+    return compareTreatmentsBetweenClinics(
+      treatmentMap,
+      selectedTreatments,
+      selectedClinicIds
+    );
+  }, [treatmentMap, selectedTreatments, selectedClinicIds]);
   
-  // Handle quote download
-  const handleDownloadQuote = async (clinicId: string, clinicName: string) => {
-    try {
-      // Set loading state
-      setLoadingStates(prev => ({
-        ...prev,
-        [clinicId]: { ...prev[clinicId], download: true }
-      }));
-      
-      toast({
-        title: "Generating Quote",
-        description: `Preparing your quote for ${clinicName}. This may take a moment...`,
-      });
-      
-      // Calculate total price for this clinic's treatments
-      const mappedTreatments = getMappedTreatmentsForClinic(treatments, clinicId);
-      const { totalMaxPrice: totalPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
-      
-      // Mock patient details (in a real implementation this would come from the user's account)
-      const patientDetails = {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        phone: "+44 7123 456789"
-      };
-      
-      // Convert the mapped treatments to TreatmentItem format
-      const treatmentItems = convertMappedTreatmentsToTreatmentItems(mappedTreatments);
-
-      // Call service to generate and download quote
-      const quoteData = await clinicService.generateQuote(
-        clinicId, 
-        clinicName, 
-        treatmentItems, 
-        totalPrice,
-        patientDetails
-      );
-      
-      // Open the PDF in a new tab
-      if (quoteData?.url) {
-        window.open(quoteData.url, '_blank');
-      }
-      
-      toast({
-        title: "Quote Generated",
-        description: "Your quote has been generated and is downloading now.",
-      });
-    } catch (error) {
-      console.error('Error downloading quote:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate quote. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      // Reset loading state
-      setLoadingStates(prev => ({
-        ...prev,
-        [clinicId]: { ...prev[clinicId], download: false }
-      }));
-    }
-  };
-  
-  // Handle choosing a clinic
-  const handleChooseClinic = async (clinicId: string, clinicName: string) => {
-    try {
-      // Set loading state
-      setLoadingStates(prev => ({
-        ...prev,
-        [clinicId]: { ...prev[clinicId], booking: true }
-      }));
-      
-      toast({
-        title: "Processing Selection",
-        description: `Setting up your connection with ${clinicName}...`,
-      });
-      
-      // Mock patient details (in a real app, this would be from the user's account)
-      const patientDetails = {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        phone: "+44 7123 456789"
-      };
-      
-      // Call the API to establish a connection with the clinic
-      await clinicService.selectClinic(clinicId, patientDetails, {
-        treatments: treatments
-      });
-      
-      // Store clinic ID in localStorage for persistence across pages
-      localStorage.setItem('selectedClinicId', clinicId);
-      localStorage.setItem('selectedClinicData', JSON.stringify({ name: clinicName }));
-      
-      toast({
-        title: "Clinic Selected",
-        description: `You are now connected with ${clinicName}. You'll need to log in to continue.`,
-      });
-      
-      // Create direct URL to the client portal with specific section and clinic
-      // For demo purposes, we'll log in automatically with the test client account
-      setTimeout(() => {
-        // Use a simpler approach - go directly to the test tab on the login page
-        window.location.href = '/#/portal-login';
-      }, 1500);
-    } catch (error) {
-      console.error('Error selecting clinic:', error);
-      toast({
-        title: "Selection Error",
-        description: "Failed to connect with clinic. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      // Reset loading state
-      setLoadingStates(prev => ({
-        ...prev,
-        [clinicId]: { ...prev[clinicId], booking: false }
-      }));
-    }
-  };
+  // Feature comparison data
+  const featureComparisonData = useMemo(() => {
+    return clinicFeatures.map(feature => ({
+      feature,
+      clinicSupport: selectedClinicIds.map(clinicId => {
+        const clinic = clinics.find(c => c.id === clinicId);
+        return clinic?.features?.[feature.id] || false;
+      })
+    }));
+  }, [clinics, selectedClinicIds, clinicFeatures]);
   
   return (
-    <div className="space-y-8 my-8">
-      <h2 className="text-2xl font-bold">Compare Clinic Treatments</h2>
-      <p className="text-muted-foreground mb-6">
-        Each clinic may offer different treatment packages, pricing, and inclusions. 
-        Compare how your selected treatments are offered at each clinic.
-      </p>
-      
-      <div className="space-y-6">
-        {SAMPLE_CLINICS.map(clinic => {
-          const isExpanded = expandedClinics[clinic.id];
-          const mappedTreatments = getMappedTreatmentsForClinic(treatments, clinic.id);
-          const { formattedPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Treatment Comparison</CardTitle>
+        <CardDescription>
+          Compare dental treatments across our partner clinics
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="treatments" className="w-full">
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="treatments">Treatment Options</TabsTrigger>
+            <TabsTrigger value="comparison">Comparison {selectedTreatments.length > 0 && `(${selectedTreatments.length})`}</TabsTrigger>
+          </TabsList>
           
-          return (
-            <Card key={clinic.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center">
-                      {clinic.name}
-                      <Badge variant="outline" className="ml-2 flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        {clinic.rating}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>{clinic.location}</CardDescription>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold">{formattedPrice}</div>
-                    <div className="text-sm text-muted-foreground">Total Quote</div>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pb-0">
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-muted-foreground">
-                    {mappedTreatments.filter(t => t.clinicVariant).length} of {treatments.length} treatments available
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => toggleClinicExpand(clinic.id)}
-                    className="flex items-center gap-1"
-                  >
-                    {isExpanded ? (
-                      <>
-                        <ChevronUp className="h-4 w-4" />
-                        Hide Details
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4" />
-                        View Details
-                      </>
-                    )}
-                  </Button>
-                </div>
+          {/* Treatment Selection Tab */}
+          <TabsContent value="treatments" className="space-y-4">
+            {/* Category Selection */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={activeCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveCategory(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Treatment List */}
+            <div className="space-y-2">
+              {categoryTreatments.map(([treatmentName]) => {
+                const isSelected = selectedTreatments.includes(treatmentName);
                 
-                {isExpanded && (
-                  <div className="mt-4 mb-2">
-                    <ClinicTreatmentsList 
-                      treatments={treatments}
-                      clinicId={clinic.id}
-                      onShowAllVariants={handleCompareVariants}
-                    />
+                return (
+                  <div key={treatmentName} className="border rounded-md">
+                    <div className="flex items-center justify-between p-3">
+                      <div>
+                        <h3 className="font-medium">{treatmentName}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Available at {clinics.filter(clinic => 
+                            treatmentMap[treatmentName]?.clinic_variants.some(v => v.clinic_id === clinic.id)
+                          ).length} clinics
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => onSelectTreatment?.(treatmentName)}
+                        >
+                          {isSelected ? 'Selected' : 'Compare'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleExpanded(treatmentName)}
+                        >
+                          {expandedTreatments[treatmentName] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Expanded Treatment Details */}
+                    {expandedTreatments[treatmentName] && (
+                      <div className="px-3 pb-3 pt-0">
+                        <Separator className="my-2" />
+                        <div className="space-y-3">
+                          {treatmentMap[treatmentName]?.clinic_variants.map((variant, idx) => {
+                            // Find the clinic for this variant
+                            const clinic = clinics.find(c => c.id === variant.clinic_id);
+                            
+                            return (
+                              <div key={`${variant.clinic_id}-${idx}`} className="bg-muted/50 p-3 rounded-md">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-medium">{clinic?.name || variant.clinic_id}</span>
+                                  <Badge variant="outline">{variant.price}</Badge>
+                                </div>
+                                <p className="text-sm mb-2">{variant.label}</p>
+                                
+                                {/* Included Items */}
+                                {variant.includes && variant.includes.length > 0 && (
+                                  <div className="mt-2">
+                                    <span className="text-xs text-muted-foreground mb-1 block">Includes:</span>
+                                    <div className="flex flex-wrap gap-1">
+                                      {variant.includes.map(item => (
+                                        <Badge key={item} variant="secondary" className="text-xs">
+                                          <Check className="h-3 w-3 mr-1" />
+                                          {item}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Optional Add-ons */}
+                                {variant.optional_addons && variant.optional_addons.length > 0 && (
+                                  <div className="mt-2">
+                                    <span className="text-xs text-muted-foreground mb-1 block">Optional add-ons:</span>
+                                    <div className="flex flex-wrap gap-1">
+                                      {variant.optional_addons.map(item => (
+                                        <Badge key={item} variant="outline" className="text-xs">
+                                          <Plus className="h-3 w-3 mr-1" />
+                                          {item}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Notes */}
+                                {variant.note && (
+                                  <div className="mt-2 text-xs italic text-muted-foreground">
+                                    Note: {variant.note}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </CardContent>
+                );
+              })}
               
-              <CardFooter className="flex justify-between pt-4 pb-4">
+              {categoryTreatments.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No treatments found in this category
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          {/* Comparison Tab */}
+          <TabsContent value="comparison">
+            {selectedTreatments.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">
+                  Select treatments to compare across clinics
+                </p>
                 <Button 
-                  variant="outline" 
-                  className="flex items-center gap-1"
+                  variant="outline"
                   onClick={() => {
-                    // Save clinic data to localStorage for persistence
-                    localStorage.setItem('selectedClinicId', clinic.id);
-                    localStorage.setItem('selectedClinicData', JSON.stringify({ name: clinic.name }));
-                    // Use direct hash-based navigation to ensure proper routing
-                    window.location.href = '/#/portal-login';
-                    // Show toast for better UX
-                    toast({
-                      title: "Clinic Selected",
-                      description: `You've selected ${clinic.name}. Please log in to continue.`,
-                    });
+                    const element = document.querySelector('[data-value="treatments"]') as HTMLElement;
+                    if (element) element.click();
                   }}
                 >
-                  <MessageSquare className="h-4 w-4 mr-1" />
-                  Message Clinic
+                  Choose Treatments
                 </Button>
-                <div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Treatments Comparison Table */}
+                <div className="border rounded-md overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-muted/50">
+                          <th className="p-3 text-left font-medium">Treatment</th>
+                          {clinics.map(clinic => (
+                            <th key={clinic.id} className="p-3 text-left font-medium">
+                              {clinic.name}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparisonData.map(({ treatmentName, clinicVariants }) => (
+                          <tr key={treatmentName} className="border-t">
+                            <td className="p-3 font-medium">{treatmentName}</td>
+                            {clinicVariants.map((variant, idx) => (
+                              <td key={idx} className="p-3">
+                                {variant ? (
+                                  <Collapsible>
+                                    <div className="flex flex-col">
+                                      <div className="flex justify-between items-center">
+                                        <Badge variant="outline">{variant.price}</Badge>
+                                        <CollapsibleTrigger asChild>
+                                          <Button variant="ghost" size="sm">
+                                            <Info className="h-4 w-4" />
+                                          </Button>
+                                        </CollapsibleTrigger>
+                                      </div>
+                                      <CollapsibleContent>
+                                        <div className="mt-2 space-y-2">
+                                          <p className="text-sm">{variant.label}</p>
+                                          
+                                          {/* Included Items */}
+                                          <div className="text-xs">
+                                            <span className="text-muted-foreground">Includes:</span>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                              {variant.includes.map(item => (
+                                                <Badge key={item} variant="secondary" className="text-xs">
+                                                  {item}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          </div>
+                                          
+                                          {/* Optional Add-ons */}
+                                          {variant.optional_addons && variant.optional_addons.length > 0 && (
+                                            <div className="text-xs">
+                                              <span className="text-muted-foreground">Add-ons:</span>
+                                              <div className="flex flex-wrap gap-1 mt-1">
+                                                {variant.optional_addons.map(item => (
+                                                  <Badge key={item} variant="outline" className="text-xs">
+                                                    {item}
+                                                  </Badge>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {/* Notes */}
+                                          {variant.note && (
+                                            <p className="text-xs italic text-muted-foreground">
+                                              {variant.note}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </div>
+                                  </Collapsible>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">Not available</span>
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                {/* Features Comparison Table */}
+                <div className="border rounded-md overflow-hidden">
+                  <div className="p-3 border-b bg-muted/50">
+                    <h3 className="font-medium">Clinic Features</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-muted/50">
+                          <th className="p-3 text-left font-medium">Feature</th>
+                          {clinics.map(clinic => (
+                            <th key={clinic.id} className="p-3 text-left font-medium">
+                              {clinic.name}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {featureComparisonData.map(({ feature, clinicSupport }) => (
+                          <tr key={feature.id} className="border-t">
+                            <td className="p-3">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger className="flex items-center gap-1 text-left">
+                                    <span>{feature.name}</span>
+                                    <Info className="h-3 w-3 text-muted-foreground" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="max-w-xs">{feature.description}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </td>
+                            {clinicSupport.map((supported, idx) => (
+                              <td key={idx} className="p-3">
+                                {supported ? (
+                                  <Check className="h-5 w-5 text-primary" />
+                                ) : (
+                                  <X className="h-5 w-5 text-muted-foreground/50" />
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex justify-between">
                   <Button 
-                    variant="outline" 
-                    className="mr-2 flex items-center"
-                    onClick={() => handleDownloadQuote(clinic.id, clinic.name)}
-                    disabled={loadingStates[clinic.id]?.download}
+                    variant="outline"
+                    onClick={() => {
+                      const element = document.querySelector('[data-value="treatments"]') as HTMLElement;
+                      if (element) element.click();
+                    }}
                   >
-                    {loadingStates[clinic.id]?.download ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-1" />
-                        Download Quote
-                      </>
-                    )}
+                    Edit Selection
                   </Button>
-                  <Button
-                    onClick={() => handleChooseClinic(clinic.id, clinic.name)}
-                    disabled={loadingStates[clinic.id]?.booking}
-                  >
-                    {loadingStates[clinic.id]?.booking ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </>
-                    ) : (
-                      "Choose This Clinic"
-                    )}
+                  <Button>
+                    Request Treatment Quote
                   </Button>
                 </div>
-              </CardFooter>
-            </Card>
-          );
-        })}
-      </div>
-      
-      {/* Treatment Variants Comparison Modal */}
-      {compareModalOpen && compareTreatment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-[90%] max-w-4xl max-h-[90vh] overflow-auto">
-            <TreatmentVariantsComparison
-              standardName={compareTreatment}
-              variants={compareTreatmentVariants}
-              onClose={() => setCompareModalOpen(false)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
+
+export default ClinicTreatmentComparison;
