@@ -55,8 +55,6 @@ const PortalLoginPage: React.FC = () => {
     setSelectedClinicName(null);
     
     console.log("Cleared stored clinic data to simplify portal login navigation");
-    
-    // Removed clinic selection code to fix navigation issues
   }, []);
   
   // Registration form
@@ -479,47 +477,43 @@ const PortalLoginPage: React.FC = () => {
                         )}
                       />
                       <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? "Logging in..." : "Login as Test User"}
+                        {isLoading ? "Logging in..." : "Continue with Test Account"}
                       </Button>
                     </form>
                   </Form>
                 </CardContent>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Automatically logs in with pre-defined test credentials. This option is only available in the development environment.
-                  </p>
-                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
         
-        {/* Right Column - Hero Image/Content */}
+        {/* Right Column - Features */}
         <div className="hidden md:flex flex-col justify-center">
-          <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg overflow-hidden h-[600px]">
-            <div className="absolute inset-0 flex flex-col justify-center p-12">
-              <h2 className="text-4xl font-bold mb-6">Welcome to MyDentalFly Portal</h2>
-              <div className="space-y-6 max-w-md">
-                <div className="bg-white/90 p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-lg text-primary mb-2">Manage Your Dental Journey</h3>
-                  <p className="text-neutral-700">
-                    Access your personalized treatment plans, communicate directly with your chosen clinic, and manage your appointments.
-                  </p>
-                </div>
-                
-                <div className="bg-white/90 p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-lg text-primary mb-2">Secure Communication</h3>
-                  <p className="text-neutral-700">
-                    Connect securely with your dental clinic through our encrypted messaging system for consultations and follow-ups.
-                  </p>
-                </div>
-                
-                <div className="bg-white/90 p-4 rounded-lg shadow-sm">
-                  <h3 className="font-semibold text-lg text-primary mb-2">Treatment Tracking</h3>
-                  <p className="text-neutral-700">
-                    Track the progress of your dental procedures, view detailed treatment plans, and access post-care instructions.
-                  </p>
-                </div>
+          <div className="bg-gradient-to-br from-primary/5 to-primary/20 p-6 rounded-xl border border-primary/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-white/20 transform translate-x-1/3 skew-x-12" />
+            
+            <h2 className="text-2xl font-bold text-primary mb-6">Portal Features</h2>
+            
+            <div className="space-y-4">
+              <div className="bg-white/90 p-4 rounded-lg shadow-sm">
+                <h3 className="font-semibold text-lg text-primary mb-2">Dental Treatment Plans</h3>
+                <p className="text-neutral-700">
+                  Access your personalized treatment plan, pricing, and appointment schedule in one secure location.
+                </p>
+              </div>
+              
+              <div className="bg-white/90 p-4 rounded-lg shadow-sm">
+                <h3 className="font-semibold text-lg text-primary mb-2">Direct Messaging</h3>
+                <p className="text-neutral-700">
+                  Connect securely with your dental clinic through our encrypted messaging system for consultations and follow-ups.
+                </p>
+              </div>
+              
+              <div className="bg-white/90 p-4 rounded-lg shadow-sm">
+                <h3 className="font-semibold text-lg text-primary mb-2">Treatment Tracking</h3>
+                <p className="text-neutral-700">
+                  Track the progress of your dental procedures, view detailed treatment plans, and access post-care instructions.
+                </p>
               </div>
             </div>
           </div>
