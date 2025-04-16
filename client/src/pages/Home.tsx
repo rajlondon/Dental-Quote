@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import clinicsData from "@/data/clinics.json";
-import EmergencyLinks from "@/components/EmergencyLinks";
 
 // Clinic Card Component
 const ClinicCard = ({ 
@@ -373,9 +372,6 @@ const HomePage: React.FC = () => {
       
       {/* How It Works Section */}
       <HowItWorksSection />
-      
-      {/* Emergency Links Section - Only shows in development mode */}
-      {process.env.NODE_ENV !== 'production' && <EmergencyLinks />}
       
       <Footer />
     </>

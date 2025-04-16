@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, Lock, Mail, Phone, User, Hospital } from "lucide-react";
-import TestButtons from "./TestButtons";
+import { navigateToClientPortal, navigateToAdminPortal, navigateToClinicPortal } from "@/utils/portalNavigation";
 
 // Form schema for login
 const loginSchema = z.object({
@@ -518,9 +518,6 @@ const PortalLoginPage: React.FC = () => {
               </Card>
             </TabsContent>
           </Tabs>
-          
-          {/* Emergency Test Buttons - For when login functionality isn't working */}
-          <TestButtons />
         </div>
         
         {/* Right Column - Hero Image/Content */}
