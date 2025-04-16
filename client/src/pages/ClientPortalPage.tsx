@@ -92,16 +92,31 @@ const ClientPortalPage: React.FC = () => {
     setLocation('/');
   };
 
-  // Check URL for section parameter
+  // Check URL for section parameter with more robust parsing
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes('?section=')) {
-      const params = new URLSearchParams(hash.split('?')[1]);
-      const sectionParam = params.get('section');
-      if (sectionParam && navItems.some(item => item.id === sectionParam)) {
-        setActiveSection(sectionParam);
-        console.log(`Setting active section from URL: ${sectionParam}`);
+    try {
+      // Get the hash part of the URL (e.g., #/client-portal?section=messages)
+      const hash = window.location.hash;
+      
+      // Check if there are query parameters
+      if (hash.includes('?')) {
+        // Extract the query string part
+        const queryString = hash.split('?')[1];
+        const params = new URLSearchParams(queryString);
+        
+        // Get section parameter
+        const sectionParam = params.get('section');
+        
+        // Only set active section if it's valid
+        if (sectionParam && navItems.some(item => item.id === sectionParam)) {
+          setActiveSection(sectionParam);
+          console.log(`Setting active section from URL: ${sectionParam}`);
+        }
       }
+    } catch (error) {
+      console.error("Error parsing URL parameters:", error);
+      // Fallback to dashboard if there's an error
+      setActiveSection('dashboard');
     }
   }, []);
 

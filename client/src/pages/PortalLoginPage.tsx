@@ -187,22 +187,16 @@ const PortalLoginPage: React.FC = () => {
           title: "Client Test Login Successful",
           description: "You are now logged in as a test client user.",
         });
-        // If we have a selected clinic, route to messages section with that clinic
-        const clinicId = localStorage.getItem('selectedClinicId');
+        // Simplest direct navigation approach
+        window.location.href = '/#/client-portal';
         
-        // DIRECT URL APPROACH - More reliable than using the helper functions
-        if (clinicId) {
-          console.log("Redirecting to messages with clinic ID:", clinicId);
-          window.location.href = `/#/client-portal?section=messages&clinic=${clinicId}`;
-        } else {
-          window.location.href = '/#/client-portal';
-        }
       } else if (values.userType === "admin") {
         toast({
           title: "Admin Test Login Successful",
           description: "You are now logged in as a test admin user.",
         });
         window.location.href = '/#/admin-portal';
+        
       } else if (values.userType === "clinic") {
         toast({
           title: "Clinic Test Login Successful",

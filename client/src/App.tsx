@@ -31,7 +31,6 @@ import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Suspense } from "react";
-import PortalRouter from "@/components/PortalRouter";
 
 function Router() {
   return (
@@ -118,9 +117,7 @@ function App() {
         <Suspense fallback={<div>Loading...</div>}>
           <ScrollToTop />
           <ReloadTranslations />
-          <PortalRouter>
-            <Router />
-          </PortalRouter>
+          <Router />
           <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
           <Toaster />
         </Suspense>
