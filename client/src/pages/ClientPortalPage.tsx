@@ -61,6 +61,7 @@ const navItems = [
   { label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, id: 'messages', notificationCount: 3 },
   { label: 'Treatment Plan', icon: <FileText className="h-5 w-5" />, id: 'treatment_plan' },
   { label: 'Dental Chart', icon: <Stethoscope className="h-5 w-5" />, id: 'dental_chart' },
+  { label: 'Treatment Comparison', icon: <BarChart2 className="h-5 w-5" />, id: 'treatment_comparison' },
   { label: 'Appointments', icon: <Calendar className="h-5 w-5" />, id: 'appointments' },
   { label: 'Documents', icon: <FileText className="h-5 w-5" />, id: 'documents' },
   { label: 'Support', icon: <UserCog className="h-5 w-5" />, id: 'support' },
@@ -110,6 +111,8 @@ const ClientPortalPage: React.FC = () => {
         return <TreatmentPlanSection />;
       case 'dental_chart':
         return <DentalChartSection />;
+      case 'treatment_comparison':
+        return <TreatmentComparisonSection />;
       default:
         return <DashboardSection setActiveSection={setActiveSection} />;
     }
@@ -298,12 +301,21 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
               <span className="font-medium">{t('portal.dashboard.total', 'Total')}:</span>
               <span className="font-bold">£{mockBookingData.treatmentPlan.totalGBP}</span>
             </div>
-            <Button 
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
-              onClick={() => setActiveSection('treatment_plan')}
-            >
-              {t('portal.dashboard.view_treatment_plan', 'View Full Treatment Plan')}
-            </Button>
+            <div className="space-y-2 mt-4">
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => setActiveSection('treatment_plan')}
+              >
+                {t('portal.dashboard.view_treatment_plan', 'View Full Treatment Plan')}
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => setActiveSection('treatment_comparison')}
+              >
+                {t('portal.dashboard.compare_treatments', 'Compare Treatment Options')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
         
