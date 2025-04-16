@@ -12,6 +12,7 @@ export interface ClinicTreatmentVariant {
   includes: string[];
   optional_addons?: string[];
   note?: string;
+  clinic_name?: string;
 }
 
 export interface StandardTreatment {

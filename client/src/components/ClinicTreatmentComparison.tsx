@@ -123,13 +123,25 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                 )}
               </CardContent>
               
-              <CardFooter className="flex justify-end pt-4 pb-4">
-                <Button variant="outline" className="mr-2">
-                  Download Quote
+              <CardFooter className="flex justify-between pt-4 pb-4">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={() => window.location.href = "#/patient-portal/messages?clinic=" + clinic.id}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  Message Clinic
                 </Button>
-                <Button>
-                  Book Consultation
-                </Button>
+                <div>
+                  <Button variant="outline" className="mr-2">
+                    Download Quote
+                  </Button>
+                  <Button>
+                    Book Consultation
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           );
