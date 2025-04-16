@@ -52,9 +52,9 @@ const Navbar: React.FC = () => {
             </div>
           </div>
           
-          <a href="/#/portal-login" className="text-neutral-600 hover:text-primary transition-colors text-xs">
+          <Link href="/portal-login" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.patient_portal', 'Patient Portal')}
-          </a>
+          </Link>
           
           <div className="relative group">
             <span className="text-neutral-600 hover:text-primary transition-colors text-xs cursor-pointer">
