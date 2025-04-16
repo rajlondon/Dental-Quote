@@ -52,7 +52,7 @@ const Navbar: React.FC = () => {
             </div>
           </div>
           
-          <Link href="/portal" className="text-neutral-600 hover:text-primary transition-colors text-xs">
+          <Link href="/portal-login" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           
@@ -130,7 +130,7 @@ const Navbar: React.FC = () => {
             My Saved Dental Charts
           </Link>
           
-          <Link href="/portal" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
+          <Link href="/portal-login" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           

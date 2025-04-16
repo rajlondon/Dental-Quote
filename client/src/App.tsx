@@ -52,8 +52,10 @@ function Router() {
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/clinic-dental-charts" component={ClinicDentalCharts} />
       <Route path="/booking" component={BookingPage} />
-      <Route path="/portal" component={PortalLoginPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
+      <Route path="/portal">
+        {() => <Redirect to="/portal-login" />}
+      </Route>
       <Route path="/client-portal" component={ClientPortalPage} />
       <Route path="/admin-portal" component={AdminPortalPage} />
       <Route path="/clinic-portal" component={ClinicPortalPage} />
