@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, MessageSquare, FileText, Calendar, BarChart3, 
   ClipboardList, Clock, LogOut, Settings, ChevronRight, Search,
-  Bell, Banknote
+  Bell, Banknote, Grid3X3
 } from "lucide-react";
+import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,7 @@ const AdminPortalPage: React.FC = () => {
     { id: "payments", label: t("admin.sidebar.payments", "Payments"), icon: <Banknote className="h-5 w-5" /> },
     { id: "messages", label: t("admin.sidebar.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
     { id: "documents", label: t("admin.sidebar.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
+    { id: "treatment_mapper", label: t("admin.sidebar.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: "analytics", label: t("admin.sidebar.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
     { id: "settings", label: t("admin.sidebar.settings", "Settings"), icon: <Settings className="h-5 w-5" /> }
   ];
@@ -126,6 +128,8 @@ const AdminPortalPage: React.FC = () => {
         return <AdminAnalyticsSection />;
       case "settings":
         return <AdminSettingsSection />;
+      case "treatment_mapper":
+        return <AdminTreatmentMapperPage />;
       default:
         return (
           <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
