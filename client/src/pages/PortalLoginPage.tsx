@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, Lock, Mail, Phone, User, Hospital } from "lucide-react";
+import { navigateToClientPortal, navigateToAdminPortal, navigateToClinicPortal } from "@/utils/portalNavigation";
 
 // Form schema for login
 const loginSchema = z.object({
@@ -53,12 +54,20 @@ const PortalLoginPage: React.FC = () => {
         if (clinicData.name) {
           setHasSelectedClinic(true);
           setSelectedClinicName(clinicData.name);
+          
+          // Show notification about selected clinic
+          toast({
+            title: "Clinic Selected",
+            description: `You've selected ${clinicData.name}. Please login or register to continue.`,
+          });
+          
+          console.log("Found selected clinic:", clinicId, clinicData.name);
         }
       } catch (error) {
         console.error('Error parsing clinic data:', error);
       }
     }
-  }, []);
+  }, [toast]);
   
   // Registration form
   const registerForm = useForm<z.infer<typeof registerSchema>>({
@@ -92,9 +101,10 @@ const PortalLoginPage: React.FC = () => {
       // If we have a selected clinic, route to messages section with that clinic
       const clinicId = localStorage.getItem('selectedClinicId');
       if (clinicId) {
-        navigate("/client-portal?section=messages&clinic=" + clinicId);
+        console.log("Redirecting to messages with clinic ID:", clinicId);
+        navigateToClientPortal("messages", clinicId);
       } else {
-        navigate("/client-portal");
+        navigateToClientPortal();
       }
     } catch (error) {
       toast({
@@ -144,9 +154,10 @@ const PortalLoginPage: React.FC = () => {
       // If we have a selected clinic, route to messages section with that clinic
       const clinicId = localStorage.getItem('selectedClinicId');
       if (clinicId) {
-        navigate("/client-portal?section=messages&clinic=" + clinicId);
+        console.log("Redirecting to messages with clinic ID:", clinicId);
+        navigateToClientPortal("messages", clinicId);
       } else {
-        navigate("/client-portal");
+        navigateToClientPortal();
       }
     } catch (error) {
       toast({
@@ -177,22 +188,23 @@ const PortalLoginPage: React.FC = () => {
         // If we have a selected clinic, route to messages section with that clinic
         const clinicId = localStorage.getItem('selectedClinicId');
         if (clinicId) {
-          navigate("/client-portal?section=messages&clinic=" + clinicId);
+          console.log("Redirecting to messages with clinic ID:", clinicId);
+          navigateToClientPortal("messages", clinicId);
         } else {
-          navigate("/client-portal");
+          navigateToClientPortal();
         }
       } else if (values.userType === "admin") {
         toast({
           title: "Admin Test Login Successful",
           description: "You are now logged in as a test admin user.",
         });
-        navigate("/admin-portal");
+        navigateToAdminPortal();
       } else if (values.userType === "clinic") {
         toast({
           title: "Clinic Test Login Successful",
           description: "You are now logged in as a test clinic user.",
         });
-        navigate("/clinic-portal");
+        navigateToClinicPortal();
       }
     } catch (error) {
       toast({
@@ -437,13 +449,13 @@ const PortalLoginPage: React.FC = () => {
               </Card>
             </TabsContent>
             
-            {/* Test Access Tab */}
+            {/* Test Credentials Tab */}
             <TabsContent value="test">
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("portal.login.test_access", "Test Access")}</CardTitle>
+                  <CardTitle>Test Access</CardTitle>
                   <CardDescription>
-                    {t("portal.login.test_desc", "Use test credentials to explore the portal")}
+                    For demonstration purposes only. Choose a user type to test the portal.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -454,51 +466,34 @@ const PortalLoginPage: React.FC = () => {
                         name="userType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("portal.login.user_type", "Select User Type")}</FormLabel>
-                            <div className="grid grid-cols-2 gap-4">
-                              <Button
-                                type="button"
-                                variant={field.value === "client" ? "default" : "outline"}
-                                className={`flex items-center justify-center gap-2 h-20 ${
-                                  field.value === "client" ? "ring-2 ring-primary" : ""
-                                }`}
+                            <FormLabel>User Type</FormLabel>
+                            <div className="grid grid-cols-3 gap-2">
+                              <Button 
+                                type="button" 
+                                variant={field.value === "client" ? "default" : "outline"} 
+                                className="flex flex-col items-center justify-center py-6"
                                 onClick={() => field.onChange("client")}
                               >
-                                <User className="h-5 w-5" />
-                                <div className="text-left">
-                                  <div className="font-medium">{t("portal.login.client", "Client")}</div>
-                                  <div className="text-xs text-neutral-500">{t("portal.login.client_desc", "Patient Portal")}</div>
-                                </div>
+                                <User className="h-8 w-8 mb-2" />
+                                <span>Client</span>
                               </Button>
-                              <Button
-                                type="button"
-                                variant={field.value === "admin" ? "default" : "outline"}
-                                className={`flex items-center justify-center gap-2 h-20 ${
-                                  field.value === "admin" ? "ring-2 ring-primary" : ""
-                                }`}
+                              <Button 
+                                type="button" 
+                                variant={field.value === "admin" ? "default" : "outline"} 
+                                className="flex flex-col items-center justify-center py-6"
                                 onClick={() => field.onChange("admin")}
                               >
-                                <Lock className="h-5 w-5" />
-                                <div className="text-left">
-                                  <div className="font-medium">{t("portal.login.admin", "Admin")}</div>
-                                  <div className="text-xs text-neutral-500">{t("portal.login.admin_desc", "Staff Portal")}</div>
-                                </div>
+                                <Lock className="h-8 w-8 mb-2" />
+                                <span>Admin</span>
                               </Button>
-                            </div>
-                            <div className="mt-4">
-                              <Button
-                                type="button"
-                                variant={field.value === "clinic" ? "default" : "outline"}
-                                className={`flex items-center justify-center gap-2 h-20 w-full ${
-                                  field.value === "clinic" ? "ring-2 ring-primary" : ""
-                                }`}
+                              <Button 
+                                type="button" 
+                                variant={field.value === "clinic" ? "default" : "outline"} 
+                                className="flex flex-col items-center justify-center py-6"
                                 onClick={() => field.onChange("clinic")}
                               >
-                                <Hospital className="h-5 w-5" />
-                                <div className="text-left">
-                                  <div className="font-medium">{t("portal.login.clinic", "Clinic")}</div>
-                                  <div className="text-xs text-neutral-500">{t("portal.login.clinic_desc", "Clinic Management Portal")}</div>
-                                </div>
+                                <Hospital className="h-8 w-8 mb-2" />
+                                <span>Clinic</span>
                               </Button>
                             </div>
                             <FormMessage />
@@ -506,105 +501,46 @@ const PortalLoginPage: React.FC = () => {
                         )}
                       />
                       <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? t("portal.login.accessing", "Accessing...") : t("portal.login.access_portal", "Access Portal")}
+                        {isLoading ? "Logging in..." : "Login as Test User"}
                       </Button>
                     </form>
                   </Form>
                 </CardContent>
+                <CardFooter>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically logs in with pre-defined test credentials. This option is only available in the development environment.
+                  </p>
+                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
         
-        {/* Right Column - Hero/Explainer */}
+        {/* Right Column - Hero Image/Content */}
         <div className="hidden md:flex flex-col justify-center">
-          <div className="bg-primary/5 border border-primary/10 rounded-lg p-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/20 z-0" />
-            
-            <div className="relative z-10">
-              <h2 className="text-2xl font-bold text-primary mb-4">
-                {t("portal.login.welcome", "Welcome to MyDentalFly Patient Portal")}
-              </h2>
-              
-              <div className="space-y-4">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-primary mb-2">
-                    {t("portal.login.client_features", "Patient Portal Features")}
-                  </h3>
-                  <ul className="text-sm text-neutral-600 space-y-2">
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_treatment_plan", "View and approve your treatment plan")}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_chat", "Chat with your dental team")}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_docs", "Upload and manage your documents")}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_appts", "Schedule and manage appointments")}
-                    </li>
-                  </ul>
+          <div className="relative bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg overflow-hidden h-[600px]">
+            <div className="absolute inset-0 flex flex-col justify-center p-12">
+              <h2 className="text-4xl font-bold mb-6">Welcome to MyDentalFly Portal</h2>
+              <div className="space-y-6 max-w-md">
+                <div className="bg-white/90 p-4 rounded-lg shadow-sm">
+                  <h3 className="font-semibold text-lg text-primary mb-2">Manage Your Dental Journey</h3>
+                  <p className="text-neutral-700">
+                    Access your personalized treatment plans, communicate directly with your chosen clinic, and manage your appointments.
+                  </p>
                 </div>
                 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-primary mb-2">
-                    {t("portal.login.admin_features", "Admin Portal Features")}
-                  </h3>
-                  <ul className="text-sm text-neutral-600 space-y-2">
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_patients", "Manage patient accounts and inquiries")}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_quotes", "Create and send treatment quotes")}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_bookings", "Track bookings and appointments")}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="bg-primary/10 p-1 rounded mt-0.5">
-                        <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      {t("portal.login.feature_analytics", "View analytics and performance metrics")}
-                    </li>
-                  </ul>
+                <div className="bg-white/90 p-4 rounded-lg shadow-sm">
+                  <h3 className="font-semibold text-lg text-primary mb-2">Secure Communication</h3>
+                  <p className="text-neutral-700">
+                    Connect securely with your dental clinic through our encrypted messaging system for consultations and follow-ups.
+                  </p>
+                </div>
+                
+                <div className="bg-white/90 p-4 rounded-lg shadow-sm">
+                  <h3 className="font-semibold text-lg text-primary mb-2">Treatment Tracking</h3>
+                  <p className="text-neutral-700">
+                    Track the progress of your dental procedures, view detailed treatment plans, and access post-care instructions.
+                  </p>
                 </div>
               </div>
             </div>

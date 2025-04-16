@@ -260,9 +260,16 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                   variant="outline" 
                   className="flex items-center gap-1"
                   onClick={() => {
+                    // Save clinic data to localStorage for persistence
                     localStorage.setItem('selectedClinicId', clinic.id);
                     localStorage.setItem('selectedClinicData', JSON.stringify({ name: clinic.name }));
+                    // Use direct hash-based navigation to ensure proper routing
                     window.location.href = '/#/portal-login';
+                    // Show toast for better UX
+                    toast({
+                      title: "Clinic Selected",
+                      description: `You've selected ${clinic.name}. Please log in to continue.`,
+                    });
                   }}
                 >
                   <MessageSquare className="h-4 w-4 mr-1" />
