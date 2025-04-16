@@ -153,19 +153,21 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
         treatments: treatments
       });
       
-      // First store clinic ID in localStorage before redirecting
+      // Store clinic ID in localStorage for persistence across pages
       localStorage.setItem('selectedClinicId', clinicId);
       localStorage.setItem('selectedClinicData', JSON.stringify({ name: clinicName }));
       
-      // Then redirect to portal login page
-      setTimeout(() => {
-        window.location.href = '/#/portal-login';
-      }, 1000);
-      
       toast({
         title: "Clinic Selected",
-        description: `You are now connected with ${clinicName}. You can now discuss your treatment options.`,
+        description: `You are now connected with ${clinicName}. You'll need to log in to continue.`,
       });
+      
+      // Create direct URL to the client portal with specific section and clinic
+      // For demo purposes, we'll log in automatically with the test client account
+      setTimeout(() => {
+        // Use a simpler approach - go directly to the test tab on the login page
+        window.location.href = '/#/portal-login';
+      }, 1500);
     } catch (error) {
       console.error('Error selecting clinic:', error);
       toast({
