@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, Lock, Mail, Phone, User, Hospital } from "lucide-react";
-import { navigateToClientPortal, navigateToAdminPortal, navigateToClinicPortal } from "@/utils/portalNavigation";
 
 // Form schema for login
 const loginSchema = z.object({
