@@ -14,8 +14,9 @@ import {
 import { 
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
-  Menu, LogOut, ChevronRight
+  Menu, LogOut, ChevronRight, Grid3X3
 } from 'lucide-react';
+import ClinicTreatmentMapperPage from '@/pages/ClinicTreatmentMapperPage';
 
 // Import all clinic section components
 import ClinicDashboardSection from '@/components/clinic/ClinicDashboardSection';
@@ -40,6 +41,7 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'patients', label: t("clinic.nav.patients", "Patients"), icon: <Users className="h-5 w-5" /> },
     { id: 'quotes', label: t("clinic.nav.quotes", "Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
     { id: 'treatmentplans', label: t("clinic.nav.treatment_plans", "Treatment Plans"), icon: <FileText className="h-5 w-5" /> },
+    { id: 'treatment_mapper', label: t("clinic.nav.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
     { id: 'documents', label: t("clinic.nav.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
@@ -59,6 +61,8 @@ const ClinicPortalPage: React.FC = () => {
         return <ClinicQuotesSection />;
       case 'treatmentplans':
         return <ClinicTreatmentPlansSection />;
+      case 'treatment_mapper':
+        return <ClinicTreatmentMapperPage />;
       case 'appointments':
         return <ClinicAppointmentsSection />;
       case 'messages':

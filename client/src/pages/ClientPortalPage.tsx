@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   X,
-  Stethoscope
+  Stethoscope,
+  BarChart2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import AppointmentsSection from '@/components/portal/AppointmentsSection';
 import SupportSection from '@/components/portal/SupportSection';
 import ProfileSection from '@/components/portal/ProfileSection';
 import DentalChartSection from '@/components/portal/DentalChartSection';
+import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
 
 // Temporary Mock Data
 const mockUserData = {
