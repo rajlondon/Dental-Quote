@@ -418,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const options = { format: 'A4' };
       const file = { content: html };
       
-      pdf.generatePdf(file, options).then(pdfBuffer => {
+      pdf.generatePdf(file, options).then((pdfBuffer: Buffer) => {
         // Set response headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=MyDentalFly_Quote.pdf');

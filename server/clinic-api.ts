@@ -1,8 +1,25 @@
 import { Express, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { TreatmentItem } from '@shared/schema';
 import * as htmlPdf from 'html-pdf-node';
+
+// Define the TreatmentItem interface on the server side
+interface TreatmentItem {
+  id: string;
+  category: string;
+  name: string;
+  quantity: number;
+  priceGBP: number;
+  priceUSD: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  guarantee?: string;
+  clinicVariant?: {
+    name: string;
+    description: string;
+    priceGBP: number;
+  };
+}
 
 interface GenerateQuoteRequest {
   clinicId: string;

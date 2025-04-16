@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, CheckCircle, ChevronDown, ChevronUp, Info, Star } from 'lucide-react';
+import { Check, CheckCircle, ChevronDown, ChevronUp, Download, Info, MessageSquare, Star } from 'lucide-react';
 import { ClinicTreatmentDisplay, ClinicTreatmentsList, TreatmentVariantsComparison } from './ClinicTreatmentDisplay';
 import { TreatmentItem } from './TreatmentPlanBuilder';
 import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
 import { treatmentMapperService } from '@/services/treatmentMapperService';
 import { getMappedTreatmentsForClinic, calculateTotalPriceForMappedTreatments } from '@/utils/treatmentMapperUtils';
+import { useToast } from '@/hooks/use-toast';
+import { clinicService } from '@/services/clinicService';
 
 // Sample clinic data
 const SAMPLE_CLINICS = [
@@ -24,18 +26,25 @@ interface ClinicTreatmentComparisonProps {
 export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps> = ({ 
   treatments 
 }) => {
+  const { toast } = useToast();
   const [expandedClinics, setExpandedClinics] = useState<Record<string, boolean>>({});
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareTreatment, setCompareTreatment] = useState<string | null>(null);
   const [compareTreatmentVariants, setCompareTreatmentVariants] = useState<ClinicTreatmentVariant[]>([]);
+  const [loadingStates, setLoadingStates] = useState<Record<string, { download: boolean; booking: boolean }>>({});
   
-  // Initialize all clinics as collapsed
+  // Initialize all clinics as collapsed and loading states
   useEffect(() => {
     const initialExpandState: Record<string, boolean> = {};
+    const initialLoadingStates: Record<string, { download: boolean; booking: boolean }> = {};
+    
     SAMPLE_CLINICS.forEach(clinic => {
       initialExpandState[clinic.id] = false;
+      initialLoadingStates[clinic.id] = { download: false, booking: false };
     });
+    
     setExpandedClinics(initialExpandState);
+    setLoadingStates(initialLoadingStates);
   }, []);
   
   const toggleClinicExpand = (clinicId: string) => {
@@ -50,6 +59,90 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
     setCompareTreatment(standardName);
     setCompareTreatmentVariants(variants);
     setCompareModalOpen(true);
+  };
+  
+  // Handle quote download
+  const handleDownloadQuote = async (clinicId: string, clinicName: string) => {
+    try {
+      // Set loading state
+      setLoadingStates(prev => ({
+        ...prev,
+        [clinicId]: { ...prev[clinicId], download: true }
+      }));
+      
+      toast({
+        title: "Generating Quote",
+        description: `Preparing your quote for ${clinicName}. This may take a moment...`,
+      });
+      
+      // Call service to generate and download quote
+      await clinicService.generateClinicQuote(clinicId, clinicName, treatments);
+      
+      toast({
+        title: "Quote Generated",
+        description: "Your quote has been generated and is downloading now.",
+      });
+    } catch (error) {
+      console.error('Error downloading quote:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate quote. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset loading state
+      setLoadingStates(prev => ({
+        ...prev,
+        [clinicId]: { ...prev[clinicId], download: false }
+      }));
+    }
+  };
+  
+  // Handle booking consultation
+  const handleBookConsultation = async (clinicId: string, clinicName: string) => {
+    try {
+      // Set loading state
+      setLoadingStates(prev => ({
+        ...prev,
+        [clinicId]: { ...prev[clinicId], booking: true }
+      }));
+      
+      toast({
+        title: "Booking Consultation",
+        description: `Processing your consultation request with ${clinicName}...`,
+      });
+      
+      // Call service to book consultation
+      const booking = await clinicService.bookConsultation(clinicId, clinicName);
+      
+      // Format date for display
+      const formattedDate = new Date(booking.dateTime).toLocaleString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      toast({
+        title: "Consultation Booked",
+        description: `Your consultation has been scheduled for ${formattedDate}. Details have been sent to your email.`,
+      });
+    } catch (error) {
+      console.error('Error booking consultation:', error);
+      toast({
+        title: "Booking Error",
+        description: "Failed to book consultation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset loading state
+      setLoadingStates(prev => ({
+        ...prev,
+        [clinicId]: { ...prev[clinicId], booking: false }
+      }));
+    }
   };
   
   return (
@@ -129,17 +222,46 @@ export const ClinicTreatmentComparison: React.FC<ClinicTreatmentComparisonProps>
                   className="flex items-center gap-1"
                   onClick={() => window.location.href = "#/patient-portal/messages?clinic=" + clinic.id}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                  </svg>
+                  <MessageSquare className="h-4 w-4 mr-1" />
                   Message Clinic
                 </Button>
                 <div>
-                  <Button variant="outline" className="mr-2">
-                    Download Quote
+                  <Button 
+                    variant="outline" 
+                    className="mr-2 flex items-center"
+                    onClick={() => handleDownloadQuote(clinic.id, clinic.name)}
+                    disabled={loadingStates[clinic.id]?.download}
+                  >
+                    {loadingStates[clinic.id]?.download ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-1" />
+                        Download Quote
+                      </>
+                    )}
                   </Button>
-                  <Button>
-                    Book Consultation
+                  <Button
+                    onClick={() => handleBookConsultation(clinic.id, clinic.name)}
+                    disabled={loadingStates[clinic.id]?.booking}
+                  >
+                    {loadingStates[clinic.id]?.booking ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Booking...
+                      </>
+                    ) : (
+                      "Book Consultation"
+                    )}
                   </Button>
                 </div>
               </CardFooter>

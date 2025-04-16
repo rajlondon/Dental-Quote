@@ -15,7 +15,7 @@ export const clinicService = {
   async generateClinicQuote(clinicId: string, clinicName: string, treatments: TreatmentItem[]): Promise<string> {
     // Get clinic-specific treatments and pricing
     const mappedTreatments = getMappedTreatmentsForClinic(treatments, clinicId);
-    const { totalPrice, formattedPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
+    const { totalMinPrice, formattedPrice } = calculateTotalPriceForMappedTreatments(mappedTreatments);
     
     try {
       // In a real implementation, this would make an API call to generate a PDF
@@ -28,7 +28,7 @@ export const clinicService = {
           clinicId,
           clinicName,
           treatments: mappedTreatments,
-          totalPrice,
+          totalPrice: totalMinPrice, // Use minimum price as the base price
           patientDetails: {
             name: 'John Doe', // In a real app, this would come from user context
             email: 'john.doe@example.com',
@@ -41,11 +41,16 @@ export const clinicService = {
         throw new Error('Failed to generate quote');
       }
       
-      // For demo purposes - simulate PDF download with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const data = await response.json();
       
-      // In a real implementation, this would return a PDF URL or blob
-      return `/api/quotes/${clinicId}_quote.pdf`;
+      // If the API returns a URL to download the PDF, use it
+      if (data && data.url) {
+        // Trigger download by opening the URL in a new tab
+        window.open(data.url, '_blank');
+        return data.url;
+      }
+      
+      throw new Error('Invalid response from server');
     } catch (error) {
       console.error('Error generating quote:', error);
       throw error;
