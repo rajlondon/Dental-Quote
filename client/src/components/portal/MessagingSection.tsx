@@ -141,12 +141,21 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
   // Check URL parameters for clinic selection
   useEffect(() => {
     // Parse clinic from URL if present (e.g., #/client-portal?section=messages&clinic=clinic_001)
-    if (!clinicId && location.includes('&clinic=')) {
-      const params = new URLSearchParams(location.split('?')[1]);
-      const urlClinicId = params.get('clinic');
-      if (urlClinicId) {
-        setActiveClinic(urlClinicId);
-        console.log(`Setting active clinic from URL: ${urlClinicId}`);
+    if (!clinicId && location.includes('clinic=')) {
+      try {
+        // Get everything after the "?"
+        const queryPart = location.split('?')[1] || '';
+        const params = new URLSearchParams(queryPart);
+        const urlClinicId = params.get('clinic');
+        
+        if (urlClinicId) {
+          setActiveClinic(urlClinicId);
+          console.log(`Setting active clinic from URL: ${urlClinicId}`);
+          // Also store in localStorage for persistence
+          localStorage.setItem('selectedClinicId', urlClinicId);
+        }
+      } catch (error) {
+        console.error('Error parsing clinic from URL:', error);
       }
     }
   }, [location, clinicId]);

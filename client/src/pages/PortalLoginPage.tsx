@@ -89,7 +89,13 @@ const PortalLoginPage: React.FC = () => {
         description: "Welcome to MyDentalFly! You're now logged in.",
       });
       
-      navigate("/client-portal");
+      // If we have a selected clinic, route to messages section with that clinic
+      const clinicId = localStorage.getItem('selectedClinicId');
+      if (clinicId) {
+        navigate("/client-portal?section=messages&clinic=" + clinicId);
+      } else {
+        navigate("/client-portal");
+      }
     } catch (error) {
       toast({
         title: "Registration Failed",
@@ -135,7 +141,13 @@ const PortalLoginPage: React.FC = () => {
         description: "Welcome back to MyDentalFly!",
       });
       
-      navigate("/client-portal");
+      // If we have a selected clinic, route to messages section with that clinic
+      const clinicId = localStorage.getItem('selectedClinicId');
+      if (clinicId) {
+        navigate("/client-portal?section=messages&clinic=" + clinicId);
+      } else {
+        navigate("/client-portal");
+      }
     } catch (error) {
       toast({
         title: "Login Failed",
