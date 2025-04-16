@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Info, Smile, Heart, AlertTriangle, Check, ArrowRight, HelpCircle, Timer } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import { DentalChart } from '@/components/DentalChart';
@@ -186,6 +187,9 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   // Step tracking
   const [currentStep, setCurrentStep] = useState(0);
   const [teeth, setTeeth] = useState<any[]>([]);
+  const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
+  const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null);
+  const [toothDialogOpen, setToothDialogOpen] = useState(false);
   
   // User answers
   const [selectedConcerns, setSelectedConcerns] = useState<string[]>([]);
@@ -339,36 +343,60 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                   <div className="hidden md:block">
                     {/* Upper Teeth Row - Simplified version as placeholder */}
                     <div className="flex justify-center gap-1 mb-4">
-                      {Array.from({ length: 16 }).map((_, index) => (
-                        <button
-                          key={`upper-${index + 1}`}
-                          className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-base"
-                          style={{ backgroundColor: '#ffffff' }}
-                          onClick={() => toast({
-                            title: "Tooth Selected",
-                            description: `You've selected tooth ${index + 1}`,
-                          })}
-                        >
-                          {index + 1}
-                        </button>
-                      ))}
+                      {Array.from({ length: 16 }).map((_, index) => {
+                        const toothNumber = index + 1;
+                        const toothHasIssue = teeth.some(t => t.number === toothNumber);
+                        
+                        return (
+                          <button
+                            key={`upper-${toothNumber}`}
+                            className={`flex items-center justify-center w-12 h-14 border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-base relative`}
+                            style={{ 
+                              backgroundColor: toothHasIssue ? '#fdf2f8' : '#ffffff',
+                            }}
+                            onClick={() => {
+                              setSelectedTooth(toothNumber);
+                              setToothDialogOpen(true);
+                            }}
+                          >
+                            {toothNumber}
+                            {toothHasIssue && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                                <span className="text-white text-[8px]">!</span>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                     
                     {/* Lower Teeth Row - Simplified version as placeholder */}
                     <div className="flex justify-center gap-1 mb-3">
-                      {Array.from({ length: 16 }).map((_, index) => (
-                        <button
-                          key={`lower-${index + 17}`}
-                          className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-base"
-                          style={{ backgroundColor: '#ffffff' }}
-                          onClick={() => toast({
-                            title: "Tooth Selected",
-                            description: `You've selected tooth ${index + 17}`,
-                          })}
-                        >
-                          {index + 17}
-                        </button>
-                      ))}
+                      {Array.from({ length: 16 }).map((_, index) => {
+                        const toothNumber = index + 17;
+                        const toothHasIssue = teeth.some(t => t.number === toothNumber);
+                        
+                        return (
+                          <button
+                            key={`lower-${toothNumber}`}
+                            className={`flex items-center justify-center w-12 h-14 border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-base relative`}
+                            style={{ 
+                              backgroundColor: toothHasIssue ? '#fdf2f8' : '#ffffff',
+                            }}
+                            onClick={() => {
+                              setSelectedTooth(toothNumber);
+                              setToothDialogOpen(true);
+                            }}
+                          >
+                            {toothNumber}
+                            {toothHasIssue && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                                <span className="text-white text-[8px]">!</span>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                   
@@ -379,23 +407,33 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                       <div>
                         <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Upper Teeth</h4>
                         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-4">
-                          {Array.from({ length: 16 }).map((_, index) => (
-                            <button
-                              key={`mobile-upper-${index + 1}`}
-                              className="flex items-center w-full p-2 border-b border-gray-100"
-                              onClick={() => toast({
-                                title: "Tooth Selected",
-                                description: `You've selected tooth ${index + 1}`,
-                              })}
-                            >
-                              <div className="flex justify-center items-center h-8 w-8 rounded-full border-2 border-gray-400 mr-2 font-bold">
-                                {index + 1}
-                              </div>
-                              <div className="text-left text-xs">
-                                Upper tooth {index + 1}
-                              </div>
-                            </button>
-                          ))}
+                          {Array.from({ length: 16 }).map((_, index) => {
+                            const toothNumber = index + 1;
+                            const toothHasIssue = teeth.some(t => t.number === toothNumber);
+                            
+                            return (
+                              <button
+                                key={`mobile-upper-${toothNumber}`}
+                                className={`flex items-center w-full p-2 border-b border-gray-100 ${toothHasIssue ? 'bg-primary/5' : ''}`}
+                                onClick={() => {
+                                  setSelectedTooth(toothNumber);
+                                  setToothDialogOpen(true);
+                                }}
+                              >
+                                <div className={`flex justify-center items-center h-8 w-8 rounded-full border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} mr-2 font-bold`}>
+                                  {toothNumber}
+                                </div>
+                                <div className="text-left text-xs">
+                                  Upper tooth {toothNumber}
+                                </div>
+                                {toothHasIssue && (
+                                  <div className="ml-auto flex items-center text-primary">
+                                    <Check className="h-4 w-4" />
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                       
@@ -403,23 +441,33 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                       <div>
                         <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Lower Teeth</h4>
                         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                          {Array.from({ length: 16 }).map((_, index) => (
-                            <button
-                              key={`mobile-lower-${index + 17}`}
-                              className="flex items-center w-full p-2 border-b border-gray-100"
-                              onClick={() => toast({
-                                title: "Tooth Selected",
-                                description: `You've selected tooth ${index + 17}`,
-                              })}
-                            >
-                              <div className="flex justify-center items-center h-8 w-8 rounded-full border-2 border-gray-400 mr-2 font-bold">
-                                {index + 17}
-                              </div>
-                              <div className="text-left text-xs">
-                                Lower tooth {index + 17}
-                              </div>
-                            </button>
-                          ))}
+                          {Array.from({ length: 16 }).map((_, index) => {
+                            const toothNumber = index + 17;
+                            const toothHasIssue = teeth.some(t => t.number === toothNumber);
+                            
+                            return (
+                              <button
+                                key={`mobile-lower-${toothNumber}`}
+                                className={`flex items-center w-full p-2 border-b border-gray-100 ${toothHasIssue ? 'bg-primary/5' : ''}`}
+                                onClick={() => {
+                                  setSelectedTooth(toothNumber);
+                                  setToothDialogOpen(true);
+                                }}
+                              >
+                                <div className={`flex justify-center items-center h-8 w-8 rounded-full border-2 ${toothHasIssue ? 'border-primary' : 'border-gray-400'} mr-2 font-bold`}>
+                                  {toothNumber}
+                                </div>
+                                <div className="text-left text-xs">
+                                  Lower tooth {toothNumber}
+                                </div>
+                                {toothHasIssue && (
+                                  <div className="ml-auto flex items-center text-primary">
+                                    <Check className="h-4 w-4" />
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
