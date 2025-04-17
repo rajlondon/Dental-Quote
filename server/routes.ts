@@ -25,6 +25,15 @@ import fileRoutes from "./routes/fileRoutes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
+// Import security middleware
+import { 
+  csrfProtection, 
+  handleCsrfError, 
+  csrfTokenHandler, 
+  apiRateLimit, 
+  authRateLimit, 
+  uploadRateLimit 
+} from "./middleware/security";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
