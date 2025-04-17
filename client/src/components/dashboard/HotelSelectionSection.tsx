@@ -325,11 +325,11 @@ const HotelSelectionSection: React.FC<HotelSelectionSectionProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <div className="flex flex-nowrap overflow-x-auto gap-4 pb-4 mb-6">
               {hotelOptions.map((option, index) => (
                 <div 
                   key={index} 
-                  className={`border rounded-lg overflow-hidden hover:shadow-md transition-shadow ${selectedHotelOption?.hotel.id === option.hotel.id ? 'border-blue-500 ring-1 ring-blue-500' : ''}`}
+                  className={`border rounded-lg overflow-hidden hover:shadow-md transition-shadow flex-shrink-0 w-[300px] ${selectedHotelOption?.hotel.id === option.hotel.id ? 'border-blue-500 ring-1 ring-blue-500' : ''}`}
                 >
                   <div className="relative h-40">
                     <img 
