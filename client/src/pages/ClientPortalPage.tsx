@@ -404,8 +404,10 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </CardContent>
         </Card>
       </div>
-      
+
+      {/* Next Steps and Dental Journey Section */}
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Next Steps */}
         <Card>
           <CardHeader>
             <CardTitle>{t('portal.dashboard.next_steps', 'Next Steps')}</CardTitle>
@@ -454,6 +456,72 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </CardContent>
         </Card>
         
+        {/* Your Dental Journey */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('portal.dashboard.your_journey', 'Your Dental Journey')}</CardTitle>
+            <CardDescription>
+              {t('portal.dashboard.journey_description', 'Track your progress through the treatment process')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+              
+              <div className="space-y-8 relative">
+                <div className="relative pl-10">
+                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-green-100 border-4 border-white flex items-center justify-center">
+                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                  </div>
+                  <h3 className="font-medium">{t('portal.dashboard.step1', 'Initial Quote & Booking')}</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {t('portal.dashboard.step1_description', 'You\'ve received your quote and secured your booking with a deposit')}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {t('portal.dashboard.completed', 'Completed')}
+                  </p>
+                </div>
+                
+                <div className="relative pl-10">
+                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-blue-100 border-4 border-white flex items-center justify-center">
+                    <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                  </div>
+                  <h3 className="font-medium">{t('portal.dashboard.step2', 'Consultation & Treatment Planning')}</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {t('portal.dashboard.step2_description', 'Your dentist will review your records and create a personalized treatment plan')}
+                  </p>
+                  <p className="text-xs text-blue-500 mt-1">
+                    {t('portal.dashboard.in_progress', 'In Progress')}
+                  </p>
+                </div>
+                
+                <div className="relative pl-10">
+                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center">
+                    <div className="h-3 w-3 rounded-full bg-gray-300"></div>
+                  </div>
+                  <h3 className="font-medium text-gray-500">{t('portal.dashboard.step3', 'Travel & Treatment')}</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {t('portal.dashboard.step3_description', 'Travel to Istanbul and receive your dental treatment')}
+                  </p>
+                </div>
+                
+                <div className="relative pl-10">
+                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center">
+                    <div className="h-3 w-3 rounded-full bg-gray-300"></div>
+                  </div>
+                  <h3 className="font-medium text-gray-500">{t('portal.dashboard.step4', 'Aftercare & Follow-up')}</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {t('portal.dashboard.step4_description', 'Receive post-treatment support and follow-up care')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Hotel Accommodation Section */}
+      <div className="grid md:grid-cols-1 gap-6 mt-6">
         {/* Hotel Accommodation Section with view toggle controls */}
         <Card className="mb-2">
           <CardHeader className="pb-2">
@@ -526,69 +594,9 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
       </div>
       
       {/* Flight Details Section */}
-      <FlightDetailsSection />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('portal.dashboard.your_journey', 'Your Dental Journey')}</CardTitle>
-          <CardDescription>
-            {t('portal.dashboard.journey_description', 'Track your progress through the treatment process')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-            
-            <div className="space-y-8 relative">
-              <div className="relative pl-10">
-                <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-green-100 border-4 border-white flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                </div>
-                <h3 className="font-medium">{t('portal.dashboard.step1', 'Initial Quote & Booking')}</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {t('portal.dashboard.step1_description', 'You\'ve received your quote and secured your booking with a deposit')}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {t('portal.dashboard.completed', 'Completed')}
-                </p>
-              </div>
-              
-              <div className="relative pl-10">
-                <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-blue-100 border-4 border-white flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                </div>
-                <h3 className="font-medium">{t('portal.dashboard.step2', 'Consultation & Treatment Planning')}</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {t('portal.dashboard.step2_description', 'Your dentist will review your records and create a personalized treatment plan')}
-                </p>
-                <p className="text-xs text-blue-500 mt-1">
-                  {t('portal.dashboard.in_progress', 'In Progress')}
-                </p>
-              </div>
-              
-              <div className="relative pl-10">
-                <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-gray-300"></div>
-                </div>
-                <h3 className="font-medium text-gray-500">{t('portal.dashboard.step3', 'Travel & Treatment')}</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {t('portal.dashboard.step3_description', 'Travel to Istanbul and receive your dental treatment')}
-                </p>
-              </div>
-              
-              <div className="relative pl-10">
-                <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-gray-300"></div>
-                </div>
-                <h3 className="font-medium text-gray-500">{t('portal.dashboard.step4', 'Aftercare & Follow-up')}</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {t('portal.dashboard.step4_description', 'Receive post-treatment support and follow-up care')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mt-6">
+        <FlightDetailsSection />
+      </div>
     </div>
   );
 };
