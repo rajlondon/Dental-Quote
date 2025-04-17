@@ -33,6 +33,7 @@ const formSchema = z.object({
   phone: z.string().min(6, 'Phone number is required'),
   travelMonth: z.string().optional(),
   departureCity: z.string().optional(),
+  hotelAccommodation: z.enum(['yes', 'no', 'clinic_decide']).default('clinic_decide'),
   hasXrays: z.boolean().default(false),
   hasCtScan: z.boolean().default(false),
   hasDentalPhotos: z.boolean().default(false),
