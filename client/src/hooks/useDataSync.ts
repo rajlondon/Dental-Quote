@@ -102,9 +102,11 @@ export const useDataSync = ({
         }
       };
       
-      socket.onerror = (error) => {
-        setLastError(error as Error);
-        console.error('WebSocket error:', error);
+      socket.onerror = (event) => {
+        // Convert the Event to an Error object
+        const error = new Error('WebSocket connection error');
+        setLastError(error);
+        console.error('WebSocket error:', event);
       };
       
       socket.onmessage = (event) => {
@@ -117,13 +119,16 @@ export const useDataSync = ({
           } else if (onMessage && typeof onMessage === 'function') {
             onMessage(message);
           }
-        } catch (error) {
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
           console.error('Error parsing WebSocket message:', error);
         }
       };
-    } catch (error) {
-      setLastError(error as Error);
-      console.error('Error establishing WebSocket connection:', error);
+    } catch (err) {
+      // Ensure we're setting an Error object
+      const error = err instanceof Error ? err : new Error(String(err));
+      setLastError(error);
+      console.error('Error establishing WebSocket connection:', err);
       
       // If failed to connect, try again after reconnectInterval
       if (autoReconnect) {
@@ -162,7 +167,8 @@ export const useDataSync = ({
       
       socketRef.current.send(JSON.stringify(fullMessage));
       return true;
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       console.error('Error sending WebSocket message:', error);
       return false;
     }

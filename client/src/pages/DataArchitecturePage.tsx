@@ -116,6 +116,50 @@ const DataArchitecturePage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Live Data Sync Demo Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Data Sync Demonstration</CardTitle>
+              <CardDescription>
+                See how data synchronizes in real-time between patient and clinic portals
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="patient">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="patient">Patient Portal</TabsTrigger>
+                  <TabsTrigger value="clinic">Clinic Portal</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="patient" className="mt-4">
+                  <SyncStatusPanel 
+                    userId="patient-123"
+                    userType="patient"
+                    targetId="clinic-456"
+                    name="John Smith"
+                  />
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    <p>The patient portal maintains a secure WebSocket connection with the clinic portal, allowing for instantaneous updates to treatment plans, appointment schedules, and communication.</p>
+                    <p className="mt-2">As a patient, you'll receive real-time notifications about treatment updates, appointment confirmations, and messages from your dental provider.</p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="clinic" className="mt-4">
+                  <SyncStatusPanel 
+                    userId="clinic-456"
+                    userType="clinic"
+                    targetId="patient-123"
+                    name="Istanbul Dental Clinic"
+                  />
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    <p>The clinic portal receives patient data changes in real-time, allowing dental providers to respond quickly to patient needs and keep treatment records up-to-date.</p>
+                    <p className="mt-2">Clinic staff can send treatment updates, appointment confirmations, and instant messages that appear immediately in the patient's portal.</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
