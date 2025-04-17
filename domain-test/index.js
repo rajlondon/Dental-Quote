@@ -1,28 +1,29 @@
+// Ultra-simple server for domain testing
 const express = require('express');
-const path = require('path');
 const app = express();
+const path = require('path');
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Special test endpoint for domain testing
-app.get('/api/domain-test', (req, res) => {
+// Basic test endpoint
+app.get('/api/test', (req, res) => {
   res.json({
     status: 'ok',
-    message: 'Domain test successful',
-    host: req.get('host'),
-    protocol: req.protocol,
-    timestamp: new Date().toISOString()
+    message: 'Domain test server is working',
+    timestamp: new Date().toISOString(),
+    host: req.get('host')
   });
 });
 
-// Serve our test HTML for all other routes
+// Catch-all route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Access at: http://localhost:${PORT}`);
+  console.log(`Domain test server running on port ${PORT}`);
+  console.log(`http://0.0.0.0:${PORT}`);
 });

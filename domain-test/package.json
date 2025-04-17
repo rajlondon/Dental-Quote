@@ -1,7 +1,7 @@
 {
   "name": "domain-test",
   "version": "1.0.0",
-  "description": "Simple domain test app for istanbuldentalsmile.co.uk",
+  "description": "Ultra-simple domain test for MyDentalFly",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
