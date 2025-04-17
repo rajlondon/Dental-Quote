@@ -55,21 +55,16 @@ app.use((req, res, next) => {
   } else {
     // Import path if not already imported
     const path = require('path');
-    const distPath = path.resolve(process.cwd(), "dist/public");
     
-    // Serve static files
-    app.use(express.static(distPath));
+    // Serve static files from the correct dist directory
+    app.use(express.static(path.join(__dirname, '../dist/public')));
     
-    // API routes should be handled before the catch-all
-    app.use('/api', (req, res, next) => {
-      if (req.path.startsWith('/api')) {
-        return next();
-      }
-    });
-
-    // Catch-all route for client-side routing
+    // Handle API routes
+    app.use('/api', (req, res, next) => next());
+    
+    // Serve index.html for all other routes to support client-side routing
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      res.sendFile(path.join(__dirname, '../dist/public/index.html'));
     });
   }
 
