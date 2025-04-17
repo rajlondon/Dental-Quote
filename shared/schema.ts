@@ -37,6 +37,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     references: [clinics.id],
   }),
   notifications: many(notifications),
+  hotelBookings: many(hotelBookings),
 }));
 
 export const insertUserSchema = createInsertSchema(users)
@@ -530,6 +531,96 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// === HOTELS ===
+export const hotels = pgTable("hotels", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  address: text("address"),
+  city: varchar("city", { length: 100 }).default("Istanbul"),
+  country: varchar("country", { length: 100 }).default("Turkey"),
+  starRating: decimal("star_rating", { precision: 2, scale: 1 }),
+  description: text("description"),
+  amenities: json("amenities"),
+  // Images
+  mainImageUrl: varchar("main_image_url", { length: 255 }),
+  galleryImages: json("gallery_images"),
+  // Location
+  latitude: decimal("latitude", { precision: 10, scale: 6 }),
+  longitude: decimal("longitude", { precision: 10, scale: 6 }),
+  distanceToClinic: json("distance_to_clinic"), // JSON mapping of clinicId to distance in km
+  // Contact
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  contactEmail: varchar("contact_email", { length: 255 }),
+  website: varchar("website", { length: 255 }),
+  // Admin fields
+  isActive: boolean("is_active").default(true),
+  isPartner: boolean("is_partner").default(false),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const hotelsRelations = relations(hotels, ({ many }) => ({
+  hotelBookings: many(hotelBookings),
+}));
+
+export const hotelBookings = pgTable("hotel_bookings", {
+  id: serial("id").primaryKey(),
+  // Relationships
+  userId: integer("user_id").notNull().references(() => users.id),
+  bookingId: integer("booking_id").references(() => bookings.id),
+  treatmentPlanId: integer("treatment_plan_id").references(() => treatmentPlans.id),
+  hotelId: integer("hotel_id").references(() => hotels.id),
+  // Booking details
+  checkInDate: date("check_in_date").notNull(),
+  checkOutDate: date("check_out_date").notNull(),
+  roomType: varchar("room_type", { length: 100 }),
+  numberOfGuests: integer("number_of_guests").default(1),
+  accommodationPackage: varchar("accommodation_package", { length: 50 }).default("standard"), // standard, premium, etc.
+  // Booking status
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, confirmed, cancelled, completed
+  confirmationNumber: varchar("confirmation_number", { length: 50 }),
+  // Provider
+  providedBy: varchar("provided_by", { length: 50 }).default("clinic"), // clinic, dental_fly, third_party
+  providerDetails: json("provider_details"),
+  // Cost
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
+  currency: varchar("currency", { length: 3 }).default("GBP"),
+  includesBreakfast: boolean("includes_breakfast").default(true),
+  additionalServices: json("additional_services"),
+  // Notes
+  specialRequests: text("special_requests"),
+  adminNotes: text("admin_notes"),
+  // Tracking
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const hotelBookingsRelations = relations(hotelBookings, ({ one }) => ({
+  user: one(users, {
+    fields: [hotelBookings.userId],
+    references: [users.id],
+  }),
+  booking: one(bookings, {
+    fields: [hotelBookings.bookingId],
+    references: [bookings.id],
+  }),
+  treatmentPlan: one(treatmentPlans, {
+    fields: [hotelBookings.treatmentPlanId],
+    references: [treatmentPlans.id],
+  }),
+  hotel: one(hotels, {
+    fields: [hotelBookings.hotelId],
+    references: [hotels.id],
+  }),
+  createdBy: one(users, {
+    fields: [hotelBookings.createdById],
+    references: [users.id],
+    relationName: "hotel_booking_creator",
+  }),
+}));
+
 // === EXPORT TYPES ===
 
 // User types
@@ -576,3 +667,11 @@ export type ClinicReview = typeof clinicReviews.$inferSelect;
 // Notification types
 export type InsertNotification = Omit<typeof notifications.$inferInsert, "id" | "createdAt">;
 export type Notification = typeof notifications.$inferSelect;
+
+// Hotel types
+export type InsertHotel = Omit<typeof hotels.$inferInsert, "id" | "createdAt" | "updatedAt">;
+export type Hotel = typeof hotels.$inferSelect;
+
+// Hotel booking types
+export type InsertHotelBooking = Omit<typeof hotelBookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
+export type HotelBooking = typeof hotelBookings.$inferSelect;
