@@ -31,6 +31,7 @@ import SupportSection from '@/components/portal/SupportSection';
 import ProfileSection from '@/components/portal/ProfileSection';
 import DentalChartSection from '@/components/portal/DentalChartSection';
 import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
+import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 
 // Temporary Mock Data
 const mockUserData = {
@@ -444,25 +445,11 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('portal.dashboard.travel_arrangements', 'Travel Arrangements')}</CardTitle>
-            <CardDescription>
-              {t('portal.dashboard.travel_info', 'Information about your upcoming trip')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                {t('portal.dashboard.travel_pending', 'Your travel arrangements will be available here once your treatment dates are confirmed.')}
-              </p>
-              
-              <Button variant="outline" className="w-full">
-                {t('portal.dashboard.discuss_travel', 'Discuss Travel Options')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Hotel Accommodation Section */}
+        <HotelAccommodationSection 
+          hotelBooking={undefined} 
+          isLoading={false} 
+        />
       </div>
       
       <Card>
