@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DataFlowDiagram from '@/components/diagrams/DataFlowDiagram';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import SyncStatusPanel from '@/components/sync/SyncStatusPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SystemLoadMonitor from '@/components/monitoring/SystemLoadMonitor';
+import WebSocketConnectionAnalytics from '@/components/monitoring/WebSocketConnectionAnalytics';
 
 const DataArchitecturePage: React.FC = () => {
   return (
