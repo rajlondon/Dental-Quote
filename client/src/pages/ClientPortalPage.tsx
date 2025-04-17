@@ -32,7 +32,12 @@ import ProfileSection from '@/components/portal/ProfileSection';
 import DentalChartSection from '@/components/portal/DentalChartSection';
 import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
-import { EXAMPLE_BOOKING } from '@/components/dashboard/exampleHotelData';
+import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
+import { 
+  EXAMPLE_BOOKING, 
+  EXAMPLE_CLINIC_HOTEL_OPTIONS, 
+  EXAMPLE_SELF_ARRANGED_STATUS 
+} from '@/components/dashboard/exampleHotelData';
 
 // Temporary Mock Data
 const mockUserData = {
@@ -307,6 +312,7 @@ interface DashboardSectionProps {
 
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const { t } = useTranslation();
+  const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
   return (
     <div className="space-y-6">
@@ -446,13 +452,75 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </CardContent>
         </Card>
         
-        {/* Hotel Accommodation Section */}
-        <HotelAccommodationSection 
-          // For now, using the example hotel booking with hotel data included
-          // Later this will be replaced with actual data from an API call
-          hotelBooking={EXAMPLE_BOOKING} 
-          isLoading={false} 
-        />
+        {/* Hotel Accommodation Section with view toggle controls */}
+        <Card className="mb-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Demonstration Controls</CardTitle>
+            <CardDescription>Toggle between different accommodation views</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant={hotelViewMode === 'selection' ? 'default' : 'outline'} 
+                onClick={() => setHotelViewMode('selection')}
+                size="sm"
+              >
+                Hotel Selection View
+              </Button>
+              <Button 
+                variant={hotelViewMode === 'confirmed' ? 'default' : 'outline'} 
+                onClick={() => setHotelViewMode('confirmed')}
+                size="sm"
+              >
+                Confirmed Hotel View
+              </Button>
+              <Button 
+                variant={hotelViewMode === 'self-arranged' ? 'default' : 'outline'} 
+                onClick={() => setHotelViewMode('self-arranged')}
+                size="sm"
+              >
+                Self-Arranged View
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Hotel Selection View - Multiple hotel options to choose from */}
+        {hotelViewMode === 'selection' && (
+          <HotelSelectionSection 
+            hotelOptions={EXAMPLE_CLINIC_HOTEL_OPTIONS}
+            checkInDate={new Date('2025-06-10')}
+            checkOutDate={new Date('2025-06-17')}
+            numberOfGuests={2}
+            clinicName="DentGroup Istanbul"
+            showSelfArrangedOption={true}
+            onSelectHotel={(hotelId) => console.log('Selected hotel ID:', hotelId)}
+            onAddSelfArranged={(data) => console.log('Self-arranged data:', data)}
+          />
+        )}
+        
+        {/* Confirmed Hotel View - After a hotel has been selected and confirmed */}
+        {hotelViewMode === 'confirmed' && (
+          <HotelAccommodationSection 
+            hotelBooking={EXAMPLE_BOOKING} 
+            isLoading={false} 
+          />
+        )}
+        
+        {/* Self-Arranged Accommodation View - When user arranges their own hotel */}
+        {hotelViewMode === 'self-arranged' && (
+          <HotelSelectionSection 
+            hotelOptions={EXAMPLE_CLINIC_HOTEL_OPTIONS}
+            checkInDate={new Date('2025-06-10')}
+            checkOutDate={new Date('2025-06-17')}
+            numberOfGuests={2}
+            clinicName="DentGroup Istanbul"
+            showSelfArrangedOption={true}
+            selfArrangedStatus={EXAMPLE_SELF_ARRANGED_STATUS}
+            onSelectHotel={(hotelId) => console.log('Selected hotel ID:', hotelId)}
+            onAddSelfArranged={(data) => console.log('Self-arranged data:', data)}
+          />
+        )}
       </div>
       
       <Card>

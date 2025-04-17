@@ -1,7 +1,7 @@
 import { HotelBooking, Hotel as HotelType } from '@shared/schema';
 
-// Example hotel data for demonstration
-export const EXAMPLE_HOTEL: HotelType = {
+// Example hotel data for demonstration - Premium option
+export const EXAMPLE_HOTEL_PREMIUM: HotelType = {
   id: 1,
   name: 'Grand Istanbul Hotel',
   address: 'Taksim Square, Beyoglu',
@@ -23,13 +23,74 @@ export const EXAMPLE_HOTEL: HotelType = {
   distanceToClinic: { '1': 1.2 },
   contactPhone: '+90 212 123 4567',
   contactEmail: 'info@grandistanbulhotel.com',
-  website: 'https://www.example-hotel.com',
+  website: 'https://www.grand-istanbul-hotel.com',
   isActive: true,
   isPartner: true,
   adminNotes: '',
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+
+// Standard hotel option
+export const EXAMPLE_HOTEL_STANDARD: HotelType = {
+  id: 2,
+  name: 'Istanbul Comfort Suites',
+  address: 'Sisli District, Istanbul',
+  city: 'Istanbul',
+  country: 'Turkey',
+  starRating: 3.5,
+  description: 'Clean and comfortable accommodations within 3km of the dental clinic. Enjoy modern rooms, a restaurant with Turkish cuisine, and easy access to public transportation.',
+  amenities: ['Free WiFi', 'Free Breakfast', 'Restaurant', 'Airport Shuttle (surcharge)', 'Daily Housekeeping', 'Laundry Service'],
+  mainImageUrl: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
+  galleryImages: [
+    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+    'https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
+    'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80'
+  ],
+  latitude: 41.0565,
+  longitude: 28.9902,
+  distanceToClinic: { '1': 3.0 },
+  contactPhone: '+90 212 456 7890',
+  contactEmail: 'info@istanbulcomfortsuites.com',
+  website: 'https://www.istanbul-comfort-suites.com',
+  isActive: true,
+  isPartner: true,
+  adminNotes: '',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+// Economy hotel option
+export const EXAMPLE_HOTEL_ECONOMY: HotelType = {
+  id: 3,
+  name: 'Istanbul Budget Stay',
+  address: 'Fatih District, Istanbul',
+  city: 'Istanbul',
+  country: 'Turkey',
+  starRating: 2.5,
+  description: 'Affordable lodging option for budget-conscious travelers. Simple rooms with the necessities, located near public transportation with easy clinic access.',
+  amenities: ['Free WiFi', 'Shared Kitchen', '24h Reception', 'Luggage Storage', 'Air Conditioning'],
+  mainImageUrl: 'https://images.unsplash.com/photo-1683741595609-9a77c8baeba5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=684&q=80',
+  galleryImages: [
+    'https://images.unsplash.com/photo-1657586640569-da0d2950e631?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1072&q=80',
+    'https://images.unsplash.com/photo-1671465451278-5720c7dff654?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
+    'https://images.unsplash.com/photo-1671465452148-61e85bf8b5c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80'
+  ],
+  latitude: 41.0099,
+  longitude: 28.9770,
+  distanceToClinic: { '1': 4.5 },
+  contactPhone: '+90 212 876 5432',
+  contactEmail: 'info@istanbulbudgetstay.com',
+  website: 'https://www.istanbul-budget-stay.com',
+  isActive: true,
+  isPartner: true,
+  adminNotes: '',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+// For backward compatibility
+export const EXAMPLE_HOTEL = EXAMPLE_HOTEL_PREMIUM;
 
 // Example booking data for demonstration
 export const EXAMPLE_BOOKING: HotelBooking & { hotel: HotelType } = {
@@ -57,5 +118,81 @@ export const EXAMPLE_BOOKING: HotelBooking & { hotel: HotelType } = {
   createdAt: new Date(),
   updatedAt: new Date(),
   // Including the hotel relation
-  hotel: EXAMPLE_HOTEL
+  hotel: EXAMPLE_HOTEL_PREMIUM
+};
+
+// Types for multi-option hotel scenarios
+export type HotelOption = {
+  hotel: HotelType;
+  tier: 'economy' | 'standard' | 'premium';
+  includedInPrice: boolean;
+  additionalCost?: number;
+  currency?: string;
+  availableRooms?: string[];
+  transferIncluded: boolean;
+  breakfastIncluded: boolean;
+  benefits: string[];
+  recommendedFor?: string[];
+};
+
+// Example hotel options offered by clinic
+export const EXAMPLE_CLINIC_HOTEL_OPTIONS: HotelOption[] = [
+  {
+    hotel: EXAMPLE_HOTEL_PREMIUM,
+    tier: 'premium',
+    includedInPrice: false,
+    additionalCost: 350,
+    currency: 'GBP',
+    availableRooms: ['Deluxe Room', 'Executive Suite'],
+    transferIncluded: true,
+    breakfastIncluded: true,
+    benefits: [
+      'Daily shuttle to clinic',
+      'Post-treatment room service',
+      'Special dental patient amenities',
+      'Premium toiletries suitable after dental work',
+      'Diet-specific menu options'
+    ],
+    recommendedFor: ['Extended stays', 'Premium treatments', 'Patients wanting luxury']
+  },
+  {
+    hotel: EXAMPLE_HOTEL_STANDARD,
+    tier: 'standard',
+    includedInPrice: true,
+    availableRooms: ['Standard Room', 'Superior Room'],
+    transferIncluded: true,
+    breakfastIncluded: true,
+    benefits: [
+      'Daily shuttle to clinic',
+      'Welcome package',
+      'Dental care kit',
+      'Special diet menu available'
+    ]
+  },
+  {
+    hotel: EXAMPLE_HOTEL_ECONOMY,
+    tier: 'economy',
+    includedInPrice: true,
+    availableRooms: ['Standard Room'],
+    transferIncluded: false,
+    breakfastIncluded: false,
+    benefits: [
+      'Affordable option',
+      'Near public transportation',
+      'Basic dental care kit'
+    ],
+    recommendedFor: ['Budget-conscious patients', 'Short stays']
+  }
+];
+
+// Self-arranged accommodation status
+export const EXAMPLE_SELF_ARRANGED_STATUS = {
+  arrangedByPatient: true,
+  patientHotelName: 'Hotel of my choice',
+  patientHotelAddress: '123 Example Street, Istanbul',
+  patientHotelPhone: '+90 123 456 7890',
+  checkInDate: new Date('2025-06-10'),
+  checkOutDate: new Date('2025-06-17'),
+  specialRequests: 'Please arrange transport from this hotel to the clinic',
+  clinicAcknowledged: true
 };
