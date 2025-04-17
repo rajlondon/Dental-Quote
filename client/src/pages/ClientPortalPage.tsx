@@ -33,10 +33,12 @@ import DentalChartSection from '@/components/portal/DentalChartSection';
 import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
+import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
 import { 
   EXAMPLE_BOOKING, 
   EXAMPLE_CLINIC_HOTEL_OPTIONS, 
-  EXAMPLE_SELF_ARRANGED_STATUS 
+  EXAMPLE_SELF_ARRANGED_STATUS,
+  EXAMPLE_FLIGHT_DETAILS
 } from '@/components/dashboard/exampleHotelData';
 
 // Temporary Mock Data

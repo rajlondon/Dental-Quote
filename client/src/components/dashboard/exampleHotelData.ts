@@ -196,3 +196,70 @@ export const EXAMPLE_SELF_ARRANGED_STATUS = {
   specialRequests: 'Please arrange transport from this hotel to the clinic',
   clinicAcknowledged: true
 };
+
+// Flight information types and examples
+export type FlightDetails = {
+  outboundFlight: {
+    flightNumber: string;
+    airline: string;
+    departureAirport: string;
+    departureCity: string;
+    departureDate: Date;
+    departureTime: string;
+    arrivalAirport: string;
+    arrivalDate: Date;
+    arrivalTime: string;
+    bookingReference?: string;
+  };
+  returnFlight?: {
+    flightNumber: string;
+    airline: string;
+    departureAirport: string;
+    departureCity: string;
+    departureDate: Date;
+    departureTime: string;
+    arrivalAirport: string;
+    arrivalDate: Date;
+    arrivalTime: string;
+    bookingReference?: string;
+  };
+  assistanceNeeded: boolean;
+  assistanceType?: string;
+  pickupRequested: boolean;
+  passengers: number;
+  additionalInformation?: string;
+  flightStatus?: 'confirmed' | 'pending' | 'not_booked';
+};
+
+export const EXAMPLE_FLIGHT_DETAILS: FlightDetails = {
+  outboundFlight: {
+    flightNumber: 'BA678',
+    airline: 'British Airways',
+    departureAirport: 'LHR',
+    departureCity: 'London',
+    departureDate: new Date('2025-06-10'),
+    departureTime: '09:45',
+    arrivalAirport: 'IST',
+    arrivalDate: new Date('2025-06-10'),
+    arrivalTime: '15:30',
+    bookingReference: 'XYZABC'
+  },
+  returnFlight: {
+    flightNumber: 'BA679',
+    airline: 'British Airways',
+    departureAirport: 'IST',
+    departureCity: 'Istanbul',
+    departureDate: new Date('2025-06-17'),
+    departureTime: '16:45',
+    arrivalAirport: 'LHR',
+    arrivalDate: new Date('2025-06-17'),
+    arrivalTime: '19:20',
+    bookingReference: 'XYZABC'
+  },
+  assistanceNeeded: true,
+  assistanceType: 'Airport pickup and drop-off',
+  pickupRequested: true,
+  passengers: 2,
+  additionalInformation: 'I will have one large suitcase per person',
+  flightStatus: 'confirmed'
+};
