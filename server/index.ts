@@ -53,8 +53,11 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    // Import path if not already imported
-    const path = require('path');
+    import { fileURLToPath } from 'url';
+    import { dirname, join } from 'path';
+    
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
     
     // Serve static files from the correct dist directory
     app.use(express.static(path.join(__dirname, '../dist/public')));

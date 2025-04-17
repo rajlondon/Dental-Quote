@@ -1,5 +1,9 @@
 import fs from 'fs';
-import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 import { randomUUID } from 'crypto';
 import multer from 'multer';
 import { storage } from '../storage';
