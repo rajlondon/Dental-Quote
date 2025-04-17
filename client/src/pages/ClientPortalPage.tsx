@@ -186,6 +186,15 @@ const ClientPortalPage: React.FC = () => {
         <div className="p-4 mt-auto">
           <Button 
             variant="outline" 
+            className="w-full justify-start text-gray-700 mb-2"
+            onClick={() => window.location.href = '/account-settings'}
+          >
+            <UserCog className="h-5 w-5 mr-3" />
+            {t('portal.account_settings', 'Account Settings')}
+          </Button>
+        
+          <Button 
+            variant="outline" 
             className="w-full justify-start text-gray-700"
             onClick={handleLogout}
           >
@@ -258,6 +267,15 @@ const ClientPortalPage: React.FC = () => {
               </ScrollArea>
               
               <div className="p-4 mt-auto border-t border-gray-200">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start text-gray-700 mb-2"
+                  onClick={() => window.location.href = '/account-settings'}
+                >
+                  <UserCog className="h-5 w-5 mr-3" />
+                  {t('portal.account_settings', 'Account Settings')}
+                </Button>
+              
                 <Button 
                   variant="outline" 
                   className="w-full justify-start text-gray-700"

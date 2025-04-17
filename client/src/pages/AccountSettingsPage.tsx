@@ -62,10 +62,10 @@ const AccountSettingsPage = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to update password");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Update Failed",
-        description: error.message || "There was a problem updating your password. Please try again.",
+        description: error?.message || "There was a problem updating your password. Please try again.",
         variant: "destructive",
       });
     } finally {
