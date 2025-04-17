@@ -28,6 +28,7 @@ import ClinicTreatmentMapperPage from "@/pages/ClinicTreatmentMapperPage";
 import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
 import TreatmentComparisonPage from "./pages/TreatmentComparisonPage";
 import AccountSettingsPage from "@/pages/AccountSettingsPage";
+import DataArchitecturePage from "@/pages/DataArchitecturePage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
       <Route path="/account-settings" component={AccountSettingsPage} />
+      <Route path="/data-architecture" component={DataArchitecturePage} />
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>
