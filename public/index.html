@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MyDentalFly - Domain Test</title>
+  <title>MyDentalFly</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
@@ -24,6 +24,10 @@
     h1 { 
       color: #3182ce; 
       margin-top: 0; 
+    }
+    .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
     }
     .status { 
       background: #ebf8ff; 
@@ -57,28 +61,46 @@
       border-radius: 4px; 
       overflow-x: auto; 
     }
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .coming-soon {
+      text-align: center;
+      padding: 40px 20px;
+      background: #3182ce;
+      color: white;
+      border-radius: 8px;
+      margin: 40px 0;
+    }
+    .coming-soon h2 {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>MyDentalFly Domain Test</h1>
-    <div id="status" class="status">
-      Checking server status...
+    <h1>MyDentalFly</h1>
+    <p>Global dental tourism platform</p>
+    
+    <div class="coming-soon">
+      <h2>Coming Soon</h2>
+      <p>Our new platform is under development. We're working hard to bring you the best dental tourism experience.</p>
     </div>
     
-    <div>
-      <h2>API Status Check</h2>
-      <button id="check-status">Check API Status</button>
-      <pre id="status-result">Click button to test API status</pre>
+    <div class="card">
+      <h2>Server Status</h2>
+      <div id="status" class="status">
+        Checking server status...
+      </div>
+      <button id="check-health">Check Server Health</button>
+      <pre id="result">Click button to test server</pre>
     </div>
     
-    <div>
-      <h2>Domain Information</h2>
-      <button id="check-domain">Check Domain Info</button>
-      <pre id="domain-result">Click button to retrieve domain information</pre>
-    </div>
-    
-    <div>
+    <div class="card">
       <h2>Browser Information</h2>
       <pre id="browser-info"></pre>
     </div>
@@ -93,16 +115,16 @@ Protocol: ${window.location.protocol}
 User Agent: ${navigator.userAgent}`;
     
     // Test API Status
-    document.getElementById('check-status').addEventListener('click', async () => {
-      const result = document.getElementById('status-result');
+    document.getElementById('check-health').addEventListener('click', async () => {
+      const result = document.getElementById('result');
       const status = document.getElementById('status');
       
-      result.textContent = 'Testing API...';
+      result.textContent = 'Testing server...';
       status.className = 'status';
       status.textContent = 'Checking server status...';
       
       try {
-        const response = await fetch('/api/status');
+        const response = await fetch('/api/health');
         if (response.ok) {
           const data = await response.json();
           result.textContent = JSON.stringify(data, null, 2);
@@ -111,37 +133,19 @@ User Agent: ${navigator.userAgent}`;
         } else {
           result.textContent = `Error: ${response.status} ${response.statusText}`;
           status.className = 'status error';
-          status.textContent = 'Error connecting to API';
+          status.textContent = 'Error connecting to server';
         }
       } catch (error) {
         result.textContent = `Error: ${error.message}`;
         status.className = 'status error';
-        status.textContent = 'Error connecting to API';
-      }
-    });
-    
-    // Check domain information
-    document.getElementById('check-domain').addEventListener('click', async () => {
-      const result = document.getElementById('domain-result');
-      result.textContent = 'Retrieving domain information...';
-      
-      try {
-        const response = await fetch('/api/domain-info');
-        if (response.ok) {
-          const data = await response.json();
-          result.textContent = JSON.stringify(data, null, 2);
-        } else {
-          result.textContent = `Error: ${response.status} ${response.statusText}`;
-        }
-      } catch (error) {
-        result.textContent = `Error: ${error.message}`;
+        status.textContent = 'Error connecting to server';
       }
     });
     
     // Auto-check status on load
     window.addEventListener('load', () => {
       setTimeout(() => {
-        document.getElementById('check-status').click();
+        document.getElementById('check-health').click();
       }, 1000);
     });
   </script>
