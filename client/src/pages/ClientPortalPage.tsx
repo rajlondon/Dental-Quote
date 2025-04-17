@@ -339,6 +339,14 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
             <p className="text-sm text-blue-600">
               {t('portal.dashboard.mobile_hint_description', 'Scroll down to see all sections including your dental journey, hotel options, and flight details')}
             </p>
+            <div className="flex items-center mt-2 text-blue-700 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+              {t('portal.dashboard.hamburger_hint', 'Tap the menu icon for more options')}
+            </div>
           </div>
         </div>
         
