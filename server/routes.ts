@@ -65,6 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/images', express.static(path.join(__dirname, '../public/images')));
   app.use('/favicon.ico', express.static(path.join(__dirname, '../public/favicon.ico')));
   
+  // Special test page for domain diagnosis
+  app.get('/domaintest.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/domaintest.html'));
+  });
+  
   // Setup authentication
   setupAuth(app);
   
@@ -101,8 +106,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CSRF Token endpoint for frontend usage
   app.get('/api/csrf-token', csrfProtection, csrfTokenHandler);
   
-  // WebSocket connection status endpoint
-  app.get('/api/ws-status', (_req, res) => {
+  // WebSocket connection status endpoint with domain info
+  app.get('/api/ws-status', (req, res) => {
     res.json({
       enabled: true,
       endpoint: '/ws',
@@ -111,7 +116,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'sync_appointment', 
         'treatment_update', 
         'message'
-      ]
+      ],
+      host: req.get('host'),
+      protocol: req.protocol,
+      domain_test: true,
+      time: new Date().toISOString()
     });
   });
   
