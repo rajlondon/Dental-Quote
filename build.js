@@ -1,3 +1,4 @@
+
 // Simple build script to handle frontend and backend compilation
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -12,13 +13,10 @@ try {
   
   // Step 2: Build the backend
   console.log('📦 Building backend with esbuild...');
-  execSync('npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist', 
+  execSync('npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --out-extension:.js=.mjs --outdir=dist', 
     { stdio: 'inherit' });
   
-  // Step 3: Create a .js version of the .mjs file
-  console.log('✅ Ensuring compatibility...');
-  
-  // Step 4: Create a simple start script for production
+  // Step 3: Create a start script for production
   const startScript = `
 // Production startup script
 import { createServer } from 'http';
@@ -30,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Import the main app module
-import('./index.js').then(module => {
+import('./index.mjs').then(module => {
   console.log('✅ Application started in production mode');
 }).catch(err => {
   console.error('❌ Failed to start application:', err);
@@ -38,7 +36,7 @@ import('./index.js').then(module => {
 });
 `;
 
-  fs.writeFileSync(path.join(__dirname, 'dist', 'start.js'), startScript);
+  fs.writeFileSync(path.join(__dirname, 'dist', 'start.mjs'), startScript);
   
   console.log('🎉 Build completed successfully!');
 } catch (error) {
