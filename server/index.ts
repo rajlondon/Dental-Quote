@@ -53,10 +53,12 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    app.use(express.static("dist"));
-    // Serve index.html for all routes to support client-side routing
+    // Serve static files from dist/public
+    app.use(express.static(path.join(__dirname, "../dist/public")));
+    
+    // Handle client-side routing by serving index.html
     app.get("*", (req, res) => {
-      res.sendFile("dist/index.html", { root: "." });
+      res.sendFile(path.join(__dirname, "../dist/public/index.html"));
     });
   }
 
