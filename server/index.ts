@@ -56,20 +56,19 @@ app.use((req, res, next) => {
   } else {
     const { fileURLToPath } = await import('url');
     const { dirname, join } = await import('path');
-    const path = { join };
     
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     
-    // Serve static files from the correct dist directory
-    app.use(express.static(join(__dirname, '../dist/public')));
+    // Serve static files from the dist directory
+    app.use(express.static(join(__dirname, '../dist')));
     
-    // Handle API routes
+    // Handle API routes before the catch-all
     app.use('/api', (req, res, next) => next());
     
-    // Serve index.html for all other routes to support client-side routing
+    // Serve index.html for client-side routing
     app.get('*', (req, res) => {
-      res.sendFile(join(__dirname, '../dist/public/index.html'));
+      res.sendFile(join(__dirname, '../dist/index.html'));
     });
   }
 
