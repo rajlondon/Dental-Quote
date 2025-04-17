@@ -7,10 +7,18 @@ if (!stripeSecretKey) {
   console.error('STRIPE_SECRET_KEY environment variable is not set');
 }
 
-// Use a supported API version
-const stripe = new Stripe(stripeSecretKey || '', {
+// Initialize Stripe only if secret key is available
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, {
   apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
-});
+}) : null;
+
+// Helper to check Stripe availability
+function ensureStripeConfigured() {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+  }
+  return stripe;
+}
 
 /**
  * Create a payment intent for the given amount
@@ -26,7 +34,7 @@ export async function createPaymentIntent(
 ): Promise<{ clientSecret: string; id: string }> {
   try {
     // Create a PaymentIntent with the specified amount and currency
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await ensureStripeConfigured().paymentIntents.create({
       amount,
       currency: currency.toLowerCase(),
       metadata,
