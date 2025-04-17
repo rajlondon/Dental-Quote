@@ -1,11 +1,12 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
+import { csrfProtection, authRateLimit } from "./middleware/security";
 
 // Extend Express Request with User type
 declare global {
@@ -84,7 +85,7 @@ export function setupAuth(app: Express) {
   });
 
   // Setup auth routes
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", authRateLimit, csrfProtection, async (req, res) => {
     try {
       const { email, password, firstName, lastName, role = "patient" } = req.body;
       
@@ -117,7 +118,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", (req, res, next) => {
+  app.post("/api/auth/login", authRateLimit, csrfProtection, (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {
         return next(err);
@@ -136,7 +137,7 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  app.post("/api/auth/logout", (req, res) => {
+  app.post("/api/auth/logout", csrfProtection, (req, res) => {
     req.logout((err) => {
       if (err) {
         return res.status(500).json({ message: "Error during logout" });
@@ -161,7 +162,7 @@ export function setupAuth(app: Express) {
   });
 
   // Admin-only endpoint to create initial demo users for testing
-  app.post("/api/auth/create-demo-users", async (req, res) => {
+  app.post("/api/auth/create-demo-users", csrfProtection, async (req, res) => {
     // Only allow this in development environment
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({ message: "Not allowed in production" });
