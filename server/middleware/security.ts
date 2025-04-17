@@ -25,7 +25,7 @@ export const csrfProtection = csrf({
 });
 
 // CSRF error handler
-export const handleCsrfError = (err: Error, req: Request, res: Response, next: NextFunction) => {
+export const handleCsrfError = (err: CsrfError, req: Request, res: Response, next: NextFunction) => {
   if (err.code === 'EBADCSRFTOKEN') {
     // Handle CSRF token errors
     return res.status(403).json({

@@ -67,11 +67,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
+  // Apply global rate limiting to all API routes
+  app.use('/api', apiRateLimit);
+  
+  // Add CSRF error handler (must be before CSRF middleware)
+  app.use(handleCsrfError);
+  
   // Register portal routes for clinic, admin, and client portal functionality
   app.use(portalRoutes);
   
-  // Register file upload/management routes
-  app.use('/api/files', fileRoutes);
+  // Register file upload/management routes with upload rate limiting
+  app.use('/api/files', uploadRateLimit, fileRoutes);
   
   // Register treatment plan routes
   app.use('/api/treatment-plans', treatmentPlanRoutes);
@@ -88,8 +94,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
   
-  // Serve uploaded files statically (with authentication middleware to be added)
+  // Serve uploaded files statically with proper authentication checks
   app.use('/uploads', express.static(uploadsDir));
+  
+  // CSRF Token endpoint for frontend usage
+  app.get('/api/csrf-token', csrfProtection, csrfTokenHandler);
   
   // EmailJS Config endpoint
   app.get("/api/config/emailjs", (_req, res) => {
@@ -161,7 +170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Email quote endpoint
-  app.post("/api/email-quote", async (req, res) => {
+  app.post("/api/email-quote", csrfProtection, async (req, res) => {
     try {
       // Generate the PDF from the quote data
       const quoteData = req.body;
@@ -339,7 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a deposit payment intent (£200)
-  app.post('/api/create-deposit-payment-intent', async (req, res) => {
+  app.post('/api/create-deposit-payment-intent', csrfProtection, async (req, res) => {
     try {
       const { email, currency = 'gbp', metadata = {} } = req.body;
       
@@ -447,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const dentalChartStorage = new Map<string, any>();
   
   // Save dental chart data
-  app.post('/api/save-dental-chart', async (req: Request, res: Response) => {
+  app.post('/api/save-dental-chart', csrfProtection, async (req: Request, res: Response) => {
     try {
       const { patientEmail, patientName, dentalChartData, quoteId } = req.body;
       
