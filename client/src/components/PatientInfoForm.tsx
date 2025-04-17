@@ -75,6 +75,7 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
       phone: initialData.phone || '',
       travelMonth: initialData.travelMonth || '',
       departureCity: initialData.departureCity || '',
+      hotelAccommodation: initialData.hotelAccommodation || 'clinic_decide',
       hasXrays: initialData.hasXrays || false,
       hasCtScan: initialData.hasCtScan || false,
       hasDentalPhotos: initialData.hasDentalPhotos || false,
@@ -190,6 +191,53 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                   </FormItem>
                 )}
               />
+              
+              <FormField
+                control={form.control}
+                name="hotelAccommodation"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Would you like to include hotel accommodation in your quote?</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-2"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="yes" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Yes, include hotel with my treatment
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="no" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            No, I'll arrange my own accommodation
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="clinic_decide" />
+                          </FormControl>
+                          <FormLabel className="font-normal cursor-pointer">
+                            Let the clinic decide if they include hotel
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormDescription>
+                      Some clinics offer all-inclusive packages with hotel accommodation, while others leave it separate. We can help with both options.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <div className="md:col-span-2">
                 <FormField
                   control={form.control}

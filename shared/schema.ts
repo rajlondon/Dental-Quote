@@ -76,7 +76,8 @@ export const quoteRequests = pgTable("quote_requests", {
   departureCity: varchar("departure_city", { length: 100 }),
   travelMonth: varchar("travel_month", { length: 50 }),
   // Accommodation
-  needsAccommodation: boolean("needs_accommodation").default(false),
+  hotelAccommodation: varchar("hotel_accommodation", { length: 20 }).default("clinic_decide"),
+  needsAccommodation: boolean("needs_accommodation").default(false), // legacy field
   accommodationType: varchar("accommodation_type", { length: 50 }),
   // X-rays
   hasXrays: boolean("has_xrays").default(false),
@@ -241,6 +242,8 @@ export const treatmentPlans = pgTable("treatment_plans", {
   treatmentDetails: json("treatment_details").notNull(), // JSON array of selected treatments
   estimatedTotalCost: decimal("estimated_total_cost", { precision: 10, scale: 2 }),
   currency: varchar("currency", { length: 3 }).default("GBP"),
+  includesHotel: boolean("includes_hotel").default(false),
+  hotelDetails: json("hotel_details"), // JSON object with hotel info
   notes: text("notes"), // Clinic comments
   portalStatus: varchar("portal_status", { length: 50 }).default("active"), // active, in_progress, completed
   quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id),
