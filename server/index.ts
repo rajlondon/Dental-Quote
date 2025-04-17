@@ -53,21 +53,22 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    import { fileURLToPath } from 'url';
-    import { dirname, join } from 'path';
+    const { fileURLToPath } = await import('url');
+    const { dirname, join } = await import('path');
+    const path = { join };
     
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     
     // Serve static files from the correct dist directory
-    app.use(express.static(path.join(__dirname, '../dist/public')));
+    app.use(express.static(join(__dirname, '../dist/public')));
     
     // Handle API routes
     app.use('/api', (req, res, next) => next());
     
     // Serve index.html for all other routes to support client-side routing
     app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../dist/public/index.html'));
+      res.sendFile(join(__dirname, '../dist/public/index.html'));
     });
   }
 
