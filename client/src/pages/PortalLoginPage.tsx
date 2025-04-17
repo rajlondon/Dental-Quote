@@ -31,6 +31,11 @@ const registerSchema = z.object({
   phone: z.string().min(5, { message: "Please enter a valid phone number" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
+  termsConsent: z.boolean().refine(val => val === true, {
+    message: "You must agree to the Terms, Privacy Policy, and Medical Disclaimer to continue."
+  }),
+  contactConsent: z.boolean().optional(),
+  promotionalConsent: z.boolean().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -66,6 +71,9 @@ const PortalLoginPage: React.FC = () => {
       phone: "",
       password: "",
       confirmPassword: "",
+      termsConsent: false,
+      contactConsent: false,
+      promotionalConsent: false,
     },
   });
   
@@ -418,6 +426,85 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
+
+                      <div className="space-y-4 pt-4 border-t mt-2">
+                        <h3 className="text-sm font-medium">Consent Options</h3>
+                        
+                        {/* Required Terms Consent */}
+                        <FormField
+                          control={registerForm.control}
+                          name="termsConsent"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  I agree to the <a href="/terms" className="text-primary hover:underline">Terms of Use</a>,{" "}
+                                  <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>, and acknowledge the{" "}
+                                  <a href="/medical-disclaimer" className="text-primary hover:underline">Medical Disclaimer</a>.
+                                </FormLabel>
+                                <FormDescription className="text-xs">
+                                  I understand MyDentalFly is a facilitator, not a provider of direct dental care. I consent to uploading my dental information, scans, and documents for clinic review.
+                                </FormDescription>
+                                <FormMessage />
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {/* Optional Contact Consent */}
+                        <FormField
+                          control={registerForm.control}
+                          name="contactConsent"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  I consent to being contacted via email, SMS, or WhatsApp about my enquiry and treatment planning.
+                                </FormLabel>
+                                <FormDescription className="text-xs">
+                                  This includes booking support communication and travel or appointment updates.
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {/* Optional Promotional Consent */}
+                        <FormField
+                          control={registerForm.control}
+                          name="promotionalConsent"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  I'd like to receive tips, offers, and promotions from MyDentalFly and its partner clinics.
+                                </FormLabel>
+                                <FormDescription className="text-xs">
+                                  This includes newsletters and special offers from our partner clinics.
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? t("portal.login.registering", "Creating account...") : t("portal.login.register", "Create Account")}
