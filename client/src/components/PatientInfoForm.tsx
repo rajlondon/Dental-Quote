@@ -33,7 +33,9 @@ const formSchema = z.object({
   phone: z.string().min(6, 'Phone number is required'),
   travelMonth: z.string().optional(),
   departureCity: z.string().optional(),
-  hotelAccommodation: z.enum(['yes', 'no', 'clinic_decide']).default('clinic_decide'),
+  hotelAccommodation: z.enum(['yes', 'no', 'clinic_decide'], {
+    required_error: 'Please select an accommodation option',
+  }),
   hasXrays: z.boolean().default(false),
   hasCtScan: z.boolean().default(false),
   hasDentalPhotos: z.boolean().default(false),
@@ -197,7 +199,10 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({
                 name="hotelAccommodation"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Would you like to include hotel accommodation in your quote?</FormLabel>
+                    <FormLabel className="flex items-center">
+                      Would you like to include hotel accommodation in your quote?
+                      <span className="text-red-500 ml-1">*</span>
+                    </FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
