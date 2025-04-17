@@ -70,6 +70,10 @@ const Navbar: React.FC = () => {
             </div>
           </div>
           
+          <Link href="/data-architecture" className="text-neutral-600 hover:text-primary transition-colors text-xs">
+            Data Architecture
+          </Link>
+          
           <Link href="/how-it-works" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.howItWorks', 'How It Works')}
           </Link>
@@ -140,6 +144,10 @@ const Navbar: React.FC = () => {
           
           <Link href="/clinic-dental-charts" className="block pl-4 text-gray-500 hover:text-primary transition-colors text-xs">
             Patient Dental Charts
+          </Link>
+          
+          <Link href="/data-architecture" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
+            Data Architecture
           </Link>
           
           <Link href="/how-it-works" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
