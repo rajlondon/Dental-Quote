@@ -162,6 +162,44 @@ const DataArchitecturePage: React.FC = () => {
               </Tabs>
             </CardContent>
           </Card>
+          
+          {/* System Load & Capacity Monitoring */}
+          <Card>
+            <CardHeader>
+              <CardTitle>System Load & Capacity Planning</CardTitle>
+              <CardDescription>
+                Monitor system performance and analyze capacity for handling 100+ daily signups
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-muted-foreground">
+                  This monitoring dashboard provides real-time insights into system performance metrics, 
+                  helping identify potential bottlenecks and ensure the platform can handle expected growth.
+                </p>
+              </div>
+              <SystemLoadMonitor />
+            </CardContent>
+          </Card>
+          
+          {/* WebSocket Connection Analytics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>WebSocket Connection Analytics</CardTitle>
+              <CardDescription>
+                Real-time monitoring of cross-portal communication channels
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-muted-foreground">
+                  WebSocket connections are critical for maintaining real-time synchronization between patient and clinic portals.
+                  This dashboard monitors connection health, message flow, and helps identify communication bottlenecks.
+                </p>
+              </div>
+              <WebSocketConnectionAnalytics />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
