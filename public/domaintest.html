@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Istanbul Dental Smile - Domain Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2563eb;
+      margin-top: 0;
+    }
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #34d399;
+    }
+    .loading {
+      background-color: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+    }
+    .error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+    .api-test {
+      margin-top: 30px;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    pre {
+      background-color: #f1f5f9;
+      padding: 15px;
+      border-radius: 5px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Istanbul Dental Smile - Domain Test</h1>
+    
+    <div id="status" class="status loading">
+      Testing server connection...
+    </div>
+    
+    <div class="api-test">
+      <h2>API Status</h2>
+      <button id="check-api">Check API</button>
+      <pre id="api-result">Click button to test API connection</pre>
+    </div>
+    
+    <div class="api-test">
+      <h2>WebSocket Status</h2>
+      <button id="check-ws">Check WebSocket</button>
+      <pre id="ws-result">Click button to test WebSocket connection</pre>
+    </div>
+    
+    <div class="api-test">
+      <h2>Domain Information</h2>
+      <pre id="domain-info">Loading domain information...</pre>
+    </div>
+  </div>
+
+  <script>
+    // Test domain
+    const domainInfo = document.getElementById('domain-info');
+    domainInfo.textContent = `Current URL: ${window.location.href}
+Host: ${window.location.host}
+Protocol: ${window.location.protocol}
+Search Parameters: ${window.location.search}`;
+
+    // Test API
+    const apiResult = document.getElementById('api-result');
+    const checkApiBtn = document.getElementById('check-api');
+    
+    checkApiBtn.addEventListener('click', async () => {
+      apiResult.textContent = 'Testing API connection...';
+      try {
+        const response = await fetch('/api/ws-status');
+        if (response.ok) {
+          const data = await response.json();
+          apiResult.textContent = `Connection successful!\n${JSON.stringify(data, null, 2)}`;
+          updateStatus('success', 'Server is accessible! API connection successful.');
+        } else {
+          apiResult.textContent = `Error: ${response.status} ${response.statusText}`;
+          updateStatus('error', 'API connection failed with HTTP error.');
+        }
+      } catch (error) {
+        apiResult.textContent = `Connection error: ${error.message}`;
+        updateStatus('error', 'API connection failed.');
+      }
+    });
+
+    // Test WebSocket
+    const wsResult = document.getElementById('ws-result');
+    const checkWsBtn = document.getElementById('check-ws');
+    
+    checkWsBtn.addEventListener('click', () => {
+      wsResult.textContent = 'Testing WebSocket connection...';
+      
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      try {
+        const socket = new WebSocket(wsUrl);
+        
+        socket.onopen = () => {
+          wsResult.textContent = 'WebSocket connection established successfully!';
+          socket.send(JSON.stringify({
+            type: 'echo',
+            message: 'Hello WebSocket Server'
+          }));
+        };
+        
+        socket.onmessage = (event) => {
+          wsResult.textContent = `Message received from server: ${event.data}`;
+        };
+        
+        socket.onerror = (error) => {
+          wsResult.textContent = `WebSocket error: ${JSON.stringify(error)}`;
+        };
+        
+        socket.onclose = (event) => {
+          wsResult.textContent += `\nConnection closed: ${event.code} - ${event.reason}`;
+        };
+      } catch (error) {
+        wsResult.textContent = `WebSocket initialization error: ${error.message}`;
+      }
+    });
+
+    // Update status
+    function updateStatus(type, message) {
+      const status = document.getElementById('status');
+      status.className = `status ${type}`;
+      status.textContent = message;
+    }
+
+    // Automatically check API on load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        checkApiBtn.click();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
