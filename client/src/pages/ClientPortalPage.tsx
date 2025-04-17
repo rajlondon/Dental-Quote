@@ -324,6 +324,70 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         </h2>
       </div>
       
+      {/* Mobile Navigation Hint - Only visible on mobile */}
+      <div className="md:hidden p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+        <div className="flex items-center">
+          <div className="bg-blue-100 rounded-full p-2 mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-medium text-blue-800">
+              {t('portal.dashboard.mobile_hint_title', 'Explore Your Dashboard')}
+            </h3>
+            <p className="text-sm text-blue-600">
+              {t('portal.dashboard.mobile_hint_description', 'Scroll down to see all sections including your dental journey, hotel options, and flight details')}
+            </p>
+          </div>
+        </div>
+        
+        {/* Quick section links for mobile */}
+        <div className="mt-3 pt-3 border-t border-blue-100">
+          <p className="text-sm font-medium text-blue-700 mb-2">
+            {t('portal.dashboard.quick_links', 'Quick Navigation')}:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => {
+                const nextStepsElement = document.getElementById('next-steps-section');
+                nextStepsElement?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
+            >
+              {t('portal.dashboard.next_steps', 'Next Steps')}
+            </button>
+            <button 
+              onClick={() => {
+                const journeyElement = document.getElementById('dental-journey-section');
+                journeyElement?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
+            >
+              {t('portal.dashboard.your_journey', 'Dental Journey')}
+            </button>
+            <button 
+              onClick={() => {
+                const hotelElement = document.getElementById('hotel-section');
+                hotelElement?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
+            >
+              {t('portal.dashboard.hotel', 'Hotel Options')}
+            </button>
+            <button 
+              onClick={() => {
+                const flightElement = document.getElementById('flight-section');
+                flightElement?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
+            >
+              {t('portal.dashboard.flight_details', 'Flight Details')}
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -408,7 +472,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
       {/* Next Steps and Dental Journey Section */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Next Steps */}
-        <Card>
+        <Card id="next-steps-section">
           <CardHeader>
             <CardTitle>{t('portal.dashboard.next_steps', 'Next Steps')}</CardTitle>
             <CardDescription>
@@ -457,7 +521,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         </Card>
         
         {/* Your Dental Journey */}
-        <Card>
+        <Card id="dental-journey-section">
           <CardHeader>
             <CardTitle>{t('portal.dashboard.your_journey', 'Your Dental Journey')}</CardTitle>
             <CardDescription>
@@ -521,7 +585,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
       </div>
       
       {/* Hotel Accommodation Section */}
-      <div className="grid md:grid-cols-1 gap-6 mt-6">
+      <div id="hotel-section" className="grid md:grid-cols-1 gap-6 mt-6">
         {/* Hotel Accommodation Section with view toggle controls */}
         <Card className="mb-2">
           <CardHeader className="pb-2">
@@ -594,7 +658,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
       </div>
       
       {/* Flight Details Section */}
-      <div className="mt-6">
+      <div id="flight-section" className="mt-6">
         <FlightDetailsSection />
       </div>
     </div>
