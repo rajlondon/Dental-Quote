@@ -525,6 +525,9 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         )}
       </div>
       
+      {/* Flight Details Section */}
+      <FlightDetailsSection />
+      
       <Card>
         <CardHeader>
           <CardTitle>{t('portal.dashboard.your_journey', 'Your Dental Journey')}</CardTitle>
