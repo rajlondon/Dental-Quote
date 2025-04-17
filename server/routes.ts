@@ -34,6 +34,7 @@ import {
   authRateLimit, 
   uploadRateLimit 
 } from "./middleware/security";
+import { setupWebSocketService } from "./services/websocketService";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,6 +100,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // CSRF Token endpoint for frontend usage
   app.get('/api/csrf-token', csrfProtection, csrfTokenHandler);
+  
+  // WebSocket connection status endpoint
+  app.get('/api/ws-status', (_req, res) => {
+    res.json({
+      enabled: true,
+      endpoint: '/ws',
+      supportedEvents: [
+        'register', 
+        'sync_appointment', 
+        'treatment_update', 
+        'message'
+      ]
+    });
+  });
   
   // EmailJS Config endpoint
   app.get("/api/config/emailjs", (_req, res) => {
@@ -581,6 +596,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create HTTP server
   const httpServer = createServer(app);
+  
+  // Initialize WebSocket Service for real-time data synchronization
+  const wsService = setupWebSocketService(httpServer);
+  
+  // Store WebSocket service instance in app.locals for access in other routes if needed
+  app.locals.wsService = wsService;
+  
+  console.log('WebSocket service initialized for patient-clinic data synchronization');
+  
   return httpServer;
 }
