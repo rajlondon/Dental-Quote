@@ -32,6 +32,7 @@ import ProfileSection from '@/components/portal/ProfileSection';
 import DentalChartSection from '@/components/portal/DentalChartSection';
 import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
+import { EXAMPLE_BOOKING } from '@/components/dashboard/exampleHotelData';
 
 // Temporary Mock Data
 const mockUserData = {
@@ -447,7 +448,9 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         
         {/* Hotel Accommodation Section */}
         <HotelAccommodationSection 
-          hotelBooking={undefined} 
+          // For now, using the example hotel booking with hotel data included
+          // Later this will be replaced with actual data from an API call
+          hotelBooking={EXAMPLE_BOOKING} 
           isLoading={false} 
         />
       </div>

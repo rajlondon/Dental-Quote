@@ -30,6 +30,7 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { HotelBooking, Hotel as HotelType } from '@shared/schema';
+import { EXAMPLE_BOOKING } from './exampleHotelData';
 import { 
   Tooltip,
   TooltipContent,
@@ -47,9 +48,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Extended HotelBooking type to include hotel data
+type ExtendedHotelBooking = HotelBooking & { 
+  hotel: HotelType 
+};
+
 // Types for props with default values
 interface HotelAccommodationSectionProps {
-  hotelBooking?: HotelBooking | null;
+  hotelBooking?: ExtendedHotelBooking | null;
   isLoading?: boolean;
 }
 
