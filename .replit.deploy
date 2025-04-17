@@ -1,0 +1,2 @@
+run = "node production.js"
+entrypoint = "production.js"

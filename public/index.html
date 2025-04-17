@@ -1,132 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+  <title>MyDentalFly - Domain Test</title>
   <meta charset="UTF-8">
-  <title>Istanbul Dental Smile – Quote Summary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      color: #333;
-      padding: 40px;
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      margin: 0; 
+      padding: 40px; 
+      background: #f5f9fc; 
+      color: #333; 
+      line-height: 1.6; 
     }
-    .quote-box {
-      background: white;
-      max-width: 800px;
-      margin: auto;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    .container { 
+      max-width: 800px; 
+      margin: 0 auto; 
+      background: white; 
+      padding: 30px; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
     }
-    h1 {
-      color: #00688B;
+    h1 { 
+      color: #3182ce; 
+      margin-top: 0; 
     }
-    h2 {
-      color: #007B9E;
-      margin-top: 40px;
+    .status { 
+      background: #ebf8ff; 
+      border-left: 4px solid #3182ce; 
+      padding: 15px; 
+      margin: 20px 0; 
     }
-    .icon {
-      height: 16px;
-      width: 16px;
-      vertical-align: middle;
-      margin-right: 6px;
+    .success {
+      background-color: #d1fae5;
+      border-left: 4px solid #10b981;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
+    .error {
+      background-color: #fee2e2;
+      border-left: 4px solid #ef4444;
     }
-    table, th, td {
-      border: 1px solid #ccc;
+    button { 
+      background: #3182ce; 
+      color: white; 
+      border: none; 
+      padding: 10px 15px; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      margin-bottom: 10px;
     }
-    th, td {
-      padding: 10px;
-      text-align: left;
+    button:hover { 
+      background: #2c5282; 
     }
-    button {
-      margin-top: 30px;
-      padding: 10px 20px;
-      background: #00688B;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    pre { 
+      background: #f1f5f9; 
+      padding: 15px; 
+      border-radius: 4px; 
+      overflow-x: auto; 
     }
   </style>
 </head>
 <body>
-  <div class="quote-box">
-    <h1>Istanbul Dental Smile</h1>
-    <p><strong>Quote #:</strong> IDS-20250405-RA99</p>
-    <p><strong>Date:</strong> 05/04/2025</p>
-
-    <h2>Patient Information</h2>
-    <p><strong>Name:</strong> Raj Singh</p>
-    <p><strong>Email:</strong> rajsingh140186@googlemail.com</p>
-    <p><strong>Phone:</strong> +447572445856</p>
-
-    <h2>Your Quote Details</h2>
-    <table>
-      <tr><th>Treatment</th><th>Price (GBP)</th><th>Price (USD)</th><th>Qty</th><th>Guarantee</th></tr>
-      <tr><td>Medigma Implant - Germany</td><td>£485</td><td>$625</td><td>1</td><td>LIFETIME</td></tr>
-    </table>
-
-    <h2>Travel Costs</h2>
-    <table>
-      <tr><th>Description</th><th>GBP</th><th>USD</th></tr>
-      <tr><td>Return flight from London (August)</td><td>£240</td><td>$312</td></tr>
-    </table>
-
-    <p><strong>Grand Total:</strong> £725 / $937</p>
-
-    <h2>Clinic Comparison</h2>
-    <table>
-      <tr><th>Clinic Name</th><th>Special Price (GBP)</th><th>Package Includes</th></tr>
-      <tr><td>Istanbul Dental Center</td><td>£461</td><td>
-        <img src="/icons/hotel.png" class="icon" />Hotel · 
-        <img src="/icons/car.png" class="icon" />Transfer
-      </td></tr>
-      <tr><td>Vera Smile Clinic</td><td>£437</td><td>
-        <img src="/icons/car.png" class="icon" />Transfer
-      </td></tr>
-      <tr><td>Premium Dental Turkey</td><td>£446</td><td>
-        <img src="/icons/hotel.png" class="icon" />Hotel · 
-        <img src="/icons/chat.png" class="icon" />Translator
-      </td></tr>
-    </table>
-
-    <h2>UK Cost Comparison</h2>
-    <p>The same treatment in the UK would typically cost between <strong>£1,213 and £1,455</strong>.<br>
-    By choosing Istanbul, you save approximately <strong>£849</strong> (64% savings).</p>
-
-    <h2>Why Book With Us?</h2>
-    <ul>
-      <li><img src="/icons/tick.png" class="icon" /> Vetted, Trusted Clinics</li>
-      <li><img src="/icons/tick.png" class="icon" /> Concierge Support from Start to Finish</li>
-      <li><img src="/icons/tick.png" class="icon" /> Safe Payment & Transparent Pricing</li>
-      <li><img src="/icons/tick.png" class="icon" /> Enjoy Istanbul While Enhancing Your Smile</li>
-    </ul>
-
-    <h2>Next Steps</h2>
-    <ol>
-      <li>Contact Istanbul Dental Smile to confirm your treatment plan</li>
-      <li>Book your flight to Istanbul for your chosen dates</li>
-      <li>We will arrange airport transfer and accommodation options</li>
-    </ol>
-
-    <h2>Ready to Book?</h2>
-    <p>Email us at <strong>info@istanbuldentalsmile.com</strong> or message us on WhatsApp: <strong>+447572445856</strong><br>
-    We'll handle your travel, treatment, and care — all you do is show up and smile!</p>
-
-    <button onclick="downloadPDF()">Download Quote as PDF</button>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-    <script>
-      function downloadPDF() {
-        const element = document.querySelector('.quote-box');
-        html2pdf().from(element).save('IstanbulDentalSmile_Quote.pdf');
-      }
-    </script>
+  <div class="container">
+    <h1>MyDentalFly Domain Test</h1>
+    <div id="status" class="status">
+      Checking server status...
+    </div>
+    
+    <div>
+      <h2>API Status Check</h2>
+      <button id="check-status">Check API Status</button>
+      <pre id="status-result">Click button to test API status</pre>
+    </div>
+    
+    <div>
+      <h2>Domain Information</h2>
+      <button id="check-domain">Check Domain Info</button>
+      <pre id="domain-result">Click button to retrieve domain information</pre>
+    </div>
+    
+    <div>
+      <h2>Browser Information</h2>
+      <pre id="browser-info"></pre>
+    </div>
   </div>
+  
+  <script>
+    // Display browser information
+    document.getElementById('browser-info').textContent = 
+      `URL: ${window.location.href}
+Host: ${window.location.host}
+Protocol: ${window.location.protocol}
+User Agent: ${navigator.userAgent}`;
+    
+    // Test API Status
+    document.getElementById('check-status').addEventListener('click', async () => {
+      const result = document.getElementById('status-result');
+      const status = document.getElementById('status');
+      
+      result.textContent = 'Testing API...';
+      status.className = 'status';
+      status.textContent = 'Checking server status...';
+      
+      try {
+        const response = await fetch('/api/status');
+        if (response.ok) {
+          const data = await response.json();
+          result.textContent = JSON.stringify(data, null, 2);
+          status.className = 'status success';
+          status.textContent = 'Server is running correctly!';
+        } else {
+          result.textContent = `Error: ${response.status} ${response.statusText}`;
+          status.className = 'status error';
+          status.textContent = 'Error connecting to API';
+        }
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        status.className = 'status error';
+        status.textContent = 'Error connecting to API';
+      }
+    });
+    
+    // Check domain information
+    document.getElementById('check-domain').addEventListener('click', async () => {
+      const result = document.getElementById('domain-result');
+      result.textContent = 'Retrieving domain information...';
+      
+      try {
+        const response = await fetch('/api/domain-info');
+        if (response.ok) {
+          const data = await response.json();
+          result.textContent = JSON.stringify(data, null, 2);
+        } else {
+          result.textContent = `Error: ${response.status} ${response.statusText}`;
+        }
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+      }
+    });
+    
+    // Auto-check status on load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('check-status').click();
+      }, 1000);
+    });
+  </script>
 </body>
 </html>
