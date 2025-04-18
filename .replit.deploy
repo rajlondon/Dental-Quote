@@ -1,2 +1,2 @@
-run = "node server.js"
+run = "node pre-deploy.js && node server.js"
 entrypoint = "server.js"
