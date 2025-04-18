@@ -1,153 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>MyDentalFly</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyDentalFly - Domain Test</title>
   <style>
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      margin: 0; 
-      padding: 40px; 
-      background: #f5f9fc; 
-      color: #333; 
-      line-height: 1.6; 
+    body {
+      font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
     }
-    .container { 
-      max-width: 800px; 
-      margin: 0 auto; 
-      background: white; 
-      padding: 30px; 
-      border-radius: 10px; 
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-    }
-    h1 { 
-      color: #3182ce; 
-      margin-top: 0; 
-    }
-    .logo {
-      max-width: 200px;
-      margin-bottom: 20px;
-    }
-    .status { 
-      background: #ebf8ff; 
-      border-left: 4px solid #3182ce; 
-      padding: 15px; 
-      margin: 20px 0; 
+    h1 { color: #0284c7; }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin: 20px 0;
+      padding: 20px;
     }
     .success {
-      background-color: #d1fae5;
-      border-left: 4px solid #10b981;
-    }
-    .error {
-      background-color: #fee2e2;
-      border-left: 4px solid #ef4444;
-    }
-    button { 
-      background: #3182ce; 
-      color: white; 
-      border: none; 
-      padding: 10px 15px; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      margin-bottom: 10px;
-    }
-    button:hover { 
-      background: #2c5282; 
-    }
-    pre { 
-      background: #f1f5f9; 
-      padding: 15px; 
-      border-radius: 4px; 
-      overflow-x: auto; 
-    }
-    .card {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 20px;
+      background-color: #e0f2fe;
+      border-left: 4px solid #0284c7;
+      padding: 15px;
       margin-bottom: 20px;
     }
-    .coming-soon {
-      text-align: center;
-      padding: 40px 20px;
-      background: #3182ce;
-      color: white;
-      border-radius: 8px;
-      margin: 40px 0;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
     }
-    .coming-soon h2 {
-      font-size: 32px;
-      margin-bottom: 15px;
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+    th {
+      background-color: #f8fafc;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>MyDentalFly</h1>
-    <p>Global dental tourism platform</p>
-    
-    <div class="coming-soon">
-      <h2>Coming Soon</h2>
-      <p>Our new platform is under development. We're working hard to bring you the best dental tourism experience.</p>
+  <h1>MyDentalFly - Domain Test</h1>
+  
+  <div class="card">
+    <div class="success">
+      <p><strong>✅ Static HTML Test Successful</strong></p>
+      <p>If you can see this page, static files are being served correctly!</p>
     </div>
     
-    <div class="card">
-      <h2>Server Status</h2>
-      <div id="status" class="status">
-        Checking server status...
-      </div>
-      <button id="check-health">Check Server Health</button>
-      <pre id="result">Click button to test server</pre>
-    </div>
+    <h2>Static HTML Information</h2>
+    <p>This is a static HTML file being served from the /public directory.</p>
+    <p>Time of page load: <span id="timestamp"></span></p>
     
-    <div class="card">
-      <h2>Browser Information</h2>
-      <pre id="browser-info"></pre>
+    <h2>Domain Information</h2>
+    <p>Current domain: <strong id="domain"></strong></p>
+    <p>Page URL: <strong id="url"></strong></p>
+    
+    <div style="margin-top: 30px;">
+      <h3>Next Steps</h3>
+      <p>Try accessing these endpoints to test API functionality:</p>
+      <ul>
+        <li><a href="/api/health" id="health-link">/api/health</a> - Server health check</li>
+        <li><a href="/api/domain-info" id="domain-link">/api/domain-info</a> - Domain information</li>
+      </ul>
     </div>
   </div>
   
   <script>
-    // Display browser information
-    document.getElementById('browser-info').textContent = 
-      `URL: ${window.location.href}
-Host: ${window.location.host}
-Protocol: ${window.location.protocol}
-User Agent: ${navigator.userAgent}`;
+    // Set current timestamp
+    document.getElementById('timestamp').textContent = new Date().toISOString();
     
-    // Test API Status
-    document.getElementById('check-health').addEventListener('click', async () => {
-      const result = document.getElementById('result');
-      const status = document.getElementById('status');
-      
-      result.textContent = 'Testing server...';
-      status.className = 'status';
-      status.textContent = 'Checking server status...';
-      
-      try {
-        const response = await fetch('/api/health');
-        if (response.ok) {
-          const data = await response.json();
-          result.textContent = JSON.stringify(data, null, 2);
-          status.className = 'status success';
-          status.textContent = 'Server is running correctly!';
-        } else {
-          result.textContent = `Error: ${response.status} ${response.statusText}`;
-          status.className = 'status error';
-          status.textContent = 'Error connecting to server';
-        }
-      } catch (error) {
-        result.textContent = `Error: ${error.message}`;
-        status.className = 'status error';
-        status.textContent = 'Error connecting to server';
-      }
-    });
+    // Set domain information
+    document.getElementById('domain').textContent = window.location.host;
+    document.getElementById('url').textContent = window.location.href;
     
-    // Auto-check status on load
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('check-health').click();
-      }, 1000);
-    });
+    // Update link hrefs to include domain
+    document.getElementById('health-link').href = window.location.origin + '/api/health';
+    document.getElementById('domain-link').href = window.location.origin + '/api/domain-info';
   </script>
 </body>
 </html>

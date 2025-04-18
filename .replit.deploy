@@ -1,2 +1,2 @@
-run = "node simple-server.js"
-entrypoint = "simple-server.js"
+run = "node replit-static.js"
+entrypoint = "replit-static.js"
