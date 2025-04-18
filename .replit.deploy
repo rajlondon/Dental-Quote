@@ -1,2 +1,2 @@
-run = "node pre-deploy.js && node server.js"
-entrypoint = "server.js"
+run = "node domain-server.cjs"
+entrypoint = "domain-server.cjs"
