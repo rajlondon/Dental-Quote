@@ -1,2 +1,2 @@
-run = "npm run build && node deploy-static.js"
-entrypoint = "deploy-static.js"
+run = "node server.js"
+entrypoint = "server.js"
