@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#F0F7FF"/>
+  
+  <!-- Gum Tissue -->
+  <path d="M50 100C50 100 70 85 100 85C130 85 150 100 150 100C150 100 130 95 100 95C70 95 50 100 50 100Z" fill="#FFCCCB" stroke="#FA8072" stroke-width="1"/>
+  
+  <!-- Jawbone -->
+  <path d="M40 115C40 115 70 105 100 105C130 105 160 115 160 115C160 115 130 130 100 130C70 130 40 115 40 115Z" fill="#F8F8F8" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Cross-Section Layer Lines in Jawbone -->
+  <path d="M50 112L150 112" stroke="#E1F5FE" stroke-width="0.75" stroke-dasharray="3 2"/>
+  <path d="M45 116L155 116" stroke="#E1F5FE" stroke-width="0.75" stroke-dasharray="3 2"/>
+  <path d="M43 120L157 120" stroke="#E1F5FE" stroke-width="0.75" stroke-dasharray="3 2"/>
+  <path d="M48 124L152 124" stroke="#E1F5FE" stroke-width="0.75" stroke-dasharray="3 2"/>
+  
+  <!-- Implant Post (Titanium) -->
+  <rect x="95" y="95" width="10" height="30" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <path d="M95 105H105" stroke="#A0A0A0" stroke-width="0.5"/>
+  <path d="M95 115H105" stroke="#A0A0A0" stroke-width="0.5"/>
+  <path d="M96 95L96 125" stroke="#A0A0A0" stroke-width="0.5"/>
+  <path d="M104 95L104 125" stroke="#A0A0A0" stroke-width="0.5"/>
+  
+  <!-- Implant Threads -->
+  <path d="M95 100L105 102" stroke="#A0A0A0" stroke-width="0.5"/>
+  <path d="M95 110L105 112" stroke="#A0A0A0" stroke-width="0.5"/>
+  <path d="M95 120L105 122" stroke="#A0A0A0" stroke-width="0.5"/>
+  
+  <!-- Abutment (Connector) -->
+  <path d="M95 85L95 95H105V85L100 80L95 85Z" fill="#F5F5F5" stroke="#A0A0A0" stroke-width="1"/>
+  
+  <!-- Crown (White Tooth) -->
+  <path d="M93 60C93 60 96 55 100 55C104 55 107 60 107 60L107 80L93 80L93 60Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M93 80L107 80" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Crown Details -->
+  <path d="M97 65L103 65" stroke="#0EA5E9" stroke-width="0.5"/>
+  <path d="M95 70L105 70" stroke="#0EA5E9" stroke-width="0.5"/>
+  <path d="M94 75L106 75" stroke="#0EA5E9" stroke-width="0.5"/>
+  
+  <!-- Highlight on Crown -->
+  <path d="M98 60L96 70" stroke="white" stroke-width="1" stroke-linecap="round"/>
+  <path d="M102 60L104 70" stroke="white" stroke-width="1" stroke-linecap="round"/>
+  
+  <!-- Implant Component Labels -->
+  <path d="M120 60L140 60" stroke="#0EA5E9" stroke-width="1"/>
+  <text x="145" y="63" font-family="Arial" font-size="6" fill="#0EA5E9">Crown</text>
+  
+  <path d="M120 85L140 85" stroke="#A0A0A0" stroke-width="1"/>
+  <text x="145" y="88" font-family="Arial" font-size="6" fill="#A0A0A0">Abutment</text>
+  
+  <path d="M120 105L140 105" stroke="#A0A0A0" stroke-width="1"/>
+  <text x="145" y="108" font-family="Arial" font-size="6" fill="#A0A0A0">Implant</text>
+  
+  <path d="M120 120L140 120" stroke="#0EA5E9" stroke-width="1"/>
+  <text x="145" y="123" font-family="Arial" font-size="6" fill="#0EA5E9">Jawbone</text>
+  
+  <!-- Small Stars -->
+  <path d="M35 40L36 43L39 44L37 46L38 49L35 48L32 49L33 46L31 44L34 43L35 40Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+  <path d="M165 40L166 43L169 44L167 46L168 49L165 48L162 49L163 46L161 44L164 43L165 40Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+  
+  <!-- Magnifying Glass Element -->
+  <circle cx="45" cy="155" r="15" fill="white" fill-opacity="0.7" stroke="#0EA5E9" stroke-width="1"/>
+  <path d="M57 155L65 163" stroke="#0EA5E9" stroke-width="2"/>
+  <path d="M47 150L49 155L52 152" stroke="#0EA5E9" stroke-width="0.75"/>
+</svg>

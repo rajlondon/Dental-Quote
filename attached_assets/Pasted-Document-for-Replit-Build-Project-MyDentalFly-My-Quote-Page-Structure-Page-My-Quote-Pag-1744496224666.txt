@@ -1,0 +1,105 @@
+Document for Replit Build
+
+Project: MyDentalFly - "My Quote" Page Structure
+
+---
+
+Page: My Quote Page
+Purpose: Allow users to view, edit, and build their treatment quote easily before selecting a clinic.
+
+---
+
+Page Sections:
+
+1. Quote Summary (Top Section)
+-------------------------------------
+Auto-filled details from homepage form:
+- Treatment Selected
+- Preferred Travel Month
+- Budget Range
+
+Feature:
+- Edit Quote Button (Opens Modal Popup to Edit Fields)
+
+---
+
+2. Treatment Plan Builder (Main Interactive Section)
+------------------------------------------------------------
+Allows users to add, remove, and adjust treatments.
+
+Table Structure:
+| Treatment Category | Treatment Option (Dropdown) | Quantity (Number) | Price (Auto-fill) |
+
+Functionality:
+- + Add Treatment Button
+- Auto-total updates
+- Dropdown grouped by Category:
+  - Implants
+  - Crowns & Veneers
+  - Whitening
+  - Dentures
+  - Full Mouth Reconstruction
+
+Notes under certain treatments:
+"Implant brand will be selected by the clinic based on quality, preference, and availability."
+
+Optional future feature:
+"Recommended Treatments" section based on user input or AI guidance.
+
+---
+
+3. Recommended Clinics Section
+------------------------------------------
+Dynamic display of clinics based on:
+- Treatment selections
+- Budget range
+- Location preference
+
+Structure per Clinic Card:
+- Clinic Name
+- Clinic Badge (Budget-Friendly, Premium, etc.)
+- Reviews Summary
+- Price for selected treatments
+- View More Button (Clinic Page)
+
+---
+
+4. Quote Summary & Next Steps
+--------------------------------------
+Displays Total Estimated Price (auto-updated based on treatment selection)
+
+Message:
+"This is your estimated treatment price based on your selections. Final pricing will be confirmed after consultation and review of your dental records."
+
+Primary Call to Action (CTA):
+"Choose Clinic & Proceed to Booking"
+
+---
+
+Flow Recap:
+1. Homepage Quote Form (Minimal Input)
+2. My Quote Page (Editable Quote + Recommendations)
+3. User Selects Clinic
+4. Pays £200 Refundable Deposit
+5. Accesses Patient Portal (Uploads Documents, Communicates with Clinic)
+
+---
+
+Optional Future Enhancements:
+- AI Treatment Recommendations
+- Clinic Sorting & Filters
+- Compare Clinics Side-by-Side
+- User Logged-In Dashboard to Save Quotes
+
+---
+
+Design Principles:
+- Simplicity First
+- Modular Section Build
+- Keep User in Control
+- Clear Next Steps Always Visible
+
+---
+
+End of Document.
+

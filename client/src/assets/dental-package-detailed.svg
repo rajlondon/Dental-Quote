@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#F0F7FF"/>
+  
+  <!-- Package Box -->
+  <rect x="60" y="70" width="80" height="80" rx="5" fill="white" stroke="#0EA5E9" stroke-width="3"/>
+  
+  <!-- Package Lid -->
+  <path d="M55 70H145L135 50H65L55 70Z" fill="#E1F5FE" stroke="#0EA5E9" stroke-width="2.5"/>
+  
+  <!-- Package Ribbon -->
+  <path d="M95 70V150" stroke="#0EA5E9" stroke-width="4"/>
+  <path d="M105 70V150" stroke="#0EA5E9" stroke-width="4"/>
+  <path d="M95 110H105" stroke="#0EA5E9" stroke-width="4"/>
+  
+  <!-- Istanbul Skyline Inside Box -->
+  <path d="M70 120C70 120 75 110 80 115C85 120 90 110 95 110C100 110 105 110 110 110C115 110 120 120 125 115C130 110 135 120 140 120" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Mosque Silhouette -->
+  <path d="M85 110V100C85 100 90 95 95 100V110" fill="#E1F5FE" stroke="#0EA5E9" stroke-width="1"/>
+  <circle cx="90" cy="95" r="3" fill="#0EA5E9"/>
+  
+  <!-- Travel Items -->
+  <rect x="70" y="130" width="15" height="10" rx="2" fill="#FFD700" stroke="#0EA5E9" stroke-width="1"/>
+  <rect x="115" y="130" width="15" height="10" rx="2" fill="#FFD700" stroke="#0EA5E9" stroke-width="1"/>
+  
+  <!-- Tooth Icon -->
+  <path d="M130 100C125 100 120 105 120 110C120 112 121 114 123 115C125 117 130 120 130 120C130 120 135 117 137 115C139 114 140 112 140 110C140 105 135 100 130 100Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Hotel/Accommodation Icon -->
+  <rect x="75" y="85" width="15" height="15" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M75 90H90" stroke="#0EA5E9" stroke-width="1"/>
+  <path d="M80 85V100" stroke="#0EA5E9" stroke-width="1"/>
+  <path d="M85 85V100" stroke="#0EA5E9" stroke-width="1"/>
+  
+  <!-- Airplane Icon -->
+  <path d="M40 40L45 45L55 35L50 30L40 40Z" fill="#E1F5FE" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M45 45L35 55L45 60L55 50L45 45Z" fill="#E1F5FE" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Decorative Stars -->
+  <path d="M160 40L162 45L167 46L164 50L165 55L160 53L155 55L156 50L153 46L158 45L160 40Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+  <path d="M30 150L32 155L37 156L34 160L35 165L30 163L25 165L26 160L23 156L28 155L30 150Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+  
+  <!-- Package Shadow -->
+  <rect x="65" y="150" width="70" height="5" rx="2" fill="#A0A0A0" fill-opacity="0.3"/>
+</svg>

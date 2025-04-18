@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#F0F7FF"/>
+  
+  <!-- Tooth Base Shape -->
+  <path d="M80 55C75 60 65 70 65 90C65 110 80 120 85 125C90 130 95 145 100 145C105 145 110 130 115 125C120 120 135 110 135 90C135 70 125 60 120 55C115 50 105 45 100 45C95 45 85 50 80 55Z" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Veneer Layer (Front Face) -->
+  <path d="M85 65C82 70 77 80 77 90C77 100 82 107 85 110C88 113 90 120 100 120C110 120 112 113 115 110C118 107 123 100 123 90C123 80 118 70 115 65C112 60 108 55 100 55C92 55 88 60 85 65Z" fill="#E1F5FE" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Enamel Line -->
+  <path d="M88 75C88 75 94 70 100 70C106 70 112 75 112 75" stroke="#0EA5E9" stroke-width="1" stroke-dasharray="2 1"/>
+  
+  <!-- Original Tooth Structure (Visible at Top Edge) -->
+  <path d="M85 65C88 62 92 60 100 60C108 60 112 62 115 65" stroke="#A0A0A0" stroke-width="0.75"/>
+  
+  <!-- Veneer Edge Highlights -->
+  <path d="M85 95L77 90M85 85L77 80" stroke="#0EA5E9" stroke-width="0.75" stroke-linecap="round"/>
+  <path d="M115 95L123 90M115 85L123 80" stroke="#0EA5E9" stroke-width="0.75" stroke-linecap="round"/>
+  
+  <!-- Glossy Highlights -->
+  <path d="M95 75L90 85" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M105 75L110 85" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Comparison Illustration (Before/After) -->
+  <rect x="30" y="140" width="60" height="40" rx="5" fill="white" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="110" y="140" width="60" height="40" rx="5" fill="white" stroke="#0EA5E9" stroke-width="1"/>
+  
+  <!-- "Before" Tooth -->
+  <path d="M45 150C45 150 50 155 60 155C70 155 75 150 75 150C75 150 70 165 60 165C50 165 45 150 45 150Z" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+  <path d="M50 150L52 155M55 150L57 157M65 150L63 157M70 150L68 155" stroke="#D4D4D4" stroke-width="0.75"/>
+  
+  <!-- "After" Tooth (with Veneer) -->
+  <path d="M125 150C125 150 130 155 140 155C150 155 155 150 155 150C155 150 150 165 140 165C130 165 125 150 125 150Z" fill="white" stroke="#0EA5E9" stroke-width="1"/>
+  <path d="M130 149L132 165M148 149L146 165" stroke="#E1F5FE" stroke-width="1"/>
+  
+  <!-- Labels -->
+  <text x="60" y="180" font-family="Arial" font-size="8" text-anchor="middle" fill="#A0A0A0">Before</text>
+  <text x="140" y="180" font-family="Arial" font-size="8" text-anchor="middle" fill="#0EA5E9">After</text>
+  
+  <!-- Small Stars -->
+  <path d="M35 40L36 43L39 44L37 46L38 49L35 48L32 49L33 46L31 44L34 43L35 40Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+  <path d="M165 40L166 43L169 44L167 46L168 49L165 48L162 49L163 46L161 44L164 43L165 40Z" fill="#FFD700" stroke="#0EA5E9" stroke-width="0.5"/>
+</svg>

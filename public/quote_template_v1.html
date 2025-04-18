@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthMatch Istanbul – Personalized Quote</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      padding: 40px;
+    }
+    .quote-box {
+      background: white;
+      max-width: 850px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #007B9E;
+    }
+    .section {
+      margin-top: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .highlight {
+      background: #e6f7ff;
+      border-left: 5px solid #007B9E;
+      padding: 10px;
+      margin: 20px 0;
+    }
+    .cta {
+      background: #00688B;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      margin-top: 30px;
+    }
+    .cta a {
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="quote-box">
+    <h1>Your Personalized Quote – HealthMatch Istanbul</h1>
+    <p><strong>Name:</strong> <span id="client-name">[Client Name]</span></p>
+    <p><strong>Date:</strong> <span id="quote-date">05/04/2025</span></p>
+    <p><strong>Quote Number:</strong> <span id="quote-number">HM-20250405-001</span></p>
+
+    <div class="section">
+      <h2>Quote Summary</h2>
+      <table id="treatments-table">
+        <tr><th>Treatment</th><th>Qty</th><th>Unit Price (GBP)</th><th>Total</th></tr>
+        <tr><td>Dental Veneers</td><td>10</td><td>£180</td><td>£1,800</td></tr>
+      </table>
+      <p><strong>Flight Estimate:</strong> £<span id="flight-estimate">220</span></p>
+      <p><strong>Hotel Estimate (4 nights):</strong> £250</p>
+      <p><strong>Bonus Add-ons:</strong> Free 5* Airport Transfer, Free Turkish Hamam, Dedicated Care Rep</p>
+    </div>
+
+    <div class="section">
+      <h2>UK vs Istanbul Cost Comparison</h2>
+      <table>
+        <tr><th>Item</th><th>UK Avg Price</th><th>Istanbul Price</th><th>You Save</th></tr>
+        <tr><td>Dental Veneers x10</td><td>£4,000</td><td>£<span id="treatment-cost">1,800</span></td><td>£<span id="treatment-savings">2,200</span></td></tr>
+        <tr><td>Flights + Hotel</td><td>£700</td><td>£<span id="travel-cost">470</span></td><td>£<span id="travel-savings">230</span></td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>£<span id="uk-total">4,700</span></strong></td><td><strong>£<span id="istanbul-total">2,270</span></strong></td><td><strong>£<span id="total-savings">2,430</span></strong></td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Before & After</h2>
+      <p>[Insert before/after image grid]</p>
+    </div>
+
+    <div class="section">
+      <h2>What Happens Next?</h2>
+      <ol>
+        <li>Free Video Consultation</li>
+        <li>Book Flights & Dates</li>
+        <li>Airport Pickup + Hotel Check-in</li>
+        <li>Treatment Begins with Your Coordinator</li>
+        <li>Aftercare Support & Smile Follow-up</li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>Aftercare You Can Count On</h2>
+      <div class="highlight">
+        • WhatsApp & Phone Support<br>
+        • Healing Instructions & Check-ins<br>
+        • Local Referrals (UK) if Required
+      </div>
+    </div>
+
+    <div class="cta">
+      <h2>Secure Your Smile Journey</h2>
+      <p>Lock in your offer with a fully refundable £200 deposit.</p>
+      <p><a href="https://yourpaymentlink.com">Click here to pay deposit and reserve your spot</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get quote data from sessionStorage
+      const quoteDataString = sessionStorage.getItem('quoteData');
+      if (!quoteDataString) {
+        console.error('No quote data found in session storage');
+        return;
+      }
+        
+      try {
+        const quoteData = JSON.parse(quoteDataString);
+        
+        // Format numbers with commas
+        const formatNumber = (num) => {
+          return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        };
+        
+        // Fill in client information
+        document.getElementById('client-name').textContent = quoteData.patientName || '[Client Name]';
+        document.getElementById('quote-date').textContent = quoteData.date;
+        document.getElementById('quote-number').textContent = quoteData.quoteNumber;
+        
+        // Calculate totals
+        const treatmentCost = quoteData.totalGBP;
+        const flightCost = quoteData.flightEstimate || 220;
+        const hotelCost = 250; // Fixed for now
+        const travelCost = flightCost + hotelCost;
+        
+        // UK prices (estimated as 2.5x higher)
+        const ukTreatmentCost = treatmentCost * 2.5;
+        const ukTravelCost = 700;
+        const ukTotal = ukTreatmentCost + ukTravelCost;
+        
+        // Istanbul total
+        const istanbulTotal = treatmentCost + travelCost;
+        
+        // Savings
+        const treatmentSavings = ukTreatmentCost - treatmentCost;
+        const travelSavings = ukTravelCost - travelCost;
+        const totalSavings = ukTotal - istanbulTotal;
+        
+        // Update the treatment table
+        const treatmentsTable = document.getElementById('treatments-table');
+        // Clear existing rows except header
+        while (treatmentsTable.rows.length > 1) {
+          treatmentsTable.deleteRow(1);
+        }
+        
+        // Add treatments from the quote data
+        quoteData.items.forEach(item => {
+          const row = treatmentsTable.insertRow();
+          
+          const treatmentCell = row.insertCell(0);
+          treatmentCell.textContent = item.treatment.replace(/(\w)([A-Z])/g, '$1 $2').split('_').join(' ');
+          
+          const qtyCell = row.insertCell(1);
+          qtyCell.textContent = item.quantity;
+          
+          const priceCell = row.insertCell(2);
+          priceCell.textContent = `£${formatNumber(item.priceGBP)}`;
+          
+          const totalCell = row.insertCell(3);
+          totalCell.textContent = `£${formatNumber(item.subtotalGBP)}`;
+        });
+        
+        // Update flight estimate
+        document.getElementById('flight-estimate').textContent = formatNumber(flightCost);
+        
+        // Update comparison table
+        document.getElementById('treatment-cost').textContent = formatNumber(treatmentCost);
+        document.getElementById('treatment-savings').textContent = formatNumber(treatmentSavings);
+        document.getElementById('travel-cost').textContent = formatNumber(travelCost);
+        document.getElementById('travel-savings').textContent = formatNumber(travelSavings);
+        document.getElementById('uk-total').textContent = formatNumber(ukTotal);
+        document.getElementById('istanbul-total').textContent = formatNumber(istanbulTotal);
+        document.getElementById('total-savings').textContent = formatNumber(totalSavings);
+        
+      } catch (error) {
+        console.error('Error processing quote data:', error);
+      }
+    });
+    
+    // Function to print or save the quote
+    function printQuote() {
+      window.print();
+    }
+  </script>
+</body>
+</html>

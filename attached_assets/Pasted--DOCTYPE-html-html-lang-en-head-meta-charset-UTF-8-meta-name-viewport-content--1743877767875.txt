@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Istanbul Dental Smile – Quote Summary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      padding: 40px;
+    }
+    .quote-box {
+      background: white;
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      height: 70px;
+    }
+    h1 {
+      color: #00688B;
+      margin-bottom: 0;
+    }
+    h2 {
+      color: #007B9E;
+      margin-top: 40px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .info p {
+      margin: 6px 0;
+    }
+    .icon {
+      height: 16px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="quote-box">
+    <div class="logo">
+      <img src="logo.jpeg" alt="Istanbul Dental Smile Logo" />
+    </div>
+
+    <h1>Istanbul Dental Smile</h1>
+    <p><strong>Quote #:</strong> IDS-20250405-RA87</p>
+    <p><strong>Date:</strong> 05/04/2025</p>
+
+    <h2>Patient Information</h2>
+    <div class="info">
+      <p><strong>Name:</strong> Raj Singh</p>
+      <p><strong>Email:</strong> rajsingh140186@googlemail.com</p>
+      <p><strong>Phone:</strong> +447572445856</p>
+    </div>
+
+    <h2>Your Quote Details</h2>
+    <table>
+      <tr><th>Treatment</th><th>Price (GBP)</th><th>Price (USD)</th><th>Qty</th><th>Guarantee</th></tr>
+      <tr><td>Medigma Implant - Germany</td><td>£485</td><td>$625</td><td>1</td><td>LIFETIME</td></tr>
+    </table>
+
+    <h2>Travel Costs</h2>
+    <table>
+      <tr><th>Description</th><th>GBP</th><th>USD</th></tr>
+      <tr><td>Return flight from London (July)</td><td>£250</td><td>$325</td></tr>
+    </table>
+
+    <p><strong>Grand Total:</strong> £735 / $950</p>
+
+    <h2>Clinic Comparison</h2>
+    <table>
+      <tr><th>Clinic Name</th><th>Special Price (GBP)</th><th>Package Includes</th></tr>
+      <tr><td>Istanbul Dental Center</td><td>£461 (5% off)</td><td><img class="icon" src="hotel.png" />Hotel · <img class="icon" src="car.png" />Transfer</td></tr>
+      <tr><td>Vera Smile Clinic</td><td>£437 (10% off)</td><td><img class="icon" src="car.png" />Transfer</td></tr>
+      <tr><td>Premium Dental Turkey</td><td>£446 (8% off)</td><td><img class="icon" src="hotel.png" />Hotel · <img class="icon" src="chat.png" />Translator</td></tr>
+    </table>
+
+    <h2>UK Cost Comparison</h2>
+    <p>The same treatment in the UK would typically cost between <strong>£1,213 and £1,455</strong>.<br>
+    By choosing Istanbul, you save approximately <strong>£849</strong> (64% savings).</p>
+
+    <h2>What Our Patients Say</h2>
+    <blockquote>
+      "Istanbul Dental Smile made the whole process simple and stress-free. The quality of care was exceptional, and I couldn't be happier with my new smile!"
+      <br>— <strong>James T., UK — Hollywood Smile Package</strong> ⭐⭐⭐⭐⭐
+    </blockquote>
+
+    <h2>Why Book With Us?</h2>
+    <ul>
+      <li><img class="icon" src="tick.png" /> Vetted, Trusted Clinics</li>
+      <li><img class="icon" src="tick.png" /> Concierge Support from Start to Finish</li>
+      <li><img class="icon" src="tick.png" /> Safe Payment & Transparent Pricing</li>
+      <li><img class="icon" src="tick.png" /> Enjoy Istanbul While Enhancing Your Smile</li>
+    </ul>
+
+    <h2>Next Steps</h2>
+    <ol>
+      <li>Contact Istanbul Dental Smile to confirm your treatment plan</li>
+      <li>Book your flight to Istanbul for your chosen dates</li>
+      <li>We will arrange airport transfer and accommodation options</li>
+    </ol>
+
+    <h2>Ready to Book?</h2>
+    <p>Email us at <strong>info@istanbuldentalsmile.com</strong> or message us on WhatsApp: <strong>+447572445856</strong><br>
+    We'll handle your travel, treatment, and care — all you do is show up and smile!</p>
+
+    <hr>
+    <p><small>
+      Note: This quote is valid for 30 days from the issue date.<br>
+      * Prices may vary depending on clinical assessment.<br>
+      * Flight costs are estimates and may change based on availability.
+    </small></p>
+  </div>
+</body>
+</html>

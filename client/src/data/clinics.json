@@ -1,0 +1,516 @@
+[
+  {
+    "id": "dentgroup-istanbul",
+    "name": "DentGroup Istanbul",
+    "tier": "standard",
+    "location": {
+      "city": "Istanbul",
+      "area": "Şişli",
+      "address": "Halaskargazi Cad. No:123, Şişli, Istanbul, Turkey"
+    },
+    "ratings": {
+      "overall": 4.8,
+      "reviews": 245,
+      "categories": {
+        "Service": 4.8,
+        "Quality": 4.9,
+        "Value": 4.7
+      }
+    },
+    "description": "DentGroup Istanbul is a well-established dental clinic offering a wide range of high-quality dental treatments. Our state-of-the-art facility combines the latest technology with experienced dentists to provide exceptional care for local and international patients. We focus on making your experience comfortable and stress-free, while delivering excellent results that will make you smile with confidence.",
+    "features": [
+      "State-of-the-art equipment",
+      "Multilingual staff",
+      "Free airport pickup",
+      "Hotel arrangements",
+      "Digital dentistry",
+      "Painless treatment protocols",
+      "Treatment guarantee",
+      "Online consultations"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Ahmet Yılmaz",
+        "specialty": "Cosmetic Dentistry",
+        "experience": 15,
+        "education": "Istanbul University"
+      },
+      {
+        "name": "Dr. Ayşe Demir",
+        "specialty": "Implantology",
+        "experience": 12,
+        "education": "Hacettepe University"
+      },
+      {
+        "name": "Dr. Mehmet Kaya",
+        "specialty": "Orthodontics",
+        "experience": 10
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ISO 9001"
+      },
+      {
+        "name": "JCI Accredited"
+      },
+      {
+        "name": "Turkish Dental Association"
+      }
+    ],
+    "featuredReviews": [
+      {
+        "author": "Sarah Johnson",
+        "date": "March 2025",
+        "treatment": "Dental Implants",
+        "text": "I had 6 implants done at DentGroup and couldn't be happier with the results. The facility is modern, extremely clean, and the staff was professional and caring. Dr. Ayşe explained everything in detail and made me feel comfortable throughout the process."
+      },
+      {
+        "author": "Michael Brown",
+        "date": "February 2025",
+        "treatment": "Veneers",
+        "text": "I got 8 veneers and the results are amazing! The quality of work is excellent and the price was less than half of what I would pay in the UK. The clinic arranged my hotel and transfers, making the whole experience seamless."
+      }
+    ],
+    "treatments": {
+      "cosmetic_dentistry": [
+        {
+          "name": "Porcelain Veneer",
+          "priceGBP": { "min": 180, "max": 220 },
+          "priceUSD": { "min": 230, "max": 280 }
+        },
+        {
+          "name": "Dental Bonding",
+          "priceGBP": { "min": 80, "max": 120 },
+          "priceUSD": { "min": 100, "max": 150 }
+        },
+        {
+          "name": "Teeth Whitening",
+          "priceGBP": { "min": 150, "max": 200 },
+          "priceUSD": { "min": 190, "max": 250 }
+        }
+      ],
+      "dental_implants": [
+        {
+          "name": "Single Dental Implant",
+          "priceGBP": { "min": 500, "max": 650 },
+          "priceUSD": { "min": 640, "max": 830 }
+        },
+        {
+          "name": "Implant Supported Dentures",
+          "priceGBP": { "min": 2500, "max": 4000 },
+          "priceUSD": { "min": 3200, "max": 5100 }
+        }
+      ],
+      "crowns_bridges": [
+        {
+          "name": "Porcelain Crown",
+          "priceGBP": { "min": 150, "max": 180 },
+          "priceUSD": { "min": 190, "max": 230 }
+        },
+        {
+          "name": "Zirconia Crown",
+          "priceGBP": { "min": 180, "max": 220 },
+          "priceUSD": { "min": 230, "max": 280 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Cash (EUR, USD, GBP, TRY)",
+      "Credit Card",
+      "Bank Transfer",
+      "Installment Plans Available"
+    ],
+    "uniqueSellingPoints": [
+      "Comprehensive treatment packages",
+      "Transparent pricing with no hidden fees",
+      "5-year guarantee on implants",
+      "Dedicated international patient coordinators"
+    ],
+    "contact": {
+      "phone": "+90 212 345 6789",
+      "email": "info@dentgroupistanbul.com",
+      "website": "www.dentgroupistanbul.com",
+      "whatsapp": "+905012345678"
+    }
+  },
+  {
+    "id": "istanbul-dental-care",
+    "name": "Istanbul Dental Care",
+    "tier": "affordable",
+    "location": {
+      "city": "Istanbul",
+      "area": "Kadıköy",
+      "address": "Bağdat Cad. No:234, Kadıköy, Istanbul, Turkey"
+    },
+    "ratings": {
+      "overall": 4.5,
+      "reviews": 178,
+      "categories": {
+        "Service": 4.4,
+        "Quality": 4.6,
+        "Value": 4.8
+      }
+    },
+    "description": "Istanbul Dental Care offers affordable dental treatment solutions without compromising on quality. Our clinic specializes in providing cost-effective dental care for international patients looking to combine quality treatment with significant savings. With modern equipment and a team of experienced professionals, we ensure each patient receives personalized attention and excellent results.",
+    "features": [
+      "Affordable pricing",
+      "English-speaking staff",
+      "Free initial consultation",
+      "Digital X-rays",
+      "Comfortable treatment rooms",
+      "Treatment guarantee",
+      "Flexible appointment times",
+      "Assistance with accommodation"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Baran Özkan",
+        "specialty": "General & Cosmetic Dentistry",
+        "experience": 12
+      },
+      {
+        "name": "Dr. Ceren Şahin",
+        "specialty": "Prosthodontics",
+        "experience": 8
+      }
+    ],
+    "certifications": [
+      {
+        "name": "Turkish Dental Association"
+      },
+      {
+        "name": "Healthcare Tourism Certificate"
+      }
+    ],
+    "featuredReviews": [
+      {
+        "author": "David Wilson",
+        "date": "January 2025",
+        "treatment": "Crowns & Whitening",
+        "text": "I needed 4 crowns and whitening treatment. Istanbul Dental Care offered the best value and the results were excellent. Very happy with their service and would definitely recommend them for anyone looking for quality treatment at affordable prices."
+      }
+    ],
+    "treatments": {
+      "cosmetic_dentistry": [
+        {
+          "name": "Porcelain Veneer",
+          "priceGBP": { "min": 150, "max": 180 },
+          "priceUSD": { "min": 190, "max": 230 }
+        },
+        {
+          "name": "Teeth Whitening",
+          "priceGBP": { "min": 120, "max": 150 },
+          "priceUSD": { "min": 150, "max": 190 }
+        }
+      ],
+      "dental_implants": [
+        {
+          "name": "Single Dental Implant",
+          "priceGBP": { "min": 450, "max": 550 },
+          "priceUSD": { "min": 570, "max": 700 }
+        }
+      ],
+      "crowns_bridges": [
+        {
+          "name": "Porcelain Crown",
+          "priceGBP": { "min": 120, "max": 150 },
+          "priceUSD": { "min": 150, "max": 190 }
+        },
+        {
+          "name": "Zirconia Crown",
+          "priceGBP": { "min": 150, "max": 180 },
+          "priceUSD": { "min": 190, "max": 230 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Cash (EUR, USD, GBP, TRY)",
+      "Credit Card",
+      "Bank Transfer"
+    ],
+    "uniqueSellingPoints": [
+      "Best value treatments in Istanbul",
+      "3-year guarantee on all treatments",
+      "Free follow-up consultations",
+      "No extra costs for X-rays and consultations"
+    ],
+    "contact": {
+      "phone": "+90 216 345 6789",
+      "email": "info@istanbuldentalcare.com",
+      "website": "www.istanbuldentalcare.com",
+      "whatsapp": "+905023456789"
+    }
+  },
+  {
+    "id": "maltepe-dental-clinic",
+    "name": "Maltepe Dental Clinic",
+    "tier": "premium",
+    "location": {
+      "city": "Istanbul",
+      "area": "Maltepe",
+      "address": "Bağlarbaşı Mah. No:55, Maltepe, Istanbul, Turkey"
+    },
+    "ratings": {
+      "overall": 4.9,
+      "reviews": 320,
+      "categories": {
+        "Service": 5.0,
+        "Quality": 4.9,
+        "Value": 4.7
+      }
+    },
+    "description": "Maltepe Dental Clinic is a premium dental facility offering luxury treatment experiences for discerning patients. Our clinic combines cutting-edge technology with exceptional comfort to provide a truly VIP dental experience. From the moment you contact us, our concierge service ensures every aspect of your treatment journey is meticulously planned and executed to perfection. We pride ourselves on delivering world-class results and personalized care.",
+    "features": [
+      "Luxury treatment rooms",
+      "VIP concierge service",
+      "Latest dental technology",
+      "Premium materials only",
+      "Multilingual staff",
+      "5-star hotel arrangements",
+      "Private airport transfers",
+      "Istanbul sightseeing options",
+      "Dedicated patient coordinator",
+      "Extended treatment guarantees"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Selim Karadağ",
+        "specialty": "Cosmetic & Reconstructive Dentistry",
+        "experience": 20,
+        "education": "New York University"
+      },
+      {
+        "name": "Dr. Elif Yıldırım",
+        "specialty": "Advanced Implantology",
+        "experience": 18,
+        "education": "University of London"
+      },
+      {
+        "name": "Dr. Deniz Akman",
+        "specialty": "Prosthodontics",
+        "experience": 15,
+        "education": "Istanbul University"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ISO 9001"
+      },
+      {
+        "name": "JCI Accredited"
+      },
+      {
+        "name": "European Society of Cosmetic Dentistry"
+      },
+      {
+        "name": "Turkish Dental Association"
+      }
+    ],
+    "featuredReviews": [
+      {
+        "author": "Emma Thompson",
+        "date": "March 2025",
+        "treatment": "Full Smile Makeover",
+        "text": "I received a complete smile makeover at Maltepe and the experience was exceptional from start to finish. The level of personal attention, luxury amenities, and clinical excellence was beyond my expectations. Dr. Selim is truly an artist and my new smile is perfect!"
+      },
+      {
+        "author": "Robert Anderson",
+        "date": "February 2025",
+        "treatment": "Implants & Veneers",
+        "text": "The VIP service at Maltepe Dental Clinic was outstanding. From being picked up at the airport in a luxury car to staying at a 5-star hotel, everything was perfectly arranged. Most importantly, my dental work is flawless and exactly what I wanted."
+      },
+      {
+        "author": "Jennifer Davis",
+        "date": "January 2025",
+        "treatment": "Porcelain Veneers",
+        "text": "If you're looking for premium dental care, look no further than Maltepe. Yes, it's a bit more expensive than other Turkish clinics, but the quality, service, and attention to detail are worth every penny. My veneers look incredibly natural and beautiful."
+      }
+    ],
+    "treatments": {
+      "cosmetic_dentistry": [
+        {
+          "name": "Premium Porcelain Veneer",
+          "priceGBP": { "min": 250, "max": 300 },
+          "priceUSD": { "min": 320, "max": 380 }
+        },
+        {
+          "name": "Teeth Whitening (Premium)",
+          "priceGBP": { "min": 200, "max": 250 },
+          "priceUSD": { "min": 250, "max": 320 }
+        },
+        {
+          "name": "Smile Design",
+          "priceGBP": { "min": 300, "max": 500 },
+          "priceUSD": { "min": 380, "max": 640 }
+        }
+      ],
+      "dental_implants": [
+        {
+          "name": "Premium Dental Implant",
+          "priceGBP": { "min": 750, "max": 900 },
+          "priceUSD": { "min": 950, "max": 1150 }
+        },
+        {
+          "name": "All-on-4 Implants",
+          "priceGBP": { "min": 5000, "max": 7000 },
+          "priceUSD": { "min": 6400, "max": 8900 }
+        },
+        {
+          "name": "Sinus Lift",
+          "priceGBP": { "min": 500, "max": 700 },
+          "priceUSD": { "min": 640, "max": 890 }
+        }
+      ],
+      "crowns_bridges": [
+        {
+          "name": "Premium Zirconia Crown",
+          "priceGBP": { "min": 250, "max": 300 },
+          "priceUSD": { "min": 320, "max": 380 }
+        },
+        {
+          "name": "E-Max Crown",
+          "priceGBP": { "min": 280, "max": 330 },
+          "priceUSD": { "min": 360, "max": 420 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Cash (EUR, USD, GBP, TRY)",
+      "Credit Card",
+      "Bank Transfer",
+      "Cryptocurrency",
+      "Flexible Payment Plans"
+    ],
+    "uniqueSellingPoints": [
+      "VIP concierge service for all patients",
+      "Premium materials from Swiss and German suppliers",
+      "Lifetime guarantee on implants",
+      "Luxury transfers and accommodation included",
+      "Holistic treatment approach"
+    ],
+    "contact": {
+      "phone": "+90 216 987 6543",
+      "email": "vip@maltepedentalclinic.com",
+      "website": "www.maltepedentalclinic.com",
+      "whatsapp": "+905034567890"
+    }
+  },
+  {
+    "id": "dentakay-istanbul",
+    "name": "Dentakay Istanbul",
+    "tier": "standard",
+    "location": {
+      "city": "Istanbul",
+      "area": "Ataşehir",
+      "address": "Ataşehir Boulevard No:78, Ataşehir, Istanbul, Turkey"
+    },
+    "ratings": {
+      "overall": 4.7,
+      "reviews": 210,
+      "categories": {
+        "Service": 4.6,
+        "Quality": 4.8,
+        "Value": 4.6
+      }
+    },
+    "description": "Dentakay Istanbul offers comprehensive dental care with a focus on all-inclusive packages for international patients. Our modern clinic specializes in cosmetic dentistry, implants, and full mouth restorations, providing everything you need in one place. With transparent pricing and attentive service, we ensure a smooth treatment journey from your first consultation to your final follow-up.",
+    "features": [
+      "All-inclusive treatment packages",
+      "Modern digital dentistry",
+      "Multilingual staff",
+      "In-house dental laboratory",
+      "Hotel and airport transfers included",
+      "Online consultations",
+      "Treatment guarantee",
+      "Transparent pricing"
+    ],
+    "doctors": [
+      {
+        "name": "Dr. Serkan Küçük",
+        "specialty": "Cosmetic Dentistry & Implantology",
+        "experience": 14
+      },
+      {
+        "name": "Dr. Zeynep Aydın",
+        "specialty": "Orthodontics & Aesthetic Dentistry",
+        "experience": 12
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ISO 9001"
+      },
+      {
+        "name": "Turkish Dental Association"
+      },
+      {
+        "name": "Healthcare Tourism Certificate"
+      }
+    ],
+    "featuredReviews": [
+      {
+        "author": "Thomas Schmidt",
+        "date": "February 2025",
+        "treatment": "All-Inclusive Dental Package",
+        "text": "I chose the all-inclusive package at Dentakay which included implants, crowns, and hotel stay. Everything was organized perfectly, and I didn't have to worry about anything. The treatment results are excellent, and I saved a lot compared to prices in Germany."
+      }
+    ],
+    "treatments": {
+      "cosmetic_dentistry": [
+        {
+          "name": "Porcelain Veneer",
+          "priceGBP": { "min": 180, "max": 220 },
+          "priceUSD": { "min": 230, "max": 280 }
+        },
+        {
+          "name": "Teeth Whitening",
+          "priceGBP": { "min": 150, "max": 180 },
+          "priceUSD": { "min": 190, "max": 230 }
+        }
+      ],
+      "dental_implants": [
+        {
+          "name": "Single Dental Implant",
+          "priceGBP": { "min": 500, "max": 600 },
+          "priceUSD": { "min": 640, "max": 770 }
+        },
+        {
+          "name": "All-on-6 Implants",
+          "priceGBP": { "min": 4500, "max": 6000 },
+          "priceUSD": { "min": 5700, "max": 7700 }
+        }
+      ],
+      "crowns_bridges": [
+        {
+          "name": "Porcelain Crown",
+          "priceGBP": { "min": 150, "max": 180 },
+          "priceUSD": { "min": 190, "max": 230 }
+        },
+        {
+          "name": "Zirconia Crown",
+          "priceGBP": { "min": 180, "max": 220 },
+          "priceUSD": { "min": 230, "max": 280 }
+        }
+      ]
+    },
+    "paymentOptions": [
+      "Cash (EUR, USD, GBP, TRY)",
+      "Credit Card",
+      "Bank Transfer",
+      "Installment Options"
+    ],
+    "uniqueSellingPoints": [
+      "All-inclusive packages with no hidden costs",
+      "In-house laboratory for faster treatment",
+      "4-year guarantee on all treatments",
+      "Hotel and transfers included in treatment packages"
+    ],
+    "contact": {
+      "phone": "+90 216 789 0123",
+      "email": "info@dentakayistanbul.com",
+      "website": "www.dentakayistanbul.com",
+      "whatsapp": "+905045678901"
+    }
+  }
+]

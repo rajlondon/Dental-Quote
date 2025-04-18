@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#F3F4F6"/>
+  
+  <!-- Decorative pattern -->
+  <path d="M0,0 L800,0 L800,100 Q700,150 600,100 Q500,50 400,100 Q300,150 200,100 Q100,50 0,100 Z" fill="#2563EB" opacity="0.05"/>
+  <path d="M0,600 L800,600 L800,500 Q700,450 600,500 Q500,550 400,500 Q300,450 200,500 Q100,550 0,500 Z" fill="#2563EB" opacity="0.05"/>
+
+  <!-- Divider -->
+  <line x1="400" y1="150" x2="400" y2="450" stroke="#2563EB" stroke-width="2" stroke-dasharray="10,5"/>
+  
+  <!-- Veneer illustration - left side -->
+  <g transform="translate(150, 250) scale(0.7)">
+    <!-- Tooth shape -->
+    <path d="M120,20 C80,-10 40,0 20,50 C0,100 0,150 20,200 C40,250 80,280 120,250 C160,280 200,250 220,200 C240,150 240,100 220,50 C200,0 160,-10 120,20 Z" fill="white" stroke="#2563EB" stroke-width="4"/>
+    
+    <!-- Veneer shape -->
+    <path d="M120,20 C80,0 50,10 30,50 L120,50 L210,50 C190,10 160,0 120,20 Z" fill="#2563EB" opacity="0.2" stroke="#2563EB" stroke-width="2"/>
+    <path d="M30,50 L120,50 L210,50 L210,100 L120,100 L30,100 Z" fill="#2563EB" opacity="0.1" stroke="#2563EB" stroke-width="2"/>
+  </g>
+
+  <!-- Crown illustration - right side -->
+  <g transform="translate(550, 250) scale(0.7)">
+    <!-- Tooth shape -->
+    <path d="M120,60 C80,30 40,40 20,90 C0,140 0,190 20,240 C40,290 80,320 120,290 C160,320 200,290 220,240 C240,190 240,140 220,90 C200,40 160,30 120,60 Z" fill="white" stroke="#2563EB" stroke-width="4"/>
+    
+    <!-- Crown shape -->
+    <path d="M120,60 C80,40 50,50 30,90 L120,90 L210,90 C190,50 160,40 120,60 Z" fill="#2563EB" opacity="0.3" stroke="#2563EB" stroke-width="2"/>
+    <path d="M30,90 L120,90 L210,90 L210,140 L120,140 L30,140 Z" fill="#2563EB" opacity="0.2" stroke="#2563EB" stroke-width="2"/>
+    <path d="M30,140 L120,140 L210,140 L210,190 L120,190 L30,190 Z" fill="#2563EB" opacity="0.1" stroke="#2563EB" stroke-width="2"/>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="150" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Veneers</text>
+  <text x="200" y="180" font-family="Arial, sans-serif" font-size="16" fill="#4B5563" text-anchor="middle">Thin layer on front surface</text>
+  
+  <text x="600" y="150" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Crowns</text>
+  <text x="600" y="180" font-family="Arial, sans-serif" font-size="16" fill="#4B5563" text-anchor="middle">Full tooth coverage</text>
+
+  <!-- Main title -->
+  <text x="400" y="500" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Veneers vs. Crowns</text>
+  <text x="400" y="540" font-family="Arial, sans-serif" font-size="20" fill="#4B5563" text-anchor="middle">Which is right for your smile?</text>
+</svg>

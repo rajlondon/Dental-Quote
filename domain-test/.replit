@@ -1,0 +1,9 @@
+run = "cd domain-test && npm start"
+entrypoint = "index.js"
+
+[nix]
+channel = "stable-23_05"
+
+[deployment]
+run = "node index.js"
+deploymentTarget = "cloudrun"

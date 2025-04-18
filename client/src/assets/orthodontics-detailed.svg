@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#F0F7FF"/>
+  
+  <!-- Teeth Row -->
+  <path d="M40 100C40 100 60 120 100 120C140 120 160 100 160 100" fill="white" stroke="#0EA5E9" stroke-width="2.5"/>
+  
+  <!-- Individual Teeth -->
+  <path d="M50 100V112" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M60 100V115" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M70 100V118" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M80 100V119" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M90 100V120" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M100 100V120" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M110 100V120" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M120 100V119" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M130 100V118" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M140 100V115" stroke="#0EA5E9" stroke-width="1.5"/>
+  <path d="M150 100V112" stroke="#0EA5E9" stroke-width="1.5"/>
+  
+  <!-- Braces Wire -->
+  <path d="M45 105H155" stroke="#A0A0A0" stroke-width="1.5"/>
+  
+  <!-- Braces Brackets -->
+  <rect x="57" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="67" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="77" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="87" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="97" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="107" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="117" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="127" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  <rect x="137" y="102" width="6" height="8" rx="1" fill="#E6E6E6" stroke="#A0A0A0" stroke-width="1"/>
+  
+  <!-- Clear Aligner (Above the Braces) -->
+  <path d="M40 80C40 80 60 65 100 65C140 65 160 80 160 80C160 80 140 55 100 55C60 55 40 80 40 80Z" fill="white" fill-opacity="0.5" stroke="#E1F5FE" stroke-width="1.5"/>
+  <path d="M45 80C45 80 65 68 100 68C135 68 155 80 155 80" stroke="#E1F5FE" stroke-width="1" stroke-dasharray="2 2"/>
+  
+  <!-- Ceramic Bracket Details (for one bracket to show difference) -->
+  <rect x="97" y="102" width="6" height="8" rx="1" fill="#F5F5F5" stroke="#0EA5E9" stroke-width="1"/>
+  
+  <!-- Extra Decorative Elements -->
+  <circle cx="175" cy="70" r="10" fill="#E1F5FE" fill-opacity="0.5" stroke="#0EA5E9" stroke-width="1"/>
+  <path d="M170 70H180M175 65V75" stroke="#0EA5E9" stroke-width="1"/>
+  
+  <circle cx="25" cy="70" r="10" fill="#E1F5FE" fill-opacity="0.5" stroke="#0EA5E9" stroke-width="1"/>
+  <path d="M20 70H30M25 65V75" stroke="#0EA5E9" stroke-width="1"/>
+</svg>

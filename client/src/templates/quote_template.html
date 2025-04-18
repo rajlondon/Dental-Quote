@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dental Treatment Quote</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            background-color: #00688B;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #00688B;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            color: #007B9E;
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #B2904F;
+            padding-bottom: 5px;
+        }
+        .patient-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .treatment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .treatment-name {
+            flex: 3;
+        }
+        .treatment-price {
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
+        }
+        .clinic-comparison {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .uk-vs-istanbul {
+            display: flex;
+            margin: 20px 0;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .uk-price, .istanbul-price {
+            flex: 1;
+            text-align: center;
+        }
+        .uk-price {
+            border-right: 1px solid #ddd;
+        }
+        .price-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007B9E;
+            margin: 10px 0;
+        }
+        .savings {
+            text-align: center;
+            font-weight: bold;
+            color: #B2904F;
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        .next-steps {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .logo {
+            max-width: 120px;
+            margin: 0 auto;
+            display: block;
+        }
+        .quote-number {
+            text-align: right;
+            font-style: italic;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .travel-services {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .travel-item {
+            flex-basis: 50%;
+            padding: 8px 0;
+        }
+        .travel-item img {
+            width: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .tick-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{{logoUrl}}}" alt="Istanbul Dental Smile" class="logo">
+        
+        <div class="quote-number">Quote #: {{quoteNumber}}</div>
+        
+        <h1>Your Personalized Smile Journey</h1>
+        
+        <div class="patient-info">
+            <p><strong>Name:</strong> {{patientName}}</p>
+            <p><strong>Email:</strong> {{patientEmail}}</p>
+            <p><strong>Phone:</strong> {{patientPhone}}</p>
+            <p><strong>Date:</strong> {{currentDate}}</p>
+        </div>
+        
+        <h2>Treatment Requested</h2>
+        <div class="section">
+            {{#treatments}}
+            <div class="treatment-item">
+                <div class="treatment-name">{{treatment}} ({{quantity}}x) <span style="color: #007B9E;">[{{guarantee}}]</span></div>
+                <div class="treatment-price">£{{subtotalGBP}}</div>
+            </div>
+            {{/treatments}}
+            <div class="treatment-item" style="font-weight: bold; border-top: 2px solid #eee; margin-top: 10px; padding-top: 10px;">
+                <div class="treatment-name">Total</div>
+                <div class="treatment-price">£{{totalGBP}}</div>
+            </div>
+        </div>
+        
+        <h2>Clinic Comparison</h2>
+        <div class="section">
+            <p>We've compared prices from our trusted partner clinics in Istanbul:</p>
+            {{#clinics}}
+            <div class="clinic-comparison">
+                <strong>{{name}}:</strong> £{{priceGBP}} {{#extras}}({{extras}}){{/extras}}
+            </div>
+            {{/clinics}}
+        </div>
+        
+        <h2>Travel Services</h2>
+        <div class="section">
+            <p>Our concierge service includes:</p>
+            <div class="travel-services">
+                <div class="travel-item">
+                    <img src="{{{hotelIcon}}}" alt="Hotel"> 4★ hotel accommodation
+                </div>
+                <div class="travel-item">
+                    <img src="{{{carIcon}}}" alt="Airport Transfer"> VIP airport transfers
+                </div>
+                <div class="travel-item">
+                    <img src="{{{chatIcon}}}" alt="Support"> 24/7 English support
+                </div>
+                <div class="travel-item">
+                    <img src="{{{tickIcon}}}" alt="Check"> Clinic appointments
+                </div>
+            </div>
+            <p><strong>Travel Month:</strong> {{travelMonth}}</p>
+            <p><strong>Departure City:</strong> {{departureCity}}</p>
+            <p><strong>Estimated Flight Cost:</strong> £{{flightEstimate}} (return)</p>
+        </div>
+        
+        <h2>UK vs. Istanbul Cost Comparison</h2>
+        <div class="uk-vs-istanbul">
+            <div class="uk-price">
+                <div>UK AVERAGE</div>
+                <div class="price-value">£{{ukPrice}}</div>
+            </div>
+            <div class="istanbul-price">
+                <div>ISTANBUL</div>
+                <div class="price-value">£{{totalGBP}}</div>
+            </div>
+        </div>
+        <div class="savings">You save approximately £{{savings}} ({{savingsPercentage}}%)</div>
+        
+        <h2>What Our Patients Say</h2>
+        <div class="section">
+            <blockquote>
+                "The quality of dental work in Istanbul exceeded my expectations. The care, attention, and results were all excellent - and at a fraction of UK prices."
+                <footer>— Sarah from London</footer>
+            </blockquote>
+        </div>
+        
+        <h2>Next Steps</h2>
+        <div class="next-steps">
+            <p><img src="{{{tickIcon}}}" alt="✓" class="tick-icon"> <strong>Free Video Consultation:</strong> Book your free consultation with our UK team to discuss your treatment plan.</p>
+            <p><img src="{{{tickIcon}}}" alt="✓" class="tick-icon"> <strong>Secure Your Dates:</strong> A small refundable deposit secures your preferred treatment dates and clinic.</p>
+            <p><img src="{{{tickIcon}}}" alt="✓" class="tick-icon"> <strong>Travel Planning:</strong> We'll help arrange your flights, accommodation, and transfers.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Istanbul Dental Smile | +44 7572 445856 | www.istanbuldentalsmile.com</p>
+            <p>Quote valid for 30 days from issue date. Final treatment plans subject to dental consultation.</p>
+        </div>
+    </div>
+</body>
+</html>

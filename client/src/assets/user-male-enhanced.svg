@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#EFF8FF"/>
+  
+  <!-- Hair -->
+  <path d="M60 70C60 70 60 55 100 55C140 55 140 70 140 70V90C140 90 135 65 100 65C65 65 60 90 60 90V70Z" fill="#3E2723"/>
+  
+  <!-- Face -->
+  <path d="M100 145C122.091 145 140 127.091 140 105C140 82.9086 122.091 65 100 65C77.9086 65 60 82.9086 60 105C60 127.091 77.9086 145 100 145Z" fill="#FFDAB9"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="82" cy="95" rx="5" ry="6" fill="#3E2723"/>
+  <ellipse cx="118" cy="95" rx="5" ry="6" fill="#3E2723"/>
+  
+  <!-- Eyebrows -->
+  <path d="M75 85C75 85 80 80 90 85" stroke="#3E2723" stroke-width="2" stroke-linecap="round"/>
+  <path d="M125 85C125 85 120 80 110 85" stroke="#3E2723" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Smile -->
+  <path d="M85 115C85 115 93 125 115 115" stroke="#3E2723" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Beard/Stubble -->
+  <path d="M75 120C75 120 90 140 125 120" stroke="#5D4037" stroke-width="2" stroke-linecap="round" stroke-opacity="0.3"/>
+  <path d="M75 123C75 123 90 143 125 123" stroke="#5D4037" stroke-width="2" stroke-linecap="round" stroke-opacity="0.2"/>
+  
+  <!-- Ears -->
+  <path d="M60 100C60 100 55 95 55 100C55 105 60 110 60 110" stroke="#FFDAB9" stroke-width="8" stroke-linecap="round"/>
+  <path d="M140 100C140 100 145 95 145 100C145 105 140 110 140 110" stroke="#FFDAB9" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Hair Details -->
+  <path d="M65 65C65 65 75 55 100 55C125 55 135 65 135 65" stroke="#3E2723" stroke-width="2"/>
+  <path d="M60 75C60 75 65 65 70 65" stroke="#3E2723" stroke-width="2"/>
+  <path d="M140 75C140 75 135 65 130 65" stroke="#3E2723" stroke-width="2"/>
+  
+  <!-- Neck -->
+  <path d="M85 140C85 140 85 155 100 155C115 155 115 140 115 140" fill="#FFDAB9"/>
+</svg>

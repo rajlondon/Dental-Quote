@@ -1,0 +1,76 @@
+ STEP 1: Update your Form in index.html
+Replace your <form> section with this:
+
+html
+Copy
+Edit
+<form id="quoteForm">
+  <label for="treatment">Treatment(s) Needed:</label>
+  <select id="treatment" name="treatment" required>
+    <option value="">-- Please select --</option>
+    <option value="Hair Transplant">Hair Transplant</option>
+    <option value="Dental Veneers">Dental Veneers</option>
+    <option value="Hollywood Smile">Hollywood Smile</option>
+    <option value="Laser Eye Surgery">Laser Eye Surgery</option>
+    <option value="Liposuction">Liposuction</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <label for="budget">Your Budget (€):</label>
+  <input type="number" id="budget" name="budget" />
+
+  <label for="dates">Preferred Travel Dates:</label>
+  <input type="text" id="dates" name="dates" placeholder="e.g. June 5-10" />
+
+  <label for="notes">Any Notes or Questions:</label>
+  <textarea id="notes" name="notes"></textarea>
+
+  <label>
+    <input type="checkbox" id="extras" name="extras" value="Yes" />
+    I'd like help with hotel & airport transfers
+  </label>
+
+  <button type="submit">Request My Quote</button>
+</form>
+
+<p id="responseMessage"></p>
+🔧 STEP 2: Update script.js
+Replace the existing code in your script.js with this:
+
+javascript
+Copy
+Edit
+// Initialize EmailJS
+emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your actual EmailJS Public Key
+
+document.getElementById("quoteForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const templateParams = {
+    treatment: document.getElementById("treatment").value,
+    budget: document.getElementById("budget").value,
+    dates: document.getElementById("dates").value,
+    notes: document.getElementById("notes").value,
+    extras: document.getElementById("extras").checked ? "Yes" : "No",
+    date: new Date().toLocaleString()
+  };
+
+  emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams)
+    .then(function (response) {
+      document.getElementById("responseMessage").innerText =
+        "✅ Thanks! We’ll get back to you within 24 hours.";
+      document.getElementById("quoteForm").reset();
+    }, function (error) {
+      document.getElementById("responseMessage").innerText =
+        "❌ Oops! Something went wrong. Please try again.";
+      console.error("EmailJS error:", error);
+    });
+});
+🔧 STEP 3: Update Email Template on EmailJS
+Go to EmailJS → Templates → Edit your template, and add this line:
+
+html
+Copy
+Edit
+<strong>Needs Hotel & Transfers:</strong> {{extras}}<br>
+Put it below “Notes” or wherever you like in the email.

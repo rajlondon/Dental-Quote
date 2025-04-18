@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="#F0F7FF"/>
+  
+  <!-- Hair -->
+  <path d="M100 150C127.614 150 150 127.614 150 100C150 72.3858 127.614 50 100 50C72.3858 50 50 72.3858 50 100C50 127.614 72.3858 150 100 150Z" fill="#7A5548"/>
+  
+  <!-- Face -->
+  <path d="M100 145C122.091 145 140 127.091 140 105C140 82.9086 122.091 65 100 65C77.9086 65 60 82.9086 60 105C60 127.091 77.9086 145 100 145Z" fill="#FFD7C3"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="82" cy="95" rx="5" ry="6" fill="#4E342E"/>
+  <ellipse cx="118" cy="95" rx="5" ry="6" fill="#4E342E"/>
+  
+  <!-- Eyebrows -->
+  <path d="M78 85C78 85 82 82 87 85" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+  <path d="M122 85C122 85 118 82 113 85" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Smile -->
+  <path d="M85 115C85 115 93 125 115 115" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Hair Styling -->
+  <path d="M60 70C60 70 45 95 55 120" stroke="#5D4037" stroke-width="8" stroke-linecap="round"/>
+  <path d="M140 70C140 70 155 95 145 120" stroke="#5D4037" stroke-width="8" stroke-linecap="round"/>
+  <path d="M70 55C70 55 90 45 110 45C130 45 140 55 140 55" stroke="#5D4037" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Earrings -->
+  <circle cx="58" cy="100" r="3" fill="#FFD700"/>
+  <circle cx="142" cy="100" r="3" fill="#FFD700"/>
+  
+  <!-- Lips -->
+  <path d="M90 115C90 115 95 120 110 115" fill="#E57373"/>
+  
+  <!-- Blush -->
+  <ellipse cx="75" cy="110" rx="8" ry="5" fill="#FFCDD2" fill-opacity="0.5"/>
+  <ellipse cx="125" cy="110" rx="8" ry="5" fill="#FFCDD2" fill-opacity="0.5"/>
+</svg>

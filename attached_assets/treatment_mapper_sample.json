@@ -1,0 +1,43 @@
+{
+    "Dental Implant": {
+        "category": "Implants",
+        "clinic_variants": [
+            {
+                "clinic_id": "clinic_001",
+                "label": "Standard Titanium Dental Implant (implant only)",
+                "price": "\u00a3400 - \u00a3600",
+                "includes": [
+                    "implant"
+                ],
+                "optional_addons": [
+                    "abutment",
+                    "crown"
+                ]
+            },
+            {
+                "clinic_id": "clinic_002",
+                "label": "Implant + Abutment + Zirconia Crown Package",
+                "price": "\u00a3950",
+                "includes": [
+                    "implant",
+                    "abutment",
+                    "crown"
+                ],
+                "note": "Includes free consultation and 5-night hotel"
+            }
+        ]
+    },
+    "Porcelain Veneer": {
+        "category": "Veneers & Crowns",
+        "clinic_variants": [
+            {
+                "clinic_id": "clinic_003",
+                "label": "E.max Layered Porcelain Veneer",
+                "price": "\u00a3220",
+                "includes": [
+                    "veneer"
+                ]
+            }
+        ]
+    }
+}
