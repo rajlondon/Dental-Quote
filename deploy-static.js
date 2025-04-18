@@ -15,6 +15,25 @@ try {
   console.error('Error reading public directory:', error);
 }
 
+// Load environment variables if .env file exists
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envContents = fs.readFileSync(envPath, 'utf8');
+    envContents.split('\n').forEach(line => {
+      if (line.trim() && !line.startsWith('#')) {
+        const [key, value] = line.split('=');
+        if (key && value) {
+          process.env[key.trim()] = value.trim();
+        }
+      }
+    });
+    console.log('Loaded environment variables from .env file');
+  }
+} catch (error) {
+  console.error('Error loading environment variables:', error);
+}
+
 // Basic file type to MIME type mapping
 const mimeTypes = {
   '.html': 'text/html',

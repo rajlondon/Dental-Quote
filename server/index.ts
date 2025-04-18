@@ -3,6 +3,22 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 
+// Make sure Stripe env variables are set
+if (!process.env.STRIPE_SECRET_KEY) {
+  // Copy from environment secrets if available
+  if (process.env.REPLIT_STRIPE_SECRET_KEY) {
+    process.env.STRIPE_SECRET_KEY = process.env.REPLIT_STRIPE_SECRET_KEY;
+    log("STRIPE_SECRET_KEY set from REPLIT_STRIPE_SECRET_KEY");
+  } else {
+    log("WARNING: STRIPE_SECRET_KEY environment variable is not set");
+    // Set a placeholder for development - DO NOT use in production
+    if (process.env.NODE_ENV !== 'production') {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_placeholder';
+      log("Using placeholder STRIPE_SECRET_KEY for development");
+    }
+  }
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
