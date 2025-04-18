@@ -1,2 +1,2 @@
-run = "node deploy.cjs"
-entrypoint = "deploy.cjs"
+run = "node dist/start.mjs"
+entrypoint = "dist/start.mjs"
