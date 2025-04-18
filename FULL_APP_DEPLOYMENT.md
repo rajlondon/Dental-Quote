@@ -6,8 +6,10 @@ This guide explains how to deploy the complete MyDentalFly application (React fr
 
 Before starting the deployment, ensure you have:
 
-1. All environment variables properly set up in the Replit Secrets panel:
-   - Set "Expose to Deployments" toggle to ON for the following secrets:
+1. All environment variables properly added to your deployment environment:
+   - Go to the "Deployments" tab in Replit
+   - Click on "Environment variables"
+   - Add the following variables:
      - `STRIPE_SECRET_KEY`
      - `VITE_STRIPE_PUBLIC_KEY`
      - `STRIPE_PUBLIC_KEY`

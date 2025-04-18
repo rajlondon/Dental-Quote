@@ -20,6 +20,17 @@ entrypoint = "dist/start.mjs"`);
   console.log('Building full application...');
   execSync('node build-full-app.js');
 
+  // IMPORTANT REMINDER for Deployment Environment Variables
+  console.log('\n\n========== IMPORTANT REMINDER ==========');
+  console.log('Before deploying, please add these secrets to your deployment environment:');
+  console.log(' 1. Go to the "Deployments" tab in Replit');
+  console.log(' 2. Click on "Environment variables"');
+  console.log(' 3. Add the following environment variables:');
+  console.log('    - STRIPE_SECRET_KEY');
+  console.log('    - STRIPE_PUBLIC_KEY');
+  console.log('    - VITE_STRIPE_PUBLIC_KEY');
+  console.log('========================================\n\n');
+
   console.log('Pre-deployment tasks completed successfully!');
   console.log('Your application is ready to be deployed.');
 } catch (error) {
