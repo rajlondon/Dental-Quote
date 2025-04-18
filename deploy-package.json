@@ -1,0 +1,14 @@
+{
+  "name": "mydentalfly-domain-server",
+  "version": "1.0.0",
+  "description": "Simple landing page server for MyDentalFly domains",
+  "main": "domain-server.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node domain-server.cjs"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "private": true
+}

@@ -524,7 +524,11 @@ const server = http.createServer((req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
+console.log(`Environment PORT value: ${process.env.PORT}`);
+
+// Make sure we listen on the correct port that Replit injects
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`MyDentalFly static server running on port ${PORT}`);
   console.log(`Server ready at http://0.0.0.0:${PORT}`);
+  console.log(`Health check endpoint available at /api/health`);
 });
