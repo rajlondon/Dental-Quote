@@ -1,5 +1,5 @@
 // Simplest possible Node.js server with zero dependencies
-const http = require('http');
+import http from 'http';
 
 // Our landing page HTML
 const landingPage = `<!DOCTYPE html>
