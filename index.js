@@ -9,26 +9,103 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Check if Stripe API key is set
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('WARNING: STRIPE_SECRET_KEY environment variable is not set!');
-  console.error('Payment functionality may not work correctly.');
-  // We'll continue anyway to allow non-payment features to work
-}
+// Display server startup information
+console.log('Starting MyDentalFly production server...');
+console.log('Server environment:', process.env.NODE_ENV || 'production');
+console.log('Current directory:', __dirname);
 
-// Basic logging middleware
+// Configuration check
+const emailjsConfigured = !!(process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY);
+const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
+
+console.log('Configuration status:');
+console.log('- EmailJS:', emailjsConfigured ? 'Configured' : 'Not configured');
+console.log('- Stripe:', stripeConfigured ? 'Configured' : 'Not configured');
+
+// Basic logging middleware with more details
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - ${req.ip} - ${req.headers['user-agent']}`);
   next();
 });
 
 // Parse JSON bodies
 app.use(express.json());
 
-// First try to serve from the dist directory (production build)
-app.use(express.static(path.join(__dirname, 'dist/public')));
+// Serve the domain test HTML as the root
+app.get('/', (req, res) => {
+  const domainTestPath = path.join(__dirname, 'public/domaintest.html');
+  
+  if (fs.existsSync(domainTestPath)) {
+    return res.sendFile(domainTestPath);
+  } else {
+    // If the domain test file doesn't exist, render a simple HTML response
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>MyDentalFly - Domain Test</title>
+        <style>
+          body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          h1 { color: #0284c7; }
+          .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            padding: 20px;
+          }
+          .success {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 15px;
+            margin-bottom: 20px;
+          }
+          pre {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>MyDentalFly Domain Test</h1>
+        
+        <div class="card">
+          <div class="success">
+            <p><strong>✅ Domain Verification Successful</strong></p>
+            <p>Your domain is correctly configured and is reaching this server at <strong>${req.headers.host || 'unknown host'}</strong></p>
+          </div>
+          
+          <h2>Request Details</h2>
+          <p>Time: ${new Date().toISOString()}</p>
+          <p>IP: ${req.ip}</p>
+          <p>Protocol: ${req.protocol}</p>
+          
+          <h2>All Request Headers</h2>
+          <pre>${JSON.stringify(req.headers, null, 2)}</pre>
+          
+          <p>Try these endpoints:</p>
+          <ul>
+            <li><a href="/api/domain-info">/api/domain-info</a> - JSON with domain information</li>
+            <li><a href="/api/health">/api/health</a> - Server health check</li>
+          </ul>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+});
 
-// Then fallback to the public directory (for static assets)
+// Serve static assets from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Basic API for EmailJS configuration
@@ -62,8 +139,12 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'production',
     host: req.get('host'),
-    stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
-    emailjsConfigured: !!(process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY)
+    ip: req.ip,
+    path: req.path,
+    stripeConfigured: stripeConfigured,
+    emailjsConfigured: emailjsConfigured,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
   });
 });
 
@@ -74,7 +155,15 @@ app.get('/api/domain-info', (req, res) => {
     headers: req.headers,
     environment: process.env.NODE_ENV || 'production',
     timestamp: new Date().toISOString(),
-    path: req.path
+    ip: req.ip,
+    path: req.path,
+    protocol: req.protocol,
+    secure: req.secure,
+    server: {
+      node: process.version,
+      platform: process.platform,
+      uptime: process.uptime()
+    }
   });
 });
 
@@ -108,34 +197,10 @@ app.get('/simple', (req, res) => {
   `);
 });
 
-// SPA fallback route - return index.html for all non-API routes
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
-  // Try to serve from dist/public first
-  const distPath = path.join(__dirname, 'dist/public/index.html');
-  const publicPath = path.join(__dirname, 'public/index.html');
-  
-  try {
-    if (fs.existsSync(distPath)) {
-      return res.sendFile(distPath);
-    } else if (fs.existsSync(publicPath)) {
-      return res.sendFile(publicPath);
-    } else {
-      // Fallback to a simple HTML response
-      return res.redirect('/simple');
-    }
-  } catch (err) {
-    console.error('Error serving index.html:', err);
-    return res.redirect('/simple');
-  }
-});
-
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`MyDentalFly production server running on port ${PORT}`);
-  console.log(`http://0.0.0.0:${PORT}`);
+  console.log(`Server is listening at http://0.0.0.0:${PORT}`);
+  console.log(`Server is ready to handle requests`);
 });
