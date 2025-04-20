@@ -37,8 +37,8 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
               variant: "destructive",
             });
             
-            // Using window.location.href for a full page reload to clear any stale state
-            window.location.href = "/portal-login";
+            // Using navigate for a smoother user experience
+            navigate("/portal-login");
           }
           return;
         }
@@ -60,7 +60,7 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
               variant: "destructive",
             });
             
-            window.location.href = "/portal-login";
+            navigate("/portal-login");
           }
         }
       } catch (error) {
@@ -75,7 +75,7 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
             variant: "destructive",
           });
           
-          window.location.href = "/portal-login";
+          navigate("/portal-login");
         }
       } finally {
         if (isMounted) {

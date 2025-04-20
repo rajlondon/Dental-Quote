@@ -158,13 +158,19 @@ const PortalLoginPage: React.FC = () => {
         });
         
         // Redirect based on user role
+        console.log("Login successful, redirecting based on role:", data.user.role);
+        
         if (data.user.role === 'admin') {
-          window.location.href = "/admin-portal";
+          console.log("Admin user detected, redirecting to admin portal");
+          // Use navigate instead of direct location change
+          navigate("/admin-portal");
         } else if (data.user.role === 'clinic_staff') {
-          window.location.href = "/clinic-portal";
+          console.log("Clinic staff detected, redirecting to clinic portal");
+          navigate("/clinic-portal");
         } else {
           // Default to client portal for any other role
-          window.location.href = "/client-portal";
+          console.log("Patient/client user detected, redirecting to client portal");
+          navigate("/client-portal");
         }
       } else {
         throw new Error("Invalid response from server");
@@ -232,13 +238,18 @@ const PortalLoginPage: React.FC = () => {
         });
         
         // Redirect based on user role (from actual response)
+        console.log("Test login successful, redirecting based on role:", data.user.role);
+        
         if (data.user.role === 'admin') {
-          window.location.href = "/admin-portal";
+          console.log("Admin user detected in test login, redirecting to admin portal");
+          navigate("/admin-portal");
         } else if (data.user.role === 'clinic_staff') {
-          window.location.href = "/clinic-portal";
+          console.log("Clinic staff detected in test login, redirecting to clinic portal");
+          navigate("/clinic-portal");
         } else {
           // Default to client portal for any other role
-          window.location.href = "/client-portal";
+          console.log("Patient/client user detected in test login, redirecting to client portal");
+          navigate("/client-portal");
         }
       } else {
         throw new Error("Invalid response from server");
