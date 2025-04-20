@@ -32,11 +32,13 @@ import DataArchitecturePage from "@/pages/DataArchitecturePage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
+import { ProtectedRoute } from "./lib/protected-route";
 import { Suspense } from "react";
 
 function Router() {
   return (
     <Switch>
+      {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/home" component={Home} />
       <Route path="/index">
@@ -50,31 +52,37 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
-      <Route path="/dental-chart" component={DentalChartPage} />
-      <Route path="/my-dental-chart" component={PatientDentalChart} />
-      <Route path="/clinic-dental-charts" component={ClinicDentalCharts} />
       <Route path="/booking" component={BookingPage} />
+      <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/portal">
         {() => <Redirect to="/portal-login" />}
       </Route>
-      <Route path="/client-portal" component={ClientPortalPage} />
-      <Route path="/admin-portal" component={AdminPortalPage} />
-      <Route path="/clinic-portal" component={ClinicPortalPage} />
-      <Route path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} />
-      <Route path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} />
-      <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
-      <Route path="/account-settings" component={AccountSettingsPage} />
-      <Route path="/data-architecture" component={DataArchitecturePage} />
-      <Route path="/clinic">
-        {() => <Redirect to="/clinic-portal" />}
-      </Route>
-      <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/deposit-payment">
         {() => <DepositPaymentPage />}
       </Route>
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
+      </Route>
+      
+      {/* Protected Routes - Any authenticated user */}
+      <ProtectedRoute path="/client-portal" component={ClientPortalPage} />
+      <ProtectedRoute path="/dental-chart" component={DentalChartPage} />
+      <ProtectedRoute path="/my-dental-chart" component={PatientDentalChart} />
+      <ProtectedRoute path="/treatment-comparison" component={TreatmentComparisonPage} />
+      <ProtectedRoute path="/account-settings" component={AccountSettingsPage} />
+      
+      {/* Admin-only Protected Routes */}
+      <ProtectedRoute path="/admin-portal" component={AdminPortalPage} requiredRole="admin" />
+      <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
+      <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
+      
+      {/* Clinic Staff Protected Routes */}
+      <ProtectedRoute path="/clinic-portal" component={ClinicPortalPage} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
+      <Route path="/clinic">
+        {() => <Redirect to="/clinic-portal" />}
       </Route>
       {/* Redirect all test routes to home */}
       <Route path="/test">
