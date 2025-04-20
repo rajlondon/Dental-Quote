@@ -55,7 +55,9 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "concurrently": "^9.1.2",
     "connect-pg-simple": "^10.0.0",
+    "cross-env": "^7.0.3",
     "csurf": "^1.10.0",
     "csv-parse": "^5.6.0",
     "date-fns": "^3.6.0",
@@ -124,7 +126,7 @@
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
-    "tsx": "^4.19.1",
+    "tsx": "^4.19.3",
     "typescript": "5.6.3",
     "vite": "^5.4.14"
   },
