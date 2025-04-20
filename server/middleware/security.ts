@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 export const csrfProtection = csrf({ cookie: { sameSite: "lax" } });
 
 // CSRF error handler
-export function handleCsrfError(err: Error, req: Request, res: Response, next: NextFunction) {
+export function handleCsrfError(err: any, req: Request, res: Response, next: NextFunction) {
   if (err.code === 'EBADCSRFTOKEN') {
     // Handle CSRF token errors
     res.status(403).json({
@@ -15,6 +15,15 @@ export function handleCsrfError(err: Error, req: Request, res: Response, next: N
     });
   } else {
     next(err);
+  }
+}
+
+// Extend the Request interface to include csrfToken
+declare global {
+  namespace Express {
+    interface Request {
+      csrfToken(): string;
+    }
   }
 }
 
