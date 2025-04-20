@@ -20,6 +20,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const app = express();
+// Enable trust proxy for rate limiters in Replit environment
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
