@@ -21,7 +21,6 @@ export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Increase max connection attempts and timeout
   maxUses: 10,
-  maxLifetimeSeconds: 30,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 30000,
 });
