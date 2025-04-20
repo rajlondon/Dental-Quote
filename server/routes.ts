@@ -80,6 +80,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add CSRF error handler (must be before CSRF middleware)
   app.use(handleCsrfError);
   
+  // Direct server-side blocking of portal routes for security
+  // This prevents direct access to portal routes without authentication
+  app.get(["/admin-portal*", "/clinic-portal*", "/client-portal*"], (req, res) => {
+    // If they're trying to access directly, redirect to login
+    return res.redirect("/portal-login");
+  });
+  
   // Register portal routes for clinic, admin, and client portal functionality
   // Apply global authentication for all portal routes
   app.use("/api/portal", ensureAuthenticated);
