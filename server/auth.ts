@@ -1,285 +1,203 @@
+import { Express } from "express";
+import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request, Response, NextFunction } from "express";
-import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
-import { storage } from "./storage";
-import { User } from "@shared/schema";
-import { csrfProtection, authRateLimit } from "./middleware/security";
+import bcrypt from "bcrypt";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import memorystore from "memorystore";
 
-// Extend Express Request with User type
+// Create memory store for sessions
+const MemoryStore = memorystore(session);
+
+// Extend Express.User interface
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: number;
+      email: string;
+      role: string;
+      firstName?: string;
+      lastName?: string;
+      profileImage?: string;
+    }
   }
 }
 
-const scryptAsync = promisify(scrypt);
-
-// Helper functions for password hashing and comparison
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
-
-export function setupAuth(app: Express) {
-  // Configure session middleware
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "istanbul-dental-smile-secret",
+export async function setupAuth(app: Express) {
+  // Session middleware config
+  const sessionConfig: session.SessionOptions = {
+    secret: process.env.SESSION_SECRET || "mydentalfly_dev_secret",
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
-    cookie: {
+    store: new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
+    cookie: { 
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    },
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
   };
 
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
+  // Set up session and passport middlewares
+  app.use(session(sessionConfig));
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure passport local strategy
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: "email", // Use email instead of username
-        passwordField: "password",
-      },
-      async (email, password, done) => {
-        try {
-          const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false, { message: "Invalid email or password" });
-          }
-          return done(null, user);
-        } catch (error) {
-          return done(error);
+  // Configure LocalStrategy
+  passport.use(new LocalStrategy(
+    { usernameField: "email" },
+    async (email, password, done) => {
+      try {
+        // Find user by email
+        const [user] = await db.select().from(users).where(eq(users.email, email));
+        
+        if (!user) {
+          return done(null, false, { message: "Unknown user" });
         }
+        
+        // Check if user has a password
+        if (!user.password) {
+          return done(null, false, { message: "Password not set" });
+        }
+        
+        // Compare passwords
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+          return done(null, false, { message: "Incorrect password" });
+        }
+        
+        // Return user without password
+        const { password: _, ...userWithoutPassword } = user;
+        // Cast to match the Express.User interface
+        const userForAuth = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
+          profileImage: user.profileImage || undefined,
+          clinicId: user.clinicId
+        };
+        return done(null, userForAuth);
+      } catch (err) {
+        return done(err);
       }
-    )
-  );
+    }
+  ));
 
-  // Serialize and deserialize user
+  // Serialize user to session
   passport.serializeUser((user, done) => {
     done(null, user.id);
   });
 
+  // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
-    }
-  });
-
-  // Setup auth routes
-  app.post("/api/auth/register", authRateLimit, csrfProtection, async (req, res) => {
-    try {
-      const { email, password, firstName, lastName, role = "patient" } = req.body;
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use" });
-      }
-      
-      // Create a new user with hashed password
-      const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        role,
-      });
-      
-      // Log the user in
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Error logging in after registration" });
-        }
-        return res.status(201).json({ user: { ...user, password: undefined } });
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      return res.status(500).json({ message: "Error during registration" });
-    }
-  });
-
-  app.post("/api/auth/login", authRateLimit, csrfProtection, (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-      if (err) {
-        return next(err);
-      }
+      const [user] = await db.select({
+        id: users.id,
+        email: users.email,
+        role: users.role,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImage: users.profileImage,
+        clinicId: users.clinicId
+      }).from(users).where(eq(users.id, id));
       
       if (!user) {
-        return res.status(401).json({ message: info?.message || "Authentication failed" });
+        return done(null, false);
       }
       
-      req.login(user, (loginErr) => {
-        if (loginErr) {
-          return next(loginErr);
-        }
-        return res.json({ user: { ...user, password: undefined } });
+      // Transform null values to undefined to match the Express.User interface
+      const userForAuth = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        profileImage: user.profileImage || undefined,
+        clinicId: user.clinicId
+      };
+      
+      done(null, userForAuth);
+    } catch (err) {
+      done(err);
+    }
+  });
+
+  // Login endpoint
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
+      if (err) return next(err);
+      if (!user) return res.status(401).json({ success: false, message: info?.message || "Authentication failed" });
+      
+      req.login(user, (err: Error | null) => {
+        if (err) return next(err);
+        return res.json({ success: true, user });
       });
     })(req, res, next);
   });
 
-  app.post("/api/auth/logout", csrfProtection, (req, res) => {
+  // Logout endpoint
+  app.post("/api/auth/logout", (req, res) => {
     req.logout((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Error during logout" });
-      }
-      req.session.destroy((sessionErr) => {
-        if (sessionErr) {
-          console.error("Session destruction error:", sessionErr);
-        }
-        res.clearCookie("connect.sid");
-        return res.json({ message: "Logged out successfully" });
-      });
+      if (err) return res.status(500).json({ success: false, message: "Logout failed" });
+      res.json({ success: true, message: "Logged out successfully" });
     });
   });
 
+  // Current user endpoint
   app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
+      return res.status(401).json({ success: false, message: "Not authenticated" });
     }
-    
-    const { password, ...userWithoutPassword } = req.user;
-    return res.json({ user: userWithoutPassword });
+    res.json({ success: true, user: req.user });
   });
 
-  // Admin-only endpoint to create initial demo users for testing
-  app.post("/api/auth/create-demo-users", csrfProtection, async (req, res) => {
-    // Only allow this in development environment
-    if (process.env.NODE_ENV === "production") {
-      return res.status(403).json({ message: "Not allowed in production" });
-    }
+  // Create admin and clinic users if they don't exist
+  await seedUsers();
+}
 
-    try {
-      // Check if we already have users
-      const existingUsers = await storage.getAllUsers();
-      if (existingUsers && existingUsers.length > 0) {
-        return res.json({ 
-          message: "Demo users already exist", 
-          count: existingUsers.length 
-        });
-      }
-
-      // Create some demo users with different roles
-      const demoUsers = [
-        {
-          email: "admin@istanbuldentalsmile.co.uk",
-          password: await hashPassword("admin123"),
-          firstName: "Admin",
-          lastName: "User",
-          role: "admin",
-        },
-        {
-          email: "clinic@istanbuldentalsmile.co.uk",
-          password: await hashPassword("clinic123"),
-          firstName: "Clinic",
-          lastName: "Staff",
-          role: "clinic_staff",
-          clinicId: 1, // Will need to be updated after creating clinics
-        },
-        {
-          email: "patient@example.com",
-          password: await hashPassword("patient123"),
-          firstName: "Test",
-          lastName: "Patient",
-          role: "patient",
-        },
-      ];
-
-      // Create the users in the database
-      const createdUsers = [];
-      for (const user of demoUsers) {
-        const createdUser = await storage.createUser(user);
-        createdUsers.push(createdUser);
-      }
-
-      return res.status(201).json({ 
-        message: "Demo users created successfully", 
-        users: createdUsers.map(u => ({ ...u, password: undefined })) 
+// Helper function to seed admin and clinic users
+async function seedUsers() {
+  try {
+    // Check if admin user exists
+    const [adminExists] = await db.select().from(users).where(eq(users.email, "admin@mydentalfly.com"));
+    
+    if (!adminExists) {
+      const adminPassword = await bcrypt.hash("Admin123!", 10);
+      await db.insert(users).values({
+        email: "admin@mydentalfly.com",
+        password: adminPassword,
+        firstName: "Admin",
+        lastName: "User",
+        role: "admin",
+        emailVerified: true,
+        profileComplete: true,
+        status: "active"
       });
-    } catch (error) {
-      console.error("Error creating demo users:", error);
-      return res.status(500).json({ message: "Error creating demo users" });
-    }
-  });
-
-  // Helper method to get all users (admin only)
-  app.get("/api/auth/users", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
+      console.log("✅ Created admin user: admin@mydentalfly.com (password: Admin123!)");
     }
 
-    try {
-      const users = await storage.getAllUsers();
-      return res.json({ 
-        users: users.map(u => ({ ...u, password: undefined })) 
+    // Check if clinic user exists
+    const [clinicExists] = await db.select().from(users).where(eq(users.email, "clinic@mydentalfly.com"));
+    
+    if (!clinicExists) {
+      const clinicPassword = await bcrypt.hash("Clinic123!", 10);
+      await db.insert(users).values({
+        email: "clinic@mydentalfly.com",
+        password: clinicPassword,
+        firstName: "Clinic",
+        lastName: "Manager",
+        role: "clinic_staff",
+        emailVerified: true,
+        profileComplete: true,
+        status: "active"
       });
-    } catch (error) {
-      console.error("Error getting users:", error);
-      return res.status(500).json({ message: "Error getting users" });
+      console.log("✅ Created clinic user: clinic@mydentalfly.com (password: Clinic123!)");
     }
-  });
-  
-  // Change password endpoint
-  app.post("/api/auth/change-password", csrfProtection, async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const { currentPassword, newPassword } = req.body;
-    
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: "Current password and new password are required" });
-    }
-    
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: "New password must be at least 6 characters long" });
-    }
-    
-    try {
-      const user = await storage.getUserByEmail(req.user.email);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Verify current password
-      const isPasswordValid = await comparePasswords(currentPassword, user.password);
-      
-      if (!isPasswordValid) {
-        return res.status(400).json({ message: "Current password is incorrect" });
-      }
-      
-      // Hash the new password
-      const hashedPassword = await hashPassword(newPassword);
-      
-      // Update user's password
-      await storage.updateUser(user.id, { password: hashedPassword });
-      
-      res.status(200).json({ message: "Password updated successfully" });
-    } catch (error) {
-      console.error("Password change error:", error);
-      res.status(500).json({ message: "Failed to update password" });
-    }
-  });
-
-  return app;
+  } catch (error) {
+    console.error("Error seeding users:", error);
+  }
 }
