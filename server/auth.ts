@@ -118,7 +118,7 @@ export async function setupAuth(app: Express) {
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
         profileImage: user.profileImage || undefined,
-        clinicId: user.clinicId
+        clinicId: user.clinicId || undefined
       };
       
       done(null, userForAuth);

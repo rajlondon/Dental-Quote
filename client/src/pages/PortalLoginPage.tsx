@@ -132,26 +132,48 @@ const PortalLoginPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Here we would typically make an API call to authenticate the user
+      // Make API call to the new authentication endpoint
       console.log("Login attempt with:", values);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For now, show toast and redirect to client portal
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to MyDentalFly!",
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
       });
       
-      // Simplify routing approach - direct navigation to client portal without parameters
-      localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
-      console.log("Redirecting to client portal with simplified navigation");
-      window.location.href = "/client-portal";
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Login failed");
+      }
+      
+      const data = await response.json();
+      
+      // Check user role to determine where to redirect
+      if (data.success && data.user) {
+        toast({
+          title: "Login Successful",
+          description: `Welcome back to MyDentalFly, ${data.user.firstName || ''}!`,
+        });
+        
+        // Redirect based on user role
+        if (data.user.role === 'admin') {
+          window.location.href = "/admin-portal";
+        } else if (data.user.role === 'clinic_staff') {
+          window.location.href = "/clinic-portal";
+        } else {
+          // Default to client portal for any other role
+          window.location.href = "/client-portal";
+        }
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: error instanceof Error ? error.message : "Invalid email or password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -166,38 +188,66 @@ const PortalLoginPage: React.FC = () => {
     try {
       console.log("Test login with user type:", values.userType);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get pre-configured credentials based on selected role
+      let credentials = { email: "", password: "" };
       
-      if (values.userType === "client") {
-        toast({
-          title: "Client Test Login Successful",
-          description: "You are now logged in as a test client user.",
-        });
-        
-        // Direct navigation to client portal
-        window.location.href = '/client-portal';
-        
-      } else if (values.userType === "admin") {
-        toast({
-          title: "Admin Test Login Successful",
-          description: "You are now logged in as a test admin user.",
-        });
-        
-        window.location.href = '/admin-portal';
-        
+      if (values.userType === "admin") {
+        credentials = {
+          email: "admin@mydentalfly.com",
+          password: "Admin123!"
+        };
       } else if (values.userType === "clinic") {
+        credentials = {
+          email: "clinic@mydentalfly.com",
+          password: "Clinic123!"
+        };
+      } else {
+        // Default client test user
+        credentials = {
+          email: "client@mydentalfly.com",
+          password: "Client123!"
+        };
+      }
+      
+      // Call the actual login API with our test credentials
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Test login failed");
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.user) {
         toast({
-          title: "Clinic Test Login Successful",
-          description: "You are now logged in as a test clinic user.",
+          title: `${values.userType.charAt(0).toUpperCase() + values.userType.slice(1)} Login Successful`,
+          description: `You are now logged in as a test ${values.userType} user.`,
         });
         
-        window.location.href = '/clinic-portal';
+        // Redirect based on user role (from actual response)
+        if (data.user.role === 'admin') {
+          window.location.href = "/admin-portal";
+        } else if (data.user.role === 'clinic_staff') {
+          window.location.href = "/clinic-portal";
+        } else {
+          // Default to client portal for any other role
+          window.location.href = "/client-portal";
+        }
+      } else {
+        throw new Error("Invalid response from server");
       }
     } catch (error) {
+      console.error("Test login error:", error);
       toast({
         title: "Test Login Failed",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
