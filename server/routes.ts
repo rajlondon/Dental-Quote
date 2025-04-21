@@ -440,6 +440,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Stripe webhook handler for processing payment events
+  app.post('/api/webhooks/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    console.log('Received webhook event from Stripe');
+    
+    if (!isStripeConfigured()) {
+      console.error('Stripe not configured for webhook');
+      return res.status(503).end();
+    }
+    
+    const stripeSignature = req.headers['stripe-signature'];
+    const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!stripeSignature) {
+      console.error('Missing Stripe signature');
+      return res.status(400).send('Missing Stripe signature');
+    }
+    
+    let event;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+      apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
+    });
+    
+    try {
+      if (stripeWebhookSecret) {
+        // If webhook secret is set, verify the signature
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          stripeSignature,
+          stripeWebhookSecret
+        );
+      } else {
+        // For development, just parse the event
+        event = JSON.parse(req.body.toString());
+        console.warn('Webhook signature verification skipped - webhook secret not configured');
+      }
+      
+      // Handle the event
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          const paymentIntent = event.data.object;
+          console.log(`💰 Payment succeeded: ${paymentIntent.id}`);
+          
+          // Extract customer email from payment intent metadata
+          const customerEmail = paymentIntent.metadata?.customerEmail || '';
+          const paymentType = paymentIntent.metadata?.type || 'payment';
+          const bookingId = paymentIntent.metadata?.bookingId;
+          const quoteId = paymentIntent.metadata?.quoteId;
+          const clinicId = paymentIntent.metadata?.clinicId;
+          
+          try {
+            // Find the user by email
+            const user = await storage.getUserByEmail(customerEmail);
+            
+            if (user) {
+              // Record the payment in our database
+              await storage.createPayment({
+                userId: user.id,
+                amount: String(paymentIntent.amount / 100), // Convert from cents to pounds
+                currency: paymentIntent.currency,
+                status: 'completed',
+                paymentMethod: 'card',
+                paymentType: paymentType,
+                transactionId: paymentIntent.id,
+                stripePaymentIntentId: paymentIntent.id,
+                bookingId: bookingId ? parseInt(bookingId) : undefined,
+                metadata: paymentIntent.metadata,
+                createdAt: new Date()
+              });
+              
+              if (paymentType === 'deposit' && clinicId) {
+                // If this is a deposit payment, create or update the booking
+                const booking = await storage.createOrUpdateBooking({
+                  userId: user.id,
+                  clinicId: parseInt(clinicId),
+                  quoteRequestId: quoteId ? parseInt(quoteId) : undefined,
+                  depositPaid: true,
+                  depositAmount: "200.00", // £200 fixed deposit
+                  status: 'confirmed',
+                  stage: 'pre_travel',
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                });
+                
+                console.log(`Created/updated booking: ${booking.id}`);
+              }
+            } else {
+              console.error(`User not found for email: ${customerEmail}`);
+            }
+          } catch (dbError) {
+            console.error('Error recording payment in database:', dbError);
+          }
+          break;
+          
+        case 'payment_intent.payment_failed':
+          const failedPayment = event.data.object;
+          console.log(`❌ Payment failed: ${failedPayment.id}`);
+          console.log(`Failure reason: ${failedPayment.last_payment_error?.message || 'Unknown'}`);
+          break;
+          
+        case 'charge.succeeded':
+          const charge = event.data.object;
+          console.log(`Charge succeeded: ${charge.id}`);
+          break;
+        
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+      
+      // Return a 200 response to acknowledge receipt of the event
+      res.status(200).json({received: true});
+    } catch (err) {
+      console.error('Error processing webhook:', err);
+      res.status(400).send(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  });
 
   // Add simplified test PDF endpoint
   app.post('/api/jspdf-quote-v2', (req, res) => {
