@@ -32,7 +32,7 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center space-x-3">
           <Link 
             href="/your-quote" 
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-300 text-white font-medium px-4 py-1.5 rounded-md flex items-center text-xs animate-pulse"
+            className="bg-primary hover:bg-primary/90 shadow-sm hover:shadow transition-all duration-300 text-white font-medium px-4 py-1.5 rounded-md flex items-center text-xs"
             aria-label="Get My Quote - Build your personalized dental treatment plan"
           >
             <Calculator className="h-3 w-3 mr-1" />
@@ -140,7 +140,7 @@ const Navbar: React.FC = () => {
         <div className="md:hidden flex items-center gap-2">
           <Link 
             href="/your-quote" 
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-300 text-white font-medium px-3 py-1.5 rounded-md flex items-center text-xs"
+            className="bg-primary hover:bg-primary/90 shadow-sm hover:shadow transition-all duration-300 text-white font-medium px-3 py-1.5 rounded-md flex items-center text-xs"
             aria-label="Get My Quote - Build your personalized dental treatment plan"
           >
             <Calculator className="h-3 w-3 mr-1" />
