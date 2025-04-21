@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, MessageSquare, FileText, Calendar, BarChart3, 
   ClipboardList, Clock, LogOut, Settings, ChevronRight, Search,
-  Bell, Banknote, Grid3X3, Database, Network
+  Bell, Banknote, Grid3X3, Database, Network, TestTube
 } from "lucide-react";
 import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
 import DataArchitecturePage from "@/pages/DataArchitecturePage";
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AdminPortalTesting from "@/components/portal/AdminPortalTesting";
 
 // Import admin portal components 
 import AdminDashboardSection from "@/components/admin/AdminDashboardSection";
@@ -111,6 +112,7 @@ const AdminPortalPage: React.FC = () => {
     { id: "treatment_mapper", label: t("admin.sidebar.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: "data_architecture", label: t("admin.sidebar.data_architecture", "Data Architecture"), icon: <Network className="h-5 w-5" /> },
     { id: "analytics", label: t("admin.sidebar.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
+    { id: "testing", label: t("admin.sidebar.testing", "Testing"), icon: <TestTube className="h-5 w-5" /> },
     { id: "settings", label: t("admin.sidebar.settings", "Settings"), icon: <Settings className="h-5 w-5" /> }
   ];
 
@@ -135,6 +137,8 @@ const AdminPortalPage: React.FC = () => {
         return <AdminTreatmentMapperPage />;
       case "data_architecture":
         return <DataArchitecturePage />;
+      case "testing":
+        return <AdminPortalTesting setActiveSection={setActiveSection} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
