@@ -14,7 +14,7 @@ import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
 import YourQuotePage from "@/pages/YourQuotePage2";
 import BookingPage from "@/pages/BookingPage";
-import ClientPortalPage from "@/pages/ClientPortalPage";
+import PatientPortalPage from "@/pages/PatientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
 import ClinicPortalPage from "@/pages/ClinicPortalPage";
 import PortalLoginPage from "@/pages/PortalLoginPage";
@@ -66,7 +66,8 @@ function Router() {
       </Route>
       
       {/* Patient Portal Routes - Publicly accessible */}
-      <Route path="/client-portal" component={ClientPortalPage} /> {/* This is actually Patient Portal */}
+      <Route path="/client-portal" component={PatientPortalPage} />
+      <Route path="/patient-portal" component={PatientPortalPage} />
       <Route path="/dental-chart" component={DentalChartPage} />
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
