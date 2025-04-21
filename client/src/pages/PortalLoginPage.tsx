@@ -272,11 +272,11 @@ const PortalLoginPage: React.FC = () => {
         {/* Left Column - Login Forms */}
         <div className="flex flex-col justify-center">
           <div className="mb-8">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6">
               <img 
                 src="/images/mydentalfly-logo.png" 
                 alt="MyDentalFly Logo" 
-                className="h-12 w-auto mr-3" 
+                className="h-20 w-auto mr-3 shadow-sm border border-gray-100 rounded-md p-2" 
               />
             </div>
             <h1 className="text-3xl font-bold text-primary mb-2">

@@ -235,7 +235,7 @@ const PatientPortalPage: React.FC = () => {
             <img 
               src="/images/mydentalfly-logo.png" 
               alt="MyDentalFly Logo" 
-              className="h-6 w-auto mr-2" 
+              className="h-10 w-auto mr-3 shadow-sm border border-gray-100 rounded-md p-1" 
             />
             <h1 className="text-lg font-bold text-blue-600">
               {t('portal.title', 'Patient Portal')}
@@ -255,7 +255,7 @@ const PatientPortalPage: React.FC = () => {
                     <img 
                       src="/images/mydentalfly-logo.png" 
                       alt="MyDentalFly Logo" 
-                      className="h-8 w-auto mb-2" 
+                      className="h-12 w-auto mb-2 shadow-sm border border-gray-100 rounded-md p-1" 
                     />
                     <h2 className="text-lg font-bold text-blue-600">
                       {t('portal.title', 'Patient Portal')}

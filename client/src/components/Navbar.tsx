@@ -25,7 +25,7 @@ const Navbar: React.FC = () => {
           <img 
             src="/images/mydentalfly-logo.png" 
             alt="MyDentalFly Logo" 
-            className="h-10 w-auto"
+            className="h-14 w-auto shadow-sm border border-gray-100 rounded-md p-1"
           />
         </div>
         
