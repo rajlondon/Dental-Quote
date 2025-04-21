@@ -93,7 +93,7 @@ const QuoteForm: React.FC = () => {
   };
   
   return (
-    <form id="hero-quote-form" onSubmit={handleSubmit} className="relative">
+    <form onSubmit={handleSubmit} className="relative">
       {/* Mobile Form with Card-based Layout */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
         {/* Responsive layout - cards on mobile, horizontal on desktop */}
@@ -117,7 +117,7 @@ const QuoteForm: React.FC = () => {
                   setCity(""); 
                 }}
               >
-                <SelectTrigger id="country" className="quote-select-trigger w-full focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="country" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -152,7 +152,7 @@ const QuoteForm: React.FC = () => {
                 onValueChange={setCity}
                 disabled={!country}
               >
-                <SelectTrigger id="city" className="quote-select-trigger w-full focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="city" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder={country ? "Select city" : "Select country first"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -183,7 +183,7 @@ const QuoteForm: React.FC = () => {
             </div>
             <div className="relative">
               <Select value={treatmentType} onValueChange={setTreatmentType}>
-                <SelectTrigger id="treatment-type" className="quote-select-trigger w-full focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="treatment-type" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder="Select treatment" />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,7 +209,7 @@ const QuoteForm: React.FC = () => {
             </div>
             <div className="relative">
               <Select value={travelMonth} onValueChange={setTravelMonth}>
-                <SelectTrigger id="travel-month" className="quote-select-trigger w-full focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="travel-month" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder="When?" />
                 </SelectTrigger>
                 <SelectContent>
@@ -227,30 +227,10 @@ const QuoteForm: React.FC = () => {
           <div className="md:col-span-1 flex flex-col justify-end">
             <Button 
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-md shadow-md transition-all"
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                height: '42px',
-                minHeight: '42px',
-                maxHeight: '42px',
-                boxSizing: 'border-box',
-                padding: '0 16px'
-              }}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-[42px] md:h-[42px] rounded-md flex items-center justify-center shadow-md transition-all"
               disabled={!country || !city || !treatmentType}
             >
-              <span 
-                className="mr-2" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  height: '100%', 
-                  lineHeight: 'normal'
-                }}
-              >
-                Get My Quote
-              </span>
+              <span className="mr-2">Get My Quote</span>
               <ArrowRightIcon className="h-4 w-4" />
             </Button>
           </div>
