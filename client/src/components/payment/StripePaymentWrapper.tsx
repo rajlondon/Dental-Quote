@@ -2,71 +2,66 @@ import React, { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import StripePaymentForm from './StripePaymentForm';
-import { apiRequest } from '@/lib/queryClient';
 import { Loader2 } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-// Make sure to call loadStripe outside of a component's render to avoid
-// recreating the Stripe object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-
+// Load Stripe outside of the component to avoid recreating it on every render
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 interface StripePaymentWrapperProps {
-  amount: number;
-  description: string;
-  onPaymentSuccess: () => void;
-  onCancel: () => void;
+  email: string;
+  amount?: number;
+  quoteId?: number;
+  clinicId?: number;
+  onSuccessfulPayment?: () => void;
+  paymentType?: 'deposit' | 'treatment' | 'other';
+  bookingId?: number;
   metadata?: Record<string, string>;
-  isDeposit?: boolean;
 }
 
-const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
-  amount,
-  description,
-  onPaymentSuccess,
-  onCancel,
-  metadata = {},
-  isDeposit = false
-}) => {
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+export default function StripePaymentWrapper({
+  email,
+  amount = 200, // Default deposit amount is £200
+  quoteId,
+  clinicId,
+  onSuccessfulPayment,
+  paymentType = 'deposit',
+  bookingId,
+  metadata = {}
+}: StripePaymentWrapperProps) {
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPaymentIntent = async () => {
       try {
-        setLoading(true);
-        
-        // Determine which endpoint to use based on whether this is a deposit payment
-        const endpoint = isDeposit 
-          ? '/api/create-deposit-payment-intent'
-          : '/api/create-payment-intent';
-        
-        // Use a reasonable fallback for patient email to prevent payment issues
-        const email = metadata.patientEmail || 'guest@mydentalfly.com';
-        
-        console.log('Processing payment with metadata:', metadata);
-        
-        const payload = isDeposit
-          ? {
-              email: email,
-              currency: 'gbp',
-              metadata: {
-                ...metadata,
-                type: 'deposit',
-                customerEmail: email,
-                amount: amount.toString()
-              }
-            }
-          : {
-              amount: amount,
-              description: description,
-              metadata: metadata
-            };
-        
-        const response = await apiRequest('POST', endpoint, payload);
+        setIsLoading(true);
+        setError(null);
+
+        // Check if the Stripe key is configured
+        if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+          throw new Error('Stripe is not configured. Payment processing is unavailable.');
+        }
+
+        // Prepare the metadata to include with the payment
+        const paymentMetadata = {
+          customerEmail: email,
+          type: paymentType,
+          ...(quoteId ? { quoteId: quoteId.toString() } : {}),
+          ...(clinicId ? { clinicId: clinicId.toString() } : {}),
+          ...(bookingId ? { bookingId: bookingId.toString() } : {}),
+          ...metadata
+        };
+
+        // Get a payment intent from the server
+        const response = await apiRequest('POST', '/api/create-deposit-payment-intent', {
+          email,
+          amount,
+          metadata: paymentMetadata
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -75,75 +70,74 @@ const StripePaymentWrapper: React.FC<StripePaymentWrapperProps> = ({
 
         const data = await response.json();
         setClientSecret(data.clientSecret);
-      } catch (err: any) {
-        console.error('Payment setup error:', err);
-        console.log('Payment request details:', {
-          paymentType: isDeposit ? 'deposit' : 'regular',
-          patientEmail: metadata.patientEmail,
-          amount: amount
+      } catch (err) {
+        console.error('Payment intent error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
+        
+        toast({
+          title: 'Payment Setup Failed',
+          description: errorMessage,
+          variant: 'destructive'
         });
-        setError(err.message || 'Failed to set up payment. Please try again later.');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchPaymentIntent();
-  }, [amount, description, metadata, isDeposit]);
+  }, [email, amount, quoteId, clinicId, paymentType, bookingId, metadata, toast]);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-        <p className="text-gray-600">Setting up payment...</p>
+      <div className="flex flex-col items-center justify-center p-8 border rounded-lg shadow-sm bg-white min-h-[300px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="mt-4 text-center text-muted-foreground">
+          Setting up secure payment...
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
-        <h3 className="text-lg font-medium text-red-800 mb-2">Payment Setup Error</h3>
-        <p className="text-red-700 mb-4">{error}</p>
-        <button
-          onClick={onCancel}
-          className="px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-        >
-          Try Again Later
-        </button>
+      <div className="p-6 border rounded-lg shadow-sm bg-destructive/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+        <h3 className="font-semibold text-lg mb-2">Payment Setup Failed</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <p className="text-sm">
+          Please try again later or contact support for assistance.
+        </p>
       </div>
     );
   }
 
-  if (!clientSecret) {
-    return null;
-  }
-
   return (
-    <Elements
-      stripe={stripePromise}
-      options={{
-        clientSecret,
-        appearance: {
-          theme: 'stripe',
-          variables: {
-            colorPrimary: '#3b82f6',
-            colorBackground: '#ffffff',
-            colorText: '#1f2937',
-            colorDanger: '#ef4444',
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-            borderRadius: '8px'
-          }
-        }
-      }}
-    >
-      <StripePaymentForm
-        amount={amount}
-        onPaymentSuccess={onPaymentSuccess}
-        onCancel={onCancel}
-      />
-    </Elements>
+    <div className="p-6 border rounded-lg shadow-sm bg-white">
+      {clientSecret && (
+        <Elements 
+          stripe={stripePromise}
+          options={{
+            clientSecret,
+            appearance: {
+              theme: 'stripe',
+              variables: {
+                colorPrimary: '#2563eb', // blue-600
+                colorBackground: '#ffffff',
+                colorText: '#0f172a', // slate-900
+                colorDanger: '#ef4444', // red-500
+                fontFamily: 'Inter, system-ui, sans-serif',
+                borderRadius: '6px',
+              }
+            }
+          }}
+        >
+          <StripePaymentForm 
+            paymentType={paymentType}
+            amount={amount}
+            onSuccess={onSuccessfulPayment}
+          />
+        </Elements>
+      )}
+    </div>
   );
-};
-
-export default StripePaymentWrapper;
+}

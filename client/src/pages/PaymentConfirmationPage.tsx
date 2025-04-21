@@ -1,249 +1,165 @@
-import React, { useEffect } from 'react';
-import { useLocation } from 'wouter';
+import React, { useEffect, useState } from 'react';
+import { useLocation, Link } from 'wouter';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { 
-  CheckCircle, 
-  Calendar, 
-  User, 
-  Mail, 
-  FileText, 
-  Info,
-  ArrowRight,
-  MessageCircle,
-  HeartHandshake
-} from 'lucide-react';
+import { CheckCircle, ArrowLeft, HomeIcon, CalendarClock, FileText } from 'lucide-react';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
-interface PaymentConfirmationPageProps {
-  clinicName?: string;
-  treatmentTotalGBP?: number;
-  depositAmount?: number;
-  onPaymentSuccess?: () => void;
-  onCancel?: () => void;
-}
-
-const PaymentConfirmationPage: React.FC<PaymentConfirmationPageProps> = ({ 
-  clinicName,
-  treatmentTotalGBP,
-  depositAmount = 200,
-  onPaymentSuccess,
-  onCancel
-}) => {
-  const [, setLocation] = useLocation();
+export default function PaymentConfirmationPage() {
+  const [location, navigate] = useLocation();
+  const [email, setEmail] = useState<string>('');
+  const [paymentId, setPaymentId] = useState<string>('');
   
-  // Get patient information from localStorage
-  const patientInfoStr = localStorage.getItem('patientInfo');
-  const patientInfo = patientInfoStr ? JSON.parse(patientInfoStr) : {
-    fullName: 'Patient',
-    email: 'patient@example.com'
-  };
-  
-  // Generate a reference number
-  const referenceNumber = `MDF-${Math.floor(100000 + Math.random() * 900000)}`;
-  
-  // Store the reference number in localStorage
   useEffect(() => {
-    localStorage.setItem('paymentReference', referenceNumber);
-  }, [referenceNumber]);
+    // Parse query parameters
+    const searchParams = new URLSearchParams(window.location.search);
+    const emailParam = searchParams.get('email');
+    const paymentIdParam = searchParams.get('payment_intent') || searchParams.get('payment_id');
+    
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+    
+    if (paymentIdParam) {
+      setPaymentId(paymentIdParam);
+    }
+  }, []);
   
   return (
-    <main className="container mx-auto py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="bg-green-100 p-4 rounded-full">
-              <CheckCircle className="h-16 w-16 text-green-600" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
-          <p className="text-gray-600 max-w-xl mx-auto">
-            Your £200 deposit has been received and your dental treatment plan is now confirmed.
+    <div className="container max-w-4xl py-8 px-4 md:px-6">
+      <Breadcrumbs 
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Deposit Payment', href: `/deposit-payment${email ? `?email=${email}` : ''}` },
+          { label: 'Payment Confirmation', href: '#', current: true }
+        ]}
+      />
+      
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="mb-4 md:mb-0">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Payment Confirmation</h1>
+          <p className="text-muted-foreground mt-1">
+            Your payment has been successfully processed
           </p>
         </div>
         
-        <Card className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Your Booking Details</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Patient Name</h3>
-                  <p className="font-medium">{patientInfo.fullName}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <Mail className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Email Address</h3>
-                  <p className="font-medium">{patientInfo.email}</p>
-                </div>
-              </div>
-              
-              {clinicName && (
-                <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Selected Clinic</h3>
-                    <p className="font-medium">{clinicName}</p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Reference Number</h3>
-                  <p className="font-medium">{referenceNumber}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Deposit Amount</h3>
-                  <p className="font-medium">£{depositAmount}</p>
-                </div>
-              </div>
-              
-              {treatmentTotalGBP && (
-                <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Estimated Istanbul Price</h3>
-                    <p className="font-medium">£{treatmentTotalGBP}</p>
-                    <p className="text-xs text-gray-500 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Booking Date</h3>
-                  <p className="font-medium">{new Date().toLocaleDateString('en-GB')}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <HeartHandshake className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                  <p className="text-green-600 font-medium">Confirmed</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-        
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-3">What Happens Next?</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">1</div>
-              <div>
-                <h3 className="font-medium">Patient Portal Setup</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  You'll receive an email within 24 hours with your login details for the MyDentalFly patient portal.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">2</div>
-              <div>
-                <h3 className="font-medium">Dental Specialist Consultation</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  You'll be able to schedule your complimentary video consultation with your dental specialist 
-                  through the patient portal.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">3</div>
-              <div>
-                <h3 className="font-medium">Treatment Planning</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  After your consultation, you'll receive a detailed treatment timeline and can choose 
-                  your preferred dates for your dental trip.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center font-semibold text-blue-600 border border-blue-200 shrink-0">4</div>
-              <div>
-                <h3 className="font-medium">Travel Arrangement Support</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Our concierge team will assist you with flight, accommodation, and local transport arrangements.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Card className="p-5 border-green-200 bg-green-50">
-            <div className="flex items-start gap-3">
-              <User className="h-6 w-6 text-green-600 shrink-0" />
-              <div>
-                <h3 className="font-semibold">Access Your Patient Portal</h3>
-                <p className="text-sm text-gray-700 mt-1 mb-3">
-                  Manage your dental treatment, access your records, and communicate with your care team.
-                </p>
-                <Button 
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => setLocation('/patient-portal')}
-                >
-                  Go to Patient Portal
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-          
-          <Card className="p-5 border-blue-200 bg-blue-50">
-            <div className="flex items-start gap-3">
-              <MessageCircle className="h-6 w-6 text-blue-600 shrink-0" />
-              <div>
-                <h3 className="font-semibold">Contact Our Concierge Team</h3>
-                <p className="text-sm text-gray-700 mt-1 mb-3">
-                  Have questions about your booking? Our team is here to help you every step of the way.
-                </p>
-                <Button 
-                  variant="outline"
-                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
-                  onClick={() => setLocation('/contact')}
-                >
-                  Contact Support
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-500 mb-4">
-            A confirmation email has been sent to {patientInfo.email} with all these details.
-          </p>
+        <div className="flex space-x-3">
+          <Button 
+            variant="outline" 
+            onClick={() => window.history.back()}
+            className="flex items-center"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
           
           <Button 
-            onClick={() => setLocation('/')}
-            variant="outline"
-            className="mx-auto"
+            variant="outline" 
+            onClick={() => navigate('/')}
+            className="flex items-center"
           >
-            Return to Homepage
+            <HomeIcon className="w-4 h-4 mr-2" />
+            Home
           </Button>
         </div>
       </div>
-    </main>
+      
+      <Card className="mb-8">
+        <CardHeader>
+          <div className="flex items-center">
+            <CheckCircle className="h-8 w-8 text-green-500 mr-4" />
+            <div>
+              <CardTitle>Payment Successful</CardTitle>
+              <CardDescription>
+                Your deposit payment has been processed successfully
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="p-6 border rounded-lg bg-green-50 border-green-100">
+            <div className="flex flex-col items-center text-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Thank You for Your Payment</h3>
+              <p className="text-green-700">
+                Your booking is now confirmed and our team will be in touch soon.
+              </p>
+            </div>
+            
+            {paymentId && (
+              <div className="text-sm text-center text-green-700 mt-2">
+                Payment reference: {paymentId}
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-8 space-y-6">
+            <h3 className="text-lg font-medium">What Happens Next?</h3>
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex p-4 border rounded-lg">
+                <div className="mr-4">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <CalendarClock className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-1">Appointment Scheduling</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Our partner clinic will contact you within 2 business days to schedule your treatment.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex p-4 border rounded-lg">
+                <div className="mr-4">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-1">Booking Confirmation</h4>
+                  <p className="text-sm text-muted-foreground">
+                    A confirmation email with your booking details has been sent to your email address.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+          <Button 
+            onClick={() => navigate('/patient-portal')}
+            variant="default"
+          >
+            Go to Patient Portal
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/')}
+            variant="outline"
+          >
+            Return to Home
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-2">
+          Have questions about your booking?
+        </p>
+        <Button 
+          variant="link" 
+          onClick={() => navigate('/contact')}
+          className="text-sm"
+        >
+          Contact our support team
+        </Button>
+      </div>
+    </div>
   );
-};
-
-export default PaymentConfirmationPage;
+}
