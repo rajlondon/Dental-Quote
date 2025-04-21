@@ -33,7 +33,8 @@ import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { applyAIGeneratedStyles } from "./utils/style-updater";
 
 function Router() {
   return (
@@ -125,6 +126,18 @@ function App() {
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
+  
+  // Apply AI-generated styles when the app loads
+  useEffect(() => {
+    // Apply the AI-generated styles after a short delay to ensure DOM is ready
+    const styleTimer = setTimeout(() => {
+      applyAIGeneratedStyles().catch(err => 
+        console.error('Failed to apply AI-generated styles:', err)
+      );
+    }, 1000);
+    
+    return () => clearTimeout(styleTimer);
+  }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
