@@ -24,6 +24,7 @@ import { setupAuth } from "./auth";
 import portalRoutes from "./routes/portal-routes";
 import fileRoutes from "./routes/fileRoutes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
+import geminiRoutes from "./routes/gemini-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import security middleware
@@ -111,6 +112,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register clinic API routes for quote generation and consultation booking
   registerClinicRoutes(app);
+  
+  // Register Gemini AI routes for dental advice
+  app.use('/api/gemini', geminiRoutes);
   
   // Create the uploads directory for files if it doesn't exist
   const uploadsDir = path.join(process.cwd(), 'uploads');
