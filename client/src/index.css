@@ -7,6 +7,11 @@
   border-left-width: 12px;
 }
 
+/* Custom select boxes for the quote form */
+.quote-select-trigger {
+  @apply !h-[42px] !bg-gray-50 !border-gray-200 !rounded-md;
+}
+
 @layer base {
   * {
     @apply border-border;
