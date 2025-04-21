@@ -178,8 +178,18 @@ const PortalTestingGuide: React.FC<{ portalType: 'patient' | 'clinic' | 'admin' 
   );
 };
 
+// WorkflowStep interface definition
+export interface WorkflowStep {
+  title: string;
+  description: string;
+  note?: string;
+  completed?: boolean;
+  inProgress?: boolean;
+  navigationTarget?: string;
+}
+
 // Functions to get features for each portal type
-function getPortalFeatures(portalType: string) {
+export function getPortalFeatures(portalType: string) {
   if (portalType === 'patient') {
     return [
       {
@@ -605,14 +615,10 @@ function getPortalFeatures(portalType: string) {
 }
 
 // Define types for workflow steps
-interface WorkflowStep {
-  title: string;
-  description: string;
-  note?: string;
-}
+// Using the exported WorkflowStep interface
 
 // Function to get workflow steps for each portal type
-function getWorkflowSteps(portalType: string): WorkflowStep[] {
+export function getWorkflowSteps(portalType: string): WorkflowStep[] {
   if (portalType === 'patient') {
     return [
       {
@@ -724,7 +730,7 @@ function getWorkflowSteps(portalType: string): WorkflowStep[] {
 }
 
 // Function to get security features for each portal type
-function getSecurityFeatures(portalType: string) {
+export function getSecurityFeatures(portalType: string) {
   const commonFeatures = [
     {
       name: "Secure Authentication",
@@ -801,7 +807,7 @@ function getSecurityFeatures(portalType: string) {
 }
 
 // Helper function to get correct portal path
-function getPortalPath(portalType: string) {
+export function getPortalPath(portalType: string) {
   if (portalType === 'patient') return '/client-portal';
   if (portalType === 'clinic') return '/clinic-portal';
   if (portalType === 'admin') return '/admin-portal';
