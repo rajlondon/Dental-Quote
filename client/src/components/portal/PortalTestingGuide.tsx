@@ -93,10 +93,10 @@ const PortalTestingGuide: React.FC<{ portalType: 'patient' | 'clinic' | 'admin' 
                       )}
                       
                       {!feature.implemented && (
-                        <Alert variant="warning" className="mt-3 bg-amber-50 text-amber-800 border-amber-200">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertTitle>Implementation Note</AlertTitle>
-                          <AlertDescription>
+                        <Alert className="mt-3 bg-amber-50 border-amber-200">
+                          <AlertCircle className="h-4 w-4 text-amber-800" />
+                          <AlertTitle className="text-amber-800">Implementation Note</AlertTitle>
+                          <AlertDescription className="text-amber-700">
                             {feature.implementationNote || "This feature is partially implemented. Some functionality may be limited."}
                           </AlertDescription>
                         </Alert>
@@ -604,8 +604,15 @@ function getPortalFeatures(portalType: string) {
   return [];
 }
 
+// Define types for workflow steps
+interface WorkflowStep {
+  title: string;
+  description: string;
+  note?: string;
+}
+
 // Function to get workflow steps for each portal type
-function getWorkflowSteps(portalType: string) {
+function getWorkflowSteps(portalType: string): WorkflowStep[] {
   if (portalType === 'patient') {
     return [
       {
