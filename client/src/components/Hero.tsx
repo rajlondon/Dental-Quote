@@ -227,12 +227,31 @@ const QuoteForm: React.FC = () => {
           <div className="md:col-span-1 flex flex-col justify-end">
             <Button 
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-[42px] md:h-[42px] rounded-md flex items-center justify-center shadow-md transition-all"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-md shadow-md transition-all"
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                height: '42px',
+                minHeight: '42px',
+                maxHeight: '42px',
+                boxSizing: 'border-box',
+                padding: '0 16px'
+              }}
               disabled={!country || !city || !treatmentType}
             >
-              <span className="mr-2" style={{ lineHeight: '42px', display: 'inline-block', verticalAlign: 'middle' }}>Get My Quote</span>
-              <ArrowRightIcon className="h-4 w-4" style={{ verticalAlign: 'middle' }} />
+              <span 
+                className="mr-2" 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  height: '100%', 
+                  lineHeight: 'normal'
+                }}
+              >
+                Get My Quote
+              </span>
+              <ArrowRightIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>
