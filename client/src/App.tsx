@@ -65,12 +65,12 @@ function Router() {
         {() => <PaymentConfirmationPage />}
       </Route>
       
-      {/* Protected Routes - Any authenticated user */}
-      <ProtectedRoute path="/client-portal" component={ClientPortalPage} />
-      <ProtectedRoute path="/dental-chart" component={DentalChartPage} />
-      <ProtectedRoute path="/my-dental-chart" component={PatientDentalChart} />
-      <ProtectedRoute path="/treatment-comparison" component={TreatmentComparisonPage} />
-      <ProtectedRoute path="/account-settings" component={AccountSettingsPage} />
+      {/* Patient Portal Routes - Publicly accessible */}
+      <Route path="/client-portal" component={ClientPortalPage} />
+      <Route path="/dental-chart" component={DentalChartPage} />
+      <Route path="/my-dental-chart" component={PatientDentalChart} />
+      <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
+      <Route path="/account-settings" component={AccountSettingsPage} />
       
       {/* Admin-only Protected Routes */}
       <ProtectedRoute path="/admin-portal" component={AdminPortalPage} requiredRole="admin" />

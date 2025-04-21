@@ -91,14 +91,14 @@ const ClientPortalPage: React.FC = () => {
     setMobileNavOpen(false);
   };
 
-  // Handle logout
+  // Handle logout - modified to simply redirect without authentication
   const handleLogout = () => {
     toast({
-      title: t('portal.logout_success', 'Successfully logged out'),
-      description: t('portal.logout_message', 'You have been logged out of your account.'),
+      title: t('portal.back_to_main', 'Returning to main site'),
+      description: t('portal.demo_mode', 'This is operating in demo mode - no authentication required.'),
     });
     // Use direct URL navigation for reliability
-    window.location.href = '/#/portal-login';
+    window.location.href = '/';
   };
 
   // Check URL for section parameter with more robust parsing
@@ -231,9 +231,16 @@ const ClientPortalPage: React.FC = () => {
       {/* Mobile Header and Navigation */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-white z-30 border-b border-gray-200">
         <div className="flex items-center justify-between p-4">
-          <h1 className="text-lg font-bold text-blue-600">
-            {t('portal.title', 'Client Portal')}
-          </h1>
+          <div className="flex items-center">
+            <img 
+              src="/images/mydentalfly-logo.png" 
+              alt="MyDentalFly Logo" 
+              className="h-6 w-auto mr-2" 
+            />
+            <h1 className="text-lg font-bold text-blue-600">
+              {t('portal.title', 'Client Portal')}
+            </h1>
+          </div>
           
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger asChild>
@@ -244,9 +251,16 @@ const ClientPortalPage: React.FC = () => {
             <SheetContent side="left" className="w-64 p-0">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-lg font-bold text-blue-600">
-                    {t('portal.title', 'Client Portal')}
-                  </h2>
+                  <div>
+                    <img 
+                      src="/images/mydentalfly-logo.png" 
+                      alt="MyDentalFly Logo" 
+                      className="h-8 w-auto mb-2" 
+                    />
+                    <h2 className="text-lg font-bold text-blue-600">
+                      {t('portal.title', 'Client Portal')}
+                    </h2>
+                  </div>
                   <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
                     <X className="h-5 w-5" />
                   </Button>
