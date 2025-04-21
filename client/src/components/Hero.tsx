@@ -117,7 +117,7 @@ const QuoteForm: React.FC = () => {
                   setCity(""); 
                 }}
               >
-                <SelectTrigger id="country" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="country" className="w-full h-[42px] bg-gray-50 border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -152,7 +152,7 @@ const QuoteForm: React.FC = () => {
                 onValueChange={setCity}
                 disabled={!country}
               >
-                <SelectTrigger id="city" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="city" className="w-full h-[42px] bg-gray-50 border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder={country ? "Select city" : "Select country first"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -183,7 +183,7 @@ const QuoteForm: React.FC = () => {
             </div>
             <div className="relative">
               <Select value={treatmentType} onValueChange={setTreatmentType}>
-                <SelectTrigger id="treatment-type" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="treatment-type" className="w-full h-[42px] bg-gray-50 border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder="Select treatment" />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,7 +209,7 @@ const QuoteForm: React.FC = () => {
             </div>
             <div className="relative">
               <Select value={travelMonth} onValueChange={setTravelMonth}>
-                <SelectTrigger id="travel-month" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger id="travel-month" className="w-full h-[42px] bg-gray-50 border-gray-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
                   <SelectValue placeholder="When?" />
                 </SelectTrigger>
                 <SelectContent>
