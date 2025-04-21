@@ -66,7 +66,7 @@ function Router() {
       </Route>
       
       {/* Patient Portal Routes - Publicly accessible */}
-      <Route path="/client-portal" component={ClientPortalPage} />
+      <Route path="/client-portal" component={ClientPortalPage} /> {/* This is actually Patient Portal */}
       <Route path="/dental-chart" component={DentalChartPage} />
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />

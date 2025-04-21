@@ -168,7 +168,7 @@ const ClientPortalPage: React.FC = () => {
             />
           </div>
           <h1 className="text-xl font-bold text-blue-600">
-            {t('portal.title', 'Client Portal')}
+            {t('portal.title', 'Patient Portal')}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {t('portal.welcome', 'Welcome back')}
@@ -238,7 +238,7 @@ const ClientPortalPage: React.FC = () => {
               className="h-6 w-auto mr-2" 
             />
             <h1 className="text-lg font-bold text-blue-600">
-              {t('portal.title', 'Client Portal')}
+              {t('portal.title', 'Patient Portal')}
             </h1>
           </div>
           
@@ -258,7 +258,7 @@ const ClientPortalPage: React.FC = () => {
                       className="h-8 w-auto mb-2" 
                     />
                     <h2 className="text-lg font-bold text-blue-600">
-                      {t('portal.title', 'Client Portal')}
+                      {t('portal.title', 'Patient Portal')}
                     </h2>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>

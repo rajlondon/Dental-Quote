@@ -247,8 +247,8 @@ const PortalLoginPage: React.FC = () => {
           console.log("Clinic staff detected in test login, redirecting to clinic portal");
           navigate("/clinic-portal");
         } else {
-          // Default to client portal for any other role
-          console.log("Patient/client user detected in test login, redirecting to client portal");
+          // Default to patient portal for any other role
+          console.log("Patient user detected in test login, redirecting to patient portal");
           navigate("/client-portal");
         }
       } else {
