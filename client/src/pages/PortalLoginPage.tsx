@@ -272,6 +272,13 @@ const PortalLoginPage: React.FC = () => {
         {/* Left Column - Login Forms */}
         <div className="flex flex-col justify-center">
           <div className="mb-8">
+            <div className="flex items-center mb-4">
+              <img 
+                src="/images/mydentalfly-logo.png" 
+                alt="MyDentalFly Logo" 
+                className="h-12 w-auto mr-3" 
+              />
+            </div>
             <h1 className="text-3xl font-bold text-primary mb-2">
               {t("portal.login.title", "Patient & Admin Portal")}
             </h1>

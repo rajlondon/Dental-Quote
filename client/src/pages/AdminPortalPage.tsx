@@ -165,8 +165,8 @@ const AdminPortalPage: React.FC = () => {
               </button>
               <div className="flex items-center">
                 <img 
-                  src="/images/istanbul-dental-smile-logo.png" 
-                  alt="Istanbul Dental Smile" 
+                  src="/images/mydentalfly-logo.png" 
+                  alt="MyDentalFly Admin Portal" 
                   className="h-10 w-auto mr-2" 
                 />
                 <div className="hidden md:block">
@@ -333,8 +333,8 @@ const AdminPortalPage: React.FC = () => {
                 <div className="flex items-center justify-between px-4">
                   <div className="flex items-center">
                     <img 
-                      src="/images/istanbul-dental-smile-logo.png" 
-                      alt="Istanbul Dental Smile" 
+                      src="/images/mydentalfly-logo.png" 
+                      alt="MyDentalFly Admin Portal" 
                       className="h-8 w-auto mr-2" 
                     />
                     <span className="text-lg font-semibold text-primary">
