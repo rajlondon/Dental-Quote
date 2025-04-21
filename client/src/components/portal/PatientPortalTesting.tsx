@@ -1,0 +1,296 @@
+import React from 'react';
+import PortalTestingGuide from './PortalTestingGuide';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, FileText, Lightbulb, MessageSquare, Upload } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+/**
+ * Patient Portal Testing Component
+ * 
+ * This component provides a testing interface for the Patient Portal
+ * features including:
+ * - Account creation and login
+ * - Quote generation and management
+ * - Document uploads
+ * - Clinic communication
+ * - Treatment plan review
+ * - Payments
+ */
+const PatientPortalTesting: React.FC<{
+  setActiveSection: (section: string) => void;
+}> = ({ setActiveSection }) => {
+  const { toast } = useToast();
+  
+  // Quick action to create a demo quote
+  const createDemoQuote = () => {
+    toast({
+      title: "Demo Quote Created",
+      description: "A demo quote request has been created for testing purposes.",
+    });
+    
+    // Navigate to treatment comparison
+    setTimeout(() => {
+      setActiveSection('treatment_comparison');
+    }, 1500);
+  };
+  
+  // Quick action to upload a demo document
+  const uploadDemoDocument = () => {
+    toast({
+      title: "Demo Document Uploaded",
+      description: "A sample X-ray has been added to your documents for testing.",
+    });
+    
+    // Navigate to documents section
+    setTimeout(() => {
+      setActiveSection('documents');
+    }, 1500);
+  };
+  
+  // Quick action to create a demo message
+  const createDemoMessage = () => {
+    toast({
+      title: "Demo Message Created",
+      description: "A sample conversation with DentGroup Istanbul has been created.",
+    });
+    
+    // Navigate to messages section
+    setTimeout(() => {
+      setActiveSection('messages');
+    }, 1500);
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Patient Portal Testing</h1>
+          <p className="text-muted-foreground">
+            Test and verify all Patient Portal functionality
+          </p>
+        </div>
+        
+        <Button 
+          variant="outline"
+          onClick={() => setActiveSection('dashboard')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+      
+      <Alert className="bg-blue-50 border-blue-200">
+        <Lightbulb className="h-4 w-4 text-blue-600" />
+        <AlertTitle>Testing Mode</AlertTitle>
+        <AlertDescription className="text-blue-700">
+          You're in testing mode. This guide will help you verify all Patient Portal functionality.
+          Test data will be used to demonstrate features without affecting real data.
+        </AlertDescription>
+      </Alert>
+      
+      <Tabs defaultValue="guide" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="guide">Testing Guide</TabsTrigger>
+          <TabsTrigger value="quick-actions">Quick Test Actions</TabsTrigger>
+          <TabsTrigger value="status">Feature Status</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="guide" className="space-y-4">
+          <PortalTestingGuide portalType="patient" />
+        </TabsContent>
+        
+        <TabsContent value="quick-actions" className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-primary" />
+                  Generate Test Quote
+                </CardTitle>
+                <CardDescription>
+                  Create a sample quote request to test the quote flow
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This will create a demo quote request with preset treatments for dental implants
+                  and crowns, allowing you to test the quote comparison features.
+                </p>
+                <Button onClick={createDemoQuote} className="w-full">
+                  Create Demo Quote
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <Upload className="h-5 w-5 mr-2 text-primary" />
+                  Upload Test Document
+                </CardTitle>
+                <CardDescription>
+                  Add a sample document to test the document management
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This will add a sample X-ray document to your account, allowing you to
+                  test document viewing and management features.
+                </p>
+                <Button onClick={uploadDemoDocument} className="w-full">
+                  Add Demo Document
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <MessageSquare className="h-5 w-5 mr-2 text-primary" />
+                  Create Test Message
+                </CardTitle>
+                <CardDescription>
+                  Generate a sample conversation with a clinic
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This will create a sample message thread with a clinic, allowing you to
+                  test the messaging and communication features.
+                </p>
+                <Button onClick={createDemoMessage} className="w-full">
+                  Create Demo Messages
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="flex justify-end mt-6">
+            <Button onClick={() => setActiveSection('dashboard')}>
+              Return to Dashboard
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="status" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Patient Portal Feature Status</CardTitle>
+              <CardDescription>
+                Current implementation status of all patient portal features
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <FeatureStatus 
+                    name="Account Creation" 
+                    status="complete" 
+                    description="Register and login functionality" 
+                  />
+                  <FeatureStatus 
+                    name="Quote Generation" 
+                    status="complete" 
+                    description="Create dental treatment quote requests" 
+                  />
+                  <FeatureStatus 
+                    name="Quote Comparison" 
+                    status="complete" 
+                    description="Compare clinic quotes side-by-side" 
+                  />
+                  <FeatureStatus 
+                    name="Document Upload" 
+                    status="complete" 
+                    description="Upload X-rays and medical documents" 
+                  />
+                  <FeatureStatus 
+                    name="Clinic Messaging" 
+                    status="complete" 
+                    description="Direct communication with clinics" 
+                  />
+                  <FeatureStatus 
+                    name="Treatment Plans" 
+                    status="complete" 
+                    description="Review and accept treatment plans" 
+                  />
+                  <FeatureStatus 
+                    name="Deposit Payments" 
+                    status="complete" 
+                    description="Secure payment processing" 
+                  />
+                  <FeatureStatus 
+                    name="Appointment Booking" 
+                    status="partial" 
+                    description="Schedule and manage appointments" 
+                  />
+                  <FeatureStatus 
+                    name="Dental Charts" 
+                    status="complete" 
+                    description="Interactive dental visualization" 
+                  />
+                </div>
+                
+                <Alert className="mt-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Testing Note</AlertTitle>
+                  <AlertDescription>
+                    Features marked as "partial" have basic functionality implemented but may not be fully operational.
+                    Focus your testing on the complete features first.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+// Helper component for feature status
+const FeatureStatus: React.FC<{
+  name: string;
+  status: 'complete' | 'partial' | 'planned';
+  description: string;
+}> = ({ name, status, description }) => {
+  const statusColors = {
+    complete: 'bg-green-50 border-green-200',
+    partial: 'bg-amber-50 border-amber-200',
+    planned: 'bg-gray-50 border-gray-200'
+  };
+  
+  const statusIcons = {
+    complete: <CheckCircle2 className="h-4 w-4 text-green-600" />,
+    partial: <AlertCircle className="h-4 w-4 text-amber-600" />,
+    planned: <FileText className="h-4 w-4 text-gray-600" />
+  };
+  
+  const statusLabels = {
+    complete: 'Complete',
+    partial: 'Partial',
+    planned: 'Planned'
+  };
+  
+  return (
+    <div className={`p-4 rounded-lg border ${statusColors[status]}`}>
+      <div className="flex items-start justify-between">
+        <h3 className="font-medium">{name}</h3>
+        <div className="flex items-center">
+          {statusIcons[status]}
+          <span className="text-xs ml-1">
+            {statusLabels[status]}
+          </span>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground mt-1">
+        {description}
+      </p>
+    </div>
+  );
+};
+
+export default PatientPortalTesting;

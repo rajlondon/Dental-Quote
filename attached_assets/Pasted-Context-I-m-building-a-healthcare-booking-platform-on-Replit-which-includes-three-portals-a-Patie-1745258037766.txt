@@ -1,0 +1,69 @@
+Context:
+I'm building a healthcare booking platform on Replit, which includes three portals: a Patient Portal, a Clinic Portal, and an Admin Portal. Currently, these portals include various functionalities and examples, but many of these functionalities are placeholders or not fully functional yet.
+
+Objective:
+I want to clearly test and verify every key functionality that is currently displayed or exemplified within these portals. This includes:
+
+Patient Portal:
+
+Creating a user account and logging in.
+
+Generating an initial dental treatment quote.
+
+Viewing and comparing clinic-provided quotes.
+
+Selecting and communicating with clinics.
+
+Securely uploading documents (such as X-rays or CT scans).
+
+Reviewing clinic-uploaded treatment plans.
+
+Accepting treatment plans and triggering deposit payments.
+
+Clinic Portal:
+
+Secure login and authentication for clinic staff.
+
+Reviewing patient-generated quote requests.
+
+Editing and sending customized quotes back to patients.
+
+Reviewing uploaded patient documents (X-rays, CT scans).
+
+Securely uploading treatment plans or adjustments.
+
+Direct messaging/dialogue functionality with patients.
+
+Admin Portal:
+
+Secure login for admin users.
+
+Viewing/managing clinic and patient accounts.
+
+Tracking and overseeing active quotes and ongoing dialogues.
+
+Managing or reviewing uploaded documents.
+
+Editing basic site information or content (if applicable).
+
+Your Task (AI Agent):
+
+Ensure all these functionalities are correctly coded, clearly structured, and operational.
+
+If a functionality is missing or only partially implemented, please create the necessary logic, backend API endpoints, database interactions, and frontend components required.
+
+Clearly comment your changes within the code so I can easily understand and track what you've implemented or modified.
+
+Provide brief but clear documentation or instructions within each portal’s interface on how to test each functionality.
+
+Approach:
+
+Prioritize secure authentication and data handling (GDPR compliant).
+
+Ensure smooth user flow from beginning to end.
+
+Keep functionalities simple, clear, and intuitive to avoid confusion.
+
+Final Output:
+
+All three portals fully operational, clearly structured, and easily testable end-to-end.
