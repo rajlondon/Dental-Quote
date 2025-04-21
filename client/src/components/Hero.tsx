@@ -93,7 +93,7 @@ const QuoteForm: React.FC = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="relative">
+    <form id="hero-quote-form" onSubmit={handleSubmit} className="relative">
       {/* Mobile Form with Card-based Layout */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
         {/* Responsive layout - cards on mobile, horizontal on desktop */}
@@ -228,10 +228,11 @@ const QuoteForm: React.FC = () => {
             <Button 
               type="submit"
               className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-[42px] md:h-[42px] rounded-md flex items-center justify-center shadow-md transition-all"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
               disabled={!country || !city || !treatmentType}
             >
-              <span className="mr-2">Get My Quote</span>
-              <ArrowRightIcon className="h-4 w-4" />
+              <span className="mr-2" style={{ lineHeight: '42px', display: 'inline-block', verticalAlign: 'middle' }}>Get My Quote</span>
+              <ArrowRightIcon className="h-4 w-4" style={{ verticalAlign: 'middle' }} />
             </Button>
           </div>
         </div>
