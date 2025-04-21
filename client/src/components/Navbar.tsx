@@ -23,9 +23,9 @@ const Navbar: React.FC = () => {
       <div className="w-full px-2 py-2 flex items-center justify-between">
         <div onClick={goToHomePage} className="flex items-center cursor-pointer">
           <img 
-            src="/images/my-dental-fly-logo.png" 
+            src="/images/mydentalfly-logo.png" 
             alt="MyDentalFly Logo" 
-            className="h-8 w-auto"
+            className="h-10 w-auto"
           />
         </div>
         

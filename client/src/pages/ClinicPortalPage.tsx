@@ -98,7 +98,7 @@ const ClinicPortalPage: React.FC = () => {
   const clinicData = {
     name: "DentGroup Istanbul",
     role: "Clinic Admin",
-    logo: "/public/clinic-logo.png" // This would be a path to the actual logo
+    logo: "/images/mydentalfly-logo.png" // Path to the MyDentalFly logo
   };
 
   return (
