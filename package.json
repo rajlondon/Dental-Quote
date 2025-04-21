@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@google/generative-ai": "^0.24.0",
     "@hookform/resolvers": "^3.9.1",
     "@hookstate/core": "^4.0.2",
     "@jridgewell/trace-mapping": "^0.3.25",
