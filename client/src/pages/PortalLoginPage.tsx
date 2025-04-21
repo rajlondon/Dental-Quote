@@ -22,7 +22,7 @@ const loginSchema = z.object({
 
 // Form schema for test credentials
 const testCredentialsSchema = z.object({
-  userType: z.enum(["client", "admin", "clinic"]),
+  userType: z.enum(["patient", "admin", "clinic"]),
 });
 
 // Form schema for registration
@@ -89,15 +89,15 @@ const PortalLoginPage: React.FC = () => {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // For now, show toast and redirect to client portal
+      // For now, show toast and redirect to patient portal
       toast({
         title: "Registration Successful",
         description: "Welcome to MyDentalFly! You're now logged in.",
       });
       
-      // Simplify routing approach - direct navigation to client portal without parameters
+      // Simplify routing approach - direct navigation to patient portal without parameters
       localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
-      console.log("Redirecting to client portal with simplified navigation");
+      console.log("Redirecting to patient portal with simplified navigation");
       window.location.href = "/client-portal";
     } catch (error) {
       toast({
@@ -123,7 +123,7 @@ const PortalLoginPage: React.FC = () => {
   const testCredentialsForm = useForm<z.infer<typeof testCredentialsSchema>>({
     resolver: zodResolver(testCredentialsSchema),
     defaultValues: {
-      userType: "client",
+      userType: "patient",
     },
   });
 
@@ -168,8 +168,8 @@ const PortalLoginPage: React.FC = () => {
           console.log("Clinic staff detected, redirecting to clinic portal");
           navigate("/clinic-portal");
         } else {
-          // Default to client portal for any other role
-          console.log("Patient/client user detected, redirecting to client portal");
+          // Default to patient portal for any other role
+          console.log("Patient user detected, redirecting to patient portal");
           navigate("/client-portal");
         }
       } else {
@@ -208,10 +208,10 @@ const PortalLoginPage: React.FC = () => {
           password: "Clinic123!"
         };
       } else {
-        // Default client test user
+        // Default patient test user
         credentials = {
-          email: "client@mydentalfly.com",
-          password: "Client123!"
+          email: "patient@mydentalfly.com",
+          password: "Patient123!"
         };
       }
       
@@ -605,12 +605,12 @@ const PortalLoginPage: React.FC = () => {
                             <div className="grid grid-cols-3 gap-2">
                               <Button 
                                 type="button" 
-                                variant={field.value === "client" ? "default" : "outline"} 
+                                variant={field.value === "patient" ? "default" : "outline"} 
                                 className="flex flex-col items-center justify-center py-6"
-                                onClick={() => field.onChange("client")}
+                                onClick={() => field.onChange("patient")}
                               >
                                 <User className="h-8 w-8 mb-2" />
-                                <span>Client</span>
+                                <span>Patient</span>
                               </Button>
                               <Button 
                                 type="button" 
