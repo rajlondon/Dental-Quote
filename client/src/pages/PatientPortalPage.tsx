@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Stethoscope,
-  BarChart2
+  BarChart2,
+  TestTube
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,7 @@ const navItems = [
   { label: 'Documents', icon: <FileText className="h-5 w-5" />, id: 'documents' },
   { label: 'Support', icon: <UserCog className="h-5 w-5" />, id: 'support' },
   { label: 'My Details', icon: <Users className="h-5 w-5" />, id: 'profile' },
+  { label: 'Testing Mode', icon: <TestTube className="h-5 w-5" />, id: 'testing' },
 ];
 
 // Patient portal page component

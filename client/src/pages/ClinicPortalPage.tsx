@@ -15,7 +15,7 @@ import {
 import { 
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
-  Menu, LogOut, ChevronRight, Grid3X3
+  Menu, LogOut, ChevronRight, Grid3X3, TestTube
 } from 'lucide-react';
 import ClinicTreatmentMapperPage from '@/pages/ClinicTreatmentMapperPage';
 
@@ -30,6 +30,7 @@ import ClinicDocumentsSection from '@/components/clinic/ClinicDocumentsSection';
 import ClinicAnalyticsSection from '@/components/clinic/ClinicAnalyticsSection';
 import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
+import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 
 const ClinicPortalPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -62,6 +63,7 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'reports', label: t("clinic.nav.reports", "Reports"), icon: <FileBarChart className="h-5 w-5" /> },
     { id: 'analytics', label: t("clinic.nav.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
     { id: 'settings', label: t("clinic.nav.settings", "Settings"), icon: <Settings className="h-5 w-5" /> },
+    { id: 'testing', label: t("clinic.nav.testing", "Testing Mode"), icon: <TestTube className="h-5 w-5" /> },
   ];
 
   // Render the active section content
@@ -89,6 +91,8 @@ const ClinicPortalPage: React.FC = () => {
         return <ClinicAnalyticsSection />;
       case 'settings':
         return <ClinicSettingsSection />;
+      case 'testing':
+        return <ClinicPortalTesting setActiveSection={setActiveSection} />;
       default:
         return <ClinicDashboardSection />;
     }
