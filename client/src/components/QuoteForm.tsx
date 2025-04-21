@@ -637,8 +637,10 @@ const QuoteForm: React.FC = () => {
                   {/* Submit Button */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg font-semibold shadow-lg relative overflow-hidden group"
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg font-semibold shadow-lg relative overflow-hidden group focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none focus:ring-opacity-50"
                     disabled={isSubmitting}
+                    aria-label="Submit your dental quote request"
+                    tabIndex={0}
                   >
                     <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full"></span>
                     <span className="relative flex items-center justify-center gap-2">
