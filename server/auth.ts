@@ -214,6 +214,26 @@ async function seedUsers() {
     } else {
       console.log("ℹ️ Clinic user already exists");
     }
+    
+    // Check if patient user exists
+    const [patientExists] = await db.select().from(users).where(eq(users.email, "patient@mydentalfly.com"));
+    
+    if (!patientExists) {
+      const patientPassword = await bcrypt.hash("Patient123!", 10);
+      await db.insert(users).values({
+        email: "patient@mydentalfly.com",
+        password: patientPassword,
+        firstName: "Test",
+        lastName: "Patient",
+        role: "patient",
+        emailVerified: true,
+        profileComplete: true,
+        status: "active"
+      });
+      console.log("✅ Created patient user: patient@mydentalfly.com (password: Patient123!)");
+    } else {
+      console.log("ℹ️ Patient user already exists");
+    }
   } catch (error) {
     console.error("Error seeding users:", error);
     // Don't throw the error, just log it and continue
