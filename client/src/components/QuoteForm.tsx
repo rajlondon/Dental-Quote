@@ -613,6 +613,21 @@ const QuoteForm: React.FC = () => {
                           <FormLabel className="text-sm text-neutral-600">
                             {t('form.consent')}
                           </FormLabel>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="flex items-center text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-green-600">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                              </svg>
+                              <span>SSL Secured</span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 text-blue-600">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                              </svg>
+                              <span>GDPR Compliant</span>
+                            </div>
+                          </div>
                           <FormMessage />
                         </div>
                       </FormItem>
