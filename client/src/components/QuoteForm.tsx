@@ -289,7 +289,7 @@ const QuoteForm: React.FC = () => {
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="quote-select-trigger">
                               <SelectValue placeholder="Select a country" />
                             </SelectTrigger>
                           </FormControl>
@@ -317,7 +317,7 @@ const QuoteForm: React.FC = () => {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="quote-select-trigger">
                                 <SelectValue placeholder="Select a city" />
                               </SelectTrigger>
                             </FormControl>
