@@ -160,6 +160,13 @@ const ClientPortalPage: React.FC = () => {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
         <div className="p-6">
+          <div className="flex items-center mb-4">
+            <img 
+              src="/images/mydentalfly-logo.png" 
+              alt="MyDentalFly Logo" 
+              className="h-10 w-auto mb-2" 
+            />
+          </div>
           <h1 className="text-xl font-bold text-blue-600">
             {t('portal.title', 'Client Portal')}
           </h1>
