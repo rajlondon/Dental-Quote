@@ -363,7 +363,7 @@ const QuoteForm: React.FC = () => {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="quote-select-trigger">
                                 <SelectValue placeholder={t('form.selectTreatment')} />
                               </SelectTrigger>
                             </FormControl>
