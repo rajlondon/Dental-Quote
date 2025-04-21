@@ -31,6 +31,7 @@ import SupportSection from '@/components/portal/SupportSection';
 import ProfileSection from '@/components/portal/ProfileSection';
 import DentalChartSection from '@/components/portal/DentalChartSection';
 import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
+import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
@@ -150,6 +151,8 @@ const PatientPortalPage: React.FC = () => {
         return <DentalChartSection />;
       case 'treatment_comparison':
         return <TreatmentComparisonSection />;
+      case 'testing':
+        return <PatientPortalTesting setActiveSection={setActiveSection} />;
       default:
         return <DashboardSection setActiveSection={setActiveSection} />;
     }
