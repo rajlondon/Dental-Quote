@@ -311,6 +311,58 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return booking;
   }
+  
+  /**
+   * Create a new booking or update an existing one if it exists
+   * @param data The booking data
+   * @returns The created or updated booking
+   */
+  async createOrUpdateBooking(data: Partial<InsertBooking>): Promise<Booking> {
+    // Check if a booking already exists for the user and clinic
+    let existingBooking: Booking | undefined;
+    
+    if (data.quoteRequestId) {
+      // Try to find by quote request ID first
+      existingBooking = await this.getBookingByQuoteRequestId(data.quoteRequestId);
+    }
+    
+    if (!existingBooking && data.userId && data.clinicId) {
+      // If not found by quote, try to find by user and clinic
+      const userBookings = await this.getBookingsByUserId(data.userId);
+      existingBooking = userBookings.find(b => b.clinicId === data.clinicId);
+    }
+    
+    // Generate a unique booking reference if needed
+    if (!data.bookingReference) {
+      data.bookingReference = `MDF-${Date.now().toString().substring(7)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    }
+    
+    // Add created/updated dates
+    const now = new Date();
+    
+    if (existingBooking) {
+      // Update the existing booking
+      const updatedBooking = await this.updateBooking(existingBooking.id, {
+        ...data,
+        updatedAt: now
+      });
+      
+      if (!updatedBooking) {
+        throw new Error('Failed to update existing booking');
+      }
+      
+      return updatedBooking;
+    } else {
+      // Create a new booking
+      const fullData: InsertBooking = {
+        ...(data as any),
+        createdAt: now,
+        updatedAt: now
+      };
+      
+      return this.createBooking(fullData);
+    }
+  }
 
   // === Appointments ===
   async getAppointmentsByBookingId(bookingId: number): Promise<Appointment[]> {
