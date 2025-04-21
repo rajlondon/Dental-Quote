@@ -1,109 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import {
+  PaymentElement,
+  useStripe,
+  useElements
+} from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield } from 'lucide-react';
+import { Check, CreditCard, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface StripePaymentFormProps {
+  paymentType: 'deposit' | 'treatment' | 'other';
   amount: number;
-  onPaymentSuccess: () => void;
-  onCancel: () => void;
+  onSuccess?: () => void;
 }
 
-const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ 
-  amount, 
-  onPaymentSuccess,
-  onCancel
-}) => {
+export default function StripePaymentForm({ 
+  paymentType, 
+  amount,
+  onSuccess 
+}: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
-  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isComplete, setIsComplete] = useState<boolean>(false);
   const { toast } = useToast();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!stripe || !elements) {
-      toast({
-        title: "Payment Error",
-        description: "Stripe has not loaded yet. Please try again.",
-        variant: "destructive",
-      });
+
+  useEffect(() => {
+    if (!stripe) {
       return;
     }
-    
-    setIsLoading(true);
-    
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/payment-confirmation`,
-          payment_method_data: {
-            billing_details: {
-              // Use metadata from parent component if available
-              name: localStorage.getItem('patientInfo') ? JSON.parse(localStorage.getItem('patientInfo') || '{}').fullName : '',
-              email: localStorage.getItem('patientInfo') ? JSON.parse(localStorage.getItem('patientInfo') || '{}').email : '',
-            },
-          },
-        },
-      });
-      
-      if (error) {
-        toast({
-          title: "Payment Failed",
-          description: error.message || "An unknown error occurred.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-      } else {
-        // Payment succeeded, but we'll be redirected
-        onPaymentSuccess();
+
+    // Retrieve the payment intent client secret from the URL query params
+    const clientSecret = new URLSearchParams(window.location.search).get(
+      'payment_intent_client_secret'
+    );
+
+    // If we have a client secret in the URL, it means we were redirected after a payment
+    if (!clientSecret) {
+      return;
+    }
+
+    // Check the status of the payment intent
+    stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      switch (paymentIntent?.status) {
+        case 'succeeded':
+          setMessage('Payment successful!');
+          setIsComplete(true);
+          onSuccess?.();
+          break;
+        case 'processing':
+          setMessage('Your payment is processing.');
+          break;
+        case 'requires_payment_method':
+          setMessage('Your payment was not successful, please try again.');
+          break;
+        default:
+          setMessage('Something went wrong.');
+          break;
       }
-    } catch (error: any) {
-      console.error('Payment error:', error);
+    });
+  }, [stripe, onSuccess]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      // Stripe.js hasn't yet loaded
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Confirm the payment
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        // Make sure to change this to your payment completion page
+        return_url: window.location.href,
+      },
+    });
+
+    // This point will only be reached if there is an immediate error when
+    // confirming the payment. Otherwise, your customer will be redirected to
+    // your `return_url`.
+    if (error.type === "card_error" || error.type === "validation_error") {
+      setMessage(error.message || "An unexpected error occurred.");
       toast({
-        title: "Payment Error",
-        description: error.message || "An unexpected error occurred during payment processing.",
-        variant: "destructive",
+        title: "Payment failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive"
       });
-      setIsLoading(false);
+    } else {
+      setMessage("An unexpected error occurred.");
+      toast({
+        title: "Payment failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    }
+
+    setIsLoading(false);
+  };
+
+  const getPaymentTypeText = () => {
+    switch (paymentType) {
+      case 'deposit':
+        return 'deposit payment';
+      case 'treatment':
+        return 'treatment payment';
+      default:
+        return 'payment';
     }
   };
-  
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
-      
-      <div className="flex flex-col gap-3">
-        <Button 
-          type="submit"
-          disabled={!stripe || isLoading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
-        >
-          {isLoading ? 'Processing...' : `Pay £${amount} Deposit Securely`}
-          {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-        </Button>
-        
-        <div className="flex justify-center">
-          <div className="flex items-center text-xs text-gray-500">
-            <Shield className="h-3 w-3 mr-1" />
-            <span>Secure payment processing</span>
-          </div>
+
+  if (isComplete) {
+    return (
+      <div className="text-center p-6">
+        <div className="mx-auto bg-green-100 text-green-700 rounded-full w-12 h-12 flex items-center justify-center mb-4">
+          <Check className="w-6 h-6" />
         </div>
-        
+        <h3 className="text-xl font-medium mb-2">Payment Successful!</h3>
+        <p className="text-muted-foreground mb-6">
+          Thank you for your {getPaymentTypeText()}. We've received your payment.
+        </p>
         <Button 
-          type="button" 
-          variant="ghost" 
-          onClick={onCancel}
-          disabled={isLoading}
-          className="text-sm"
+          onClick={() => window.location.reload()}
+          variant="outline"
         >
-          Cancel payment
+          Continue
         </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium mb-1">Secure Payment</h3>
+        <p className="text-muted-foreground mb-4">
+          {paymentType === 'deposit' 
+            ? `Pay your £${amount.toFixed(2)} deposit to secure your booking.` 
+            : `Make a payment of £${amount.toFixed(2)}.`}
+        </p>
+        
+        <PaymentElement id="payment-element" />
+      </div>
+
+      {message && (
+        <div className="text-sm text-destructive p-3 bg-destructive/10 rounded-md">
+          {message}
+        </div>
+      )}
+
+      <Button
+        disabled={isLoading || !stripe || !elements}
+        type="submit"
+        className="w-full"
+      >
+        {isLoading ? (
+          <span className="flex items-center">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
+          </span>
+        ) : (
+          <span className="flex items-center">
+            <CreditCard className="mr-2 h-4 w-4" /> Pay £{amount.toFixed(2)}
+          </span>
+        )}
+      </Button>
+
+      <div className="text-xs text-muted-foreground text-center space-y-1">
+        <p>Secure payment processed by Stripe</p>
+        <p>Your payment information is encrypted and secure.</p>
       </div>
     </form>
   );
-};
-
-export default StripePaymentForm;
+}
