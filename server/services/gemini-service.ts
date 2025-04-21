@@ -4,13 +4,21 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Use Gemini Pro model
+// Attempting to use an alternative model
 // Documentation: https://ai.google.dev/tutorials/node_quickstart
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ 
+  model: "gemini-pro", // Simplified model name
+  generationConfig: {
+    temperature: 0.7,
+    topK: 40,
+    topP: 0.95,
+    maxOutputTokens: 1024,
+  }
+});
 
 // Log some information about the configuration
 console.log("Gemini API initialized with API key:", API_KEY ? "Key is set" : "No key found");
-console.log("Using model: gemini-pro");
+console.log("Using model: gemini-pro with controlled temperature");
 
 /**
  * Generate text using Google's Gemini AI model
