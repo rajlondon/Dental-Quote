@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,8 @@ import {
   FileArchive as Archive,
   FileX,
   FileQuestion,
-  Edit
+  Edit,
+  Loader2
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,20 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import DocumentEditor from './DocumentEditor';
 import DocumentViewer from './DocumentViewer';
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+interface S3File {
+  key: string;
+  filename: string;
+  originalname: string;
+  url: string;
+  type?: string;
+  category?: string;
+  uploaded: string;
+  storageType: string;
+  size?: number;
+}
 
 interface Document {
   id: string;
@@ -72,6 +87,8 @@ interface Document {
   shared: boolean;
   thumbnail?: string;
   description?: string;
+  url?: string;
+  key?: string;
 }
 
 const ClinicDocumentsSection: React.FC = () => {
@@ -90,112 +107,83 @@ const ClinicDocumentsSection: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [dragActive, setDragActive] = useState(false);
   
-  // Sample data - this would come from an API in a real application
-  const mockDocuments: Document[] = [
-    {
-      id: "doc1",
-      name: "John_Smith_X-Ray_2025-03-15.pdf",
-      type: "pdf",
-      category: "x_ray",
-      size: 3200000,
-      uploaded: "2025-03-15T09:30:00Z",
-      uploadedBy: "Dr. Emily Wilson",
-      patientId: "PT001",
-      patientName: "John Smith",
-      shared: true
-    },
-    {
-      id: "doc2",
-      name: "Sarah_Johnson_Treatment_Plan.pdf",
-      type: "pdf",
-      category: "treatment_plan",
-      size: 1800000,
-      uploaded: "2025-03-18T14:45:00Z",
-      uploadedBy: "Dr. Robert Taylor",
-      patientId: "PT002",
-      patientName: "Sarah Johnson",
-      shared: false
-    },
-    {
-      id: "doc3",
-      name: "Clinic_Consent_Form_Template_2025.docx",
-      type: "docx",
-      category: "consent_form",
-      size: 850000,
-      uploaded: "2025-02-10T10:20:00Z",
-      uploadedBy: "Admin",
-      shared: true
-    },
-    {
-      id: "doc4",
-      name: "Michael_Brown_Dental_Records.pdf",
-      type: "pdf",
-      category: "patient_record",
-      size: 4500000,
-      uploaded: "2025-03-20T11:15:00Z",
-      uploadedBy: "Dr. Emily Wilson",
-      patientId: "PT003",
-      patientName: "Michael Brown",
-      shared: false
-    },
-    {
-      id: "doc5",
-      name: "Patient_Questionnaire_Updated.pdf",
-      type: "pdf",
-      category: "other",
-      size: 950000,
-      uploaded: "2025-03-05T16:30:00Z",
-      uploadedBy: "Admin",
-      shared: true
-    },
-    {
-      id: "doc6",
-      name: "Emma_Davis_Lab_Results.pdf",
-      type: "pdf",
-      category: "lab_report",
-      size: 2800000,
-      uploaded: "2025-03-22T13:40:00Z",
-      uploadedBy: "Dr. Robert Taylor",
-      patientId: "PT004",
-      patientName: "Emma Davis",
-      shared: false
-    },
-    {
-      id: "doc7",
-      name: "Clinic_Brochure_2025.pdf",
-      type: "pdf",
-      category: "other",
-      size: 3600000,
-      uploaded: "2025-01-15T14:20:00Z",
-      uploadedBy: "Admin",
-      shared: true
-    },
-    {
-      id: "doc8",
-      name: "William_Wilson_CT_Scan.jpg",
-      type: "jpg",
-      category: "x_ray",
-      size: 5800000,
-      uploaded: "2025-03-25T09:10:00Z",
-      uploadedBy: "Dr. Emily Wilson",
-      patientId: "PT005",
-      patientName: "William Wilson",
-      shared: false
+  // Fetch actual files from the server
+  const { 
+    data: fileData, 
+    isLoading: isLoadingFiles, 
+    isError: isErrorFiles, 
+    error: filesError 
+  } = useQuery({
+    queryKey: ['/api/files/list', activeTab, filterCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (activeTab !== 'all') params.append('type', activeTab);
+      if (filterCategory !== 'all') params.append('category', filterCategory);
+      
+      const response = await apiRequest('GET', `/api/files/list?${params.toString()}`);
+      const data = await response.json();
+      return data;
     }
-  ];
+  });
   
-  // Filter documents based on active tab, search, and category
-  const filteredDocuments = mockDocuments.filter(doc => {
-    // Filter by type (tab)
-    if (activeTab !== 'all' && doc.type !== activeTab) {
-      return false;
-    }
-    
-    // Filter by category
-    if (filterCategory !== 'all' && doc.category !== filterCategory) {
-      return false;
-    }
-    
+  // Transform S3 files into Document format
+  const transformS3FilesToDocuments = (files: S3File[]): Document[] => {
+    return files.map((file, index) => {
+      // Extract file extension from filename
+      const fileExt = file.filename.split('.').pop()?.toLowerCase() || '';
+      
+      // Determine document type and category
+      const type = fileExt;
+      const category = (file.category || 'other') as Document['category'];
+      
+      return {
+        id: file.key || `file-${index}`,
+        name: file.originalname || file.filename,
+        type,
+        category,
+        size: file.size || 0,
+        uploaded: file.uploaded,
+        uploadedBy: "Upload System", // We don't have this info from S3
+        shared: false,
+        url: file.url,
+        key: file.key
+      };
+    });
+  };
+  
+  // Combine real and mock data (in production, we'd only use real data)
+  const allDocuments: Document[] = fileData?.files ? 
+    transformS3FilesToDocuments(fileData.files) : 
+    // Mock data as fallback
+    [
+      {
+        id: "doc1",
+        name: "John_Smith_X-Ray_2025-03-15.pdf",
+        type: "pdf",
+        category: "x_ray",
+        size: 3200000,
+        uploaded: "2025-03-15T09:30:00Z",
+        uploadedBy: "Dr. Emily Wilson",
+        patientId: "PT001",
+        patientName: "John Smith",
+        shared: true
+      },
+      {
+        id: "doc2",
+        name: "Sarah_Johnson_Treatment_Plan.pdf",
+        type: "pdf",
+        category: "treatment_plan",
+        size: 1800000,
+        uploaded: "2025-03-18T14:45:00Z",
+        uploadedBy: "Dr. Robert Taylor",
+        patientId: "PT002",
+        patientName: "Sarah Johnson",
+        shared: false
+      }
+    ];
+  
+  // Filter documents based on search
+  const filteredDocuments = allDocuments.filter(doc => {
     // Filter by search term (in name or patient name)
     if (searchTerm && 
         !doc.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
@@ -328,13 +316,30 @@ const ClinicDocumentsSection: React.FC = () => {
   
   // Handle document download
   const handleDownload = (document: Document) => {
-    // In a real app, this would trigger a file download
-    toast({
-      title: t("clinic.documents.downloading", "Downloading"),
-      description: t("clinic.documents.download_started", "Your download has started: {{name}}", {
-        name: document.name
-      }),
-    });
+    if (document.url) {
+      // Create a temporary link and click it to trigger download
+      const link = document.createElement('a');
+      link.href = document.url;
+      link.target = '_blank';
+      link.download = document.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: t("clinic.documents.downloading", "Downloading"),
+        description: t("clinic.documents.download_started", "Your download has started: {{name}}", {
+          name: document.name
+        }),
+      });
+    } else {
+      // For documents without URLs, show an error
+      toast({
+        title: t("clinic.documents.download_error", "Download Error"),
+        description: t("clinic.documents.download_error_desc", "Could not download file. URL not available."),
+        variant: "destructive"
+      });
+    }
   };
   
   // Handle document deletion
