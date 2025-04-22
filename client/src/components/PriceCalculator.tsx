@@ -1946,25 +1946,28 @@ export default function PriceCalculator() {
                         <p className="text-sm mb-3">See how much you can save compared to UK costs:</p>
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {(() => {
-                            // Get the selected clinic data using the new clinic information
+                            // Get the selected clinic data using the new clinic information with real images
                             const istanbulClinics = [
                               {
-                                name: "Istanbul Dental Care",
+                                name: "Hantipaciek Clinic",
                                 price: Math.round(quote.totalGBP * 0.80),
                                 extra: "Including flights & hotel",
-                                type: "Affordable"
+                                type: "Affordable",
+                                image: "/images/clinics/hantipaciek-clinic.png"
                               },
                               {
                                 name: "DentGroup Istanbul",
                                 price: Math.round(quote.totalGBP * 0.90),
                                 extra: "Including flights & hotel",
-                                type: "Mid-Tier"
+                                type: "Mid-Tier",
+                                image: "/images/clinics/dentgroup-clinic.png"
                               },
                               {
-                                name: "Vera Smile",
+                                name: "Donki Clinic",
                                 price: Math.round(quote.totalGBP * 1.00),
                                 extra: "Including flights & hotel",
-                                type: "Premium"
+                                type: "Premium",
+                                image: "/images/clinics/donki-clinic.png"
                               }
                             ];
                             
@@ -2035,15 +2038,16 @@ export default function PriceCalculator() {
                       {/* Hidden PDF Generator component */}
                       <div style={{ display: "none" }}>
                         {(() => {
-                          // Define all clinics with new names and details
+                          // Define all clinics with new names and details, including image paths
                           const allClinics = [
                             {
-                              name: "Istanbul Dental Care",
+                              name: "Hantipaciek Clinic",
                               priceGBP: Math.round(quote.totalGBP * 0.80),
                               extras: "Simple procedures & budget-focused travel",
                               guarantee: "3 Years",
-                              location: "City Center",
-                              rating: "⭐⭐⭐⭐"
+                              location: "Maltepe District",
+                              rating: "⭐⭐⭐⭐",
+                              image: "/images/clinics/hantipaciek-clinic.png"
                             },
                             {
                               name: "DentGroup Istanbul",
@@ -2051,15 +2055,17 @@ export default function PriceCalculator() {
                               extras: "Balanced budget + comfort with aftercare support",
                               guarantee: "5 Years",
                               location: "Şişli District",
-                              rating: "⭐⭐⭐⭐½"
+                              rating: "⭐⭐⭐⭐½",
+                              image: "/images/clinics/dentgroup-clinic.png"
                             },
                             {
-                              name: "Vera Smile",
+                              name: "Donki Clinic",
                               priceGBP: Math.round(quote.totalGBP * 1.00),
                               extras: "VIP clients, faster results, luxury environment",
                               guarantee: "10 Years",
                               location: "Levent District",
-                              rating: "⭐⭐⭐⭐⭐"
+                              rating: "⭐⭐⭐⭐⭐",
+                              image: "/images/clinics/donki-clinic.png"
                             }
                           ];
                           
