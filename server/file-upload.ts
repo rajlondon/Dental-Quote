@@ -3,22 +3,40 @@ import path from 'path';
 import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { 
+  generateSecureFilename, 
+  parseFileType, 
+  cloudStorageConfig, 
+  uploadToS3, 
+  isCloudStorageConfigured 
+} from './services/cloud-storage';
+import { logError, ErrorSeverity } from './services/error-logger';
 
 // Storage options
-enum StorageType {
+export enum StorageType {
   LOCAL = 'local',
-  CLOUD = 'cloud'
+  AWS_S3 = 'aws-s3',
+  CLOUDINARY = 'cloudinary'
 }
 
-// Default to local storage unless configured for cloud
-const STORAGE_TYPE = process.env.STORAGE_TYPE === 'cloud' ? StorageType.CLOUD : StorageType.LOCAL;
-
-// Generate a secure random filename that's harder to guess
-function generateSecureFilename(originalExt: string): string {
-  const timestamp = Date.now();
-  const randomBytes = crypto.randomBytes(16).toString('hex');
-  return `${timestamp}-${randomBytes}${originalExt}`;
+// Determine storage type from environment configuration
+function determineStorageType(): StorageType {
+  const provider = cloudStorageConfig.provider;
+  
+  if (provider === 'aws-s3' && isCloudStorageConfigured()) {
+    return StorageType.AWS_S3;
+  } else if (provider === 'cloudinary' && isCloudStorageConfigured()) {
+    return StorageType.CLOUDINARY;
+  } else {
+    return StorageType.LOCAL;
+  }
 }
+
+// Get the active storage type
+export const ACTIVE_STORAGE_TYPE = determineStorageType();
+
+// Log the storage configuration on startup
+console.log(`File storage configured to use: ${ACTIVE_STORAGE_TYPE}`);
 
 // Ensure upload directory exists for local storage
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -37,7 +55,7 @@ function ensureLocalDirectories() {
 }
 
 // Make sure directories exist if using local storage
-if (STORAGE_TYPE === StorageType.LOCAL) {
+if (ACTIVE_STORAGE_TYPE === StorageType.LOCAL) {
   ensureLocalDirectories();
 }
 
@@ -58,13 +76,13 @@ const diskStorage = multer.diskStorage({
   filename: (req, file, cb) => {
     // Create secure unique filename with original extension
     const ext = path.extname(file.originalname);
-    const secureFilename = generateSecureFilename(ext);
+    const secureFilename = generateSecureFilename(file.originalname);
     cb(null, secureFilename);
   }
 });
 
-// Set up storage (could be expanded for cloud storage)
-const storage = STORAGE_TYPE === StorageType.CLOUD
+// Set up storage (memory for cloud, disk for local)
+const storage = ACTIVE_STORAGE_TYPE !== StorageType.LOCAL
   ? multer.memoryStorage() // For cloud storage we'll keep file in memory
   : diskStorage;
 
@@ -123,7 +141,12 @@ export const handleUploadError = (err: Error, req: Request, res: Response, next:
     
     const errorMessage = errorResponses[err.code] || `Upload error: ${err.message}`;
     
-    console.error(`File upload error: ${err.code} - ${err.message}`);
+    logError(err, {
+      component: 'FileUpload',
+      errorCode: err.code,
+      path: req.path
+    }, ErrorSeverity.WARNING);
+    
     return res.status(400).json({ 
       success: false,
       error: errorMessage 
@@ -131,7 +154,11 @@ export const handleUploadError = (err: Error, req: Request, res: Response, next:
   }
   
   if (err) {
-    console.error(`General file upload error: ${err.message}`);
+    logError(err, {
+      component: 'FileUpload',
+      path: req.path
+    }, ErrorSeverity.WARNING);
+    
     return res.status(400).json({ 
       success: false,
       error: err.message 
@@ -152,6 +179,95 @@ export interface UploadedFile {
   storageType: StorageType;
   category?: string; // xray, document, image
   uploadDate: Date;
+  key?: string; // For cloud storage (S3 key or Cloudinary public ID)
+}
+
+/**
+ * Process the uploaded file and store it in the configured storage system
+ * @param file The file object from multer
+ * @returns Promise with the processed file information
+ */
+export async function processUploadedFile(file: Express.Multer.File): Promise<UploadedFile> {
+  const fileType = parseFileType(file.mimetype);
+  const uploadDate = new Date();
+  
+  // For local storage (already saved by multer disk storage)
+  if (ACTIVE_STORAGE_TYPE === StorageType.LOCAL) {
+    return {
+      filename: file.filename,
+      originalname: file.originalname,
+      path: file.path,
+      size: file.size,
+      mimetype: file.mimetype,
+      storageType: StorageType.LOCAL,
+      category: fileType,
+      uploadDate
+    };
+  }
+  
+  // For S3 storage
+  if (ACTIVE_STORAGE_TYPE === StorageType.AWS_S3) {
+    try {
+      // Create a folder structure in S3
+      const key = `${fileType}/${generateSecureFilename(file.originalname)}`;
+      
+      // Upload to S3
+      const result = await uploadToS3(file.buffer, key, file.mimetype);
+      
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      
+      return {
+        filename: path.basename(key),
+        originalname: file.originalname,
+        path: key, // Store the S3 key as the path
+        size: file.size,
+        mimetype: file.mimetype,
+        url: result.url,
+        key: key,
+        storageType: StorageType.AWS_S3,
+        category: fileType,
+        uploadDate
+      };
+    } catch (error) {
+      logError(error, {
+        component: 'FileUpload',
+        operation: 'S3Upload',
+        filename: file.originalname,
+        fileType
+      }, ErrorSeverity.ERROR);
+      
+      // Fallback to local storage if S3 upload fails
+      console.warn('S3 upload failed, falling back to local storage');
+      
+      // Ensure local dir exists
+      ensureLocalDirectories();
+      
+      // Save locally as fallback
+      const destPath = getDestinationPath(file.mimetype);
+      const filename = generateSecureFilename(file.originalname);
+      const fullPath = path.join(destPath, filename);
+      
+      fs.writeFileSync(fullPath, file.buffer);
+      
+      return {
+        filename: filename,
+        originalname: file.originalname,
+        path: fullPath,
+        size: file.size,
+        mimetype: file.mimetype,
+        storageType: StorageType.LOCAL, // Fallback to local
+        category: fileType,
+        uploadDate
+      };
+    }
+  }
+  
+  // Cloudinary would be implemented here if needed
+  
+  // Default fallback to local storage (should not reach here normally)
+  throw new Error('Unsupported storage type');
 }
 
 export interface UploadResult {
