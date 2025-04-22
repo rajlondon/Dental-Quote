@@ -1953,21 +1953,21 @@ export default function PriceCalculator() {
                                 price: Math.round(quote.totalGBP * 0.80),
                                 extra: "Including flights & hotel",
                                 type: "Affordable",
-                                image: "/images/clinics/istanbul-dental.jpg"
+                                image: "/images/clinics/dentgroup.jpg"
                               },
                               {
                                 name: "DentGroup Istanbul",
                                 price: Math.round(quote.totalGBP * 0.90),
                                 extra: "Including flights & hotel",
                                 type: "Mid-Tier",
-                                image: "/images/clinics/dentgroup-istanbul/exterior.jpg"
+                                image: "/images/clinics/dentgroup.jpg"
                               },
                               {
                                 name: "DentSpa Istanbul",
                                 price: Math.round(quote.totalGBP * 1.00),
                                 extra: "Including flights & hotel",
                                 type: "Premium",
-                                image: "/images/clinics/premium-clinic.jpg"
+                                image: "/images/clinics/dentgroup.jpg"
                               }
                             ];
                             
@@ -2002,27 +2002,15 @@ export default function PriceCalculator() {
                                 <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${isIstanbulClinic ? 'bg-primary text-white' : 'bg-white'}`}>
                                   {isIstanbulClinic && (
                                     <div className="mb-2 h-24 overflow-hidden rounded">
-                                      {selectedClinic === 0 && (
-                                        <img 
-                                          src="/images/clinics/istanbul-dental.jpg"
-                                          alt="Hantipaciek Clinic" 
-                                          className="w-full h-full object-cover clinic-image"
-                                        />
-                                      )}
-                                      {selectedClinic === 1 && (
-                                        <img 
-                                          src="/images/clinics/dentgroup-istanbul/exterior.jpg"
-                                          alt="DentGroup Istanbul" 
-                                          className="w-full h-full object-cover clinic-image"
-                                        />
-                                      )}
-                                      {selectedClinic === 2 && (
-                                        <img 
-                                          src="/images/clinics/premium-clinic.jpg"
-                                          alt="DentSpa Istanbul" 
-                                          className="w-full h-full object-cover clinic-image"
-                                        />
-                                      )}
+                                      <img 
+                                        src="/images/clinics/dentgroup.jpg"
+                                        alt={selectedClinicData.name} 
+                                        className="w-full h-full object-cover clinic-image"
+                                        onError={(e) => {
+                                          console.error("Failed to load image:", e);
+                                          e.currentTarget.onerror = null; // Prevent infinite fallback loop
+                                        }}
+                                      />
                                     </div>
                                   )}
                                   <div className="flex justify-between sm:block">
@@ -2078,7 +2066,7 @@ export default function PriceCalculator() {
                               guarantee: "3 Years",
                               location: "Maltepe District",
                               rating: "⭐⭐⭐⭐",
-                              image: "/images/clinics/istanbul-dental.jpg"
+                              image: "/images/clinics/dentgroup.jpg"
                             },
                             {
                               name: "DentGroup Istanbul",
@@ -2087,7 +2075,7 @@ export default function PriceCalculator() {
                               guarantee: "5 Years",
                               location: "Şişli District",
                               rating: "⭐⭐⭐⭐½",
-                              image: "/images/clinics/dentgroup-istanbul/exterior.jpg"
+                              image: "/images/clinics/dentgroup.jpg"
                             },
                             {
                               name: "DentSpa Istanbul",
@@ -2096,7 +2084,7 @@ export default function PriceCalculator() {
                               guarantee: "10 Years",
                               location: "Levent District",
                               rating: "⭐⭐⭐⭐⭐",
-                              image: "/images/clinics/premium-clinic.jpg"
+                              image: "/images/clinics/dentgroup.jpg"
                             }
                           ];
                           
