@@ -21,10 +21,7 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
-// Form schema for test credentials
-const testCredentialsSchema = z.object({
-  userType: z.enum(["patient", "admin", "clinic"]),
-});
+// Form schemas for login and registration
 
 // Form schema for registration
 const registerSchema = z.object({
@@ -139,13 +136,7 @@ const PortalLoginPage: React.FC = () => {
     },
   });
 
-  // Test credentials form
-  const testCredentialsForm = useForm<z.infer<typeof testCredentialsSchema>>({
-    resolver: zodResolver(testCredentialsSchema),
-    defaultValues: {
-      userType: "patient",
-    },
-  });
+
 
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
@@ -185,122 +176,7 @@ const PortalLoginPage: React.FC = () => {
     }
   };
 
-  // Handle test account creation
-  const createTestAccount = async (email: string, password: string, role: string) => {
-    try {
-      const response = await fetch('/api/auth/create-test-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, role }),
-      });
-      
-      if (response.ok) {
-        toast({
-          title: "Test Account Created",
-          description: `Created ${role} test account with email: ${email}`,
-        });
-        return true;
-      } else {
-        const data = await response.json();
-        toast({
-          title: "Test Account Creation Failed",
-          description: data.message || "Failed to create test account",
-          variant: "destructive",
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error("Test account creation error:", error);
-      toast({
-        title: "Test Account Creation Error",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
 
-  // Handle test credentials form submission
-  const onTestCredentialsSubmit = async (values: z.infer<typeof testCredentialsSchema>) => {
-    setIsLoading(true);
-    
-    try {
-      console.log("Test login with user type:", values.userType);
-      
-      // Get pre-configured credentials based on selected role
-      let credentials = { email: "", password: "", role: "" };
-      
-      if (values.userType === "admin") {
-        credentials = {
-          email: "admin@mydentalfly.com",
-          password: "Admin123!",
-          role: "admin"
-        };
-      } else if (values.userType === "clinic") {
-        credentials = {
-          email: "clinic@mydentalfly.com",
-          password: "Clinic123!",
-          role: "clinic_staff"
-        };
-      } else {
-        // Default patient test user
-        credentials = {
-          email: "patient@mydentalfly.com",
-          password: "Patient123!",
-          role: "patient"
-        };
-      }
-      
-      // Option to create/reset the test account first
-      const resetOption = window.confirm("Do you want to reset/create this test account first?\nClick OK to create/reset, or Cancel to just log in.");
-      
-      if (resetOption) {
-        const created = await createTestAccount(credentials.email, credentials.password, credentials.role);
-        if (!created) {
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // Use the loginMutation from useAuth hook
-      const userData = await loginMutation.mutateAsync({
-        username: credentials.email,
-        password: credentials.password
-      });
-      
-      toast({
-        title: `${values.userType.charAt(0).toUpperCase() + values.userType.slice(1)} Login Successful`,
-        description: `You are now logged in as a test ${values.userType} user.`,
-      });
-      
-      // Direct redirect based on user role from response
-      console.log("Test login successful, redirecting based on role:", userData.role);
-      
-      if (userData.role === 'admin') {
-        console.log("Admin user detected in test login, redirecting to admin portal");
-        navigate('/admin-portal');
-      } else if (userData.role === 'clinic_staff') {
-        console.log("Clinic staff detected in test login, redirecting to clinic portal");
-        navigate('/clinic-portal');
-      } else {
-        // Default to patient portal for any other role
-        console.log("Patient user detected in test login, redirecting to patient portal");
-        navigate('/client-portal');
-      }
-      
-    } catch (error) {
-      console.error("Test login error:", error);
-      toast({
-        title: "Test Login Failed",
-        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Registration form
   const registerForm = useForm<z.infer<typeof registerSchema>>({
@@ -350,10 +226,9 @@ const PortalLoginPage: React.FC = () => {
           )}
           
           <Tabs defaultValue="login" className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
               <TabsTrigger value="register">{t("portal.login.register", "Register")}</TabsTrigger>
-              <TabsTrigger value="test">{t("portal.login.test_access", "Test")}</TabsTrigger>
             </TabsList>
             
             {/* Regular Login Tab */}
@@ -425,76 +300,7 @@ const PortalLoginPage: React.FC = () => {
               </Card>
             </TabsContent>
 
-            {/* Test Credentials Tab */}
-            <TabsContent value="test">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Test User Access</CardTitle>
-                  <CardDescription>
-                    Quickly log in with pre-configured test accounts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...testCredentialsForm}>
-                    <form onSubmit={testCredentialsForm.handleSubmit(onTestCredentialsSubmit)} className="space-y-4">
-                      <FormField
-                        control={testCredentialsForm.control}
-                        name="userType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Select User Type</FormLabel>
-                            <FormControl>
-                              <div className="flex flex-col space-y-2">
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    name="userType"
-                                    value="patient"
-                                    checked={field.value === "patient"}
-                                    onChange={() => field.onChange("patient")}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                                  />
-                                  <span>Patient (test@mydentalfly.com)</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    name="userType"
-                                    value="clinic"
-                                    checked={field.value === "clinic"}
-                                    onChange={() => field.onChange("clinic")}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                                  />
-                                  <span>Clinic (clinic@mydentalfly.com)</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    name="userType"
-                                    value="admin"
-                                    checked={field.value === "admin"}
-                                    onChange={() => field.onChange("admin")}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                                  />
-                                  <span>Admin (admin@mydentalfly.com)</span>
-                                </label>
-                              </div>
-                            </FormControl>
-                            <FormDescription>
-                              Select the type of test user to log in as
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? "Logging in..." : "Access Test Account"}
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+
             
             {/* Registration Tab */}
             <TabsContent value="register">
