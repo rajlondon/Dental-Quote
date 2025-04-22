@@ -166,17 +166,24 @@ const PortalLoginPage: React.FC = () => {
         
         console.log("Login successful, redirecting based on role:", data.user.role);
         
-        // Use the navigate function from wouter directly for cleaner navigation
+        // Force redirect using window.location for more reliable navigation
         if (data.user.role === 'admin') {
           console.log("Admin user detected, redirecting to admin portal");
-          navigate("/admin-portal");
+          // Use a slight delay to ensure the state is updated
+          setTimeout(() => {
+            window.location.href = '/admin-portal';
+          }, 300);
         } else if (data.user.role === 'clinic_staff') {
           console.log("Clinic staff detected, redirecting to clinic portal");
-          navigate("/clinic-portal");
+          setTimeout(() => {
+            window.location.href = '/clinic-portal';
+          }, 300);
         } else {
           // Default to patient portal for any other role
           console.log("Patient user detected, redirecting to patient portal");
-          navigate("/client-portal");
+          setTimeout(() => {
+            window.location.href = '/client-portal';
+          }, 300);
         }
       } else {
         throw new Error("Invalid response from server");
@@ -297,17 +304,24 @@ const PortalLoginPage: React.FC = () => {
         // Redirect based on user role (from actual response)
         console.log("Test login successful, redirecting based on role:", data.user.role);
         
-        // Use the navigate function from wouter for consistent navigation
+        // Force redirect using window.location for more reliable navigation
         if (data.user.role === 'admin') {
           console.log("Admin user detected in test login, redirecting to admin portal");
-          navigate("/admin-portal");
+          // Use a slight delay to ensure the state is updated
+          setTimeout(() => {
+            window.location.href = '/admin-portal';
+          }, 300);
         } else if (data.user.role === 'clinic_staff') {
           console.log("Clinic staff detected in test login, redirecting to clinic portal");
-          navigate("/clinic-portal");
+          setTimeout(() => {
+            window.location.href = '/clinic-portal';
+          }, 300);
         } else {
           // Default to patient portal for any other role
           console.log("Patient user detected in test login, redirecting to patient portal");
-          navigate("/client-portal");
+          setTimeout(() => {
+            window.location.href = '/client-portal';
+          }, 300);
         }
       } else {
         throw new Error("Invalid response from server");
