@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/ui/toast";
+import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 
@@ -47,6 +48,7 @@ import PortalTestingHub from "@/pages/PortalTestingHub";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
+import TreatmentPaymentPage from "@/pages/TreatmentPaymentPage";
 import DentalChartPage from "@/pages/DentalChartPage";
 import PatientDentalChart from "@/pages/PatientDentalChart";
 import ClinicDentalCharts from "@/pages/ClinicDentalCharts";
@@ -93,6 +95,9 @@ function Router() {
       </Route>
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
+      </Route>
+      <Route path="/treatment-payment/:bookingId?">
+        {(params) => <TreatmentPaymentPage />}
       </Route>
       <Route path="/portal-testing">
         {() => <PortalTestingHub />}
@@ -166,14 +171,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <Suspense fallback={<div>Loading...</div>}>
-          <ScrollToTop />
-          <ReloadTranslations />
-          <Router />
-          <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-          <EnvironmentBadge />
-          <Toaster />
-        </Suspense>
+        <AuthProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            <ScrollToTop />
+            <ReloadTranslations />
+            <Router />
+            <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+            <EnvironmentBadge />
+            <Toaster />
+          </Suspense>
+        </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>
   );
