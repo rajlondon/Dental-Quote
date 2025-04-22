@@ -60,6 +60,7 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
     { id: 'documents', label: t("clinic.nav.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
+    { id: 'payments', label: t("clinic.nav.payments", "Payments"), icon: <FileBarChart className="h-5 w-5" /> },
     { id: 'reports', label: t("clinic.nav.reports", "Reports"), icon: <FileBarChart className="h-5 w-5" /> },
     { id: 'analytics', label: t("clinic.nav.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
     { id: 'settings', label: t("clinic.nav.settings", "Settings"), icon: <Settings className="h-5 w-5" /> },
@@ -85,6 +86,18 @@ const ClinicPortalPage: React.FC = () => {
         return <ClinicMessagesSection />;
       case 'documents':
         return <ClinicDocumentsSection />;
+      case 'payments':
+        // Redirect to the payment page when the payments section is selected
+        useEffect(() => {
+          if (activeSection === 'payments') {
+            window.location.href = '/#/treatment-payment';
+          }
+        }, [activeSection]);
+        return (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
+          </div>
+        );
       case 'reports':
         return <ClinicReportsSection />;
       case 'analytics':
