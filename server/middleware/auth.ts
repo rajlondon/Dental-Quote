@@ -110,3 +110,16 @@ export function ensureOwnResources(paramIdField: string = 'id') {
     });
   };
 }
+
+/**
+ * Helper function to check if user has any of the specified roles
+ * @param user - User object from request
+ * @param roles - Single role or array of roles to check against
+ * @returns boolean indicating if user has one of the roles
+ */
+export function checkRole(user: Express.User | undefined, roles: string | string[]): boolean {
+  if (!user) return false;
+  
+  const rolesToCheck = Array.isArray(roles) ? roles : [roles];
+  return rolesToCheck.includes(user.role);
+}
