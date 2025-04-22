@@ -31,6 +31,9 @@ import TreatmentComparisonPage from "./pages/TreatmentComparisonPage";
 import AccountSettingsPage from "@/pages/AccountSettingsPage";
 import DataArchitecturePage from "@/pages/DataArchitecturePage";
 import DentalAdvicePage from "@/pages/DentalAdvicePage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import VerifyEmailPage from "@/pages/VerifyEmailPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -78,6 +81,9 @@ function Router() {
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
       <Route path="/account-settings" component={AccountSettingsPage} />
       <Route path="/dental-advice" component={DentalAdvicePage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/verify-email" component={VerifyEmailPage} />
       
       {/* Admin-only Protected Routes */}
       <ProtectedRoute path="/admin-portal" component={AdminPortalPage} requiredRole="admin" />
