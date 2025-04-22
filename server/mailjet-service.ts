@@ -45,13 +45,16 @@ const mailjet = MailJet.apiConnect(
   process.env.MAILJET_SECRET_KEY || ''
 );
 
+// Configuration 
+const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com';
+const SENDER_NAME = process.env.MAILJET_SENDER_NAME || 'MyDentalFly';
+const ADMIN_EMAIL = process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com';
+
 // Function to check if Mailjet is configured
 export function isMailjetConfigured(): boolean {
   return !!(
     process.env.MAILJET_API_KEY &&
-    process.env.MAILJET_SECRET_KEY &&
-    process.env.MAILJET_SENDER_EMAIL &&
-    process.env.MAILJET_RECIPIENT_EMAIL
+    process.env.MAILJET_SECRET_KEY
   );
 }
 
@@ -60,6 +63,175 @@ export interface EmailData {
   pdfBuffer: Buffer;
   quoteData: QuoteData;
   filename: string;
+}
+
+// Interface for verification email data
+export interface VerificationEmailData {
+  userEmail: string;
+  userName: string;
+  verificationLink: string;
+}
+
+// Interface for password reset email data
+export interface PasswordResetEmailData {
+  userEmail: string;
+  userName: string;
+  resetLink: string;
+}
+
+/**
+ * Send verification email via Mailjet
+ */
+export async function sendVerificationEmail(data: VerificationEmailData): Promise<boolean> {
+  try {
+    if (!isMailjetConfigured()) {
+      console.warn('Mailjet is not fully configured - email verification functionality is limited');
+      return false;
+    }
+
+    const { userEmail, userName, verificationLink } = data;
+    
+    console.log(`Sending verification email to: ${userEmail}`);
+    
+    const message = {
+      From: {
+        Email: SENDER_EMAIL,
+        Name: SENDER_NAME
+      },
+      To: [
+        {
+          Email: userEmail,
+          Name: userName
+        }
+      ],
+      Subject: "Verify Your MyDentalFly Account",
+      HTMLPart: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
+            <h1 style="margin: 0;">Verify Your Email</h1>
+            <p style="margin: 5px 0 0 0;">MyDentalFly</p>
+          </div>
+
+          <div style="background-color: #f9f9f9; padding: 20px;">
+            <h2 style="color: #007B9E; margin-top: 0;">Welcome to MyDentalFly!</h2>
+            <p>Thank you for registering. To complete your account setup and start using our services, please verify your email address by clicking the button below:</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${verificationLink}" style="background-color: #00688B; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify My Email</a>
+            </div>
+            
+            <p>If the button doesn't work, you can also click on the link below or copy and paste it into your browser:</p>
+            <p style="word-break: break-all; background-color: #f0f0f0; padding: 10px; border-radius: 4px;"><a href="${verificationLink}">${verificationLink}</a></p>
+            
+            <p>This link will expire in 24 hours for security reasons.</p>
+            
+            <p>If you did not register for a MyDentalFly account, please ignore this email.</p>
+          </div>
+
+          <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+            <p>This is an automated email from MyDentalFly.</p>
+            <p style="margin-bottom: 0;">© ${new Date().getFullYear()} MyDentalFly. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [message]
+    });
+
+    console.log(`Verification email sent successfully to ${userEmail}`);
+    return true;
+  } catch (error: any) {
+    console.error('Error sending verification email with Mailjet:', error);
+
+    if (error.response) {
+      console.error('Mailjet API error details:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+
+    return false;
+  }
+}
+
+/**
+ * Send password reset email via Mailjet
+ */
+export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<boolean> {
+  try {
+    if (!isMailjetConfigured()) {
+      console.warn('Mailjet is not fully configured - password reset functionality is limited');
+      return false;
+    }
+
+    const { userEmail, userName, resetLink } = data;
+    
+    console.log(`Sending password reset email to: ${userEmail}`);
+    
+    const message = {
+      From: {
+        Email: SENDER_EMAIL,
+        Name: SENDER_NAME
+      },
+      To: [
+        {
+          Email: userEmail,
+          Name: userName
+        }
+      ],
+      Subject: "Reset Your MyDentalFly Password",
+      HTMLPart: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
+            <h1 style="margin: 0;">Password Reset</h1>
+            <p style="margin: 5px 0 0 0;">MyDentalFly</p>
+          </div>
+
+          <div style="background-color: #f9f9f9; padding: 20px;">
+            <h2 style="color: #007B9E; margin-top: 0;">Reset Your Password</h2>
+            <p>We received a request to reset your password. If you didn't make this request, you can safely ignore this email.</p>
+            <p>To reset your password, click the button below:</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${resetLink}" style="background-color: #00688B; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+            </div>
+            
+            <p>If the button doesn't work, you can also click on the link below or copy and paste it into your browser:</p>
+            <p style="word-break: break-all; background-color: #f0f0f0; padding: 10px; border-radius: 4px;"><a href="${resetLink}">${resetLink}</a></p>
+            
+            <p>This password reset link will expire in 24 hours for security reasons.</p>
+          </div>
+
+          <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+            <p>This is an automated email from MyDentalFly.</p>
+            <p style="margin-bottom: 0;">© ${new Date().getFullYear()} MyDentalFly. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [message]
+    });
+
+    console.log(`Password reset email sent successfully to ${userEmail}`);
+    return true;
+  } catch (error: any) {
+    console.error('Error sending password reset email with Mailjet:', error);
+
+    if (error.response) {
+      console.error('Mailjet API error details:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+
+    return false;
+  }
 }
 
 export interface NotificationData {
