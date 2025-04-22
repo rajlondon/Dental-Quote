@@ -64,12 +64,12 @@ const ClinicDashboardSection = memo(() => {
   
   // More efficient API data fetching with TanStack Query v5
   const { data, isLoading: isQueryLoading, isError } = useQuery({ 
-    queryKey: ['/api/portal/clinic/dashboard'], // Use the correct role-based endpoint
+    queryKey: ['/api/portal/dashboard'], // Use the main endpoint that will route based on user role
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1,
+    retry: false, // Don't retry to avoid multiple refreshes
     enabled: true
   });
   
