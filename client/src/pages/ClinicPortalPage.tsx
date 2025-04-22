@@ -16,8 +16,21 @@ import {
 import { 
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
-  Menu, LogOut, ChevronRight, Grid3X3, TestTube
+  Menu, LogOut, ChevronRight, Grid3X3, TestTube,
+  Clock, TrendingUp, CalendarDays
 } from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 import ClinicTreatmentMapperPage from '@/pages/ClinicTreatmentMapperPage';
 
 // Import all clinic section components
@@ -98,9 +111,154 @@ const ClinicPortalPage: React.FC = () => {
 
   // Render the active section content
   const renderSection = () => {
+    // For the dashboard section, we'll render an embedded dashboard directly
+    if (activeSection === 'dashboard') {
+      // Hard-coded dashboard data
+      const dashboardData = {
+        pendingAppointments: 5,
+        totalPatients: 28,
+        activeQuotes: 12,
+        monthlyRevenue: 8450,
+        upcomingAppointments: [
+          { id: 1, patientName: "John Smith", startTime: new Date().setDate(new Date().getDate() + 1) },
+          { id: 2, patientName: "Maria Garcia", startTime: new Date().setDate(new Date().getDate() + 2) },
+          { id: 3, patientName: "Ahmed Hassan", startTime: new Date().setDate(new Date().getDate() + 3) }
+        ],
+        recentQuotes: [
+          { id: 101, patientName: "Sarah Johnson", status: "pending", createdAt: new Date().setDate(new Date().getDate() - 1) },
+          { id: 102, patientName: "Michael Brown", status: "approved", createdAt: new Date().setDate(new Date().getDate() - 2) },
+          { id: 103, patientName: "Emma Wilson", status: "scheduled", createdAt: new Date().setDate(new Date().getDate() - 3) }
+        ]
+      };
+      
+      const getStatusColor = (status: string): string => {
+        switch (status.toLowerCase()) {
+          case 'pending': return 'bg-yellow-500';
+          case 'approved': return 'bg-green-500';
+          case 'rejected': 
+          case 'declined': return 'bg-red-500';
+          case 'scheduled': return 'bg-blue-500';
+          case 'completed': return 'bg-purple-500';
+          default: return 'bg-gray-500';
+        }
+      };
+      
+      return (
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Pending Appointments Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
+                <Clock className="h-5 w-5 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData.pendingAppointments}</div>
+                <p className="text-xs text-muted-foreground">Appointments awaiting confirmation</p>
+              </CardContent>
+            </Card>
+            
+            {/* Total Patients Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+                <Users className="h-5 w-5 text-emerald-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData.totalPatients}</div>
+                <p className="text-xs text-muted-foreground">Patients associated with your clinic</p>
+              </CardContent>
+            </Card>
+            
+            {/* Active Quotes Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Active Quotes</CardTitle>
+                <FileText className="h-5 w-5 text-yellow-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData.activeQuotes}</div>
+                <p className="text-xs text-muted-foreground">Quotes awaiting response</p>
+              </CardContent>
+            </Card>
+            
+            {/* Revenue Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">£{dashboardData.monthlyRevenue}</div>
+                <p className="text-xs text-muted-foreground">Current month revenue</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="upcoming" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="upcoming">Upcoming Appointments</TabsTrigger>
+              <TabsTrigger value="quotes">Recent Quotes</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upcoming" className="space-y-4">
+              {dashboardData.upcomingAppointments?.length > 0 ? (
+                <div className="divide-y divide-gray-200 rounded-md border">
+                  {dashboardData.upcomingAppointments.map((appointment: any) => (
+                    <div key={appointment.id} className="flex items-center justify-between p-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{appointment.patientName}</p>
+                        <p className="text-sm text-gray-500">{new Date(appointment.startTime).toLocaleString()}</p>
+                      </div>
+                      <Button variant="outline" size="sm">View</Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center p-8 text-center border rounded-md border-dashed">
+                  <div className="space-y-2">
+                    <CalendarDays className="mx-auto h-8 w-8 text-gray-400" />
+                    <h3 className="text-lg font-semibold">No upcoming appointments</h3>
+                    <p className="text-sm text-gray-500">New appointments will appear here when scheduled.</p>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="quotes" className="space-y-4">
+              {dashboardData.recentQuotes?.length > 0 ? (
+                <div className="divide-y divide-gray-200 rounded-md border">
+                  {dashboardData.recentQuotes.map((quote: any) => (
+                    <div key={quote.id} className="flex items-center justify-between p-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{quote.patientName}</p>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex h-2 w-2 rounded-full ${getStatusColor(quote.status)}`} />
+                          <p className="text-sm text-gray-500">
+                            {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)} • 
+                            {new Date(quote.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">View</Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center p-8 text-center border rounded-md border-dashed">
+                  <div className="space-y-2">
+                    <FileText className="mx-auto h-8 w-8 text-gray-400" />
+                    <h3 className="text-lg font-semibold">No recent quotes</h3>
+                    <p className="text-sm text-gray-500">New quotes will appear here when received.</p>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      );
+    }
+    
+    // Handle other sections as before
     switch (activeSection) {
-      case 'dashboard':
-        return <ClinicDashboardSection />;
       case 'patients':
         return <ClinicPatientsSection />;
       case 'quotes':
@@ -131,7 +289,13 @@ const ClinicPortalPage: React.FC = () => {
       case 'testing':
         return <ClinicPortalTesting setActiveSection={setActiveSection} />;
       default:
-        return <ClinicDashboardSection />;
+        // Fallback to embedded dashboard if something goes wrong
+        return (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <h3 className="text-lg font-medium text-blue-800">Welcome to Your Clinic Dashboard</h3>
+            <p className="mt-2 text-blue-600">Please select an option from the menu to continue.</p>
+          </div>
+        );
     }
   };
 
