@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import { createErrorHandler, logError } from "./services/error-logger";
 
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -58,13 +59,8 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
+  // Use our enhanced error handler middleware
+  app.use(createErrorHandler());
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
