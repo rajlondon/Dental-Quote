@@ -330,9 +330,13 @@ const ClinicPortalPage: React.FC = () => {
           {/* Clinic profile section */}
           <div className="p-4 border-b">
             <div className="flex items-center space-x-3">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Building className="h-6 w-6 text-primary" />
-              </div>
+              <a href="/" className="flex-shrink-0">
+                <img 
+                  src="/images/mydentalfly-logo.png" 
+                  alt="MyDentalFly Logo" 
+                  className="h-10 w-auto cursor-pointer" 
+                />
+              </a>
               <div>
                 <h2 className="font-medium">{clinicData.name}</h2>
                 <p className="text-sm text-muted-foreground">{clinicData.role}</p>

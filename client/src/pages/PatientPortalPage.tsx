@@ -196,11 +196,13 @@ const PatientPortalPage: React.FC = () => {
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
         <div className="p-6">
           <div className="flex items-center mb-4">
-            <img 
-              src="/images/mydentalfly-logo.png" 
-              alt="MyDentalFly Logo" 
-              className="h-10 w-auto mb-2" 
-            />
+            <a href="/" className="block">
+              <img 
+                src="/images/mydentalfly-logo.png" 
+                alt="MyDentalFly Logo" 
+                className="h-10 w-auto mb-2 cursor-pointer" 
+              />
+            </a>
           </div>
           <h1 className="text-xl font-bold text-blue-600">
             {t('portal.title', 'Patient Portal')}
@@ -267,11 +269,13 @@ const PatientPortalPage: React.FC = () => {
       <div className="md:hidden fixed top-0 left-0 right-0 bg-white z-30 border-b border-gray-200">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <img 
-              src="/images/mydentalfly-logo.png" 
-              alt="MyDentalFly Logo" 
-              className="h-10 w-auto mr-3 shadow-sm border border-gray-100 rounded-md p-1" 
-            />
+            <a href="/" className="flex-shrink-0">
+              <img 
+                src="/images/mydentalfly-logo.png" 
+                alt="MyDentalFly Logo" 
+                className="h-10 w-auto mr-3 shadow-sm border border-gray-100 rounded-md p-1 cursor-pointer" 
+              />
+            </a>
             <h1 className="text-lg font-bold text-blue-600">
               {t('portal.title', 'Patient Portal')}
             </h1>

@@ -183,11 +183,13 @@ const AdminPortalPage: React.FC = () => {
                 </svg>
               </button>
               <div className="flex items-center">
-                <img 
-                  src="/images/mydentalfly-logo.png" 
-                  alt="MyDentalFly Admin Portal" 
-                  className="h-10 w-auto mr-2" 
-                />
+                <a href="/" className="flex-shrink-0">
+                  <img 
+                    src="/images/mydentalfly-logo.png" 
+                    alt="MyDentalFly Admin Portal" 
+                    className="h-10 w-auto mr-2 cursor-pointer" 
+                  />
+                </a>
                 <div className="hidden md:block">
                   <h1 className="text-lg font-semibold text-primary">
                     {t("admin.title", "Admin Portal")}
@@ -351,11 +353,13 @@ const AdminPortalPage: React.FC = () => {
               <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
                 <div className="flex items-center justify-between px-4">
                   <div className="flex items-center">
-                    <img 
-                      src="/images/mydentalfly-logo.png" 
-                      alt="MyDentalFly Admin Portal" 
-                      className="h-8 w-auto mr-2" 
-                    />
+                    <a href="/" className="flex-shrink-0">
+                      <img 
+                        src="/images/mydentalfly-logo.png" 
+                        alt="MyDentalFly Admin Portal" 
+                        className="h-8 w-auto mr-2 cursor-pointer" 
+                      />
+                    </a>
                     <span className="text-lg font-semibold text-primary">
                       {t("admin.title", "Admin Portal")}
                     </span>
