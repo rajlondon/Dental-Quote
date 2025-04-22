@@ -39,15 +39,30 @@ const ClinicPortalPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
+  // Get auth context for logout functionality
+  const { logoutMutation } = useAuth();
+  
   // Handle logout
-  const handleLogout = () => {
-    toast({
-      title: t('portal.logout_success', 'Successfully logged out'),
-      description: t('portal.logout_message', 'You have been logged out of your account.'),
-    });
-    
-    // Use direct URL navigation for reliability
-    window.location.href = '/#/portal-login';
+  const handleLogout = async () => {
+    try {
+      // Call the API to logout via the mutation
+      await logoutMutation.mutateAsync();
+      
+      toast({
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
+      });
+      
+      // Use wouter navigation instead of direct URL change
+      setLocation('/portal-login');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: t('portal.logout_error', 'Logout failed'),
+        description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
+        variant: "destructive",
+      });
+    }
   };
 
   // Clinic navigation items
