@@ -74,9 +74,17 @@ const AdminPortalPage: React.FC = () => {
   // Get auth context for logout functionality
   const { logoutMutation } = useAuth();
   
+  // Prevent multiple logout calls
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
   // Handle logout using authentication system
   const handleLogout = async () => {
+    // Prevent multiple clicks/calls
+    if (isLoggingOut) return;
+    
     try {
+      setIsLoggingOut(true);
+      
       // Call the API to logout via the mutation
       await logoutMutation.mutateAsync();
       
@@ -94,6 +102,9 @@ const AdminPortalPage: React.FC = () => {
         description: t('admin.logout_error_message', 'There was an issue logging out. Please try again.'),
         variant: "destructive",
       });
+      
+      // Reset the logging out state so user can try again
+      setIsLoggingOut(false);
     }
   };
 
