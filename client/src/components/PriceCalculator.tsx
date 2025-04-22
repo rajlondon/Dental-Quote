@@ -1953,21 +1953,21 @@ export default function PriceCalculator() {
                                 price: Math.round(quote.totalGBP * 0.80),
                                 extra: "Including flights & hotel",
                                 type: "Affordable",
-                                image: "/images/clinics/hantipaciek-clinic.png"
+                                image: "/images/clinics/istanbul-dental.jpg"
                               },
                               {
                                 name: "DentGroup Istanbul",
                                 price: Math.round(quote.totalGBP * 0.90),
                                 extra: "Including flights & hotel",
                                 type: "Mid-Tier",
-                                image: "/images/clinics/dentgroup-clinic.png"
+                                image: "/images/clinics/dentgroup-istanbul/exterior.jpg"
                               },
                               {
                                 name: "Donki Clinic",
                                 price: Math.round(quote.totalGBP * 1.00),
                                 extra: "Including flights & hotel",
                                 type: "Premium",
-                                image: "/images/clinics/donki-clinic.png"
+                                image: "/images/clinics/premium-clinic.jpg"
                               }
                             ];
                             
@@ -2003,9 +2003,11 @@ export default function PriceCalculator() {
                                   {isIstanbulClinic && clinicImage && (
                                     <div className="mb-2 h-24 overflow-hidden rounded">
                                       <img 
-                                        src={clinicImage} 
+                                        src={clinicImage}
                                         alt={clinic.name} 
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover clinic-image"
+                                        onError={(e) => console.log("Image failed to load:", clinicImage)}
+                                        onLoad={() => console.log("Image loaded successfully:", clinicImage)}
                                       />
                                     </div>
                                   )}
@@ -2062,7 +2064,7 @@ export default function PriceCalculator() {
                               guarantee: "3 Years",
                               location: "Maltepe District",
                               rating: "⭐⭐⭐⭐",
-                              image: "/images/clinics/hantipaciek-clinic.png"
+                              image: "/images/clinics/istanbul-dental.jpg"
                             },
                             {
                               name: "DentGroup Istanbul",
@@ -2071,7 +2073,7 @@ export default function PriceCalculator() {
                               guarantee: "5 Years",
                               location: "Şişli District",
                               rating: "⭐⭐⭐⭐½",
-                              image: "/images/clinics/dentgroup-clinic.png"
+                              image: "/images/clinics/dentalesk-clinic.png"
                             },
                             {
                               name: "Donki Clinic",
