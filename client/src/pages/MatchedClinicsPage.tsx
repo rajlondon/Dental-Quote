@@ -521,75 +521,64 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
                   <div className="md:col-span-1">
-                    {clinic.id === 'dentspa' ? (
-                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative border border-amber-200">
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="relative w-40 h-40">
-                              <div className="absolute inset-4 rounded-full bg-amber-500/10 animate-pulse"></div>
-                              <Award className="absolute inset-0 m-auto h-16 w-16 text-amber-600" />
-                              <Sparkles className="absolute top-3 right-3 h-6 w-6 text-amber-500" />
-                              <Gem className="absolute bottom-6 left-6 h-8 w-8 text-amber-600/70" />
-                            </div>
-                          </div>
-                          <div className="absolute bottom-4 w-full text-center">
-                            <span className="text-sm font-bold text-amber-800 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
-                            <div className="text-xs text-amber-600 mt-1 font-medium">Premium Clinic Experience</div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : clinic.id === 'beyazada' ? (
-                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center relative border border-blue-200">
-                        <div className="absolute inset-0">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="relative w-40 h-40">
-                              <div className="absolute inset-8 rounded-full bg-blue-500/10 border-8 border-blue-200/50"></div>
-                              <Target className="absolute inset-0 m-auto h-14 w-14 text-blue-500" />
-                              <Smile className="absolute top-4 right-4 h-6 w-6 text-blue-500/70" />
-                            </div>
-                          </div>
-                          <div className="absolute bottom-4 w-full text-center">
-                            <span className="text-sm font-bold text-blue-700 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
-                            <div className="text-xs text-blue-500 mt-1 font-medium">Standard Clinic Experience</div>
+                    <div className="aspect-video rounded-lg overflow-hidden mb-4 relative">
+                      {/* Clinic banner with consistent styling */}
+                      <div className={`absolute inset-0 flex flex-col items-center justify-center 
+                        ${clinic.tier === 'premium' 
+                          ? 'bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200' 
+                          : clinic.tier === 'standard' 
+                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+                            : 'bg-gradient-to-r from-green-50 to-blue-50 border border-green-200'
+                        }`}>
+                        <div className="flex items-center justify-center mb-2">
+                          {/* Large circular badge with clinic initial */}
+                          <div className={`flex items-center justify-center w-24 h-24 rounded-full 
+                            ${clinic.tier === 'premium' 
+                              ? 'bg-amber-500 text-white' 
+                              : clinic.tier === 'standard' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-green-500 text-white'
+                            }`}>
+                            <span className="font-bold text-3xl">
+                              {clinic.name.charAt(0)}
+                            </span>
                           </div>
                         </div>
-                      </div>
-                    ) : clinic.id === 'maltepe' ? (
-                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center relative border border-purple-200">
-                        <div className="absolute inset-0">
-                          <div className="grid grid-cols-2 h-full">
-                            <div className="bg-gradient-to-br from-indigo-100/50 to-indigo-200/30 flex items-center justify-center">
-                              <Stethoscope className="h-12 w-12 text-indigo-500" />
-                            </div>
-                            <div className="bg-gradient-to-tl from-purple-100/50 to-purple-200/30 flex items-center justify-center">
-                              <HeartPulse className="h-12 w-12 text-purple-500" />
-                            </div>
-                          </div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-white/80 rounded-full p-2">
-                              <Award className="h-12 w-12 text-indigo-600" />
-                            </div>
-                          </div>
-                          <div className="absolute bottom-4 w-full text-center">
-                            <span className="text-sm font-bold text-indigo-800 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
-                            <div className="text-xs text-indigo-600 mt-1 font-medium">Premium Clinic Experience</div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center relative border border-green-200">
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <div className="relative w-40 h-40 flex items-center justify-center">
-                            <Columns className="h-16 w-16 text-green-500" />
-                            <Zap className="absolute top-4 right-4 h-6 w-6 text-green-600" />
-                          </div>
-                          <div className="absolute bottom-4 w-full text-center">
-                            <span className="text-sm font-bold text-green-700 bg-white/80 px-3 py-1 rounded-full">{clinic.name}</span>
-                            <div className="text-xs text-green-600 mt-1 font-medium">Affordable Clinic Experience</div>
+                        
+                        {/* Clinic name overlay with proper spacing */}
+                        <div className="w-full text-center px-4">
+                          <span className={`font-bold text-lg px-4 py-2 rounded-full bg-white/90 
+                            ${clinic.tier === 'premium' 
+                              ? 'text-amber-800' 
+                              : clinic.tier === 'standard' 
+                                ? 'text-blue-800' 
+                                : 'text-green-800'
+                            }`}>
+                            {clinic.name}
+                          </span>
+                          <div className={`mt-2 font-medium text-sm 
+                            ${clinic.tier === 'premium' 
+                              ? 'text-amber-800' 
+                              : clinic.tier === 'standard' 
+                                ? 'text-blue-800' 
+                                : 'text-green-800'
+                            }`}>
+                            {tierInfo.label} Clinic Experience
                           </div>
                         </div>
+                        
+                        {/* Subtle icon overlay for visual interest */}
+                        <div className="absolute top-4 right-4">
+                          {clinic.tier === 'premium' ? (
+                            <Award className="h-6 w-6 text-amber-500/70" />
+                          ) : clinic.tier === 'standard' ? (
+                            <ShieldCheck className="h-6 w-6 text-blue-500/70" />
+                          ) : (
+                            <Check className="h-6 w-6 text-green-500/70" />
+                          )}
+                        </div>
                       </div>
-                    )}
+                    </div>
                     
                     <h2 className="text-xl font-bold mb-1">{clinic.name}</h2>
                     
