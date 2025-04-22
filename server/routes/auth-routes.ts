@@ -325,55 +325,6 @@ router.post("/change-password", async (req: Request, res: Response) => {
   }
 });
 
-// Special test accounts route - for development and testing only
-router.post("/create-test-account", async (req: Request, res: Response) => {
-  try {
-    const { email, password, role = "patient" } = req.body;
-    
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email and password are required" 
-      });
-    }
-    
-    // Delete existing user if exists (only for test accounts)
-    await db.delete(users).where(eq(users.email, email));
-    
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Insert with pre-verified status
-    const [newUser] = await db.insert(users).values({
-      email,
-      password: hashedPassword,
-      firstName: "Test",
-      lastName: "User",
-      role: role as "admin" | "clinic_staff" | "patient",
-      emailVerified: true,
-      profileComplete: true,
-      status: "active"
-    }).returning({
-      id: users.id,
-      email: users.email,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      role: users.role
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: "Test account created successfully",
-      user: newUser
-    });
-  } catch (error: any) {
-    console.error("Test account creation error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Test account creation failed: " + error.message 
-    });
-  }
-});
+
 
 export default router;
