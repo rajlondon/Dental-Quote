@@ -94,14 +94,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global authentication for all portal routes
   app.use("/api/portal", ensureAuthenticated);
   
+  // Register main portal routes first
+  app.use(portalRoutes);
+  
   // Protect admin-specific routes
   app.use("/api/portal/admin", ensureRole("admin"));
   
   // Protect clinic-specific routes
   app.use("/api/portal/clinic", ensureRole("clinic_staff"));
-  
-  // Use the portal routes
-  app.use(portalRoutes);
   
   // Register file upload/management routes with upload rate limiting
   app.use('/api/files', uploadRateLimit, fileRoutes);
