@@ -111,7 +111,17 @@ const ClinicCard = ({
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${featured ? 'ring-2 ring-primary' : ''}`}>
       <div className="relative">
-        {getStylizedClinic()}
+        {image ? (
+          <div className="w-full h-48 overflow-hidden">
+            <img 
+              src={image} 
+              alt={`${name} dental clinic`} 
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            />
+          </div>
+        ) : (
+          getStylizedClinic()
+        )}
         {featured && (
           <div className="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded flex items-center">
             <Sparkles className="w-3 h-3 mr-1" />
@@ -224,10 +234,22 @@ const HomePage: React.FC = () => {
         category = 'Quality Dental Care';
     }
     
+    // Assign real clinic images
+    let imagePath = "";
+    if (clinic.id === "dentgroup-istanbul") {
+      imagePath = "/images/clinics/dentalesk-clinic.png"; // DENTALESK
+    } else if (clinic.id === "istanbul-dental-care") {
+      imagePath = "/images/clinics/kstada-clinic.png"; // KSTADA
+    } else if (clinic.id === "maltepe-dental-clinic") {
+      imagePath = "/images/clinics/dentalclinic-clinic.png"; // DENTALCLINIC
+    } else if (clinic.id === "dentakay-istanbul") {
+      imagePath = "/images/clinics/dentid-clinic.png"; // DENTID
+    }
+    
     return {
       id: clinic.id,
       name: clinic.name,
-      image: "", // Using stylized placeholders instead of images
+      image: imagePath,
       rating: clinic.ratings.overall,
       reviewCount: clinic.ratings.reviews,
       location: `${clinic.location.area}, ${clinic.location.city}`,
