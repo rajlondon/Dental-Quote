@@ -23,6 +23,7 @@ import { ensureAuthenticated, ensureRole } from "./middleware/auth";
 import { setupAuth } from "./auth";
 import portalRoutes from "./routes/portal-routes";
 import fileRoutes from "./routes/fileRoutes";
+import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import geminiRoutes from "./routes/gemini-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
@@ -115,6 +116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register Gemini AI routes for dental advice
   app.use('/api/gemini', geminiRoutes);
+  
+  // Register routes for email verification, password reset, and user registration
+  app.use('/api/auth', authRoutesRouter);
   
   // Create the uploads directory for files if it doesn't exist
   const uploadsDir = path.join(process.cwd(), 'uploads');
