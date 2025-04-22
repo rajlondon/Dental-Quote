@@ -5,6 +5,31 @@ import { Toaster } from "@/components/ui/toaster";
 import { ToastProvider } from "@/components/ui/toast";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
+
+// Environment indicator component for production
+const EnvironmentBadge = () => {
+  const isProd = import.meta.env.PROD || import.meta.env.NODE_ENV === 'production';
+  
+  if (!isProd) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '10px',
+      left: '10px',
+      zIndex: 9999,
+      background: '#ff5252',
+      color: 'white',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+    }}>
+      PRODUCTION
+    </div>
+  );
+};
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import PricingPage from "./pages/PricingPage";
@@ -146,6 +171,7 @@ function App() {
           <ReloadTranslations />
           <Router />
           <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+          <EnvironmentBadge />
           <Toaster />
         </Suspense>
       </ToastProvider>

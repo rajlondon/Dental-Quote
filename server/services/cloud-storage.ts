@@ -82,7 +82,14 @@ function getCloudStorageConfig(): CloudStorageConfig {
   const defaultProvider = isProduction() ? 'aws-s3' : 'local';
   const provider = explicitProvider || defaultProvider;
   
+  // Check for environment-specific configurations
+  const isAWSConfigured = process.env.S3_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID;
+  
+  // Log detailed environment information for better debugging
   console.log(`Storage mode: ${provider} (${isProduction() ? 'PRODUCTION' : 'DEVELOPMENT'} environment)`);
+  if (provider === 'aws-s3' && !isAWSConfigured) {
+    console.warn('⚠️ AWS S3 selected but credentials not found - may fall back to local storage');
+  }
   
   if (provider === 'local') {
     return { provider: 'local' };
