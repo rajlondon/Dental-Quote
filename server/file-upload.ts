@@ -231,7 +231,7 @@ export async function processUploadedFile(file: Express.Multer.File): Promise<Up
         uploadDate
       };
     } catch (error) {
-      logError(error, {
+      logError(error instanceof Error ? error : new Error(String(error)), {
         component: 'FileUpload',
         operation: 'S3Upload',
         filename: file.originalname,

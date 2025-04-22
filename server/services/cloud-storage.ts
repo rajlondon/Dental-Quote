@@ -42,15 +42,50 @@ export interface UploadFileResponse {
   error?: any;
 }
 
-// Get cloud storage configuration from environment variables
+/**
+ * Determines whether the application is running in production mode
+ * @returns {boolean} true if in production, false otherwise
+ */
+export function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+/**
+ * Get cloud storage configuration from environment variables
+ * Production environments default to cloud storage if configured
+ * Development environments default to local storage for easier testing
+ * Override with STORAGE_PROVIDER environment variable
+ */
 function getCloudStorageConfig(): CloudStorageConfig {
-  const provider = process.env.STORAGE_PROVIDER || 'local';
+  // If STORAGE_PROVIDER is explicitly set, use that regardless of environment
+  const explicitProvider = process.env.STORAGE_PROVIDER;
+  if (explicitProvider) {
+    console.log(`Using explicitly configured storage provider: ${explicitProvider}`);
+  }
+  
+  // Default provider based on environment
+  const defaultProvider = isProduction() ? 'aws-s3' : 'local';
+  const provider = explicitProvider || defaultProvider;
+  
+  console.log(`Storage mode: ${provider} (${isProduction() ? 'PRODUCTION' : 'DEVELOPMENT'} environment)`);
   
   if (provider === 'local') {
     return { provider: 'local' };
   }
   
   if (provider === 'cloudinary') {
+    // Check for required environment variables
+    const missingVars = [];
+    if (!process.env.CLOUDINARY_CLOUD_NAME) missingVars.push('CLOUDINARY_CLOUD_NAME');
+    if (!process.env.CLOUDINARY_API_KEY) missingVars.push('CLOUDINARY_API_KEY');
+    if (!process.env.CLOUDINARY_API_SECRET) missingVars.push('CLOUDINARY_API_SECRET');
+    
+    if (missingVars.length > 0 && isProduction()) {
+      console.error(`⚠️ Missing Cloudinary environment variables: ${missingVars.join(', ')}`);
+      console.warn('⚠️ Falling back to local storage despite production environment');
+      return { provider: 'local' };
+    }
+    
     return {
       provider: 'cloudinary',
       credentials: {
@@ -63,6 +98,18 @@ function getCloudStorageConfig(): CloudStorageConfig {
   }
   
   if (provider === 'aws-s3') {
+    // Check for required environment variables
+    const missingVars = [];
+    if (!process.env.S3_BUCKET_NAME) missingVars.push('S3_BUCKET_NAME');
+    if (!process.env.S3_ACCESS_KEY) missingVars.push('S3_ACCESS_KEY');
+    if (!process.env.S3_SECRET_KEY) missingVars.push('S3_SECRET_KEY');
+    
+    if (missingVars.length > 0 && isProduction()) {
+      console.error(`⚠️ Missing AWS S3 environment variables: ${missingVars.join(', ')}`);
+      console.warn('⚠️ Falling back to local storage despite production environment');
+      return { provider: 'local' };
+    }
+    
     return {
       provider: 'aws-s3',
       bucket: process.env.S3_BUCKET_NAME,
@@ -316,7 +363,7 @@ export async function listS3Files(prefix: string): Promise<string[]> {
     const response = await s3Client.send(command);
     return (response.Contents || []).map(item => item.Key || '').filter(Boolean);
   } catch (error) {
-    logError(error, {
+    logError(error instanceof Error ? error : new Error(String(error)), {
       component: 'CloudStorage',
       operation: 'listS3Files',
       prefix
