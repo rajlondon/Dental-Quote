@@ -327,7 +327,7 @@ const ClinicDocumentsSection: React.FC = () => {
             success: successCount,
             total: files.length
           }),
-          variant: "warning"
+          variant: "destructive"
         });
       }
     } catch (error) {
