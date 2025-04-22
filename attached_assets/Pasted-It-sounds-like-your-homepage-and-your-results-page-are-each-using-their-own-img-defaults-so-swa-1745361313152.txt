@@ -1,0 +1,45 @@
+It sounds like your homepage and your results page are each using their own `<img>` defaults, so swapping out the homepage placeholder didn’t touch the one in your results component. Here’s a checklist to get them both pulling in your new clinic image:
+
+1. **Drop your new placeholder into your static assets folder**  
+   e.g. `/public/images/clinic-placeholder.svg` or wherever you like under `public/`.  
+
+2. **Find the Results‑rendering component**  
+   You might have something like `ResultsList.jsx` or `ClinicResults.js` where you do:  
+   ```jsx
+   {clinics.map(clinic => (
+     <div key={clinic.id}>
+       <img
+         src={clinic.imageUrl || '/images/clinic-placeholder.svg'}
+         alt={clinic.name}
+         className="w-32 h-32"
+       />
+       <h3>{clinic.name}</h3>
+       {/* …other info… */}
+     </div>
+   ))}
+   ```  
+   – If it still references the old file name, change that `'/images/clinic-placeholder.svg'` to your new filename (e.g. `'/images/new-placeholder.png'`).
+
+3. **Search and replace**  
+   Grep your code for the old placeholder name:  
+   ```
+   grep -R "clinic-placeholder" src/
+   ```  
+   Then replace any instances in the results‑page code.
+
+4. **Verify your static‐files middleware (if you have one)**  
+   In your Express server (if you’re using one), make sure you’re serving the folder where your new image lives:  
+   ```js
+   app.use(express.static(path.join(__dirname, 'public')));
+   ```
+   Then restart the server so it picks up the new file.
+
+5. **Inspect in the browser**  
+   Open the results page, right‑click the broken image, choose “Open image in new tab” and see what 404 path it’s hitting. That’ll tell you exactly which URL to correct.
+
+6. **Rebuild/clear cache**  
+   If you’ve got a build step (e.g. `npm run build`), run it again, then redeploy on Replit. Also try an incognito window or clear your cache so you’re not seeing the old asset.
+
+---
+
+If you post the snippet where you render those clinic cards on the results page, I can point exactly where to swap in the new path.
