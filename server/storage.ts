@@ -70,8 +70,11 @@ export interface IStorage {
   // Payments
   getPaymentsByBookingId(bookingId: number): Promise<Payment[]>;
   getPaymentsByUserId(userId: number): Promise<Payment[]>;
+  getAllPayments(limit?: number): Promise<Payment[]>;
+  getPaymentById(id: number): Promise<Payment | undefined>;
   createPayment(data: InsertPayment): Promise<Payment>;
   updatePayment(id: number, data: Partial<Payment>): Promise<Payment | undefined>;
+  createPaymentFromStripe(stripePaymentIntentId: string, paymentData: Partial<InsertPayment>): Promise<Payment>;
   
   // Files
   getFile(id: number): Promise<File | undefined>;
@@ -433,6 +436,28 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(payments.createdAt));
   }
 
+  async getAllPayments(limit?: number): Promise<Payment[]> {
+    const query = db
+      .select()
+      .from(payments)
+      .orderBy(desc(payments.createdAt));
+    
+    if (limit && limit > 0) {
+      query.limit(limit);
+    }
+    
+    return query;
+  }
+
+  async getPaymentById(id: number): Promise<Payment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, id));
+    
+    return payment;
+  }
+
   async createPayment(data: InsertPayment): Promise<Payment> {
     const [payment] = await db.insert(payments).values(data).returning();
     return payment;
@@ -444,6 +469,48 @@ export class DatabaseStorage implements IStorage {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(payments.id, id))
       .returning();
+    return payment;
+  }
+  
+  async createPaymentFromStripe(
+    stripePaymentIntentId: string, 
+    paymentData: Partial<InsertPayment>
+  ): Promise<Payment> {
+    // Check if payment already exists with this paymentIntentId
+    const existingPayments = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.stripePaymentIntentId, stripePaymentIntentId));
+    
+    if (existingPayments.length > 0) {
+      // Payment already exists, return it
+      return existingPayments[0];
+    }
+    
+    // Create a new payment record
+    const fullPaymentData: InsertPayment = {
+      userId: paymentData.userId!,
+      amount: paymentData.amount!,
+      currency: paymentData.currency || 'GBP',
+      status: paymentData.status || 'pending',
+      paymentMethod: paymentData.paymentMethod || 'card',
+      paymentType: paymentData.paymentType || 'treatment',
+      transactionId: paymentData.transactionId || stripePaymentIntentId,
+      stripePaymentIntentId: stripePaymentIntentId,
+      stripeCustomerId: paymentData.stripeCustomerId,
+      receiptUrl: paymentData.receiptUrl,
+      notes: paymentData.notes,
+      bookingId: paymentData.bookingId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Insert the payment record
+    const [payment] = await db
+      .insert(payments)
+      .values(fullPaymentData)
+      .returning();
+      
     return payment;
   }
 

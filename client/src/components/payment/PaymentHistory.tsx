@@ -1,309 +1,288 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Payment } from '@shared/schema';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
+import { ChevronDown, ExternalLink, Copy, Check, Loader2 } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Download, Search, ExternalLink } from 'lucide-react';
-import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { queryClient } from '@/lib/queryClient';
+
+// Helper to format currency amount from cents to display format
+const formatAmount = (amount: number, currency: string = 'GBP') => {
+  const formatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+  });
+  return formatter.format(amount);
+};
+
+// Status badge component
+const PaymentStatusBadge = ({ status }: { status: string }) => {
+  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
+  
+  switch (status.toLowerCase()) {
+    case 'succeeded':
+    case 'paid':
+    case 'completed':
+      variant = 'default';
+      break;
+    case 'pending':
+    case 'processing':
+      variant = 'secondary';
+      break;
+    case 'failed':
+    case 'canceled':
+    case 'cancelled':
+      variant = 'destructive';
+      break;
+    default:
+      variant = 'outline';
+  }
+  
+  return <Badge variant={variant}>{status}</Badge>;
+};
 
 interface PaymentHistoryProps {
-  userId?: number;
+  userId: number;
   bookingId?: number;
   limit?: number;
   title?: string;
-  showDownload?: boolean;
 }
 
-export default function PaymentHistory({ 
-  userId, 
-  bookingId, 
-  limit = 10,
-  title = "Payment History",
-  showDownload = true
+export default function PaymentHistory({
+  userId,
+  bookingId,
+  limit,
+  title = 'Payment History',
 }: PaymentHistoryProps) {
-  const [expandedPayment, setExpandedPayment] = useState<number | null>(null);
   const { toast } = useToast();
+  const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
   
-  // Create query string based on provided filters
-  const queryParams = new URLSearchParams();
-  if (userId) queryParams.append('userId', userId.toString());
-  if (bookingId) queryParams.append('bookingId', bookingId.toString());
-  if (limit) queryParams.append('limit', limit.toString());
-  
-  // Fetch payment history
-  const { data, isLoading, isError } = useQuery<{payments: Payment[]}>({
-    queryKey: [`/api/payments?${queryParams.toString()}`],
+  // Fetch payments
+  const { data: payments, isLoading, error } = useQuery({
+    queryKey: bookingId 
+      ? [`/api/payments/booking/${bookingId}`] 
+      : [`/api/payments/user/${userId}`],
+    enabled: !!userId || !!bookingId,
   });
   
-  // Format currency
-  const formatCurrency = (amount: string | number, currency = 'GBP') => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: currency,
-    }).format(numAmount);
-  };
-  
-  // Get status badge color
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return <Badge variant="success">Completed</Badge>;
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">Pending</Badge>;
-      case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
-      case 'refunded':
-        return <Badge variant="secondary">Refunded</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  // Get payment type badge
-  const getPaymentTypeBadge = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'deposit':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">Deposit</Badge>;
-      case 'treatment':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">Treatment</Badge>;
-      case 'refund':
-        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">Refund</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
-  };
-  
-  // View receipt
-  const viewReceipt = (url: string | null) => {
-    if (!url) {
-      toast({
-        title: "Receipt Unavailable",
-        description: "No receipt is available for this payment.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    window.open(url, '_blank');
-  };
-
-  // Toggle expanded view for a payment
-  const toggleDetails = (paymentId: number) => {
-    if (expandedPayment === paymentId) {
-      setExpandedPayment(null);
-    } else {
-      setExpandedPayment(paymentId);
-    }
-  };
-  
-  // Download payment history as CSV
-  const downloadHistory = () => {
-    if (!data?.payments || data.payments.length === 0) {
-      toast({
-        title: "No Data to Download",
-        description: "There are no payment records to download.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Format payments for CSV
-    const headers = "Date,Amount,Currency,Payment Type,Status,Transaction ID\n";
-    const rows = data.payments.map(p => {
-      const date = p.createdAt ? format(new Date(p.createdAt), 'yyyy-MM-dd') : 'N/A';
-      return `${date},${p.amount},${p.currency},${p.paymentType},${p.status},${p.transactionId || 'N/A'}`;
-    }).join('\n');
-    
-    const csvContent = `data:text/csv;charset=utf-8,${headers}${rows}`;
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `payment-history-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-  
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>Loading payment history...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
+  const handleCopyPaymentId = (paymentId: string) => {
+    navigator.clipboard.writeText(paymentId).then(
+      () => {
+        setCopiedPaymentId(paymentId);
+        setTimeout(() => setCopiedPaymentId(null), 2000);
+        toast({
+          title: 'Copied to clipboard',
+          description: 'Payment ID has been copied to clipboard',
+        });
+      },
+      (err) => {
+        console.error('Could not copy payment ID', err);
+        toast({
+          title: 'Copy failed',
+          description: 'Failed to copy payment ID to clipboard',
+          variant: 'destructive',
+        });
+      }
     );
-  }
+  };
   
-  if (isError) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>Error loading payment history</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive">
-            An error occurred while loading your payment history. Please try again later.
-          </p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/payments?${queryParams.toString()}`] })}
-          >
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (!data?.payments || data.payments.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>No payment records found</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No payment records have been found.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Open receipt in new tab
+  const openReceiptUrl = (receiptUrl: string) => {
+    if (receiptUrl) {
+      window.open(receiptUrl, '_blank');
+    }
+  };
   
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>
-            Showing {data.payments.length} payment {data.payments.length === 1 ? 'record' : 'records'}
-          </CardDescription>
-        </div>
-        
-        {showDownload && (
-          <Button variant="outline" size="sm" onClick={downloadHistory}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        )}
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          View your payment history and transaction details
+        </CardDescription>
       </CardHeader>
-      
       <CardContent>
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.payments.map((payment) => (
-                <React.Fragment key={payment.id}>
-                  <TableRow className="hover:bg-muted/50">
+        {isLoading ? (
+          // Skeleton loader for payment history
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-5 w-1/3" />
+                  <Skeleton className="h-5 w-1/4" />
+                </div>
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-md text-center">
+            <p className="text-sm text-destructive">
+              Failed to load payment history. Please try again later.
+            </p>
+          </div>
+        ) : !payments || payments.length === 0 ? (
+          <div className="p-8 border border-dashed rounded-md text-center">
+            <p className="text-muted-foreground">No payment transactions found</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.slice(0, limit || payments.length).map((payment: any) => (
+                  <TableRow key={payment.id}>
                     <TableCell>
                       {payment.createdAt ? format(new Date(payment.createdAt), 'dd MMM yyyy') : 'N/A'}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {formatCurrency(payment.amount, payment.currency)}
+                      {formatAmount(payment.amount, payment.currency)}
                     </TableCell>
-                    <TableCell>{getPaymentTypeBadge(payment.paymentType)}</TableCell>
-                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => toggleDetails(payment.id)}
-                        >
-                          <Search className="h-4 w-4" />
-                          <span className="sr-only">View details</span>
-                        </Button>
-                        
+                    <TableCell className="capitalize">
+                      {payment.paymentType || 'payment'}
+                    </TableCell>
+                    <TableCell>
+                      <PaymentStatusBadge status={payment.status} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
                         {payment.receiptUrl && (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => viewReceipt(payment.receiptUrl)}
+                            onClick={() => openReceiptUrl(payment.receiptUrl)}
+                            title="View Receipt"
                           >
                             <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">View receipt</span>
                           </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
-                  
-                  {expandedPayment === payment.id && (
-                    <TableRow className="bg-muted/30">
-                      <TableCell colSpan={5} className="p-4">
-                        <div className="rounded-md bg-muted p-4 text-sm">
-                          <h4 className="font-medium mb-2">Payment Details</h4>
-                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-                            <div>
-                              <dt className="text-muted-foreground">Transaction ID</dt>
-                              <dd className="font-mono text-xs break-all">{payment.transactionId || 'N/A'}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-muted-foreground">Payment Method</dt>
-                              <dd>{payment.paymentMethod || 'N/A'}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-muted-foreground">Date & Time</dt>
-                              <dd>
-                                {payment.createdAt 
-                                  ? format(new Date(payment.createdAt), 'dd MMM yyyy, HH:mm:ss') 
-                                  : 'N/A'}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-muted-foreground">Receipt</dt>
-                              <dd>
-                                {payment.receiptUrl ? (
-                                  <Button 
-                                    variant="link" 
-                                    className="p-0 h-auto font-normal text-primary"
-                                    onClick={() => viewReceipt(payment.receiptUrl)}
-                                  >
-                                    View Receipt
-                                  </Button>
-                                ) : (
-                                  <span className="text-muted-foreground">Not available</span>
-                                )}
-                              </dd>
-                            </div>
-                            {payment.notes && (
-                              <div className="col-span-2">
-                                <dt className="text-muted-foreground">Notes</dt>
-                                <dd className="whitespace-pre-wrap">{payment.notes}</dd>
-                              </div>
-                            )}
-                          </dl>
+                ))}
+              </TableBody>
+            </Table>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="details">
+                <AccordionTrigger>
+                  <span className="text-sm font-medium">Transaction Details</span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-4">
+                    {payments.slice(0, limit || payments.length).map((payment: any) => (
+                      <div key={payment.id} className="border rounded-md p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="font-medium">{formatAmount(payment.amount, payment.currency)}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {payment.createdAt ? format(new Date(payment.createdAt), 'dd MMM yyyy, HH:mm') : 'N/A'}
+                            </p>
+                          </div>
+                          <PaymentStatusBadge status={payment.status} />
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                          <div>
+                            <span className="text-muted-foreground">Payment Type:</span>{' '}
+                            <span className="capitalize">{payment.paymentType || 'payment'}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Payment Method:</span>{' '}
+                            <span className="capitalize">{payment.paymentMethod || 'card'}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="text-sm mb-3">
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground">Transaction ID:</span>{' '}
+                            <code className="px-1 py-0.5 bg-muted rounded text-xs">
+                              {payment.transactionId || payment.stripePaymentIntentId || 'N/A'}
+                            </code>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5"
+                              onClick={() => handleCopyPaymentId(payment.transactionId || payment.stripePaymentIntentId)}
+                              title="Copy transaction ID"
+                            >
+                              {copiedPaymentId === (payment.transactionId || payment.stripePaymentIntentId) ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {payment.notes && (
+                          <div className="text-sm border-t pt-2 mt-2">
+                            <span className="text-muted-foreground">Notes:</span>{' '}
+                            <span>{payment.notes}</span>
+                          </div>
+                        )}
+                        
+                        {payment.receiptUrl && (
+                          <div className="mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => openReceiptUrl(payment.receiptUrl)}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View Receipt
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
       </CardContent>
+      <CardFooter className="flex justify-between">
+        {payments && payments.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Showing {Math.min(limit || payments.length, payments.length)} of {payments.length} payments
+          </p>
+        )}
+      </CardFooter>
     </Card>
   );
 }

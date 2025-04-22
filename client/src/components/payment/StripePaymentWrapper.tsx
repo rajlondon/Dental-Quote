@@ -1,143 +1,173 @@
 import React, { useState, useEffect } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import StripePaymentForm from './StripePaymentForm';
-import { Loader2 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2, CreditCard, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-// Load Stripe outside of the component to avoid recreating it on every render
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
-interface StripePaymentWrapperProps {
-  email: string;
-  amount?: number;
-  quoteId?: number;
-  clinicId?: number;
-  onSuccessfulPayment?: () => void;
-  paymentType?: 'deposit' | 'treatment' | 'other';
-  bookingId?: number;
-  metadata?: Record<string, string>;
+export interface StripePaymentWrapperProps {
+  returnUrl: string;
 }
 
-export default function StripePaymentWrapper({
-  email,
-  amount = 200, // Default deposit amount is £200
-  quoteId,
-  clinicId,
-  onSuccessfulPayment,
-  paymentType = 'deposit',
-  bookingId,
-  metadata = {}
-}: StripePaymentWrapperProps) {
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+export default function StripePaymentWrapper({ returnUrl }: StripePaymentWrapperProps) {
+  const stripe = useStripe();
+  const elements = useElements();
   const { toast } = useToast();
-
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'succeeded' | 'error'>('idle');
+  
   useEffect(() => {
-    const fetchPaymentIntent = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Check if the Stripe key is configured
-        if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-          throw new Error('Stripe is not configured. Payment processing is unavailable.');
-        }
-
-        // Prepare the metadata to include with the payment
-        const paymentMetadata = {
-          customerEmail: email,
-          type: paymentType,
-          ...(quoteId ? { quoteId: quoteId.toString() } : {}),
-          ...(clinicId ? { clinicId: clinicId.toString() } : {}),
-          ...(bookingId ? { bookingId: bookingId.toString() } : {}),
-          ...metadata
-        };
-
-        // Get a payment intent from the server
-        const response = await apiRequest('POST', '/api/create-deposit-payment-intent', {
-          email,
-          amount,
-          metadata: paymentMetadata
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to create payment intent');
-        }
-
-        const data = await response.json();
-        setClientSecret(data.clientSecret);
-      } catch (err) {
-        console.error('Payment intent error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-        setError(errorMessage);
-        
-        toast({
-          title: 'Payment Setup Failed',
-          description: errorMessage,
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
+    if (!stripe) {
+      return;
+    }
+    
+    // Check for errors when the component mounts
+    const clientSecret = new URLSearchParams(window.location.search).get(
+      'payment_intent_client_secret'
+    );
+    
+    if (!clientSecret) {
+      return;
+    }
+    
+    stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      switch (paymentIntent?.status) {
+        case 'succeeded':
+          setMessage('Payment succeeded!');
+          setPaymentStatus('succeeded');
+          break;
+        case 'processing':
+          setMessage('Your payment is processing.');
+          setPaymentStatus('processing');
+          break;
+        case 'requires_payment_method':
+          setMessage('Your payment was not successful, please try again.');
+          setPaymentStatus('error');
+          break;
+        default:
+          setMessage('Something went wrong.');
+          setPaymentStatus('error');
+          break;
       }
-    };
-
-    fetchPaymentIntent();
-  }, [email, amount, quoteId, clinicId, paymentType, bookingId, metadata, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 border rounded-lg shadow-sm bg-white min-h-[300px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="mt-4 text-center text-muted-foreground">
-          Setting up secure payment...
-        </p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 border rounded-lg shadow-sm bg-destructive/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-        <h3 className="font-semibold text-lg mb-2">Payment Setup Failed</h3>
-        <p className="text-muted-foreground mb-4">{error}</p>
-        <p className="text-sm">
-          Please try again later or contact support for assistance.
-        </p>
-      </div>
-    );
-  }
-
+    });
+  }, [stripe]);
+  
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!stripe || !elements) {
+      // Stripe.js hasn't yet loaded
+      return;
+    }
+    
+    setIsLoading(true);
+    setPaymentStatus('processing');
+    
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}${returnUrl}`,
+        },
+      });
+      
+      if (error) {
+        // This point will only be reached if there is an immediate error when
+        // confirming the payment. Otherwise, customers will be redirected to
+        // the `return_url` with the payment processing status.
+        if (error.type === 'card_error' || error.type === 'validation_error') {
+          setMessage(error.message || 'An error occurred with your payment');
+        } else {
+          setMessage('An unexpected error occurred');
+        }
+        
+        setPaymentStatus('error');
+        toast({
+          title: 'Payment Failed',
+          description: error.message || 'There was a problem with your payment',
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      console.error('Error in payment submission:', err);
+      setMessage('An unexpected error occurred during payment processing');
+      setPaymentStatus('error');
+      toast({
+        title: 'Payment System Error',
+        description: 'There was a technical problem with the payment system',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   return (
-    <div className="p-6 border rounded-lg shadow-sm bg-white">
-      {clientSecret && (
-        <Elements 
-          stripe={stripePromise}
-          options={{
-            clientSecret,
-            appearance: {
-              theme: 'stripe',
-              variables: {
-                colorPrimary: '#2563eb', // blue-600
-                colorBackground: '#ffffff',
-                colorText: '#0f172a', // slate-900
-                colorDanger: '#ef4444', // red-500
-                fontFamily: 'Inter, system-ui, sans-serif',
-                borderRadius: '6px',
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Complete Your Payment
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {paymentStatus === 'succeeded' ? (
+          <div className="flex flex-col items-center justify-center py-6">
+            <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+            <h3 className="text-xl font-medium text-center">Payment Successful!</h3>
+            <p className="text-center text-muted-foreground mt-2">
+              Your payment has been processed successfully.
+            </p>
+            <Button
+              onClick={() => window.location.href = returnUrl}
+              className="mt-6"
+            >
+              Continue
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {message && (
+              <Alert variant={paymentStatus === 'error' ? 'destructive' : 'default'}>
+                <AlertTitle>
+                  {paymentStatus === 'error' ? 'Payment Error' : 'Payment Status'}
+                </AlertTitle>
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
+            
+            <PaymentElement id="payment-element" options={{
+              layout: {
+                type: 'tabs',
+                defaultCollapsed: false,
               }
-            }
-          }}
-        >
-          <StripePaymentForm 
-            paymentType={paymentType}
-            amount={amount}
-            onSuccess={onSuccessfulPayment}
-          />
-        </Elements>
-      )}
-    </div>
+            }} />
+            
+            <Button
+              type="submit"
+              disabled={isLoading || !stripe || !elements || paymentStatus === 'processing'}
+              className="w-full"
+            >
+              {isLoading || paymentStatus === 'processing' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Pay Now'
+              )}
+            </Button>
+          </form>
+        )}
+      </CardContent>
+      <CardFooter className="flex justify-center">
+        <p className="text-xs text-muted-foreground text-center">
+          Secure payment powered by Stripe. Your card details are encrypted and never stored on our servers.
+        </p>
+      </CardFooter>
+    </Card>
   );
 }
