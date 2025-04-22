@@ -41,6 +41,13 @@ function determineStorageType(): StorageType {
     return StorageType.LOCAL;
   }
   
+  // FORCE S3: If we have AWS S3 keys configured, use it regardless of environment
+  // This ensures we always use S3 if it's properly configured
+  if (process.env.S3_ACCESS_KEY && process.env.S3_BUCKET_NAME) {
+    console.log('FORCED: Using AWS S3 storage (keys are configured)');
+    return StorageType.AWS_S3;
+  }
+  
   // In production, always try to use S3 if the keys are available
   if (isProductionEnv && process.env.S3_ACCESS_KEY && process.env.S3_BUCKET_NAME) {
     console.log('Using AWS S3 storage in production environment');

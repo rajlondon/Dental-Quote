@@ -166,36 +166,11 @@ const ClinicDocumentsSection: React.FC = () => {
     });
   };
   
-  // Combine real and mock data (in production, we'd only use real data)
+  // Use only real data from AWS S3
   const allDocuments: Document[] = fileData?.files ? 
     transformS3FilesToDocuments(fileData.files) : 
-    // Mock data as fallback
-    [
-      {
-        id: "doc1",
-        name: "John_Smith_X-Ray_2025-03-15.pdf",
-        type: "pdf",
-        category: "x_ray",
-        size: 3200000,
-        uploaded: "2025-03-15T09:30:00Z",
-        uploadedBy: "Dr. Emily Wilson",
-        patientId: "PT001",
-        patientName: "John Smith",
-        shared: true
-      },
-      {
-        id: "doc2",
-        name: "Sarah_Johnson_Treatment_Plan.pdf",
-        type: "pdf",
-        category: "treatment_plan",
-        size: 1800000,
-        uploaded: "2025-03-18T14:45:00Z",
-        uploadedBy: "Dr. Robert Taylor",
-        patientId: "PT002",
-        patientName: "Sarah Johnson",
-        shared: false
-      }
-    ];
+    // Empty array when no files are found
+    [];
   
   // Filter documents based on search
   const filteredDocuments = allDocuments.filter(doc => {
