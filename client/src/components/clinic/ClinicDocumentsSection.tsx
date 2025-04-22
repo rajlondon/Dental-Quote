@@ -320,6 +320,10 @@ const ClinicDocumentsSection: React.FC = () => {
           variant: "destructive"
         });
       }
+      
+      // Dialog no longer closes automatically - users must click "Done" after setting categories
+      // setShowUploadDialog(false);
+      
     } catch (error) {
       toast({
         title: t("clinic.documents.upload_error", "Upload Failed"),
@@ -327,8 +331,6 @@ const ClinicDocumentsSection: React.FC = () => {
         variant: "destructive"
       });
     }
-    
-    setShowUploadDialog(false);
   };
   
   // Handle drag events
@@ -814,6 +816,77 @@ const ClinicDocumentsSection: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
+          <div className="space-y-4">
+            <div>
+              <Label className="text-base font-medium">{t("clinic.documents.document_category", "Document Category")}</Label>
+              <RadioGroup defaultValue="patient_record" className="mt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="patient_record" id="patient_record" />
+                    <Label htmlFor="patient_record">
+                      {t("clinic.documents.categories.patient_record", "Patient Records")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="x_ray" id="x_ray" />
+                    <Label htmlFor="x_ray">
+                      {t("clinic.documents.categories.x_ray", "X-Rays & Scans")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="treatment_plan" id="treatment_plan" />
+                    <Label htmlFor="treatment_plan">
+                      {t("clinic.documents.categories.treatment_plan", "Treatment Plan")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="consent_form" id="consent_form" />
+                    <Label htmlFor="consent_form">
+                      {t("clinic.documents.categories.consent_form", "Consent Form")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="lab_report" id="lab_report" />
+                    <Label htmlFor="lab_report">
+                      {t("clinic.documents.categories.lab_report", "Lab Report")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="other" id="other" />
+                    <Label htmlFor="other">
+                      {t("clinic.documents.categories.other", "Other")}
+                    </Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="patient_select">
+                {t("clinic.documents.assign_patient", "Assign to Patient (Optional)")}
+              </Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("clinic.documents.select_patient", "Select a patient")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pt001">John Smith</SelectItem>
+                  <SelectItem value="pt002">Sarah Johnson</SelectItem>
+                  <SelectItem value="pt003">Michael Brown</SelectItem>
+                  <SelectItem value="pt004">Emma Davis</SelectItem>
+                  <SelectItem value="pt005">William Wilson</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2 mb-4">
+              <Checkbox id="share_with_patient" />
+              <Label htmlFor="share_with_patient">
+                {t("clinic.documents.share_with_patient", "Share with patient")}
+              </Label>
+            </div>
+          </div>
+          
           <div 
             className={`
               border-2 border-dashed rounded-lg p-10 text-center transition-colors
@@ -845,75 +918,6 @@ const ClinicDocumentsSection: React.FC = () => {
             </label>
           </div>
           
-          <div className="space-y-4 mt-4">
-            <Label>{t("clinic.documents.document_category", "Document Category")}</Label>
-            <RadioGroup defaultValue="patient_record">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="patient_record" id="patient_record" />
-                  <Label htmlFor="patient_record">
-                    {t("clinic.documents.categories.patient_record", "Patient Records")}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="x_ray" id="x_ray" />
-                  <Label htmlFor="x_ray">
-                    {t("clinic.documents.categories.x_ray", "X-Rays & Scans")}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="treatment_plan" id="treatment_plan" />
-                  <Label htmlFor="treatment_plan">
-                    {t("clinic.documents.categories.treatment_plan", "Treatment Plan")}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="consent_form" id="consent_form" />
-                  <Label htmlFor="consent_form">
-                    {t("clinic.documents.categories.consent_form", "Consent Form")}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="lab_report" id="lab_report" />
-                  <Label htmlFor="lab_report">
-                    {t("clinic.documents.categories.lab_report", "Lab Report")}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="other" id="other" />
-                  <Label htmlFor="other">
-                    {t("clinic.documents.categories.other", "Other")}
-                  </Label>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="patient_select">
-              {t("clinic.documents.assign_patient", "Assign to Patient (Optional)")}
-            </Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder={t("clinic.documents.select_patient", "Select a patient")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pt001">John Smith</SelectItem>
-                <SelectItem value="pt002">Sarah Johnson</SelectItem>
-                <SelectItem value="pt003">Michael Brown</SelectItem>
-                <SelectItem value="pt004">Emma Davis</SelectItem>
-                <SelectItem value="pt005">William Wilson</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox id="share_with_patient" />
-            <Label htmlFor="share_with_patient">
-              {t("clinic.documents.share_with_patient", "Share with patient")}
-            </Label>
-          </div>
-          
           <DialogFooter className="sm:justify-end">
             <Button 
               variant="outline" 
@@ -924,15 +928,17 @@ const ClinicDocumentsSection: React.FC = () => {
             <Button 
               type="submit"
               onClick={() => {
-                // Simulate successful upload
-                toast({
-                  title: t("clinic.documents.upload_successful", "Upload Successful"),
-                  description: t("clinic.documents.upload_successful_desc", "Files have been uploaded successfully."),
-                });
-                setShowUploadDialog(false);
+                // Keep dialog open after upload so users can select category and share options
+                document.getElementById('fileUpload')?.click();
               }}
             >
-              {t("clinic.documents.upload", "Upload")}
+              {t("clinic.documents.select_files", "Select Files")}
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => setShowUploadDialog(false)}
+            >
+              {t("common.done", "Done")}
             </Button>
           </DialogFooter>
         </DialogContent>
