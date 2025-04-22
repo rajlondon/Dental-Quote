@@ -11,7 +11,8 @@ import {
   Image,
   FileText,
   X,
-  FilePlus2 
+  FilePlus2,
+  Loader2 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Message, Attachment } from '@/types/clientPortal';
+import { apiRequest } from '@/lib/queryClient';
 
 // Mock data for initial development
 const mockMessages: Message[] = [
@@ -170,48 +172,131 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
     }
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() && attachments.length === 0) return;
+  // State to track upload progress for each attachment
+  const [uploadingFiles, setUploadingFiles] = useState<{[key: string]: boolean}>({});
+  const [processedAttachments, setProcessedAttachments] = useState<Attachment[]>([]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() && processedAttachments.length === 0) return;
     
     setIsLoading(true);
     
-    // In a real app, this would be an API call to send the message
-    setTimeout(() => {
+    try {
+      // First ensure all files are uploaded
+      if (attachments.length > 0 && processedAttachments.length < attachments.length) {
+        // Some files still need to be uploaded
+        await Promise.all(attachments.map((file, index) => uploadFile(file)));
+      }
+      
+      // Create a new message object
       const newMsg: Message = {
-        id: Math.floor(Math.random() * 1000) + 10,
+        id: Math.floor(Math.random() * 1000) + 10, // In production this would come from the server
         bookingId,
-        senderId: 2, // Current user
+        senderId: 2, // Current user ID
         senderType: 'patient',
         content: newMessage.trim(),
-        attachments: attachments.length > 0 ? attachments.map((file, index) => ({
-          id: Math.floor(Math.random() * 1000) + 10,
-          messageId: Math.floor(Math.random() * 1000) + 10,
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          url: '#',
-          createdAt: new Date().toISOString()
-        })) : undefined,
+        attachments: processedAttachments.length > 0 ? processedAttachments : undefined,
         createdAt: new Date().toISOString(),
       };
+      
+      // In production, this would be an API call to save the message
+      // For now, we'll just add it to the local state
+      // Example API call: await apiRequest('POST', '/api/messages', { message: newMsg });
       
       setMessages([...messages, newMsg]);
       setNewMessage('');
       setAttachments([]);
-      setIsLoading(false);
+      setProcessedAttachments([]);
       
       toast({
         title: t('portal.message_sent', 'Message Sent'),
         description: t('portal.message_sent_desc', 'Your message has been sent successfully.'),
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: t('portal.message_error', 'Error Sending Message'),
+        description: error instanceof Error ? error.message : 'An error occurred while sending your message.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadFile = async (file: File): Promise<Attachment> => {
+    // Skip if already uploaded
+    const existingAttachment = processedAttachments.find(a => a.fileName === file.name && a.fileSize === file.size);
+    if (existingAttachment) {
+      return existingAttachment;
+    }
+    
+    // Track this file as uploading
+    setUploadingFiles(prev => ({ ...prev, [file.name]: true }));
+    
+    try {
+      // Create form data for the file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Upload the file
+      console.log(`Uploading file: ${file.name}`);
+      const response = await fetch('/api/files/upload-message-attachment', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include' // Important for authentication
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Unknown upload error');
+      }
+      
+      console.log(`File uploaded successfully:`, result.file);
+      
+      // Create an attachment object from the response
+      const newAttachment: Attachment = {
+        id: Math.floor(Math.random() * 1000) + 10, // Would come from server in production
+        messageId: 0, // Will be assigned when the message is created
+        fileName: result.file.originalname,
+        fileType: result.file.mimetype,
+        fileSize: result.file.size,
+        url: result.file.url,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Add to processed attachments
+      setProcessedAttachments(prev => [...prev, newAttachment]);
+      
+      return newAttachment;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: t('portal.upload_error', 'Upload Error'),
+        description: `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      // Remove from uploading state
+      setUploadingFiles(prev => {
+        const updated = { ...prev };
+        delete updated[file.name];
+        return updated;
+      });
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       
-      // In a real app, check file sizes, types, etc.
+      // Validate file count
       if (attachments.length + newFiles.length > 5) {
         toast({
           title: t('portal.max_files', 'Maximum Files Exceeded'),
@@ -221,12 +306,43 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
         return;
       }
       
-      setAttachments([...attachments, ...newFiles]);
+      // Validate file sizes
+      const oversizedFiles = newFiles.filter(file => file.size > 10 * 1024 * 1024); // 10MB
+      if (oversizedFiles.length > 0) {
+        toast({
+          title: t('portal.file_too_large', 'File Too Large'),
+          description: t('portal.file_too_large_desc', 'Some files exceed the 10MB size limit.'),
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Add files to attachments state
+      setAttachments(prev => [...prev, ...newFiles]);
+      
+      // Start uploading files immediately
+      try {
+        for (const file of newFiles) {
+          await uploadFile(file);
+        }
+      } catch (error) {
+        console.error('Error processing uploads:', error);
+      }
     }
   };
 
   const removeAttachment = (index: number) => {
+    const fileToRemove = attachments[index];
+    
+    // Remove from attachments list
     setAttachments(attachments.filter((_, i) => i !== index));
+    
+    // Also remove from processed attachments if it exists there
+    if (fileToRemove) {
+      setProcessedAttachments(prev => 
+        prev.filter(a => !(a.fileName === fileToRemove.name && a.fileSize === fileToRemove.size))
+      );
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -356,26 +472,37 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
         <CardFooter className="pt-3">
           {attachments.length > 0 && (
             <div className="mb-2 w-full flex flex-wrap gap-2">
-              {attachments.map((file, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center bg-gray-50 rounded-full pl-2 pr-1 py-1 text-xs"
-                >
-                  {file.type.startsWith('image/')
-                    ? <Image className="h-3 w-3 mr-1 text-blue-500" />
-                    : <FileText className="h-3 w-3 mr-1 text-blue-500" />
-                  }
-                  <span className="truncate max-w-[100px]">{file.name}</span>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
-                    className="h-5 w-5 ml-1 text-gray-500 hover:text-gray-700"
-                    onClick={() => removeAttachment(index)}
+              {attachments.map((file, index) => {
+                const isUploading = uploadingFiles[file.name] || false;
+                const isUploaded = processedAttachments.some(a => a.fileName === file.name && a.fileSize === file.size);
+                
+                return (
+                  <div 
+                    key={index}
+                    className={`flex items-center ${isUploaded ? 'bg-green-50' : isUploading ? 'bg-blue-50' : 'bg-gray-50'} rounded-full pl-2 pr-1 py-1 text-xs`}
                   >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+                    {isUploading ? (
+                      <Loader2 className="h-3 w-3 mr-1 text-blue-500 animate-spin" />
+                    ) : isUploaded ? (
+                      <CheckCheck className="h-3 w-3 mr-1 text-green-500" />
+                    ) : file.type.startsWith('image/') ? (
+                      <Image className="h-3 w-3 mr-1 text-blue-500" />
+                    ) : (
+                      <FileText className="h-3 w-3 mr-1 text-blue-500" />
+                    )}
+                    <span className="truncate max-w-[100px]">{file.name}</span>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-5 w-5 ml-1 text-gray-500 hover:text-gray-700"
+                      onClick={() => removeAttachment(index)}
+                      disabled={isUploading}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
           
