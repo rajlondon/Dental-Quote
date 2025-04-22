@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Select,
   SelectContent,
@@ -87,11 +88,11 @@ const ClinicPortalPage: React.FC = () => {
     if (activeSection === 'payments') {
       // Short timeout to allow the state to update before navigating
       const redirectTimer = setTimeout(() => {
-        window.location.href = '/#/treatment-payment';
+        setLocation('/treatment-payment');
       }, 100);
       return () => clearTimeout(redirectTimer);
     }
-  }, [activeSection]);
+  }, [activeSection, setLocation]);
 
   // Render the active section content
   const renderSection = () => {

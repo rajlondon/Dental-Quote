@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, MessageSquare, FileText, Calendar, BarChart3, 
@@ -70,13 +71,30 @@ const AdminPortalPage: React.FC = () => {
   ]);
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-    // Use direct URL navigation for reliability
-    window.location.href = '/#/portal-login';
+  // Get auth context for logout functionality
+  const { logoutMutation } = useAuth();
+  
+  // Handle logout using authentication system
+  const handleLogout = async () => {
+    try {
+      // Call the API to logout via the mutation
+      await logoutMutation.mutateAsync();
+      
+      toast({
+        title: t('admin.logout_success', 'Successfully logged out'),
+        description: t('admin.logout_message', 'You have been logged out of your account.'),
+      });
+      
+      // Use wouter navigation instead of direct URL change
+      navigate('/portal-login');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: t('admin.logout_error', 'Logout failed'),
+        description: t('admin.logout_error_message', 'There was an issue logging out. Please try again.'),
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleMobileMenu = () => {
