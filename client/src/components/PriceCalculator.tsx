@@ -2001,16 +2001,19 @@ export default function PriceCalculator() {
                               return (
                                 <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${isIstanbulClinic ? 'bg-primary text-white' : 'bg-white'}`}>
                                   {isIstanbulClinic && (
-                                    <div className="mb-2 h-24 overflow-hidden rounded">
-                                      <img 
-                                        src="/images/clinics/dentgroup.jpg"
-                                        alt={selectedClinicData.name} 
-                                        className="w-full h-full object-cover clinic-image"
-                                        onError={(e) => {
-                                          console.error("Failed to load image:", e);
-                                          e.currentTarget.onerror = null; // Prevent infinite fallback loop
-                                        }}
-                                      />
+                                    <div className="mb-2 h-24 overflow-hidden rounded flex items-center justify-center bg-primary/10">
+                                      <div className="bg-primary/10 p-3 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                                          <path d="M2.8 12.8a10 10 0 0 0 16.4 0"></path>
+                                          <path d="M12 3c4.8 0 8.8 3.5 9.5 8.2"></path>
+                                          <path d="M12 3c-5 0-9.3 4-9.3 9a9.3 9.3 0 0 0 .3 2.2"></path>
+                                          <path d="M7 16.8A4 4 0 0 0 12 18a4 4 0 0 0 5-1.2"></path>
+                                          <path d="M12 9v.01"></path>
+                                        </svg>
+                                      </div>
+                                      <div className="text-sm font-semibold text-primary ml-3">
+                                        {selectedClinicData.name}
+                                      </div>
                                     </div>
                                   )}
                                   <div className="flex justify-between sm:block">
