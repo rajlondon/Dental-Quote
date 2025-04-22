@@ -500,6 +500,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (user) {
               // Record the payment in our database
+              const paymentMetadata = paymentIntent.metadata ? 
+                JSON.stringify(paymentIntent.metadata) : null;
+                
               await storage.createPayment({
                 userId: user.id,
                 amount: String(paymentIntent.amount / 100), // Convert from cents to pounds
@@ -510,8 +513,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 transactionId: paymentIntent.id,
                 stripePaymentIntentId: paymentIntent.id,
                 bookingId: bookingId ? parseInt(bookingId) : undefined,
-                metadata: paymentIntent.metadata,
-                createdAt: new Date()
+                // Store metadata as notes instead
+                notes: paymentMetadata
               });
               
               if (paymentType === 'deposit' && clinicId) {
@@ -523,9 +526,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   depositPaid: true,
                   depositAmount: "200.00", // £200 fixed deposit
                   status: 'confirmed',
-                  stage: 'pre_travel',
-                  createdAt: new Date(),
-                  updatedAt: new Date()
+                  stage: 'pre_travel'
+                  // Removed createdAt and updatedAt as they should be handled by the database
                 });
                 
                 console.log(`Created/updated booking: ${booking.id}`);
