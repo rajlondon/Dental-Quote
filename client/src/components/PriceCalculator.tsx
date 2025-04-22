@@ -1993,15 +1993,30 @@ export default function PriceCalculator() {
                               }
                             ];
                             
-                            return comparisonData.map((clinic, idx) => (
-                              <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${idx === 2 ? 'bg-primary text-white' : 'bg-white'}`}>
-                                <div className="flex justify-between sm:block">
-                                  <div className="text-sm font-semibold">{clinic.name}</div>
-                                  <div className={`text-lg font-bold ${idx === 2 ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                            return comparisonData.map((clinic, idx) => {
+                              // Only add images for the Istanbul clinic (third card)
+                              const isIstanbulClinic = idx === 2;
+                              const clinicImage = isIstanbulClinic ? istanbulClinics[selectedClinic].image : null;
+                              
+                              return (
+                                <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${isIstanbulClinic ? 'bg-primary text-white' : 'bg-white'}`}>
+                                  {isIstanbulClinic && clinicImage && (
+                                    <div className="mb-2 h-24 overflow-hidden rounded">
+                                      <img 
+                                        src={clinicImage} 
+                                        alt={clinic.name} 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-sm font-semibold">{clinic.name}</div>
+                                    <div className={`text-lg font-bold ${isIstanbulClinic ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                                  </div>
+                                  <div className="text-xs mt-1">{clinic.extra}</div>
                                 </div>
-                                <div className="text-xs mt-1">{clinic.extra}</div>
-                              </div>
-                            ));
+                              );
+                            });
                           })()}
                         </div>
                         
@@ -2009,9 +2024,9 @@ export default function PriceCalculator() {
                         {(() => {
                           // Get the selected clinic price with the new price factors
                           const selectedClinicPrice = [
-                            Math.round(quote.totalGBP * 0.80), // Istanbul Dental Care (Affordable)
+                            Math.round(quote.totalGBP * 0.80), // Hantipaciek Clinic (Affordable)
                             Math.round(quote.totalGBP * 0.90), // DentGroup Istanbul (Mid-Tier)
-                            Math.round(quote.totalGBP * 1.00)  // Vera Smile (Premium)
+                            Math.round(quote.totalGBP * 1.00)  // Donki Clinic (Premium)
                           ][selectedClinic];
                           
                           // Calculate Estimated UK Cost
