@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -40,6 +41,7 @@ const AdminPortalPage: React.FC = () => {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { logoutMutation } = useAuth();
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<Notification[]>([
@@ -70,13 +72,26 @@ const AdminPortalPage: React.FC = () => {
   ]);
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-    // Use direct URL navigation for reliability
-    window.location.href = '/#/portal-login';
+  const handleLogout = async () => {
+    try {
+      // Call the API to logout via the mutation
+      await logoutMutation.mutateAsync();
+      
+      toast({
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
+      });
+      
+      // Use wouter navigation instead of direct URL change
+      navigate('/portal-login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: 'Logout Error',
+        description: 'An error occurred during logout. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const toggleMobileMenu = () => {
