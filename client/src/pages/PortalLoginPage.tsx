@@ -45,9 +45,9 @@ const registerSchema = z.object({
 
 const PortalLoginPage: React.FC = () => {
   const { t } = useTranslation();
-  const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, loginMutation } = useAuth();
+  const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
   const [selectedClinicName, setSelectedClinicName] = useState("");
@@ -72,7 +72,6 @@ const PortalLoginPage: React.FC = () => {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
-    console.log("Cleared stored clinic data to simplify portal login navigation");
   }, []);
   
   // Handle registration form submission
@@ -540,7 +539,6 @@ const PortalLoginPage: React.FC = () => {
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
                                 <Input 
                                   placeholder="you@example.com" 
-                                  type="email"
                                   className="pl-10" 
                                   {...field} 
                                 />
@@ -560,7 +558,7 @@ const PortalLoginPage: React.FC = () => {
                               <div className="relative">
                                 <Phone className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
                                 <Input 
-                                  placeholder="+1 (555) 123-4567" 
+                                  placeholder="+44 7700 900123" 
                                   className="pl-10" 
                                   {...field} 
                                 />
@@ -612,68 +610,75 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      <div className="space-y-3 pt-2">
-                        <FormField
-                          control={registerForm.control}
-                          name="termsConsent"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                  I agree to the <Link href="/terms" className="text-primary underline">Terms of Service</Link>, <Link href="/privacy" className="text-primary underline">Privacy Policy</Link>, and <Link href="/disclaimer" className="text-primary underline">Medical Disclaimer</Link>
-                                </FormLabel>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={registerForm.control}
-                          name="contactConsent"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                  I agree to be contacted by MyDentalFly regarding my treatment plan and bookings
-                                </FormLabel>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={registerForm.control}
-                          name="promotionalConsent"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                  I would like to receive promotional material and special offers by email (optional)
-                                </FormLabel>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? t("portal.login.registering", "Creating account...") : t("portal.login.register", "Create Account")}
+                      <FormField
+                        control={registerForm.control}
+                        name="termsConsent"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                I agree to the Terms and Conditions, Privacy Policy, and Medical Disclaimer
+                              </FormLabel>
+                              <FormDescription>
+                                By checking this box, you agree to our terms of service, privacy policy, and consent to dental information sharing for treatment purposes.
+                              </FormDescription>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={registerForm.control}
+                        name="contactConsent"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                I consent to being contacted about my dental treatment
+                              </FormLabel>
+                              <FormDescription>
+                                We'll use your email and phone to communicate about your treatments, appointments, and quotes.
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={registerForm.control}
+                        name="promotionalConsent"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                I want to receive promotional offers and newsletters
+                              </FormLabel>
+                              <FormDescription>
+                                Receive updates on dental care tips, special offers, and new treatments (optional).
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                        {isLoading ? "Creating Account..." : t("portal.login.register", "Create Account")}
                       </Button>
                     </form>
                   </Form>
@@ -682,80 +687,80 @@ const PortalLoginPage: React.FC = () => {
             </TabsContent>
           </Tabs>
         </div>
-        
+
         {/* Right Column - Benefits */}
         <div className="hidden md:flex flex-col justify-center">
-          <div className="bg-primary/5 p-8 rounded-lg border border-primary/10">
-            <h2 className="text-2xl font-bold text-primary mb-6">
+          <div className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-lg p-8 shadow-lg">
+            <h2 className="text-2xl font-bold mb-6">
               {t("portal.login.benefits.title", "Your Dental Journey in One Place")}
             </h2>
             
-            <div className="space-y-4">
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary/10 p-2 rounded-full mt-1">
-                  <Check className="h-5 w-5 text-primary" />
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="shrink-0 bg-white/20 p-3 rounded-full">
+                  <Check className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">
+                  <h3 className="font-semibold text-lg">
                     {t("portal.login.benefits.treatment_plans", "View Your Treatment Plans")}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-white/90">
                     {t("portal.login.benefits.treatment_plans_desc", "Access detailed treatment plans from your selected clinics")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary/10 p-2 rounded-full mt-1">
-                  <Check className="h-5 w-5 text-primary" />
+              <div className="flex gap-4">
+                <div className="shrink-0 bg-white/20 p-3 rounded-full">
+                  <Check className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">
+                  <h3 className="font-semibold text-lg">
                     {t("portal.login.benefits.compare", "Compare Clinic Treatments")}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-white/90">
                     {t("portal.login.benefits.compare_desc", "Side-by-side comparison of treatment options and prices")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary/10 p-2 rounded-full mt-1">
-                  <Check className="h-5 w-5 text-primary" />
+              <div className="flex gap-4">
+                <div className="shrink-0 bg-white/20 p-3 rounded-full">
+                  <Check className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">
+                  <h3 className="font-semibold text-lg">
                     {t("portal.login.benefits.communicate", "Direct Communication")}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-white/90">
                     {t("portal.login.benefits.communicate_desc", "Message your dental providers directly within the platform")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary/10 p-2 rounded-full mt-1">
-                  <Check className="h-5 w-5 text-primary" />
+              <div className="flex gap-4">
+                <div className="shrink-0 bg-white/20 p-3 rounded-full">
+                  <Check className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">
+                  <h3 className="font-semibold text-lg">
                     {t("portal.login.benefits.book", "Book & Manage Appointments")}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-white/90">
                     {t("portal.login.benefits.book_desc", "Schedule consultations and treatments with ease")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary/10 p-2 rounded-full mt-1">
-                  <Check className="h-5 w-5 text-primary" />
+              <div className="flex gap-4">
+                <div className="shrink-0 bg-white/20 p-3 rounded-full">
+                  <Check className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">
+                  <h3 className="font-semibold text-lg">
                     {t("portal.login.benefits.secure", "Secure & Confidential")}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-white/90">
                     {t("portal.login.benefits.secure_desc", "All your dental records and communications are encrypted and secure")}
                   </p>
                 </div>
