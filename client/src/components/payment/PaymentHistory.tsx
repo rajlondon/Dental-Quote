@@ -81,13 +81,33 @@ export default function PaymentHistory({
   const { toast } = useToast();
   const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
   
+  // Payment type definition
+  interface Payment {
+    id: number;
+    userId: number;
+    bookingId?: number;
+    amount: number;
+    currency: string;
+    status: string;
+    paymentType: string;
+    paymentMethod?: string;
+    transactionId?: string;
+    stripePaymentIntentId?: string;
+    receiptUrl?: string;
+    notes?: string;
+    createdAt: string;
+  }
+  
   // Fetch payments
-  const { data: payments, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<{ success: boolean; payments: Payment[] }>({
     queryKey: bookingId 
       ? [`/api/payments/booking/${bookingId}`] 
       : [`/api/payments/user/${userId}`],
     enabled: !!userId || !!bookingId,
   });
+  
+  // Extract payments array from response
+  const payments = data?.payments || [];
   
   const handleCopyPaymentId = (paymentId: string) => {
     navigator.clipboard.writeText(paymentId).then(
@@ -111,7 +131,7 @@ export default function PaymentHistory({
   };
   
   // Open receipt in new tab
-  const openReceiptUrl = (receiptUrl: string) => {
+  const openReceiptUrl = (receiptUrl: string | undefined) => {
     if (receiptUrl) {
       window.open(receiptUrl, '_blank');
     }
@@ -162,7 +182,7 @@ export default function PaymentHistory({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.slice(0, limit || payments.length).map((payment: any) => (
+                {payments.slice(0, limit || payments.length).map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell>
                       {payment.createdAt ? format(new Date(payment.createdAt), 'dd MMM yyyy') : 'N/A'}
@@ -202,7 +222,7 @@ export default function PaymentHistory({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4">
-                    {payments.slice(0, limit || payments.length).map((payment: any) => (
+                    {payments.slice(0, limit || payments.length).map((payment) => (
                       <div key={payment.id} className="border rounded-md p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div>

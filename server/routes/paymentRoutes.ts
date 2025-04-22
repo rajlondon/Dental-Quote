@@ -22,22 +22,22 @@ router.get("/", ensureAuthenticated, async (req: Request, res: Response) => {
       }
     }
     
-    let payments = [];
+    let payments: any[] = [];
     if (bookingId) {
       payments = await storage.getPaymentsByBookingId(parseInt(bookingId as string));
     } else if (userId) {
       payments = await storage.getPaymentsByUserId(parseInt(userId as string));
     } else if (req.user?.role === "admin") {
-      // Admin can get all payments with limit
-      // TODO: Implement getAllPayments in storage.ts with pagination
-      payments = []; // Placeholder for now
+      // Admin can get all payments with optional limit
+      const limitNumber = limit ? parseInt(limit as string) : undefined;
+      payments = await storage.getAllPayments(limitNumber);
     } else {
       // Default to current user's payments
       payments = await storage.getPaymentsByUserId(req.user!.id);
     }
     
-    // Apply limit if specified
-    if (limit && parseInt(limit as string) > 0) {
+    // Apply limit if specified and not already applied for admin
+    if (limit && parseInt(limit as string) > 0 && req.user?.role !== "admin") {
       payments = payments.slice(0, parseInt(limit as string));
     }
     
@@ -122,17 +122,26 @@ router.post("/create-treatment-payment-intent", csrfProtection, ensureAuthentica
     
     console.log('Creating treatment payment intent with email:', email);
     
-    // Create payment intent
+    // Create payment intent with proper handling of metadata
+    const paymentMetadata: Record<string, string> = {
+      ...metadata,
+      description: description || "Treatment Payment"
+    };
+    
+    // Only add defined fields to metadata
+    if (bookingId) {
+      paymentMetadata.bookingId = bookingId.toString();
+    }
+    
+    if (treatmentPlanId) {
+      paymentMetadata.treatmentPlanId = treatmentPlanId.toString();
+    }
+    
     const paymentIntentData = await createTreatmentPaymentIntent(
       email, 
       amount, 
       currency, 
-      {
-        ...metadata,
-        description: description || "Treatment Payment",
-        bookingId: bookingId ? bookingId.toString() : undefined,
-        treatmentPlanId: treatmentPlanId ? treatmentPlanId.toString() : undefined
-      }
+      paymentMetadata
     );
     
     // Return client secret
