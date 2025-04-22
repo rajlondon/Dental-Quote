@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,17 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'testing', label: t("clinic.nav.testing", "Testing Mode"), icon: <TestTube className="h-5 w-5" /> },
   ];
 
+  // Payment section redirect effect
+  useEffect(() => {
+    if (activeSection === 'payments') {
+      // Short timeout to allow the state to update before navigating
+      const redirectTimer = setTimeout(() => {
+        window.location.href = '/#/treatment-payment';
+      }, 100);
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [activeSection]);
+
   // Render the active section content
   const renderSection = () => {
     switch (activeSection) {
@@ -87,12 +98,7 @@ const ClinicPortalPage: React.FC = () => {
       case 'documents':
         return <ClinicDocumentsSection />;
       case 'payments':
-        // Redirect to the payment page when the payments section is selected
-        useEffect(() => {
-          if (activeSection === 'payments') {
-            window.location.href = '/#/treatment-payment';
-          }
-        }, [activeSection]);
+        // Show loading spinner while redirecting to payment page
         return (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
