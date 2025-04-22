@@ -436,6 +436,13 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+export const insertPaymentSchema = createInsertSchema(payments)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
 // === FILES ===
 export const files = pgTable("files", {
   id: serial("id").primaryKey(),
