@@ -63,8 +63,16 @@ const PortalLoginPage: React.FC = () => {
     }
   }, [user, navigate]);
 
-  // Set selected clinic data
+  // Check for query parameters and set selected clinic data
   useEffect(() => {
+    // Check for clinic type in URL
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type');
+    if (type === 'clinic') {
+      document.getElementById('clinic-tab')?.click();
+    }
+    
+    // Check for selected clinic data
     if (localStorage.getItem('selectedClinic')) {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
@@ -228,9 +236,10 @@ const PortalLoginPage: React.FC = () => {
           )}
           
           <Tabs defaultValue="login" className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
-              <TabsTrigger value="register">{t("portal.login.register", "Register")}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger id="login-tab" value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
+              <TabsTrigger id="clinic-tab" value="clinic">Clinic Login</TabsTrigger>
+              <TabsTrigger id="register-tab" value="register">{t("portal.login.register", "Register")}</TabsTrigger>
             </TabsList>
             
             {/* Regular Login Tab */}
