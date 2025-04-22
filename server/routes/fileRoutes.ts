@@ -1,13 +1,91 @@
 import express, { Request, Response } from "express";
 import { csrfProtection, uploadRateLimit } from "../middleware/security";
 import { ensureAuthenticated, checkRole } from "../middleware/auth";
-import { upload, handleUploadError, processUploadedFile, type UploadedFile, StorageType } from "../file-upload";
+import { upload, handleUploadError, processUploadedFile, type UploadedFile, StorageType, ACTIVE_STORAGE_TYPE } from "../file-upload";
 import { logError, ErrorSeverity } from "../services/error-logger";
-import { listS3Files, getSignedS3Url } from "../services/cloud-storage";
+import { listS3Files, getSignedS3Url, cloudStorageConfig, isCloudStorageConfigured } from "../services/cloud-storage";
+import { runAwsS3ConfigCheck } from "../aws-s3-check";
 import { db } from "../db";
 import { parse } from "path";
 
 const router = express.Router();
+
+// Test AWS S3 connection and upload capabilities
+router.get("/test-s3", async (req: Request, res: Response) => {
+  const isAdmin = req.user?.role === 'admin';
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  // Only allow admin users in production
+  if (isProd && !isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized access to S3 test endpoint"
+    });
+  }
+  
+  try {
+    console.log('Running AWS S3 configuration check...');
+    const s3TestResult = await checkAwsS3Configuration();
+    
+    return res.json({
+      success: true,
+      s3TestResult,
+      message: s3TestResult 
+        ? "AWS S3 is properly configured and operational" 
+        : "AWS S3 configuration check failed - see server logs for details"
+    });
+  } catch (error) {
+    console.error('Error running S3 test:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Error running S3 test",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Debug endpoint to check storage configuration (admin-only in production)
+router.get("/debug-storage", async (req: Request, res: Response) => {
+  const isAdmin = req.user?.role === 'admin';
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  // Only allow admin users in production
+  if (isProd && !isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized access to debug endpoint"
+    });
+  }
+  
+  // Check environment variables without exposing secrets
+  const s3AccessKeyExists = !!process.env.S3_ACCESS_KEY;
+  const s3SecretKeyExists = !!process.env.S3_SECRET_KEY;
+  const awsAccessKeyExists = !!process.env.AWS_ACCESS_KEY_ID;
+  const awsSecretKeyExists = !!process.env.AWS_SECRET_ACCESS_KEY;
+  const bucketNameExists = !!process.env.S3_BUCKET_NAME;
+  const bucketName = process.env.S3_BUCKET_NAME;
+  const region = process.env.S3_REGION || process.env.AWS_REGION || 'eu-north-1';
+  
+  // Provide diagnostics info
+  return res.json({
+    success: true,
+    environment: process.env.NODE_ENV || 'development',
+    storageConfig: {
+      activeStorageType: StorageType[ACTIVE_STORAGE_TYPE],
+      configuredProvider: cloudStorageConfig.provider,
+      isCloudStorageConfigured: isCloudStorageConfigured(),
+      region
+    },
+    credentials: {
+      s3AccessKeyExists,
+      s3SecretKeyExists,
+      awsAccessKeyExists,
+      awsSecretKeyExists,
+      bucketNameExists,
+      bucketName // This is safe to expose
+    }
+  });
+});
 
 // General file upload endpoint
 router.post("/upload", uploadRateLimit, ensureAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
@@ -24,7 +102,7 @@ router.post("/upload", uploadRateLimit, ensureAuthenticated, upload.single('file
     }
 
     console.log(`Processing file upload: ${file.originalname}, Category: ${category}`);
-    console.log(`Storage active type: ${StorageType[StorageType.AWS_S3]} vs ${process.env.NODE_ENV}`);
+    console.log(`Storage active type: ${StorageType[ACTIVE_STORAGE_TYPE]} in ${process.env.NODE_ENV} environment`);
     
     // Process the file (handles S3 upload if configured)
     const processedFile = await processUploadedFile(file);
