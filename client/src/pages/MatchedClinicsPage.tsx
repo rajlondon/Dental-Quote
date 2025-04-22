@@ -521,61 +521,46 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
                   <div className="md:col-span-1">
-                    <div className="aspect-video rounded-lg overflow-hidden mb-4 relative">
-                      {/* Clinic banner with consistent styling */}
-                      <div className={`absolute inset-0 flex flex-col items-center justify-center 
-                        ${clinic.tier === 'premium' 
-                          ? 'bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200' 
-                          : clinic.tier === 'standard' 
-                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
-                            : 'bg-gradient-to-r from-green-50 to-blue-50 border border-green-200'
-                        }`}>
-                        <div className="flex items-center justify-center mb-2">
-                          {/* Large circular badge with clinic initial */}
-                          <div className={`flex items-center justify-center w-24 h-24 rounded-full 
-                            ${clinic.tier === 'premium' 
-                              ? 'bg-amber-500 text-white' 
-                              : clinic.tier === 'standard' 
-                                ? 'bg-blue-500 text-white' 
-                                : 'bg-green-500 text-white'
-                            }`}>
-                            <span className="font-bold text-3xl">
-                              {clinic.name.charAt(0)}
-                            </span>
+                    <div className="aspect-video rounded-lg overflow-hidden mb-4 relative shadow-md border-2 border-gray-100">
+                      {/* Clinic image */}
+                      <img 
+                        src={`/images/clinics/${clinic.id}/exterior.jpg`} 
+                        alt={`${clinic.name} Exterior`}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          // Fallback if image doesn't load
+                          e.currentTarget.src = clinic.tier === 'premium' 
+                            ? 'https://placehold.co/600x400/fef3c7/92400e?text=Premium+Clinic'
+                            : clinic.tier === 'standard'
+                              ? 'https://placehold.co/600x400/e0f2fe/1e40af?text=Standard+Clinic'
+                              : 'https://placehold.co/600x400/f0fdf4/166534?text=Affordable+Clinic';
+                        }}
+                      />
+                      
+                      {/* Overlay with clinic info */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                        <div className="flex justify-between items-end">
+                          <div>
+                            <h3 className="font-bold text-white text-lg leading-tight truncate">{clinic.name}</h3>
+                            <div className="flex items-center">
+                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                              <span className="ml-1 text-sm font-medium text-white">{clinic.ratings.overall}</span>
+                              <span className="ml-1 text-xs text-gray-300">({clinic.ratings.reviews})</span>
+                            </div>
                           </div>
-                        </div>
-                        
-                        {/* Clinic name overlay with proper spacing */}
-                        <div className="w-full text-center px-4">
-                          <span className={`font-bold text-lg px-4 py-2 rounded-full bg-white/90 
-                            ${clinic.tier === 'premium' 
-                              ? 'text-amber-800' 
-                              : clinic.tier === 'standard' 
-                                ? 'text-blue-800' 
-                                : 'text-green-800'
-                            }`}>
-                            {clinic.name}
-                          </span>
-                          <div className={`mt-2 font-medium text-sm 
-                            ${clinic.tier === 'premium' 
-                              ? 'text-amber-800' 
-                              : clinic.tier === 'standard' 
-                                ? 'text-blue-800' 
-                                : 'text-green-800'
-                            }`}>
-                            {tierInfo.label} Clinic Experience
-                          </div>
-                        </div>
-                        
-                        {/* Subtle icon overlay for visual interest */}
-                        <div className="absolute top-4 right-4">
-                          {clinic.tier === 'premium' ? (
-                            <Award className="h-6 w-6 text-amber-500/70" />
-                          ) : clinic.tier === 'standard' ? (
-                            <ShieldCheck className="h-6 w-6 text-blue-500/70" />
-                          ) : (
-                            <Check className="h-6 w-6 text-green-500/70" />
-                          )}
+                          <Badge 
+                            variant="outline" 
+                            className={`
+                              ${clinic.tier === 'premium' 
+                                ? 'bg-amber-500/90 text-white border-amber-400' 
+                                : clinic.tier === 'standard' 
+                                  ? 'bg-blue-500/90 text-white border-blue-400' 
+                                  : 'bg-green-500/90 text-white border-green-400'
+                              }
+                            `}
+                          >
+                            {tierInfo.label}
+                          </Badge>
                         </div>
                       </div>
                     </div>
