@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import ClinicImageCarousel from "@/components/ClinicImageCarousel";
 import { Link } from "wouter";
 
 // Import clinic data
@@ -177,13 +178,28 @@ const ClinicDetailPage: React.FC = () => {
             </div>
             
             {/* Clinic Showcase */}
-            <div className="h-64 bg-gray-200 relative">
-              {/* In a real app, this would be an image gallery component */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/20 flex items-center justify-center">
-                <div className="text-center">
-                  <Building2 className="h-16 w-16 text-primary/40 mx-auto mb-4" />
-                  <div className="font-medium text-gray-700">Clinic Images Gallery</div>
-                </div>
+            <div className="h-80 bg-gray-200 relative overflow-hidden">
+              {/* Using ClinicImageCarousel component for multiple clinic images */}
+              <ClinicImageCarousel 
+                clinicId={clinic.id} 
+                className="h-full w-full"
+              />
+              
+              {/* Overlay with clinic tier badge */}
+              <div className="absolute top-4 right-4 z-10">
+                <Badge 
+                  variant="outline" 
+                  className={`
+                    ${clinic.tier === 'premium' 
+                      ? 'bg-amber-500/90 text-white border-amber-400' 
+                      : clinic.tier === 'standard' 
+                        ? 'bg-blue-500/90 text-white border-blue-400' 
+                        : 'bg-green-500/90 text-white border-green-400'
+                    } text-sm py-1.5 px-3 font-medium
+                  `}
+                >
+                  {tierInfo.label} Clinic
+                </Badge>
               </div>
             </div>
             
