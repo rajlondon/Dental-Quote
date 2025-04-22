@@ -312,6 +312,74 @@ const PortalLoginPage: React.FC = () => {
             </TabsContent>
 
 
+            {/* Clinic Login Tab */}
+            <TabsContent value="clinic">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Clinic Staff Login</CardTitle>
+                  <CardDescription>
+                    Access your clinic dashboard and patient management
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...loginForm}>
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                      <FormField
+                        control={loginForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Clinic Email</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  placeholder="clinic@example.com" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={loginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Signing in..." : "Sign In as Clinic Staff"}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Link href="/forgot-password">
+                    <Button variant="link" className="px-0">
+                      Forgot password?
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            </TabsContent>
             
             {/* Registration Tab */}
             <TabsContent value="register">
