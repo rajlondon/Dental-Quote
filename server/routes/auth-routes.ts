@@ -4,7 +4,6 @@ import { db } from "../db";
 import { users } from "../../shared/schema";
 import { eq } from "drizzle-orm";
 import { createVerificationToken, formatVerificationEmail, formatPasswordResetEmail, verifyToken, markTokenAsUsed, markEmailAsVerified, getUserByEmail } from "../services/email-service";
-import emailjs from '@emailjs/browser';
 
 const router = Router();
 
@@ -75,16 +74,40 @@ router.post("/register", async (req: Request, res: Response) => {
       publicKeyExists: !!emailjsPublicKey
     });
     
-    // Send verification email
-    // Note: We're using the server-side API here, which is different from client-side
-    await emailjs.send(
-      emailjsServiceId!,
-      emailjsTemplateId!,
-      emailData,
-      {
-        publicKey: emailjsPublicKey!,
+    // Send verification email using Node.js implementation
+    try {
+      // Using node-fetch for making the HTTP request to EmailJS API
+      const nodeFetch = await import('node-fetch');
+      const fetch = nodeFetch.default;
+      
+      // Prepare the data for EmailJS API
+      const serviceId = emailjsServiceId!;
+      const templateId = emailjsTemplateId!;
+      const publicKey = emailjsPublicKey!;
+      
+      const url = 'https://api.emailjs.com/api/v1.0/email/send';
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          service_id: serviceId,
+          template_id: templateId,
+          user_id: publicKey,
+          template_params: emailData,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`EmailJS API error: ${response.statusText}`);
       }
-    );
+      
+      console.log('Verification email sent successfully');
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      throw new Error('Failed to send verification email. Registration successful, but you need to contact support for verification.');
+    }
     
     // Return success without password
     res.status(201).json({
@@ -191,15 +214,41 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
     const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
     
-    // Send reset email
-    await emailjs.send(
-      emailjsServiceId!,
-      emailjsTemplateId!,
-      emailData,
-      {
-        publicKey: emailjsPublicKey!,
+    // Send reset email using Node.js implementation
+    try {
+      // Using node-fetch for making the HTTP request to EmailJS API
+      const nodeFetch = await import('node-fetch');
+      const fetch = nodeFetch.default;
+      
+      // Prepare the data for EmailJS API
+      const serviceId = emailjsServiceId!;
+      const templateId = emailjsTemplateId!;
+      const publicKey = emailjsPublicKey!;
+      
+      const url = 'https://api.emailjs.com/api/v1.0/email/send';
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          service_id: serviceId,
+          template_id: templateId,
+          user_id: publicKey,
+          template_params: emailData,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`EmailJS API error: ${response.statusText}`);
       }
-    );
+      
+      console.log('Password reset email sent successfully');
+    } catch (emailError) {
+      console.error('Error sending password reset email:', emailError);
+      // Still return success to not reveal if email exists
+      console.log('Suppressing password reset email error for security');
+    }
     
     res.status(200).json({
       success: true,
