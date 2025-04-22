@@ -282,19 +282,23 @@ const ClinicDocumentsSection: React.FC = () => {
   });
   
   // Handle file upload
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files) return;
+  const handleFileUpload = async (fileList: FileList | null, selectedFilesArray?: File[]) => {
+    // Use either FileList or direct array of Files
+    const fileArray = selectedFilesArray || (fileList ? Array.from(fileList) : []);
     
-    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+    
     const fileNames = fileArray.map(file => file.name).join(', ');
     
-    // Add files to state to show in the UI
-    setSelectedFiles(prev => [...prev, ...fileArray]);
+    // Only add to the UI state if we're uploading from a FileList (direct drop or input)
+    if (fileList && !selectedFilesArray) {
+      setSelectedFiles(prev => [...prev, ...fileArray]);
+    }
     
     toast({
       title: t("clinic.documents.uploading", "Uploading Files"),
       description: t("clinic.documents.upload_started", "Starting upload of {{count}} files", {
-        count: files.length
+        count: fileArray.length
       }),
     });
     
@@ -306,11 +310,11 @@ const ClinicDocumentsSection: React.FC = () => {
       
       const successCount = results.filter(r => r.status === 'fulfilled').length;
       
-      if (successCount === files.length) {
+      if (successCount === fileArray.length) {
         toast({
           title: t("clinic.documents.upload_successful", "Files Uploaded Successfully"),
           description: t("clinic.documents.upload_successful_desc", "{{count}} files uploaded: {{files}}", {
-            count: files.length,
+            count: fileArray.length,
             files: fileNames
           }),
         });
@@ -319,7 +323,7 @@ const ClinicDocumentsSection: React.FC = () => {
           title: t("clinic.documents.upload_partial", "Partial Upload Success"),
           description: t("clinic.documents.upload_partial_desc", "{{success}} of {{total}} files uploaded successfully", {
             success: successCount,
-            total: files.length
+            total: fileArray.length
           }),
           variant: "destructive"
         });
@@ -356,14 +360,18 @@ const ClinicDocumentsSection: React.FC = () => {
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileUpload(e.dataTransfer.files);
+      // Add dropped files to selection first, instead of uploading immediately
+      const newFiles = Array.from(e.dataTransfer.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
   
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      handleFileUpload(e.target.files);
+      // Add files to selection first, instead of uploading immediately
+      const newFiles = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
   
@@ -934,6 +942,36 @@ const ClinicDocumentsSection: React.FC = () => {
                         <span className="text-xs text-gray-500 ml-auto">
                           {formatFileSize(file.size)}
                         </span>
+                        {/* Add preview button for image files */}
+                        {(['jpg', 'jpeg', 'png', 'gif'].includes(file.name.split('.').pop()?.toLowerCase() || '')) && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="ml-2 p-1 h-8 w-8" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Create a temporary object URL for preview
+                              const fileUrl = URL.createObjectURL(file);
+                              const previewDoc: Document = {
+                                id: `temp-${index}`,
+                                name: file.name,
+                                type: file.name.split('.').pop()?.toLowerCase() || '',
+                                size: file.size,
+                                category: 'other',
+                                uploaded: new Date().toISOString(),
+                                uploadedBy: 'You',
+                                shared: false,
+                                url: fileUrl,
+                                thumbnail: fileUrl
+                              };
+                              setSelectedDocument(previewDoc);
+                              setShowPreviewDialog(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -981,7 +1019,11 @@ const ClinicDocumentsSection: React.FC = () => {
             </Button>
             <Button
               variant="default"
-              onClick={() => {
+              onClick={async () => {
+                if (selectedFiles.length > 0) {
+                  // Upload all selected files
+                  await handleFileUpload(null, selectedFiles);
+                }
                 setShowUploadDialog(false);
                 // Reset selected files when done
                 setSelectedFiles([]);
