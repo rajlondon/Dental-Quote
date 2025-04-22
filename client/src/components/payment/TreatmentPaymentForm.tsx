@@ -69,14 +69,34 @@ export default function TreatmentPaymentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStripeReady, setIsStripeReady] = useState(false);
   
+  // Define user data interface
+  interface UserData {
+    id: number;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    username: string;
+  }
+  
+  // Define treatment plan interface
+  interface TreatmentPlan {
+    id: number;
+    userId: number;
+    treatmentType: string;
+    estimatedTotalCost: number;
+    status: string;
+    notes?: string;
+    createdAt: string;
+  }
+  
   // Get user details
-  const { data: userData } = useQuery({
+  const { data: userData } = useQuery<UserData>({
     queryKey: [`/api/user/${userId}`],
     enabled: !!userId,
   });
   
   // Get treatment plan details if treatmentPlanId is provided
-  const { data: treatmentPlan } = useQuery({
+  const { data: treatmentPlan } = useQuery<TreatmentPlan>({
     queryKey: [`/api/treatment-plans/${treatmentPlanId}`],
     enabled: !!treatmentPlanId,
   });
@@ -182,17 +202,21 @@ export default function TreatmentPaymentForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {userData && (
+            {userData ? (
               <div className="rounded-md bg-primary/5 p-4 mb-4">
                 <h3 className="text-sm font-medium">Patient Information</h3>
                 <div className="mt-2 text-sm">
-                  <p>Name: {userData.firstName} {userData.lastName}</p>
+                  <p>Name: {userData.firstName || ''} {userData.lastName || ''}</p>
                   <p>Email: {userData.email}</p>
                 </div>
               </div>
+            ) : (
+              <div className="rounded-md bg-muted/20 p-4 mb-4 animate-pulse">
+                <h3 className="text-sm font-medium">Loading patient information...</h3>
+              </div>
             )}
             
-            {treatmentPlan && (
+            {treatmentPlan ? (
               <div className="rounded-md bg-primary/5 p-4 mb-4">
                 <h3 className="text-sm font-medium">Treatment Plan Information</h3>
                 <div className="mt-2 text-sm">
@@ -200,7 +224,11 @@ export default function TreatmentPaymentForm({
                   <p>Treatment Type: {treatmentPlan.treatmentType}</p>
                 </div>
               </div>
-            )}
+            ) : treatmentPlanId ? (
+              <div className="rounded-md bg-muted/20 p-4 mb-4 animate-pulse">
+                <h3 className="text-sm font-medium">Loading treatment plan...</h3>
+              </div>
+            ) : null}
             
             <FormField
               control={form.control}
