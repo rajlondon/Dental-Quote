@@ -95,7 +95,68 @@ const PortalLoginPage: React.FC = () => {
         lastName = nameParts.slice(1).join(" ");
       }
       
-      // Make API call to register user
+      // Development mode - Use the test account creation API instead of regular registration
+      // This will allow us to bypass email verification for testing
+      const isDevelopment = process.env.NODE_ENV !== 'production' || window.location.hostname.includes('replit');
+      
+      if (isDevelopment) {
+        const useTestRegistration = window.confirm(
+          "Would you like to use the simplified development registration?\n\n" +
+          "This will create a pre-verified account that doesn't require email verification.\n\n" +
+          "Click OK for simplified registration (recommended for testing), or Cancel for normal registration with email verification."
+        );
+        
+        if (useTestRegistration) {
+          // Use test account creation that bypasses email verification
+          const testResponse = await fetch('/api/auth/create-test-account', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+              role: "patient"
+            }),
+          });
+          
+          const testData = await testResponse.json();
+          
+          if (!testResponse.ok) {
+            throw new Error(testData.message || "Test registration failed");
+          }
+          
+          // Automatically log in with the new account
+          const loginResponse = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+            }),
+          });
+          
+          const loginData = await loginResponse.json();
+          
+          if (!loginResponse.ok) {
+            throw new Error(loginData.message || "Login after registration failed");
+          }
+          
+          toast({
+            title: "Development Registration Successful",
+            description: "Your account was created with pre-verified status. You're now logged in.",
+          });
+          
+          // Navigate to patient portal
+          localStorage.removeItem('selectedClinicId');
+          navigate("/client-portal");
+          return;
+        }
+      }
+      
+      // Regular registration process with email verification
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -118,18 +179,21 @@ const PortalLoginPage: React.FC = () => {
       if (!response.ok) {
         throw new Error(data.message || "Registration failed");
       }
-      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // For now, show toast and redirect to patient portal
+      // Show verification required message
       toast({
         title: "Registration Successful",
-        description: "Welcome to MyDentalFly! You're now logged in.",
+        description: "Please check your email to verify your account before logging in.",
       });
       
-      // Simplify routing approach - direct navigation to patient portal without parameters
-      localStorage.removeItem('selectedClinicId'); // Clear any stored clinic ID to avoid routing issues
-      console.log("Redirecting to patient portal with simplified navigation");
-      window.location.href = "/client-portal";
+      // Reset the form
+      registerForm.reset();
+      
+      // Switch to login tab
+      const loginTab = document.querySelector('[data-state="inactive"][value="login"]') as HTMLElement;
+      if (loginTab) {
+        loginTab.click();
+      }
     } catch (error) {
       toast({
         title: "Registration Failed",
