@@ -90,18 +90,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.redirect("/portal-login");
   });
   
-  // Register portal routes for clinic, admin, and client portal functionality
+  // IMPORTANT: Register routes in this order to avoid conflicts:
+  // 1. Global auth middleware
+  // 2. Role-specific middleware
+  // 3. Portal routes
+  
   // Apply global authentication for all portal routes
   app.use("/api/portal", ensureAuthenticated);
-  
-  // Register main portal routes first
-  app.use(portalRoutes);
   
   // Protect admin-specific routes
   app.use("/api/portal/admin", ensureRole("admin"));
   
   // Protect clinic-specific routes
   app.use("/api/portal/clinic", ensureRole("clinic_staff"));
+  
+  // Register main portal routes AFTER role middleware
+  app.use(portalRoutes);
   
   // Register file upload/management routes with upload rate limiting
   app.use('/api/files', uploadRateLimit, fileRoutes);
