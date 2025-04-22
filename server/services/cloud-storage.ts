@@ -263,7 +263,12 @@ export async function uploadToS3(
   key: string, 
   mimetype: string
 ): Promise<UploadFileResponse> {
+  console.log(`Attempting S3 upload for file with key: ${key}`);
+  console.log(`Mimetype: ${mimetype}, Buffer size: ${buffer.length} bytes`);
+  
   if (!s3Client || !cloudStorageConfig.bucket) {
+    console.error('S3 client or bucket not configured');
+    console.log(`S3 client exists: ${!!s3Client}, Bucket: ${cloudStorageConfig.bucket}`);
     return { 
       success: false, 
       message: 'S3 client or bucket not configured' 
@@ -271,6 +276,9 @@ export async function uploadToS3(
   }
 
   try {
+    console.log(`Using bucket: ${cloudStorageConfig.bucket}`);
+    console.log(`Using region: ${cloudStorageConfig.region || 'default'}`);
+    
     const command = new PutObjectCommand({
       Bucket: cloudStorageConfig.bucket,
       Key: key,
@@ -280,19 +288,24 @@ export async function uploadToS3(
       ServerSideEncryption: 'AES256'
     });
 
-    await s3Client.send(command);
+    console.log('Sending S3 PutObject command...');
+    const response = await s3Client.send(command);
+    console.log('S3 upload succeeded:', response);
     
     // Generate URL (either from base URL or signed URL)
     let url = '';
     if (cloudStorageConfig.baseUrl) {
       url = `${cloudStorageConfig.baseUrl}/${key}`;
+      console.log(`Using base URL: ${url}`);
     } else {
       const getCommand = new GetObjectCommand({
         Bucket: cloudStorageConfig.bucket,
         Key: key
       });
       // Generate temporary signed URL valid for 60 minutes
+      console.log('Generating signed URL...');
       url = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
+      console.log(`Generated signed URL successfully`);
     }
 
     return {
@@ -302,10 +315,23 @@ export async function uploadToS3(
       key
     };
   } catch (error) {
+    console.error('S3 upload failed with error:', error);
+    
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error(`Error name: ${error.name}`);
+      console.error(`Error message: ${error.message}`);
+      console.error(`Error stack: ${error.stack}`);
+    }
+    
     logError(error instanceof Error ? error : new Error(String(error)), {
       component: 'CloudStorage',
       operation: 'uploadToS3',
-      key
+      key,
+      mimetype,
+      bufferSize: buffer.length,
+      bucket: cloudStorageConfig.bucket,
+      region: cloudStorageConfig.region
     }, ErrorSeverity.ERROR);
 
     return {
