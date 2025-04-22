@@ -44,26 +44,28 @@ const ClinicPortalPage: React.FC = () => {
   const { logoutMutation } = useAuth();
   
   // Handle logout
-  const handleLogout = async () => {
-    try {
-      // Call the API to logout via the mutation
-      await logoutMutation.mutateAsync();
-      
-      toast({
-        title: t('portal.logout_success', 'Successfully logged out'),
-        description: t('portal.logout_message', 'You have been logged out of your account.'),
-      });
-      
-      // Use wouter navigation instead of direct URL change
-      setLocation('/portal-login');
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast({
-        title: t('portal.logout_error', 'Logout failed'),
-        description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    // Using non-async function to make sure the button click handler completes immediately
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        // When successful, show toast and redirect
+        toast({
+          title: t('portal.logout_success', 'Successfully logged out'),
+          description: t('portal.logout_message', 'You have been logged out of your account.'),
+        });
+        
+        // Use wouter navigation instead of direct URL change
+        setLocation('/portal-login');
+      },
+      onError: (error) => {
+        console.error("Logout error:", error);
+        toast({
+          title: t('portal.logout_error', 'Logout failed'),
+          description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   // Clinic navigation items
