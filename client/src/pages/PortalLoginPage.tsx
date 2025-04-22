@@ -57,14 +57,14 @@ const PortalLoginPage: React.FC = () => {
     if (user) {
       console.log("User already logged in, redirecting:", user.role);
       if (user.role === 'admin') {
-        window.location.href = '/admin-portal';
+        navigate('/admin-portal');
       } else if (user.role === 'clinic_staff') {
-        window.location.href = '/clinic-portal';
+        navigate('/clinic-portal');
       } else {
-        window.location.href = '/client-portal';
+        navigate('/client-portal');
       }
     }
-  }, [user]);
+  }, [user, navigate]);
 
   // Set selected clinic data
   useEffect(() => {
@@ -170,14 +170,14 @@ const PortalLoginPage: React.FC = () => {
       
       if (userData.role === 'admin') {
         console.log("Admin user detected, redirecting to admin portal");
-        window.location.href = '/admin-portal';
+        navigate('/admin-portal');
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
-        window.location.href = '/clinic-portal';
+        navigate('/clinic-portal');
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");
-        window.location.href = '/client-portal';
+        navigate('/client-portal');
       }
       
     } catch (error) {
@@ -281,14 +281,14 @@ const PortalLoginPage: React.FC = () => {
       
       if (userData.role === 'admin') {
         console.log("Admin user detected in test login, redirecting to admin portal");
-        window.location.href = '/admin-portal';
+        navigate('/admin-portal');
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected in test login, redirecting to clinic portal");
-        window.location.href = '/clinic-portal';
+        navigate('/clinic-portal');
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected in test login, redirecting to patient portal");
-        window.location.href = '/client-portal';
+        navigate('/client-portal');
       }
       
     } catch (error) {
