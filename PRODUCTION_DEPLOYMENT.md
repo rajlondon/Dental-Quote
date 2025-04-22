@@ -187,11 +187,27 @@ In production, error handling is enhanced:
 
 ### 9.2 Regular Maintenance
 
-- Update dependencies regularly
-- Rotate API keys and secrets
-- Review and update IAM policies
-- Test backup and recovery procedures
+- Schedule regular security updates
+- Perform periodic security audits
+- Review and rotate API keys and credentials
+- Check for outdated dependencies
 
----
+## 10. GDPR Compliance
 
-For additional assistance or questions about production deployment, contact the MyDentalFly development team.
+For European operations, ensure GDPR compliance:
+
+1. Implement proper consent mechanisms for data collection
+2. Provide a way for users to download or delete their data
+3. Document all data processing activities
+4. Establish a data breach notification process
+5. Ensure all third-party services are GDPR compliant
+
+## 11. Scaling Considerations
+
+As the application grows:
+
+1. Consider implementing a CDN for static assets
+2. Set up database connection pooling
+3. Configure caching strategies for frequently accessed data
+4. Monitor API rate limits for external services (Stripe, AWS, etc.)
+5. Consider horizontal scaling options for high-traffic scenarios
