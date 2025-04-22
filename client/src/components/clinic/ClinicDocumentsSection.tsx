@@ -120,9 +120,24 @@ const ClinicDocumentsSection: React.FC = () => {
       if (activeTab !== 'all') params.append('type', activeTab);
       if (filterCategory !== 'all') params.append('category', filterCategory);
       
-      const response = await apiRequest('GET', `/api/files/list?${params.toString()}`);
-      const data = await response.json();
-      return data;
+      try {
+        const response = await fetch(`/api/files/list?${params.toString()}`, {
+          credentials: "include",
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Error fetching files:", error);
+        throw error;
+      }
     }
   });
   
