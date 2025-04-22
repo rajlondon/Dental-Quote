@@ -537,31 +537,21 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         }}
                       />
                       
-                      {/* Overlay with clinic info */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                        <div className="flex justify-between items-end">
-                          <div>
-                            <h3 className="font-bold text-white text-lg leading-tight truncate">{clinic.name}</h3>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                              <span className="ml-1 text-sm font-medium text-white">{clinic.ratings.overall}</span>
-                              <span className="ml-1 text-xs text-gray-300">({clinic.ratings.reviews})</span>
-                            </div>
-                          </div>
-                          <Badge 
-                            variant="outline" 
-                            className={`
-                              ${clinic.tier === 'premium' 
-                                ? 'bg-amber-500/90 text-white border-amber-400' 
-                                : clinic.tier === 'standard' 
-                                  ? 'bg-blue-500/90 text-white border-blue-400' 
-                                  : 'bg-green-500/90 text-white border-green-400'
-                              }
-                            `}
-                          >
-                            {tierInfo.label}
-                          </Badge>
-                        </div>
+                      {/* Small badge in the corner to indicate tier */}
+                      <div className="absolute top-2 right-2">
+                        <Badge 
+                          variant="outline" 
+                          className={`
+                            ${clinic.tier === 'premium' 
+                              ? 'bg-amber-500/90 text-white border-amber-400' 
+                              : clinic.tier === 'standard' 
+                                ? 'bg-blue-500/90 text-white border-blue-400' 
+                                : 'bg-green-500/90 text-white border-green-400'
+                            }
+                          `}
+                        >
+                          {tierInfo.label}
+                        </Badge>
                       </div>
                     </div>
                     
