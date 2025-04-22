@@ -57,30 +57,31 @@ const getStatusColor = (status: string): string => {
 // Main component using React.memo to prevent unnecessary re-renders
 const ClinicDashboardSection = memo(() => {
   // State management for loading and errors
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [stats, setStats] = useState<any>(null);
   
-  // TEMPORARY: Hardcoded dashboard data to bypass API issues
-  const stats = {
-    success: true,
-    message: "Clinic dashboard data",
-    stats: {
-      pendingAppointments: 5,
-      totalPatients: 28,
-      activeQuotes: 12,
-      monthlyRevenue: 8450,
-      upcomingAppointments: [
-        { id: 1, patientName: "John Smith", startTime: new Date().setDate(new Date().getDate() + 1) },
-        { id: 2, patientName: "Maria Garcia", startTime: new Date().setDate(new Date().getDate() + 2) },
-        { id: 3, patientName: "Ahmed Hassan", startTime: new Date().setDate(new Date().getDate() + 3) }
-      ],
-      recentQuotes: [
-        { id: 101, patientName: "Sarah Johnson", status: "pending", createdAt: new Date().setDate(new Date().getDate() - 1) },
-        { id: 102, patientName: "Michael Brown", status: "approved", createdAt: new Date().setDate(new Date().getDate() - 2) },
-        { id: 103, patientName: "Emma Wilson", status: "scheduled", createdAt: new Date().setDate(new Date().getDate() - 3) }
-      ]
+  // Use TanStack Query to fetch dashboard data
+  const { data, isLoading: isQueryLoading, isError } = useQuery({
+    queryKey: ['/api/portal/dashboard'],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
+  });
+  
+  // Update state when data is fetched
+  useEffect(() => {
+    if (data) {
+      console.log("Dashboard data received:", data);
+      setStats(data);
+      setIsLoading(false);
+    } else if (isError) {
+      console.error("Error fetching dashboard data");
+      setError(new Error("Failed to load dashboard data"));
+      setIsLoading(false);
     }
-  };
+  }, [data, isError]);
 
   // Loading state
   if (isLoading) {

@@ -169,10 +169,26 @@ router.get("/api/portal/clinic/profile", ensureRole("clinic_staff"), async (req,
   }
 });
 
-// Generic dashboard endpoint for all user types
+// DEBUGGING helper endpoint
+router.get("/api/portal/debug", ensureAuthenticated, (req, res) => {
+  res.json({
+    user: {
+      id: req.user?.id,
+      email: req.user?.email,
+      role: req.user?.role,
+      clinicId: req.user?.clinicId
+    },
+    session: req.session ? true : false,
+    authenticated: req.isAuthenticated()
+  });
+});
+
+// Generic dashboard endpoint for all user types - NO REDIRECTS
 router.get("/api/portal/dashboard", ensureAuthenticated, async (req, res) => {
   try {
-    // Check the user role and PROXY to the appropriate dashboard instead of redirecting
+    console.log("Dashboard endpoint called for user:", req.user?.id, "with role:", req.user?.role);
+    
+    // Check the user role and provide appropriate data
     const userRole = req.user?.role;
     let dashboardData;
 
