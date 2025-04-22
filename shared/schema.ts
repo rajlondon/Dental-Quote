@@ -156,6 +156,24 @@ export const quoteVersionsRelations = relations(quoteVersions, ({ one }) => ({
   }),
 }));
 
+// === VERIFICATION TOKENS ===
+export const verificationTokens = pgTable("verification_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 64 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  type: varchar("type", { length: 20 }).notNull(), // "email_verification" or "password_reset"
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const verificationTokensRelations = relations(verificationTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationTokens.userId],
+    references: [users.id],
+  }),
+}));
+
 // === CLINICS ===
 export const clinics = pgTable("clinics", {
   id: serial("id").primaryKey(),
