@@ -79,7 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/auth/login", credentials);
+      // Passport.js expects username/password fields
+      // But our server expects email/password
+      const res = await apiRequest("POST", "/api/auth/login", {
+        email: credentials.username,
+        password: credentials.password
+      });
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Login failed");
