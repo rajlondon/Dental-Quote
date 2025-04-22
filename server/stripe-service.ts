@@ -2,23 +2,45 @@ import Stripe from 'stripe';
 
 // Initialize Stripe with the secret key from environment variables
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const isProduction = process.env.NODE_ENV === 'production';
 
 if (!stripeSecretKey) {
   console.error('STRIPE_SECRET_KEY environment variable is not set');
 }
 
-// Initialize Stripe only if secret key is available
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, {
-  apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
-}) : null;
+// Enhanced Stripe configuration with proper error handling
+let stripeClient: Stripe | null = null;
 
-// Helper to check Stripe availability
-function ensureStripeConfigured() {
-  if (!stripe) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+try {
+  if (stripeSecretKey) {
+    stripeClient = new Stripe(stripeSecretKey, {
+      apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
+      appInfo: {
+        name: 'MyDentalFly',
+        version: '1.0.0',
+        url: 'https://mydentalfly.com'
+      },
+      // In production, enable proper telemetry and error monitoring
+      telemetry: isProduction
+    });
+    console.log('Stripe client initialized successfully');
   }
-  return stripe;
+} catch (error) {
+  console.error('Failed to initialize Stripe client:', error);
 }
+
+// Enhanced helper to check Stripe availability with detailed error message
+function ensureStripeConfigured() {
+  if (!stripeClient) {
+    throw new Error(
+      'Stripe is not configured properly. Please ensure STRIPE_SECRET_KEY environment variable is set with a valid Stripe API key.'
+    );
+  }
+  return stripeClient;
+}
+
+// Export the Stripe instance for use in other modules
+export const stripe = stripeClient;
 
 /**
  * Create a payment intent for the given amount
@@ -85,7 +107,7 @@ export async function createDepositPaymentIntent(
     console.log('Using payment metadata:', paymentMetadata);
     
     // Create a PaymentIntent with the deposit amount
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await ensureStripeConfigured().paymentIntents.create({
       amount: DEPOSIT_AMOUNT,
       currency: currency.toLowerCase(),
       customer: customer.id,
@@ -113,8 +135,10 @@ export async function createDepositPaymentIntent(
  */
 export async function createOrRetrieveCustomer(email: string): Promise<Stripe.Customer> {
   try {
+    const stripeInstance = ensureStripeConfigured();
+    
     // First check if the customer already exists
-    const customers = await stripe.customers.list({ email });
+    const customers = await stripeInstance.customers.list({ email });
     
     if (customers.data.length > 0) {
       // Return the first matching customer
@@ -122,7 +146,7 @@ export async function createOrRetrieveCustomer(email: string): Promise<Stripe.Cu
     }
     
     // Create a new customer if none exists
-    const customer = await stripe.customers.create({
+    const customer = await stripeInstance.customers.create({
       email,
       description: 'MyDentalFly Customer',
     });
@@ -141,7 +165,7 @@ export async function createOrRetrieveCustomer(email: string): Promise<Stripe.Cu
  */
 export async function getPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
   try {
-    return await stripe.paymentIntents.retrieve(paymentIntentId);
+    return await ensureStripeConfigured().paymentIntents.retrieve(paymentIntentId);
   } catch (error) {
     console.error('Error retrieving payment intent:', error);
     throw error;
@@ -155,7 +179,7 @@ export async function getPaymentIntent(paymentIntentId: string): Promise<Stripe.
  */
 export async function cancelPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
   try {
-    return await stripe.paymentIntents.cancel(paymentIntentId);
+    return await ensureStripeConfigured().paymentIntents.cancel(paymentIntentId);
   } catch (error) {
     console.error('Error cancelling payment intent:', error);
     throw error;
@@ -173,7 +197,7 @@ export async function updatePaymentIntent(
   updateData: Stripe.PaymentIntentUpdateParams,
 ): Promise<Stripe.PaymentIntent> {
   try {
-    return await stripe.paymentIntents.update(paymentIntentId, updateData);
+    return await ensureStripeConfigured().paymentIntents.update(paymentIntentId, updateData);
   } catch (error) {
     console.error('Error updating payment intent:', error);
     throw error;
