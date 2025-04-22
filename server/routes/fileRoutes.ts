@@ -25,7 +25,7 @@ router.get("/test-s3", async (req: Request, res: Response) => {
   
   try {
     console.log('Running AWS S3 configuration check...');
-    const s3TestResult = await checkAwsS3Configuration();
+    const s3TestResult = await runAwsS3ConfigCheck();
     
     return res.json({
       success: true,
