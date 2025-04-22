@@ -55,6 +55,10 @@ export default function ClinicDashboardSection() {
   useQuery({
     queryKey: ['/api/portal/dashboard'],
     retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes - don't refetch for 5 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes
+    refetchOnWindowFocus: false, // Prevent refetching when window gets focus
+    refetchOnMount: false, // Prevent refetching when component mounts
     onSuccess: (data) => {
       if (data) setStats(data);
     },
