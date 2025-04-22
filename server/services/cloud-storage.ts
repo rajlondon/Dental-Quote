@@ -160,25 +160,51 @@ export const cloudStorageConfig = getCloudStorageConfig();
 // Create AWS S3 client if configured
 let s3Client: S3Client | null = null;
 
-if (cloudStorageConfig.provider === 'aws-s3' && 
-    cloudStorageConfig.credentials?.accessKey && 
-    cloudStorageConfig.credentials?.secretKey) {
+// Helper function to initialize S3 client
+function initializeS3Client(): S3Client | null {
+  console.log('Attempting to initialize S3 client...');
+  
+  // Get credentials from environment directly to avoid any config issues
+  const accessKey = process.env.S3_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID;
+  const secretKey = process.env.S3_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  const region = process.env.S3_REGION || process.env.AWS_REGION || 'eu-north-1';
+  const bucket = process.env.S3_BUCKET_NAME;
+  
+  console.log(`S3 configuration check:
+  - Access Key exists: ${!!accessKey}
+  - Secret Key exists: ${!!secretKey}
+  - Region: ${region}
+  - Bucket: ${bucket}
+  `);
+  
+  if (!accessKey || !secretKey || !bucket) {
+    console.warn('Cannot initialize S3 client: missing required credentials or bucket name');
+    return null;
+  }
+  
   try {
-    s3Client = new S3Client({
-      region: cloudStorageConfig.region || 'eu-north-1',
+    const client = new S3Client({
+      region,
       credentials: {
-        accessKeyId: cloudStorageConfig.credentials.accessKey,
-        secretAccessKey: cloudStorageConfig.credentials.secretKey
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey
       }
     });
+    
     logInfo('AWS S3 client initialized successfully');
+    console.log('S3 client created successfully');
+    return client;
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), 
       { component: 'CloudStorage' }, 
       ErrorSeverity.WARNING);
     console.error('Failed to initialize S3 client:', error);
+    return null;
   }
 }
+
+// Initialize S3 client
+s3Client = initializeS3Client();
 
 /**
  * Generate a secure filename for cloud storage
@@ -266,9 +292,18 @@ export async function uploadToS3(
   console.log(`Attempting S3 upload for file with key: ${key}`);
   console.log(`Mimetype: ${mimetype}, Buffer size: ${buffer.length} bytes`);
   
-  if (!s3Client || !cloudStorageConfig.bucket) {
+  // Get bucket name directly from environment
+  const bucketName = process.env.S3_BUCKET_NAME;
+  
+  // If we don't have an S3 client or bucket, try initializing again
+  if (!s3Client) {
+    console.log('S3 client not initialized, attempting to create...');
+    s3Client = initializeS3Client();
+  }
+  
+  if (!s3Client || !bucketName) {
     console.error('S3 client or bucket not configured');
-    console.log(`S3 client exists: ${!!s3Client}, Bucket: ${cloudStorageConfig.bucket}`);
+    console.log(`S3 client exists: ${!!s3Client}, Bucket: ${bucketName}`);
     return { 
       success: false, 
       message: 'S3 client or bucket not configured' 
@@ -276,11 +311,12 @@ export async function uploadToS3(
   }
 
   try {
-    console.log(`Using bucket: ${cloudStorageConfig.bucket}`);
-    console.log(`Using region: ${cloudStorageConfig.region || 'default'}`);
+    console.log(`Using bucket: ${bucketName}`);
+    const region = process.env.S3_REGION || process.env.AWS_REGION || 'eu-north-1';
+    console.log(`Using region: ${region}`);
     
     const command = new PutObjectCommand({
-      Bucket: cloudStorageConfig.bucket,
+      Bucket: bucketName,
       Key: key,
       Body: buffer,
       ContentType: mimetype,
@@ -299,7 +335,7 @@ export async function uploadToS3(
       console.log(`Using base URL: ${url}`);
     } else {
       const getCommand = new GetObjectCommand({
-        Bucket: cloudStorageConfig.bucket,
+        Bucket: bucketName,
         Key: key
       });
       // Generate temporary signed URL valid for 60 minutes
@@ -349,13 +385,19 @@ export async function uploadToS3(
  * @returns Signed URL or null if error
  */
 export async function getSignedS3Url(key: string, expiresIn = 3600): Promise<string | null> {
-  if (!s3Client || !cloudStorageConfig.bucket) {
+  const bucketName = process.env.S3_BUCKET_NAME;
+  
+  if (!s3Client) {
+    s3Client = initializeS3Client();
+  }
+  
+  if (!s3Client || !bucketName) {
     return null;
   }
 
   try {
     const command = new GetObjectCommand({
-      Bucket: cloudStorageConfig.bucket,
+      Bucket: bucketName,
       Key: key
     });
 
@@ -376,13 +418,19 @@ export async function getSignedS3Url(key: string, expiresIn = 3600): Promise<str
  * @returns Success or failure
  */
 export async function deleteFromS3(key: string): Promise<boolean> {
-  if (!s3Client || !cloudStorageConfig.bucket) {
+  const bucketName = process.env.S3_BUCKET_NAME;
+  
+  if (!s3Client) {
+    s3Client = initializeS3Client();
+  }
+  
+  if (!s3Client || !bucketName) {
     return false;
   }
 
   try {
     const command = new DeleteObjectCommand({
-      Bucket: cloudStorageConfig.bucket,
+      Bucket: bucketName,
       Key: key
     });
 
@@ -404,13 +452,19 @@ export async function deleteFromS3(key: string): Promise<boolean> {
  * @returns Array of S3 object keys
  */
 export async function listS3Files(prefix: string): Promise<string[]> {
-  if (!s3Client || !cloudStorageConfig.bucket) {
+  const bucketName = process.env.S3_BUCKET_NAME;
+  
+  if (!s3Client) {
+    s3Client = initializeS3Client();
+  }
+  
+  if (!s3Client || !bucketName) {
     return [];
   }
 
   try {
     const command = new ListObjectsV2Command({
-      Bucket: cloudStorageConfig.bucket,
+      Bucket: bucketName,
       Prefix: prefix
     });
 
