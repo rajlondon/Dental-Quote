@@ -259,21 +259,84 @@ const ClinicDocumentsSection: React.FC = () => {
     }
   };
   
+  // Set up mutation for file uploads
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/files/upload-message-attachment', {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header since it will be automatically set with boundary for FormData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      // Invalidate the files query to refresh the file list
+      queryClient.invalidateQueries({ queryKey: ['/api/files/list'] });
+    },
+    onError: (error) => {
+      toast({
+        title: t("clinic.documents.upload_error", "Upload Failed"),
+        description: String(error),
+        variant: "destructive"
+      });
+    }
+  });
+  
   // Handle file upload
-  const handleFileUpload = (files: FileList | null) => {
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
     
-    // In a real app, you would upload the files to your server here
-    // For now, we'll just show a toast message
-    const fileNames = Array.from(files).map(file => file.name).join(', ');
+    const fileArray = Array.from(files);
+    const fileNames = fileArray.map(file => file.name).join(', ');
     
     toast({
-      title: t("clinic.documents.upload_successful", "Files Uploaded Successfully"),
-      description: t("clinic.documents.upload_successful_desc", "{{count}} files uploaded: {{files}}", {
-        count: files.length,
-        files: fileNames
+      title: t("clinic.documents.uploading", "Uploading Files"),
+      description: t("clinic.documents.upload_started", "Starting upload of {{count}} files", {
+        count: files.length
       }),
     });
+    
+    try {
+      // Upload each file, tracking successes and failures
+      const results = await Promise.allSettled(
+        fileArray.map(file => uploadFileMutation.mutateAsync(file))
+      );
+      
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      
+      if (successCount === files.length) {
+        toast({
+          title: t("clinic.documents.upload_successful", "Files Uploaded Successfully"),
+          description: t("clinic.documents.upload_successful_desc", "{{count}} files uploaded: {{files}}", {
+            count: files.length,
+            files: fileNames
+          }),
+        });
+      } else {
+        toast({
+          title: t("clinic.documents.upload_partial", "Partial Upload Success"),
+          description: t("clinic.documents.upload_partial_desc", "{{success}} of {{total}} files uploaded successfully", {
+            success: successCount,
+            total: files.length
+          }),
+          variant: "warning"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: t("clinic.documents.upload_error", "Upload Failed"),
+        description: String(error),
+        variant: "destructive"
+      });
+    }
     
     setShowUploadDialog(false);
   };
@@ -315,13 +378,13 @@ const ClinicDocumentsSection: React.FC = () => {
   };
   
   // Handle document download
-  const handleDownload = (document: Document) => {
-    if (document.url) {
+  const handleDownload = (doc: Document) => {
+    if (doc.url) {
       // Create a temporary link and click it to trigger download
       const link = document.createElement('a');
-      link.href = document.url;
+      link.href = doc.url;
       link.target = '_blank';
-      link.download = document.name;
+      link.download = doc.name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -329,7 +392,7 @@ const ClinicDocumentsSection: React.FC = () => {
       toast({
         title: t("clinic.documents.downloading", "Downloading"),
         description: t("clinic.documents.download_started", "Your download has started: {{name}}", {
-          name: document.name
+          name: doc.name
         }),
       });
     } else {
@@ -537,7 +600,39 @@ const ClinicDocumentsSection: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDocuments.length > 0 ? (
+                {isLoadingFiles ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-lg font-medium">
+                          {t("clinic.documents.loading", "Loading documents...")}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : isErrorFiles ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <FileX className="h-10 w-10 text-red-500" />
+                        <p className="text-lg font-medium text-red-500">
+                          {t("clinic.documents.error_loading", "Error loading documents")}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {String(filesError)}
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/files/list'] })}
+                          className="mt-2"
+                        >
+                          {t("clinic.documents.retry", "Retry")}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredDocuments.length > 0 ? (
                   filteredDocuments.map((document) => {
                     const categoryInfo = getCategoryInfo(document.category);
                     
