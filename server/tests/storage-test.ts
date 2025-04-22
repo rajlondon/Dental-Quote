@@ -70,8 +70,8 @@ async function runStorageTest() {
     // 2. File Upload Test
     console.log(`${colors.cyan}[Test 2] Testing file upload...${colors.reset}`);
     
-    // Create test file - use a specific folder structure that matches expected application use
-    const testFileKey = `uploads/test-files/storage-test-${Date.now()}.txt`;
+    // Use a simple file name without folders to test basic permissions
+    const testFileKey = `test-${Date.now()}.txt`;
     const testBuffer = Buffer.from(testFileContent);
     
     try {
@@ -102,7 +102,7 @@ async function runStorageTest() {
       // 4. List Files Test
       console.log(`${colors.cyan}[Test 4] Testing file listing...${colors.reset}`);
       
-      const fileList = await listS3Files('uploads/test-files/');
+      const fileList = await listS3Files('');
       
       if (fileList.length === 0 || !fileList.includes(testFileKey)) {
         console.log(`${colors.red}${colors.bright}❌ File listing failed. The uploaded test file was not found.${colors.reset}`);
@@ -110,7 +110,7 @@ async function runStorageTest() {
       }
       
       console.log(`${colors.green}${colors.bright}✅ File listing test passed.${colors.reset}`);
-      console.log(`Found ${fileList.length} files in 'uploads/test-files/' directory.${colors.reset}\n`);
+      console.log(`Found ${fileList.length} files in the bucket root directory.${colors.reset}\n`);
       
       // 5. File Deletion Test
       console.log(`${colors.cyan}[Test 5] Testing file deletion...${colors.reset}`);

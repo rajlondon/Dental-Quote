@@ -208,8 +208,9 @@ export async function processUploadedFile(file: Express.Multer.File): Promise<Up
   // For S3 storage
   if (ACTIVE_STORAGE_TYPE === StorageType.AWS_S3) {
     try {
-      // Create a folder structure in S3
-      const key = `${fileType}/${generateSecureFilename(file.originalname)}`;
+      // Generate a filename with the file type as prefix
+      // This uses root-level storage which we've verified works with the current IAM policy
+      const key = `${fileType}-${generateSecureFilename(file.originalname)}`;
       
       // Upload to S3
       const result = await uploadToS3(file.buffer, key, file.mimetype);
