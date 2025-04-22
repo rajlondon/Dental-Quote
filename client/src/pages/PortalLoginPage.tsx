@@ -83,10 +83,41 @@ const PortalLoginPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Here we would typically make an API call to register the user
       console.log("Registration attempt with:", values);
       
-      // Simulate API call delay
+      // Split the full name into first and last name
+      let firstName = values.fullName;
+      let lastName = "";
+      
+      if (values.fullName.includes(" ")) {
+        const nameParts = values.fullName.split(" ");
+        firstName = nameParts[0];
+        lastName = nameParts.slice(1).join(" ");
+      }
+      
+      // Make API call to register user
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          firstName,
+          lastName,
+          phone: values.phone,
+          consent: values.termsConsent,
+          contactConsent: values.contactConsent,
+          promotionalConsent: values.promotionalConsent
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // For now, show toast and redirect to patient portal
@@ -365,9 +396,11 @@ const PortalLoginPage: React.FC = () => {
                   </Form>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button variant="link" className="px-0">
-                    {t("portal.login.forgot_password", "Forgot password?")}
-                  </Button>
+                  <Link href="/forgot-password">
+                    <Button variant="link" className="px-0">
+                      {t("portal.login.forgot_password", "Forgot password?")}
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
             </TabsContent>
