@@ -256,23 +256,46 @@ const ClinicDocumentsSection: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch('/api/files/upload-message-attachment', {
+      // Add category based on file type
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+      let category = 'document';
+      
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+        category = 'image';
+      } else if (['pdf'].includes(fileExt)) {
+        category = 'document';
+      } else if (['dcm'].includes(fileExt)) {
+        category = 'xray';
+      }
+      
+      formData.append('category', category);
+      
+      // Use the new general upload endpoint
+      console.log(`Uploading file ${file.name} with category ${category} in ${process.env.NODE_ENV} mode`);
+      const response = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header since it will be automatically set with boundary for FormData
       });
       
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Upload error response:', errorText);
+        throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      console.log('Upload result:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Log the success for debugging the production issue
+      console.log('File uploaded successfully:', data);
       // Invalidate the files query to refresh the file list
       queryClient.invalidateQueries({ queryKey: ['/api/files/list'] });
     },
     onError: (error) => {
+      console.error('Upload error:', error);
       toast({
         title: t("clinic.documents.upload_error", "Upload Failed"),
         description: String(error),

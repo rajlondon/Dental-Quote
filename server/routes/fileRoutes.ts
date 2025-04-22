@@ -9,6 +9,60 @@ import { parse } from "path";
 
 const router = express.Router();
 
+// General file upload endpoint
+router.post("/upload", uploadRateLimit, ensureAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    const category = req.body.category || 'document';
+    const patientId = req.body.patientId;
+    
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file provided"
+      });
+    }
+
+    console.log(`Processing file upload: ${file.originalname}, Category: ${category}`);
+    console.log(`Storage active type: ${StorageType[StorageType.AWS_S3]} vs ${process.env.NODE_ENV}`);
+    
+    // Process the file (handles S3 upload if configured)
+    const processedFile = await processUploadedFile(file);
+    
+    console.log(`File processed successfully. Storage type: ${processedFile.storageType}`);
+    console.log(`File URL: ${processedFile.url || 'local file'}`);
+    
+    // Return the file information
+    res.json({
+      success: true,
+      message: "File uploaded successfully",
+      file: {
+        filename: processedFile.filename,
+        originalname: processedFile.originalname,
+        url: processedFile.url || `/uploads/${processedFile.category}/${processedFile.filename}`,
+        mimetype: processedFile.mimetype,
+        size: processedFile.size,
+        category: processedFile.category || category,
+        patientId: patientId,
+        storageType: processedFile.storageType,
+        key: processedFile.key // Include the S3 key for reference
+      }
+    });
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      component: 'FileUpload',
+      operation: 'UploadFile',
+      user: req.user?.id
+    }, ErrorSeverity.ERROR);
+    
+    res.status(500).json({
+      success: false,
+      message: "Failed to upload file",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 // Endpoint to upload message attachments
 router.post("/upload-message-attachment", uploadRateLimit, ensureAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
   try {
