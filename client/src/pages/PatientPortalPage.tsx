@@ -99,8 +99,17 @@ const PatientPortalPage: React.FC = () => {
   const { logoutMutation } = useAuth();
   
   // Handle logout using authentication system
+  // Using a variable to prevent multiple clicks
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = () => {
-    // Using non-async function to make sure the button click handler completes immediately
+    // Prevent double-clicking
+    if (isLoggingOut) return;
+    
+    // Set logging out state to prevent additional clicks
+    setIsLoggingOut(true);
+    
+    // Using direct window location change instead of wouter navigation
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
         // When successful, show toast and redirect
@@ -109,8 +118,8 @@ const PatientPortalPage: React.FC = () => {
           description: t('portal.logout_message', 'You have been logged out of your account.'),
         });
         
-        // Use wouter navigation instead of direct URL change
-        setLocation('/portal-login');
+        // Use direct URL navigation which is more reliable for logout
+        window.location.href = '/#/portal-login';
       },
       onError: (error) => {
         console.error("Logout error:", error);
@@ -119,6 +128,8 @@ const PatientPortalPage: React.FC = () => {
           description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
           variant: "destructive",
         });
+        // Reset logging out state on error
+        setIsLoggingOut(false);
       }
     });
   };
