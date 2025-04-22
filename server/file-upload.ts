@@ -23,12 +23,14 @@ export enum StorageType {
 function determineStorageType(): StorageType {
   const provider = cloudStorageConfig.provider;
   const envForce = process.env.FORCE_STORAGE_TYPE;
+  const isProductionEnv = process.env.NODE_ENV === 'production';
   
   // Debug log the storage configuration
   console.log(`Storage provider from config: ${provider}`);
   console.log(`CloudStorage configured: ${isCloudStorageConfigured()}`);
   console.log(`Environment S3 keys exist: ${!!process.env.S3_ACCESS_KEY}`);
   console.log(`Environment has S3 bucket: ${!!process.env.S3_BUCKET_NAME}`);
+  console.log(`Environment: ${isProductionEnv ? 'PRODUCTION' : 'DEVELOPMENT'}`);
   
   // Force specific storage type if set in environment
   if (envForce === 'aws-s3') {
@@ -39,6 +41,12 @@ function determineStorageType(): StorageType {
     return StorageType.LOCAL;
   }
   
+  // In production, always try to use S3 if the keys are available
+  if (isProductionEnv && process.env.S3_ACCESS_KEY && process.env.S3_BUCKET_NAME) {
+    console.log('Using AWS S3 storage in production environment');
+    return StorageType.AWS_S3;
+  }
+  
   // For the Replit environment, we know AWS S3 keys are properly set, so prefer S3
   if (process.env.REPLIT_ENVIRONMENT === 'production' && process.env.S3_ACCESS_KEY && process.env.S3_BUCKET_NAME) {
     console.log('Using AWS S3 storage in Replit production environment');
@@ -47,10 +55,12 @@ function determineStorageType(): StorageType {
   
   // Regular logic from cloud storage config
   if (provider === 'aws-s3' && isCloudStorageConfigured()) {
+    console.log('Using AWS S3 storage based on configuration');
     return StorageType.AWS_S3;
   } else if (provider === 'cloudinary' && isCloudStorageConfigured()) {
     return StorageType.CLOUDINARY;
   } else {
+    console.log('Using local storage as fallback');
     return StorageType.LOCAL;
   }
 }
