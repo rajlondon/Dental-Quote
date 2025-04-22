@@ -291,11 +291,13 @@ const PatientPortalPage: React.FC = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <img 
-                      src="/images/mydentalfly-logo.png" 
-                      alt="MyDentalFly Logo" 
-                      className="h-12 w-auto mb-2 shadow-sm border border-gray-100 rounded-md p-1" 
-                    />
+                    <a href="/" className="block">
+                      <img 
+                        src="/images/mydentalfly-logo.png" 
+                        alt="MyDentalFly Logo" 
+                        className="h-12 w-auto mb-2 shadow-sm border border-gray-100 rounded-md p-1 cursor-pointer" 
+                      />
+                    </a>
                     <h2 className="text-lg font-bold text-blue-600">
                       {t('portal.title', 'Patient Portal')}
                     </h2>
