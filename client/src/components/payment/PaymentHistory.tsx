@@ -255,7 +255,10 @@ export default function PaymentHistory({
                               variant="ghost"
                               size="icon"
                               className="h-5 w-5"
-                              onClick={() => handleCopyPaymentId(payment.transactionId || payment.stripePaymentIntentId)}
+                              onClick={() => {
+                                const id = payment.transactionId || payment.stripePaymentIntentId;
+                                if (id) handleCopyPaymentId(id);
+                              }}
                               title="Copy transaction ID"
                             >
                               {copiedPaymentId === (payment.transactionId || payment.stripePaymentIntentId) ? (

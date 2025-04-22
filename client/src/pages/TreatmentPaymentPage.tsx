@@ -28,13 +28,31 @@ export default function TreatmentPaymentPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('payment-form');
   
+  // Define type for Stripe configuration
+  interface StripeConfig {
+    isConfigured: boolean;
+    publicKey?: string;
+  }
+  
+  // Define type for booking data
+  interface BookingData {
+    id: number;
+    userId: number;
+    clinicId: number;
+    treatmentPlanId?: number;
+    status: string;
+    appointmentDate?: string;
+    notes?: string;
+    createdAt: string;
+  }
+  
   // Get Stripe public key
-  const { data: stripeConfig, isLoading: isLoadingStripeConfig } = useQuery({
+  const { data: stripeConfig, isLoading: isLoadingStripeConfig } = useQuery<StripeConfig>({
     queryKey: ['/api/config/stripe'],
   });
   
   // Get booking details if bookingId is provided
-  const { data: booking, isLoading: isLoadingBooking } = useQuery({
+  const { data: booking, isLoading: isLoadingBooking } = useQuery<BookingData>({
     queryKey: [`/api/booking/${bookingId}`],
     enabled: !!bookingId,
   });
@@ -97,7 +115,7 @@ export default function TreatmentPaymentPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate(-1)}
+              onClick={() => window.history.back()}
               className="mb-2"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
