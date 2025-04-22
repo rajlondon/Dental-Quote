@@ -60,53 +60,26 @@ router.post("/register", async (req: Request, res: Response) => {
     
     // Format verification email data
     const userName = newUser.firstName || "User";
-    const emailData = formatVerificationEmail(newUser.email, userName, verificationUrl);
+    const verificationData = {
+      userEmail: newUser.email,
+      userName: userName,
+      verificationLink: verificationUrl
+    };
     
-    // Email configuration from environment
-    const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
-    const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
-    
-    // For logging without exposing actual values
-    console.log("Sending verification email with config:", {
-      serviceIdExists: !!emailjsServiceId,
-      templateIdExists: !!emailjsTemplateId,
-      publicKeyExists: !!emailjsPublicKey
-    });
-    
-    // Send verification email using Node.js implementation
+    // Import the Mailjet service
     try {
-      // Using node-fetch for making the HTTP request to EmailJS API
-      const nodeFetch = await import('node-fetch');
-      const fetch = nodeFetch.default;
+      const { sendVerificationEmail } = await import('../mailjet-service');
+      const emailSent = await sendVerificationEmail(verificationData);
       
-      // Prepare the data for EmailJS API
-      const serviceId = emailjsServiceId!;
-      const templateId = emailjsTemplateId!;
-      const publicKey = emailjsPublicKey!;
-      
-      const url = 'https://api.emailjs.com/api/v1.0/email/send';
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          service_id: serviceId,
-          template_id: templateId,
-          user_id: publicKey,
-          template_params: emailData,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`EmailJS API error: ${response.statusText}`);
+      if (!emailSent) {
+        console.warn('Mailjet email sending failed or not configured - continuing with registration');
+        // We'll still create the account, but the user might need manual verification
+      } else {
+        console.log('Verification email sent successfully via Mailjet');
       }
-      
-      console.log('Verification email sent successfully');
     } catch (emailError) {
       console.error('Error sending verification email:', emailError);
-      throw new Error('Failed to send verification email. Registration successful, but you need to contact support for verification.');
+      // Continue with registration even if email fails - we'll handle this case
     }
     
     // Return success without password
@@ -207,43 +180,23 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     
     // Format reset email data
     const userName = user.firstName || "User";
-    const emailData = formatPasswordResetEmail(user.email, userName, resetUrl);
+    const resetData = {
+      userEmail: user.email,
+      userName: userName,
+      resetLink: resetUrl
+    };
     
-    // Email configuration from environment
-    const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
-    const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
-    
-    // Send reset email using Node.js implementation
+    // Import the Mailjet service
     try {
-      // Using node-fetch for making the HTTP request to EmailJS API
-      const nodeFetch = await import('node-fetch');
-      const fetch = nodeFetch.default;
+      const { sendPasswordResetEmail } = await import('../mailjet-service');
+      const emailSent = await sendPasswordResetEmail(resetData);
       
-      // Prepare the data for EmailJS API
-      const serviceId = emailjsServiceId!;
-      const templateId = emailjsTemplateId!;
-      const publicKey = emailjsPublicKey!;
-      
-      const url = 'https://api.emailjs.com/api/v1.0/email/send';
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          service_id: serviceId,
-          template_id: templateId,
-          user_id: publicKey,
-          template_params: emailData,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`EmailJS API error: ${response.statusText}`);
+      if (!emailSent) {
+        console.warn('Mailjet password reset email sending failed or not configured');
+        // Still return success to not reveal if email exists
+      } else {
+        console.log('Password reset email sent successfully via Mailjet');
       }
-      
-      console.log('Password reset email sent successfully');
     } catch (emailError) {
       console.error('Error sending password reset email:', emailError);
       // Still return success to not reveal if email exists
