@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Card, 
   CardContent, 
-  CardDescription, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
@@ -17,13 +16,53 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, Users, FileText, Clock, TrendingUp } from 'lucide-react';
 
-export default function ClinicDashboardSection() {
-  // For demo purposes, we'll use mock data since the API endpoint isn't fully implemented yet
+// Define the helper components within the main component's scope
+interface DashboardCardProps {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const DashboardCard = ({ title, value, description, icon }: DashboardCardProps) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      {icon}
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{value}</div>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </CardContent>
+  </Card>
+);
+
+const getStatusColor = (status: string): string => {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return 'bg-yellow-500';
+    case 'approved':
+      return 'bg-green-500';
+    case 'rejected':
+    case 'declined':
+      return 'bg-red-500';
+    case 'scheduled':
+      return 'bg-blue-500';
+    case 'completed':
+      return 'bg-purple-500';
+    default:
+      return 'bg-gray-500';
+  }
+};
+
+// Main component using React.memo to prevent unnecessary re-renders
+const ClinicDashboardSection = memo(() => {
+  // State management
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [stats, setStats] = useState<any>(null);
   
-  // Simulate loading data
+  // Mock data loading with a timeout
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -51,23 +90,24 @@ export default function ClinicDashboardSection() {
     return () => clearTimeout(timer);
   }, []);
   
-  // We also try the real API but fallback to mock data
-  useQuery({
+  // API data fetching with TanStack Query v5
+  const { data } = useQuery({ 
     queryKey: ['/api/portal/dashboard'],
-    retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes - don't refetch for 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes
-    refetchOnWindowFocus: false, // Prevent refetching when window gets focus
-    refetchOnMount: false, // Prevent refetching when component mounts
-    onSuccess: (data) => {
-      if (data) setStats(data);
-    },
-    onError: (err: Error) => {
-      console.log("Using demo data due to API error:", err.message);
-      // We don't set the error state here since we're using demo data as a fallback
-    }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1
   });
+  
+  // Update state if API request is successful
+  useEffect(() => {
+    if (data) {
+      setStats(data);
+    }
+  }, [data]);
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -87,6 +127,7 @@ export default function ClinicDashboardSection() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-4">
@@ -101,10 +142,12 @@ export default function ClinicDashboardSection() {
     pendingAppointments: 0,
     totalPatients: 0,
     activeQuotes: 0,
+    monthlyRevenue: 0,
     upcomingAppointments: [],
     recentQuotes: []
   };
 
+  // Main render
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -194,44 +237,9 @@ export default function ClinicDashboardSection() {
       </Tabs>
     </div>
   );
-}
+});
 
-interface DashboardCardProps {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: React.ReactNode;
-}
+// Export with displayName for better debugging
+ClinicDashboardSection.displayName = 'ClinicDashboardSection';
 
-function DashboardCard({ title, value, description, icon }: DashboardCardProps) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function getStatusColor(status: string): string {
-  switch (status.toLowerCase()) {
-    case 'pending':
-      return 'bg-yellow-500';
-    case 'approved':
-      return 'bg-green-500';
-    case 'rejected':
-    case 'declined':
-      return 'bg-red-500';
-    case 'scheduled':
-      return 'bg-blue-500';
-    case 'completed':
-      return 'bg-purple-500';
-    default:
-      return 'bg-gray-500';
-  }
-}
+export default ClinicDashboardSection;
