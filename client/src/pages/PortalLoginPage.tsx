@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, Link } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,11 +47,26 @@ const PortalLoginPage: React.FC = () => {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user, loginMutation } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
   const [selectedClinicName, setSelectedClinicName] = useState("");
   
-  // Clear any stored clinic data on page load
+  // Check if user is already logged in and redirect if needed
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting:", user.role);
+      if (user.role === 'admin') {
+        window.location.href = '/#/admin-portal';
+      } else if (user.role === 'clinic_staff') {
+        window.location.href = '/#/clinic-portal';
+      } else {
+        window.location.href = '/#/client-portal';
+      }
+    }
+  }, [user]);
+
+  // Set selected clinic data
   useEffect(() => {
     if (localStorage.getItem('selectedClinic')) {
       setHasSelectedClinic(true);
@@ -134,69 +150,36 @@ const PortalLoginPage: React.FC = () => {
 
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
-    setIsLoading(true);
-    
     try {
       console.log("Login attempt with:", values);
       
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
+      // Use the loginMutation from useAuth hook
+      await loginMutation.mutateAsync({
+        username: values.email,
+        password: values.password
       });
       
-      // Log the raw response for debugging
-      console.log("Login response status:", response.status);
+      // The loginMutation will automatically update the user state and show toast notifications
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
-      }
-      
-      const data = await response.json();
-      console.log("Login response data:", data);
-      
-      if (data.success && data.user) {
-        toast({
-          title: "Login Successful",
-          description: `Welcome back to MyDentalFly, ${data.user.firstName || ''}!`,
-        });
-        
-        console.log("Login successful, redirecting based on role:", data.user.role);
-        
-        // Force redirect using window.location for more reliable navigation
-        if (data.user.role === 'admin') {
+      // Wait a moment for the state to update
+      setTimeout(() => {
+        // Redirect based on role
+        if (user?.role === 'admin') {
           console.log("Admin user detected, redirecting to admin portal");
-          // Use a slight delay to ensure the state is updated
-          setTimeout(() => {
-            window.location.href = '/admin-portal';
-          }, 300);
-        } else if (data.user.role === 'clinic_staff') {
+          window.location.href = '/#/admin-portal';
+        } else if (user?.role === 'clinic_staff') {
           console.log("Clinic staff detected, redirecting to clinic portal");
-          setTimeout(() => {
-            window.location.href = '/clinic-portal';
-          }, 300);
+          window.location.href = '/#/clinic-portal';
         } else {
           // Default to patient portal for any other role
           console.log("Patient user detected, redirecting to patient portal");
-          setTimeout(() => {
-            window.location.href = '/client-portal';
-          }, 300);
+          window.location.href = '/#/client-portal';
         }
-      } else {
-        throw new Error("Invalid response from server");
-      }
+      }, 500);
+      
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "Invalid email or password. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // The loginMutation will handle error toasts automatically
     }
   };
 
@@ -279,53 +262,33 @@ const PortalLoginPage: React.FC = () => {
         }
       }
       
-      // Call the actual login API with our test credentials
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
+      // Use the loginMutation from useAuth hook
+      await loginMutation.mutateAsync({
+        username: credentials.email,
+        password: credentials.password
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Test login failed");
-      }
+      toast({
+        title: `${values.userType.charAt(0).toUpperCase() + values.userType.slice(1)} Login Successful`,
+        description: `You are now logged in as a test ${values.userType} user.`,
+      });
       
-      const data = await response.json();
-      
-      if (data.success && data.user) {
-        toast({
-          title: `${values.userType.charAt(0).toUpperCase() + values.userType.slice(1)} Login Successful`,
-          description: `You are now logged in as a test ${values.userType} user.`,
-        });
-        
-        // Redirect based on user role (from actual response)
-        console.log("Test login successful, redirecting based on role:", data.user.role);
-        
-        // Force redirect using window.location for more reliable navigation
-        if (data.user.role === 'admin') {
-          console.log("Admin user detected in test login, redirecting to admin portal");
-          // Use a slight delay to ensure the state is updated
-          setTimeout(() => {
-            window.location.href = '/admin-portal';
-          }, 300);
-        } else if (data.user.role === 'clinic_staff') {
-          console.log("Clinic staff detected in test login, redirecting to clinic portal");
-          setTimeout(() => {
-            window.location.href = '/clinic-portal';
-          }, 300);
+      // Wait a moment for the state to update
+      setTimeout(() => {
+        // Redirect based on role
+        if (user?.role === 'admin') {
+          console.log("Admin user detected, redirecting to admin portal");
+          window.location.href = '/#/admin-portal';
+        } else if (user?.role === 'clinic_staff') {
+          console.log("Clinic staff detected, redirecting to clinic portal");
+          window.location.href = '/#/clinic-portal';
         } else {
           // Default to patient portal for any other role
-          console.log("Patient user detected in test login, redirecting to patient portal");
-          setTimeout(() => {
-            window.location.href = '/client-portal';
-          }, 300);
+          console.log("Patient user detected, redirecting to patient portal");
+          window.location.href = '/#/client-portal';
         }
-      } else {
-        throw new Error("Invalid response from server");
-      }
+      }, 500);
+      
     } catch (error) {
       console.error("Test login error:", error);
       toast({
