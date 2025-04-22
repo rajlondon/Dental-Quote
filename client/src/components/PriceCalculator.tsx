@@ -2002,18 +2002,27 @@ export default function PriceCalculator() {
                                 <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${isIstanbulClinic ? 'bg-primary text-white' : 'bg-white'}`}>
                                   {isIstanbulClinic && (
                                     <div className="mb-2 h-24 overflow-hidden rounded">
-                                      <div className="w-full h-full bg-primary/10 flex items-center justify-center p-2">
-                                        <div className="bg-amber-100 rounded-full p-3 text-amber-600 w-full h-full flex flex-col items-center justify-center">
-                                          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M17.5 5.5C19 7 20.5 9 21 11c.5 2 .5 4 0 6-1.5 2-3 4-5.5 5.5-.5.5-1 .5-1.5.5-1 0-1.5-.5-2-1-.5-.5-1-1-2-1s-1.5.5-2 1c-.5.5-1 1-2 1-.5 0-1 0-1.5-.5C2 21 .5 19 0 17c-.5-2-.5-4 0-6 .5-2 2-4 3.5-5.5 1-1 2-1.5 3-1.5 1 0 2 .5 3 1 .5.5 1 .5 1.5.5s1-.5 1.5-.5C13 4 14 4 15 4c1 0 2 .5 3 1.5ZM11 20v-6M14 17H8"></path>
-                                          </svg>
-                                          <span className="text-xs font-semibold mt-1">
-                                            {selectedClinic === 0 && "Hantipaciek Clinic"}
-                                            {selectedClinic === 1 && "DentGroup Istanbul"}
-                                            {selectedClinic === 2 && "DentSpa Istanbul"}
-                                          </span>
-                                        </div>
-                                      </div>
+                                      {selectedClinic === 0 && (
+                                        <img 
+                                          src="/images/clinics/istanbul-dental.jpg"
+                                          alt="Hantipaciek Clinic" 
+                                          className="w-full h-full object-cover clinic-image"
+                                        />
+                                      )}
+                                      {selectedClinic === 1 && (
+                                        <img 
+                                          src="/images/clinics/dentgroup-istanbul/exterior.jpg"
+                                          alt="DentGroup Istanbul" 
+                                          className="w-full h-full object-cover clinic-image"
+                                        />
+                                      )}
+                                      {selectedClinic === 2 && (
+                                        <img 
+                                          src="/images/clinics/premium-clinic.jpg"
+                                          alt="DentSpa Istanbul" 
+                                          className="w-full h-full object-cover clinic-image"
+                                        />
+                                      )}
                                     </div>
                                   )}
                                   <div className="flex justify-between sm:block">
