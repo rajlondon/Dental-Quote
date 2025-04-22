@@ -47,8 +47,23 @@ export interface UploadFileResponse {
  * @returns {boolean} true if in production, false otherwise
  */
 export function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production';
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  // Only log during the initial configuration to avoid log spam
+  if (!isProductionLogged) {
+    if (isProd) {
+      console.log('🚀 Running in PRODUCTION mode - secure cloud storage enabled by default');
+    } else {
+      console.log('🔧 Running in DEVELOPMENT mode - using local storage by default');
+    }
+    isProductionLogged = true;
+  }
+  
+  return isProd;
 }
+
+// Flag to ensure we only log environment once during startup
+let isProductionLogged = false;
 
 /**
  * Get cloud storage configuration from environment variables
@@ -98,11 +113,17 @@ function getCloudStorageConfig(): CloudStorageConfig {
   }
   
   if (provider === 'aws-s3') {
-    // Check for required environment variables
+    // Check for required environment variables - adapted to match provided credentials
     const missingVars = [];
     if (!process.env.S3_BUCKET_NAME) missingVars.push('S3_BUCKET_NAME');
-    if (!process.env.S3_ACCESS_KEY) missingVars.push('S3_ACCESS_KEY');
-    if (!process.env.S3_SECRET_KEY) missingVars.push('S3_SECRET_KEY');
+    
+    // Support both naming conventions for AWS credentials
+    const accessKey = process.env.S3_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID;
+    const secretKey = process.env.S3_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+    const region = process.env.S3_REGION || process.env.AWS_REGION || 'eu-north-1';
+    
+    if (!accessKey) missingVars.push('S3_ACCESS_KEY or AWS_ACCESS_KEY_ID');
+    if (!secretKey) missingVars.push('S3_SECRET_KEY or AWS_SECRET_ACCESS_KEY');
     
     if (missingVars.length > 0 && isProduction()) {
       console.error(`⚠️ Missing AWS S3 environment variables: ${missingVars.join(', ')}`);
@@ -113,10 +134,10 @@ function getCloudStorageConfig(): CloudStorageConfig {
     return {
       provider: 'aws-s3',
       bucket: process.env.S3_BUCKET_NAME,
-      region: process.env.S3_REGION || 'us-east-1',
+      region: region,
       credentials: {
-        accessKey: process.env.S3_ACCESS_KEY,
-        secretKey: process.env.S3_SECRET_KEY,
+        accessKey: accessKey,
+        secretKey: secretKey,
       },
       baseUrl: process.env.S3_BASE_URL
     };
@@ -137,7 +158,7 @@ if (cloudStorageConfig.provider === 'aws-s3' &&
     cloudStorageConfig.credentials?.secretKey) {
   try {
     s3Client = new S3Client({
-      region: cloudStorageConfig.region || 'us-east-1',
+      region: cloudStorageConfig.region || 'eu-north-1',
       credentials: {
         accessKeyId: cloudStorageConfig.credentials.accessKey,
         secretAccessKey: cloudStorageConfig.credentials.secretKey
