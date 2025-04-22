@@ -488,29 +488,29 @@ export function generateQuotePdf(quoteData: QuoteData): Buffer {
   // Prepare clinic data if not provided
   let comparisonClinics = clinics || [];
   if (comparisonClinics.length === 0) {
-    // Default clinics if none provided, using the specific clinic names requested by the client
+    // Default clinics if none provided, using the updated clinic names and matched with frontend
     comparisonClinics = [
       {
-        name: "Maltepe Dental Clinic",
-        priceGBP: Math.round(totalGBP * 0.85), // 15% cheaper
+        name: "Hantipaciek Clinic",
+        priceGBP: Math.round(totalGBP * 0.80), // 20% cheaper
         extras: "Modern Facilities, Airport Transfer",
         location: "Maltepe District",
-        guarantee: "5 Years",
+        guarantee: "3 Years",
         rating: "⭐⭐⭐⭐"
       },
       {
-        name: "Denteste Istanbul",
-        priceGBP: Math.round(totalGBP * 0.80), // 20% cheaper
+        name: "DentGroup Istanbul",
+        priceGBP: Math.round(totalGBP * 0.90), // 10% cheaper
         extras: "Central Location, 5-Star Hotel Included",
-        location: "Şişli",
-        guarantee: "7 Years",
-        rating: "⭐⭐⭐⭐⭐"
+        location: "Şişli District",
+        guarantee: "5 Years",
+        rating: "⭐⭐⭐⭐½"
       },
       {
-        name: "Istanbulsmilecenter",
+        name: "Donki Clinic",
         priceGBP: totalGBP, // Original price
         extras: "Luxury Experience, VIP Service, Premium Hotel",
-        location: "Levent",
+        location: "Levent District",
         guarantee: "10 Years",
         rating: "⭐⭐⭐⭐⭐"
       }
