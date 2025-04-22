@@ -48,153 +48,60 @@ const PortalLoginPage: React.FC = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
-  const [selectedClinicName, setSelectedClinicName] = useState<string | null>(null);
+  const [selectedClinicName, setSelectedClinicName] = useState("");
   
-  // Simplify portal login by removing clinic selection for now
+  // Clear any stored clinic data on page load
   useEffect(() => {
-    // Clear any stored clinic data to avoid routing issues
-    localStorage.removeItem('selectedClinicId');
-    localStorage.removeItem('selectedClinicData');
-    
-    // Reset states
-    setHasSelectedClinic(false);
-    setSelectedClinicName(null);
-    
+    if (localStorage.getItem('selectedClinic')) {
+      setHasSelectedClinic(true);
+      setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
+    }
     console.log("Cleared stored clinic data to simplify portal login navigation");
   }, []);
-  
-  // Registration form
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      termsConsent: false,
-      contactConsent: false,
-      promotionalConsent: false,
-    },
-  });
   
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
     
     try {
-      console.log("Registration attempt with:", values);
-      
-      // Split the full name into first and last name
-      let firstName = values.fullName;
-      let lastName = "";
-      
-      if (values.fullName.includes(" ")) {
-        const nameParts = values.fullName.split(" ");
-        firstName = nameParts[0];
-        lastName = nameParts.slice(1).join(" ");
-      }
-      
-      // Development mode - Use the test account creation API instead of regular registration
-      // This will allow us to bypass email verification for testing
-      const isDevelopment = process.env.NODE_ENV !== 'production' || window.location.hostname.includes('replit');
-      
-      if (isDevelopment) {
-        const useTestRegistration = window.confirm(
-          "Would you like to use the simplified development registration?\n\n" +
-          "This will create a pre-verified account that doesn't require email verification.\n\n" +
-          "Click OK for simplified registration (recommended for testing), or Cancel for normal registration with email verification."
-        );
-        
-        if (useTestRegistration) {
-          // Use test account creation that bypasses email verification
-          const testResponse = await fetch('/api/auth/create-test-account', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: values.email,
-              password: values.password,
-              role: "patient"
-            }),
-          });
-          
-          const testData = await testResponse.json();
-          
-          if (!testResponse.ok) {
-            throw new Error(testData.message || "Test registration failed");
-          }
-          
-          // Automatically log in with the new account
-          const loginResponse = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: values.email,
-              password: values.password,
-            }),
-          });
-          
-          const loginData = await loginResponse.json();
-          
-          if (!loginResponse.ok) {
-            throw new Error(loginData.message || "Login after registration failed");
-          }
-          
-          toast({
-            title: "Development Registration Successful",
-            description: "Your account was created with pre-verified status. You're now logged in.",
-          });
-          
-          // Navigate to patient portal
-          localStorage.removeItem('selectedClinicId');
-          navigate("/client-portal");
-          return;
-        }
-      }
-      
-      // Regular registration process with email verification
+      // Make API call to register endpoint
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          firstName: values.fullName.split(' ')[0],
+          lastName: values.fullName.split(' ').slice(1).join(' '),
           email: values.email,
-          password: values.password,
-          firstName,
-          lastName,
           phone: values.phone,
-          consent: values.termsConsent,
-          contactConsent: values.contactConsent,
-          promotionalConsent: values.promotionalConsent
+          password: values.password,
+          role: 'patient', // Default role for new registrations
+          consentGDPR: values.termsConsent,
+          consentContact: values.contactConsent || false,
+          consentMarketing: values.promotionalConsent || false,
         }),
       });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+      
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
-      
-      // Show verification required message
+      // Show success message based on response
       toast({
         title: "Registration Successful",
-        description: "Please check your email to verify your account before logging in.",
+        description: "Please check your email for verification instructions.",
       });
       
-      // Reset the form
-      registerForm.reset();
+      // Switch to the login tab or redirect to email verification page
+      // For now, just switch to login tab
+      document.querySelector('[data-value="login"]')?.click();
       
-      // Switch to login tab
-      const loginTab = document.querySelector('[data-state="inactive"][value="login"]') as HTMLElement;
-      if (loginTab) {
-        loginTab.click();
-      }
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         title: "Registration Failed",
         description: "There was a problem with your registration. Please try again.",
@@ -227,7 +134,6 @@ const PortalLoginPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Make API call to the new authentication endpoint
       console.log("Login attempt with:", values);
       
       const response = await fetch('/api/auth/login', {
@@ -238,35 +144,38 @@ const PortalLoginPage: React.FC = () => {
         body: JSON.stringify(values),
       });
       
+      // Log the raw response for debugging
+      console.log("Login response status:", response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Login failed");
       }
       
       const data = await response.json();
+      console.log("Login response data:", data);
       
-      // Check user role to determine where to redirect
       if (data.success && data.user) {
         toast({
           title: "Login Successful",
           description: `Welcome back to MyDentalFly, ${data.user.firstName || ''}!`,
         });
         
-        // Redirect based on user role
         console.log("Login successful, redirecting based on role:", data.user.role);
         
-        if (data.user.role === 'admin') {
-          console.log("Admin user detected, redirecting to admin portal");
-          // Use navigate instead of direct location change
-          navigate("/admin-portal");
-        } else if (data.user.role === 'clinic_staff') {
-          console.log("Clinic staff detected, redirecting to clinic portal");
-          navigate("/clinic-portal");
-        } else {
-          // Default to patient portal for any other role
-          console.log("Patient user detected, redirecting to patient portal");
-          navigate("/client-portal");
-        }
+        // Force delay to allow toast to show
+        setTimeout(() => {
+          if (data.user.role === 'admin') {
+            console.log("Admin user detected, redirecting to admin portal");
+            window.location.href = '/#/admin-portal';
+          } else if (data.user.role === 'clinic_staff') {
+            console.log("Clinic staff detected, redirecting to clinic portal");
+            window.location.href = '/#/clinic-portal';
+          } else {
+            console.log("Patient user detected, redirecting to patient portal");
+            window.location.href = '/#/client-portal';
+          }
+        }, 500);
       } else {
         throw new Error("Invalid response from server");
       }
@@ -386,17 +295,20 @@ const PortalLoginPage: React.FC = () => {
         // Redirect based on user role (from actual response)
         console.log("Test login successful, redirecting based on role:", data.user.role);
         
-        if (data.user.role === 'admin') {
-          console.log("Admin user detected in test login, redirecting to admin portal");
-          navigate("/admin-portal");
-        } else if (data.user.role === 'clinic_staff') {
-          console.log("Clinic staff detected in test login, redirecting to clinic portal");
-          navigate("/clinic-portal");
-        } else {
-          // Default to patient portal for any other role
-          console.log("Patient user detected in test login, redirecting to patient portal");
-          navigate("/client-portal");
-        }
+        // Force delay to allow toast to show
+        setTimeout(() => {
+          if (data.user.role === 'admin') {
+            console.log("Admin user detected in test login, redirecting to admin portal");
+            window.location.href = '/#/admin-portal';
+          } else if (data.user.role === 'clinic_staff') {
+            console.log("Clinic staff detected in test login, redirecting to clinic portal");
+            window.location.href = '/#/clinic-portal';
+          } else {
+            // Default to patient portal for any other role
+            console.log("Patient user detected in test login, redirecting to patient portal");
+            window.location.href = '/#/client-portal';
+          }
+        }, 500);
       } else {
         throw new Error("Invalid response from server");
       }
@@ -411,6 +323,21 @@ const PortalLoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // Registration form
+  const registerForm = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      termsConsent: false,
+      contactConsent: false,
+      promotionalConsent: false,
+    },
+  });
 
   return (
     <div className="bg-neutral-50 min-h-screen flex items-center justify-center p-4">
@@ -519,6 +446,77 @@ const PortalLoginPage: React.FC = () => {
                 </CardFooter>
               </Card>
             </TabsContent>
+
+            {/* Test Credentials Tab */}
+            <TabsContent value="test">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Test User Access</CardTitle>
+                  <CardDescription>
+                    Quickly log in with pre-configured test accounts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...testCredentialsForm}>
+                    <form onSubmit={testCredentialsForm.handleSubmit(onTestCredentialsSubmit)} className="space-y-4">
+                      <FormField
+                        control={testCredentialsForm.control}
+                        name="userType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select User Type</FormLabel>
+                            <FormControl>
+                              <div className="flex flex-col space-y-2">
+                                <label className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    name="userType"
+                                    value="patient"
+                                    checked={field.value === "patient"}
+                                    onChange={() => field.onChange("patient")}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                  />
+                                  <span>Patient (test@mydentalfly.com)</span>
+                                </label>
+                                <label className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    name="userType"
+                                    value="clinic"
+                                    checked={field.value === "clinic"}
+                                    onChange={() => field.onChange("clinic")}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                  />
+                                  <span>Clinic (clinic@mydentalfly.com)</span>
+                                </label>
+                                <label className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    name="userType"
+                                    value="admin"
+                                    checked={field.value === "admin"}
+                                    onChange={() => field.onChange("admin")}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                  />
+                                  <span>Admin (admin@mydentalfly.com)</span>
+                                </label>
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              Select the type of test user to log in as
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Logging in..." : "Access Test Account"}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </TabsContent>
             
             {/* Registration Tab */}
             <TabsContent value="register">
@@ -527,11 +525,6 @@ const PortalLoginPage: React.FC = () => {
                   <CardTitle>{t("portal.login.register", "Create an Account")}</CardTitle>
                   <CardDescription>
                     {t("portal.login.register_desc", "Register to access your dental treatment plan")}
-                    {hasSelectedClinic && (
-                      <span className="block mt-1 text-primary font-medium">
-                        You've selected {selectedClinicName} for your treatment
-                      </span>
-                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -557,7 +550,6 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={registerForm.control}
                         name="email"
@@ -569,6 +561,7 @@ const PortalLoginPage: React.FC = () => {
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
                                 <Input 
                                   placeholder="you@example.com" 
+                                  type="email"
                                   className="pl-10" 
                                   {...field} 
                                 />
@@ -578,7 +571,6 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={registerForm.control}
                         name="phone"
@@ -589,7 +581,7 @@ const PortalLoginPage: React.FC = () => {
                               <div className="relative">
                                 <Phone className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
                                 <Input 
-                                  placeholder="+44 123 456 7890" 
+                                  placeholder="+1 (555) 123-4567" 
                                   className="pl-10" 
                                   {...field} 
                                 />
@@ -599,7 +591,6 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={registerForm.control}
                         name="password"
@@ -621,13 +612,12 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
                       <FormField
                         control={registerForm.control}
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("portal.login.confirm_password", "Confirm Password")}</FormLabel>
+                            <FormLabel>Confirm Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -643,16 +633,12 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-
-                      <div className="space-y-4 pt-4 border-t mt-2">
-                        <h3 className="text-sm font-medium">Consent Options</h3>
-                        
-                        {/* Required Terms Consent */}
+                      <div className="space-y-3 pt-2">
                         <FormField
                           control={registerForm.control}
                           name="termsConsent"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value}
@@ -661,25 +647,18 @@ const PortalLoginPage: React.FC = () => {
                               </FormControl>
                               <div className="space-y-1 leading-none">
                                 <FormLabel>
-                                  I agree to the <a href="/terms" className="text-primary hover:underline">Terms of Use</a>,{" "}
-                                  <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>, and acknowledge the{" "}
-                                  <a href="/medical-disclaimer" className="text-primary hover:underline">Medical Disclaimer</a>.
+                                  I agree to the <Link href="/terms" className="text-primary underline">Terms of Service</Link>, <Link href="/privacy" className="text-primary underline">Privacy Policy</Link>, and <Link href="/disclaimer" className="text-primary underline">Medical Disclaimer</Link>
                                 </FormLabel>
-                                <FormDescription className="text-xs">
-                                  I understand MyDentalFly is a facilitator, not a provider of direct dental care. I consent to uploading my dental information, scans, and documents for clinic review.
-                                </FormDescription>
                                 <FormMessage />
                               </div>
                             </FormItem>
                           )}
                         />
-                        
-                        {/* Optional Contact Consent */}
                         <FormField
                           control={registerForm.control}
                           name="contactConsent"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value}
@@ -688,22 +667,17 @@ const PortalLoginPage: React.FC = () => {
                               </FormControl>
                               <div className="space-y-1 leading-none">
                                 <FormLabel>
-                                  I consent to being contacted via email, SMS, or WhatsApp about my enquiry and treatment planning.
+                                  I agree to be contacted by MyDentalFly regarding my treatment plan and bookings
                                 </FormLabel>
-                                <FormDescription className="text-xs">
-                                  This includes booking support communication and travel or appointment updates.
-                                </FormDescription>
                               </div>
                             </FormItem>
                           )}
                         />
-                        
-                        {/* Optional Promotional Consent */}
                         <FormField
                           control={registerForm.control}
                           name="promotionalConsent"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value}
@@ -712,79 +686,15 @@ const PortalLoginPage: React.FC = () => {
                               </FormControl>
                               <div className="space-y-1 leading-none">
                                 <FormLabel>
-                                  I'd like to receive tips, offers, and promotions from MyDentalFly and its partner clinics.
+                                  I would like to receive promotional material and special offers by email (optional)
                                 </FormLabel>
-                                <FormDescription className="text-xs">
-                                  This includes newsletters and special offers from our partner clinics.
-                                </FormDescription>
                               </div>
                             </FormItem>
                           )}
                         />
                       </div>
-                      
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? t("portal.login.registering", "Creating account...") : t("portal.login.register", "Create Account")}
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            {/* Test Credentials Tab */}
-            <TabsContent value="test">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Test Access</CardTitle>
-                  <CardDescription>
-                    For demonstration purposes only. Choose a user type to test the portal.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...testCredentialsForm}>
-                    <form onSubmit={testCredentialsForm.handleSubmit(onTestCredentialsSubmit)} className="space-y-4">
-                      <FormField
-                        control={testCredentialsForm.control}
-                        name="userType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>User Type</FormLabel>
-                            <div className="grid grid-cols-3 gap-2">
-                              <Button 
-                                type="button" 
-                                variant={field.value === "patient" ? "default" : "outline"} 
-                                className="flex flex-col items-center justify-center py-6"
-                                onClick={() => field.onChange("patient")}
-                              >
-                                <User className="h-8 w-8 mb-2" />
-                                <span>Patient</span>
-                              </Button>
-                              <Button 
-                                type="button" 
-                                variant={field.value === "admin" ? "default" : "outline"} 
-                                className="flex flex-col items-center justify-center py-6"
-                                onClick={() => field.onChange("admin")}
-                              >
-                                <Lock className="h-8 w-8 mb-2" />
-                                <span>Admin</span>
-                              </Button>
-                              <Button 
-                                type="button" 
-                                variant={field.value === "clinic" ? "default" : "outline"} 
-                                className="flex flex-col items-center justify-center py-6"
-                                onClick={() => field.onChange("clinic")}
-                              >
-                                <Hospital className="h-8 w-8 mb-2" />
-                                <span>Clinic</span>
-                              </Button>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? "Logging in..." : "Continue with Test Account"}
                       </Button>
                     </form>
                   </Form>
@@ -794,81 +704,79 @@ const PortalLoginPage: React.FC = () => {
           </Tabs>
         </div>
         
-        {/* Right Column - Features */}
+        {/* Right Column - Benefits */}
         <div className="hidden md:flex flex-col justify-center">
-          <div className="bg-gradient-to-br from-primary/5 to-primary/20 p-6 rounded-xl border border-primary/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-white/20 transform translate-x-1/3 skew-x-12" />
-            
+          <div className="bg-primary/5 p-8 rounded-lg border border-primary/10">
             <h2 className="text-2xl font-bold text-primary mb-6">
               {t("portal.login.benefits.title", "Your Dental Journey in One Place")}
             </h2>
             
-            <div className="space-y-4 relative z-10">
-              <div className="flex items-start space-x-3">
-                <div className="bg-white p-2 rounded-full shadow-sm">
+            <div className="space-y-4">
+              <div className="flex items-start space-x-4">
+                <div className="bg-primary/10 p-2 rounded-full mt-1">
                   <Check className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">
+                  <h3 className="font-medium mb-1">
                     {t("portal.login.benefits.treatment_plans", "View Your Treatment Plans")}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("portal.login.benefits.treatment_plans_desc", "Access detailed treatment plans from your selected clinics")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="bg-white p-2 rounded-full shadow-sm">
+              <div className="flex items-start space-x-4">
+                <div className="bg-primary/10 p-2 rounded-full mt-1">
                   <Check className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">
+                  <h3 className="font-medium mb-1">
                     {t("portal.login.benefits.compare", "Compare Clinic Treatments")}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("portal.login.benefits.compare_desc", "Side-by-side comparison of treatment options and prices")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="bg-white p-2 rounded-full shadow-sm">
+              <div className="flex items-start space-x-4">
+                <div className="bg-primary/10 p-2 rounded-full mt-1">
                   <Check className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">
+                  <h3 className="font-medium mb-1">
                     {t("portal.login.benefits.communicate", "Direct Communication")}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("portal.login.benefits.communicate_desc", "Message your dental providers directly within the platform")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="bg-white p-2 rounded-full shadow-sm">
+              <div className="flex items-start space-x-4">
+                <div className="bg-primary/10 p-2 rounded-full mt-1">
                   <Check className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">
+                  <h3 className="font-medium mb-1">
                     {t("portal.login.benefits.book", "Book & Manage Appointments")}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("portal.login.benefits.book_desc", "Schedule consultations and treatments with ease")}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="bg-white p-2 rounded-full shadow-sm">
+              <div className="flex items-start space-x-4">
+                <div className="bg-primary/10 p-2 rounded-full mt-1">
                   <Check className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-sm">
+                  <h3 className="font-medium mb-1">
                     {t("portal.login.benefits.secure", "Secure & Confidential")}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("portal.login.benefits.secure_desc", "All your dental records and communications are encrypted and secure")}
                   </p>
                 </div>
