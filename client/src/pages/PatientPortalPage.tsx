@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -94,14 +95,30 @@ const PatientPortalPage: React.FC = () => {
     setMobileNavOpen(false);
   };
 
-  // Handle logout - modified to simply redirect without authentication
-  const handleLogout = () => {
-    toast({
-      title: t('portal.back_to_main', 'Returning to main site'),
-      description: t('portal.demo_mode', 'This is operating in demo mode - no authentication required.'),
-    });
-    // Use direct URL navigation for reliability
-    window.location.href = '/';
+  // Get auth context for logout functionality
+  const { logoutMutation } = useAuth();
+  
+  // Handle logout using authentication system
+  const handleLogout = async () => {
+    try {
+      // Call the API to logout via the mutation
+      await logoutMutation.mutateAsync();
+      
+      toast({
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
+      });
+      
+      // Use wouter navigation instead of direct URL change
+      setLocation('/portal-login');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: t('portal.logout_error', 'Logout failed'),
+        description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
+        variant: "destructive",
+      });
+    }
   };
 
   // Check URL for section parameter with more robust parsing
@@ -208,7 +225,7 @@ const PatientPortalPage: React.FC = () => {
           <Button 
             variant="outline" 
             className="w-full justify-start text-gray-700 mb-2"
-            onClick={() => window.location.href = '/account-settings'}
+            onClick={() => setLocation('/account-settings')}
           >
             <UserCog className="h-5 w-5 mr-3" />
             {t('portal.account_settings', 'Account Settings')}
@@ -305,7 +322,7 @@ const PatientPortalPage: React.FC = () => {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start text-gray-700 mb-2"
-                  onClick={() => window.location.href = '/account-settings'}
+                  onClick={() => setLocation('/account-settings')}
                 >
                   <UserCog className="h-5 w-5 mr-3" />
                   {t('portal.account_settings', 'Account Settings')}
