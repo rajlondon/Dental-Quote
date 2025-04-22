@@ -57,11 +57,11 @@ const PortalLoginPage: React.FC = () => {
     if (user) {
       console.log("User already logged in, redirecting:", user.role);
       if (user.role === 'admin') {
-        window.location.href = '/#/admin-portal';
+        window.location.href = '/admin-portal';
       } else if (user.role === 'clinic_staff') {
-        window.location.href = '/#/clinic-portal';
+        window.location.href = '/clinic-portal';
       } else {
-        window.location.href = '/#/client-portal';
+        window.location.href = '/client-portal';
       }
     }
   }, [user]);
@@ -154,28 +154,31 @@ const PortalLoginPage: React.FC = () => {
       console.log("Login attempt with:", values);
       
       // Use the loginMutation from useAuth hook
-      await loginMutation.mutateAsync({
+      const userData = await loginMutation.mutateAsync({
         username: values.email,
         password: values.password
       });
       
-      // The loginMutation will automatically update the user state and show toast notifications
+      // Show success message
+      toast({
+        title: "Login Successful",
+        description: `Welcome back to MyDentalFly, ${userData.firstName || ''}!`,
+      });
       
-      // Wait a moment for the state to update
-      setTimeout(() => {
-        // Redirect based on role
-        if (user?.role === 'admin') {
-          console.log("Admin user detected, redirecting to admin portal");
-          window.location.href = '/#/admin-portal';
-        } else if (user?.role === 'clinic_staff') {
-          console.log("Clinic staff detected, redirecting to clinic portal");
-          window.location.href = '/#/clinic-portal';
-        } else {
-          // Default to patient portal for any other role
-          console.log("Patient user detected, redirecting to patient portal");
-          window.location.href = '/#/client-portal';
-        }
-      }, 500);
+      // Direct redirect based on user role from response
+      console.log("Login successful, redirecting based on role:", userData.role);
+      
+      if (userData.role === 'admin') {
+        console.log("Admin user detected, redirecting to admin portal");
+        window.location.href = '/admin-portal';
+      } else if (userData.role === 'clinic_staff') {
+        console.log("Clinic staff detected, redirecting to clinic portal");
+        window.location.href = '/clinic-portal';
+      } else {
+        // Default to patient portal for any other role
+        console.log("Patient user detected, redirecting to patient portal");
+        window.location.href = '/client-portal';
+      }
       
     } catch (error) {
       console.error("Login error:", error);
@@ -263,7 +266,7 @@ const PortalLoginPage: React.FC = () => {
       }
       
       // Use the loginMutation from useAuth hook
-      await loginMutation.mutateAsync({
+      const userData = await loginMutation.mutateAsync({
         username: credentials.email,
         password: credentials.password
       });
@@ -273,21 +276,20 @@ const PortalLoginPage: React.FC = () => {
         description: `You are now logged in as a test ${values.userType} user.`,
       });
       
-      // Wait a moment for the state to update
-      setTimeout(() => {
-        // Redirect based on role
-        if (user?.role === 'admin') {
-          console.log("Admin user detected, redirecting to admin portal");
-          window.location.href = '/#/admin-portal';
-        } else if (user?.role === 'clinic_staff') {
-          console.log("Clinic staff detected, redirecting to clinic portal");
-          window.location.href = '/#/clinic-portal';
-        } else {
-          // Default to patient portal for any other role
-          console.log("Patient user detected, redirecting to patient portal");
-          window.location.href = '/#/client-portal';
-        }
-      }, 500);
+      // Direct redirect based on user role from response
+      console.log("Test login successful, redirecting based on role:", userData.role);
+      
+      if (userData.role === 'admin') {
+        console.log("Admin user detected in test login, redirecting to admin portal");
+        window.location.href = '/admin-portal';
+      } else if (userData.role === 'clinic_staff') {
+        console.log("Clinic staff detected in test login, redirecting to clinic portal");
+        window.location.href = '/clinic-portal';
+      } else {
+        // Default to patient portal for any other role
+        console.log("Patient user detected in test login, redirecting to patient portal");
+        window.location.href = '/client-portal';
+      }
       
     } catch (error) {
       console.error("Test login error:", error);
