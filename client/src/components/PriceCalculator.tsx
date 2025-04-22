@@ -2073,7 +2073,7 @@ export default function PriceCalculator() {
                               guarantee: "5 Years",
                               location: "Şişli District",
                               rating: "⭐⭐⭐⭐½",
-                              image: "/images/clinics/dentalesk-clinic.png"
+                              image: "/images/clinics/dentgroup-istanbul/exterior.jpg"
                             },
                             {
                               name: "Donki Clinic",
@@ -2082,7 +2082,7 @@ export default function PriceCalculator() {
                               guarantee: "10 Years",
                               location: "Levent District",
                               rating: "⭐⭐⭐⭐⭐",
-                              image: "/images/clinics/donki-clinic.png"
+                              image: "/images/clinics/premium-clinic.jpg"
                             }
                           ];
                           
