@@ -97,8 +97,11 @@ const PortalLoginPage: React.FC = () => {
       });
       
       // Switch to the login tab or redirect to email verification page
-      // For now, just switch to login tab
-      document.querySelector('[data-value="login"]')?.click();
+      // For now, just set focus to login tab
+      const loginTab = document.querySelector('[data-value="login"]');
+      if (loginTab && loginTab instanceof HTMLElement) {
+        loginTab.click();
+      }
       
     } catch (error) {
       console.error("Registration error:", error);
@@ -163,19 +166,18 @@ const PortalLoginPage: React.FC = () => {
         
         console.log("Login successful, redirecting based on role:", data.user.role);
         
-        // Force delay to allow toast to show
-        setTimeout(() => {
-          if (data.user.role === 'admin') {
-            console.log("Admin user detected, redirecting to admin portal");
-            window.location.href = '/#/admin-portal';
-          } else if (data.user.role === 'clinic_staff') {
-            console.log("Clinic staff detected, redirecting to clinic portal");
-            window.location.href = '/#/clinic-portal';
-          } else {
-            console.log("Patient user detected, redirecting to patient portal");
-            window.location.href = '/#/client-portal';
-          }
-        }, 500);
+        // Use the navigate function from wouter directly for cleaner navigation
+        if (data.user.role === 'admin') {
+          console.log("Admin user detected, redirecting to admin portal");
+          navigate("/admin-portal");
+        } else if (data.user.role === 'clinic_staff') {
+          console.log("Clinic staff detected, redirecting to clinic portal");
+          navigate("/clinic-portal");
+        } else {
+          // Default to patient portal for any other role
+          console.log("Patient user detected, redirecting to patient portal");
+          navigate("/client-portal");
+        }
       } else {
         throw new Error("Invalid response from server");
       }
@@ -295,20 +297,18 @@ const PortalLoginPage: React.FC = () => {
         // Redirect based on user role (from actual response)
         console.log("Test login successful, redirecting based on role:", data.user.role);
         
-        // Force delay to allow toast to show
-        setTimeout(() => {
-          if (data.user.role === 'admin') {
-            console.log("Admin user detected in test login, redirecting to admin portal");
-            window.location.href = '/#/admin-portal';
-          } else if (data.user.role === 'clinic_staff') {
-            console.log("Clinic staff detected in test login, redirecting to clinic portal");
-            window.location.href = '/#/clinic-portal';
-          } else {
-            // Default to patient portal for any other role
-            console.log("Patient user detected in test login, redirecting to patient portal");
-            window.location.href = '/#/client-portal';
-          }
-        }, 500);
+        // Use the navigate function from wouter for consistent navigation
+        if (data.user.role === 'admin') {
+          console.log("Admin user detected in test login, redirecting to admin portal");
+          navigate("/admin-portal");
+        } else if (data.user.role === 'clinic_staff') {
+          console.log("Clinic staff detected in test login, redirecting to clinic portal");
+          navigate("/clinic-portal");
+        } else {
+          // Default to patient portal for any other role
+          console.log("Patient user detected in test login, redirecting to patient portal");
+          navigate("/client-portal");
+        }
       } else {
         throw new Error("Invalid response from server");
       }
