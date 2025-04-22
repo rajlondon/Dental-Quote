@@ -62,50 +62,34 @@ const ClinicDashboardSection = memo(() => {
   const [error, setError] = useState<Error | null>(null);
   const [stats, setStats] = useState<any>(null);
   
-  // Mock data loading with a timeout
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      // Provide demo data for the dashboard
-      setStats({
-        stats: {
-          pendingAppointments: 5,
-          totalPatients: 28,
-          activeQuotes: 12,
-          monthlyRevenue: 8450,
-          upcomingAppointments: [
-            { id: 1, patientName: "John Smith", startTime: new Date().setDate(new Date().getDate() + 1) },
-            { id: 2, patientName: "Maria Garcia", startTime: new Date().setDate(new Date().getDate() + 2) },
-            { id: 3, patientName: "Ahmed Hassan", startTime: new Date().setDate(new Date().getDate() + 3) }
-          ],
-          recentQuotes: [
-            { id: 101, patientName: "Sarah Johnson", status: "pending", createdAt: new Date().setDate(new Date().getDate() - 1) },
-            { id: 102, patientName: "Michael Brown", status: "approved", createdAt: new Date().setDate(new Date().getDate() - 2) },
-            { id: 103, patientName: "Emma Wilson", status: "scheduled", createdAt: new Date().setDate(new Date().getDate() - 3) }
-          ]
-        }
-      });
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // API data fetching with TanStack Query v5
-  const { data } = useQuery({ 
-    queryKey: ['/api/portal/dashboard'],
+  // More efficient API data fetching with TanStack Query v5
+  const { data, isLoading: isQueryLoading, isError } = useQuery({ 
+    queryKey: ['/api/portal/clinic/dashboard'], // Use the correct role-based endpoint
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1
+    retry: 1,
+    enabled: true
   });
   
-  // Update state if API request is successful
+  // Update state if API request is successful or use fallback data
   useEffect(() => {
+    // If data is loaded successfully
     if (data) {
       setStats(data);
+      setIsLoading(false);
     }
-  }, [data]);
+    // If there's an error loading data
+    else if (isError) {
+      setError(new Error("Failed to load dashboard data"));
+      setIsLoading(false);
+    }
+    // If we're waiting for data (first load only)
+    else if (isQueryLoading) {
+      setIsLoading(true);
+    }
+  }, [data, isQueryLoading, isError]);
 
   // Loading state
   if (isLoading) {

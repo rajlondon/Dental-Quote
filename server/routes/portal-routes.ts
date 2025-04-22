@@ -168,6 +168,45 @@ router.get("/api/portal/clinic/profile", ensureRole("clinic_staff"), async (req,
   }
 });
 
+// Generic dashboard endpoint for all user types
+router.get("/api/portal/dashboard", ensureAuthenticated, async (req, res) => {
+  try {
+    // Check the user role and route to the appropriate dashboard
+    const userRole = req.user?.role;
+
+    // If it's a clinic user, they should be using the clinic-specific endpoint
+    if (userRole === 'clinic_staff') {
+      return res.redirect(307, '/api/portal/clinic/dashboard');
+    }
+    
+    // If it's an admin user, they should be using the admin-specific endpoint
+    if (userRole === 'admin') {
+      return res.redirect(307, '/api/portal/admin/dashboard');
+    }
+    
+    // For patient users or others, return some basic stats
+    res.json({
+      success: true,
+      message: "User dashboard data",
+      stats: {
+        pendingAppointments: 0,
+        totalPatients: 0,
+        activeQuotes: 0,
+        monthlyRevenue: 0,
+        upcomingAppointments: [],
+        recentQuotes: []
+      }
+    });
+  } catch (error) {
+    console.error("Error in dashboard endpoint:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get dashboard data",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 // Portal route health check
 router.get("/api/portal/health", ensureAuthenticated, (req, res) => {
   res.json({
