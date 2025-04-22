@@ -41,6 +41,7 @@ function ensureStripeConfigured() {
 
 // Export the Stripe instance for use in other modules
 export const stripe = stripeClient;
+export { stripeClient };
 
 /**
  * Create a payment intent for the given amount
@@ -210,4 +211,58 @@ export async function updatePaymentIntent(
  */
 export function isStripeConfigured(): boolean {
   return !!stripeSecretKey;
+}
+
+/**
+ * Create a treatment payment intent for a specific amount
+ * @param email Customer email for the payment
+ * @param amount Amount in standard currency units (e.g., dollars/pounds)
+ * @param currency Currency code (e.g., 'gbp', 'usd') 
+ * @param metadata Additional metadata to include with the payment
+ * @returns The client secret for the payment intent
+ */
+export async function createTreatmentPaymentIntent(
+  email: string,
+  amount: number,
+  currency: string = 'gbp',
+  metadata: Record<string, string> = {}
+): Promise<{ clientSecret: string; id: string }> {
+  try {
+    console.log('Creating treatment payment intent for email:', email, 'amount:', amount);
+    
+    // Convert from standard currency to smallest unit (e.g., dollars to cents)
+    const amountInSmallestUnit = Math.round(amount * 100);
+    
+    // Create or retrieve a customer
+    const customer = await createOrRetrieveCustomer(email);
+    
+    // Merge default metadata with provided metadata
+    const paymentMetadata = {
+      type: 'treatment',
+      customerEmail: email,
+      ...metadata
+    };
+    
+    console.log('Using payment metadata:', paymentMetadata);
+    
+    // Create a PaymentIntent with the specified amount
+    const paymentIntent = await ensureStripeConfigured().paymentIntents.create({
+      amount: amountInSmallestUnit,
+      currency: currency.toLowerCase(),
+      customer: customer.id,
+      metadata: paymentMetadata,
+      payment_method_types: ['card'],
+      receipt_email: email,
+      description: metadata.description || 'MyDentalFly - Treatment Payment',
+    });
+
+    // Return the client secret, which is used to complete the payment on the client
+    return {
+      clientSecret: paymentIntent.client_secret as string,
+      id: paymentIntent.id,
+    };
+  } catch (error) {
+    console.error('Error creating treatment payment intent:', error);
+    throw error;
+  }
 }

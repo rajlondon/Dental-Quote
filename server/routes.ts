@@ -26,6 +26,7 @@ import fileRoutes from "./routes/fileRoutes";
 import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import geminiRoutes from "./routes/gemini-routes";
+import paymentRoutes from "./routes/paymentRoutes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import security middleware
@@ -119,6 +120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register routes for email verification, password reset, and user registration
   app.use('/api/auth', authRoutesRouter);
+  
+  // Register payment routes
+  app.use('/api/payments', paymentRoutes);
   
   // Create the uploads directory for files if it doesn't exist
   const uploadsDir = path.join(process.cwd(), 'uploads');
