@@ -106,6 +106,7 @@ const ClinicDocumentsSection: React.FC = () => {
   const [showViewerDialog, setShowViewerDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   // Fetch actual files from the server
   const { 
@@ -286,6 +287,9 @@ const ClinicDocumentsSection: React.FC = () => {
     
     const fileArray = Array.from(files);
     const fileNames = fileArray.map(file => file.name).join(', ');
+    
+    // Add files to state to show in the UI
+    setSelectedFiles(prev => [...prev, ...fileArray]);
     
     toast({
       title: t("clinic.documents.uploading", "Uploading Files"),
@@ -904,18 +908,59 @@ const ClinicDocumentsSection: React.FC = () => {
               className="hidden"
               onChange={handleFileInputChange}
             />
-            <label 
-              htmlFor="fileUpload" 
-              className="flex flex-col items-center justify-center cursor-pointer"
-            >
-              <Upload className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-base font-medium mb-1">
-                {t("clinic.documents.drop_files", "Drop files here or click to upload")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("clinic.documents.upload_instructions", "PDF, Word, images, and other files up to 10MB each")}
-              </p>
-            </label>
+            
+            {selectedFiles.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center">
+                  <p className="text-base font-medium mb-1">
+                    {t("clinic.documents.files_selected", "{{count}} files selected", { count: selectedFiles.length })}
+                  </p>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto w-full">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center p-2 border rounded bg-gray-50">
+                        {(() => {
+                          const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+                          if (fileExt === 'pdf') {
+                            return <FileText className="h-5 w-5 text-red-500 mr-2" />;
+                          } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                            return <Image className="h-5 w-5 text-blue-500 mr-2" />;
+                          } else if (['doc', 'docx'].includes(fileExt)) {
+                            return <FileText className="h-5 w-5 text-blue-700 mr-2" />;
+                          } else {
+                            return <File className="h-5 w-5 text-gray-500 mr-2" />;
+                          }
+                        })()}
+                        <span className="text-sm truncate">{file.name}</span>
+                        <span className="text-xs text-gray-500 ml-auto">
+                          {formatFileSize(file.size)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => document.getElementById('fileUpload')?.click()}
+                  className="mt-4"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {t("clinic.documents.add_more_files", "Add More Files")}
+                </Button>
+              </div>
+            ) : (
+              <label 
+                htmlFor="fileUpload" 
+                className="flex flex-col items-center justify-center cursor-pointer"
+              >
+                <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-base font-medium mb-1">
+                  {t("clinic.documents.drop_files", "Drop files here or click to upload")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("clinic.documents.upload_instructions", "PDF, Word, images, and other files up to 10MB each")}
+                </p>
+              </label>
+            )}
           </div>
           
           <DialogFooter className="sm:justify-end">
@@ -936,7 +981,11 @@ const ClinicDocumentsSection: React.FC = () => {
             </Button>
             <Button
               variant="default"
-              onClick={() => setShowUploadDialog(false)}
+              onClick={() => {
+                setShowUploadDialog(false);
+                // Reset selected files when done
+                setSelectedFiles([]);
+              }}
             >
               {t("common.done", "Done")}
             </Button>
