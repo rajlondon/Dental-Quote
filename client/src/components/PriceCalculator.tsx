@@ -1946,28 +1946,28 @@ export default function PriceCalculator() {
                         <p className="text-sm mb-3">See how much you can save compared to UK costs:</p>
                         <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 pt-2">
                           {(() => {
-                            // Get the selected clinic data using the new clinic information with real images
+                            // Get the selected clinic data for the UI cards
                             const istanbulClinics = [
                               {
                                 name: "Hantipaciek Clinic",
                                 price: Math.round(quote.totalGBP * 0.80),
                                 extra: "Including flights & hotel",
                                 type: "Affordable",
-                                image: "/images/clinic-icon.svg"
+                                color: "#007B9E"
                               },
                               {
                                 name: "DentGroup Istanbul",
                                 price: Math.round(quote.totalGBP * 0.90),
                                 extra: "Including flights & hotel",
                                 type: "Mid-Tier",
-                                image: "/images/clinic-icon.svg"
+                                color: "#007B9E"
                               },
                               {
                                 name: "DentSpa Istanbul",
                                 price: Math.round(quote.totalGBP * 1.00),
                                 extra: "Including flights & hotel",
                                 type: "Premium",
-                                image: "/images/clinic-icon.svg"
+                                color: "#007B9E"
                               }
                             ];
                             
@@ -1994,34 +1994,38 @@ export default function PriceCalculator() {
                             ];
                             
                             return comparisonData.map((clinic, idx) => {
-                              // Only add images for the Istanbul clinic (third card)
+                              // Only add special styling for the Istanbul clinic (third card)
                               const isIstanbulClinic = idx === 2;
-                              const clinicImage = isIstanbulClinic ? istanbulClinics[selectedClinic].image : null;
                               
                               return (
-                                <div key={idx} className={`w-full sm:flex-1 p-3 rounded-lg ${isIstanbulClinic ? 'bg-primary text-white' : 'bg-white'}`}>
+                                <div key={idx} className={`w-full sm:flex-1 p-4 rounded-lg ${isIstanbulClinic ? 'border-2 border-primary bg-primary/5 text-gray-800' : 'bg-white'}`}>
                                   {isIstanbulClinic && (
-                                    <div className="mb-2 p-4 overflow-hidden rounded flex flex-col items-center justify-center">
-                                      {/* Inline SVG instead of loading external file */}
-                                      <div className="bg-white p-3 rounded-full mb-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#007B9E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M2.8 12.8a10 10 0 0 0 16.4 0"></path>
-                                          <path d="M12 3c4.8 0 8.8 3.5 9.5 8.2"></path>
-                                          <path d="M12 3c-5 0-9.3 4-9.3 9a9.3 9.3 0 0 0 .3 2.2"></path>
-                                          <path d="M7 16.8A4 4 0 0 0 12 18a4 4 0 0 0 5-1.2"></path>
-                                          <path d="M12 9v.01"></path>
-                                        </svg>
+                                    <div className="mb-4">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white">
+                                          <span className="font-bold text-sm">
+                                            {selectedClinicData.name.charAt(0)}
+                                          </span>
+                                        </div>
+                                        <div className="font-semibold text-primary">
+                                          {selectedClinicData.name}
+                                        </div>
                                       </div>
-                                      <div className="text-sm font-semibold text-white text-center px-2">
-                                        {selectedClinicData.name}
+                                      <div className="flex justify-between items-center">
+                                        <div className="text-xs text-gray-600">
+                                          {selectedClinicData.type} Option
+                                        </div>
+                                        <div className="bg-primary/10 px-2 py-1 rounded-full">
+                                          <span className="text-xs text-primary font-medium">Recommended</span>
+                                        </div>
                                       </div>
                                     </div>
                                   )}
-                                  <div className="flex justify-between sm:block">
+                                  <div className="flex justify-between items-center mb-2">
                                     <div className="text-sm font-semibold">{clinic.name}</div>
-                                    <div className={`text-lg font-bold ${isIstanbulClinic ? 'text-white' : 'text-primary'}`}>£{clinic.price.toLocaleString()}</div>
+                                    <div className={`text-lg font-bold text-primary`}>£{clinic.price.toLocaleString()}</div>
                                   </div>
-                                  <div className="text-xs mt-1">{clinic.extra}</div>
+                                  <div className="text-xs text-gray-600">{clinic.extra}</div>
                                 </div>
                               );
                             });
@@ -2061,7 +2065,7 @@ export default function PriceCalculator() {
                       {/* Hidden PDF Generator component */}
                       <div style={{ display: "none" }}>
                         {(() => {
-                          // Define all clinics with new names and details, including image paths
+                          // Define all clinics with new names and details
                           const allClinics = [
                             {
                               name: "Hantipaciek Clinic",
@@ -2070,7 +2074,8 @@ export default function PriceCalculator() {
                               guarantee: "3 Years",
                               location: "Maltepe District",
                               rating: "⭐⭐⭐⭐",
-                              image: "/images/clinic-icon.svg"
+                              color: "#007B9E",
+                              type: "Affordable"
                             },
                             {
                               name: "DentGroup Istanbul",
@@ -2079,7 +2084,8 @@ export default function PriceCalculator() {
                               guarantee: "5 Years",
                               location: "Şişli District",
                               rating: "⭐⭐⭐⭐½",
-                              image: "/images/clinic-icon.svg"
+                              color: "#007B9E",
+                              type: "Mid-Tier"
                             },
                             {
                               name: "DentSpa Istanbul",
@@ -2088,7 +2094,8 @@ export default function PriceCalculator() {
                               guarantee: "10 Years",
                               location: "Levent District",
                               rating: "⭐⭐⭐⭐⭐",
-                              image: "/images/clinic-icon.svg"
+                              color: "#007B9E",
+                              type: "Premium"
                             }
                           ];
                           
