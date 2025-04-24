@@ -547,7 +547,7 @@ export function DentalChart3D({
                         textAnchor="middle" 
                         dominantBaseline="middle"
                         fill={textColor}
-                        fontSize={7}
+                        fontSize={10}
                         fontWeight="bold"
                       >
                         {tooth.id}
@@ -597,7 +597,7 @@ export function DentalChart3D({
                         textAnchor="middle" 
                         dominantBaseline="middle"
                         fill={textColor}
-                        fontSize={7}
+                        fontSize={10}
                         fontWeight="bold"
                       >
                         {tooth.id}
