@@ -1,19 +1,34 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { DentalChart } from '@/components/DentalChart';
+import DentalChart3D from '@/components/DentalChart3D';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DentalChartPage() {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
+  const [chartType, setChartType] = useState<'standard' | '3d'>('3d');
+  const [teethData, setTeethData] = useState<any>(null);
   
   // Set page title when component mounts
   useEffect(() => {
     document.title = 'Interactive Dental Chart | MyDentalFly.com';
   }, []);
+  
+  // Handle saving teeth data from either chart component
+  const handleTeethUpdate = (data: any) => {
+    setTeethData(data);
+    console.log('Teeth data updated:', data);
+    localStorage.setItem('dentalChartData', JSON.stringify(data));
+    toast({
+      title: "Dental Chart Updated",
+      description: "Your dental information has been saved",
+    });
+  };
   
   return (
     <>
