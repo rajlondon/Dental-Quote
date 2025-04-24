@@ -14,7 +14,8 @@ import {
   BriefcaseMedical,
   CircleUser,
   Menu,
-  ChevronDown
+  ChevronDown,
+  Search
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -239,27 +240,80 @@ const Hero: React.FC = () => {
       </div>
 
       {/* Main content with light background */}
-      <div className="bg-[#F8FAFC] pb-8">
+      <div className="bg-[#F8FAFC] pb-4 pt-6">
         <div className="container mx-auto px-4">
-          {/* Heading Section - Simplified */}
-          <div className="text-center py-6">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-              Compare Dental Clinics
+          {/* Heading Section - Booking.com style */}
+          <div>
+            <h1 className="text-primary text-2xl font-bold mb-2">
+              Find your dental clinic abroad
             </h1>
-            <h2 className="text-primary text-xl font-semibold mb-1">
-              Abroad in Seconds
-            </h2>
-            <p className="text-gray-600 text-sm">
-              Real prices. Trusted surgeons. One easy portal.
+            <p className="text-gray-700 text-sm mb-4">
+              Search for quality, experienced dental clinics and all-inclusive packages
             </p>
           </div>
         </div>
       </div>
       
-      {/* Use the existing QuoteForm */}
-      <div className="container mx-auto px-4 -mt-4">
-        <div className="max-w-xl mx-auto bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 shadow-lg">
-          <QuoteForm />
+      {/* Search box with blue medical border - Booking.com style */}
+      <div className="container mx-auto px-4">
+        <div className="max-w-xl mx-auto bg-white rounded-lg border-4 border-primary overflow-hidden shadow-lg">
+          {/* Search city field */}
+          <div className="flex items-center px-3 py-3 border-b border-gray-200">
+            <Search className="h-5 w-5 text-gray-500 mr-3" />
+            <div className="flex-1">
+              <input 
+                type="text" 
+                placeholder="Istanbul, Antalya, Dalaman, Izmir..." 
+                className="w-full border-0 focus:ring-0 focus:outline-none text-base"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
+            {/* Treatment date */}
+            <div className="flex items-center px-3 py-3 border-b border-r-0 sm:border-r border-gray-200">
+              <Calendar className="h-5 w-5 text-gray-500 mr-3" />
+              <div className="flex-1">
+                <div className="text-xs text-gray-500">Treatment date</div>
+                <div className="text-base">Thu 24 Jun 2025</div>
+              </div>
+            </div>
+            
+            {/* Fly home date */}
+            <div className="flex items-center px-3 py-3 border-b border-gray-200">
+              <PlaneIcon className="h-5 w-5 text-gray-500 mr-3" />
+              <div className="flex-1">
+                <div className="text-xs text-gray-500">Fly home date</div>
+                <div className="text-base">Fri 11 Jul 2025</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Flying from */}
+          <div className="flex items-center px-3 py-3 border-b border-gray-200">
+            <MapPin className="h-5 w-5 text-gray-500 mr-3" />
+            <div className="flex-1">
+              <div className="text-xs text-gray-500">Flying from</div>
+              <div className="text-base">United Kingdom</div>
+            </div>
+          </div>
+          
+          {/* Search Button */}
+          <div className="p-3">
+            <button className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded flex items-center justify-center">
+              <span className="mr-2 font-medium">Search</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Micro reassurance line */}
+        <div className="max-w-xl mx-auto mt-2 text-center text-[11px] text-gray-500 flex items-center justify-center">
+          <span>✓ Avg. 67% saving</span>
+          <span className="mx-2">•</span>
+          <span>17,842 quotes generated</span>
+          <span className="mx-2">•</span>
+          <span>Data fully encrypted</span>
         </div>
         
         {/* Popular Clinics - Similar to booking.com "Offers" section */}
