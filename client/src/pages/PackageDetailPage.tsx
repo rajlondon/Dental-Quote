@@ -76,6 +76,9 @@ const PackageDetailPage = () => {
         {/* Package header section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
+            <div className="mb-6 rounded-lg overflow-hidden h-[300px] shadow-md">
+              <img src={`/images/packages/${packageData.id}.png`} alt={packageData.title} className="w-full h-full object-cover" />
+            </div>
             <div className="flex items-center gap-2 mb-3">
               <Badge className={`${tierStyles[packageData.tier]} flex items-center gap-1`}>
                 <Crown className="h-3 w-3" />
