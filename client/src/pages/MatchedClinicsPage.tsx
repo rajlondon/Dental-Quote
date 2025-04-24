@@ -461,13 +461,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </p>
           </div>
           
-          <div className="mt-4 md:mt-0">
-            <WhatsAppButton 
-              phoneNumber="447123456789" 
-              message="I need help choosing a clinic for my dental treatment in Istanbul." 
-              className="w-full md:w-auto" 
-            />
-          </div>
+
         </div>
         
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -1283,12 +1277,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             <Button variant="outline" onClick={() => setLocation('/your-quote')} className="w-full sm:w-auto">
               Back to Quote
             </Button>
-            
-            <WhatsAppButton 
-              phoneNumber="447123456789" 
-              message="I need help choosing a clinic for my dental treatment in Istanbul." 
-              className="w-full sm:w-auto" 
-            />
+
           </div>
         </div>
       </div>

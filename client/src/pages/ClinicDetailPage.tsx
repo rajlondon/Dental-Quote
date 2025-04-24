@@ -169,10 +169,7 @@ const ClinicDetailPage: React.FC = () => {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   
-                  <WhatsAppButton 
-                    phoneNumber={clinic.contact?.whatsapp?.replace(/\+/g, '') || "905012345678"} 
-                    message={`Hi, I'm interested in ${clinic.name}'s dental services.`}
-                  />
+
                 </div>
               </div>
             </div>

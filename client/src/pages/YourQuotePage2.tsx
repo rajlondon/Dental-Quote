@@ -316,10 +316,6 @@ const YourQuotePage: React.FC = () => {
     <>
       <Navbar />
       <ScrollToTop />
-      <WhatsAppButton 
-        phoneNumber="447572445856" 
-        message="Hello! I'm interested in dental treatments with MyDentalFly and would like some information about my quote. Can you help me?"
-      />
       
       <main className="min-h-screen bg-gray-50 pt-24 pb-28">
         <div className="container mx-auto px-4">
