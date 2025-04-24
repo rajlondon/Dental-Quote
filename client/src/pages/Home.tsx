@@ -154,11 +154,18 @@ const ClinicCard = ({
           </span>
         </div>
         
-        <Link href={`/clinic/${id || name.toLowerCase().replace(/\s+/g, '-')}`}>
-          <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
-            View Clinic
-          </Button>
-        </Link>
+        <div className="grid grid-cols-2 gap-2">
+          <Link href={`/clinic/${id || name.toLowerCase().replace(/\s+/g, '-')}`} className="w-full">
+            <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
+              View Clinic
+            </Button>
+          </Link>
+          <Link href="/quote" className="w-full">
+            <Button className="w-full">
+              Get a Quote
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
