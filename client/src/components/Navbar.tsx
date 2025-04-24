@@ -30,13 +30,13 @@ const Navbar: React.FC = () => {
         </div>
         
         <div className="hidden md:flex items-center space-x-3">
-          <Link href="/your-quote" className="bg-primary hover:bg-primary/90 text-white font-medium px-3 py-1 rounded-md flex items-center text-xs">
-            <Calculator className="h-3 w-3 mr-1" />
+          <Link href="/your-quote" className="bg-primary hover:bg-primary/90 text-white font-medium px-4 py-1.5 rounded-md flex items-center text-sm">
+            <Calculator className="h-4 w-4 mr-1.5" />
             {t('navbar.get_quote', 'Get a Quote')}
           </Link>
           
           <div className="relative group">
-            <Link href="/dental-chart" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1 rounded-md flex items-center text-xs">
+            <Link href="/dental-chart" className="text-neutral-600 hover:text-primary transition-colors text-xs flex items-center">
               <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
               </svg>
@@ -80,11 +80,11 @@ const Navbar: React.FC = () => {
             {t('navbar.get_quote', 'Quote')}
           </Link>
           
-          <Link href="/dental-chart" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-2 py-1 rounded-md flex items-center text-xs">
+          <Link href="/dental-chart" className="text-neutral-600 hover:text-primary transition-colors flex items-center text-xs">
             <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
             </svg>
-            Chart
+            Services
           </Link>
           
           <LanguageSwitcher />
@@ -111,19 +111,19 @@ const Navbar: React.FC = () => {
         id="mobileMenu"
       >
         <div className="px-3 py-2 space-y-2">
-          <Link href="/your-quote" className="block text-primary font-medium hover:text-primary/80 transition-colors text-xs">
+          <Link href="/your-quote" className="block py-1.5 bg-primary text-white font-medium hover:bg-primary/90 text-xs rounded px-3 mb-2">
             {t('navbar.get_quote', 'Get a Quote')}
           </Link>
           
-          <Link href="/dental-chart" className="block text-blue-600 hover:text-blue-700 transition-colors text-xs font-medium">
+          <Link href="/dental-chart" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             Interactive Dental Chart
           </Link>
           
-          <Link href="/my-dental-chart" className="block text-blue-500 hover:text-blue-600 transition-colors text-xs">
+          <Link href="/my-dental-chart" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             My Saved Dental Charts
           </Link>
           
-          <Link href="/dental-advice" className="block text-blue-500 hover:text-blue-600 transition-colors text-xs">
+          <Link href="/dental-advice" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             AI Dental Treatment Advice
           </Link>
           
