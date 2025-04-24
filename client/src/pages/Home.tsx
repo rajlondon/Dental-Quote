@@ -264,14 +264,6 @@ const HomePage: React.FC = () => {
   // Filter clinics for different sections
   const popularClinics = formattedClinics;
   
-  // The new clinics section will show two random clinics for demo purposes
-  const shuffled = [...formattedClinics].sort(() => 0.5 - Math.random());
-  const newClinics = shuffled.slice(0, 2).map(clinic => ({
-    ...clinic,
-    featured: false,
-    category: clinic.category + ' (New)'
-  }));
-  
   // Trending clinics - for demo we'll mark premium and clinics with high ratings as trending
   const trendingClinics = formattedClinics
     .filter(clinic => clinic.tier === 'premium' || clinic.rating >= 4.7)
@@ -357,37 +349,6 @@ const HomePage: React.FC = () => {
                   </Link>
                 </Button>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* New Clinics Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-8">New Clinics</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newClinics.map((clinic, index) => (
-              <ClinicCard 
-                key={index}
-                id={clinic.id}
-                name={clinic.name} 
-                image={clinic.image}
-                rating={clinic.rating}
-                reviewCount={clinic.reviewCount}
-                location={clinic.location}
-                category={clinic.category}
-              />
-            ))}
-            
-            {/* Empty slots for "View All" */}
-            <div className="flex items-center justify-center bg-white rounded-lg shadow-md p-6 border border-dashed border-gray-300 h-full">
-              <Link href="/clinics">
-                <Button variant="ghost" className="text-primary hover:text-primary/80">
-                  View All Clinics
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
