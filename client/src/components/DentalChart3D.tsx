@@ -493,20 +493,20 @@ export function DentalChart3D({
         {/* 3D Mouth Representation - Simplified version that matches screenshot */}
         <div className="hidden md:block relative">
           <div className="relative w-full h-[400px] rounded-lg bg-pink-100 overflow-hidden border-2 border-red-300 flex flex-col justify-center items-center">
-            {/* Outer mouth oval */}
-            <div className="absolute w-[80%] h-[85%] bg-[#e76f51] rounded-[100%/50%] border-4 border-[#e76f51]"></div>
+            {/* Outer mouth oval - more anatomical shape */}
+            <div className="absolute w-[80%] h-[90%] bg-[#ec8c74] rounded-[100%/50%] border-4 border-[#ec8c74]"></div>
             
-            {/* Middle section - darker area */}
-            <div className="absolute w-[70%] h-[65%] bg-[#d26649] rounded-[100%/50%]"></div>
+            {/* Middle section - pink oral cavity area */}
+            <div className="absolute w-[70%] h-[65%] bg-[#f8a9a3] rounded-[100%/50%]"></div>
             
             {/* Upper gums - red bar like in screenshot */}
-            <div className="absolute top-[25%] w-[60%] h-[8%] bg-[#e63946] z-10"></div>
+            <div className="absolute top-[25%] w-[60%] h-[8%] bg-[#f05450] z-10"></div>
             
             {/* Lower gums - red bar like in screenshot */}
-            <div className="absolute bottom-[25%] w-[60%] h-[8%] bg-[#e63946] z-10"></div>
+            <div className="absolute bottom-[25%] w-[60%] h-[8%] bg-[#f05450] z-10"></div>
             
             {/* Center gap/tongue area */}
-            <div className="absolute w-[40%] h-[25%] bg-[#ff8e88] rounded-[100%/50%] z-5"></div>
+            <div className="absolute w-[40%] h-[25%] bg-[#e57373] rounded-[100%/50%] z-5"></div>
             
             {/* Upper Teeth Row - positioned directly on the upper gum line */}
             <div className="absolute z-20" style={{ top: '25%', transform: 'translateY(-50%)' }}>
