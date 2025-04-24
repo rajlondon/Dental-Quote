@@ -167,13 +167,7 @@ const FAQSection: React.FC = () => {
           </div>
         </div>
         
-        <div className="flex justify-center mt-8">
-          <WhatsAppButton 
-            phoneNumber="447572445856" 
-            message="Hello! I have a question about my dental treatment quote. Can you help me?"
-            className=""
-          />
-        </div>
+
       </CardContent>
     </Card>
   );
