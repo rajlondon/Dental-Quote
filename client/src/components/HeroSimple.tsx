@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { 
   Plane as PlaneIcon, 
-  MapPin, 
-  Search,
-  Home,
-  Stethoscope
+  Search
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 
@@ -13,69 +10,36 @@ import { format, addDays } from "date-fns";
 const HeroSimple: React.FC = () => {
   const [, setLocation] = useLocation();
   
-  // Simple state without dropdowns
+  // Simple state for only city and departure date
   const [city, setCity] = useState("Istanbul");
-  const [origin, setOrigin] = useState("United Kingdom");
-  const [treatment, setTreatment] = useState("Dental Implants");
   const [departureDate, setDepartureDate] = useState(new Date());
-  const [returnDate, setReturnDate] = useState(addDays(new Date(), 14));
   
-  // Minimal city options
+  // Default values we'll use but not show to the user
+  const defaultTreatment = "dental-implants";
+  const defaultOrigin = "uk";
+  const returnDate = addDays(departureDate, 14);
+  
+  // City options - currently only Istanbul
   const cities = ["Istanbul"];
-  const treatments = ["Dental Implants", "Veneers & Crowns", "Hollywood Smile", "Full Mouth Reconstruction"];
-  const origins = ["United Kingdom", "United States", "Canada", "Europe", "Australia"];
   
-  // Use direct select elements instead of custom dropdowns
+  // City select handler
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setCity(e.target.value);
   };
   
-  const handleTreatmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTreatment(e.target.value);
-  };
-  
-  const handleOriginChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setOrigin(e.target.value);
-  };
-  
+  // Date change handler
   const handleDepartureDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDepartureDate(new Date(e.target.value));
-    // Set return date 14 days after new departure date
-    setReturnDate(addDays(new Date(e.target.value), 14));
   };
   
-  const handleReturnDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setReturnDate(new Date(e.target.value));
-  };
-  
-  // Handle search with treatment value mapping
+  // Handle search with minimal parameters
   const handleSearch = () => {
-    // Map treatment display names to URL values
-    const treatmentMap: Record<string, string> = {
-      "Dental Implants": "dental-implants",
-      "Veneers & Crowns": "veneers",
-      "Hollywood Smile": "hollywood-smile",
-      "Full Mouth Reconstruction": "full-mouth"
-    };
-    
-    // Map origin display names to URL values
-    const originMap: Record<string, string> = {
-      "United Kingdom": "uk",
-      "United States": "us",
-      "Canada": "ca",
-      "Europe": "eu",
-      "Australia": "au"
-    };
-    
-    const treatmentValue = treatmentMap[treatment] || "dental-implants";
-    const originValue = originMap[origin] || "uk";
-    
     // Format dates for URL
     const outDateFormatted = format(departureDate, "yyyy-MM-dd");
     const returnDateFormatted = format(returnDate, "yyyy-MM-dd");
     
     // Navigate to quote page with parameters
-    setLocation(`/your-quote?city=${city}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
+    setLocation(`/your-quote?city=${city}&treatment=${defaultTreatment}&origin=${defaultOrigin}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
   };
   
   return (
@@ -96,8 +60,8 @@ const HeroSimple: React.FC = () => {
           {/* Search Box */}
           <div className="max-w-5xl mx-auto">
             {/* Desktop: Horizontal form */}
-            <div className="hidden md:block bg-white rounded-lg border-2 border-yellow-400 p-4">
-              <div className="grid grid-cols-5 gap-3">
+            <div className="hidden md:flex bg-white rounded-lg border-2 border-yellow-400 p-4">
+              <div className="grid grid-cols-2 gap-4 flex-1">
                 {/* City select */}
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Where are you going?</label>
@@ -117,28 +81,9 @@ const HeroSimple: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Treatment select */}
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Treatment type</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                      <Stethoscope className="h-4 w-4 text-gray-500" />
-                    </div>
-                    <select 
-                      value={treatment}
-                      onChange={handleTreatmentChange}
-                      className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {treatments.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
                 {/* Departure date */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Fly out date</label>
+                  <label className="block text-xs text-gray-500 mb-1">Travel date</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                       <PlaneIcon className="h-4 w-4 text-gray-500 transform rotate-45" />
@@ -152,49 +97,13 @@ const HeroSimple: React.FC = () => {
                     />
                   </div>
                 </div>
-                
-                {/* Return date */}
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Return date</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                      <PlaneIcon className="h-4 w-4 text-gray-500 transform -rotate-45" />
-                    </div>
-                    <input 
-                      type="date"
-                      value={format(returnDate, "yyyy-MM-dd")}
-                      min={format(departureDate, "yyyy-MM-dd")}
-                      onChange={handleReturnDateChange}
-                      className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-                
-                {/* Origin select */}
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Flying from</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                      <Home className="h-4 w-4 text-gray-500" />
-                    </div>
-                    <select 
-                      value={origin}
-                      onChange={handleOriginChange}
-                      className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {origins.map(o => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
               </div>
               
               {/* Search button */}
-              <div className="mt-4">
+              <div className="ml-4 flex items-center">
                 <button 
                   onClick={handleSearch}
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded flex items-center justify-center"
+                  className="h-full px-6 bg-primary hover:bg-primary/90 text-white font-medium rounded flex items-center justify-center"
                 >
                   <span>Search</span>
                 </button>
@@ -222,28 +131,9 @@ const HeroSimple: React.FC = () => {
                 </div>
               </div>
               
-              {/* Treatment select */}
-              <div className="mb-3">
-                <label className="block text-xs text-gray-500 mb-1">Treatment type</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                    <Stethoscope className="h-4 w-4 text-gray-500" />
-                  </div>
-                  <select 
-                    value={treatment}
-                    onChange={handleTreatmentChange}
-                    className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {treatments.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
               {/* Departure date */}
-              <div className="mb-3">
-                <label className="block text-xs text-gray-500 mb-1">Fly out date</label>
+              <div className="mb-4">
+                <label className="block text-xs text-gray-500 mb-1">Travel date</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                     <PlaneIcon className="h-4 w-4 text-gray-500 transform rotate-45" />
@@ -255,42 +145,6 @@ const HeroSimple: React.FC = () => {
                     onChange={handleDepartureDateChange}
                     className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
                   />
-                </div>
-              </div>
-              
-              {/* Return date */}
-              <div className="mb-3">
-                <label className="block text-xs text-gray-500 mb-1">Return date</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                    <PlaneIcon className="h-4 w-4 text-gray-500 transform -rotate-45" />
-                  </div>
-                  <input 
-                    type="date"
-                    value={format(returnDate, "yyyy-MM-dd")}
-                    min={format(departureDate, "yyyy-MM-dd")}
-                    onChange={handleReturnDateChange}
-                    className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              
-              {/* Origin select */}
-              <div className="mb-3">
-                <label className="block text-xs text-gray-500 mb-1">Flying from</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                    <Home className="h-4 w-4 text-gray-500" />
-                  </div>
-                  <select 
-                    value={origin}
-                    onChange={handleOriginChange}
-                    className="w-full pl-8 pr-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {origins.map(o => (
-                      <option key={o} value={o}>{o}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
               
