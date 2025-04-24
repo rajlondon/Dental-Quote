@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { 
   Plane as PlaneIcon, 
-  ArrowRight as ArrowRightIcon, 
+  ArrowRight, 
   Check, 
   Clock, 
   PoundSterling,
@@ -11,7 +11,10 @@ import {
   Calendar,
   HeartPulse,
   Shield,
-  BriefcaseMedical
+  BriefcaseMedical,
+  CircleUser,
+  Menu,
+  ChevronDown
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -195,7 +198,7 @@ const QuoteForm: React.FC = () => {
             className="w-full md:w-auto bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 text-white font-medium px-6 rounded-none md:rounded-r-lg flex items-center justify-center text-base h-14"
           >
             <span className="mr-2">Get Quote</span>
-            <ArrowRightIcon className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </form>
@@ -216,29 +219,53 @@ const Hero: React.FC = () => {
   const { t } = useTranslation();
   
   return (
-    <section className="relative py-8 md:py-12 overflow-hidden bg-[#F8FAFC]">
-      {/* Simple light background */}
-      <div className="container mx-auto px-4 relative">
-        {/* Header with nav space */}
-        <div className="flex items-center justify-center md:justify-start mb-6">
-          <div className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent font-bold text-xl md:text-2xl">MyDentalFly</div>
+    <section className="relative pb-12 overflow-hidden">
+      {/* Header - Booking.com blue style */}
+      <div className="bg-primary py-4 px-4">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="text-white font-bold text-xl">MyDentalFly</div>
+            <div className="flex items-center space-x-2">
+              {/* Mobile header icons */}
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <CircleUser className="h-5 w-5 text-white" />
+              </div>
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <Menu className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
-        
-        {/* Main content with heading and form */}
-        <div className="max-w-4xl mx-auto relative">
+      </div>
+
+      {/* Main content with light background */}
+      <div className="bg-[#F8FAFC] pb-8">
+        <div className="container mx-auto px-4">
           {/* Heading Section - Simplified */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-5xl font-bold mb-2">
-              <span className="block mb-2">Compare Dental Clinics</span>
-              <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">Abroad in Seconds</span>
+          <div className="text-center py-6">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+              Compare Dental Clinics
             </h1>
-            <p className="text-gray-600 text-lg mb-6">
+            <h2 className="text-primary text-xl font-semibold mb-1">
+              Abroad in Seconds
+            </h2>
+            <p className="text-gray-600 text-sm">
               Real prices. Trusted surgeons. One easy portal.
             </p>
           </div>
-          
-          {/* Quote Form - Booking.com style, full width */}
+        </div>
+      </div>
+      
+      {/* Use the existing QuoteForm */}
+      <div className="container mx-auto px-4 -mt-4">
+        <div className="max-w-xl mx-auto bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 shadow-lg">
           <QuoteForm />
+        </div>
+        
+        {/* Popular Clinics - Similar to booking.com "Offers" section */}
+        <div className="mt-12 max-w-xl mx-auto">
+          <h2 className="text-xl font-bold mb-4">Popular Clinics</h2>
+          {/* Additional content would go here */}
         </div>
       </div>
     </section>
