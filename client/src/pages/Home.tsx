@@ -160,7 +160,7 @@ const ClinicCard = ({
               View Clinic
             </Button>
           </Link>
-          <Link href="/quote" className="w-full">
+          <Link href="/your-quote" className="w-full">
             <Button className="w-full">
               Get a Quote
             </Button>
@@ -351,7 +351,7 @@ const HomePage: React.FC = () => {
               </div>
               <div className="p-4">
                 <Button asChild className="w-full bg-white hover:bg-gray-50 text-primary border-2 border-primary/30 hover:border-primary/50 font-medium">
-                  <Link href="/quote">
+                  <Link href="/your-quote">
                     Build Custom Package
                   </Link>
                 </Button>
