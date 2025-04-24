@@ -85,6 +85,9 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
+      <Route path="/quote">
+        {() => <Redirect to="/your-quote" />}
+      </Route>
       <Route path="/booking" component={BookingPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/package/:id" component={PackageDetailPage} />
