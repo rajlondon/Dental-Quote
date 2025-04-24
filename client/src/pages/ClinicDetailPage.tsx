@@ -403,7 +403,7 @@ const ClinicDetailPage: React.FC = () => {
                     </p>
                     <Button 
                       onClick={() => setLocation('/quote-form')}
-                      className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80"
+                      className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 shadow-md px-6 py-6 text-base font-semibold"
                     >
                       Get Your Personalized Quote
                       <ArrowRight className="ml-2 h-4 w-4" />
