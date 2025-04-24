@@ -162,7 +162,7 @@ const ClinicDetailPage: React.FC = () => {
                 
                 <div className="flex gap-2">
                   <Button 
-                    onClick={() => setLocation('/quote-form')}
+                    onClick={() => setLocation('/your-quote')}
                     className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 shadow-md px-5 py-6 text-base font-semibold"
                   >
                     Get a Quote
@@ -351,7 +351,7 @@ const ClinicDetailPage: React.FC = () => {
                         </p>
                       </div>
                       <Button 
-                        onClick={() => setLocation('/quote-form')}
+                        onClick={() => setLocation('/your-quote')}
                         size="lg"
                         className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 shadow-md px-6 py-6 text-base font-semibold"
                       >
@@ -402,7 +402,7 @@ const ClinicDetailPage: React.FC = () => {
                       Want to see a complete price list and get a personalized quote?
                     </p>
                     <Button 
-                      onClick={() => setLocation('/quote-form')}
+                      onClick={() => setLocation('/your-quote')}
                       className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 shadow-md px-6 py-6 text-base font-semibold"
                     >
                       Get Your Personalized Quote
