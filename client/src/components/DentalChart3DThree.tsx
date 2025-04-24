@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,12 +48,10 @@ export function DentalChart3DThree({
 }: DentalChart3DThreeProps) {
   const { toast } = useToast();
   const mountRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const [selectedTooth, setSelectedTooth] = React.useState<Tooth | null>(null);
-  const [selectedMode, setSelectedMode] = React.useState<'condition' | 'treatment'>('condition');
-  const [openDialog, setOpenDialog] = React.useState(false);
+  const [selectedTooth, setSelectedTooth] = useState<Tooth | null>(null);
+  const [selectedMode, setSelectedMode] = useState<'condition' | 'treatment'>('condition');
+  const [openDialog, setOpenDialog] = useState(false);
   
   // Generate teeth with 3D positioning
   const generateTeethWithPositions = (): Tooth[] => {
@@ -131,7 +129,7 @@ export function DentalChart3DThree({
   };
   
   // Default teeth array with all 32 adult teeth with 3D positions
-  const [teeth, setTeeth] = React.useState<Tooth[]>(initialTeeth || generateTeethWithPositions());
+  const [teeth, setTeeth] = useState<Tooth[]>(initialTeeth || generateTeethWithPositions());
   
   // Condition options
   const conditionOptions = [
@@ -184,23 +182,18 @@ export function DentalChart3DThree({
   useEffect(() => {
     if (!mountRef.current) return;
     
-    // Create scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f5f5);
-    sceneRef.current = scene;
+    scene.background = new THREE.Color(0xf8fafc);
     
-    // Create camera
     const camera = new THREE.PerspectiveCamera(
-      50, 
+      45, 
       mountRef.current.clientWidth / mountRef.current.clientHeight, 
       0.1, 
       1000
     );
-    camera.position.set(0, 5, 10);
+    camera.position.set(0, 4, 12);
     camera.lookAt(0, 0, 0);
-    cameraRef.current = camera;
     
-    // Create renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     mountRef.current.appendChild(renderer.domElement);
@@ -214,11 +207,12 @@ export function DentalChart3DThree({
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
     
-    // Add gums (upper and lower arches)
+    // Add mouth cavity
+    // Upper and lower arches (gums)
     const upperGumGeometry = new THREE.TorusGeometry(5, 1.5, 16, 32, Math.PI);
     const lowerGumGeometry = new THREE.TorusGeometry(5, 1.5, 16, 32, Math.PI);
     
-    const gumMaterial = new THREE.MeshPhongMaterial({ color: 0xf87171 });
+    const gumMaterial = new THREE.MeshPhongMaterial({ color: 0xf87171 }); // Soft pink color
     
     const upperGum = new THREE.Mesh(upperGumGeometry, gumMaterial);
     upperGum.rotation.x = Math.PI;
@@ -229,17 +223,9 @@ export function DentalChart3DThree({
     lowerGum.position.y = -1;
     scene.add(lowerGum);
     
-    // Add tongue
-    const tongueGeometry = new THREE.SphereGeometry(2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-    const tongueMaterial = new THREE.MeshPhongMaterial({ color: 0xe57373 });
-    const tongue = new THREE.Mesh(tongueGeometry, tongueMaterial);
-    tongue.rotation.x = Math.PI;
-    tongue.position.set(0, -1.5, 0);
-    tongue.scale.z = 1.5;
-    scene.add(tongue);
-    
     // Add teeth
     teeth.forEach((tooth) => {
+      // Create a tooth cube
       const toothGeometry = new THREE.BoxGeometry(0.7, 0.7, 0.7);
       const toothMaterial = new THREE.MeshPhongMaterial({ 
         color: getToothColor(tooth),
@@ -249,24 +235,21 @@ export function DentalChart3DThree({
       
       const toothMesh = new THREE.Mesh(toothGeometry, toothMaterial);
       
-      // Position according to tooth data
+      // Position the tooth
       toothMesh.position.set(
         tooth.position.x,
         tooth.position.y,
         tooth.position.z
       );
       
-      // Set rotation
+      // Rotate the tooth
       toothMesh.rotation.set(
         tooth.position.rotation.x,
         tooth.position.rotation.y,
         tooth.position.rotation.z
       );
       
-      // Add tooth ID
-      const loader = new THREE.FontLoader();
-      
-      // Use simple approach with a sprite for text
+      // Add a label for the tooth number
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       canvas.width = 64;
@@ -286,35 +269,79 @@ export function DentalChart3DThree({
       sprite.scale.set(0.5, 0.5, 0.5);
       
       toothMesh.add(sprite);
+      
+      // Store tooth data in mesh userdata for raycasting
       toothMesh.userData = { tooth };
       
       scene.add(toothMesh);
     });
     
-    // Handle resizing
+    // Add raycaster for tooth selection
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    // Handle mouse click on teeth
+    const handleMouseClick = (event: MouseEvent) => {
+      if (!mountRef.current) return;
+      
+      const rect = mountRef.current.getBoundingClientRect();
+      
+      // Calculate mouse position in normalized device coordinates (-1 to +1)
+      mouse.x = ((event.clientX - rect.left) / mountRef.current.clientWidth) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / mountRef.current.clientHeight) * 2 + 1;
+      
+      // Update the picking ray with the camera and mouse position
+      raycaster.setFromCamera(mouse, camera);
+      
+      // Get all objects intersecting the ray
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      
+      // Find the first intersected tooth
+      for (let i = 0; i < intersects.length; i++) {
+        let obj = intersects[i].object;
+        
+        // Traverse up to find the parent with userData
+        while (obj && !obj.userData?.tooth) {
+          obj = obj.parent;
+        }
+        
+        if (obj && obj.userData?.tooth) {
+          handleToothClick(obj.userData.tooth);
+          break;
+        }
+      }
+    };
+    
+    mountRef.current.addEventListener('click', handleMouseClick);
+    
+    // Handle window resize
     const handleResize = () => {
-      if (!mountRef.current || !rendererRef.current || !cameraRef.current) return;
+      if (!mountRef.current || !rendererRef.current) return;
       
       const width = mountRef.current.clientWidth;
       const height = mountRef.current.clientHeight;
       
-      cameraRef.current.aspect = width / height;
-      cameraRef.current.updateProjectionMatrix();
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
       
-      rendererRef.current.setSize(width, height);
+      renderer.setSize(width, height);
     };
     
     window.addEventListener('resize', handleResize);
     
     // Animation loop
+    const controls = new THREE.Group(); // Empty group for potential orbit controls
+    scene.add(controls);
+    
     let animationFrameId: number;
     
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       
-      if (rendererRef.current && sceneRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-      }
+      // Slowly rotate the entire scene for better visibility
+      scene.rotation.y += 0.001;
+      
+      renderer.render(scene, camera);
     };
     
     animate();
@@ -322,11 +349,16 @@ export function DentalChart3DThree({
     // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
       
-      if (mountRef.current && rendererRef.current) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
+      if (mountRef.current) {
+        mountRef.current.removeEventListener('click', handleMouseClick);
+        
+        if (rendererRef.current) {
+          mountRef.current.removeChild(rendererRef.current.domElement);
+        }
       }
+      
+      cancelAnimationFrame(animationFrameId);
     };
   }, [teeth]);
   
@@ -390,7 +422,7 @@ export function DentalChart3DThree({
       <div>
         {/* Simple Header with Reset Button */}
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Your Dental Chart (3D)</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Interactive 3D Dental Chart</h3>
           <Button 
             variant="outline" 
             size="sm"
@@ -411,20 +443,13 @@ export function DentalChart3DThree({
               });
             }}
           >
-            Reset
+            Reset Chart
           </Button>
         </div>
         
         {/* Simple Instructions */}
         <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm text-blue-800">
-          <p className="mb-1"><strong>How to Use This Tool:</strong></p>
-          <ol className="list-decimal pl-5 space-y-1">
-            <li>Click on any tooth in the diagram</li>
-            <li>Mark its current condition (chipped, missing, painful, etc.)</li>
-            <li>Indicate your desired treatment (implant, crown, veneer, etc.)</li>
-            <li>Add any notes specific to that tooth</li>
-            <li>Continue marking all teeth that need attention</li>
-          </ol>
+          <p><strong>Click on any tooth</strong> in the 3D model to mark conditions or treatments</p>
         </div>
         
         {/* 3D Mouth Canvas */}
@@ -433,8 +458,9 @@ export function DentalChart3DThree({
           className="w-full h-80 rounded-lg border border-gray-200 overflow-hidden mb-4"
         />
         
-        {/* Legend for desktop */}
-        <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
+        {/* Legend */}
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="col-span-2 sm:col-span-4 text-sm font-medium mb-1">Color Legend:</div>
           {[...conditionOptions, ...treatmentOptions].map(option => (
             option.value !== 'normal' && option.value !== 'none' && (
               <div key={option.value} className="flex items-center">
@@ -478,8 +504,8 @@ export function DentalChart3DThree({
           
           <Tabs defaultValue="condition" onValueChange={(value) => setSelectedMode(value as 'condition' | 'treatment')}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="condition">Condition</TabsTrigger>
-              <TabsTrigger value="treatment">Treatment</TabsTrigger>
+              <TabsTrigger value="condition">Current Condition</TabsTrigger>
+              <TabsTrigger value="treatment">Desired Treatment</TabsTrigger>
             </TabsList>
             
             <TabsContent value="condition">
