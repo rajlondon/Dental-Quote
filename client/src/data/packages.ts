@@ -113,7 +113,7 @@ const setExcursionInclusion = (packageTier: ExcursionTier, excursion: Excursion)
 // Define trending packages
 export const trendingPackages: TrendingPackage[] = [
   {
-    id: 'hollywood-smile-gold',
+    id: 'hollywood-smile-vacation',
     title: 'Hollywood Smile Vacation Package',
     description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying a luxury stay in Istanbul with guided tours and premium experiences.',
     clinic: {
@@ -147,7 +147,7 @@ export const trendingPackages: TrendingPackage[] = [
     tier: 'gold'
   },
   {
-    id: 'implant-package-silver',
+    id: 'dental-implant-city-experience',
     title: 'Dental Implant & City Experience',
     description: 'Restore your smile with quality dental implants and enjoy exploring Istanbul with included hotel stay and select city experiences.',
     clinic: {
@@ -181,7 +181,7 @@ export const trendingPackages: TrendingPackage[] = [
     tier: 'silver'
   },
   {
-    id: 'basic-veneer-package-bronze',
+    id: 'value-veneer-istanbul-discovery',
     title: 'Value Veneer & Istanbul Discovery',
     description: 'Get affordable veneers to enhance your smile while exploring the highlights of Istanbul with basic accommodations and essential services.',
     clinic: {

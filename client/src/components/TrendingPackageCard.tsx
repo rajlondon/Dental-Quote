@@ -71,20 +71,20 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg bg-white">
       <div className="relative">
         {/* Package image with overlay */}
-        <div className="w-full h-48 overflow-hidden">
+        <div className="w-full h-60 overflow-hidden relative">
           <img 
-            src={pkg.clinic.image} 
+            src={`/images/packages/${pkg.id}.png`}
             alt={`${pkg.title} package`} 
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
             <div className="flex justify-between items-center">
               <TierBadge tier={tier} />
-              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+              <Badge className="bg-blue-100 text-blue-800 border-blue-200 shadow-sm">
                 {pkg.duration}
               </Badge>
             </div>
-            <h3 className="text-white font-bold text-lg mt-2">{pkg.title}</h3>
+            <h3 className="text-white font-bold text-lg mt-2 drop-shadow-md">{pkg.title}</h3>
           </div>
         </div>
       </div>
