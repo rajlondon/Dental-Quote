@@ -153,7 +153,16 @@ const Question: React.FC<QuestionProps> = ({
       {/* Navigation buttons */}
       <div className="flex justify-between">
         {onBack ? (
-          <Button variant="outline" onClick={onBack} className="px-6">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              // Preserve scroll position when going back
+              const currentPosition = window.scrollY;
+              onBack();
+              setTimeout(() => window.scrollTo(0, currentPosition), 0);
+            }} 
+            className="px-6"
+          >
             Back
           </Button>
         ) : (
@@ -161,7 +170,12 @@ const Question: React.FC<QuestionProps> = ({
         )}
         
         <Button 
-          onClick={onNext} 
+          onClick={() => {
+            // Preserve scroll position when going forward
+            const currentPosition = window.scrollY;
+            onNext();
+            setTimeout(() => window.scrollTo(0, currentPosition), 0);
+          }} 
           disabled={!canContinue}
           className="px-6"
         >
