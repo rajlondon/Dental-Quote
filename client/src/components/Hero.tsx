@@ -64,6 +64,7 @@ const Hero: React.FC = () => {
     setIsFromOpen(false);
     setIsTreatmentsOpen(false);
     setIsDatePickerOpen(false);
+    setIsReturnDatePickerOpen(false);
   };
   
   // Handle search action
@@ -197,6 +198,7 @@ const Hero: React.FC = () => {
                     setIsFromOpen(false);
                     setIsDestinationOpen(false);
                     setIsTreatmentsOpen(false);
+                    setIsReturnDatePickerOpen(false);
                   }}
                 >
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 flex-shrink-0 transform rotate-45" />
@@ -222,6 +224,53 @@ const Hero: React.FC = () => {
                                 setSelectedDate(date);
                                 setReturnDate(addDays(date, 14));
                                 setIsDatePickerOpen(false);
+                              }}
+                            >
+                              <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
+                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Return date field */}
+              <div className="relative flex-1 border-r border-gray-200">
+                <div 
+                  className="flex items-center w-full h-full px-3 py-3 cursor-pointer"
+                  onClick={() => {
+                    setIsReturnDatePickerOpen(!isReturnDatePickerOpen);
+                    setIsDatePickerOpen(false);
+                    setIsFromOpen(false);
+                    setIsDestinationOpen(false);
+                    setIsTreatmentsOpen(false);
+                  }}
+                >
+                  <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 flex-shrink-0 transform -rotate-45" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-gray-500">Return date</div>
+                    <div className="text-base">{format(returnDate, "EEE dd MMM yyyy")}</div>
+                  </div>
+                </div>
+                
+                {/* Return date picker dropdown */}
+                {isReturnDatePickerOpen && (
+                  <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
+                    <div className="p-4">
+                      <h4 className="font-medium mb-2">Select return date:</h4>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[...Array(12)].map((_, index) => {
+                          const date = addDays(selectedDate, index * 3 + 1);
+                          return (
+                            <div 
+                              key={index}
+                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              onClick={() => {
+                                setReturnDate(date);
+                                setIsReturnDatePickerOpen(false);
                               }}
                             >
                               <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
@@ -364,7 +413,16 @@ const Hero: React.FC = () => {
                 )}
                 
                 {/* Fly out date */}
-                <div className="flex items-center px-3 py-3 border-b border-gray-200">
+                <div 
+                  className="flex items-center px-3 py-3 border-b border-gray-200 cursor-pointer"
+                  onClick={() => {
+                    setIsDatePickerOpen(!isDatePickerOpen);
+                    setIsFromOpen(false);
+                    setIsDestinationOpen(false);
+                    setIsTreatmentsOpen(false);
+                    setIsReturnDatePickerOpen(false);
+                  }}
+                >
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 transform rotate-45" />
                   <div className="flex-1">
                     <div className="text-xs text-gray-500">Fly out date</div>
@@ -372,14 +430,78 @@ const Hero: React.FC = () => {
                   </div>
                 </div>
                 
+                {/* Date picker for mobile */}
+                {isDatePickerOpen && (
+                  <div className="border-b border-gray-200 bg-gray-50">
+                    <div className="p-4">
+                      <h4 className="font-medium mb-2">Select departure date:</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[...Array(9)].map((_, index) => {
+                          const date = addDays(new Date(), index * 7);
+                          return (
+                            <div 
+                              key={index}
+                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              onClick={() => {
+                                setSelectedDate(date);
+                                setReturnDate(addDays(date, 14));
+                                setIsDatePickerOpen(false);
+                              }}
+                            >
+                              <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
+                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Fly home date */}
-                <div className="flex items-center px-3 py-3 border-b border-gray-200">
+                <div 
+                  className="flex items-center px-3 py-3 border-b border-gray-200 cursor-pointer"
+                  onClick={() => {
+                    setIsReturnDatePickerOpen(!isReturnDatePickerOpen);
+                    setIsDatePickerOpen(false);
+                    setIsFromOpen(false);
+                    setIsDestinationOpen(false);
+                    setIsTreatmentsOpen(false);
+                  }}
+                >
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 transform -rotate-45" />
                   <div className="flex-1">
                     <div className="text-xs text-gray-500">Fly home date</div>
                     <div className="text-base">{format(returnDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
+                
+                {/* Return date picker for mobile */}
+                {isReturnDatePickerOpen && (
+                  <div className="border-b border-gray-200 bg-gray-50">
+                    <div className="p-4">
+                      <h4 className="font-medium mb-2">Select return date:</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[...Array(9)].map((_, index) => {
+                          const date = addDays(selectedDate, index * 3 + 1);
+                          return (
+                            <div 
+                              key={index}
+                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              onClick={() => {
+                                setReturnDate(date);
+                                setIsReturnDatePickerOpen(false);
+                              }}
+                            >
+                              <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
+                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Flying from */}
                 <div 
