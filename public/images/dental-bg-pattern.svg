@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dental cross pattern for background -->
+  <g opacity="0.07">
+    <!-- Toothbrush -->
+    <path d="M40 60C40 53.3726 45.3726 48 52 48H58C64.6274 48 70 53.3726 70 60V100C70 106.627 64.6274 112 58 112H52C45.3726 112 40 106.627 40 100V60Z" fill="#3B82F6"/>
+    <rect x="48" y="112" width="14" height="40" rx="7" fill="#3B82F6"/>
+    <rect x="48" y="30" width="14" height="18" rx="7" fill="#3B82F6"/>
+    
+    <!-- Molar/Tooth -->
+    <path d="M130 70C130 56.1929 141.193 45 155 45C168.807 45 180 56.1929 180 70V75C180 88.8071 168.807 100 155 100C141.193 100 130 88.8071 130 75V70Z" fill="#3B82F6"/>
+    <path d="M140 100L135 120C134.5 122 135 125 138 125H172C175 125 175.5 122 175 120L170 100" stroke="#3B82F6" stroke-width="6"/>
+    
+    <!-- Dental Mirror -->
+    <circle cx="230" cy="60" r="25" fill="#3B82F6"/>
+    <rect x="225" y="85" width="10" height="40" rx="5" fill="#3B82F6"/>
+    
+    <!-- Toothpaste -->
+    <rect x="40" y="180" width="60" height="30" rx="10" fill="#3B82F6"/>
+    <path d="M100 195C120 195 120 170 140 170H170C180 170 190 180 190 190C190 200 180 210 170 210H120C110 210 100 205 100 195Z" fill="#3B82F6"/>
+    
+    <!-- Dental Floss -->
+    <circle cx="240" cy="190" r="20" stroke="#3B82F6" stroke-width="8"/>
+    <path d="M235 210L225 240" stroke="#3B82F6" stroke-width="3"/>
+    <path d="M245 210L255 240" stroke="#3B82F6" stroke-width="3"/>
+  </g>
+</svg>
