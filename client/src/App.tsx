@@ -61,6 +61,7 @@ import DentalAdvicePage from "@/pages/DentalAdvicePage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
+import PackageDetailPage from "@/pages/PackageDetailPage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/quote-results" component={QuoteResultsPage} />
       <Route path="/booking" component={BookingPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
+      <Route path="/package/:id" component={PackageDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/portal">
         {() => <Redirect to="/portal-login" />}
