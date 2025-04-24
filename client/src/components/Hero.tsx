@@ -211,15 +211,15 @@ const Hero: React.FC = () => {
                 {/* Date picker dropdown */}
                 {isDatePickerOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
-                    <div className="p-4">
-                      <h4 className="font-medium mb-2">Select departure date:</h4>
-                      <div className="grid grid-cols-4 gap-2">
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium mb-2">Select departure date:</h4>
+                      <div className="grid grid-cols-4 gap-1">
                         {[...Array(12)].map((_, index) => {
                           const date = addDays(new Date(), index * 7);
                           return (
                             <div 
                               key={index}
-                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              className="p-1 hover:bg-blue-50 rounded cursor-pointer text-center border"
                               onClick={() => {
                                 setSelectedDate(date);
                                 setReturnDate(addDays(date, 14));
@@ -227,7 +227,7 @@ const Hero: React.FC = () => {
                               }}
                             >
                               <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
-                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                              <div className="text-xs font-medium">{format(date, "dd MMM")}</div>
                             </div>
                           );
                         })}
@@ -259,22 +259,22 @@ const Hero: React.FC = () => {
                 {/* Return date picker dropdown */}
                 {isReturnDatePickerOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
-                    <div className="p-4">
-                      <h4 className="font-medium mb-2">Select return date:</h4>
-                      <div className="grid grid-cols-4 gap-2">
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium mb-2">Select return date:</h4>
+                      <div className="grid grid-cols-4 gap-1">
                         {[...Array(12)].map((_, index) => {
                           const date = addDays(selectedDate, index * 3 + 1);
                           return (
                             <div 
                               key={index}
-                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              className="p-1 hover:bg-blue-50 rounded cursor-pointer text-center border"
                               onClick={() => {
                                 setReturnDate(date);
                                 setIsReturnDatePickerOpen(false);
                               }}
                             >
                               <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
-                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                              <div className="text-xs font-medium">{format(date, "dd MMM")}</div>
                             </div>
                           );
                         })}
@@ -433,15 +433,15 @@ const Hero: React.FC = () => {
                 {/* Date picker for mobile */}
                 {isDatePickerOpen && (
                   <div className="border-b border-gray-200 bg-gray-50">
-                    <div className="p-4">
-                      <h4 className="font-medium mb-2">Select departure date:</h4>
-                      <div className="grid grid-cols-3 gap-2">
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium mb-2">Select departure date:</h4>
+                      <div className="grid grid-cols-3 gap-1">
                         {[...Array(9)].map((_, index) => {
                           const date = addDays(new Date(), index * 7);
                           return (
                             <div 
                               key={index}
-                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              className="p-1 hover:bg-blue-50 rounded cursor-pointer text-center border"
                               onClick={() => {
                                 setSelectedDate(date);
                                 setReturnDate(addDays(date, 14));
@@ -449,7 +449,7 @@ const Hero: React.FC = () => {
                               }}
                             >
                               <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
-                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                              <div className="text-xs font-medium">{format(date, "dd MMM")}</div>
                             </div>
                           );
                         })}
@@ -479,22 +479,22 @@ const Hero: React.FC = () => {
                 {/* Return date picker for mobile */}
                 {isReturnDatePickerOpen && (
                   <div className="border-b border-gray-200 bg-gray-50">
-                    <div className="p-4">
-                      <h4 className="font-medium mb-2">Select return date:</h4>
-                      <div className="grid grid-cols-3 gap-2">
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium mb-2">Select return date:</h4>
+                      <div className="grid grid-cols-3 gap-1">
                         {[...Array(9)].map((_, index) => {
                           const date = addDays(selectedDate, index * 3 + 1);
                           return (
                             <div 
                               key={index}
-                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              className="p-1 hover:bg-blue-50 rounded cursor-pointer text-center border"
                               onClick={() => {
                                 setReturnDate(date);
                                 setIsReturnDatePickerOpen(false);
                               }}
                             >
                               <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
-                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                              <div className="text-xs font-medium">{format(date, "dd MMM")}</div>
                             </div>
                           );
                         })}
