@@ -823,56 +823,62 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                     onValueChange={setSelectedTimeframe}
                     className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                   >
-                    <div className={`border rounded-lg p-4 text-center transition-all duration-200 
-                      ${selectedTimeframe === 'urgent' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
+                    <Label 
+                      htmlFor="time-urgent" 
+                      className={`border rounded-lg p-4 text-center transition-all duration-200 block cursor-pointer
+                        ${selectedTimeframe === 'urgent' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
                     >
                       <div className="flex flex-col items-center gap-3">
                         <RadioGroupItem value="urgent" id="time-urgent" className="sr-only" />
                         <Timer className="h-6 w-6 text-primary/80" />
                         <div>
-                          <Label htmlFor="time-urgent" className="text-base font-medium mb-1 block">
+                          <span className="text-base font-medium mb-1 block">
                             As Soon as Possible
-                          </Label>
+                          </span>
                           <p className="text-xs text-gray-500">
                             Within the next month
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </Label>
                     
-                    <div className={`border rounded-lg p-4 text-center transition-all duration-200 
-                      ${selectedTimeframe === 'soon' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
+                    <Label 
+                      htmlFor="time-soon"
+                      className={`border rounded-lg p-4 text-center transition-all duration-200 block cursor-pointer
+                        ${selectedTimeframe === 'soon' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
                     >
                       <div className="flex flex-col items-center gap-3">
                         <RadioGroupItem value="soon" id="time-soon" className="sr-only" />
                         <Timer className="h-6 w-6 text-primary/80" />
                         <div>
-                          <Label htmlFor="time-soon" className="text-base font-medium mb-1 block">
+                          <span className="text-base font-medium mb-1 block">
                             Within 3 Months
-                          </Label>
+                          </span>
                           <p className="text-xs text-gray-500">
                             I'm planning ahead
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </Label>
                     
-                    <div className={`border rounded-lg p-4 text-center transition-all duration-200 
-                      ${selectedTimeframe === 'flexible' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
+                    <Label
+                      htmlFor="time-flexible"
+                      className={`border rounded-lg p-4 text-center transition-all duration-200 block cursor-pointer
+                        ${selectedTimeframe === 'flexible' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
                     >
                       <div className="flex flex-col items-center gap-3">
                         <RadioGroupItem value="flexible" id="time-flexible" className="sr-only" />
                         <Timer className="h-6 w-6 text-primary/80" />
                         <div>
-                          <Label htmlFor="time-flexible" className="text-base font-medium mb-1 block">
+                          <span className="text-base font-medium mb-1 block">
                             Flexible
-                          </Label>
+                          </span>
                           <p className="text-xs text-gray-500">
                             I'm just exploring options
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </Label>
                   </RadioGroup>
                 </div>
                 
