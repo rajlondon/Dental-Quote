@@ -76,10 +76,10 @@ const Hero: React.FC = () => {
     const outDateFormatted = format(selectedDate, "yyyy-MM-dd");
     const returnDateFormatted = format(returnDate, "yyyy-MM-dd");
     
-    // Use the existing treatment builder page with our parameters
-    setLocation(`/step-by-step-treatment-builder?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
+    // Use the your-quote page (which exists in our routes) with search parameters
+    setLocation(`/your-quote?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
     
-    console.log(`Navigating to treatment builder with parameters:
+    console.log(`Navigating to quote builder with parameters:
       City: ${selectedCity}
       Treatment: ${treatmentValue}
       Origin: ${originValue}
