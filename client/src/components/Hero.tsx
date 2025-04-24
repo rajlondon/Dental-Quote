@@ -215,58 +215,53 @@ const QuoteForm: React.FC = () => {
 const Hero: React.FC = () => {
   const { t } = useTranslation();
   
-  // The svg of the friendly otter mascot with toothbrush and passport
+  // Simple cartoon otter mascot with toothbrush based on provided image
   const OtterMascot = () => (
-    <svg className="w-44 h-44 md:w-52 md:h-52 absolute right-4 top-12 hidden lg:block" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className="w-44 h-44 md:w-52 md:h-52 absolute right-4 top-12 hidden lg:block" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g>
-        {/* Otter body */}
-        <path d="M100 180c30 0 50-20 50-50 0-35-20-60-50-60S50 95 50 130c0 30 20 50 50 50z" fill="#8B572A" />
-        <path d="M90 180c20 0 40-15 40-40 0-30-20-50-40-50S50 110 50 140c0 25 20 40 40 40z" fill="#D2B48C" />
+        {/* Background circle */}
+        <circle cx="200" cy="200" r="180" fill="#F9E8B8" />
         
-        {/* Otter face */}
-        <path d="M75 118a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" fill="#000" /> {/* Left eye */}
-        <path d="M115 118a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" fill="#000" /> {/* Right eye */}
+        {/* Otter head */}
+        <path d="M325 190c0 55-55 100-125 100S75 245 75 190c0-55 55-100 125-100s125 45 125 100z" fill="#8B572A" stroke="#222" strokeWidth="8" />
         
-        {/* Eye highlights for friendly look */}
-        <circle cx="78" cy="116" r="2" fill="#FFF" />
-        <circle cx="118" cy="116" r="2" fill="#FFF" />
+        {/* Otter ears */}
+        <path d="M135 125c-10-25-30-25-30-10 0 15 15 25 30 10z" fill="#8B572A" stroke="#222" strokeWidth="8" />
+        <path d="M265 125c10-25 30-25 30-10 0 15-15 25-30 10z" fill="#8B572A" stroke="#222" strokeWidth="8" />
+        
+        {/* Otter face - light area */}
+        <path d="M200 290c45 0 80-35 80-70 0-35-35-60-80-60s-80 25-80 60c0 35 35 70 80 70z" fill="#E2C799" />
+        
+        {/* Otter eyes - closed happy */}
+        <path d="M140 170c5-10 20-10 25 0" stroke="#222" strokeWidth="8" strokeLinecap="round" />
+        <path d="M235 170c5-10 20-10 25 0" stroke="#222" strokeWidth="8" strokeLinecap="round" />
         
         {/* Nose */}
-        <path d="M95 135c3 0 10 0 10 0 2 0 4 5 0 5-4 0-10 0-10 0-4 0-2-5 0-5z" fill="#000" />
-        
-        {/* Smiling mouth with teeth */}
-        <path d="M75 130c10 15 40 15 50 0" stroke="#000" strokeWidth="2" fill="none" />
-        <path d="M85 132c10 10 20 10 30 0" fill="#FFF" />
-        <path d="M85 132c10 10 20 10 30 0" stroke="#000" strokeWidth="1" fill="none" />
-        <path d="M85 132l5 0M95 132l5 0M105 132l5 0" stroke="#000" strokeWidth="0.75" />
+        <ellipse cx="200" cy="190" rx="15" ry="10" fill="#222" />
         
         {/* Whiskers */}
-        <path d="M65 125c0 0 -10 -5 -15 -5" stroke="#8B572A" strokeWidth="1.5" />
-        <path d="M65 130c0 0 -10 0 -15 0" stroke="#8B572A" strokeWidth="1.5" />
-        <path d="M65 135c0 0 -10 5 -15 5" stroke="#8B572A" strokeWidth="1.5" />
+        <path d="M130 200h-30M130 210h-25M130 220h-30" stroke="#222" strokeWidth="4" />
+        <path d="M270 200h30M270 210h25M270 220h30" stroke="#222" strokeWidth="4" />
         
-        <path d="M135 125c0 0 10 -5 15 -5" stroke="#8B572A" strokeWidth="1.5" />
-        <path d="M135 130c0 0 10 0 15 0" stroke="#8B572A" strokeWidth="1.5" />
-        <path d="M135 135c0 0 10 5 15 5" stroke="#8B572A" strokeWidth="1.5" />
-        
-        {/* Ears */}
-        <path d="M70 95c-5-10-10-15-15-10-5 5 0 15 10 15" fill="#8B572A" />
-        <path d="M130 95c5-10 10-15 15-10 5 5 0 15-10 15" fill="#8B572A" />
+        {/* Smiling mouth with teeth */}
+        <path d="M140 230c20 30 100 30 120 0" stroke="#222" strokeWidth="8" fill="#222" />
+        <path d="M165 228h70v15a35 35 0 01-70 0v-15z" fill="white" />
+        <path d="M200 228v15M180 228v12M220 228v12" stroke="#222" strokeWidth="2" />
         
         {/* Toothbrush */}
-        <rect x="140" y="150" width="6" height="25" rx="2" fill="#3B82F6" /> {/* Handle */}
-        <rect x="137" y="145" width="12" height="5" rx="1" fill="#F0F9FF" /> {/* Brush base */}
-        <path d="M137 145c0-5 2-7 6-7s6 2 6 7" fill="#F0F9FF" /> {/* Bristles */}
-        <path d="M139 138v7M141 138v7M143 138v7M145 138v7M147 138v7" stroke="#E5E7EB" strokeWidth="1" />
+        <rect x="240" y="215" width="10" height="70" rx="5" fill="#3B82F6" stroke="#222" strokeWidth="4" />
+        <rect x="230" y="210" width="30" height="15" rx="2" fill="white" stroke="#222" strokeWidth="3" />
+        <path d="M230 215c0-15 5-15 30-15" stroke="#222" strokeWidth="2" />
+        <path d="M232 198v12M237 198v12M242 198v12M247 198v12M252 198v12M257 198v12" stroke="#80BFFF" strokeWidth="3" />
         
-        {/* Passport */}
-        <rect x="55" y="155" width="22" height="16" rx="1" fill="#1E40AF" /> {/* Passport cover */}
-        <path d="M60 160h12M60 164h10M60 168h8" stroke="#F8FAFC" strokeWidth="1.5" /> {/* Passport lines */}
-        <path d="M68 155c0-2 2-4 4-4s4 2 4 4" fill="gold" /> {/* Passport emblem */}
+        {/* Toothpaste foam */}
+        <path d="M170 235c5 0 10-5 15-5s10 5 15 5 10-5 15-5 10 5 15 5" fill="white" stroke="#80BFFF" strokeWidth="3" />
         
-        {/* Paws */}
-        <path d="M70 165c-5 5-10 10-5 15s15 0 20-5" fill="#8B572A" />
-        <path d="M130 165c5 5 10 10 5 15s-15 0-20-5" fill="#8B572A" />
+        {/* Paw holding toothbrush */}
+        <path d="M265 280c20 0 40-10 40-25s-20-15-40-15" fill="#8B572A" stroke="#222" strokeWidth="8" />
+        
+        {/* Second paw */}
+        <ellipse cx="140" cy="290" rx="25" ry="15" fill="#8B572A" stroke="#222" strokeWidth="8" />
       </g>
     </svg>
   );
@@ -275,26 +270,9 @@ const Hero: React.FC = () => {
     <section className="relative py-8 md:py-12 overflow-hidden bg-[#F8FAFC]">
       {/* Simple light background */}
       <div className="container mx-auto px-4 relative">
-        {/* Brand logo with mascot - Compare the Market style */}
-        <div className="flex items-center justify-center md:justify-start mb-8 md:mb-10">
-          <div className="relative">
-            {/* Simple otter logo */}
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="50" fill="#3B82F6" fillOpacity="0.1" />
-                <path d="M50 80c15 0 25-10 25-25 0-15-10-30-25-30S25 40 25 55c0 15 10 25 25 25z" fill="#8B572A" />
-                <path d="M40 35a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" fill="#8B572A" />
-                <path d="M60 35a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" fill="#8B572A" />
-                <circle cx="37" cy="45" r="4" fill="#000" />
-                <circle cx="63" cy="45" r="4" fill="#000" />
-                <path d="M38 48l12 10 12-10" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-                <path d="M40 65h20" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
-          <div className="ml-2 md:ml-3">
-            <span className="text-primary font-bold text-lg md:text-xl">MyDentalFly</span>
-          </div>
+        {/* Header with nav space */}
+        <div className="flex items-center justify-center md:justify-start mb-6">
+          <div className="text-primary font-bold text-lg md:text-xl">MyDentalFly</div>
         </div>
         
         {/* Main content with heading and form */}
@@ -313,52 +291,9 @@ const Hero: React.FC = () => {
           <QuoteForm />
         </div>
         
-        {/* Compare the Market style mascot positioning - right side */}
-        <div className="hidden lg:block absolute right-10 top-1/2 transform -translate-y-1/4">
-          <div className="relative w-72 h-72 bg-white/70 rounded-full flex items-center justify-center">
-            <svg className="w-60 h-60" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g>
-                {/* Otter body */}
-                <path d="M100 180c30 0 50-20 50-50 0-35-20-60-50-60S50 95 50 130c0 30 20 50 50 50z" fill="#8B572A" />
-                <path d="M90 180c20 0 40-15 40-40 0-30-20-50-40-50S50 110 50 140c0 25 20 40 40 40z" fill="#D2B48C" />
-                
-                {/* Dental coat */}
-                <rect x="65" y="120" width="70" height="60" rx="5" fill="#FFF" />
-                <rect x="65" y="120" width="70" height="60" rx="5" stroke="#DDD" strokeWidth="1" fill="none" />
-                <path d="M100 120v60" stroke="#F0F0F0" strokeWidth="1" />
-                <path d="M85 130h10M105 130h10" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" />
-                <path d="M85 140h10M105 140h10" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" />
-                <path d="M75 160a5 5 0 1 0 10 0 5 5 0 0 0-10 0z" fill="#3B82F6" />
-                
-                {/* Otter face */}
-                <path d="M75 95a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" fill="#000" /> {/* Left eye */}
-                <path d="M115 95a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" fill="#000" /> {/* Right eye */}
-                
-                {/* Glasses */}
-                <rect x="72" y="90" width="16" height="12" rx="6" stroke="#666" strokeWidth="2" fill="none" />
-                <rect x="112" y="90" width="16" height="12" rx="6" stroke="#666" strokeWidth="2" fill="none" />
-                <path d="M88 96h24" stroke="#666" strokeWidth="2" />
-                
-                {/* Eye highlights for friendly look */}
-                <circle cx="78" cy="93" r="2" fill="#FFF" />
-                <circle cx="118" cy="93" r="2" fill="#FFF" />
-                
-                {/* Nose */}
-                <path d="M95 105c3 0 10 0 10 0 2 0 4 5 0 5-4 0-10 0-10 0-4 0-2-5 0-5z" fill="#000" />
-                
-                {/* Smiling mouth with teeth */}
-                <path d="M75 108c10 12 40 12 50 0" stroke="#000" strokeWidth="2" fill="none" />
-                <path d="M85 108c10 8 20 8 30 0" fill="#FFF" />
-                <path d="M85 108c10 8 20 8 30 0" stroke="#000" strokeWidth="1" fill="none" />
-                
-                {/* Dental pocket protector with tools */}
-                <rect x="75" y="125" width="15" height="20" rx="2" fill="#E1F5FE" stroke="#3B82F6" strokeWidth="0.5" />
-                <rect x="78" y="126" width="2" height="15" fill="#3B82F6" /> {/* Dental tool */}
-                <rect x="82" y="126" width="2" height="15" fill="#64B5F6" /> {/* Dental tool */}
-                <rect x="86" y="126" width="2" height="15" fill="#3B82F6" /> {/* Dental tool */}
-              </g>
-            </svg>
-          </div>
+        {/* Otter mascot positioned to the right */}
+        <div className="hidden lg:block absolute right-10 top-1/3 transform -translate-y-1/4">
+          <OtterMascot />
         </div>
       </div>
     </section>
