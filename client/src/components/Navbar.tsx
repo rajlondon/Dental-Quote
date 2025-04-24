@@ -5,39 +5,6 @@ import { UserCircle2, Menu, X, Calculator } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 
-// Otter logo icon component for the navbar
-const OtterLogo: React.FC<{ className?: string }> = ({ className = "h-5 w-5" }) => (
-  <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g transform="scale(0.9) translate(5, 5)">
-      {/* Otter head */}
-      <path d="M50 80c25 0 40-15 40-35 0-25-20-35-40-35S10 20 10 45c0 20 15 35 40 35z" fill="#8B572A" />
-      
-      {/* Otter face */}
-      <path d="M25 45a4 4 0 1 1 8 0 4 4 0 0 1-8 0z" fill="#000" /> {/* Left eye */}
-      <path d="M67 45a4 4 0 1 1 8 0 4 4 0 0 1-8 0z" fill="#000" /> {/* Right eye */}
-      
-      {/* Eye highlights */}
-      <circle cx="28" cy="43" r="1.5" fill="#FFF" />
-      <circle cx="70" cy="43" r="1.5" fill="#FFF" />
-      
-      {/* Nose */}
-      <path d="M45 58c3 0 10 0 10 0 2 0 4 3 0 3-4 0-10 0-10 0-4 0-2-3 0-3z" fill="#000" />
-      
-      {/* Mouth and teeth */}
-      <path d="M35 53c10 12 20 12 30 0" stroke="#000" strokeWidth="2" fill="none" />
-      <path d="M40 55c6 5 14 5 20 0" fill="white" />
-      <path d="M40 55c6 5 14 5 20 0" stroke="#000" strokeWidth="0.75" fill="none" />
-      
-      {/* Toothbrush with foam */}
-      <rect x="60" y="58" width="3" height="12" rx="1" fill="#3B82F6" /> {/* Handle */}
-      <rect x="58" y="55" width="7" height="3" rx="1" fill="#F0F9FF" /> {/* Brush base */}
-      <path d="M58 55c0-2 1-3 3.5-3s3.5 1 3.5 3" fill="#F0F9FF" /> {/* Bristles */}
-      <path d="M59 52v3M61 52v3M63 52v3M65 52v3" stroke="#E5E7EB" strokeWidth="0.5" />
-      <path d="M58 54c-1-1-2-1-3 0s-1 2 0 3 4 0 4-1-1-2-1-2z" fill="white" /> {/* Foam */}
-    </g>
-  </svg>
-);
-
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,13 +55,11 @@ const Navbar: React.FC = () => {
             </div>
           </div>
           
-          <Link href="/portal-login" className="text-neutral-600 hover:text-primary transition-colors text-xs flex items-center">
-            <OtterLogo className="h-4 w-4 mr-1 text-primary" />
+          <Link href="/portal-login" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           
-          <Link href="/portal-login?type=clinic" className="text-neutral-600 hover:text-primary transition-colors text-xs flex items-center">
-            <OtterLogo className="h-4 w-4 mr-1 text-primary" />
+          <Link href="/portal-login?type=clinic" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.clinic_login', 'Clinic Login')}
           </Link>
           
@@ -162,13 +127,11 @@ const Navbar: React.FC = () => {
             AI Dental Treatment Advice
           </Link>
           
-          <Link href="/portal-login" className="flex items-center text-neutral-600 hover:text-primary transition-colors text-xs">
-            <OtterLogo className="h-4 w-4 mr-1 text-primary" />
+          <Link href="/portal-login" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.patient_portal', 'Patient Portal')}
           </Link>
           
-          <Link href="/portal-login?type=clinic" className="flex items-center text-neutral-600 hover:text-primary transition-colors text-xs">
-            <OtterLogo className="h-4 w-4 mr-1 text-primary" />
+          <Link href="/portal-login?type=clinic" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.clinic_login', 'Clinic Login')}
           </Link>
           
