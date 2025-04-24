@@ -17,11 +17,6 @@ const Hero: React.FC = () => {
   const [, setLocation] = useLocation();
   
   // Search form state
-  const [isDestinationOpen, setIsDestinationOpen] = useState(false);
-  const [isFromOpen, setIsFromOpen] = useState(false);
-  const [isTreatmentsOpen, setIsTreatmentsOpen] = useState(false);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isReturnDatePickerOpen, setIsReturnDatePickerOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Istanbul");
   const [selectedOrigin, setSelectedOrigin] = useState("United Kingdom");
   const [selectedTreatment, setSelectedTreatment] = useState("Dental Implants");
@@ -57,15 +52,6 @@ const Hero: React.FC = () => {
     { value: "dentures", label: "Dentures" },
     { value: "general", label: "General Dentistry" }
   ];
-  
-  // Close all dropdowns
-  const closeAllDropdowns = () => {
-    setIsDestinationOpen(false);
-    setIsFromOpen(false);
-    setIsTreatmentsOpen(false);
-    setIsDatePickerOpen(false);
-    setIsReturnDatePickerOpen(false);
-  };
   
   // Handle search action
   const handleSearch = () => {
