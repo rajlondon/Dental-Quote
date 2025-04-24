@@ -4,22 +4,11 @@ import { Link } from "wouter";
 import { 
   Plane as PlaneIcon, 
   ArrowRight, 
-  Check, 
-  Clock, 
-  PoundSterling,
   MapPin,
   Calendar,
-  HeartPulse,
-  Shield,
-  BriefcaseMedical,
-  CircleUser,
-  Menu,
-  ChevronDown,
   Search,
   Home
 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 const Hero: React.FC = () => {
   const { t } = useTranslation();
@@ -36,16 +25,6 @@ const Hero: React.FC = () => {
     { name: "Antalya", available: false },
     { name: "Dalaman", available: false },
     { name: "Izmir", available: false }
-  ];
-  
-  // Origin dropdown options
-  const originOptions = [
-    { value: "uk", label: "United Kingdom" },
-    { value: "us", label: "United States" },
-    { value: "ca", label: "Canada" },
-    { value: "eu", label: "Europe" },
-    { value: "au", label: "Australia" },
-    { value: "other", label: "Other" }
   ];
   
   // Origin dropdown options
