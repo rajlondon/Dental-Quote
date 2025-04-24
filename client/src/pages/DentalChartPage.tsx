@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DentalChart } from '@/components/DentalChart';
-import DentalChart3D from '@/components/DentalChart3D';
+import { DentalChart3D } from '@/components/DentalChart3D';
 import { DentalChart3DThree } from '@/components/DentalChart3DThree';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
