@@ -15,8 +15,14 @@ const PackageDetailPage = () => {
   const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
   
   useEffect(() => {
+    // Debug info
+    console.log("Package ID from params:", id);
+    console.log("Available packages:", trendingPackages.map(p => p.id));
+    
     // Find the package by ID
     const pkg = trendingPackages.find(p => p.id === id);
+    console.log("Found package:", pkg);
+    
     if (pkg) {
       setPackageData(pkg);
       document.title = `${pkg.title} - MyDentalFly`;
