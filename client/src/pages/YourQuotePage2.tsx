@@ -181,9 +181,17 @@ const YourQuotePage: React.FC = () => {
   
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
     treatment: searchParams.get('treatment') || 'Dental Implants',
-    travelMonth: searchParams.get('travelMonth') || 'Flexible',
+    travelMonth: searchParams.get('departureDate') 
+      ? new Date(searchParams.get('departureDate') || '').toLocaleString('default', { month: 'long' })
+      : searchParams.get('travelMonth') || 'Flexible',
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
+  
+  // Extract additional parameters passed from the Hero search
+  const selectedCity = searchParams.get('city') || 'Istanbul';
+  const selectedOrigin = searchParams.get('origin') || 'UK';
+  const departureDate = searchParams.get('departureDate');
+  const returnDate = searchParams.get('returnDate');
   
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
@@ -296,13 +304,18 @@ const YourQuotePage: React.FC = () => {
     }
     
     // Initialize patient info from URL parameters if available
-    if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone')) {
+    if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone') || departureDate) {
       setPatientInfo({
         fullName: searchParams.get('name') || '',
         email: searchParams.get('email') || '',
         phone: searchParams.get('phone') || '',
-        travelMonth: searchParams.get('travelMonth') || '',
-        departureCity: '',
+        // Use date parameters from search if available
+        travelMonth: departureDate 
+          ? new Date(departureDate).toLocaleString('default', { month: 'long' })
+          : searchParams.get('travelMonth') || '',
+        departureCity: selectedOrigin || '',
+        // Add required field hotelAccommodation
+        hotelAccommodation: 'clinic_decide',
         hasXrays: false,
         hasCtScan: false,
         hasDentalPhotos: false,
