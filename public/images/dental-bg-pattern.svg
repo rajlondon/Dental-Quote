@@ -1,27 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Dental cross pattern for background -->
-  <g opacity="0.07">
+  <!-- Enhanced dental background pattern with more recognizable elements -->
+  <g opacity="0.08">
+    <!-- Molar Tooth 1 -->
+    <path d="M30 40C30 33 36 28 42 28C48 28 54 33 54 40V42C54 49 48 54 42 54C36 54 30 49 30 42V40Z" fill="#3B82F6"/>
+    <path d="M34 54L32 64C31.5 66 32 68 35 68H49C52 68 52.5 66 52 64L50 54" stroke="#3B82F6" stroke-width="3"/>
+    
+    <!-- Incisor Tooth -->
+    <path d="M75 35C75 28 80 25 85 25C90 25 95 28 95 35V45C95 52 90.5 56 85 56C79.5 56 75 52 75 45V35Z" fill="#3B82F6"/>
+    <path d="M78 56L77 66H93L92 56" stroke="#3B82F6" stroke-width="2"/>
+    
+    <!-- Molar Tooth 2 -->
+    <path d="M130 40C130 33 136 28 142 28C148 28 154 33 154 40V42C154 49 148 54 142 54C136 54 130 49 130 42V40Z" fill="#3B82F6"/>
+    <path d="M134 54L132 64C131.5 66 132 68 135 68H149C152 68 152.5 66 152 64L150 54" stroke="#3B82F6" stroke-width="3"/>
+    
     <!-- Toothbrush -->
-    <path d="M40 60C40 53.3726 45.3726 48 52 48H58C64.6274 48 70 53.3726 70 60V100C70 106.627 64.6274 112 58 112H52C45.3726 112 40 106.627 40 100V60Z" fill="#3B82F6"/>
-    <rect x="48" y="112" width="14" height="40" rx="7" fill="#3B82F6"/>
-    <rect x="48" y="30" width="14" height="18" rx="7" fill="#3B82F6"/>
+    <rect x="180" y="35" width="8" height="30" rx="4" fill="#3B82F6"/>
+    <rect x="178" y="25" width="12" height="10" rx="2" fill="#3B82F6"/>
+    <path d="M176 65H192V71C192 74.3137 189.314 77 186 77H182C178.686 77 176 74.3137 176 71V65Z" fill="#3B82F6"/>
+    <rect x="178" y="77" width="8" height="15" rx="4" fill="#3B82F6"/>
     
-    <!-- Molar/Tooth -->
-    <path d="M130 70C130 56.1929 141.193 45 155 45C168.807 45 180 56.1929 180 70V75C180 88.8071 168.807 100 155 100C141.193 100 130 88.8071 130 75V70Z" fill="#3B82F6"/>
-    <path d="M140 100L135 120C134.5 122 135 125 138 125H172C175 125 175.5 122 175 120L170 100" stroke="#3B82F6" stroke-width="6"/>
-    
-    <!-- Dental Mirror -->
-    <circle cx="230" cy="60" r="25" fill="#3B82F6"/>
-    <rect x="225" y="85" width="10" height="40" rx="5" fill="#3B82F6"/>
-    
-    <!-- Toothpaste -->
-    <rect x="40" y="180" width="60" height="30" rx="10" fill="#3B82F6"/>
-    <path d="M100 195C120 195 120 170 140 170H170C180 170 190 180 190 190C190 200 180 210 170 210H120C110 210 100 205 100 195Z" fill="#3B82F6"/>
+    <!-- Dental Implant -->
+    <rect x="240" y="30" width="10" height="20" rx="5" fill="#3B82F6"/>
+    <path d="M235 50H255L250 65H240L235 50Z" fill="#3B82F6"/>
+    <rect x="242" y="65" width="6" height="15" rx="3" fill="#3B82F6"/>
     
     <!-- Dental Floss -->
-    <circle cx="240" cy="190" r="20" stroke="#3B82F6" stroke-width="8"/>
-    <path d="M235 210L225 240" stroke="#3B82F6" stroke-width="3"/>
-    <path d="M245 210L255 240" stroke="#3B82F6" stroke-width="3"/>
+    <circle cx="50" cy="120" r="15" stroke="#3B82F6" stroke-width="4"/>
+    <path d="M45 135L35 160" stroke="#3B82F6" stroke-width="2"/>
+    <path d="M55 135L65 160" stroke="#3B82F6" stroke-width="2"/>
+    
+    <!-- Braces -->
+    <path d="M100 120H140" stroke="#3B82F6" stroke-width="3"/>
+    <circle cx="100" cy="120" r="3" fill="#3B82F6"/>
+    <circle cx="110" cy="120" r="3" fill="#3B82F6"/>
+    <circle cx="120" cy="120" r="3" fill="#3B82F6"/>
+    <circle cx="130" cy="120" r="3" fill="#3B82F6"/>
+    <circle cx="140" cy="120" r="3" fill="#3B82F6"/>
+    
+    <!-- Dental Mirror -->
+    <circle cx="200" cy="130" r="15" fill="#3B82F6"/>
+    <rect x="197" y="145" width="6" height="25" rx="3" fill="#3B82F6"/>
+    
+    <!-- Smile Design -->
+    <path d="M40 220C60 205 90 205 110 220" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="50" cy="210" r="3" fill="#3B82F6"/>
+    <circle cx="70" cy="208" r="3" fill="#3B82F6"/>
+    <circle cx="90" cy="210" r="3" fill="#3B82F6"/>
+    <circle cx="108" cy="217" r="3" fill="#3B82F6"/>
+    
+    <!-- Toothpaste -->
+    <rect x="150" y="200" width="40" height="20" rx="5" fill="#3B82F6"/>
+    <path d="M190 210C200 210 200 195 210 195H230C235 195 240 200 240 205C240 210 235 215 230 215H200C195 215 190 213 190 210Z" fill="#3B82F6"/>
+    
+    <!-- Digital X-Ray -->
+    <rect x="250" y="200" width="30" height="40" rx="3" fill="none" stroke="#3B82F6" stroke-width="2"/>
+    <path d="M255 210H275M255 220H275M255 230H275" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
   </g>
 </svg>
