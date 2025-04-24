@@ -397,7 +397,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       <div className="container mx-auto py-10 px-4 text-center">
         <h1 className="text-2xl font-bold mb-4">No Treatment Plan Available</h1>
         <p className="mb-6">Please create a treatment plan first to view matched clinics.</p>
-        <Button onClick={() => setLocation('/quote')}>Return to Quote</Button>
+        <Button onClick={() => setLocation('/your-quote')}>Return to Quote</Button>
       </div>
     );
   }
@@ -1280,7 +1280,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="outline" onClick={() => setLocation('/quote')} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setLocation('/your-quote')} className="w-full sm:w-auto">
               Back to Quote
             </Button>
             
