@@ -279,8 +279,8 @@ const Hero: React.FC = () => {
       {/* Enhanced background with pattern and gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-blue-50/30 to-blue-100/20 opacity-90"></div>
       
-      {/* Hero subtle background image */}
-      <div className="absolute inset-0 bg-[url('/images/dental-bg-pattern.png')] bg-repeat opacity-5"></div>
+      {/* Hero subtle background image with dental patterns */}
+      <div className="absolute inset-0 bg-[url('/images/dental-bg-pattern.svg')] bg-repeat opacity-8"></div>
       
       {/* Large decorative medical cross - bottom right */}
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTcwIDQwdjMwSDQwdjIwaDMwdjMwaDIwdi0zMGgzMHYtMjBoLTMwVjQwSDcweiIgZmlsbD0iIzNiODJmNiIgZmlsbC1vcGFjaXR5PSIwLjA2Ii8+PC9zdmc+')] bg-no-repeat opacity-70 transform rotate-12"></div>
@@ -300,9 +300,9 @@ const Hero: React.FC = () => {
             <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
           </div>
           
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight leading-tight">
-            <span className="block mb-1">Quality Dental Care</span>
-            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Without the Premium Price</span>
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-5 tracking-tight leading-tight">
+            <span className="block mb-2">Quality Dental Care</span>
+            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">Without the Premium Price</span>
           </h1>
           
           <div className="flex items-center justify-center mb-4">

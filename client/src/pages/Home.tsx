@@ -205,7 +205,7 @@ const HowItWorksSection = () => {
         </div>
         
         <div className="text-center mt-12">
-          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+          <Button asChild className="bg-white hover:bg-gray-50 text-primary border-2 border-primary/30 hover:border-primary/50 font-medium px-6">
             <Link href="/how-it-works">
               Learn More About Our Process
             </Link>
