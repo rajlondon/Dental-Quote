@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
+import HeroSimple from "@/components/HeroSimple";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
@@ -288,7 +288,7 @@ const HomePage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <Hero />
+      <HeroSimple />
       
       {/* Popular Clinics Section */}
       <section className="py-16">
