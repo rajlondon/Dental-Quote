@@ -21,6 +21,7 @@ const Hero: React.FC = () => {
   const [isFromOpen, setIsFromOpen] = useState(false);
   const [isTreatmentsOpen, setIsTreatmentsOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isReturnDatePickerOpen, setIsReturnDatePickerOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Istanbul");
   const [selectedOrigin, setSelectedOrigin] = useState("United Kingdom");
   const [selectedTreatment, setSelectedTreatment] = useState("Dental Implants");
@@ -188,14 +189,50 @@ const Hero: React.FC = () => {
               </div>
               
               {/* Fly out date field */}
-              <div className="flex-1 border-r border-gray-200">
-                <div className="flex items-center w-full h-full px-3 py-3 cursor-pointer">
+              <div className="relative flex-1 border-r border-gray-200">
+                <div 
+                  className="flex items-center w-full h-full px-3 py-3 cursor-pointer"
+                  onClick={() => {
+                    setIsDatePickerOpen(!isDatePickerOpen);
+                    setIsFromOpen(false);
+                    setIsDestinationOpen(false);
+                    setIsTreatmentsOpen(false);
+                  }}
+                >
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 flex-shrink-0 transform rotate-45" />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-gray-500">Fly out date</div>
                     <div className="text-base">{format(selectedDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
+                
+                {/* Date picker dropdown */}
+                {isDatePickerOpen && (
+                  <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
+                    <div className="p-4">
+                      <h4 className="font-medium mb-2">Select departure date:</h4>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[...Array(12)].map((_, index) => {
+                          const date = addDays(new Date(), index * 7);
+                          return (
+                            <div 
+                              key={index}
+                              className="p-2 hover:bg-blue-50 rounded cursor-pointer text-center border"
+                              onClick={() => {
+                                setSelectedDate(date);
+                                setReturnDate(addDays(date, 14));
+                                setIsDatePickerOpen(false);
+                              }}
+                            >
+                              <div className="text-xs text-gray-500">{format(date, "EEE")}</div>
+                              <div className="text-sm font-medium">{format(date, "dd MMM")}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Flying from field */}
