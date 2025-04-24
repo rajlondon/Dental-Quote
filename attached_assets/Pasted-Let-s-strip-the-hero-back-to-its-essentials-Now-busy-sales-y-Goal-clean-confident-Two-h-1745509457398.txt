@@ -1,0 +1,76 @@
+Let’s strip the hero back to its essentials
+
+Now (busy & “sales-y”)	Goal (clean & confident)
+• Two headline lines
+• Badge ribbon
+• Two paragraphs of copy
+• Five reassurance chips	• One crisp headline
+• One sub-line of context
+• One search/quote bar
+• Micro reassurance line
+1️⃣ Copy — one punchy promise
+pgsql
+Copy
+Edit
+Headline:  “Compare Turkish Dental Clinics in Seconds”
+
+Sub-headline:  “Real prices. Trusted surgeons. One easy portal.”
+That’s it. No “save up to 70 %” above the fold; put savings in the chips under the bar.
+
+2️⃣ Visuals — focus on the input bar
+White / very light hero background so the bar pops.
+
+Single-row chip bar (Destination | Treatment | When | From Country | CTA).
+→ 75 % of the visual weight goes here.
+
+Keep the bar at 900-1000 px max width so it’s the star of the hero.
+
+3️⃣ Reassurance micro-row (6 pt text)
+pgsql
+Copy
+Edit
+✓ Avg. 67 % saving • 17 k quotes generated • Data fully encrypted
+Light-gray text, centred, sitting 8 px under the bar.
+
+4️⃣ Quiet benefits, not eager shouting
+Remove the three coloured “100 % Satisfaction / Premium Care / 70 % saving” tiles.
+
+Fold those benefits into the micro-row or into small icon blurbs lower on the page.
+
+5️⃣ Brand character: the Otter
+Hero right-hand side (desktop): a simple vector of the otter holding a toothbrush & passport, smiling.
+– Keep it flat/illustrated (like Compare-the-Market’s meerkat) so it feels friendly, not medical.
+
+On mobile the otter can tuck below the bar or be dropped.
+
+Quick wireframe sketch (desktop)
+pgsql
+Copy
+Edit
++-------------------------------------------------------------+
+|               Compare Turkish Dental Clinics in Seconds     |
+|          Real prices. Trusted surgeons. One easy portal.    |
+|                                                             |
+| [📍 Istanbul ] [🦷 Implants ] [🗓️ July ] [🇬🇧 UK ] | Get Quote |  <-- main bar
+|  ✓ Avg. 67% saving • 17,842 quotes • Data encrypted         |
+|                                                             |
+|   (Otter illustration, right-aligned)                       |
++-------------------------------------------------------------+
+6️⃣ Tone consistency
+Colours: one brand blue (+ lighter hover) and neutral greys; reserve gradients for CTAs only.
+
+Icons: outline style, all one colour (#475569 slate).
+
+Font: Same weight for headline and sub; no multi-colour headline.
+
+7️⃣ Implementation checklist
+Remove extra paragraphs & ribbon from HTML.
+
+Replace h1, p copy with the lines above.
+
+Wrap four <select> elements in a flex container with divide-x (Tailwind) or 1-px borders.
+
+Insert Otter SVG (position: absolute on large screens, hidden on md: and below).
+
+Add micro-row —small font, muted colour, centred.
+

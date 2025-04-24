@@ -16,10 +16,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-// Create a booking.com-style quote form
+// Create a clean, streamlined quote form
 const QuoteForm: React.FC = () => {
   const { t } = useTranslation();
-  const [country, setCountry] = useState<string>("");
   const [city, setCity] = useState<string>("");
   const [treatmentType, setTreatmentType] = useState<string>("");
   const [travelMonth, setTravelMonth] = useState<string>("");
@@ -77,21 +76,14 @@ const QuoteForm: React.FC = () => {
   };
   
   return (
-    <div className="relative max-w-4xl mx-auto">
-      {/* Main message above form */}
-      <div className="text-center mb-4">
-        <p className="text-gray-800 font-medium text-lg">
-          Get an instant, side-by-side quote from top Turkish dental clinics—save up to 70% and manage everything in one secure portal.
-        </p>
-      </div>
-      
+    <div className="relative max-w-[1000px] mx-auto">
       <form onSubmit={handleSubmit}>
-        {/* Booking.com style horizontal search bar */}
+        {/* Clean horizontal search bar */}
         <div className="flex flex-col md:flex-row md:items-stretch md:h-14 rounded-lg overflow-hidden shadow-lg">
           {/* City/Destination */}
           <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
             <div className="w-full h-full relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600">
                 <MapPin className="h-5 w-5" />
               </div>
               <Select value={city} onValueChange={setCity}>
@@ -99,7 +91,7 @@ const QuoteForm: React.FC = () => {
                   id="destination-city" 
                   className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
                 >
-                  <SelectValue placeholder="Destination city" />
+                  <SelectValue placeholder="Istanbul" />
                 </SelectTrigger>
                 <SelectContent>
                   {cities.map((cityOption) => (
@@ -107,7 +99,6 @@ const QuoteForm: React.FC = () => {
                       key={cityOption.value} 
                       value={cityOption.value}
                       disabled={cityOption.disabled}
-                      className="focus:bg-primary/10"
                     >
                       {cityOption.label}
                     </SelectItem>
@@ -120,7 +111,7 @@ const QuoteForm: React.FC = () => {
           {/* Treatment Type */}
           <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
             <div className="w-full h-full relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600">
                 <BriefcaseMedical className="h-5 w-5" />
               </div>
               <Select value={treatmentType} onValueChange={setTreatmentType}>
@@ -128,14 +119,13 @@ const QuoteForm: React.FC = () => {
                   id="treatment-type" 
                   className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
                 >
-                  <SelectValue placeholder="Treatment type" />
+                  <SelectValue placeholder="Implants" />
                 </SelectTrigger>
                 <SelectContent>
                   {treatmentTypes.map((type) => (
                     <SelectItem 
                       key={type.value} 
-                      value={type.value} 
-                      className="focus:bg-primary/10"
+                      value={type.value}
                     >
                       {type.label}
                     </SelectItem>
@@ -148,7 +138,7 @@ const QuoteForm: React.FC = () => {
           {/* Travel Month */}
           <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
             <div className="w-full h-full relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600">
                 <Calendar className="h-5 w-5" />
               </div>
               <Select value={travelMonth} onValueChange={setTravelMonth}>
@@ -156,14 +146,13 @@ const QuoteForm: React.FC = () => {
                   id="travel-month" 
                   className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
                 >
-                  <SelectValue placeholder="When?" />
+                  <SelectValue placeholder="July" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
                     <SelectItem 
                       key={month.value} 
-                      value={month.value} 
-                      className="focus:bg-primary/10"
+                      value={month.value}
                     >
                       {month.label}
                     </SelectItem>
@@ -176,7 +165,7 @@ const QuoteForm: React.FC = () => {
           {/* Origin Country */}
           <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
             <div className="w-full h-full relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600">
                 <PlaneIcon className="h-5 w-5" />
               </div>
               <Select value={userOrigin} onValueChange={setUserOrigin}>
@@ -184,14 +173,13 @@ const QuoteForm: React.FC = () => {
                   id="user-origin" 
                   className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
                 >
-                  <SelectValue placeholder="From country" />
+                  <SelectValue placeholder="UK" />
                 </SelectTrigger>
                 <SelectContent>
                   {origins.map((origin) => (
                     <SelectItem 
                       key={origin.value} 
-                      value={origin.value} 
-                      className="focus:bg-primary/10"
+                      value={origin.value}
                     >
                       {origin.label}
                     </SelectItem>
@@ -204,51 +192,21 @@ const QuoteForm: React.FC = () => {
           {/* Submit Button */}
           <Button 
             type="submit"
-            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-medium px-6 rounded-none md:rounded-r-lg flex items-center justify-center text-base h-14"
-            disabled={!city || !treatmentType}
+            className="w-full md:w-auto bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 text-white font-medium px-6 rounded-none md:rounded-r-lg flex items-center justify-center text-base h-14"
           >
-            <span className="mr-2">Get My Quote</span>
+            <span className="mr-2">Get Quote</span>
             <ArrowRightIcon className="h-4 w-4" />
           </Button>
         </div>
       </form>
       
-      {/* Feature badges/reassurance elements in a thin row */}
-      <div className="grid grid-cols-3 gap-2 mt-3">
-        <div className="flex items-center justify-center">
-          <div className="bg-white rounded-full px-4 py-1.5 shadow-sm inline-flex items-center">
-            <Check className="h-4 w-4 text-green-500 mr-1.5" />
-            <p className="text-xs text-gray-700">
-              <span className="font-medium">100% Satisfaction</span> Guaranteed
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center">
-          <div className="bg-white rounded-full px-4 py-1.5 shadow-sm inline-flex items-center">
-            <HeartPulse className="h-4 w-4 text-blue-500 mr-1.5" />
-            <p className="text-xs text-gray-700">
-              <span className="font-medium">Premium Care</span> - Best UK Standards
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center">
-          <div className="bg-white rounded-full px-4 py-1.5 shadow-sm inline-flex items-center">
-            <PoundSterling className="h-4 w-4 text-primary mr-1.5" />
-            <p className="text-xs text-gray-700">
-              <span className="font-medium">70% Savings</span> vs UK prices
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Trust line */}
-      <div className="mt-4 text-center text-xs text-gray-500 flex items-center justify-center">
-        <Shield className="h-3 w-3 inline mr-1" />
-        <span>Your data is encrypted and secure</span>
+      {/* Micro reassurance line */}
+      <div className="mt-2 text-center text-[11px] text-gray-500">
+        <span>✓ Avg. 67% saving</span>
         <span className="mx-2">•</span>
-        <span>17,842 quotes generated since 2023</span>
+        <span>17,842 quotes generated</span>
+        <span className="mx-2">•</span>
+        <span>Data fully encrypted</span>
       </div>
     </div>
   );
@@ -257,52 +215,82 @@ const QuoteForm: React.FC = () => {
 const Hero: React.FC = () => {
   const { t } = useTranslation();
   
-  return (
-    <section className="relative py-6 md:py-10 overflow-hidden">
-      {/* Enhanced background with pattern and gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-blue-50/30 to-blue-100/20 opacity-90"></div>
-      
-      {/* Hero subtle background image with dental patterns */}
-      <div className="absolute inset-0 bg-[url('/images/dental-bg-pattern.svg')] bg-repeat opacity-8"></div>
-      
-      {/* Large decorative medical cross - bottom right */}
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTcwIDQwdjMwSDQwdjIwaDMwdjMwaDIwdi0zMGgzMHYtMjBoLTMwVjQwSDcweiIgZmlsbD0iIzNiODJmNiIgZmlsbC1vcGFjaXR5PSIwLjA2Ii8+PC9zdmc+')] bg-no-repeat opacity-70 transform rotate-12"></div>
-      
-      {/* Medical themed pattern - more visible */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMzQjgyRjYiIGZpbGwtb3BhY2l0eT0iMC4xMiI+PHBhdGggZD0iTTM4IDM4aDR2NGgtNHpNMzggMzhoLTR2LTRoNHY0em0wLTh2NGg0di00aC00em0wLTRoNHY0aC00di00em0tOCAwdjRoNHYtNGgtNHptMCAxMmg0di00aC00djR6Ii8+PGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iNjAiIHI9IjIiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjIwIiByPSIyIi8+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-60"></div>
-      
-      {/* Small decorative medical cross - top left */}
-      <div className="absolute top-0 left-0 w-60 h-60 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUwIDMwdjIwSDMwdjIwaDIwdjIwaDIwVjcwaDIwVjUwSDcwVjMwSDUweiIgZmlsbD0iIzNiODJmNiIgZmlsbC1vcGFjaXR5PSIwLjA0Ii8+PC9zdmc+')] bg-no-repeat opacity-80 transform -rotate-12"></div>
-      
-      <div className="container mx-auto px-4 relative">
-        {/* Top Section - Heading and Brief Description */}
-        <div className="text-center mb-6 md:mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
-            <div className="h-1 w-20 bg-primary rounded-full mx-1"></div>
-            <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
-          </div>
-          
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight leading-tight">
-            <span className="block mb-1">Where's Your New Smile?</span>
-            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">Quality Care, Affordable Price</span>
-          </h1>
-          
-          <div className="flex items-center justify-center mb-4">
-            <div className="px-4 py-1.5 bg-primary/10 rounded-full inline-flex items-center">
-              <PoundSterling className="h-4 w-4 text-primary mr-2" />
-              <span className="text-sm text-gray-800 font-medium">Save up to 70% on UK dental costs</span>
-            </div>
-          </div>
-          
-          <p className="text-gray-600 mx-auto max-w-2xl font-light text-sm md:text-base leading-relaxed">
-            MyDentalFly connects you with premium accredited dental clinics in Turkey, offering 
-            the same high-quality treatments available in the UK at a fraction of the cost.
-          </p>
-        </div>
+  // The svg of the friendly otter mascot with toothbrush and passport
+  const OtterMascot = () => (
+    <svg className="w-44 h-44 md:w-52 md:h-52 absolute right-4 top-12 hidden lg:block" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g>
+        {/* Otter body */}
+        <path d="M100 180c30 0 50-20 50-50 0-35-20-60-50-60S50 95 50 130c0 30 20 50 50 50z" fill="#8B572A" />
+        <path d="M90 180c20 0 40-15 40-40 0-30-20-50-40-50S50 110 50 140c0 25 20 40 40 40z" fill="#D2B48C" />
         
-        {/* Quote Form Section - Booking.com style */}
-        <div className="max-w-5xl mx-auto">
+        {/* Otter face */}
+        <path d="M75 118a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" fill="#000" /> {/* Left eye */}
+        <path d="M115 118a5 5 0 1 1 10 0 5 5 0 0 1-10 0z" fill="#000" /> {/* Right eye */}
+        
+        {/* Eye highlights for friendly look */}
+        <circle cx="78" cy="116" r="2" fill="#FFF" />
+        <circle cx="118" cy="116" r="2" fill="#FFF" />
+        
+        {/* Nose */}
+        <path d="M95 135c3 0 10 0 10 0 2 0 4 5 0 5-4 0-10 0-10 0-4 0-2-5 0-5z" fill="#000" />
+        
+        {/* Smiling mouth with teeth */}
+        <path d="M75 130c10 15 40 15 50 0" stroke="#000" strokeWidth="2" fill="none" />
+        <path d="M85 132c10 10 20 10 30 0" fill="#FFF" />
+        <path d="M85 132c10 10 20 10 30 0" stroke="#000" strokeWidth="1" fill="none" />
+        <path d="M85 132l5 0M95 132l5 0M105 132l5 0" stroke="#000" strokeWidth="0.75" />
+        
+        {/* Whiskers */}
+        <path d="M65 125c0 0 -10 -5 -15 -5" stroke="#8B572A" strokeWidth="1.5" />
+        <path d="M65 130c0 0 -10 0 -15 0" stroke="#8B572A" strokeWidth="1.5" />
+        <path d="M65 135c0 0 -10 5 -15 5" stroke="#8B572A" strokeWidth="1.5" />
+        
+        <path d="M135 125c0 0 10 -5 15 -5" stroke="#8B572A" strokeWidth="1.5" />
+        <path d="M135 130c0 0 10 0 15 0" stroke="#8B572A" strokeWidth="1.5" />
+        <path d="M135 135c0 0 10 5 15 5" stroke="#8B572A" strokeWidth="1.5" />
+        
+        {/* Ears */}
+        <path d="M70 95c-5-10-10-15-15-10-5 5 0 15 10 15" fill="#8B572A" />
+        <path d="M130 95c5-10 10-15 15-10 5 5 0 15-10 15" fill="#8B572A" />
+        
+        {/* Toothbrush */}
+        <rect x="140" y="150" width="6" height="25" rx="2" fill="#3B82F6" /> {/* Handle */}
+        <rect x="137" y="145" width="12" height="5" rx="1" fill="#F0F9FF" /> {/* Brush base */}
+        <path d="M137 145c0-5 2-7 6-7s6 2 6 7" fill="#F0F9FF" /> {/* Bristles */}
+        <path d="M139 138v7M141 138v7M143 138v7M145 138v7M147 138v7" stroke="#E5E7EB" strokeWidth="1" />
+        
+        {/* Passport */}
+        <rect x="55" y="155" width="22" height="16" rx="1" fill="#1E40AF" /> {/* Passport cover */}
+        <path d="M60 160h12M60 164h10M60 168h8" stroke="#F8FAFC" strokeWidth="1.5" /> {/* Passport lines */}
+        <path d="M68 155c0-2 2-4 4-4s4 2 4 4" fill="gold" /> {/* Passport emblem */}
+        
+        {/* Paws */}
+        <path d="M70 165c-5 5-10 10-5 15s15 0 20-5" fill="#8B572A" />
+        <path d="M130 165c5 5 10 10 5 15s-15 0-20-5" fill="#8B572A" />
+      </g>
+    </svg>
+  );
+  
+  return (
+    <section className="relative py-8 md:py-12 overflow-hidden bg-[#F8FAFC]">
+      {/* Simple light background */}
+      <div className="container mx-auto px-4 relative">
+        {/* Main content with heading, form, and mascot */}
+        <div className="max-w-4xl mx-auto relative">
+          {/* Otter Mascot - hidden on mobile */}
+          <OtterMascot />
+          
+          {/* Heading Section - Simplified */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              Compare Turkish Dental Clinics in Seconds
+            </h1>
+            <p className="text-gray-600 text-lg mb-6">
+              Real prices. Trusted surgeons. One easy portal.
+            </p>
+          </div>
+          
+          {/* Quote Form - Booking.com style, full width */}
           <QuoteForm />
         </div>
       </div>
