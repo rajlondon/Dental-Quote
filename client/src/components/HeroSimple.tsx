@@ -50,10 +50,10 @@ const HeroSimple: React.FC = () => {
           {/* Heading */}
           <div>
             <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-              Find your cheaper dental treatment abroad
+              Find high-quality dental care abroad for up to 70% less
             </h1>
             <p className="text-white text-sm mb-6">
-              Search for quality, experienced dental clinics and all-inclusive dental packages
+              Compare vetted Dental clinics & ready-made treatment packages in seconds.
             </p>
           </div>
           
@@ -64,7 +64,7 @@ const HeroSimple: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 flex-1">
                 {/* City select */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Where are you going?</label>
+                  <label className="block text-xs text-gray-500 mb-1">Treatment city</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                       <Search className="h-4 w-4 text-gray-500" />
@@ -83,7 +83,7 @@ const HeroSimple: React.FC = () => {
                 
                 {/* Departure date */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Travel date</label>
+                  <label className="block text-xs text-gray-500 mb-1">When?</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                       <PlaneIcon className="h-4 w-4 text-gray-500 transform rotate-45" />
@@ -114,7 +114,7 @@ const HeroSimple: React.FC = () => {
             <div className="md:hidden bg-white rounded-lg border-2 border-yellow-400 p-4">
               {/* City select */}
               <div className="mb-3">
-                <label className="block text-xs text-gray-500 mb-1">Where are you going?</label>
+                <label className="block text-xs text-gray-500 mb-1">Treatment city</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                     <Search className="h-4 w-4 text-gray-500" />
@@ -133,7 +133,7 @@ const HeroSimple: React.FC = () => {
               
               {/* Departure date */}
               <div className="mb-4">
-                <label className="block text-xs text-gray-500 mb-1">Travel date</label>
+                <label className="block text-xs text-gray-500 mb-1">When?</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
                     <PlaneIcon className="h-4 w-4 text-gray-500 transform rotate-45" />
