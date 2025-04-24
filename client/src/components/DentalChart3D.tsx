@@ -136,17 +136,18 @@ export function DentalChart3D({
 
   // Generate teeth with 3D positioning
   const generateTeethWithPositions = (): Tooth[] => {
-    const upperArcRadius = 180; // Radius for upper arch path
-    const lowerArcRadius = 160; // Radius for lower arch path
+    const upperArcRadius = 100; // Radius for upper arch path
+    const lowerArcRadius = 90; // Radius for lower arch path
     const upperTeeth: Tooth[] = [];
     const lowerTeeth: Tooth[] = [];
     
     // Upper arch teeth - 16 teeth (8 per side)
     for (let i = 0; i < 8; i++) {
-      // Right side
-      const rightAngle = -Math.PI/2 + i * (Math.PI / 9);
+      // Right side - starting from center going right
+      // We want a curve from -20 degrees to 60 degrees for the upper right
+      const rightAngle = (-Math.PI/9) + i * (Math.PI / 12);
       const rightX = Math.cos(rightAngle) * upperArcRadius;
-      const rightY = Math.sin(rightAngle) * upperArcRadius;
+      const rightY = Math.sin(rightAngle) * upperArcRadius - 40; // Offset to position upper teeth
       upperTeeth.push(createPositionedTooth(
         i + 1, 
         `Upper Right ${getToothType(i)}`, 
@@ -158,10 +159,11 @@ export function DentalChart3D({
         rightAngle * (180/Math.PI) + 90
       ));
       
-      // Left side
-      const leftAngle = -Math.PI/2 - i * (Math.PI / 9);
+      // Left side - starting from center going left
+      // We want a curve from -20 degrees to -100 degrees for the upper left
+      const leftAngle = (-Math.PI/9) - i * (Math.PI / 12);
       const leftX = Math.cos(leftAngle) * upperArcRadius;
-      const leftY = Math.sin(leftAngle) * upperArcRadius;
+      const leftY = Math.sin(leftAngle) * upperArcRadius - 40; // Offset to position upper teeth
       upperTeeth.push(createPositionedTooth(
         16 - i, 
         `Upper Left ${getToothType(i)}`, 
@@ -176,10 +178,11 @@ export function DentalChart3D({
     
     // Lower arch teeth - 16 teeth (8 per side)
     for (let i = 0; i < 8; i++) {
-      // Left side
-      const leftAngle = Math.PI/2 - i * (Math.PI / 9);
+      // Left side - starting from center going left
+      // We want a curve from 20 degrees to 100 degrees for the lower left
+      const leftAngle = (Math.PI/9) + i * (Math.PI / 12);
       const leftX = Math.cos(leftAngle) * lowerArcRadius;
-      const leftY = Math.sin(leftAngle) * lowerArcRadius;
+      const leftY = Math.sin(leftAngle) * lowerArcRadius + 40; // Offset to position lower teeth
       lowerTeeth.push(createPositionedTooth(
         17 + i, 
         `Lower Left ${getToothType(i)}`, 
@@ -191,10 +194,11 @@ export function DentalChart3D({
         leftAngle * (180/Math.PI) - 90
       ));
       
-      // Right side
-      const rightAngle = Math.PI/2 + i * (Math.PI / 9);
+      // Right side - starting from center going right
+      // We want a curve from 20 degrees to -60 degrees for the lower right
+      const rightAngle = (Math.PI/9) - i * (Math.PI / 12);
       const rightX = Math.cos(rightAngle) * lowerArcRadius;
-      const rightY = Math.sin(rightAngle) * lowerArcRadius;
+      const rightY = Math.sin(rightAngle) * lowerArcRadius + 40; // Offset to position lower teeth
       lowerTeeth.push(createPositionedTooth(
         32 - i, 
         `Lower Right ${getToothType(i)}`, 
@@ -451,25 +455,123 @@ export function DentalChart3D({
         {/* 3D Mouth Representation */}
         <div className="hidden md:block relative">
           <div className="relative w-full h-[400px] rounded-lg bg-pink-100 overflow-hidden border-2 border-red-300 flex flex-col justify-center items-center">
-            {/* Background mouth shape - pink gums */}
-            <div className="absolute w-[90%] h-[80%] bg-pink-200 rounded-[100%/50%]"></div>
+            {/* Background mouth shape - outer lips */}
+            <div className="absolute w-[80%] h-[85%] bg-[#e76f51] rounded-[100%/50%] border-4 border-[#e76f51] shadow-inner"></div>
             
-            {/* Upper Palate */}
-            <div className="absolute top-[15%] w-[60%] h-[25%] bg-pink-300 rounded-[100%/50%]"></div>
+            {/* Inner mouth - dark cavity */}
+            <div className="absolute w-[70%] h-[75%] bg-[#8c271e] rounded-[100%/50%] opacity-40"></div>
             
-            {/* Center gap between upper and lower */}
-            <div className="absolute w-[80%] h-[30%] bg-gray-800 opacity-30 rounded-[100%/50%] z-0"></div>
+            {/* Upper gums */}
+            <div className="absolute top-[20%] w-[60%] h-[15%] bg-[#e63946] rounded-t-[100%] z-10 shadow-md"></div>
+            
+            {/* Lower gums */}
+            <div className="absolute bottom-[20%] w-[60%] h-[15%] bg-[#e63946] rounded-b-[100%] z-10 shadow-md"></div>
             
             {/* Upper Teeth Row */}
-            <div className="absolute" style={{ top: '30%', transform: 'translateY(-50%)' }}>
-              <svg width="360" height="360" viewBox="-180 -180 360 360">
+            <div className="absolute z-20" style={{ top: '30%', transform: 'translateY(-50%)' }}>
+              <svg width="300" height="300" viewBox="-150 -150 300 300">
                 {/* Render upper arch teeth */}
                 {teeth.slice(0, 16).map(tooth => {
                   const bgColor = getToothColor(tooth);
                   const textColor = getTextColor(bgColor);
                   const { x, y, rotation } = tooth.position;
                   
-                  // Tooth shape and size based on position in the arch
+                  // Determine tooth shape based on type (incisors, canines, premolars, molars)
+                  let toothShape;
+                  if (tooth.position.index <= 2) { // Molars
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -6,0 L -6,-8 C -6,-12 6,-12 6,-8 L 6,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <rect 
+                          x={-8} 
+                          y={-20} 
+                          width={16} 
+                          height={13}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                          rx={2}
+                        />
+                      </>
+                    );
+                  } else if (tooth.position.index <= 4) { // Premolars
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -4,0 L -4,-10 C -4,-13 4,-13 4,-10 L 4,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <rect 
+                          x={-7} 
+                          y={-20} 
+                          width={14} 
+                          height={12}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                          rx={3}
+                        />
+                      </>
+                    );
+                  } else if (tooth.position.index === 5) { // Canines
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -3,0 L -3,-15 C -3,-17 3,-17 3,-15 L 3,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <path 
+                          d={`M -6,-20 L 0,-26 L 6,-20 L 6,-12 L -6,-12 Z`}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                      </>
+                    );
+                  } else { // Incisors
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -2.5,0 L -2.5,-12 C -2.5,-14 2.5,-14 2.5,-12 L 2.5,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <rect 
+                          x={-5} 
+                          y={-20} 
+                          width={10} 
+                          height={12}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                          rx={1}
+                        />
+                      </>
+                    );
+                  }
+                  
                   return (
                     <g 
                       key={tooth.id} 
@@ -477,38 +579,16 @@ export function DentalChart3D({
                       onClick={() => handleToothClick(tooth)}
                       style={{ cursor: 'pointer' }}
                     >
-                      {/* Tooth root */}
-                      <rect 
-                        x={-8} 
-                        y={-5} 
-                        width={16} 
-                        height={10}
-                        fill="#f5f5f4" 
-                        stroke="#d6d3d1"
-                        strokeWidth={1}
-                        rx={1}
-                      />
-                      
-                      {/* Tooth crown */}
-                      <rect 
-                        x={-10} 
-                        y={-20} 
-                        width={20} 
-                        height={15}
-                        fill={bgColor} 
-                        stroke="#d6d3d1"
-                        strokeWidth={1}
-                        rx={2}
-                      />
+                      {toothShape}
                       
                       {/* Tooth number */}
                       <text 
                         x={0} 
-                        y={-10}
+                        y={-13}
                         textAnchor="middle" 
                         dominantBaseline="middle"
                         fill={textColor}
-                        fontSize={10}
+                        fontSize={7}
                         fontWeight="bold"
                       >
                         {tooth.id}
@@ -520,13 +600,109 @@ export function DentalChart3D({
             </div>
             
             {/* Lower Teeth Row */}
-            <div className="absolute" style={{ top: '70%', transform: 'translateY(-50%)' }}>
-              <svg width="360" height="360" viewBox="-180 -180 360 360">
+            <div className="absolute z-20" style={{ top: '70%', transform: 'translateY(-50%)' }}>
+              <svg width="300" height="300" viewBox="-150 -150 300 300">
                 {/* Render lower arch teeth */}
                 {teeth.slice(16).map(tooth => {
                   const bgColor = getToothColor(tooth);
                   const textColor = getTextColor(bgColor);
                   const { x, y, rotation } = tooth.position;
+                  
+                  // Determine tooth shape based on type (incisors, canines, premolars, molars)
+                  let toothShape;
+                  if (tooth.position.index <= 2) { // Molars
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -6,0 L -6,8 C -6,12 6,12 6,8 L 6,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <rect 
+                          x={-8} 
+                          y={7} 
+                          width={16} 
+                          height={13}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                          rx={2}
+                        />
+                      </>
+                    );
+                  } else if (tooth.position.index <= 4) { // Premolars
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -4,0 L -4,10 C -4,13 4,13 4,10 L 4,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <rect 
+                          x={-7} 
+                          y={8} 
+                          width={14} 
+                          height={12}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                          rx={3}
+                        />
+                      </>
+                    );
+                  } else if (tooth.position.index === 5) { // Canines
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -3,0 L -3,15 C -3,17 3,17 3,15 L 3,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <path 
+                          d={`M -6,20 L 0,26 L 6,20 L 6,12 L -6,12 Z`}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                      </>
+                    );
+                  } else { // Incisors
+                    toothShape = (
+                      <>
+                        {/* Tooth root */}
+                        <path 
+                          d={`M -2.5,0 L -2.5,12 C -2.5,14 2.5,14 2.5,12 L 2.5,0 Z`}
+                          fill="#f5f5f4" 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                        />
+                        
+                        {/* Tooth crown */}
+                        <rect 
+                          x={-5} 
+                          y={8} 
+                          width={10} 
+                          height={12}
+                          fill={bgColor} 
+                          stroke="#d6d3d1"
+                          strokeWidth={0.5}
+                          rx={1}
+                        />
+                      </>
+                    );
+                  }
                   
                   return (
                     <g 
@@ -535,38 +711,16 @@ export function DentalChart3D({
                       onClick={() => handleToothClick(tooth)}
                       style={{ cursor: 'pointer' }}
                     >
-                      {/* Tooth root */}
-                      <rect 
-                        x={-8} 
-                        y={-5} 
-                        width={16} 
-                        height={10}
-                        fill="#f5f5f4" 
-                        stroke="#d6d3d1"
-                        strokeWidth={1}
-                        rx={1}
-                      />
-                      
-                      {/* Tooth crown */}
-                      <rect 
-                        x={-10} 
-                        y={-20} 
-                        width={20} 
-                        height={15}
-                        fill={bgColor} 
-                        stroke="#d6d3d1"
-                        strokeWidth={1}
-                        rx={2}
-                      />
+                      {toothShape}
                       
                       {/* Tooth number */}
                       <text 
                         x={0} 
-                        y={-10}
+                        y={13}
                         textAnchor="middle" 
                         dominantBaseline="middle"
                         fill={textColor}
-                        fontSize={10}
+                        fontSize={7}
                         fontWeight="bold"
                       >
                         {tooth.id}
@@ -578,7 +732,7 @@ export function DentalChart3D({
             </div>
             
             {/* Tongue */}
-            <div className="absolute top-[75%] w-[40%] h-[20%] bg-red-300 rounded-[100%/60%]"></div>
+            <div className="absolute top-[60%] w-[40%] h-[25%] bg-[#e57373] rounded-[100%/60%] z-15"></div>
           </div>
           
           {/* Legend for desktop */}
