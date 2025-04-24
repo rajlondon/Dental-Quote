@@ -55,16 +55,22 @@ export default function DentalChartPage() {
               </ol>
             </div>
             
-            <DentalChart 
-              onTeethUpdate={(teethData) => {
-                console.log('Teeth data updated:', teethData);
-                localStorage.setItem('dentalChartData', JSON.stringify(teethData));
-                toast({
-                  title: "Dental Chart Updated",
-                  description: "Your dental information has been saved",
-                });
-              }}
-            />
+            <div className="mb-6">
+              <Tabs defaultValue="3d" onValueChange={(value) => setChartType(value as 'standard' | '3d')}>
+                <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+                  <TabsTrigger value="3d">3D View</TabsTrigger>
+                  <TabsTrigger value="standard">Standard View</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="3d" className="mt-4">
+                  <DentalChart3D onTeethUpdate={handleTeethUpdate} />
+                </TabsContent>
+                
+                <TabsContent value="standard" className="mt-4">
+                  <DentalChart onTeethUpdate={handleTeethUpdate} />
+                </TabsContent>
+              </Tabs>
+            </div>
             
             <div className="mt-8 flex justify-center space-x-4">
               <Button 
