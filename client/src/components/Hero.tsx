@@ -72,8 +72,20 @@ const Hero: React.FC = () => {
     const originObj = originOptions.find(o => o.label === selectedOrigin);
     const originValue = originObj ? originObj.value : "uk";
     
-    // Navigate to treatment builder with parameters
-    setLocation(`/treatment-builder?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}`);
+    // Format dates for URL parameters
+    const outDateFormatted = format(selectedDate, "yyyy-MM-dd");
+    const returnDateFormatted = format(returnDate, "yyyy-MM-dd");
+    
+    // Use the existing treatment builder page with our parameters
+    setLocation(`/step-by-step-treatment-builder?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
+    
+    console.log(`Navigating to treatment builder with parameters:
+      City: ${selectedCity}
+      Treatment: ${treatmentValue}
+      Origin: ${originValue}
+      Departure: ${outDateFormatted}
+      Return: ${returnDateFormatted}
+    `);
   };
   
   return (
@@ -84,10 +96,10 @@ const Hero: React.FC = () => {
           {/* Heading Section - Booking.com style */}
           <div>
             <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-              Find your dental clinic abroad
+              Find your cheaper dental treatment abroad
             </h1>
             <p className="text-white text-sm mb-6">
-              Search for quality, experienced dental clinics and all-inclusive packages
+              Search for quality, experienced dental clinics and all-inclusive dental packages
             </p>
           </div>
           
