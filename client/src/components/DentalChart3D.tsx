@@ -140,53 +140,53 @@ export function DentalChart3D({
     const upperTeeth: Tooth[] = [];
     const lowerTeeth: Tooth[] = [];
     
-    // Define the tooth positions in a more straight line
-    // This creates a vertical line of teeth on the right side of the mouth
+    // Define the teeth positions in a tight U shape like in the reference image
+    // Upper teeth (1-16) in a U-shaped curve matching the screenshot
     const upperRightPositions = [
-      { x: 100, y: -85, rotation: 25 },  // 1
-      { x: 90, y: -70, rotation: 20 },   // 2
-      { x: 80, y: -55, rotation: 15 },   // 3
-      { x: 70, y: -40, rotation: 10 },   // 4
-      { x: 60, y: -25, rotation: 5 },    // 5
-      { x: 50, y: -10, rotation: 0 },    // 6
-      { x: 40, y: 5, rotation: -5 },     // 7
-      { x: 25, y: 15, rotation: -10 },   // 8
+      { x: 90, y: -10, rotation: 45 },   // 1
+      { x: 75, y: -20, rotation: 35 },   // 2
+      { x: 60, y: -30, rotation: 25 },   // 3
+      { x: 45, y: -35, rotation: 15 },   // 4
+      { x: 30, y: -40, rotation: 10 },   // 5
+      { x: 15, y: -42, rotation: 5 },    // 6
+      { x: 0, y: -43, rotation: 0 },     // 7
+      { x: -15, y: -43, rotation: 0 },   // 8
     ];
     
-    // Positions for upper left teeth
+    // Positions for upper left teeth - curved arch
     const upperLeftPositions = [
-      { x: 5, y: 15, rotation: 10 },     // 9
-      { x: -15, y: 5, rotation: 5 },     // 10
-      { x: -35, y: -10, rotation: 0 },   // 11
-      { x: -50, y: -25, rotation: -5 },  // 12
-      { x: -60, y: -40, rotation: -10 }, // 13
-      { x: -70, y: -55, rotation: -15 }, // 14
-      { x: -80, y: -70, rotation: -20 }, // 15
-      { x: -90, y: -85, rotation: -25 }, // 16
+      { x: -30, y: -42, rotation: 0 },    // 9
+      { x: -45, y: -40, rotation: -5 },   // 10
+      { x: -60, y: -35, rotation: -15 },  // 11
+      { x: -75, y: -30, rotation: -25 },  // 12
+      { x: -90, y: -20, rotation: -35 },  // 13
+      { x: -105, y: -10, rotation: -45 }, // 14
+      { x: -115, y: 0, rotation: -50 },  // 15
+      { x: -120, y: 10, rotation: -55 }, // 16
     ];
     
-    // Positions for lower left teeth
+    // Positions for lower left teeth - curved arch
     const lowerLeftPositions = [
-      { x: -90, y: 85, rotation: 25 },   // 17
-      { x: -80, y: 70, rotation: 20 },   // 18
-      { x: -70, y: 55, rotation: 15 },   // 19
-      { x: -60, y: 40, rotation: 10 },   // 20
-      { x: -50, y: 25, rotation: 5 },    // 21
-      { x: -35, y: 10, rotation: 0 },    // 22
-      { x: -15, y: -5, rotation: -5 },   // 23
-      { x: 5, y: -15, rotation: -10 },   // 24
+      { x: -120, y: 20, rotation: 55 },  // 17
+      { x: -115, y: 30, rotation: 50 },  // 18
+      { x: -105, y: 40, rotation: 45 },  // 19
+      { x: -90, y: 50, rotation: 35 },   // 20
+      { x: -75, y: 55, rotation: 25 },   // 21
+      { x: -60, y: 60, rotation: 15 },   // 22
+      { x: -45, y: 63, rotation: 5 },    // 23
+      { x: -30, y: 65, rotation: 0 },    // 24
     ];
     
-    // Positions for lower right teeth
+    // Positions for lower right teeth - curved arch
     const lowerRightPositions = [
-      { x: 25, y: -15, rotation: 10 },   // 25
-      { x: 40, y: -5, rotation: 5 },     // 26
-      { x: 50, y: 10, rotation: 0 },     // 27
-      { x: 60, y: 25, rotation: -5 },    // 28
-      { x: 70, y: 40, rotation: -10 },   // 29
-      { x: 80, y: 55, rotation: -15 },   // 30
-      { x: 90, y: 70, rotation: -20 },   // 31
-      { x: 100, y: 85, rotation: -25 },  // 32
+      { x: -15, y: 65, rotation: 0 },    // 25
+      { x: 0, y: 65, rotation: 0 },      // 26
+      { x: 15, y: 63, rotation: -5 },    // 27
+      { x: 30, y: 60, rotation: -15 },   // 28
+      { x: 45, y: 55, rotation: -25 },   // 29
+      { x: 60, y: 50, rotation: -35 },   // 30
+      { x: 75, y: 40, rotation: -45 },   // 31
+      { x: 90, y: 30, rotation: -55 },   // 32
     ];
     
     // Upper right teeth (1-8)
@@ -499,17 +499,17 @@ export function DentalChart3D({
             {/* Middle section - darker area */}
             <div className="absolute w-[70%] h-[65%] bg-[#d26649] rounded-[100%/50%]"></div>
             
-            {/* Upper gums */}
-            <div className="absolute top-[20%] w-[60%] h-[12%] bg-[#e63946] z-10"></div>
+            {/* Upper gums - red bar like in screenshot */}
+            <div className="absolute top-[25%] w-[60%] h-[8%] bg-[#e63946] z-10"></div>
             
-            {/* Lower gums */}
-            <div className="absolute bottom-[20%] w-[60%] h-[12%] bg-[#e63946] z-10"></div>
+            {/* Lower gums - red bar like in screenshot */}
+            <div className="absolute bottom-[25%] w-[60%] h-[8%] bg-[#e63946] z-10"></div>
             
             {/* Center gap/tongue area */}
             <div className="absolute w-[40%] h-[25%] bg-[#ff8e88] rounded-[100%/50%] z-5"></div>
             
-            {/* Upper Teeth Row */}
-            <div className="absolute z-20" style={{ top: '30%', transform: 'translateY(-50%)' }}>
+            {/* Upper Teeth Row - positioned directly on the upper gum line */}
+            <div className="absolute z-20" style={{ top: '25%', transform: 'translateY(-50%)' }}>
               <svg width="300" height="300" viewBox="-150 -150 300 300">
                 {/* Render upper arch teeth */}
                 {teeth.slice(0, 16).map(tooth => {
@@ -558,8 +558,8 @@ export function DentalChart3D({
               </svg>
             </div>
             
-            {/* Lower Teeth Row */}
-            <div className="absolute z-20" style={{ top: '70%', transform: 'translateY(-50%)' }}>
+            {/* Lower Teeth Row - positioned directly on the lower gum line */}
+            <div className="absolute z-20" style={{ top: '75%', transform: 'translateY(-50%)' }}>
               <svg width="300" height="300" viewBox="-150 -150 300 300">
                 {/* Render lower arch teeth */}
                 {teeth.slice(16).map(tooth => {
