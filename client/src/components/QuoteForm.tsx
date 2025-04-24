@@ -619,10 +619,10 @@ const QuoteForm: React.FC = () => {
                     )}
                   />
                   
-                  {/* Submit Button */}
+                  {/* Primary CTA Submit Button */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg font-semibold shadow-lg relative overflow-hidden group"
+                    className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 text-white py-6 text-lg font-semibold shadow-lg relative overflow-hidden group"
                     disabled={isSubmitting}
                   >
                     <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full"></span>

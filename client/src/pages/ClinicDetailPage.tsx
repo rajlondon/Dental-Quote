@@ -163,7 +163,7 @@ const ClinicDetailPage: React.FC = () => {
                 <div className="flex gap-2">
                   <Button 
                     onClick={() => setLocation('/quote-form')}
-                    className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80"
+                    className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 shadow-md px-5 py-6 text-base font-semibold"
                   >
                     Get a Quote
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -353,7 +353,7 @@ const ClinicDetailPage: React.FC = () => {
                       <Button 
                         onClick={() => setLocation('/quote-form')}
                         size="lg"
-                        className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80"
+                        className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 shadow-md px-6 py-6 text-base font-semibold"
                       >
                         Request a Quote
                         <ArrowRight className="ml-2 h-4 w-4" />
