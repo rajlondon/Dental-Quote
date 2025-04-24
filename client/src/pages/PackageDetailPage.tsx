@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -57,7 +57,7 @@ const PackageDetailPage = () => {
     <>
       <Navbar />
       
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4 bg-white min-h-screen">
         {/* Breadcrumb navigation */}
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <a href="/" className="hover:text-primary">Home</a>

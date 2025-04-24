@@ -120,7 +120,7 @@ export const trendingPackages: TrendingPackage[] = [
       id: 'maltepe-dental-clinic',
       name: 'Maltepe Dental Clinic',
       location: 'Maltepe, Istanbul',
-      image: '/images/clinics/dentalclinic-clinic.png'
+      image: '/images/carousel/clinic.png'
     },
     hotel: {
       name: 'Hilton Istanbul Bomonti',
@@ -154,7 +154,7 @@ export const trendingPackages: TrendingPackage[] = [
       id: 'dentgroup-istanbul',
       name: 'DentGroup Istanbul',
       location: 'Şişli, Istanbul',
-      image: '/images/clinics/dentalesk-clinic.png'
+      image: '/images/carousel/clinic.png'
     },
     hotel: {
       name: 'Radisson Blu Istanbul',
@@ -188,7 +188,7 @@ export const trendingPackages: TrendingPackage[] = [
       id: 'istanbul-dental-care',
       name: 'Istanbul Dental Care',
       location: 'Kadıköy, Istanbul',
-      image: '/images/clinics/kstada-clinic.png'
+      image: '/images/carousel/clinic.png'
     },
     hotel: {
       name: 'Ibis Istanbul City',
