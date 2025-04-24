@@ -198,6 +198,13 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   onComplete
 }) => {
   const { toast } = useToast();
+  
+  // Helper function for changing steps while preserving scroll position
+  const changeStep = (newStep: number) => {
+    const currentPosition = window.scrollY;
+    setCurrentStep(newStep);
+    setTimeout(() => window.scrollTo(0, currentPosition), 0);
+  };
   // Step tracking
   const [currentStep, setCurrentStep] = useState(0);
   // Define the Tooth type to match DentalChart component
@@ -466,9 +473,12 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   
   // Handle final submission
   const handleComplete = () => {
+    const currentPosition = window.scrollY;
     if (onComplete) {
       onComplete(teeth, treatments);
     }
+    // Maintain scroll position after completion
+    setTimeout(() => window.scrollTo(0, currentPosition), 0);
   };
   
   // Handle concern selection
@@ -508,7 +518,7 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
               title="What dental concerns are you experiencing?"
               description="Select all that apply to help us understand your needs"
               progress={progress}
-              onNext={() => setCurrentStep(1)}
+              onNext={() => changeStep(1)}
               canContinue={selectedConcerns.length > 0}
               timelineItems={timelineItems}
               currentStep={currentStep}
@@ -547,8 +557,8 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
               title="Map Your Dental Concerns"
               description="Mark any teeth that have issues or concerns"
               progress={progress}
-              onNext={() => setCurrentStep(2)}
-              onBack={() => setCurrentStep(0)}
+              onNext={() => changeStep(2)}
+              onBack={() => changeStep(0)}
               timelineItems={timelineItems}
               currentStep={currentStep}
             >
@@ -614,8 +624,8 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
               title="Have you had dental work done in the past?"
               description="Tell us about your dental history to help determine the best treatment options"
               progress={progress}
-              onNext={() => setCurrentStep(3)}
-              onBack={() => setCurrentStep(1)}
+              onNext={() => changeStep(3)}
+              onBack={() => changeStep(1)}
               canContinue={hasPreviousDentalWork !== null}
               timelineItems={timelineItems}
               currentStep={currentStep}
@@ -698,8 +708,8 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
               title="What are your treatment goals?"
               description="Select what matters most to you for your dental treatment"
               progress={progress}
-              onNext={() => setCurrentStep(4)}
-              onBack={() => setCurrentStep(2)}
+              onNext={() => changeStep(4)}
+              onBack={() => changeStep(2)}
               canContinue={desiredOutcomes.length > 0}
               timelineItems={timelineItems}
               currentStep={currentStep}
@@ -823,8 +833,8 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
               title="What's your timeline and budget?"
               description="Help us understand your preferences for treatment timing and cost"
               progress={progress}
-              onNext={() => setCurrentStep(5)}
-              onBack={() => setCurrentStep(3)}
+              onNext={() => changeStep(5)}
+              onBack={() => changeStep(3)}
               canContinue={selectedTimeframe !== null}
               timelineItems={timelineItems}
               currentStep={currentStep}
@@ -957,7 +967,7 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
               description="Based on your answers, here are the treatments that might be suitable for you. You can still modify these options."
               progress={progress}
               onNext={handleComplete}
-              onBack={() => setCurrentStep(4)}
+              onBack={() => changeStep(4)}
               timelineItems={timelineItems}
               currentStep={currentStep}
             >
