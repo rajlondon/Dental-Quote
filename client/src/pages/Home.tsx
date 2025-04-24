@@ -350,7 +350,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
               <div className="p-4">
-                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
+                <Button asChild className="w-full bg-white hover:bg-gray-50 text-primary border-2 border-primary/30 hover:border-primary/50 font-medium">
                   <Link href="/quote">
                     Get Your Quote
                   </Link>

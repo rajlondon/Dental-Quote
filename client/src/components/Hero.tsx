@@ -223,14 +223,14 @@ const QuoteForm: React.FC = () => {
             </div>
           </div>
           
-          {/* Submit Button */}
+          {/* Submit Button - More Prominent */}
           <div className="md:col-span-1 flex flex-col justify-end">
             <Button 
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white font-medium h-[42px] md:h-[42px] rounded-md flex items-center justify-center shadow-md transition-all"
+              className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 text-white font-semibold h-[46px] md:h-[46px] rounded-md flex items-center justify-center shadow-lg transition-all scale-105 border border-primary/20"
               disabled={!country || !city || !treatmentType}
             >
-              <span className="mr-2">Get My Quote</span>
+              <span className="mr-2 text-[15px]">Get My Quote</span>
               <ArrowRightIcon className="h-4 w-4" />
             </Button>
           </div>
@@ -276,8 +276,11 @@ const Hero: React.FC = () => {
   
   return (
     <section className="relative py-6 md:py-10 overflow-hidden">
-      {/* Background with pattern and gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white to-blue-50 opacity-85"></div>
+      {/* Enhanced background with pattern and gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white via-blue-50/30 to-blue-100/20 opacity-90"></div>
+      
+      {/* Hero subtle background image */}
+      <div className="absolute inset-0 bg-[url('/images/dental-bg-pattern.png')] bg-repeat opacity-5"></div>
       
       {/* Large decorative medical cross - bottom right */}
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTcwIDQwdjMwSDQwdjIwaDMwdjMwaDIwdi0zMGgzMHYtMjBoLTMwVjQwSDcweiIgZmlsbD0iIzNiODJmNiIgZmlsbC1vcGFjaXR5PSIwLjA2Ii8+PC9zdmc+')] bg-no-repeat opacity-70 transform rotate-12"></div>
