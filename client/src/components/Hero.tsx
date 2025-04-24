@@ -1,23 +1,31 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { 
   Plane as PlaneIcon, 
   ArrowRight, 
   MapPin,
   Calendar,
   Search,
-  Home
+  Home,
+  Stethoscope
 } from "lucide-react";
+import { format, addDays } from "date-fns";
 
 const Hero: React.FC = () => {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
   
   // Search form state
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
   const [isFromOpen, setIsFromOpen] = useState(false);
+  const [isTreatmentsOpen, setIsTreatmentsOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Istanbul");
   const [selectedOrigin, setSelectedOrigin] = useState("United Kingdom");
+  const [selectedTreatment, setSelectedTreatment] = useState("Dental Implants");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [returnDate, setReturnDate] = useState(addDays(new Date(), 14));
   
   // City dropdown options
   const cityOptions = [
@@ -36,6 +44,37 @@ const Hero: React.FC = () => {
     { value: "au", label: "Australia" },
     { value: "other", label: "Other" }
   ];
+  
+  // Treatment dropdown options
+  const treatmentOptions = [
+    { value: "dental-implants", label: "Dental Implants" },
+    { value: "veneers", label: "Veneers & Crowns" },
+    { value: "hollywood-smile", label: "Hollywood Smile" },
+    { value: "full-mouth", label: "Full Mouth Reconstruction" },
+    { value: "whitening", label: "Teeth Whitening" },
+    { value: "root-canal", label: "Root Canal Treatment" },
+    { value: "dentures", label: "Dentures" },
+    { value: "general", label: "General Dentistry" }
+  ];
+  
+  // Close all dropdowns
+  const closeAllDropdowns = () => {
+    setIsDestinationOpen(false);
+    setIsFromOpen(false);
+    setIsTreatmentsOpen(false);
+    setIsDatePickerOpen(false);
+  };
+  
+  // Handle search action
+  const handleSearch = () => {
+    const selectedTreatmentObj = treatmentOptions.find(t => t.label === selectedTreatment);
+    const treatmentValue = selectedTreatmentObj ? selectedTreatmentObj.value : "dental-implants";
+    const originObj = originOptions.find(o => o.label === selectedOrigin);
+    const originValue = originObj ? originObj.value : "uk";
+    
+    // Navigate to treatment builder with parameters
+    setLocation(`/treatment-builder?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}`);
+  };
   
   return (
     <section className="relative pb-12 overflow-hidden">
@@ -97,24 +136,52 @@ const Hero: React.FC = () => {
                 )}
               </div>
               
+              {/* Treatment field */}
+              <div className="relative flex-1 border-r border-gray-200">
+                <div 
+                  className="flex items-center w-full h-full px-3 py-3 cursor-pointer"
+                  onClick={() => {
+                    setIsTreatmentsOpen(!isTreatmentsOpen);
+                    setIsFromOpen(false);
+                    setIsDestinationOpen(false);
+                  }}
+                >
+                  <Stethoscope className="h-5 w-5 text-gray-500 mr-3 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-gray-500">Treatment type</div>
+                    <div className="text-base truncate">{selectedTreatment}</div>
+                  </div>
+                </div>
+                
+                {/* Dropdown for treatments */}
+                {isTreatmentsOpen && (
+                  <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
+                    <div className="p-2">
+                      {treatmentOptions.map((treatment) => (
+                        <div 
+                          key={treatment.value} 
+                          className="p-2 hover:bg-gray-100 rounded cursor-pointer flex items-center"
+                          onClick={() => {
+                            setSelectedTreatment(treatment.label);
+                            setIsTreatmentsOpen(false);
+                          }}
+                        >
+                          <Stethoscope className="h-4 w-4 text-gray-500 mr-2" />
+                          <span>{treatment.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               {/* Fly out date field */}
               <div className="flex-1 border-r border-gray-200">
                 <div className="flex items-center w-full h-full px-3 py-3 cursor-pointer">
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 flex-shrink-0 transform rotate-45" />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-gray-500">Fly out date</div>
-                    <div className="text-base">Thu 24 Jun 2025</div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Fly home date field */}
-              <div className="flex-1 border-r border-gray-200">
-                <div className="flex items-center w-full h-full px-3 py-3 cursor-pointer">
-                  <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 flex-shrink-0 transform -rotate-45" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-gray-500">Fly home date</div>
-                    <div className="text-base">Fri 11 Jul 2025</div>
+                    <div className="text-base">{format(selectedDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
               </div>
@@ -159,7 +226,10 @@ const Hero: React.FC = () => {
               
               {/* Search Button */}
               <div className="flex items-center px-2">
-                <button className="bg-primary hover:bg-primary/90 text-white font-medium px-5 py-3 h-full rounded flex items-center justify-center whitespace-nowrap">
+                <button 
+                  onClick={handleSearch}
+                  className="bg-primary hover:bg-primary/90 text-white font-medium px-5 py-3 h-full rounded flex items-center justify-center whitespace-nowrap"
+                >
                   <span>Search</span>
                 </button>
               </div>
@@ -207,12 +277,49 @@ const Hero: React.FC = () => {
               )}
               
               <div className="grid grid-cols-1 gap-0">
+                {/* Treatment type */}
+                <div 
+                  className="flex items-center px-3 py-3 border-b border-gray-200 cursor-pointer"
+                  onClick={() => {
+                    setIsTreatmentsOpen(!isTreatmentsOpen);
+                    setIsFromOpen(false);
+                    setIsDestinationOpen(false);
+                  }}
+                >
+                  <Stethoscope className="h-5 w-5 text-gray-500 mr-3" />
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-500">Treatment type</div>
+                    <div className="text-base">{selectedTreatment}</div>
+                  </div>
+                </div>
+                
+                {/* Dropdown for treatments */}
+                {isTreatmentsOpen && (
+                  <div className="border-b border-gray-200 bg-gray-50">
+                    <div className="p-2">
+                      {treatmentOptions.map((treatment) => (
+                        <div 
+                          key={treatment.value} 
+                          className="p-2 hover:bg-gray-100 rounded cursor-pointer flex items-center"
+                          onClick={() => {
+                            setSelectedTreatment(treatment.label);
+                            setIsTreatmentsOpen(false);
+                          }}
+                        >
+                          <Stethoscope className="h-4 w-4 text-gray-500 mr-2" />
+                          <span>{treatment.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Fly out date */}
                 <div className="flex items-center px-3 py-3 border-b border-gray-200">
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 transform rotate-45" />
                   <div className="flex-1">
                     <div className="text-xs text-gray-500">Fly out date</div>
-                    <div className="text-base">Thu 24 Jun 2025</div>
+                    <div className="text-base">{format(selectedDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
                 
@@ -221,7 +328,7 @@ const Hero: React.FC = () => {
                   <PlaneIcon className="h-5 w-5 text-gray-500 mr-3 transform -rotate-45" />
                   <div className="flex-1">
                     <div className="text-xs text-gray-500">Fly home date</div>
-                    <div className="text-base">Fri 11 Jul 2025</div>
+                    <div className="text-base">{format(returnDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
                 
@@ -264,7 +371,10 @@ const Hero: React.FC = () => {
               
               {/* Search Button */}
               <div className="p-3">
-                <button className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded flex items-center justify-center">
+                <button 
+                  onClick={handleSearch}
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded flex items-center justify-center"
+                >
                   <span>Search</span>
                 </button>
               </div>
