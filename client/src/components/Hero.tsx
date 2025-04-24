@@ -215,72 +215,22 @@ const QuoteForm: React.FC = () => {
 const Hero: React.FC = () => {
   const { t } = useTranslation();
   
-  // Simple cartoon otter mascot with toothbrush based on provided image
-  const OtterMascot = () => (
-    <svg className="w-44 h-44 md:w-52 md:h-52 absolute right-4 top-12 hidden lg:block" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g>
-        {/* Background circle */}
-        <circle cx="200" cy="200" r="180" fill="#F9E8B8" />
-        
-        {/* Otter head */}
-        <path d="M325 190c0 55-55 100-125 100S75 245 75 190c0-55 55-100 125-100s125 45 125 100z" fill="#8B572A" stroke="#222" strokeWidth="8" />
-        
-        {/* Otter ears */}
-        <path d="M135 125c-10-25-30-25-30-10 0 15 15 25 30 10z" fill="#8B572A" stroke="#222" strokeWidth="8" />
-        <path d="M265 125c10-25 30-25 30-10 0 15-15 25-30 10z" fill="#8B572A" stroke="#222" strokeWidth="8" />
-        
-        {/* Otter face - light area */}
-        <path d="M200 290c45 0 80-35 80-70 0-35-35-60-80-60s-80 25-80 60c0 35 35 70 80 70z" fill="#E2C799" />
-        
-        {/* Otter eyes - closed happy */}
-        <path d="M140 170c5-10 20-10 25 0" stroke="#222" strokeWidth="8" strokeLinecap="round" />
-        <path d="M235 170c5-10 20-10 25 0" stroke="#222" strokeWidth="8" strokeLinecap="round" />
-        
-        {/* Nose */}
-        <ellipse cx="200" cy="190" rx="15" ry="10" fill="#222" />
-        
-        {/* Whiskers */}
-        <path d="M130 200h-30M130 210h-25M130 220h-30" stroke="#222" strokeWidth="4" />
-        <path d="M270 200h30M270 210h25M270 220h30" stroke="#222" strokeWidth="4" />
-        
-        {/* Smiling mouth with teeth */}
-        <path d="M140 230c20 30 100 30 120 0" stroke="#222" strokeWidth="8" fill="#222" />
-        <path d="M165 228h70v15a35 35 0 01-70 0v-15z" fill="white" />
-        <path d="M200 228v15M180 228v12M220 228v12" stroke="#222" strokeWidth="2" />
-        
-        {/* Toothbrush */}
-        <rect x="240" y="215" width="10" height="70" rx="5" fill="#3B82F6" stroke="#222" strokeWidth="4" />
-        <rect x="230" y="210" width="30" height="15" rx="2" fill="white" stroke="#222" strokeWidth="3" />
-        <path d="M230 215c0-15 5-15 30-15" stroke="#222" strokeWidth="2" />
-        <path d="M232 198v12M237 198v12M242 198v12M247 198v12M252 198v12M257 198v12" stroke="#80BFFF" strokeWidth="3" />
-        
-        {/* Toothpaste foam */}
-        <path d="M170 235c5 0 10-5 15-5s10 5 15 5 10-5 15-5 10 5 15 5" fill="white" stroke="#80BFFF" strokeWidth="3" />
-        
-        {/* Paw holding toothbrush */}
-        <path d="M265 280c20 0 40-10 40-25s-20-15-40-15" fill="#8B572A" stroke="#222" strokeWidth="8" />
-        
-        {/* Second paw */}
-        <ellipse cx="140" cy="290" rx="25" ry="15" fill="#8B572A" stroke="#222" strokeWidth="8" />
-      </g>
-    </svg>
-  );
-  
   return (
     <section className="relative py-8 md:py-12 overflow-hidden bg-[#F8FAFC]">
       {/* Simple light background */}
       <div className="container mx-auto px-4 relative">
         {/* Header with nav space */}
         <div className="flex items-center justify-center md:justify-start mb-6">
-          <div className="text-primary font-bold text-lg md:text-xl">MyDentalFly</div>
+          <div className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent font-bold text-xl md:text-2xl">MyDentalFly</div>
         </div>
         
         {/* Main content with heading and form */}
         <div className="max-w-4xl mx-auto relative">
           {/* Heading Section - Simplified */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Compare Turkish Dental Clinics in Seconds
+            <h1 className="text-3xl md:text-5xl font-bold mb-2">
+              <span className="block mb-2">Compare Dental Clinics</span>
+              <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">Abroad in Seconds</span>
             </h1>
             <p className="text-gray-600 text-lg mb-6">
               Real prices. Trusted surgeons. One easy portal.
@@ -289,11 +239,6 @@ const Hero: React.FC = () => {
           
           {/* Quote Form - Booking.com style, full width */}
           <QuoteForm />
-        </div>
-        
-        {/* Otter mascot positioned to the right */}
-        <div className="hidden lg:block absolute right-10 top-1/3 transform -translate-y-1/4">
-          <OtterMascot />
         </div>
       </div>
     </section>
