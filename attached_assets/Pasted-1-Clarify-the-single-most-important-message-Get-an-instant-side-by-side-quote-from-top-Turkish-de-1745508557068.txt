@@ -1,0 +1,51 @@
+1. Clarify the single-most-important message
+“Get an instant, side-by-side quote from top Turkish dental clinics—save up to 70% and manage everything in one secure portal.”
+
+That line (or something equally tight) should sit directly above your form. It tells visitors what they get (instant comparison), why it matters (big savings), and hints at ease/peace-of-mind (one portal).
+
+2. Make the form read like a single “query bar”—just like Booking.com
+
+Booking.com pattern (Img 1)	Apply to MyDentalFly (Img 2)
+One uninterrupted bar, split into 4 equal “chips” + CTA	Merge your four dropdowns into one horizontal bar (see mock-up below).
+Large, personable headline (“Where to next, Gül…?”)	Use a friendly headline: “Where’s your new smile, Raj?” (fallback to “Where to next for your smile?” when guest is unknown).
+Sub-headline adding benefit (“Find exclusive Genius rewards…”)	Sub-headline: “Compare verified clinics, see real prices, book in minutes.”
+Quick wire-mock
+less
+Copy
+Edit
+[📍 Destination city] [🦷 Treatment type] [🗓️ Travel month] [🇬🇧 From country]  |  [ Get My Quote ]
+Destination city first (it’s what users mentally start with)
+
+Border-radius & subtle 1 px separators so it feels like a unit
+
+CTA in brand blue, same height as inputs
+
+3. Trim secondary info and move it below
+Keep the three badges (✓ Satisfaction, 🩺 Premium care, 💷 70 % savings) but make them a thin row below the bar—small icons + short caption.
+
+The three micro-badges (“free quote / 24 h response / full treatment plan”) can stack underneath in a muted gray; they’re reassurance but not primary.
+
+4. Visual style tweaks
+
+Current	Suggested
+Light dotted background distracts	Clean white card or very soft gradient (#f4f8fc → #ffffff).
+Rounded boxes inside a big rounded white panel	Use a single subtle-outline input group like Booking; avoid heavy inner cards.
+Icon colour mix	Use a single outline icon style (Feather or Heroicons) at 16-18 px, slate gray.
+CTA gradient	Solid brand blue (#0d6efd), add a tiny right-arrow → “Get My Quote ▸”.
+5. Copy tweaks for each field
+
+Label	Better copy
+Treatment Country	Where do you live? (so clinics know patient origin)
+City	Treatment city
+Treatment Type	Treatment
+Travel Month	When?
+Keep labels inside the chips as placeholder text so the bar looks lighter.
+
+6. Re-introduce depth later
+Once users click “Get My Quote” you can reveal the rich comparison table (ratings, prices, qualifications). Front page = friction-free; results page = detail overload.
+
+7. Small trust boosters
+Under the query bar, a subtle line: “17,842 quotes generated since 2023”
+
+Add a tiny GDPR/secure-lock icon with “Your data is encrypted”.
+

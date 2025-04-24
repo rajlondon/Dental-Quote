@@ -23,24 +23,13 @@ const QuoteForm: React.FC = () => {
   const [city, setCity] = useState<string>("");
   const [treatmentType, setTreatmentType] = useState<string>("");
   const [travelMonth, setTravelMonth] = useState<string>("");
-  const [budgetRange, setBudgetRange] = useState<string>("");
+  const [userOrigin, setUserOrigin] = useState<string>("uk");
   
-  // Countries - supporting expansion plan
-  const countries = [
-    { value: "turkey", label: "Turkey" },
-    { value: "thailand", label: "Thailand (Coming Soon)", disabled: true },
-    { value: "mexico", label: "Mexico (Coming Soon)", disabled: true },
+  // Cities/Destinations
+  const cities = [
+    { value: "istanbul", label: "Istanbul" },
+    { value: "antalya", label: "Antalya (Coming Soon)", disabled: true },
   ];
-  
-  // Cities by country
-  const cities = {
-    turkey: [
-      { value: "istanbul", label: "Istanbul" },
-      { value: "antalya", label: "Antalya (Coming Soon)", disabled: true },
-      { value: "izmir", label: "Izmir (Coming Soon)", disabled: true },
-      { value: "dalaman", label: "Dalaman (Coming Soon)", disabled: true },
-    ]
-  };
   
   // Treatment types - these will be populated from your database in production
   const treatmentTypes = [
@@ -66,97 +55,54 @@ const QuoteForm: React.FC = () => {
     { value: "september", label: "September" },
     { value: "october", label: "October" },
     { value: "november", label: "November" },
-    { value: "december", label: "December" }
+    { value: "december", label: "December" },
+    { value: "flexible", label: "Flexible" },
   ];
   
-  // Budget ranges
-  const budgetRanges = [
-    { value: "budget", label: "Budget-friendly (£1,000-£3,000)" },
-    { value: "mid-range", label: "Mid-range (£3,000-£6,000)" },
-    { value: "premium", label: "Premium (£6,000+)" },
-    { value: "not-sure", label: "I'm not sure yet" }
+  // Origin countries
+  const origins = [
+    { value: "uk", label: "United Kingdom" },
+    { value: "us", label: "United States" },
+    { value: "ca", label: "Canada" },
+    { value: "eu", label: "Europe" },
+    { value: "au", label: "Australia" },
+    { value: "other", label: "Other" }
   ];
-  
-  // Get cities based on selected country
-  const getCitiesForCountry = () => {
-    if (country === "turkey") {
-      return cities.turkey;
-    }
-    return [];
-  };
   
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to quote results page with query parameters
-    window.location.href = `/your-quote?country=${country}&city=${city}&treatment=${treatmentType}&travelMonth=${travelMonth}&budget=${budgetRange}`;
+    window.location.href = `/your-quote?city=${city}&treatment=${treatmentType}&travelMonth=${travelMonth}&origin=${userOrigin}`;
   };
   
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      {/* Mobile Form with Card-based Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-        {/* Responsive layout - cards on mobile, horizontal on desktop */}
-        <div className="space-y-5 md:space-y-0 md:grid md:grid-cols-5 md:gap-4 col-span-full">
-        
-          {/* Country Selection */}
-          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
-            <div className="flex items-center mb-2">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
-                <PlaneIcon className="h-3 w-3 text-primary" />
+    <div className="relative max-w-4xl mx-auto">
+      {/* Main message above form */}
+      <div className="text-center mb-4">
+        <p className="text-gray-800 font-medium text-lg">
+          Get an instant, side-by-side quote from top Turkish dental clinics—save up to 70% and manage everything in one secure portal.
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit}>
+        {/* Booking.com style horizontal search bar */}
+        <div className="flex flex-col md:flex-row md:items-stretch md:h-14 rounded-lg overflow-hidden shadow-lg">
+          {/* City/Destination */}
+          <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="w-full h-full relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <MapPin className="h-5 w-5" />
               </div>
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                Treatment Country
-              </label>
-            </div>
-            <div className="relative">
-              <Select 
-                value={country} 
-                onValueChange={(value) => {
-                  setCountry(value);
-                  setCity(""); 
-                }}
-              >
-                <SelectTrigger id="country" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
-                  <SelectValue placeholder="Select country" />
+              <Select value={city} onValueChange={setCity}>
+                <SelectTrigger 
+                  id="destination-city" 
+                  className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
+                >
+                  <SelectValue placeholder="Destination city" />
                 </SelectTrigger>
                 <SelectContent>
-                  {countries.map((option) => (
-                    <SelectItem 
-                      key={option.value} 
-                      value={option.value}
-                      disabled={option.disabled}
-                      className="focus:bg-primary/10"
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* City Selection */}
-          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
-            <div className="flex items-center mb-2">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
-                <MapPin className="h-3 w-3 text-primary" />
-              </div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                City
-              </label>
-            </div>
-            <div className="relative">
-              <Select 
-                value={city} 
-                onValueChange={setCity}
-                disabled={!country}
-              >
-                <SelectTrigger id="city" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
-                  <SelectValue placeholder={country ? "Select city" : "Select country first"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {country && getCitiesForCountry().map((cityOption) => (
+                  {cities.map((cityOption) => (
                     <SelectItem 
                       key={cityOption.value} 
                       value={cityOption.value}
@@ -170,25 +116,27 @@ const QuoteForm: React.FC = () => {
               </Select>
             </div>
           </div>
-
-          {/* Main Treatment Type */}
-          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
-            <div className="flex items-center mb-2">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
-                <BriefcaseMedical className="h-3 w-3 text-primary" />
+          
+          {/* Treatment Type */}
+          <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="w-full h-full relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <BriefcaseMedical className="h-5 w-5" />
               </div>
-              <label htmlFor="treatment-type" className="block text-sm font-medium text-gray-700">
-                Treatment Type
-              </label>
-            </div>
-            <div className="relative">
               <Select value={treatmentType} onValueChange={setTreatmentType}>
-                <SelectTrigger id="treatment-type" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
-                  <SelectValue placeholder="Select treatment" />
+                <SelectTrigger 
+                  id="treatment-type" 
+                  className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
+                >
+                  <SelectValue placeholder="Treatment type" />
                 </SelectTrigger>
                 <SelectContent>
                   {treatmentTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value} className="focus:bg-primary/10">
+                    <SelectItem 
+                      key={type.value} 
+                      value={type.value} 
+                      className="focus:bg-primary/10"
+                    >
                       {type.label}
                     </SelectItem>
                   ))}
@@ -198,23 +146,25 @@ const QuoteForm: React.FC = () => {
           </div>
           
           {/* Travel Month */}
-          <div className="md:col-span-1 bg-white rounded-lg p-4 shadow-sm md:shadow-none md:p-0 md:bg-transparent border border-gray-100 md:border-0">
-            <div className="flex items-center mb-2">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 mr-2">
-                <Calendar className="h-3 w-3 text-primary" />
+          <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="w-full h-full relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <Calendar className="h-5 w-5" />
               </div>
-              <label htmlFor="travel-month" className="block text-sm font-medium text-gray-700">
-                Travel Month
-              </label>
-            </div>
-            <div className="relative">
               <Select value={travelMonth} onValueChange={setTravelMonth}>
-                <SelectTrigger id="travel-month" className="w-full bg-gray-50 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+                <SelectTrigger 
+                  id="travel-month" 
+                  className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
+                >
                   <SelectValue placeholder="When?" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value} className="focus:bg-primary/10">
+                    <SelectItem 
+                      key={month.value} 
+                      value={month.value} 
+                      className="focus:bg-primary/10"
+                    >
                       {month.label}
                     </SelectItem>
                   ))}
@@ -223,51 +173,84 @@ const QuoteForm: React.FC = () => {
             </div>
           </div>
           
-          {/* Submit Button - More Prominent */}
-          <div className="md:col-span-1 flex flex-col justify-end">
-            <Button 
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-700 text-white font-semibold h-[46px] md:h-[46px] rounded-md flex items-center justify-center shadow-lg transition-all scale-105 border border-primary/20"
-              disabled={!country || !city || !treatmentType}
-            >
-              <span className="mr-2 text-[15px]">Get My Quote</span>
-              <ArrowRightIcon className="h-4 w-4" />
-            </Button>
+          {/* Origin Country */}
+          <div className="flex-1 flex items-center bg-white border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="w-full h-full relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <PlaneIcon className="h-5 w-5" />
+              </div>
+              <Select value={userOrigin} onValueChange={setUserOrigin}>
+                <SelectTrigger 
+                  id="user-origin" 
+                  className="w-full h-full border-0 shadow-none pl-10 focus:ring-0"
+                >
+                  <SelectValue placeholder="From country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {origins.map((origin) => (
+                    <SelectItem 
+                      key={origin.value} 
+                      value={origin.value} 
+                      className="focus:bg-primary/10"
+                    >
+                      {origin.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Submit Button */}
+          <Button 
+            type="submit"
+            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-medium px-6 rounded-none md:rounded-r-lg flex items-center justify-center text-base h-14"
+            disabled={!city || !treatmentType}
+          >
+            <span className="mr-2">Get My Quote</span>
+            <ArrowRightIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      </form>
+      
+      {/* Feature badges/reassurance elements in a thin row */}
+      <div className="grid grid-cols-3 gap-2 mt-3">
+        <div className="flex items-center justify-center">
+          <div className="bg-white rounded-full px-4 py-1.5 shadow-sm inline-flex items-center">
+            <Check className="h-4 w-4 text-green-500 mr-1.5" />
+            <p className="text-xs text-gray-700">
+              <span className="font-medium">100% Satisfaction</span> Guaranteed
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center">
+          <div className="bg-white rounded-full px-4 py-1.5 shadow-sm inline-flex items-center">
+            <HeartPulse className="h-4 w-4 text-blue-500 mr-1.5" />
+            <p className="text-xs text-gray-700">
+              <span className="font-medium">Premium Care</span> - Best UK Standards
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center">
+          <div className="bg-white rounded-full px-4 py-1.5 shadow-sm inline-flex items-center">
+            <PoundSterling className="h-4 w-4 text-primary mr-1.5" />
+            <p className="text-xs text-gray-700">
+              <span className="font-medium">70% Savings</span> vs UK prices
+            </p>
           </div>
         </div>
       </div>
       
-      {/* Feature badges */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="flex items-center justify-center">
-          <div className="bg-blue-50 rounded-full px-4 py-1.5 inline-flex items-center border border-blue-100">
-            <Shield className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
-            <p className="text-xs text-gray-700">
-              <span className="font-medium">Free, no-obligation</span> quote
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center">
-          <div className="bg-green-50 rounded-full px-4 py-1.5 inline-flex items-center border border-green-100">
-            <Clock className="h-3.5 w-3.5 text-green-500 mr-1.5" />
-            <p className="text-xs text-gray-700">
-              <span className="font-medium">Response within</span> 24 hours
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center">
-          <div className="bg-primary/5 rounded-full px-4 py-1.5 inline-flex items-center border border-primary/10">
-            <BriefcaseMedical className="h-3.5 w-3.5 text-primary mr-1.5" />
-            <p className="text-xs text-gray-700">
-              <span className="font-medium">Includes full</span> treatment plan
-            </p>
-          </div>
-        </div>
+      {/* Trust line */}
+      <div className="mt-4 text-center text-xs text-gray-500 flex items-center justify-center">
+        <Shield className="h-3 w-3 inline mr-1" />
+        <span>Your data is encrypted and secure</span>
+        <span className="mx-2">•</span>
+        <span>17,842 quotes generated since 2023</span>
       </div>
-    </form>
-    
+    </div>
   );
 };
 
@@ -293,16 +276,16 @@ const Hero: React.FC = () => {
       
       <div className="container mx-auto px-4 relative">
         {/* Top Section - Heading and Brief Description */}
-        <div className="text-center mb-8 md:mb-10">
+        <div className="text-center mb-6 md:mb-8">
           <div className="inline-flex items-center justify-center mb-4">
             <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
             <div className="h-1 w-20 bg-primary rounded-full mx-1"></div>
             <div className="h-1 w-8 bg-gray-200 rounded-full mx-1"></div>
           </div>
           
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-5 tracking-tight leading-tight">
-            <span className="block mb-2">Quality Dental Care</span>
-            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">Without the Premium Price</span>
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight leading-tight">
+            <span className="block mb-1">Where's Your New Smile?</span>
+            <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">Quality Care, Affordable Price</span>
           </h1>
           
           <div className="flex items-center justify-center mb-4">
@@ -318,48 +301,8 @@ const Hero: React.FC = () => {
           </p>
         </div>
         
-        {/* Bottom Section - Form with Trust Badges */}
-        <div className="bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMzQjgyRjYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMTUiIGN5PSIxNSIgcj0iMyIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iMTUiIHI9IjMiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIzIi8+PGNpcmNsZSBjeD0iMTUiIGN5PSI0NSIgcj0iMyIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iNDUiIHI9IjMiLz48cGF0aCBkPSJNMjggMTVoNHYtNGgtNHY0em0wIDEwaDR2LTRoLTR2NHptMCAxMGg0di00aC00djR6Ii8+PC9nPjwvZz48L3N2Zz4=')] rounded-xl shadow-xl p-5 md:p-7 max-w-5xl mx-auto border border-gray-100">
-          {/* Medical Indicator */}
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="flex items-center justify-center h-14 w-14 rounded-full bg-white shadow-lg border-2 border-primary/20">
-              <HeartPulse className="h-7 w-7 text-primary" />
-            </div>
-          </div>
-          
-          <div className="flex flex-col mb-6 pb-4 border-b border-gray-100">
-            <h2 className="text-lg font-medium text-gray-800 mb-4 text-center">
-              Request Your Personalised Dental Quote
-            </h2>
-            
-            {/* Trust Badges */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col items-center bg-green-50 rounded-xl p-3 border border-green-100">
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-green-100 mb-1">
-                  <Check className="h-4 w-4 text-green-600" />
-                </div>
-                <span className="text-xs text-center text-gray-700 font-medium">100% Satisfaction</span>
-                <span className="text-[10px] text-gray-500">Guaranteed</span>
-              </div>
-              
-              <div className="flex flex-col items-center bg-blue-50 rounded-xl p-3 border border-blue-100">
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 mb-1">
-                  <HeartPulse className="h-4 w-4 text-blue-600" />
-                </div>
-                <span className="text-xs text-center text-gray-700 font-medium">Premium Care</span>
-                <span className="text-[10px] text-gray-500">Best UK Standards</span>
-              </div>
-              
-              <div className="flex flex-col items-center bg-primary/5 rounded-xl p-3 border border-primary/10">
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 mb-1">
-                  <PoundSterling className="h-4 w-4 text-primary" />
-                </div>
-                <span className="text-xs text-center text-gray-700 font-medium">70% Savings</span>
-                <span className="text-[10px] text-gray-500">vs UK Prices</span>
-              </div>
-            </div>
-          </div>
-          
+        {/* Quote Form Section - Booking.com style */}
+        <div className="max-w-5xl mx-auto">
           <QuoteForm />
         </div>
       </div>
