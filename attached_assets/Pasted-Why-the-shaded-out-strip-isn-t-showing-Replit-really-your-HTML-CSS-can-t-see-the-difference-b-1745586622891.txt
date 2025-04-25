@@ -1,0 +1,77 @@
+Why the “shaded-out” strip isn’t showing
+Replit (really: your HTML/CSS) can’t “see” the difference between the white card and the page-background unless you explicitly wrap that call-to-action (CTA) card in a section that has its own background colour.
+
+Right now you probably have something like:
+
+html
+Copy
+Edit
+<article class="prose ..."> …blog post … </article>
+
+<div class="rounded-lg shadow-lg p-8">
+  <!-- CTA content -->
+</div>
+Because the <body> or parent <main> is still plain white, the card just sits on white—so you don’t perceive the grey strip you expected.
+
+Fix: give the CTA its own full-width section
+html
+Copy
+Edit
+<!-- Blog body -->
+<article class="prose mx-auto mb-16"> ... </article>
+
+<!-- Light-grey strip -->
+<section class="w-full bg-gray-50 py-12">
+  <div class="max-w-3xl mx-auto px-6">
+    <div class="bg-white rounded-lg shadow-lg p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div>
+        <h2 class="text-2xl font-semibold mb-2">Ready to Transform Your Smile?</h2>
+        <p class="text-gray-600">
+          Get your personalised quote today and save up to 70 % on high-quality care with our trusted global clinics.
+        </p>
+      </div>
+
+      <!-- CTA button -->
+      <a href="/your-quote"
+         class="inline-flex items-center justify-center px-6 py-4 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
+        Get My Quote&nbsp;▸
+      </a>
+    </div>
+  </div>
+</section>
+What changed
+
+<section class="bg-gray-50 py-12"> → full-width light grey band (swap gray-50 for any pastel).
+
+Card inside remains white (bg-white rounded-lg shadow-lg) so it “floats” on that strip.
+
+Padding (py-12) above and below the card so the strip feels intentional.
+
+If you need two shaded areas
+Just repeat the pattern:
+
+html
+Copy
+Edit
+<section class="w-full bg-gray-100 py-12"> …first CTA… </section>
+
+<section class="w-full bg-gray-50 py-12"> …second CTA… </section>
+Use slightly different greys (gray-50, gray-100, sky-50, etc.) so they don’t clash.
+
+Tailwind colour cheat sheet (light neutrals)
+
+Token	Hex	Looks like
+gray-50	#f9fafb	Ultra-light
+gray-100	#f3f4f6	Light
+stone-50	#fafaf9	Warm-white
+sky-50	#f0f9ff	Very pale blue
+Pick whichever best matches your brand palette.
+
+Quick checklist
+Wrapper must span full viewport width (w-full outside your centred container).
+
+Avoid margin collapse: keep padding (py-12) on the coloured section, not margins on the inner card.
+
+Mobile stacking: use flex-col md:flex-row so the button drops below headline on small screens.
+
+Drop that snippet into Replit and you should see a clear grey band behind your CTA card. Let me know if it still doesn’t render and we can debug further (e.g. conflicting parent styles or z-index issues).
