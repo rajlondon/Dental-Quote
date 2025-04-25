@@ -38,6 +38,10 @@ import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
 import YourQuotePage from "@/pages/YourQuotePage2";
+import DentalImplantsPage from "@/pages/DentalImplantsPage";
+import VeneersPage from "@/pages/VeneersPage";
+import HollywoodSmilePage from "@/pages/HollywoodSmilePage";
+import FullMouthPage from "@/pages/FullMouthPage";
 import BookingPage from "@/pages/BookingPage";
 import PatientPortalPage from "@/pages/PatientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
@@ -78,6 +82,10 @@ function Router() {
       </Route>
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:id" component={BlogPost} />
+      <Route path="/dental-implants" component={DentalImplantsPage} />
+      <Route path="/veneers" component={VeneersPage} />
+      <Route path="/hollywood-smile" component={HollywoodSmilePage} />
+      <Route path="/full-mouth" component={FullMouthPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/team" component={TeamPage} />
       <Route path="/how-it-works" component={HowItWorks} />
