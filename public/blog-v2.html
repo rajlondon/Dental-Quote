@@ -197,14 +197,14 @@
   </div>
 
   <!-- Main Content -->
-  <main class="flex-grow py-12 bg-gray-50">
-    <div class="container mx-auto px-4 md:px-6">
-      <!-- Featured Posts Section -->
-      <div class="mb-12">
-        <h2 class="text-2xl font-bold mb-8 text-gray-900">Featured Articles</h2>
+  <main class="flex-grow">
+    <!-- Featured Posts Section with its own background -->
+    <section class="w-full bg-white py-16">
+      <div class="container mx-auto px-4 md:px-6">
+        <h2 class="text-2xl font-bold mb-10 text-gray-900">Featured Articles</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <!-- Featured Post 1 -->
-          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-lg h-full">
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-lg h-full border border-gray-100">
             <a href="/blog/how-it-works" class="block relative">
               <div class="absolute top-4 left-4 bg-[#0071c2] text-white text-xs font-bold px-3 py-1 rounded-full">FEATURED</div>
               <img src="/images/clinics/dentgroup.jpg" alt="How MyDentalFly Works" class="w-full h-64 object-cover">
@@ -227,7 +227,7 @@
           </div>
           
           <!-- Featured Post 2 -->
-          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-lg h-full">
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-lg h-full border border-gray-100">
             <a href="/dental-implants" class="block relative">
               <div class="absolute top-4 left-4 bg-[#0071c2] text-white text-xs font-bold px-3 py-1 rounded-full">POPULAR</div>
               <img src="/images/treatments/implants.jpg" alt="Dental Implants Guide" class="w-full h-64 object-cover">
@@ -250,94 +250,100 @@
           </div>
         </div>
       </div>
+    </section>
       
-      <!-- Recent Posts Section -->
-      <h2 class="text-2xl font-bold mb-8 text-gray-900">Recent Articles</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Blog Post 1 -->
-        <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
-          <a href="/veneers">
-            <img src="/images/treatments/veneers.jpg" alt="Veneers vs Crowns" class="w-full h-56 object-cover">
-          </a>
-          <div class="p-6">
+    <!-- Recent Posts Section with different background -->
+    <section class="w-full bg-gray-50 py-16">
+      <div class="container mx-auto px-4 md:px-6">
+        <h2 class="text-2xl font-bold mb-10 text-gray-900">Recent Articles</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Blog Post 1 -->
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md h-full">
             <a href="/veneers">
-              <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">Comparing Veneers and Crowns</h2>
+              <img src="/images/treatments/veneers.jpg" alt="Veneers vs Crowns" class="w-full h-56 object-cover">
             </a>
-            <p class="text-gray-600 mb-4">A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
-              <span>April 18, 2025</span>
-              <a href="/veneers" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
-                Read more 
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+            <div class="p-6">
+              <a href="/veneers">
+                <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">Comparing Veneers and Crowns</h2>
               </a>
+              <p class="text-gray-600 mb-4">A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option.</p>
+              <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
+                <span>April 18, 2025</span>
+                <a href="/veneers" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
+                  Read more 
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Blog Post 2 -->
-        <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
-          <a href="/hollywood-smile">
-            <img src="/images/treatments/hollywood.jpg" alt="Hollywood Smile" class="w-full h-56 object-cover">
-          </a>
-          <div class="p-6">
+          <!-- Blog Post 2 -->
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md h-full">
             <a href="/hollywood-smile">
-              <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">The Hollywood Smile Treatment</h2>
+              <img src="/images/treatments/hollywood.jpg" alt="Hollywood Smile" class="w-full h-56 object-cover">
             </a>
-            <p class="text-gray-600 mb-4">Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
-              <span>April 15, 2025</span>
-              <a href="/hollywood-smile" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
-                Read more
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+            <div class="p-6">
+              <a href="/hollywood-smile">
+                <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">The Hollywood Smile Treatment</h2>
               </a>
+              <p class="text-gray-600 mb-4">Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile.</p>
+              <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
+                <span>April 15, 2025</span>
+                <a href="/hollywood-smile" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
+                  Read more
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Blog Post 3 -->
-        <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
-          <a href="/full-mouth">
-            <img src="/images/treatments/fullmouth.jpg" alt="Full Mouth Reconstruction" class="w-full h-56 object-cover">
-          </a>
-          <div class="p-6">
+          <!-- Blog Post 3 -->
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md h-full">
             <a href="/full-mouth">
-              <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">Full Mouth Reconstruction</h2>
+              <img src="/images/treatments/fullmouth.jpg" alt="Full Mouth Reconstruction" class="w-full h-56 object-cover">
             </a>
-            <p class="text-gray-600 mb-4">Discover how full mouth reconstruction can address multiple dental issues and completely restore your oral health and appearance.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
-              <span>April 10, 2025</span>
-              <a href="/full-mouth" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
-                Read more
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+            <div class="p-6">
+              <a href="/full-mouth">
+                <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">Full Mouth Reconstruction</h2>
               </a>
+              <p class="text-gray-600 mb-4">Discover how full mouth reconstruction can address multiple dental issues and completely restore your oral health and appearance.</p>
+              <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
+                <span>April 10, 2025</span>
+                <a href="/full-mouth" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
+                  Read more
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- CTA Section -->
-    <div class="container mx-auto px-4 md:px-6 mt-16">
-      <div class="max-w-4xl mx-auto bg-gradient-to-r from-[#003b95] to-[#0071c2] rounded-xl p-8 text-white shadow-lg">
-        <div class="flex flex-col md:flex-row items-center justify-between">
-          <div class="mb-6 md:mb-0 md:mr-8">
-            <h2 class="text-2xl font-bold mb-4">Ready to Transform Your Smile?</h2>
-            <p class="text-blue-100 max-w-xl">
-              Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul with our trusted network of clinics.
-            </p>
+    <!-- CTA Section with full-width background - using blue gradient for visual distinction -->
+    <section class="w-full bg-blue-50 py-16">
+      <div class="container mx-auto px-4 md:px-6">
+        <div class="max-w-4xl mx-auto bg-gradient-to-r from-[#003b95] to-[#0071c2] rounded-xl p-8 text-white shadow-lg">
+          <div class="flex flex-col md:flex-row items-center justify-between">
+            <div class="mb-6 md:mb-0 md:mr-8">
+              <h2 class="text-2xl font-bold mb-4">Ready to Transform Your Smile?</h2>
+              <p class="text-blue-100 max-w-xl">
+                Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul with our trusted network of clinics.
+              </p>
+            </div>
+            <a href="/your-quote" class="whitespace-nowrap bg-white hover:bg-blue-50 text-[#003b95] font-bold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-1">
+              Get Your Free Quote
+            </a>
           </div>
-          <a href="/your-quote" class="whitespace-nowrap bg-white hover:bg-blue-50 text-[#003b95] font-bold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-1">
-            Get Your Free Quote
-          </a>
         </div>
       </div>
-    </div>
+    </section>
   </main>
 
   <!-- Footer -->
