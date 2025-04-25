@@ -85,15 +85,15 @@ const Hero: React.FC = () => {
   
   return (
     <section className="relative pb-12 overflow-hidden">
-      {/* Main content with blue background - exactly like Booking.com */}
-      <div className="bg-primary pb-8 pt-8">
+      {/* Main content with dark blue background - exactly like Booking.com */}
+      <div className="bg-[#003b95] pb-8 pt-8">
         <div className="container mx-auto px-4">
           {/* Heading Section */}
-          <div>
-            <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
+          <div className="mb-8">
+            <h1 className="text-white text-3xl md:text-4xl font-bold mb-2">
               Get your World-Class Smile at Local Prices.
             </h1>
-            <p className="text-white text-sm md:text-base mb-6">
+            <p className="text-white text-sm md:text-base">
               Book and compare accredited clinics abroad, save up to 70%, and manage every detail in one secure portal.
             </p>
           </div>
@@ -315,11 +315,11 @@ const Hero: React.FC = () => {
                 )}
               </div>
               
-              {/* Search Button */}
+              {/* Search Button - Booking.com style */}
               <div className="flex items-center px-2">
                 <button 
                   onClick={handleSearch}
-                  className="bg-primary hover:bg-primary/90 text-white font-medium px-5 py-3 h-full rounded flex items-center justify-center whitespace-nowrap"
+                  className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-6 py-3 h-full rounded flex items-center justify-center whitespace-nowrap"
                 >
                   <span>Search</span>
                 </button>
@@ -533,11 +533,11 @@ const Hero: React.FC = () => {
                 )}
               </div>
               
-              {/* Search Button */}
+              {/* Search Button - Booking.com style */}
               <div className="p-3">
                 <button 
                   onClick={handleSearch}
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded flex items-center justify-center"
+                  className="w-full bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 rounded flex items-center justify-center"
                 >
                   <span>Search</span>
                 </button>
