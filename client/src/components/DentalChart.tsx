@@ -312,40 +312,27 @@ export function DentalChart({
         
         {/* Desktop View - Full Dental Chart */}
         <div className="hidden md:block">
-          {/* Mouth container with pink gum background */}
+          {/* Mouth container with pink gum background - based on screenshot */}
           <div className="w-full max-w-3xl mx-auto bg-red-100 rounded-3xl p-6 border-2 border-pink-200 relative">
             {/* Upper gum area */}
-            <div className="bg-pink-300 rounded-t-2xl h-6 mb-1"></div>
+            <div className="bg-pink-300 rounded-t-xl h-8 mb-4"></div>
             
-            {/* Upper Teeth Row - arc shape */}
-            <div className="flex justify-center gap-1 mb-4" style={{ 
-              display: "flex", 
-              flexWrap: "nowrap", 
-              justifyContent: "center",
-              alignItems: "flex-end",
-              width: "100%",
-              marginBottom: "8px"
-            }}>
-              {teeth.slice(0, 16).map((tooth, index) => {
+            {/* Upper Teeth Row - straight horizontal line like in screenshot */}
+            <div className="flex justify-center space-x-3 mb-8 text-center">
+              {teeth.slice(0, 16).map((tooth) => {
                 const bgColor = getToothColor(tooth);
                 const textColor = getTextColor(bgColor);
-                
-                // Create arc effect by adjusting button height based on position
-                const isCenter = index >= 4 && index <= 11;
-                const height = isCenter ? 12 : (index >= 2 && index <= 13 ? 11 : 10);
-                const width = isCenter ? 9 : (index >= 2 && index <= 13 ? 9 : 8);
                 
                 return (
                   <button
                     key={tooth.id}
                     onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
+                    className="flex items-center justify-center border-2 border-gray-400 rounded-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
                     style={{ 
                       backgroundColor: bgColor,
                       color: textColor,
-                      width: `${width}px`,
-                      height: `${height}px`,
-                      transform: index < 8 ? `rotate(-${(7-index) * 5}deg)` : `rotate(${(index-8) * 5}deg)`
+                      width: "18px",
+                      height: "18px"
                     }}
                     title={getToothTooltip(tooth)}
                   >
@@ -355,38 +342,25 @@ export function DentalChart({
               })}
             </div>
             
-            {/* Tongue area */}
-            <div className="bg-pink-400 w-3/5 h-14 mx-auto rounded-full"></div>
+            {/* Tongue area - pink oblong shape like in screenshot */}
+            <div className="bg-pink-400 w-4/5 h-16 mx-auto rounded-full mb-8"></div>
             
-            {/* Lower Teeth Row - arc shape */}
-            <div className="flex justify-center gap-1" style={{ 
-              display: "flex", 
-              flexWrap: "nowrap", 
-              justifyContent: "center",
-              alignItems: "flex-start",
-              width: "100%",
-              marginTop: "8px"
-            }}>
-              {teeth.slice(16).map((tooth, index) => {
+            {/* Lower Teeth Row - straight horizontal line like in screenshot */}
+            <div className="flex justify-center space-x-3 mb-4 text-center">
+              {teeth.slice(16).map((tooth) => {
                 const bgColor = getToothColor(tooth);
                 const textColor = getTextColor(bgColor);
-                
-                // Create arc effect by adjusting button height based on position
-                const isCenter = index >= 4 && index <= 11;
-                const height = isCenter ? 12 : (index >= 2 && index <= 13 ? 11 : 10);
-                const width = isCenter ? 9 : (index >= 2 && index <= 13 ? 9 : 8);
                 
                 return (
                   <button
                     key={tooth.id}
                     onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
+                    className="flex items-center justify-center border-2 border-gray-400 rounded-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
                     style={{ 
                       backgroundColor: bgColor,
                       color: textColor,
-                      width: `${width}px`,
-                      height: `${height}px`,
-                      transform: index < 8 ? `rotate(${(7-index) * 5}deg)` : `rotate(-${(index-8) * 5}deg)`
+                      width: "18px",
+                      height: "18px"
                     }}
                     title={getToothTooltip(tooth)}
                   >
@@ -397,7 +371,7 @@ export function DentalChart({
             </div>
             
             {/* Lower gum area */}
-            <div className="bg-pink-300 rounded-b-2xl h-6 mt-1"></div>
+            <div className="bg-pink-300 rounded-b-xl h-8 mt-4"></div>
           </div>
         </div>
         
