@@ -52,15 +52,15 @@ const HeroSimple: React.FC = () => {
   
   return (
     <section className="relative pb-12 overflow-hidden">
-      {/* Gradient background header - lightened 10% */}
-      <div className="bg-gradient-to-r from-primary/90 to-blue-500/90 pb-8 pt-8">
+      {/* Booking.com style dark blue background */}
+      <div className="bg-[#003b95] pb-8 pt-8">
         <div className="container mx-auto px-4">
           {/* Heading */}
-          <div>
-            <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
+          <div className="mb-8">
+            <h1 className="text-white text-3xl md:text-4xl font-bold mb-2">
               Get your World-Class Smile at Local Prices.
             </h1>
-            <p className="text-white text-sm md:text-base mb-6">
+            <p className="text-white text-sm md:text-base">
               Book and compare accredited clinics abroad, save up to 70%, and manage every detail in one secure portal.
             </p>
           </div>
@@ -116,11 +116,11 @@ const HeroSimple: React.FC = () => {
                 </div>
               </div>
               
-              {/* Search button */}
+              {/* Search button - Booking.com style */}
               <div className="ml-4 flex items-center">
                 <button 
                   onClick={handleSearch}
-                  className="h-full px-6 bg-primary hover:bg-primary/90 text-white font-medium rounded flex items-center justify-center"
+                  className="h-full px-6 bg-[#0071c2] hover:bg-[#00487a] text-white font-bold rounded flex items-center justify-center"
                 >
                   <span>Search</span>
                 </button>
@@ -174,10 +174,10 @@ const HeroSimple: React.FC = () => {
                 </div>
               </div>
               
-              {/* Search button */}
+              {/* Search button - Booking.com style */}
               <button 
                 onClick={handleSearch}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded flex items-center justify-center"
+                className="w-full bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 rounded flex items-center justify-center"
               >
                 <span>Search</span>
               </button>
