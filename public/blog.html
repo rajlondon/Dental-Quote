@@ -6,10 +6,13 @@
   <title>MyDentalFly - Dental Tourism Blog</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* Base styles */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: #333;
       line-height: 1.5;
     }
@@ -17,7 +20,7 @@
     /* Navigation styles */
     .navbar {
       background-color: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      border-bottom: 1px solid #e5e7eb;
     }
     
     /* Footer styles */
@@ -43,24 +46,24 @@
       padding: 0.5rem 1rem;
       border-radius: 0.375rem;
       font-weight: 600;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
     }
     .btn-primary:hover {
       background-color: #00487a;
+      transform: translateY(-1px);
     }
     
     /* Hero section with gradient */
     .hero-section {
       background: linear-gradient(135deg, #003b95 0%, #0071c2 100%);
       color: white;
-      padding: 4rem 0;
+      padding: 3rem 0;
     }
     
     /* Breadcrumb styles */
     .breadcrumbs {
-      padding: 0.75rem 0;
-      background-color: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
+      background-color: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
     }
     
     /* Whatsapp floating button */
@@ -71,40 +74,42 @@
       background-color: #25D366;
       color: white;
       border-radius: 50%;
-      width: 60px;
-      height: 60px;
+      width: 56px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       z-index: 1000;
+      transition: all 0.3s;
     }
     .whatsapp-float:hover {
       background-color: #128C7E;
+      transform: scale(1.05);
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col bg-white">
   <!-- WhatsApp Button -->
   <a href="https://wa.me/447572445856" target="_blank" class="whatsapp-float">
     <i class="fab fa-whatsapp fa-2x"></i>
   </a>
 
   <!-- Navbar -->
-  <nav class="navbar sticky top-0 z-50 py-3">
-    <div class="container mx-auto px-4">
+  <nav class="navbar sticky top-0 z-50 py-4">
+    <div class="container mx-auto px-4 md:px-6">
       <div class="flex justify-between items-center">
         <a href="/" class="flex items-center">
-          <img src="/images/logo.png" alt="MyDentalFly Logo" class="h-10 mr-3">
-          <span class="text-2xl font-bold text-[#003b95]">MyDentalFly</span>
+          <img src="/images/logo.png" alt="MyDentalFly Logo" class="h-9 w-auto mr-3">
+          <span class="text-xl font-bold text-[#003b95]">MyDentalFly</span>
         </a>
         
-        <div class="hidden md:flex items-center space-x-6">
-          <a href="/" class="text-gray-700 hover:text-[#0071c2] text-sm transition-colors">Home</a>
-          <a href="/dental-chart" class="text-gray-700 hover:text-[#0071c2] text-sm transition-colors">Interactive Dental Chart</a>
-          <a href="/your-quote" class="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-4 py-2 rounded-md text-sm transition-colors">Get a Quote</a>
-          <a href="/blog" class="text-gray-700 hover:text-[#0071c2] text-sm font-medium transition-colors">Blog</a>
-          <a href="/portal-login" class="text-gray-700 hover:text-[#0071c2] text-sm transition-colors">Patient Portal</a>
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="/" class="text-gray-700 hover:text-[#0071c2] font-medium text-sm transition-colors">Home</a>
+          <a href="/dental-chart" class="text-gray-700 hover:text-[#0071c2] font-medium text-sm transition-colors">Interactive Dental Chart</a>
+          <a href="/your-quote" class="bg-[#0071c2] hover:bg-[#00487a] text-white font-medium px-4 py-2 rounded-md text-sm transition-colors">Get a Quote</a>
+          <a href="/blog" class="text-gray-700 hover:text-[#0071c2] font-bold text-sm transition-colors">Blog</a>
+          <a href="/portal-login" class="text-gray-700 hover:text-[#0071c2] font-medium text-sm transition-colors">Patient Portal</a>
         </div>
         
         <!-- Mobile menu button -->
@@ -116,225 +121,256 @@
       </div>
       
       <!-- Mobile menu (hidden by default) -->
-      <div id="mobile-menu" class="md:hidden hidden mt-2 pb-2">
-        <a href="/" class="block py-1.5 text-gray-700 hover:text-[#0071c2]">Home</a>
-        <a href="/dental-chart" class="block py-1.5 text-gray-700 hover:text-[#0071c2]">Interactive Dental Chart</a>
-        <a href="/your-quote" class="block py-1.5 bg-[#0071c2] text-white px-3 my-2 rounded hover:bg-[#00487a]">Get a Quote</a>
-        <a href="/blog" class="block py-1.5 text-gray-700 hover:text-[#0071c2] font-medium">Blog</a>
-        <a href="/portal-login" class="block py-1.5 text-gray-700 hover:text-[#0071c2]">Patient Portal</a>
+      <div id="mobile-menu" class="md:hidden hidden mt-4 pb-2">
+        <a href="/" class="block py-2 text-gray-700 hover:text-[#0071c2] font-medium">Home</a>
+        <a href="/dental-chart" class="block py-2 text-gray-700 hover:text-[#0071c2] font-medium">Interactive Dental Chart</a>
+        <a href="/your-quote" class="block py-2 my-2">
+          <span class="bg-[#0071c2] text-white hover:bg-[#00487a] px-3 py-2 rounded font-medium">Get a Quote</span>
+        </a>
+        <a href="/blog" class="block py-2 text-gray-700 hover:text-[#0071c2] font-bold">Blog</a>
+        <a href="/portal-login" class="block py-2 text-gray-700 hover:text-[#0071c2] font-medium">Patient Portal</a>
       </div>
     </div>
   </nav>
   
   <!-- Breadcrumbs -->
-  <div class="breadcrumbs">
-    <div class="container mx-auto px-4">
-      <div class="flex items-center text-sm text-gray-600">
-        <a href="/" class="hover:text-[#0071c2]">Home</a>
-        <span class="mx-2">›</span>
-        <span class="text-gray-800 font-medium">Blog</span>
+  <div class="breadcrumbs py-2">
+    <div class="container mx-auto px-4 md:px-6">
+      <div class="flex items-center text-sm">
+        <a href="/" class="text-gray-600 hover:text-[#0071c2] transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">Blog</span>
       </div>
     </div>
   </div>
 
   <!-- Hero Section -->
   <div class="hero-section">
-    <div class="container mx-auto px-4">
-      <h1 class="text-3xl md:text-4xl font-bold text-center">Dental Tourism Blog</h1>
-      <p class="text-lg md:text-xl text-center mt-4 max-w-3xl mx-auto text-blue-100">
-        Expert advice, guides, and information about dental treatments abroad. Discover everything you need to know about dental procedures, costs, and what to expect.
-      </p>
+    <div class="container mx-auto px-4 md:px-6">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-3xl md:text-4xl font-bold">Dental Tourism Blog</h1>
+        <p class="text-lg mt-4 text-blue-100">
+          Expert advice, guides, and information about dental treatments abroad. Discover everything you need to know about dental procedures, costs, and what to expect.
+        </p>
+      </div>
     </div>
   </div>
 
   <!-- Main Content -->
   <main class="flex-grow py-12 bg-gray-50">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-4 md:px-6">
+      <!-- Featured Posts Section -->
+      <div class="mb-12">
+        <h2 class="text-2xl font-bold mb-8 text-gray-900">Featured Articles</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Featured Post 1 -->
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-lg h-full">
+            <a href="/blog/how-it-works" class="block relative">
+              <div class="absolute top-4 left-4 bg-[#0071c2] text-white text-xs font-bold px-3 py-1 rounded-full">FEATURED</div>
+              <img src="/images/clinics/dentgroup.jpg" alt="How MyDentalFly Works" class="w-full h-64 object-cover">
+            </a>
+            <div class="p-8">
+              <a href="/blog/how-it-works">
+                <h2 class="font-bold text-2xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">How MyDentalFly.com Works</h2>
+              </a>
+              <p class="text-gray-600 mb-4 text-base">Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience. Learn how we connect you with top-rated clinics, handle your travel arrangements, and provide support throughout your dental journey.</p>
+              <div class="flex items-center justify-between text-sm text-gray-500 border-t pt-4 mt-4 border-gray-100">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-2">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <span>MyDentalFly Team</span>
+                </div>
+                <span>April 24, 2025</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Featured Post 2 -->
+          <div class="blog-card bg-white rounded-xl overflow-hidden shadow-lg h-full">
+            <a href="/dental-implants" class="block relative">
+              <div class="absolute top-4 left-4 bg-[#0071c2] text-white text-xs font-bold px-3 py-1 rounded-full">POPULAR</div>
+              <img src="/images/treatments/implants.jpg" alt="Dental Implants Guide" class="w-full h-64 object-cover">
+            </a>
+            <div class="p-8">
+              <a href="/dental-implants">
+                <h2 class="font-bold text-2xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">The Complete Guide to Dental Implants</h2>
+              </a>
+              <p class="text-gray-600 mb-4 text-base">Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery. Learn why so many patients choose Turkey for affordable, high-quality implant treatments.</p>
+              <div class="flex items-center justify-between text-sm text-gray-500 border-t pt-4 mt-4 border-gray-100">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-2">
+                    <i class="fas fa-user-md"></i>
+                  </div>
+                  <span>Dr. Sarah Johnson</span>
+                </div>
+                <span>April 20, 2025</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Posts Section -->
+      <h2 class="text-2xl font-bold mb-8 text-gray-900">Recent Articles</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Blog Post 1 -->
-        <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
-          <a href="/blog/how-it-works">
-            <img src="/images/clinics/dentgroup.jpg" alt="How MyDentalFly Works" class="w-full h-56 object-cover">
-          </a>
-          <div class="p-6">
-            <a href="/blog/how-it-works">
-              <h2 class="font-bold text-xl mb-3 text-blue-700 hover:text-blue-500">How MyDentalFly.com Works</h2>
-            </a>
-            <p class="text-gray-600 mb-4">Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500">
-              <span>MyDentalFly Team</span>
-              <span>April 24, 2025</span>
-            </div>
-            <a href="/blog/how-it-works" class="mt-4 inline-block text-blue-600 font-medium hover:underline">
-              Read more →
-            </a>
-          </div>
-        </div>
-
-        <!-- Blog Post 2 -->
-        <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
-          <a href="/dental-implants">
-            <img src="/images/treatments/implants.jpg" alt="Dental Implants Guide" class="w-full h-56 object-cover">
-          </a>
-          <div class="p-6">
-            <a href="/dental-implants">
-              <h2 class="font-bold text-xl mb-3 text-blue-700 hover:text-blue-500">The Complete Guide to Dental Implants</h2>
-            </a>
-            <p class="text-gray-600 mb-4">Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500">
-              <span>Dr. Sarah Johnson</span>
-              <span>April 20, 2025</span>
-            </div>
-            <a href="/dental-implants" class="mt-4 inline-block text-blue-600 font-medium hover:underline">
-              Read more →
-            </a>
-          </div>
-        </div>
-
-        <!-- Blog Post 3 -->
         <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
           <a href="/veneers">
             <img src="/images/treatments/veneers.jpg" alt="Veneers vs Crowns" class="w-full h-56 object-cover">
           </a>
           <div class="p-6">
             <a href="/veneers">
-              <h2 class="font-bold text-xl mb-3 text-blue-700 hover:text-blue-500">Comparing Veneers and Crowns: Which is Right for You?</h2>
+              <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">Comparing Veneers and Crowns</h2>
             </a>
             <p class="text-gray-600 mb-4">A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500">
-              <span>Dr. Michael Chen</span>
+            <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
               <span>April 18, 2025</span>
+              <a href="/veneers" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
+                Read more 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
             </div>
-            <a href="/veneers" class="mt-4 inline-block text-blue-600 font-medium hover:underline">
-              Read more →
-            </a>
           </div>
         </div>
 
-        <!-- Blog Post 4 -->
+        <!-- Blog Post 2 -->
         <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
           <a href="/hollywood-smile">
             <img src="/images/treatments/hollywood.jpg" alt="Hollywood Smile" class="w-full h-56 object-cover">
           </a>
           <div class="p-6">
             <a href="/hollywood-smile">
-              <h2 class="font-bold text-xl mb-3 text-blue-700 hover:text-blue-500">The Hollywood Smile: Transform Your Appearance</h2>
+              <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">The Hollywood Smile Treatment</h2>
             </a>
             <p class="text-gray-600 mb-4">Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500">
-              <span>Dr. Emily Taylor</span>
+            <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
               <span>April 15, 2025</span>
+              <a href="/hollywood-smile" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
+                Read more
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
             </div>
-            <a href="/hollywood-smile" class="mt-4 inline-block text-blue-600 font-medium hover:underline">
-              Read more →
-            </a>
           </div>
         </div>
 
-        <!-- Blog Post 5 -->
+        <!-- Blog Post 3 -->
         <div class="blog-card bg-white rounded-xl overflow-hidden shadow-md">
           <a href="/full-mouth">
             <img src="/images/treatments/fullmouth.jpg" alt="Full Mouth Reconstruction" class="w-full h-56 object-cover">
           </a>
           <div class="p-6">
             <a href="/full-mouth">
-              <h2 class="font-bold text-xl mb-3 text-blue-700 hover:text-blue-500">Full Mouth Reconstruction: A New Beginning</h2>
+              <h2 class="font-bold text-xl mb-3 text-gray-900 hover:text-[#0071c2] transition-colors">Full Mouth Reconstruction</h2>
             </a>
             <p class="text-gray-600 mb-4">Discover how full mouth reconstruction can address multiple dental issues and completely restore your oral health and appearance.</p>
-            <div class="flex items-center justify-between text-sm text-gray-500">
-              <span>Dr. James Wilson</span>
+            <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
               <span>April 10, 2025</span>
+              <a href="/full-mouth" class="inline-flex items-center text-[#0071c2] font-medium hover:underline">
+                Read more
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
             </div>
-            <a href="/full-mouth" class="mt-4 inline-block text-blue-600 font-medium hover:underline">
-              Read more →
-            </a>
           </div>
         </div>
       </div>
     </div>
 
     <!-- CTA Section -->
-    <div class="container mx-auto px-4 mt-16">
-      <div class="max-w-4xl mx-auto bg-blue-50 rounded-xl p-8 border border-blue-100">
-        <h2 class="text-2xl font-bold mb-4 text-blue-700">Ready to Start Your Dental Journey?</h2>
-        <p class="text-lg text-gray-700 mb-6">
-          Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul.
-        </p>
-        <a href="/your-quote" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
-          Get Your Free Quote
-        </a>
+    <div class="container mx-auto px-4 md:px-6 mt-16">
+      <div class="max-w-4xl mx-auto bg-gradient-to-r from-[#003b95] to-[#0071c2] rounded-xl p-8 text-white shadow-lg">
+        <div class="flex flex-col md:flex-row items-center justify-between">
+          <div class="mb-6 md:mb-0 md:mr-8">
+            <h2 class="text-2xl font-bold mb-4">Ready to Transform Your Smile?</h2>
+            <p class="text-blue-100 max-w-xl">
+              Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul with our trusted network of clinics.
+            </p>
+          </div>
+          <a href="/your-quote" class="whitespace-nowrap bg-white hover:bg-blue-50 text-[#003b95] font-bold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-1">
+            Get Your Free Quote
+          </a>
+        </div>
       </div>
     </div>
   </main>
 
   <!-- Footer -->
   <footer class="footer py-12">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-4 md:px-6">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <div>
           <div class="flex items-center mb-4">
-            <img src="/images/logo-white.png" alt="MyDentalFly Logo" class="h-8 mr-2">
-            <h4 class="font-semibold text-lg">MyDentalFly</h4>
+            <span class="text-xl font-bold text-white">MyDentalFly</span>
           </div>
-          <p class="text-blue-200 mb-4">
-            Find affordable, high-quality dental care in Istanbul with our concierge booking service.
+          <p class="text-blue-100 mb-4 text-sm">
+            The premier dental tourism platform connecting you with top clinics in Istanbul. Save up to 70% on high-quality dental treatments.
           </p>
-          <div class="flex space-x-3 mt-6">
-            <a href="https://facebook.com" class="text-blue-200 hover:text-white">
+          <div class="flex space-x-4 mt-6">
+            <a href="https://facebook.com" class="bg-blue-800 hover:bg-blue-700 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
               <i class="fab fa-facebook-f"></i>
             </a>
-            <a href="https://instagram.com" class="text-blue-200 hover:text-white">
+            <a href="https://instagram.com" class="bg-blue-800 hover:bg-blue-700 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
               <i class="fab fa-instagram"></i>
             </a>
-            <a href="https://twitter.com" class="text-blue-200 hover:text-white">
+            <a href="https://twitter.com" class="bg-blue-800 hover:bg-blue-700 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
               <i class="fab fa-twitter"></i>
             </a>
-            <a href="https://linkedin.com" class="text-blue-200 hover:text-white">
+            <a href="https://linkedin.com" class="bg-blue-800 hover:bg-blue-700 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
               <i class="fab fa-linkedin-in"></i>
             </a>
           </div>
         </div>
         
         <div>
-          <h4 class="font-semibold text-lg mb-4">Quick Links</h4>
-          <ul class="space-y-3">
-            <li><a href="/" class="text-blue-200 hover:text-white text-sm">Home</a></li>
-            <li><a href="/how-it-works" class="text-blue-200 hover:text-white text-sm">How It Works</a></li>
-            <li><a href="/your-quote" class="text-blue-200 hover:text-white text-sm">Get a Quote</a></li>
-            <li><a href="/team" class="text-blue-200 hover:text-white text-sm">Our Team</a></li>
-            <li><a href="/blog" class="text-blue-200 hover:text-white text-sm">Blog</a></li>
+          <h4 class="font-semibold text-lg mb-4 text-white">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="/" class="text-blue-100 hover:text-white text-sm transition-colors">Home</a></li>
+            <li><a href="/how-it-works" class="text-blue-100 hover:text-white text-sm transition-colors">How It Works</a></li>
+            <li><a href="/your-quote" class="text-blue-100 hover:text-white text-sm transition-colors">Get a Quote</a></li>
+            <li><a href="/dental-chart" class="text-blue-100 hover:text-white text-sm transition-colors">Interactive Dental Chart</a></li>
+            <li><a href="/faq" class="text-blue-100 hover:text-white text-sm transition-colors">FAQs</a></li>
+            <li><a href="/blog" class="text-blue-100 hover:text-white text-sm transition-colors">Blog</a></li>
           </ul>
         </div>
         
         <div>
-          <h4 class="font-semibold text-lg mb-4">Treatments</h4>
-          <ul class="space-y-3">
-            <li><a href="/your-quote?treatment=veneers" class="text-blue-200 hover:text-white text-sm">Veneers</a></li>
-            <li><a href="/your-quote?treatment=dental-implants" class="text-blue-200 hover:text-white text-sm">Dental Implants</a></li>
-            <li><a href="/your-quote?treatment=hollywood-smile" class="text-blue-200 hover:text-white text-sm">Hollywood Smile</a></li>
-            <li><a href="/your-quote?treatment=crowns" class="text-blue-200 hover:text-white text-sm">Crowns & Bridges</a></li>
-            <li><a href="/your-quote?treatment=whitening" class="text-blue-200 hover:text-white text-sm">Teeth Whitening</a></li>
+          <h4 class="font-semibold text-lg mb-4 text-white">Treatments</h4>
+          <ul class="space-y-2">
+            <li><a href="/your-quote?treatment=veneers" class="text-blue-100 hover:text-white text-sm transition-colors">Veneers</a></li>
+            <li><a href="/your-quote?treatment=dental-implants" class="text-blue-100 hover:text-white text-sm transition-colors">Dental Implants</a></li>
+            <li><a href="/your-quote?treatment=hollywood-smile" class="text-blue-100 hover:text-white text-sm transition-colors">Hollywood Smile</a></li>
+            <li><a href="/your-quote?treatment=crowns" class="text-blue-100 hover:text-white text-sm transition-colors">Crowns & Bridges</a></li>
+            <li><a href="/your-quote?treatment=whitening" class="text-blue-100 hover:text-white text-sm transition-colors">Teeth Whitening</a></li>
+            <li><a href="/your-quote?treatment=full-mouth" class="text-blue-100 hover:text-white text-sm transition-colors">Full Mouth Reconstruction</a></li>
           </ul>
         </div>
         
         <div>
-          <h4 class="font-semibold text-lg mb-4">Contact Us</h4>
+          <h4 class="font-semibold text-lg mb-4 text-white">Contact Us</h4>
           <ul class="space-y-4">
             <li class="flex items-start gap-3">
               <i class="fas fa-envelope w-5 h-5 text-blue-300 mt-0.5"></i>
-              <a href="mailto:info@mydentalfly.com" class="text-blue-200 hover:text-white text-sm">info@mydentalfly.com</a>
+              <a href="mailto:info@mydentalfly.com" class="text-blue-100 hover:text-white text-sm transition-colors">info@mydentalfly.com</a>
             </li>
             <li class="flex items-start gap-3">
               <i class="fas fa-phone w-5 h-5 text-blue-300 mt-0.5"></i>
-              <a href="tel:+447572445856" class="text-blue-200 hover:text-white text-sm">+44 7572 445856</a>
+              <a href="tel:+447572445856" class="text-blue-100 hover:text-white text-sm transition-colors">+44 7572 445856</a>
             </li>
             <li class="flex items-start gap-3">
               <i class="fab fa-whatsapp w-5 h-5 text-blue-300 mt-0.5"></i>
-              <a href="https://wa.me/447572445856" class="text-blue-200 hover:text-white text-sm">WhatsApp Chat</a>
+              <a href="https://wa.me/447572445856" class="text-blue-100 hover:text-white text-sm transition-colors">WhatsApp Chat</a>
             </li>
             <li class="flex items-start gap-3">
               <i class="fas fa-map-marker-alt w-5 h-5 text-blue-300 mt-0.5"></i>
-              <span class="text-blue-200 text-sm">London, United Kingdom</span>
+              <span class="text-blue-100 text-sm">London, United Kingdom</span>
             </li>
           </ul>
         </div>
@@ -342,12 +378,12 @@
       
       <div class="border-t border-blue-800 pt-6 mt-4">
         <div class="flex flex-col md:flex-row justify-between items-center">
-          <p class="text-blue-400 text-sm mb-4 md:mb-0">© 2025 MyDentalFly. All rights reserved.</p>
+          <p class="text-blue-200 text-sm mb-4 md:mb-0">© 2025 MyDentalFly. All rights reserved.</p>
           <div class="flex flex-wrap gap-4 md:gap-6 justify-center">
-            <a href="/privacy-policy" class="text-blue-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-            <a href="/terms-of-service" class="text-blue-400 hover:text-white text-sm transition-colors">Terms of Service</a>
-            <a href="/cookies-policy" class="text-blue-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
-            <a href="/clinics" class="text-blue-400 hover:text-white text-sm transition-colors">For Clinics</a>
+            <a href="/privacy-policy" class="text-blue-200 hover:text-white text-sm transition-colors">Privacy Policy</a>
+            <a href="/terms-of-service" class="text-blue-200 hover:text-white text-sm transition-colors">Terms of Service</a>
+            <a href="/cookies-policy" class="text-blue-200 hover:text-white text-sm transition-colors">Cookie Policy</a>
+            <a href="/clinics" class="text-blue-200 hover:text-white text-sm transition-colors">For Clinics</a>
           </div>
         </div>
       </div>
@@ -369,7 +405,7 @@
         }
       });
       
-      // Handle blog navigation with proper links
+      // Handle blog navigation links with proper routing behavior
       const blogLinks = document.querySelectorAll('a[href^="/blog/"], a[href^="/dental-implants"], a[href^="/veneers"], a[href^="/hollywood-smile"], a[href^="/full-mouth"]');
       
       blogLinks.forEach(link => {
