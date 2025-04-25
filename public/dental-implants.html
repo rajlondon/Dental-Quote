@@ -8,11 +8,27 @@
   <link rel="stylesheet" href="/assets/index.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Base styles */
+    /* Reset & Base styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
     body {
       margin: 0;
       padding: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.5;
+      color: #333;
+    }
+    
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    a {
+      color: #003b95;
+      text-decoration: none;
     }
     
     /* Layout styles */
@@ -28,11 +44,27 @@
     /* Header and footer */
     .footer {
       background-color: #003b95;
+      color: white;
     }
     
     /* Typography */
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
     h2 {
       color: #003b95;
+      font-size: 1.75rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    h3 {
+      font-size: 1.35rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
     }
     
     /* Content styles */
@@ -41,80 +73,134 @@
       margin-left: auto;
       margin-right: auto;
       color: #374151;
-    }
-    .prose p {
-      margin-top: 1.25em;
-      margin-bottom: 1.25em;
-    }
-    .prose h2 {
-      margin-top: 2em;
-      margin-bottom: 1em;
-      font-size: 1.5em;
-      line-height: 1.3333333;
-    }
-    .prose h3 {
-      margin-top: 1.5em;
-      margin-bottom: 0.75em;
-      font-size: 1.25em;
-      line-height: 1.4;
-    }
-    .prose ul {
-      margin-top: 1.25em;
-      margin-bottom: 1.25em;
-      list-style-type: disc;
-      padding-left: 1.625em;
-    }
-    .prose ol {
-      margin-top: 1.25em;
-      margin-bottom: 1.25em;
-      list-style-type: decimal;
-      padding-left: 1.625em;
-    }
-    .prose li {
-      margin-top: 0.5em;
-      margin-bottom: 0.5em;
-    }
-    .prose-lg {
       font-size: 1.125rem;
       line-height: 1.75;
     }
     
-    /* Hero section ribbon */
-    .hero-section {
-      background: linear-gradient(to right, #e6f2ff, #f0f7ff);
-      width: 100%;
-      position: relative;
-      overflow: hidden;
+    .prose p {
+      margin-top: 1.25em;
+      margin-bottom: 1.25em;
     }
+    
+    .prose ul, .prose ol {
+      margin-top: 1.25em;
+      margin-bottom: 1.25em;
+      padding-left: 1.625em;
+    }
+    
+    .prose ul {
+      list-style-type: disc;
+    }
+    
+    .prose ol {
+      list-style-type: decimal;
+    }
+    
+    .prose li {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
+    
+    /* Hero section */
+    .hero-section {
+      background-color: #e6f0ff;
+      padding: 3rem 0;
+      margin-bottom: 2rem;
+    }
+    
     .hero-content {
       display: flex;
       flex-direction: column;
-      padding: 3rem 0;
+      gap: 2rem;
     }
+    
+    /* Media Queries */
     @media (min-width: 768px) {
       .hero-content {
         flex-direction: row;
         align-items: center;
-        justify-content: space-between;
+      }
+      
+      .hero-text {
+        flex: 1;
+        padding-right: 2rem;
+      }
+      
+      .hero-image {
+        flex: 1;
       }
     }
     
-    /* Tables */
+    /* Table styles */
     table {
       width: 100%;
       border-collapse: collapse;
       margin: 1.5rem 0;
     }
+    
     th, td {
       border: 1px solid #e5e7eb;
-      padding: 0.5rem 1rem;
+      padding: 0.75rem;
       text-align: left;
     }
+    
     th {
       background-color: #f9fafb;
+      font-weight: 600;
     }
+    
     tr:nth-child(even) {
       background-color: #f9fafb;
+    }
+    
+    /* Navigation and links */
+    .next-articles {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .article-link {
+      display: block;
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      transition: box-shadow 0.2s ease;
+    }
+    
+    .article-link:hover {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .read-more {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #0071c2;
+    }
+    
+    .cta-box {
+      background: linear-gradient(to right, #003b95, #0071c2);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      margin: 2rem 0;
+    }
+    
+    .button {
+      display: inline-block;
+      background-color: white;
+      color: #003b95;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      transition: background-color 0.2s ease;
+    }
+    
+    .button:hover {
+      background-color: #f0f7ff;
     }
   </style>
 </head>
@@ -162,10 +248,10 @@
     <div class="hero-section">
       <div class="container">
         <div class="hero-content">
-          <div class="w-full md:w-1/2 mb-8 md:mb-0">
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">The Complete Guide to Dental Implants</h1>
+          <div class="hero-text">
+            <h1>The Complete Guide to Dental Implants</h1>
             <p class="text-lg text-gray-600 mb-6">Everything you need to know about dental implants, procedures, costs, and what to expect for treatment in Istanbul.</p>
-            <div class="flex items-center space-x-4 text-sm text-gray-500">
+            <div class="flex items-center flex-wrap gap-3 text-sm text-gray-500">
               <div class="flex items-center">
                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-2">
                   <i class="fas fa-user-md"></i>
@@ -178,8 +264,8 @@
               <span>15 min read</span>
             </div>
           </div>
-          <div class="w-full md:w-1/2 flex justify-center">
-            <img src="/images/treatments/illustrations/dental-implants2.png" alt="Dental Implant Illustration" class="w-full max-w-md bg-[#d9f0ff] rounded-xl p-4">
+          <div class="hero-image">
+            <img src="/images/treatments/illustrations/dental-implants2.png" alt="Dental Implant Illustration" class="bg-[#d9f0ff] rounded-xl p-4 max-w-full mx-auto">
           </div>
         </div>
       </div>
@@ -341,46 +427,29 @@
       </div>
     </article>
 
-    <!-- Simple Next Articles Navigation -->
-    <section class="bg-white py-12 border-t border-gray-100">
+    <!-- Next Articles Section -->
+    <section class="bg-white py-12">
       <div class="container">
-        <div class="max-w-3xl mx-auto">
+        <div class="max-w-3xl mx-auto next-articles">
           <h3 class="text-xl font-semibold mb-6">Continue Reading</h3>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="/veneers" class="flex flex-col p-5 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-              <span class="text-sm text-gray-500 mb-2">Next Article</span>
-              <h4 class="text-lg font-medium text-[#003b95]">Complete Guide to Dental Veneers</h4>
-              <span class="mt-auto pt-3 flex items-center text-sm text-[#0071c2]">
+          <a href="/veneers" class="article-link">
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-500 mb-1">Next Article</span>
+              <h4 class="text-lg font-medium text-[#003b95] mb-3">Complete Guide to Dental Veneers</h4>
+              <span class="read-more">
                 Read more
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </span>
-            </a>
-            
-            <a href="/hollywood-smile" class="flex flex-col p-5 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-              <span class="text-sm text-gray-500 mb-2">Related Article</span>
-              <h4 class="text-lg font-medium text-[#003b95]">The Hollywood Smile Transformation</h4>
-              <span class="mt-auto pt-3 flex items-center text-sm text-[#0071c2]">
-                Read more
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </span>
-            </a>
-          </div>
-          
-          <div class="mt-12 p-6 bg-gradient-to-r from-[#003b95] to-[#0071c2] rounded-lg text-white shadow-md">
-            <div class="flex flex-col md:flex-row items-center justify-between">
-              <div class="mb-4 md:mb-0">
-                <h3 class="text-xl font-bold mb-2">Ready for Your Free Quote?</h3>
-                <p class="text-blue-100">Compare prices from top Istanbul dental clinics today.</p>
-              </div>
-              <a href="/your-quote" class="whitespace-nowrap bg-white hover:bg-blue-50 text-[#003b95] font-bold py-2 px-5 rounded-md transition-colors">
-                Get Started
-              </a>
             </div>
+          </a>
+          
+          <div class="cta-box">
+            <h3 class="text-xl font-bold mb-2">Ready for Your Free Quote?</h3>
+            <p class="mb-4">Compare prices from top Istanbul dental clinics today.</p>
+            <a href="/your-quote" class="button">Get Started</a>
           </div>
         </div>
       </div>
