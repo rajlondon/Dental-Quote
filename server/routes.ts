@@ -125,6 +125,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/dental-implants.html'));
   });
   
+  // Add route for NEW dental implants page
+  app.get('/dental-implants-new', (req, res) => {
+    // Set cache control headers to prevent caching
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(__dirname, '../public/dental-implants-new.html'));
+  });
+  
   // Add routes for other treatment pages (these will be created later)
   app.get('/veneers', (req, res) => {
     // For now, redirect to dental implants page as it's the only one complete
