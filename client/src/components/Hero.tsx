@@ -23,6 +23,13 @@ const Hero: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [returnDate, setReturnDate] = useState(addDays(new Date(), 14));
   
+  // Dropdown visibility states
+  const [isDestinationOpen, setIsDestinationOpen] = useState(false);
+  const [isFromOpen, setIsFromOpen] = useState(false);
+  const [isTreatmentsOpen, setIsTreatmentsOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isReturnDatePickerOpen, setIsReturnDatePickerOpen] = useState(false);
+  
   // City dropdown options
   const cityOptions = [
     { name: "Istanbul", available: true },
@@ -81,13 +88,13 @@ const Hero: React.FC = () => {
       {/* Main content with blue background - exactly like Booking.com */}
       <div className="bg-primary pb-8 pt-8">
         <div className="container mx-auto px-4">
-          {/* Heading Section - Booking.com style */}
+          {/* Heading Section */}
           <div>
             <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-              Find your cheaper dental treatment abroad
+              Get your World-Class Smile at Local Prices.
             </h1>
-            <p className="text-white text-sm mb-6">
-              Search for quality, experienced dental clinics and all-inclusive dental packages
+            <p className="text-white text-sm md:text-base mb-6">
+              Book and compare accredited clinics abroad, save up to 70%, and manage every detail in one secure portal.
             </p>
           </div>
           
