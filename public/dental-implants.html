@@ -5,46 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Complete Guide to Dental Implants | MyDentalFly</title>
   <meta name="description" content="Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery. Learn why so many patients choose Turkey for affordable, high-quality implant treatments.">
-  <link rel="stylesheet" href="/assets/index.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Reset & Base styles */
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-    
     body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      line-height: 1.5;
-      color: #333;
-    }
-    
-    img {
-      max-width: 100%;
-      height: auto;
-    }
-    
-    a {
-      color: #003b95;
-      text-decoration: none;
-    }
-    
-    /* Layout styles */
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-    
-    /* Header and footer */
-    .footer {
-      background-color: #003b95;
-      color: white;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     .hero-section {
@@ -53,27 +18,11 @@
       padding: 5rem 0;
     }
     
-    /* Typography */
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
+    .footer {
+      background-color: #003b95;
+      color: white;
     }
     
-    h2 {
-      color: #003b95;
-      font-size: 1.75rem;
-      margin-top: 2rem;
-      margin-bottom: 1rem;
-    }
-    
-    h3 {
-      font-size: 1.35rem;
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
-    }
-    
-    /* Content styles */
     .prose {
       max-width: 65ch;
       margin-left: auto;
@@ -107,32 +56,6 @@
       margin-bottom: 0.5em;
     }
     
-    /* Hero section styles */
-    
-    .hero-content {
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
-    
-    /* Media Queries */
-    @media (min-width: 768px) {
-      .hero-content {
-        flex-direction: row;
-        align-items: center;
-      }
-      
-      .hero-text {
-        flex: 1;
-        padding-right: 2rem;
-      }
-      
-      .hero-image {
-        flex: 1;
-      }
-    }
-    
-    /* Table styles */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -153,59 +76,9 @@
     tr:nth-child(even) {
       background-color: #f9fafb;
     }
-    
-    /* Navigation and links */
-    .next-articles {
-      margin-top: 3rem;
-      padding-top: 2rem;
-      border-top: 1px solid #e5e7eb;
-    }
-    
-    .article-link {
-      display: block;
-      padding: 1rem;
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
-      transition: box-shadow 0.2s ease;
-    }
-    
-    .article-link:hover {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    .read-more {
-      display: inline-flex;
-      align-items: center;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #0071c2;
-    }
-    
-    .cta-box {
-      background: linear-gradient(to right, #003b95, #0071c2);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
-      margin: 2rem 0;
-    }
-    
-    .button {
-      display: inline-block;
-      background-color: white;
-      color: #003b95;
-      font-weight: 600;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      transition: background-color 0.2s ease;
-    }
-    
-    .button:hover {
-      background-color: #f0f7ff;
-    }
   </style>
 </head>
-<body class="bg-white text-gray-800 font-sans">
+<body class="bg-white text-gray-800">
   <!-- Navigation -->
   <nav class="bg-[#003b95] text-white shadow-md">
     <div class="container mx-auto px-4 md:px-6">
@@ -256,9 +129,9 @@
     <!-- Hero Section -->
     <div class="hero-section">
       <div class="container mx-auto px-4 md:px-6">
-        <div class="hero-content">
-          <div class="hero-text">
-            <h1>The Complete Guide to Dental Implants</h1>
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="md:w-1/2">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">The Complete Guide to Dental Implants</h1>
             <p class="text-lg text-blue-100 mb-6">Everything you need to know about dental implants, procedures, costs, and what to expect for treatment in Istanbul.</p>
             <div class="flex items-center flex-wrap gap-3 text-sm text-blue-100">
               <div class="flex items-center">
@@ -273,7 +146,7 @@
               <span>15 min read</span>
             </div>
           </div>
-          <div class="hero-image">
+          <div class="md:w-1/2">
             <img src="/images/treatments/illustrations/dental-implants2.png" alt="Dental Implant Illustration" class="bg-[#d9f0ff] rounded-xl p-4 max-w-full mx-auto">
           </div>
         </div>
@@ -284,187 +157,184 @@
     <article class="py-12">
       <div class="container mx-auto px-4 md:px-6">
         <div class="prose prose-lg mx-auto">
-            <h2 class="text-2xl font-bold mb-4">What Are Dental Implants?</h2>
-            <p class="mb-6">
-              Dental implants are titanium posts that are surgically placed into the jawbone beneath your gums. Once in place, they allow your dentist to mount replacement teeth onto them. Unlike dentures or bridges, implants become a permanent part of your jaw, providing a stable foundation for artificial teeth that look, feel, and function like natural teeth.
-            </p>
-            
-            <h2 class="text-2xl font-bold mb-4 mt-10">The Benefits of Dental Implants</h2>
-            <ul class="list-disc pl-6 mb-6 space-y-2">
-              <li><strong>Natural look and feel:</strong> Dental implants are designed to look, feel, and function like your natural teeth.</li>
-              <li><strong>Improved speech:</strong> Unlike poorly fitted dentures that can slip and cause you to mumble or slur words, implants allow you to speak naturally.</li>
-              <li><strong>Comfortable fit:</strong> Because they become part of you, implants eliminate the discomfort of removable dentures.</li>
-              <li><strong>Easier eating:</strong> Sliding dentures can make chewing difficult. Dental implants function like your own teeth, allowing you to eat your favorite foods with confidence.</li>
-              <li><strong>Durability:</strong> With proper care, many implants last a lifetime.</li>
-              <li><strong>Improved oral health:</strong> Unlike tooth-supported bridges, dental implants don't require reducing other teeth. This leaves more of your own teeth intact, improving long-term oral health.</li>
-              <li><strong>Convenience:</strong> Removable dentures are just that — removable. Dental implants eliminate the embarrassment of removing dentures and the need for messy adhesives.</li>
-            </ul>
+          <h2 class="text-2xl font-bold mb-4 text-[#003b95]">What Are Dental Implants?</h2>
+          <p class="mb-6">
+            Dental implants are titanium posts that are surgically placed into the jawbone beneath your gums. Once in place, they allow your dentist to mount replacement teeth onto them. Unlike dentures or bridges, implants become a permanent part of your jaw, providing a stable foundation for artificial teeth that look, feel, and function like natural teeth.
+          </p>
+          
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">The Benefits of Dental Implants</h2>
+          <ul class="list-disc pl-6 mb-6 space-y-2">
+            <li><strong>Natural look and feel:</strong> Dental implants are designed to look, feel, and function like your natural teeth.</li>
+            <li><strong>Improved speech:</strong> Unlike poorly fitted dentures that can slip and cause you to mumble or slur words, implants allow you to speak naturally.</li>
+            <li><strong>Comfortable fit:</strong> Because they become part of you, implants eliminate the discomfort of removable dentures.</li>
+            <li><strong>Easier eating:</strong> Sliding dentures can make chewing difficult. Dental implants function like your own teeth, allowing you to eat your favorite foods with confidence.</li>
+            <li><strong>Durability:</strong> With proper care, many implants last a lifetime.</li>
+            <li><strong>Improved oral health:</strong> Unlike tooth-supported bridges, dental implants don't require reducing other teeth. This leaves more of your own teeth intact, improving long-term oral health.</li>
+            <li><strong>Convenience:</strong> Removable dentures are just that — removable. Dental implants eliminate the embarrassment of removing dentures and the need for messy adhesives.</li>
+          </ul>
 
-            <h2 class="text-2xl font-bold mb-4 mt-10">Types of Dental Implants</h2>
-            <p class="mb-4">
-              There are two main types of dental implants:
-            </p>
-            <ol class="list-decimal pl-6 mb-6 space-y-2">
-              <li>
-                <strong>Endosteal implants:</strong> These are surgically implanted directly into the jawbone. Once the surrounding gum tissue has healed, a second surgery is needed to connect a post to the original implant. Finally, an artificial tooth (or teeth) is attached to the post individually, or grouped on a bridge or denture.
-              </li>
-              <li>
-                <strong>Subperiosteal implants:</strong> These consist of a metal frame that is fitted onto the jawbone just below the gum tissue. As the gums heal, the frame becomes fixed to the jawbone. Posts, which are attached to the frame, protrude through the gums. As with endosteal implants, artificial teeth are then mounted to the posts.
-              </li>
-            </ol>
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">Types of Dental Implants</h2>
+          <p class="mb-4">
+            There are two main types of dental implants:
+          </p>
+          <ol class="list-decimal pl-6 mb-6 space-y-2">
+            <li>
+              <strong>Endosteal implants:</strong> These are surgically implanted directly into the jawbone. Once the surrounding gum tissue has healed, a second surgery is needed to connect a post to the original implant. Finally, an artificial tooth (or teeth) is attached to the post individually, or grouped on a bridge or denture.
+            </li>
+            <li>
+              <strong>Subperiosteal implants:</strong> These consist of a metal frame that is fitted onto the jawbone just below the gum tissue. As the gums heal, the frame becomes fixed to the jawbone. Posts, which are attached to the frame, protrude through the gums. As with endosteal implants, artificial teeth are then mounted to the posts.
+            </li>
+          </ol>
 
-            <h2 class="text-2xl font-bold mb-4 mt-10">The Dental Implant Procedure</h2>
-            <p class="mb-4">
-              The dental implant process typically involves several stages spread over 3-9 months:
-            </p>
-            <ol class="list-decimal pl-6 mb-6 space-y-4">
-              <li>
-                <strong>Initial consultation and planning:</strong> Your dentist will conduct a thorough examination, take X-rays, and create a treatment plan tailored to your specific needs.
-              </li>
-              <li>
-                <strong>Implant placement surgery:</strong> The dental implant (titanium post) is placed into the jawbone where the tooth is missing. This surgery usually takes 1-2 hours per implant.
-              </li>
-              <li>
-                <strong>Healing and osseointegration:</strong> The jawbone grows around the implanted metal post, anchoring it securely in the jaw. This process, called osseointegration, takes 3-6 months.
-              </li>
-              <li>
-                <strong>Abutment placement:</strong> Once osseointegration is complete, an abutment (extension) is attached to the implant. In some cases, this is done during the initial implant placement.
-              </li>
-              <li>
-                <strong>Crown placement:</strong> After your gums heal, impressions of your mouth are made and used to create a custom crown (the visible part of the tooth). The crown is then attached to the abutment.
-              </li>
-            </ol>
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">The Dental Implant Procedure</h2>
+          <p class="mb-4">
+            The dental implant process typically involves several stages spread over 3-9 months:
+          </p>
+          <ol class="list-decimal pl-6 mb-6 space-y-4">
+            <li>
+              <strong>Initial consultation and planning:</strong> Your dentist will conduct a thorough examination, take X-rays, and create a treatment plan tailored to your specific needs.
+            </li>
+            <li>
+              <strong>Implant placement surgery:</strong> The dental implant (titanium post) is placed into the jawbone where the tooth is missing. This surgery usually takes 1-2 hours per implant.
+            </li>
+            <li>
+              <strong>Healing and osseointegration:</strong> The jawbone grows around the implanted metal post, anchoring it securely in the jaw. This process, called osseointegration, takes 3-6 months.
+            </li>
+            <li>
+              <strong>Abutment placement:</strong> Once osseointegration is complete, an abutment (extension) is attached to the implant. In some cases, this is done during the initial implant placement.
+            </li>
+            <li>
+              <strong>Crown placement:</strong> After your gums heal, impressions of your mouth are made and used to create a custom crown (the visible part of the tooth). The crown is then attached to the abutment.
+            </li>
+          </ol>
 
-            <h2 class="text-2xl font-bold mb-4 mt-10">Why Choose Turkey for Dental Implants?</h2>
-            <p class="mb-6">
-              Turkey, and specifically Istanbul, has become a leading destination for dental tourism for several compelling reasons:
-            </p>
-            <ul class="list-disc pl-6 mb-6 space-y-2">
-              <li><strong>Cost savings:</strong> Dental implant treatments in Turkey cost 50-70% less than in the UK, US, and other Western European countries, without compromising on quality.</li>
-              <li><strong>World-class facilities:</strong> Turkish dental clinics feature state-of-the-art technology and modern equipment comparable to the best clinics worldwide.</li>
-              <li><strong>Highly qualified dentists:</strong> Many Turkish dentists are internationally trained and certified, with extensive experience in implantology.</li>
-              <li><strong>All-inclusive packages:</strong> Many clinics offer comprehensive packages that include accommodation, airport transfers, and a personal host to guide you through your treatment journey.</li>
-              <li><strong>Reduced waiting times:</strong> While you might wait months for treatment in some countries, Turkish clinics can often accommodate patients within days or weeks.</li>
-              <li><strong>Combine treatment with tourism:</strong> Patients can enjoy exploring Istanbul's rich history and culture while recovering between dental appointments.</li>
-            </ul>
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">Why Choose Turkey for Dental Implants?</h2>
+          <p class="mb-6">
+            Turkey, and specifically Istanbul, has become a leading destination for dental tourism for several compelling reasons:
+          </p>
+          <ul class="list-disc pl-6 mb-6 space-y-2">
+            <li><strong>Cost savings:</strong> Dental implant treatments in Turkey cost 50-70% less than in the UK, US, and other Western European countries, without compromising on quality.</li>
+            <li><strong>World-class facilities:</strong> Turkish dental clinics feature state-of-the-art technology and modern equipment comparable to the best clinics worldwide.</li>
+            <li><strong>Highly qualified dentists:</strong> Many Turkish dentists are internationally trained and certified, with extensive experience in implantology.</li>
+            <li><strong>All-inclusive packages:</strong> Many clinics offer comprehensive packages that include accommodation, airport transfers, and a personal host to guide you through your treatment journey.</li>
+            <li><strong>Reduced waiting times:</strong> While you might wait months for treatment in some countries, Turkish clinics can often accommodate patients within days or weeks.</li>
+            <li><strong>Combine treatment with tourism:</strong> Patients can enjoy exploring Istanbul's rich history and culture while recovering between dental appointments.</li>
+          </ul>
 
-            <h2 class="text-2xl font-bold mb-4 mt-10">Cost of Dental Implants in Turkey vs. Europe</h2>
-            <p class="mb-4">
-              The cost difference between dental implants in Turkey and Western European countries is significant:
-            </p>
-            <div class="overflow-x-auto mb-6">
-              <table class="min-w-full border-collapse border border-gray-300 mt-4">
-                <thead>
-                  <tr class="bg-gray-100">
-                    <th class="border border-gray-300 px-4 py-2 text-left">Treatment</th>
-                    <th class="border border-gray-300 px-4 py-2 text-left">Average Cost in UK (£)</th>
-                    <th class="border border-gray-300 px-4 py-2 text-left">Average Cost in Turkey (£)</th>
-                    <th class="border border-gray-300 px-4 py-2 text-left">Savings</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="border border-gray-300 px-4 py-2">Single Dental Implant</td>
-                    <td class="border border-gray-300 px-4 py-2">2,000 - 2,500</td>
-                    <td class="border border-gray-300 px-4 py-2">650 - 950</td>
-                    <td class="border border-gray-300 px-4 py-2">60-70%</td>
-                  </tr>
-                  <tr class="bg-gray-50">
-                    <td class="border border-gray-300 px-4 py-2">Full Arch (All-on-4/6)</td>
-                    <td class="border border-gray-300 px-4 py-2">12,000 - 25,000</td>
-                    <td class="border border-gray-300 px-4 py-2">4,500 - 7,000</td>
-                    <td class="border border-gray-300 px-4 py-2">65-75%</td>
-                  </tr>
-                  <tr>
-                    <td class="border border-gray-300 px-4 py-2">Full Mouth Restoration</td>
-                    <td class="border border-gray-300 px-4 py-2">20,000 - 45,000</td>
-                    <td class="border border-gray-300 px-4 py-2">7,000 - 15,000</td>
-                    <td class="border border-gray-300 px-4 py-2">65-70%</td>
-                  </tr>
-                </tbody>
-              </table>
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">Cost of Dental Implants in Turkey vs. Europe</h2>
+          <p class="mb-4">
+            The cost difference between dental implants in Turkey and Western European countries is significant:
+          </p>
+          <div class="overflow-x-auto mb-6">
+            <table class="min-w-full border-collapse border border-gray-300 mt-4">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="border border-gray-300 px-4 py-2 text-left">Treatment</th>
+                  <th class="border border-gray-300 px-4 py-2 text-left">Average Cost in UK (£)</th>
+                  <th class="border border-gray-300 px-4 py-2 text-left">Average Cost in Turkey (£)</th>
+                  <th class="border border-gray-300 px-4 py-2 text-left">Savings</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="border border-gray-300 px-4 py-2">Single Dental Implant</td>
+                  <td class="border border-gray-300 px-4 py-2">2,000 - 2,500</td>
+                  <td class="border border-gray-300 px-4 py-2">650 - 950</td>
+                  <td class="border border-gray-300 px-4 py-2">60-70%</td>
+                </tr>
+                <tr class="bg-gray-50">
+                  <td class="border border-gray-300 px-4 py-2">Full Arch (All-on-4/6)</td>
+                  <td class="border border-gray-300 px-4 py-2">12,000 - 25,000</td>
+                  <td class="border border-gray-300 px-4 py-2">4,500 - 7,000</td>
+                  <td class="border border-gray-300 px-4 py-2">65-75%</td>
+                </tr>
+                <tr>
+                  <td class="border border-gray-300 px-4 py-2">Full Mouth Restoration</td>
+                  <td class="border border-gray-300 px-4 py-2">20,000 - 45,000</td>
+                  <td class="border border-gray-300 px-4 py-2">7,000 - 15,000</td>
+                  <td class="border border-gray-300 px-4 py-2">65-70%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mb-6">
+            These prices are indicative and may vary depending on the specific clinic, the complexity of your case, and the materials used. Always request a personalized quote based on your specific needs.
+          </p>
+
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">What to Expect When Getting Dental Implants in Istanbul</h2>
+          <p class="mb-4">
+            When you choose MyDentalFly for your dental implant treatment in Istanbul, you can expect a smooth, well-organized experience:
+          </p>
+          <ol class="list-decimal pl-6 mb-6 space-y-2">
+            <li><strong>Consultation and planning:</strong> After submitting your details and dental photos, you'll receive treatment plans from multiple clinics, complete with price quotes.</li>
+            <li><strong>Travel arrangements:</strong> Once you select a clinic, we'll help arrange your trip, including hotel bookings and airport transfers.</li>
+            <li><strong>Initial appointment:</strong> Upon arrival, you'll meet your dentist for an examination and detailed treatment discussion.</li>
+            <li><strong>Treatment process:</strong> Your implant procedure will be carried out according to your personalized treatment plan.</li>
+            <li><strong>Recovery and aftercare:</strong> You'll receive comprehensive aftercare instructions and support during your recovery.</li>
+            <li><strong>Follow-up:</strong> Most clinics offer continued support after you return home and are available to answer any questions.</li>
+          </ol>
+
+          <h2 class="text-2xl font-bold mb-4 mt-10 text-[#003b95]">Frequently Asked Questions</h2>
+          <div class="space-y-6">
+            <div>
+              <h3 class="font-bold text-xl mb-2">How long do dental implants last?</h3>
+              <p>With proper care and maintenance, dental implants can last a lifetime. The crown attached to the implant typically lasts 10-15 years before it might need replacement due to wear and tear.</p>
             </div>
-            <p class="mb-6">
-              These prices are indicative and may vary depending on the specific clinic, the complexity of your case, and the materials used. Always request a personalized quote based on your specific needs.
-            </p>
-
-            <h2 class="text-2xl font-bold mb-4 mt-10">What to Expect When Getting Dental Implants in Istanbul</h2>
-            <p class="mb-4">
-              When you choose MyDentalFly for your dental implant treatment in Istanbul, you can expect a smooth, well-organized experience:
-            </p>
-            <ol class="list-decimal pl-6 mb-6 space-y-2">
-              <li><strong>Consultation and planning:</strong> After submitting your details and dental photos, you'll receive treatment plans from multiple clinics, complete with price quotes.</li>
-              <li><strong>Travel arrangements:</strong> Once you select a clinic, we'll help arrange your trip, including hotel bookings and airport transfers.</li>
-              <li><strong>Initial appointment:</strong> Upon arrival, you'll meet your dentist for an examination and detailed treatment discussion.</li>
-              <li><strong>Treatment process:</strong> Your implant procedure will be carried out according to your personalized treatment plan.</li>
-              <li><strong>Recovery and aftercare:</strong> You'll receive comprehensive aftercare instructions and support during your recovery.</li>
-              <li><strong>Follow-up:</strong> Most clinics offer continued support after you return home and are available to answer any questions.</li>
-            </ol>
-
-            <h2 class="text-2xl font-bold mb-4 mt-10">Frequently Asked Questions</h2>
-            <div class="space-y-6">
-              <div>
-                <h3 class="font-bold text-xl mb-2">How long do dental implants last?</h3>
-                <p>With proper care and maintenance, dental implants can last a lifetime. The crown attached to the implant typically lasts 10-15 years before it might need replacement due to wear and tear.</p>
-              </div>
-              <div>
-                <h3 class="font-bold text-xl mb-2">Is the dental implant procedure painful?</h3>
-                <p>The procedure is performed under local anesthesia, so you shouldn't feel pain during the surgery. Some discomfort, swelling, and bruising might be experienced during the healing process, but this can be managed with prescription or over-the-counter pain medication.</p>
-              </div>
-              <div>
-                <h3 class="font-bold text-xl mb-2">How many trips to Turkey will I need for dental implants?</h3>
-                <p>Typically, you'll need 2-3 trips depending on the complexity of your case. The first trip (5-7 days) is for the implant placement, and the second trip (3-5 days) is for placing the final crown, usually 3-6 months later. Some clinics offer same-day or immediate-loading implants that might reduce the number of trips needed.</p>
-              </div>
-              <div>
-                <h3 class="font-bold text-xl mb-2">Are dental implants in Turkey safe?</h3>
-                <p>Yes, when performed by qualified professionals in accredited clinics. The best Turkish dental clinics use the same high-quality implant brands (like Straumann, Nobel Biocare) as clinics in Western Europe and the US, and follow strict sterilization protocols. Through MyDentalFly, you'll be connected only with verified clinics that meet international standards.</p>
-              </div>
-              <div>
-                <h3 class="font-bold text-xl mb-2">What is the success rate of dental implants?</h3>
-                <p>Dental implants have a success rate of about 95-98%. Factors that can affect this include the patient's overall health, whether they smoke, and their commitment to good oral hygiene and regular dental check-ups.</p>
-              </div>
+            <div>
+              <h3 class="font-bold text-xl mb-2">Is the dental implant procedure painful?</h3>
+              <p>The procedure is performed under local anesthesia, so you shouldn't feel pain during the surgery. Some discomfort, swelling, and bruising might be experienced during the healing process, but this can be managed with prescription or over-the-counter pain medication.</p>
             </div>
-
-            <div class="mt-12 bg-blue-50 p-8 rounded-xl">
-              <h2 class="text-2xl font-bold mb-4">Ready to Get Started?</h2>
-              <p class="mb-6">Take the first step towards your new smile today. Our team is ready to help you find the perfect clinic in Istanbul for your dental implant needs.</p>
-              <a href="/your-quote" class="inline-block bg-[#003b95] hover:bg-[#00316f] text-white font-bold py-3 px-6 rounded-md transition-colors">Get Your Personalized Quote</a>
+            <div>
+              <h3 class="font-bold text-xl mb-2">How many trips to Turkey will I need for dental implants?</h3>
+              <p>Typically, you'll need 2-3 trips depending on the complexity of your case. The first trip (5-7 days) is for the implant placement, and the second trip (3-5 days) is for placing the final crown, usually 3-6 months later. Some clinics offer same-day or immediate-loading implants that might reduce the number of trips needed.</p>
             </div>
-            
+            <div>
+              <h3 class="font-bold text-xl mb-2">Are dental implants in Turkey safe?</h3>
+              <p>Yes, when performed by qualified professionals in accredited clinics. The best Turkish dental clinics use the same high-quality implant brands (like Straumann, Nobel Biocare) as clinics in Western Europe and the US, and follow strict sterilization protocols. Through MyDentalFly, you'll be connected only with verified clinics that meet international standards.</p>
+            </div>
+            <div>
+              <h3 class="font-bold text-xl mb-2">What is the success rate of dental implants?</h3>
+              <p>Dental implants have a success rate of about 95-98%. Factors that can affect this include the patient's overall health, whether they smoke, and their commitment to good oral hygiene and regular dental check-ups.</p>
+            </div>
+          </div>
+
+          <div class="mt-12 bg-blue-50 p-8 rounded-xl">
+            <h2 class="text-2xl font-bold mb-4 text-[#003b95]">Ready to Get Started?</h2>
+            <p class="mb-6">Take the first step towards your new smile today. Our team is ready to help you find the perfect clinic in Istanbul for your dental implant needs.</p>
+            <a href="/your-quote" class="inline-block bg-[#003b95] hover:bg-[#00316f] text-white font-bold py-3 px-6 rounded-md transition-colors">Get Your Personalized Quote</a>
+          </div>
+          
+          <!-- Related Articles Section -->
+          <div class="mt-16">
+            <h2 class="text-2xl font-bold mb-6 text-[#003b95]">Continue Reading</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <a href="/veneers" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <h3 class="text-xl font-semibold mb-2 text-[#003b95]">Complete Guide to Dental Veneers</h3>
+                <p class="text-gray-600 mb-4">Learn everything about veneers, from types and procedure to costs and durability.</p>
+                <span class="text-[#003b95] font-medium flex items-center">
+                  Read Article
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </a>
+              <a href="/hollywood-smile" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <h3 class="text-xl font-semibold mb-2 text-[#003b95]">Hollywood Smile: What You Need to Know</h3>
+                <p class="text-gray-600 mb-4">Discover how to achieve that perfect Hollywood smile with veneers, whitening, and more.</p>
+                <span class="text-[#003b95] font-medium flex items-center">
+                  Read Article
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
     </article>
-
-    <!-- Next Articles Section -->
-    <section class="bg-white py-12">
-      <div class="container">
-        <div class="max-w-3xl mx-auto next-articles">
-          <h3 class="text-xl font-semibold mb-6">Continue Reading</h3>
-          
-          <a href="/veneers" class="article-link">
-            <div class="flex flex-col">
-              <span class="text-sm text-gray-500 mb-1">Next Article</span>
-              <h4 class="text-lg font-medium text-[#003b95] mb-3">Complete Guide to Dental Veneers</h4>
-              <span class="read-more">
-                Read more
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </span>
-            </div>
-          </a>
-          
-          <div class="cta-box">
-            <h3 class="text-xl font-bold mb-2">Ready for Your Free Quote?</h3>
-            <p class="mb-4">Compare prices from top Istanbul dental clinics today.</p>
-            <a href="/your-quote" class="button">Get Started</a>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
-
+  
   <!-- Footer -->
   <footer class="footer py-12">
     <div class="container mx-auto px-4 md:px-6">
@@ -556,38 +426,14 @@
   <script>
     // Mobile menu toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
-      // Mobile menu toggle
       const mobileMenuButton = document.getElementById('mobile-menu-button');
       const mobileMenu = document.getElementById('mobile-menu');
       
       if (mobileMenuButton && mobileMenu) {
         mobileMenuButton.addEventListener('click', function() {
-          if (mobileMenu.classList.contains('hidden')) {
-            mobileMenu.classList.remove('hidden');
-          } else {
-            mobileMenu.classList.add('hidden');
-          }
+          mobileMenu.classList.toggle('hidden');
         });
-      } else {
-        console.warn('Mobile menu elements not found');
       }
-      
-      // Add smooth scrolling to anchor links
-      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-          e.preventDefault();
-          
-          const targetId = this.getAttribute('href');
-          if (targetId === '#') return;
-          
-          const targetElement = document.querySelector(targetId);
-          if (targetElement) {
-            targetElement.scrollIntoView({
-              behavior: 'smooth'
-            });
-          }
-        });
-      });
     });
   </script>
 </body>
