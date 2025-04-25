@@ -310,15 +310,15 @@ export function DentalChart({
           </ul>
         </div>
         
-        {/* Desktop View - Full Dental Chart */}
-        <div className="hidden md:block">
-          {/* Mouth container with pink gum background - based on screenshot */}
-          <div className="w-full max-w-3xl mx-auto bg-red-100 rounded-3xl p-6 border-2 border-pink-200 relative">
+        {/* Visual Dental Chart - Available on all devices */}
+        <div className="block w-full overflow-x-auto">
+          {/* Mouth container with pink gum background */}
+          <div className="w-full max-w-3xl mx-auto bg-red-100 rounded-3xl p-4 md:p-6 border-2 border-pink-200 relative">
             {/* Upper gum area */}
-            <div className="bg-pink-300 rounded-t-xl h-8 mb-4"></div>
+            <div className="bg-pink-300 rounded-t-xl h-6 md:h-8 mb-2 md:mb-4"></div>
             
-            {/* Upper Teeth Row - straight horizontal line like in screenshot */}
-            <div className="flex justify-center space-x-3 mb-8 text-center">
+            {/* Upper Teeth Row - straight horizontal line */}
+            <div className="flex justify-center gap-1 md:gap-3 mb-4 md:mb-8 text-center">
               {teeth.slice(0, 16).map((tooth) => {
                 const bgColor = getToothColor(tooth);
                 const textColor = getTextColor(bgColor);
@@ -327,26 +327,24 @@ export function DentalChart({
                   <button
                     key={tooth.id}
                     onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center border-2 border-gray-400 rounded-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
+                    className="flex items-center justify-center border-2 border-gray-400 rounded-full shadow-sm hover:shadow-md transition-all font-medium text-[8px] md:text-xs w-[14px] h-[14px] md:w-[18px] md:h-[18px]"
                     style={{ 
                       backgroundColor: bgColor,
-                      color: textColor,
-                      width: "18px",
-                      height: "18px"
+                      color: textColor
                     }}
                     title={getToothTooltip(tooth)}
                   >
-                    {tooth.id}
+                    <span className="transform scale-75 md:scale-100">{tooth.id}</span>
                   </button>
                 );
               })}
             </div>
             
-            {/* Tongue area - pink oblong shape like in screenshot */}
-            <div className="bg-pink-400 w-4/5 h-16 mx-auto rounded-full mb-8"></div>
+            {/* Tongue area - pink oblong shape */}
+            <div className="bg-pink-400 w-4/5 h-10 md:h-16 mx-auto rounded-full mb-4 md:mb-8"></div>
             
-            {/* Lower Teeth Row - straight horizontal line like in screenshot */}
-            <div className="flex justify-center space-x-3 mb-4 text-center">
+            {/* Lower Teeth Row - straight horizontal line */}
+            <div className="flex justify-center gap-1 md:gap-3 mb-2 md:mb-4 text-center">
               {teeth.slice(16).map((tooth) => {
                 const bgColor = getToothColor(tooth);
                 const textColor = getTextColor(bgColor);
@@ -355,101 +353,26 @@ export function DentalChart({
                   <button
                     key={tooth.id}
                     onClick={() => handleToothClick(tooth)}
-                    className="flex items-center justify-center border-2 border-gray-400 rounded-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
+                    className="flex items-center justify-center border-2 border-gray-400 rounded-full shadow-sm hover:shadow-md transition-all font-medium text-[8px] md:text-xs w-[14px] h-[14px] md:w-[18px] md:h-[18px]"
                     style={{ 
                       backgroundColor: bgColor,
-                      color: textColor,
-                      width: "18px",
-                      height: "18px"
+                      color: textColor
                     }}
                     title={getToothTooltip(tooth)}
                   >
-                    {tooth.id}
+                    <span className="transform scale-75 md:scale-100">{tooth.id}</span>
                   </button>
                 );
               })}
             </div>
             
             {/* Lower gum area */}
-            <div className="bg-pink-300 rounded-b-xl h-8 mt-4"></div>
-          </div>
-        </div>
-        
-        {/* Mobile View - Simplified List */}
-        <div className="block md:hidden">
-          <div className="grid grid-cols-2 gap-2">
-            {/* Left Side - Upper Teeth */}
-            <div>
-              <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Upper Teeth</h4>
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-4">
-                {teeth.slice(0, 16).map(tooth => {
-                  const bgColor = getToothColor(tooth);
-                  const textColor = getTextColor(bgColor);
-                  
-                  return (
-                    <button
-                      key={tooth.id}
-                      onClick={() => handleToothClick(tooth)}
-                      className="flex items-center w-full p-2 border-b border-gray-100"
-                      style={{ backgroundColor: bgColor || "transparent" }}
-                    >
-                      <div className="flex justify-center items-center h-8 w-8 rounded-full border-2 border-gray-400 mr-2 font-bold" style={{ color: textColor }}>
-                        {tooth.id}
-                      </div>
-                      <div className="text-left text-xs">
-                        <div className="font-medium">{tooth.name}</div>
-                        {(tooth.condition || tooth.treatment) && (
-                          <div className="text-xs text-gray-600">
-                            {tooth.condition && tooth.condition !== 'normal' ? conditionOptions.find(o => o.value === tooth.condition)?.label : ''}
-                            {tooth.condition && tooth.treatment && ' • '}
-                            {tooth.treatment && tooth.treatment !== 'none' ? treatmentOptions.find(o => o.value === tooth.treatment)?.label : ''}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            
-            {/* Right Side - Lower Teeth */}
-            <div>
-              <h4 className="text-sm font-medium text-center text-gray-700 mb-1">Lower Teeth</h4>
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                {teeth.slice(16).map(tooth => {
-                  const bgColor = getToothColor(tooth);
-                  const textColor = getTextColor(bgColor);
-                  
-                  return (
-                    <button
-                      key={tooth.id}
-                      onClick={() => handleToothClick(tooth)}
-                      className="flex items-center w-full p-2 border-b border-gray-100"
-                      style={{ backgroundColor: bgColor || "transparent" }}
-                    >
-                      <div className="flex justify-center items-center h-8 w-8 rounded-full border-2 border-gray-400 mr-2 font-bold" style={{ color: textColor }}>
-                        {tooth.id}
-                      </div>
-                      <div className="text-left text-xs">
-                        <div className="font-medium">{tooth.name}</div>
-                        {(tooth.condition || tooth.treatment) && (
-                          <div className="text-xs text-gray-600">
-                            {tooth.condition && tooth.condition !== 'normal' ? conditionOptions.find(o => o.value === tooth.condition)?.label : ''}
-                            {tooth.condition && tooth.treatment && ' • '}
-                            {tooth.treatment && tooth.treatment !== 'none' ? treatmentOptions.find(o => o.value === tooth.treatment)?.label : ''}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <div className="bg-pink-300 rounded-b-xl h-6 md:h-8 mt-2 md:mt-4"></div>
           </div>
           
-          {/* Color Legend - Mobile */}
-          <div className="mt-4 bg-gray-50 p-2 rounded-md border border-gray-100">
-            <div className="grid grid-cols-4 gap-1">
+          {/* Color Legend */}
+          <div className="mt-4 bg-gray-50 p-2 rounded-md border border-gray-100 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
               <div className="flex items-center">
                 <div className="h-3 w-3 rounded-full bg-yellow-300 mr-1"></div>
                 <span className="text-xs">Chipped</span>
@@ -467,6 +390,11 @@ export function DentalChart({
                 <span className="text-xs">Implant</span>
               </div>
             </div>
+          </div>
+          
+          {/* Mobile instruction */}
+          <div className="mt-2 text-center text-xs text-gray-500 md:hidden">
+            <p>Swipe left/right if needed to see all teeth</p>
           </div>
         </div>
       </div>
