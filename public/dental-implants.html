@@ -8,14 +8,38 @@
   <link rel="stylesheet" href="/assets/index.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* Base styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    /* Layout styles */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Header and footer */
     .footer {
       background-color: #003b95;
     }
+    
+    /* Typography */
     h2 {
       color: #003b95;
     }
+    
+    /* Content styles */
     .prose {
       max-width: 65ch;
+      margin-left: auto;
+      margin-right: auto;
       color: #374151;
     }
     .prose p {
@@ -27,6 +51,12 @@
       margin-bottom: 1em;
       font-size: 1.5em;
       line-height: 1.3333333;
+    }
+    .prose h3 {
+      margin-top: 1.5em;
+      margin-bottom: 0.75em;
+      font-size: 1.25em;
+      line-height: 1.4;
     }
     .prose ul {
       margin-top: 1.25em;
@@ -47,6 +77,44 @@
     .prose-lg {
       font-size: 1.125rem;
       line-height: 1.75;
+    }
+    
+    /* Hero section ribbon */
+    .hero-section {
+      background: linear-gradient(to right, #e6f2ff, #f0f7ff);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      padding: 3rem 0;
+    }
+    @media (min-width: 768px) {
+      .hero-content {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+    
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 0.5rem 1rem;
+      text-align: left;
+    }
+    th {
+      background-color: #f9fafb;
+    }
+    tr:nth-child(even) {
+      background-color: #f9fafb;
     }
   </style>
 </head>
@@ -91,29 +159,27 @@
 
   <main>
     <!-- Hero Section -->
-    <div class="relative bg-gradient-to-r from-blue-100 to-blue-50 pt-10 pb-12 md:py-20">
-      <div class="container mx-auto px-4 md:px-6">
-        <div class="max-w-4xl mx-auto">
-          <div class="flex flex-col md:flex-row items-center justify-between">
-            <div class="w-full md:w-1/2 mb-8 md:mb-0">
-              <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">The Complete Guide to Dental Implants</h1>
-              <p class="text-lg text-gray-600 mb-6">Everything you need to know about dental implants, procedures, costs, and what to expect for treatment in Istanbul.</p>
-              <div class="flex items-center space-x-4 text-sm text-gray-500">
-                <div class="flex items-center">
-                  <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-2">
-                    <i class="fas fa-user-md"></i>
-                  </div>
-                  <span>Dr. Sarah Johnson</span>
+    <div class="hero-section">
+      <div class="container">
+        <div class="hero-content">
+          <div class="w-full md:w-1/2 mb-8 md:mb-0">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">The Complete Guide to Dental Implants</h1>
+            <p class="text-lg text-gray-600 mb-6">Everything you need to know about dental implants, procedures, costs, and what to expect for treatment in Istanbul.</p>
+            <div class="flex items-center space-x-4 text-sm text-gray-500">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-2">
+                  <i class="fas fa-user-md"></i>
                 </div>
-                <span>•</span>
-                <span>April 20, 2025</span>
-                <span>•</span>
-                <span>15 min read</span>
+                <span>Dr. Sarah Johnson</span>
               </div>
+              <span>•</span>
+              <span>April 20, 2025</span>
+              <span>•</span>
+              <span>15 min read</span>
             </div>
-            <div class="w-full md:w-1/2 flex justify-center">
-              <img src="/images/treatments/illustrations/dental-implants2.png" alt="Dental Implant Illustration" class="w-full max-w-md bg-[#d9f0ff] rounded-xl p-4">
-            </div>
+          </div>
+          <div class="w-full md:w-1/2 flex justify-center">
+            <img src="/images/treatments/illustrations/dental-implants2.png" alt="Dental Implant Illustration" class="w-full max-w-md bg-[#d9f0ff] rounded-xl p-4">
           </div>
         </div>
       </div>
@@ -121,9 +187,8 @@
 
     <!-- Article Content -->
     <article class="py-12">
-      <div class="container mx-auto px-4 md:px-6">
-        <div class="max-w-3xl mx-auto">
-          <div class="prose prose-lg max-w-none">
+      <div class="container">
+        <div class="prose prose-lg mx-auto">
             <h2 class="text-2xl font-bold mb-4">What Are Dental Implants?</h2>
             <p class="mb-6">
               Dental implants are titanium posts that are surgically placed into the jawbone beneath your gums. Once in place, they allow your dentist to mount replacement teeth onto them. Unlike dentures or bridges, implants become a permanent part of your jaw, providing a stable foundation for artificial teeth that look, feel, and function like natural teeth.
@@ -341,7 +406,7 @@
 
   <!-- Footer -->
   <footer class="footer py-12">
-    <div class="container mx-auto px-4 md:px-6">
+    <div class="container">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <div>
           <div class="flex items-center mb-4">
