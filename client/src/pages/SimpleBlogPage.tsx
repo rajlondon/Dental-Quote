@@ -1,6 +1,6 @@
 import React from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import SimpleNavbar from "@/components/SimpleNavbar";
+import SimpleFooter from "@/components/SimpleFooter";
 import HeroSimple from "@/components/HeroSimple";
 
 interface BlogPostProps {
@@ -58,7 +58,7 @@ const SimpleBlogPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <SimpleNavbar />
       
       <HeroSimple />
       
@@ -123,7 +123,7 @@ const SimpleBlogPage: React.FC = () => {
         </section>
       </main>
       
-      <Footer />
+      <SimpleFooter />
     </div>
   );
 };
