@@ -994,11 +994,11 @@ export default function PriceCalculator() {
                                         defaultValue={field.value}
                                       >
                                         <FormControl>
-                                          <SelectTrigger className="bg-white">
+                                          <SelectTrigger className="bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary/40 transition-colors">
                                             <SelectValue placeholder={t('pricing.select_treatment')} />
                                           </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent>
+                                        <SelectContent className="max-h-[400px]">
                                           
                                           {/* IMPLANTS SECTION */}
                                           <div className="px-2 py-2 text-sm font-bold text-white select-none mt-2 bg-[#007B9E] rounded-sm">
@@ -1013,9 +1013,13 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`implants-${treatment.treatment}`} value={treatment.treatment}>
-                                                <div className="flex items-center">
-                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                              <SelectItem 
+                                                key={`implants-${treatment.treatment}`} 
+                                                value={treatment.treatment}
+                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
                                                   {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
@@ -1034,9 +1038,13 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`crowns-${treatment.treatment}`} value={treatment.treatment}>
-                                                <div className="flex items-center">
-                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                              <SelectItem 
+                                                key={`crowns-${treatment.treatment}`} 
+                                                value={treatment.treatment}
+                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
                                                   {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
@@ -1056,9 +1064,13 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`veneers-${treatment.treatment}`} value={treatment.treatment}>
-                                                <div className="flex items-center">
-                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                              <SelectItem 
+                                                key={`veneers-${treatment.treatment}`} 
+                                                value={treatment.treatment}
+                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
                                                   {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
@@ -1093,9 +1105,13 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`general-${treatment.treatment}`} value={treatment.treatment}>
-                                                <div className="flex items-center">
-                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                              <SelectItem 
+                                                key={`general-${treatment.treatment}`} 
+                                                value={treatment.treatment}
+                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
                                                   {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
@@ -1118,9 +1134,13 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`dentures-${treatment.treatment}`} value={treatment.treatment}>
-                                                <div className="flex items-center">
-                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                              <SelectItem 
+                                                key={`dentures-${treatment.treatment}`} 
+                                                value={treatment.treatment}
+                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
                                                   {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
@@ -1139,9 +1159,13 @@ export default function PriceCalculator() {
                                               treatment.treatment.trim() !== ''
                                             )
                                             .map((treatment, idx) => (
-                                              <SelectItem key={`packages-${treatment.treatment}`} value={treatment.treatment}>
-                                                <div className="flex items-center">
-                                                  <span>{formatTreatmentName(treatment.treatment)}</span>
+                                              <SelectItem 
+                                                key={`packages-${treatment.treatment}`} 
+                                                value={treatment.treatment}
+                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
                                                   {hasComplexTerms(treatment.treatment) && <DentalTermTooltip treatment={treatment.treatment} />}
                                                 </div>
                                               </SelectItem>
