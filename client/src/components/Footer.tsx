@@ -61,7 +61,7 @@ const Footer: React.FC = () => {
               <li><Link href="/your-quote"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Get a Quote</span></Link></li>
               <li><Link href="/team"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Our Team</span></Link></li>
               <li><Link href="/faq"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">FAQs</span></Link></li>
-              <li><a href="/blog" onClick={(e) => { e.preventDefault(); window.location.href = "/blog"; }}><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Blog</span></a></li>
+              <li><a href="/blog.html"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Blog</span></a></li>
             </ul>
           </div>
           

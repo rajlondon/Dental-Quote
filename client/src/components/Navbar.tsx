@@ -64,12 +64,8 @@ const Navbar: React.FC = () => {
           </Link>
           
           <a 
-            href="/blog" 
+            href="/blog.html" 
             className="text-neutral-600 hover:text-primary transition-colors text-xs"
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.href = "/blog";
-            }}
           >
             {t('navbar.blog', 'Blog')}
           </a>
@@ -143,12 +139,8 @@ const Navbar: React.FC = () => {
           </Link>
           
           <a 
-            href="/blog" 
+            href="/blog.html" 
             className="block text-neutral-600 hover:text-primary transition-colors text-xs"
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.href = "/blog";
-            }}
           >
             {t('navbar.blog', 'Blog')}
           </a>
