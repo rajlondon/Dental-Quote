@@ -58,10 +58,10 @@ const HeroSimple: React.FC = () => {
           {/* Heading */}
           <div>
             <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-              Find high-quality dental care abroad for up to 70% less
+              Get your World-Class Smile at Local Prices.
             </h1>
-            <p className="text-white text-sm mb-6">
-              Compare vetted Dental clinics & ready-made treatment packages in seconds.
+            <p className="text-white text-sm md:text-base mb-6">
+              Book and compare accredited clinics abroad, save up to 70%, and manage every detail in one secure portal.
             </p>
           </div>
           
