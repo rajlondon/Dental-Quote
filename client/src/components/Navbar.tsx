@@ -63,9 +63,16 @@ const Navbar: React.FC = () => {
             {t('navbar.clinic_login', 'Clinic Login')}
           </Link>
           
-          <Link href="/blog" className="text-neutral-600 hover:text-primary transition-colors text-xs">
+          <a 
+            href="/blog" 
+            className="text-neutral-600 hover:text-primary transition-colors text-xs"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = "/blog";
+            }}
+          >
             {t('navbar.blog', 'Blog')}
-          </Link>
+          </a>
           
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.contact', 'Contact')}
@@ -135,9 +142,16 @@ const Navbar: React.FC = () => {
             {t('navbar.clinic_login', 'Clinic Login')}
           </Link>
           
-          <Link href="/blog" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
+          <a 
+            href="/blog" 
+            className="block text-neutral-600 hover:text-primary transition-colors text-xs"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = "/blog";
+            }}
+          >
             {t('navbar.blog', 'Blog')}
-          </Link>
+          </a>
           
           <Link href="/about" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.about', 'About Us')}
