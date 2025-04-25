@@ -125,6 +125,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/dental-implants.html'));
   });
   
+  // Add routes for other treatment pages (these will be created later)
+  app.get('/veneers', (req, res) => {
+    // For now, redirect to dental implants page as it's the only one complete
+    res.redirect('/dental-implants');
+  });
+  
+  app.get('/hollywood-smile', (req, res) => {
+    // For now, redirect to dental implants page as it's the only one complete
+    res.redirect('/dental-implants');
+  });
+  
+  app.get('/full-mouth', (req, res) => {
+    // For now, redirect to dental implants page as it's the only one complete
+    res.redirect('/dental-implants');
+  });
+  
   // Setup authentication
   setupAuth(app);
   
