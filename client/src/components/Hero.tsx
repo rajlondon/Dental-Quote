@@ -115,6 +115,12 @@ const Hero: React.FC = () => {
               </svg>
               Full Mouth Reconstruction
             </Link>
+            <Link href="/blog" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
+              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19.4 5c-.8-.8-2.2-.8-3 0l-9 9-2 6 6-2 9-9c.8-.8.8-2.2 0-3zM17.9 7.5L10 15.4M15 3v1M3 15h1M21 15h-1M15 21v-1M12 3v2" />
+              </svg>
+              Blog
+            </Link>
           </div>
           
           {/* Heading Section */}
