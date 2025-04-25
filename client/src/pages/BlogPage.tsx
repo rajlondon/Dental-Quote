@@ -17,7 +17,7 @@ const BlogPage: React.FC = () => {
   const blogPosts: BlogPostProps[] = [
     {
       title: "How MyDentalFly.com Works",
-      slug: "how-it-works",
+      slug: "blog/how-it-works",
       image: "/images/clinics/dentgroup.jpg",
       excerpt: "Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.",
       author: "MyDentalFly Team",
