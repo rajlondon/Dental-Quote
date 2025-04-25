@@ -74,33 +74,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
   });
   
-  // Special route for blog page - using v2 to bypass caching issues
+  // Special route for blog page - completely new file to bypass caching
   app.get('/blog', (req, res) => {
-    // Set cache control headers to prevent caching
+    // Set strong cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    // Serve the v2 file with the updated design
-    res.sendFile(path.join(__dirname, '../public/blog-v2.html'));
+    // Add random query parameter to URL to force reloading from server
+    res.setHeader('Content-Type', 'text/html');
+    // Serve the new file with the updated design
+    res.sendFile(path.join(__dirname, '../public/blog-new.html'));
   });
   
-  // Special route for blog.html direct access - also using v2
+  // Special route for blog.html direct access
   app.get('/blog.html', (req, res) => {
-    // Set cache control headers to prevent caching
+    // Set strong cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    // Serve the v2 file with the updated design
-    res.sendFile(path.join(__dirname, '../public/blog-v2.html'));
+    // Add random query parameter to URL to force reloading from server
+    res.setHeader('Content-Type', 'text/html');
+    // Serve the new file with the updated design
+    res.sendFile(path.join(__dirname, '../public/blog-new.html'));
   });
   
-  // Keep the explicit v2 route for testing
+  // Keep original v2 route for comparison
   app.get('/blog-v2', (req, res) => {
     // Set cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, '../public/blog-v2.html'));
+  });
+  
+  // Add explicit route for new blog design
+  app.get('/blog-new', (req, res) => {
+    // Set cache control headers to prevent caching
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(__dirname, '../public/blog-new.html'));
   });
   
   // Setup authentication
