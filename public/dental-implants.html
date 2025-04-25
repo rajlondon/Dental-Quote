@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Complete Guide to Dental Implants | MyDentalFly</title>
   <meta name="description" content="Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery. Learn why so many patients choose Turkey for affordable, high-quality implant treatments.">
-  <link rel="stylesheet" href="https://cdn.tailwindcss.com">
+  <link rel="stylesheet" href="/assets/index.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     .footer {
@@ -13,6 +13,40 @@
     }
     h2 {
       color: #003b95;
+    }
+    .prose {
+      max-width: 65ch;
+      color: #374151;
+    }
+    .prose p {
+      margin-top: 1.25em;
+      margin-bottom: 1.25em;
+    }
+    .prose h2 {
+      margin-top: 2em;
+      margin-bottom: 1em;
+      font-size: 1.5em;
+      line-height: 1.3333333;
+    }
+    .prose ul {
+      margin-top: 1.25em;
+      margin-bottom: 1.25em;
+      list-style-type: disc;
+      padding-left: 1.625em;
+    }
+    .prose ol {
+      margin-top: 1.25em;
+      margin-bottom: 1.25em;
+      list-style-type: decimal;
+      padding-left: 1.625em;
+    }
+    .prose li {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
+    .prose-lg {
+      font-size: 1.125rem;
+      line-height: 1.75;
     }
   </style>
 </head>
@@ -33,13 +67,25 @@
         
         <div class="flex items-center space-x-4">
           <a href="/your-quote" class="hidden md:block bg-[#003b95] hover:bg-[#00316f] text-white font-semibold rounded-md px-4 py-2 transition-colors">Get a Quote</a>
-          <button class="md:hidden text-gray-700">
+          <button id="mobile-menu-button" class="md:hidden text-gray-700" aria-label="Toggle mobile menu">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
       </nav>
+      
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="md:hidden py-3 border-t border-gray-200 hidden">
+        <ul class="flex flex-col space-y-4 px-2">
+          <li><a href="/" class="block text-gray-700 hover:text-[#003b95] font-medium">Home</a></li>
+          <li><a href="/how-it-works" class="block text-gray-700 hover:text-[#003b95] font-medium">How It Works</a></li>
+          <li><a href="/blog" class="block text-gray-700 hover:text-[#003b95] font-medium">Blog</a></li>
+          <li><a href="/faq" class="block text-gray-700 hover:text-[#003b95] font-medium">FAQs</a></li>
+          <li><a href="/contact" class="block text-gray-700 hover:text-[#003b95] font-medium">Contact</a></li>
+          <li><a href="/your-quote" class="block bg-[#003b95] hover:bg-[#00316f] text-white text-center font-semibold rounded-md px-4 py-2 transition-colors">Get a Quote</a></li>
+        </ul>
+      </div>
     </div>
   </header>
 
@@ -381,19 +427,39 @@
   </footer>
 
   <script>
-    // Mobile menu toggle
+    // Mobile menu toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
-      const mobileMenuButton = document.querySelector('button.md\\:hidden');
-      const mobileMenu = document.querySelector('.hidden.md\\:flex');
+      // Mobile menu toggle
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
       
-      mobileMenuButton.addEventListener('click', function() {
-        if (mobileMenu.classList.contains('hidden')) {
-          mobileMenu.classList.remove('hidden');
-          mobileMenu.classList.add('flex', 'flex-col', 'absolute', 'top-16', 'left-0', 'w-full', 'bg-white', 'shadow-lg', 'p-4', 'space-y-4');
-        } else {
-          mobileMenu.classList.add('hidden');
-          mobileMenu.classList.remove('flex', 'flex-col', 'absolute', 'top-16', 'left-0', 'w-full', 'bg-white', 'shadow-lg', 'p-4', 'space-y-4');
-        }
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+          if (mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.remove('hidden');
+          } else {
+            mobileMenu.classList.add('hidden');
+          }
+        });
+      } else {
+        console.warn('Mobile menu elements not found');
+      }
+      
+      // Add smooth scrolling to anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          
+          const targetId = this.getAttribute('href');
+          if (targetId === '#') return;
+          
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          }
+        });
       });
     });
   </script>
