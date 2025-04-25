@@ -206,40 +206,50 @@
 </head>
 <body class="bg-white text-gray-800 font-sans">
   <!-- Navigation -->
-  <header class="border-b border-gray-200 shadow-sm sticky top-0 bg-white z-50">
-    <div class="container">
-      <nav class="flex items-center justify-between py-4">
-        <a href="/" class="text-[#003b95] text-2xl font-bold">MyDentalFly</a>
-        
-        <div class="hidden md:flex items-center gap-8">
-          <a href="/" class="text-gray-700 hover:text-[#003b95] font-medium">Home</a>
-          <a href="/how-it-works" class="text-gray-700 hover:text-[#003b95] font-medium">How It Works</a>
-          <a href="/blog" class="text-gray-700 hover:text-[#003b95] font-medium">Blog</a>
-          <a href="/faq" class="text-gray-700 hover:text-[#003b95] font-medium">FAQs</a>
-          <a href="/contact" class="text-gray-700 hover:text-[#003b95] font-medium">Contact</a>
-          <a href="/your-quote" class="bg-[#003b95] hover:bg-[#00316f] text-white font-semibold rounded-md px-4 py-2 transition-colors">Get a Quote</a>
+  <nav class="bg-[#003b95] text-white shadow-md">
+    <div class="container mx-auto px-4 md:px-6">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center">
+          <a href="/" class="font-bold text-xl">MyDentalFly</a>
         </div>
         
-        <button id="mobile-menu-button" class="md:hidden text-gray-700" aria-label="Toggle mobile menu">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </nav>
+        <!-- Desktop Navigation -->
+        <div class="hidden md:flex space-x-8 items-center">
+          <a href="/" class="text-white hover:text-blue-100 transition-colors">Home</a>
+          <a href="/how-it-works" class="text-white hover:text-blue-100 transition-colors">How It Works</a>
+          <a href="/clinics" class="text-white hover:text-blue-100 transition-colors">Clinics</a>
+          <a href="/dental-chart" class="text-white hover:text-blue-100 transition-colors">Dental Chart</a>
+          <a href="/blog" class="text-white hover:text-blue-100 transition-colors">Blog</a>
+          <a href="/your-quote" class="bg-white hover:bg-gray-100 text-[#003b95] font-bold py-2 px-4 rounded-lg shadow transition-colors">
+            Get a Quote
+          </a>
+        </div>
+        
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-white focus:outline-none">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       
-      <!-- Mobile Menu -->
-      <div id="mobile-menu" class="md:hidden py-3 border-t border-gray-200 hidden">
-        <div class="flex flex-col gap-3 py-2">
-          <a href="/" class="text-gray-700 hover:text-[#003b95] font-medium">Home</a>
-          <a href="/how-it-works" class="text-gray-700 hover:text-[#003b95] font-medium">How It Works</a>
-          <a href="/blog" class="text-gray-700 hover:text-[#003b95] font-medium">Blog</a>
-          <a href="/faq" class="text-gray-700 hover:text-[#003b95] font-medium">FAQs</a>
-          <a href="/contact" class="text-gray-700 hover:text-[#003b95] font-medium">Contact</a>
-          <a href="/your-quote" class="block bg-[#003b95] hover:bg-[#00316f] text-white text-center font-semibold rounded-md px-4 py-2 mt-2 transition-colors">Get a Quote</a>
+      <!-- Mobile Navigation -->
+      <div id="mobile-menu" class="md:hidden hidden pb-4">
+        <div class="flex flex-col space-y-3">
+          <a href="/" class="text-white hover:text-blue-100 py-2 transition-colors">Home</a>
+          <a href="/how-it-works" class="text-white hover:text-blue-100 py-2 transition-colors">How It Works</a>
+          <a href="/clinics" class="text-white hover:text-blue-100 py-2 transition-colors">Clinics</a>
+          <a href="/dental-chart" class="text-white hover:text-blue-100 py-2 transition-colors">Dental Chart</a>
+          <a href="/blog" class="text-white hover:text-blue-100 py-2 transition-colors">Blog</a>
+          <a href="/your-quote" class="bg-white hover:bg-gray-100 text-[#003b95] font-bold py-2 px-4 rounded-lg shadow transition-colors inline-block mt-2">
+            Get a Quote
+          </a>
         </div>
       </div>
     </div>
-  </header>
+  </nav>
 
   <main>
     <!-- Hero Section -->
@@ -456,7 +466,7 @@
 
   <!-- Footer -->
   <footer class="footer py-12">
-    <div class="container">
+    <div class="container mx-auto px-4 md:px-6">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <div>
           <div class="flex items-center mb-4">
@@ -483,48 +493,48 @@
         
         <div>
           <h4 class="font-semibold text-lg mb-4 text-white">Quick Links</h4>
-          <div class="footer-links">
-            <a href="/" class="text-blue-100 hover:text-white text-sm block py-1">Home</a>
-            <a href="/how-it-works" class="text-blue-100 hover:text-white text-sm block py-1">How It Works</a>
-            <a href="/your-quote" class="text-blue-100 hover:text-white text-sm block py-1">Get a Quote</a>
-            <a href="/dental-chart" class="text-blue-100 hover:text-white text-sm block py-1">Interactive Dental Chart</a>
-            <a href="/faq" class="text-blue-100 hover:text-white text-sm block py-1">FAQs</a>
-            <a href="/blog" class="text-blue-100 hover:text-white text-sm block py-1">Blog</a>
-          </div>
+          <ul class="space-y-2">
+            <li><a href="/" class="text-blue-100 hover:text-white text-sm transition-colors">Home</a></li>
+            <li><a href="/how-it-works" class="text-blue-100 hover:text-white text-sm transition-colors">How It Works</a></li>
+            <li><a href="/your-quote" class="text-blue-100 hover:text-white text-sm transition-colors">Get a Quote</a></li>
+            <li><a href="/dental-chart" class="text-blue-100 hover:text-white text-sm transition-colors">Interactive Dental Chart</a></li>
+            <li><a href="/faq" class="text-blue-100 hover:text-white text-sm transition-colors">FAQs</a></li>
+            <li><a href="/blog" class="text-blue-100 hover:text-white text-sm transition-colors">Blog</a></li>
+          </ul>
         </div>
         
         <div>
           <h4 class="font-semibold text-lg mb-4 text-white">Treatments</h4>
-          <div class="footer-links">
-            <a href="/your-quote?treatment=veneers" class="text-blue-100 hover:text-white text-sm block py-1">Veneers</a>
-            <a href="/your-quote?treatment=dental-implants" class="text-blue-100 hover:text-white text-sm block py-1">Dental Implants</a>
-            <a href="/your-quote?treatment=hollywood-smile" class="text-blue-100 hover:text-white text-sm block py-1">Hollywood Smile</a>
-            <a href="/your-quote?treatment=crowns" class="text-blue-100 hover:text-white text-sm block py-1">Crowns & Bridges</a>
-            <a href="/your-quote?treatment=whitening" class="text-blue-100 hover:text-white text-sm block py-1">Teeth Whitening</a>
-            <a href="/your-quote?treatment=full-mouth" class="text-blue-100 hover:text-white text-sm block py-1">Full Mouth Reconstruction</a>
-          </div>
+          <ul class="space-y-2">
+            <li><a href="/your-quote?treatment=veneers" class="text-blue-100 hover:text-white text-sm transition-colors">Veneers</a></li>
+            <li><a href="/your-quote?treatment=dental-implants" class="text-blue-100 hover:text-white text-sm transition-colors">Dental Implants</a></li>
+            <li><a href="/your-quote?treatment=hollywood-smile" class="text-blue-100 hover:text-white text-sm transition-colors">Hollywood Smile</a></li>
+            <li><a href="/your-quote?treatment=crowns" class="text-blue-100 hover:text-white text-sm transition-colors">Crowns & Bridges</a></li>
+            <li><a href="/your-quote?treatment=whitening" class="text-blue-100 hover:text-white text-sm transition-colors">Teeth Whitening</a></li>
+            <li><a href="/your-quote?treatment=full-mouth" class="text-blue-100 hover:text-white text-sm transition-colors">Full Mouth Reconstruction</a></li>
+          </ul>
         </div>
         
         <div>
           <h4 class="font-semibold text-lg mb-4 text-white">Contact Us</h4>
-          <div class="space-y-3">
-            <div class="flex items-start gap-3">
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
               <i class="fas fa-envelope w-5 h-5 text-blue-300 mt-0.5"></i>
               <a href="mailto:info@mydentalfly.com" class="text-blue-100 hover:text-white text-sm transition-colors">info@mydentalfly.com</a>
-            </div>
-            <div class="flex items-start gap-3">
+            </li>
+            <li class="flex items-start gap-3">
               <i class="fas fa-phone w-5 h-5 text-blue-300 mt-0.5"></i>
               <a href="tel:+447572445856" class="text-blue-100 hover:text-white text-sm transition-colors">+44 7572 445856</a>
-            </div>
-            <div class="flex items-start gap-3">
+            </li>
+            <li class="flex items-start gap-3">
               <i class="fab fa-whatsapp w-5 h-5 text-blue-300 mt-0.5"></i>
               <a href="https://wa.me/447572445856" class="text-blue-100 hover:text-white text-sm transition-colors">WhatsApp Chat</a>
-            </div>
-            <div class="flex items-start gap-3">
+            </li>
+            <li class="flex items-start gap-3">
               <i class="fas fa-map-marker-alt w-5 h-5 text-blue-300 mt-0.5"></i>
               <span class="text-blue-100 text-sm">London, United Kingdom</span>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </div>
       
@@ -535,6 +545,7 @@
             <a href="/privacy-policy" class="text-blue-200 hover:text-white text-sm transition-colors">Privacy Policy</a>
             <a href="/terms-of-service" class="text-blue-200 hover:text-white text-sm transition-colors">Terms of Service</a>
             <a href="/cookies-policy" class="text-blue-200 hover:text-white text-sm transition-colors">Cookie Policy</a>
+            <a href="/clinics" class="text-blue-200 hover:text-white text-sm transition-colors">For Clinics</a>
           </div>
         </div>
       </div>
