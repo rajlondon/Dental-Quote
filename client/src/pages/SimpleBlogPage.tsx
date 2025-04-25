@@ -1,130 +1,118 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import HeroSimple from "@/components/HeroSimple";
+
+interface BlogPostProps {
+  title: string;
+  slug: string;
+  image: string;
+  excerpt: string;
+  author: string;
+  publishDate: string;
+}
 
 const SimpleBlogPage: React.FC = () => {
+  const blogPosts: BlogPostProps[] = [
+    {
+      title: "How MyDentalFly.com Works",
+      slug: "blog/how-it-works",
+      image: "/images/clinics/dentgroup.jpg",
+      excerpt: "Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.",
+      author: "MyDentalFly Team",
+      publishDate: "April 24, 2025"
+    },
+    {
+      title: "The Complete Guide to Dental Implants",
+      slug: "dental-implants",
+      image: "/images/treatments/implants.jpg",
+      excerpt: "Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery.",
+      author: "Dr. Sarah Johnson",
+      publishDate: "April 20, 2025"
+    },
+    {
+      title: "Comparing Veneers and Crowns: Which is Right for You?",
+      slug: "veneers",
+      image: "/images/treatments/veneers.jpg",
+      excerpt: "A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option.",
+      author: "Dr. Michael Chen",
+      publishDate: "April 18, 2025"
+    },
+    {
+      title: "The Hollywood Smile: Transform Your Appearance",
+      slug: "hollywood-smile",
+      image: "/images/treatments/hollywood.jpg",
+      excerpt: "Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile.",
+      author: "Dr. Emily Taylor",
+      publishDate: "April 15, 2025"
+    },
+    {
+      title: "Full Mouth Reconstruction: A New Beginning",
+      slug: "full-mouth",
+      image: "/images/treatments/fullmouth.jpg",
+      excerpt: "Discover how full mouth reconstruction can address multiple dental issues and completely restore your oral health and appearance.",
+      author: "Dr. James Wilson",
+      publishDate: "April 10, 2025"
+    }
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
+      <HeroSimple />
+      
       <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="bg-[#003b95] text-white py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Dental Tourism Blog</h1>
-            <p className="text-xl max-w-2xl mx-auto">
-              Expert advice and information about dental treatments abroad
-            </p>
-          </div>
-        </section>
-        
-        {/* Blog Content */}
+        {/* Blog Header */}
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold mb-8 text-primary">Featured Articles</h2>
-              
-              <div className="space-y-8">
-                {/* Blog Post 1 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md">
+              <h1 className="text-3xl md:text-4xl font-bold mb-6 text-primary">Dental Tourism Blog</h1>
+              <p className="text-lg text-neutral-700">
+                Expert advice, guides, and information about dental treatments abroad. Discover everything you need to know about dental procedures, costs, and what to expect during your dental journey.
+              </p>
+            </div>
+          </div>
+        </section>
+        
+        {/* Blog Articles */}
+        <section className="py-12 bg-neutral-50">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogPosts.map((post, index) => (
+                <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md transition-transform hover:shadow-lg hover:-translate-y-1">
+                  <a href={`/${post.slug}`}>
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      className="w-full h-56 object-cover"
+                    />
+                  </a>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3">
-                      <a href="/blog/how-it-works" className="text-primary hover:text-primary/80">
-                        How MyDentalFly.com Works
-                      </a>
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.
-                    </p>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>MyDentalFly Team</span>
-                      <span>April 24, 2025</span>
+                    <a href={`/${post.slug}`}>
+                      <h2 className="font-bold text-xl mb-3 text-primary hover:text-primary/80">{post.title}</h2>
+                    </a>
+                    <p className="text-neutral-600 mb-4">{post.excerpt}</p>
+                    <div className="flex items-center justify-between text-sm text-neutral-500">
+                      <span>{post.author}</span>
+                      <span>{post.publishDate}</span>
                     </div>
+                    <a href={`/${post.slug}`} className="mt-4 inline-block text-[#0071c2] font-medium hover:underline">
+                      Read more →
+                    </a>
                   </div>
                 </div>
-                
-                {/* Blog Post 2 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md">
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3">
-                      <a href="/dental-implants" className="text-primary hover:text-primary/80">
-                        The Complete Guide to Dental Implants
-                      </a>
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery.
-                    </p>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Dr. Sarah Johnson</span>
-                      <span>April 20, 2025</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Blog Post 3 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md">
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3">
-                      <a href="/veneers" className="text-primary hover:text-primary/80">
-                        Comparing Veneers and Crowns: Which is Right for You?
-                      </a>
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option.
-                    </p>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Dr. Michael Chen</span>
-                      <span>April 18, 2025</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Blog Post 4 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md">
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3">
-                      <a href="/hollywood-smile" className="text-primary hover:text-primary/80">
-                        The Hollywood Smile: Transform Your Appearance
-                      </a>
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile.
-                    </p>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Dr. Emily Taylor</span>
-                      <span>April 15, 2025</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Blog Post 5 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md">
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3">
-                      <a href="/full-mouth" className="text-primary hover:text-primary/80">
-                        Full Mouth Reconstruction: A New Beginning
-                      </a>
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Discover how full mouth reconstruction can address multiple dental issues and completely restore your oral health and appearance.
-                    </p>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Dr. James Wilson</span>
-                      <span>April 10, 2025</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
         
         {/* CTA Section */}
-        <section className="py-12 bg-gray-50">
+        <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto bg-blue-50 rounded-lg p-8 border border-blue-100 text-center">
+            <div className="max-w-4xl mx-auto bg-blue-50 rounded-xl p-8 border border-blue-100">
               <h2 className="text-2xl font-bold mb-4 text-primary">Ready to Start Your Dental Journey?</h2>
-              <p className="text-gray-700 mb-6">
+              <p className="text-lg text-neutral-700 mb-6">
                 Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul.
               </p>
               <a href="/your-quote" className="inline-block bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 px-6 rounded-lg">
