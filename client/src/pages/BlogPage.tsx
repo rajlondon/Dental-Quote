@@ -1,7 +1,6 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Link } from "wouter";
 import HeroSimple from "@/components/HeroSimple";
 
 interface BlogPostProps {
@@ -82,25 +81,25 @@ const BlogPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogPosts.map((post, index) => (
                 <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md transition-transform hover:shadow-lg hover:-translate-y-1">
-                  <Link href={`/${post.slug}`}>
+                  <a href={`/${post.slug}`}>
                     <img
                       src={post.image}
                       alt={post.title}
                       className="w-full h-56 object-cover"
                     />
-                  </Link>
+                  </a>
                   <div className="p-6">
-                    <Link href={`/${post.slug}`}>
+                    <a href={`/${post.slug}`}>
                       <h2 className="font-bold text-xl mb-3 text-primary hover:text-primary/80">{post.title}</h2>
-                    </Link>
+                    </a>
                     <p className="text-neutral-600 mb-4">{post.excerpt}</p>
                     <div className="flex items-center justify-between text-sm text-neutral-500">
                       <span>{post.author}</span>
                       <span>{post.publishDate}</span>
                     </div>
-                    <Link href={`/${post.slug}`} className="mt-4 inline-block text-[#0071c2] font-medium hover:underline">
+                    <a href={`/${post.slug}`} className="mt-4 inline-block text-[#0071c2] font-medium hover:underline">
                       Read more →
-                    </Link>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -116,9 +115,9 @@ const BlogPage: React.FC = () => {
               <p className="text-lg text-neutral-700 mb-6">
                 Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul.
               </p>
-              <Link href="/your-quote" className="inline-block bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 px-6 rounded-lg">
+              <a href="/your-quote" className="inline-block bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 px-6 rounded-lg">
                 Get Your Free Quote
-              </Link>
+              </a>
             </div>
           </div>
         </section>
