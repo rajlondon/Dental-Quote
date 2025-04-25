@@ -312,50 +312,92 @@ export function DentalChart({
         
         {/* Desktop View - Full Dental Chart */}
         <div className="hidden md:block">
-          {/* Upper Teeth Row */}
-          <div className="flex justify-center gap-1 mb-4">
-            {teeth.slice(0, 16).map(tooth => {
-              const bgColor = getToothColor(tooth);
-              const textColor = getTextColor(bgColor);
-              
-              return (
-                <button
-                  key={tooth.id}
-                  onClick={() => handleToothClick(tooth)}
-                  className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-base"
-                  style={{ 
-                    backgroundColor: bgColor,
-                    color: textColor
-                  }}
-                  title={getToothTooltip(tooth)}
-                >
-                  {tooth.id}
-                </button>
-              );
-            })}
-          </div>
-          
-          {/* Lower Teeth Row */}
-          <div className="flex justify-center gap-1 mb-3">
-            {teeth.slice(16).map(tooth => {
-              const bgColor = getToothColor(tooth);
-              const textColor = getTextColor(bgColor);
-              
-              return (
-                <button
-                  key={tooth.id}
-                  onClick={() => handleToothClick(tooth)}
-                  className="flex items-center justify-center w-12 h-14 border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-base"
-                  style={{ 
-                    backgroundColor: bgColor,
-                    color: textColor
-                  }}
-                  title={getToothTooltip(tooth)}
-                >
-                  {tooth.id}
-                </button>
-              );
-            })}
+          {/* Mouth container with pink gum background */}
+          <div className="w-full max-w-3xl mx-auto bg-red-100 rounded-3xl p-6 border-2 border-pink-200 relative">
+            {/* Upper gum area */}
+            <div className="bg-pink-300 rounded-t-2xl h-6 mb-1"></div>
+            
+            {/* Upper Teeth Row - arc shape */}
+            <div className="flex justify-center gap-1 mb-4" style={{ 
+              display: "flex", 
+              flexWrap: "nowrap", 
+              justifyContent: "center",
+              alignItems: "flex-end",
+              width: "100%",
+              marginBottom: "8px"
+            }}>
+              {teeth.slice(0, 16).map((tooth, index) => {
+                const bgColor = getToothColor(tooth);
+                const textColor = getTextColor(bgColor);
+                
+                // Create arc effect by adjusting button height based on position
+                const isCenter = index >= 4 && index <= 11;
+                const height = isCenter ? 12 : (index >= 2 && index <= 13 ? 11 : 10);
+                const width = isCenter ? 9 : (index >= 2 && index <= 13 ? 9 : 8);
+                
+                return (
+                  <button
+                    key={tooth.id}
+                    onClick={() => handleToothClick(tooth)}
+                    className="flex items-center justify-center border-2 border-gray-400 rounded-t-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
+                    style={{ 
+                      backgroundColor: bgColor,
+                      color: textColor,
+                      width: `${width}px`,
+                      height: `${height}px`,
+                      transform: index < 8 ? `rotate(-${(7-index) * 5}deg)` : `rotate(${(index-8) * 5}deg)`
+                    }}
+                    title={getToothTooltip(tooth)}
+                  >
+                    {tooth.id}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Tongue area */}
+            <div className="bg-pink-400 w-3/5 h-14 mx-auto rounded-full"></div>
+            
+            {/* Lower Teeth Row - arc shape */}
+            <div className="flex justify-center gap-1" style={{ 
+              display: "flex", 
+              flexWrap: "nowrap", 
+              justifyContent: "center",
+              alignItems: "flex-start",
+              width: "100%",
+              marginTop: "8px"
+            }}>
+              {teeth.slice(16).map((tooth, index) => {
+                const bgColor = getToothColor(tooth);
+                const textColor = getTextColor(bgColor);
+                
+                // Create arc effect by adjusting button height based on position
+                const isCenter = index >= 4 && index <= 11;
+                const height = isCenter ? 12 : (index >= 2 && index <= 13 ? 11 : 10);
+                const width = isCenter ? 9 : (index >= 2 && index <= 13 ? 9 : 8);
+                
+                return (
+                  <button
+                    key={tooth.id}
+                    onClick={() => handleToothClick(tooth)}
+                    className="flex items-center justify-center border-2 border-gray-400 rounded-b-full shadow-sm hover:shadow-md transition-all font-medium text-xs"
+                    style={{ 
+                      backgroundColor: bgColor,
+                      color: textColor,
+                      width: `${width}px`,
+                      height: `${height}px`,
+                      transform: index < 8 ? `rotate(${(7-index) * 5}deg)` : `rotate(-${(index-8) * 5}deg)`
+                    }}
+                    title={getToothTooltip(tooth)}
+                  >
+                    {tooth.id}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Lower gum area */}
+            <div className="bg-pink-300 rounded-b-2xl h-6 mt-1"></div>
           </div>
         </div>
         

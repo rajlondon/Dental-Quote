@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react';
 import { DentalChart } from '@/components/DentalChart';
-import { DentalChart3D } from '@/components/DentalChart3D';
-import { DentalChart3DThree } from '@/components/DentalChart3DThree';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DentalChartPage() {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const [chartType, setChartType] = useState<'standard' | '3d' | '3d-advanced'>('3d');
   const [teethData, setTeethData] = useState<any>(null);
   
   // Set page title when component mounts
@@ -20,7 +16,7 @@ export default function DentalChartPage() {
     document.title = 'Interactive Dental Chart | MyDentalFly.com';
   }, []);
   
-  // Handle saving teeth data from either chart component
+  // Handle saving teeth data from chart component
   const handleTeethUpdate = (data: any) => {
     setTeethData(data);
     console.log('Teeth data updated:', data);
@@ -57,25 +53,7 @@ export default function DentalChartPage() {
             </div>
             
             <div className="mb-6">
-              <Tabs defaultValue="3d" onValueChange={(value) => setChartType(value as 'standard' | '3d' | '3d-advanced')}>
-                <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-6">
-                  <TabsTrigger value="3d">Basic 3D</TabsTrigger>
-                  <TabsTrigger value="3d-advanced">Advanced 3D</TabsTrigger>
-                  <TabsTrigger value="standard">Standard View</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="3d" className="mt-4">
-                  <DentalChart3D onTeethUpdate={handleTeethUpdate} />
-                </TabsContent>
-                
-                <TabsContent value="3d-advanced" className="mt-4">
-                  <DentalChart3DThree onTeethUpdate={handleTeethUpdate} />
-                </TabsContent>
-                
-                <TabsContent value="standard" className="mt-4">
-                  <DentalChart onTeethUpdate={handleTeethUpdate} />
-                </TabsContent>
-              </Tabs>
+              <DentalChart onTeethUpdate={handleTeethUpdate} />
             </div>
             
             <div className="mt-8 flex justify-center space-x-4">
