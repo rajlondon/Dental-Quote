@@ -295,7 +295,7 @@ const HomePage: React.FC = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-center">
           <a 
-            href="/blog.html" 
+            href="/blog" 
             className="bg-red-600 text-white font-bold py-2 px-4 rounded inline-block"
           >
             TEST BLOG BUTTON

@@ -74,6 +74,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
   });
   
+  // Special route for blog page
+  app.get('/blog', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/blog.html'));
+  });
+  
+  // Special route for blog.html direct access
+  app.get('/blog.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/blog.html'));
+  });
+  
   // Setup authentication
   setupAuth(app);
   
