@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSimple from "@/components/HeroSimple";
 import Footer from "@/components/Footer";
+import SimpleBlogPage from "@/pages/SimpleBlogPage";
 import { Button } from "@/components/ui/button";
 import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
@@ -289,6 +290,20 @@ const HomePage: React.FC = () => {
     <>
       <Navbar />
       <HeroSimple />
+      
+      {/* Test Blog Navigation Button */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-center">
+          <button 
+            className="bg-red-600 text-white font-bold py-2 px-4 rounded"
+            onClick={() => {
+              window.location.href = '/blog';
+            }}
+          >
+            TEST BLOG BUTTON
+          </button>
+        </div>
+      </div>
       
       {/* Popular Clinics Section */}
       <section className="py-16">
