@@ -5,44 +5,143 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyDentalFly - Dental Tourism Blog</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* Base styles */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #333;
+      line-height: 1.5;
+    }
+    
+    /* Navigation styles */
     .navbar {
       background-color: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
     }
+    
+    /* Footer styles */
     .footer {
       background-color: #003b95;
       color: white;
     }
+    
+    /* Card animations */
     .blog-card {
-      transition: transform 0.3s ease;
+      transition: all 0.3s ease;
+      border-radius: 0.5rem;
     }
     .blog-card:hover {
       transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Button styles */
+    .btn-primary {
+      background-color: #0071c2;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .btn-primary:hover {
+      background-color: #00487a;
+    }
+    
+    /* Hero section with gradient */
+    .hero-section {
+      background: linear-gradient(135deg, #003b95 0%, #0071c2 100%);
+      color: white;
+      padding: 4rem 0;
+    }
+    
+    /* Breadcrumb styles */
+    .breadcrumbs {
+      padding: 0.75rem 0;
+      background-color: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    /* Whatsapp floating button */
+    .whatsapp-float {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #25D366;
+      color: white;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+    }
+    .whatsapp-float:hover {
+      background-color: #128C7E;
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
+  <!-- WhatsApp Button -->
+  <a href="https://wa.me/447572445856" target="_blank" class="whatsapp-float">
+    <i class="fab fa-whatsapp fa-2x"></i>
+  </a>
+
   <!-- Navbar -->
-  <nav class="navbar sticky top-0 z-50 py-4">
-    <div class="container mx-auto px-4 flex justify-between items-center">
-      <a href="/" class="text-2xl font-bold text-blue-600">MyDentalFly</a>
-      <div class="flex items-center space-x-6">
-        <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
-        <a href="/your-quote" class="text-gray-700 hover:text-blue-600">Get a Quote</a>
-        <a href="/blog" class="text-gray-700 hover:text-blue-600 font-medium">Blog</a>
-        <a href="/portal-login" class="text-gray-700 hover:text-blue-600">Patient Portal</a>
-        <a href="#contact" class="text-gray-700 hover:text-blue-600">Contact</a>
+  <nav class="navbar sticky top-0 z-50 py-3">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-between items-center">
+        <a href="/" class="flex items-center">
+          <img src="/images/logo.png" alt="MyDentalFly Logo" class="h-10 mr-3">
+          <span class="text-2xl font-bold text-[#003b95]">MyDentalFly</span>
+        </a>
+        
+        <div class="hidden md:flex items-center space-x-6">
+          <a href="/" class="text-gray-700 hover:text-[#0071c2] text-sm transition-colors">Home</a>
+          <a href="/dental-chart" class="text-gray-700 hover:text-[#0071c2] text-sm transition-colors">Interactive Dental Chart</a>
+          <a href="/your-quote" class="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-4 py-2 rounded-md text-sm transition-colors">Get a Quote</a>
+          <a href="/blog" class="text-gray-700 hover:text-[#0071c2] text-sm font-medium transition-colors">Blog</a>
+          <a href="/portal-login" class="text-gray-700 hover:text-[#0071c2] text-sm transition-colors">Patient Portal</a>
+        </div>
+        
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Mobile menu (hidden by default) -->
+      <div id="mobile-menu" class="md:hidden hidden mt-2 pb-2">
+        <a href="/" class="block py-1.5 text-gray-700 hover:text-[#0071c2]">Home</a>
+        <a href="/dental-chart" class="block py-1.5 text-gray-700 hover:text-[#0071c2]">Interactive Dental Chart</a>
+        <a href="/your-quote" class="block py-1.5 bg-[#0071c2] text-white px-3 my-2 rounded hover:bg-[#00487a]">Get a Quote</a>
+        <a href="/blog" class="block py-1.5 text-gray-700 hover:text-[#0071c2] font-medium">Blog</a>
+        <a href="/portal-login" class="block py-1.5 text-gray-700 hover:text-[#0071c2]">Patient Portal</a>
       </div>
     </div>
   </nav>
+  
+  <!-- Breadcrumbs -->
+  <div class="breadcrumbs">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center text-sm text-gray-600">
+        <a href="/" class="hover:text-[#0071c2]">Home</a>
+        <span class="mx-2">›</span>
+        <span class="text-gray-800 font-medium">Blog</span>
+      </div>
+    </div>
+  </div>
 
   <!-- Hero Section -->
-  <div class="bg-blue-50 py-12">
+  <div class="hero-section">
     <div class="container mx-auto px-4">
-      <h1 class="text-4xl font-bold text-center text-gray-800">Dental Tourism Blog</h1>
-      <p class="text-xl text-center text-gray-600 mt-4 max-w-3xl mx-auto">
+      <h1 class="text-3xl md:text-4xl font-bold text-center">Dental Tourism Blog</h1>
+      <p class="text-lg md:text-xl text-center mt-4 max-w-3xl mx-auto text-blue-100">
         Expert advice, guides, and information about dental treatments abroad. Discover everything you need to know about dental procedures, costs, and what to expect.
       </p>
     </div>
@@ -173,60 +272,82 @@
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <div>
-          <h4 class="font-semibold text-lg mb-4">MyDentalFly</h4>
+          <div class="flex items-center mb-4">
+            <img src="/images/logo-white.png" alt="MyDentalFly Logo" class="h-8 mr-2">
+            <h4 class="font-semibold text-lg">MyDentalFly</h4>
+          </div>
           <p class="text-blue-200 mb-4">
             Find affordable, high-quality dental care in Istanbul with our concierge booking service.
           </p>
+          <div class="flex space-x-3 mt-6">
+            <a href="https://facebook.com" class="text-blue-200 hover:text-white">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://instagram.com" class="text-blue-200 hover:text-white">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://twitter.com" class="text-blue-200 hover:text-white">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://linkedin.com" class="text-blue-200 hover:text-white">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+          </div>
         </div>
         
         <div>
           <h4 class="font-semibold text-lg mb-4">Quick Links</h4>
           <ul class="space-y-3">
-            <li><a href="/" class="text-blue-200 hover:text-white">Home</a></li>
-            <li><a href="/how-it-works" class="text-blue-200 hover:text-white">How It Works</a></li>
-            <li><a href="/your-quote" class="text-blue-200 hover:text-white">Get a Quote</a></li>
-            <li><a href="/team" class="text-blue-200 hover:text-white">Our Team</a></li>
-            <li><a href="/blog" class="text-blue-200 hover:text-white">Blog</a></li>
+            <li><a href="/" class="text-blue-200 hover:text-white text-sm">Home</a></li>
+            <li><a href="/how-it-works" class="text-blue-200 hover:text-white text-sm">How It Works</a></li>
+            <li><a href="/your-quote" class="text-blue-200 hover:text-white text-sm">Get a Quote</a></li>
+            <li><a href="/team" class="text-blue-200 hover:text-white text-sm">Our Team</a></li>
+            <li><a href="/blog" class="text-blue-200 hover:text-white text-sm">Blog</a></li>
           </ul>
         </div>
         
         <div>
           <h4 class="font-semibold text-lg mb-4">Treatments</h4>
           <ul class="space-y-3">
-            <li><a href="/your-quote?treatment=veneers" class="text-blue-200 hover:text-white">Veneers</a></li>
-            <li><a href="/your-quote?treatment=dental-implants" class="text-blue-200 hover:text-white">Dental Implants</a></li>
-            <li><a href="/your-quote?treatment=hollywood-smile" class="text-blue-200 hover:text-white">Hollywood Smile</a></li>
-            <li><a href="/your-quote?treatment=crowns" class="text-blue-200 hover:text-white">Crowns & Bridges</a></li>
-            <li><a href="/your-quote?treatment=whitening" class="text-blue-200 hover:text-white">Teeth Whitening</a></li>
+            <li><a href="/your-quote?treatment=veneers" class="text-blue-200 hover:text-white text-sm">Veneers</a></li>
+            <li><a href="/your-quote?treatment=dental-implants" class="text-blue-200 hover:text-white text-sm">Dental Implants</a></li>
+            <li><a href="/your-quote?treatment=hollywood-smile" class="text-blue-200 hover:text-white text-sm">Hollywood Smile</a></li>
+            <li><a href="/your-quote?treatment=crowns" class="text-blue-200 hover:text-white text-sm">Crowns & Bridges</a></li>
+            <li><a href="/your-quote?treatment=whitening" class="text-blue-200 hover:text-white text-sm">Teeth Whitening</a></li>
           </ul>
         </div>
         
         <div>
           <h4 class="font-semibold text-lg mb-4">Contact Us</h4>
-          <ul class="space-y-3">
-            <li>
-              <a href="mailto:info@mydentalfly.com" class="text-blue-200 hover:text-white">info@mydentalfly.com</a>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <i class="fas fa-envelope w-5 h-5 text-blue-300 mt-0.5"></i>
+              <a href="mailto:info@mydentalfly.com" class="text-blue-200 hover:text-white text-sm">info@mydentalfly.com</a>
             </li>
-            <li>
-              <a href="tel:+447572445856" class="text-blue-200 hover:text-white">+44 7572 445856</a>
+            <li class="flex items-start gap-3">
+              <i class="fas fa-phone w-5 h-5 text-blue-300 mt-0.5"></i>
+              <a href="tel:+447572445856" class="text-blue-200 hover:text-white text-sm">+44 7572 445856</a>
             </li>
-            <li>
-              <a href="https://wa.me/447572445856" class="text-blue-200 hover:text-white">WhatsApp Chat</a>
+            <li class="flex items-start gap-3">
+              <i class="fab fa-whatsapp w-5 h-5 text-blue-300 mt-0.5"></i>
+              <a href="https://wa.me/447572445856" class="text-blue-200 hover:text-white text-sm">WhatsApp Chat</a>
             </li>
-            <li>
-              <span class="text-blue-200">London, United Kingdom</span>
+            <li class="flex items-start gap-3">
+              <i class="fas fa-map-marker-alt w-5 h-5 text-blue-300 mt-0.5"></i>
+              <span class="text-blue-200 text-sm">London, United Kingdom</span>
             </li>
           </ul>
         </div>
       </div>
       
-      <div class="border-t border-blue-800 pt-6">
+      <div class="border-t border-blue-800 pt-6 mt-4">
         <div class="flex flex-col md:flex-row justify-between items-center">
-          <p class="text-blue-300 text-sm mb-4 md:mb-0">© 2025 MyDentalFly. All rights reserved.</p>
-          <div class="flex gap-6">
-            <a href="/privacy-policy" class="text-blue-300 hover:text-white text-sm">Privacy Policy</a>
-            <a href="/terms-of-service" class="text-blue-300 hover:text-white text-sm">Terms of Service</a>
-            <a href="/cookies-policy" class="text-blue-300 hover:text-white text-sm">Cookie Policy</a>
+          <p class="text-blue-400 text-sm mb-4 md:mb-0">© 2025 MyDentalFly. All rights reserved.</p>
+          <div class="flex flex-wrap gap-4 md:gap-6 justify-center">
+            <a href="/privacy-policy" class="text-blue-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
+            <a href="/terms-of-service" class="text-blue-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+            <a href="/cookies-policy" class="text-blue-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+            <a href="/clinics" class="text-blue-400 hover:text-white text-sm transition-colors">For Clinics</a>
           </div>
         </div>
       </div>
@@ -234,8 +355,21 @@
   </footer>
 
   <script>
-    // Simple script to handle the blog navigation
+    // Mobile menu toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
+      // Mobile menu toggle
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      mobileMenuButton.addEventListener('click', function() {
+        if (mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.remove('hidden');
+        } else {
+          mobileMenu.classList.add('hidden');
+        }
+      });
+      
+      // Handle blog navigation with proper links
       const blogLinks = document.querySelectorAll('a[href^="/blog/"], a[href^="/dental-implants"], a[href^="/veneers"], a[href^="/hollywood-smile"], a[href^="/full-mouth"]');
       
       blogLinks.forEach(link => {
