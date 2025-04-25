@@ -84,6 +84,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/blog.html'));
   });
   
+  // New version of blog page with forced cache refresh
+  app.get('/blog-v2', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/blog-v2.html'));
+  });
+  
   // Setup authentication
   setupAuth(app);
   
