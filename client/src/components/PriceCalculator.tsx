@@ -994,16 +994,15 @@ export default function PriceCalculator() {
                                         defaultValue={field.value}
                                       >
                                         <FormControl>
-                                          <SelectTrigger className="bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary/40 transition-colors">
+                                          <SelectTrigger className="bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary/40 transition-colors h-10">
                                             <SelectValue placeholder={t('pricing.select_treatment')} />
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent className="max-h-[400px]">
-                                          
                                           {/* IMPLANTS SECTION */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-2 bg-[#007B9E] rounded-sm">
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-1 bg-[#007B9E] rounded-sm">
                                             Implants
-                                          </div>
+                                          </SelectLabel>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1016,7 +1015,7 @@ export default function PriceCalculator() {
                                               <SelectItem 
                                                 key={`implants-${treatment.treatment}`} 
                                                 value={treatment.treatment}
-                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                                className="py-3 cursor-pointer"
                                               >
                                                 <div className="flex items-center w-full">
                                                   <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
@@ -1026,9 +1025,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* CROWNS SECTION */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Crowns
-                                          </div>
+                                          </SelectLabel>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1041,7 +1040,7 @@ export default function PriceCalculator() {
                                               <SelectItem 
                                                 key={`crowns-${treatment.treatment}`} 
                                                 value={treatment.treatment}
-                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                                className="py-3 cursor-pointer"
                                               >
                                                 <div className="flex items-center w-full">
                                                   <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
@@ -1051,9 +1050,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* VENEERS SECTION */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Veneers
-                                          </div>
+                                          </SelectLabel>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1067,7 +1066,7 @@ export default function PriceCalculator() {
                                               <SelectItem 
                                                 key={`veneers-${treatment.treatment}`} 
                                                 value={treatment.treatment}
-                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                                className="py-3 cursor-pointer"
                                               >
                                                 <div className="flex items-center w-full">
                                                   <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
@@ -1077,9 +1076,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* GENERAL DENTAL PROCEDURES */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             General Dental Procedures
-                                          </div>
+                                          </SelectLabel>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1108,7 +1107,7 @@ export default function PriceCalculator() {
                                               <SelectItem 
                                                 key={`general-${treatment.treatment}`} 
                                                 value={treatment.treatment}
-                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                                className="py-3 cursor-pointer"
                                               >
                                                 <div className="flex items-center w-full">
                                                   <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
@@ -1118,9 +1117,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* DENTURES & INVISALIGN/ORTHODONTIC */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Dentures & Orthodontics
-                                          </div>
+                                          </SelectLabel>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1137,7 +1136,7 @@ export default function PriceCalculator() {
                                               <SelectItem 
                                                 key={`dentures-${treatment.treatment}`} 
                                                 value={treatment.treatment}
-                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                                className="py-3 cursor-pointer"
                                               >
                                                 <div className="flex items-center w-full">
                                                   <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
@@ -1147,9 +1146,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* PACKAGES */}
-                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Packages
-                                          </div>
+                                          </SelectLabel>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1162,7 +1161,7 @@ export default function PriceCalculator() {
                                               <SelectItem 
                                                 key={`packages-${treatment.treatment}`} 
                                                 value={treatment.treatment}
-                                                className="hover:bg-primary/10 focus:bg-primary/10 py-2 cursor-pointer"
+                                                className="py-3 cursor-pointer"
                                               >
                                                 <div className="flex items-center w-full">
                                                   <span className="flex-1">{formatTreatmentName(treatment.treatment)}</span>
