@@ -116,12 +116,8 @@ const PortalLoginPage: React.FC = () => {
         description: "Please check your email for verification instructions.",
       });
       
-      // Switch to the login tab or redirect to email verification page
-      // For now, just set focus to login tab
-      const loginTab = document.querySelector('[data-value="login"]');
-      if (loginTab && loginTab instanceof HTMLElement) {
-        loginTab.click();
-      }
+      // Redirect to verification notice page
+      navigate('/verification-sent?email=' + encodeURIComponent(values.email));
       
     } catch (error) {
       console.error("Registration error:", error);
@@ -239,8 +235,50 @@ const PortalLoginPage: React.FC = () => {
           {user && user.role === 'patient' && !user.emailVerified && user.status === 'pending' && (
             <Alert className="mb-6 bg-amber-50 border-amber-200">
               <AlertTitle>Email Verification Required</AlertTitle>
-              <AlertDescription>
-                Please check your email inbox and click the verification link to activate your account.
+              <AlertDescription className="flex flex-col gap-2">
+                <p>Please check your email inbox and click the verification link to activate your account.</p>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="self-start text-xs"
+                  onClick={async () => {
+                    try {
+                      setIsLoading(true);
+                      const response = await fetch('/api/auth/resend-verification', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        }
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (response.ok) {
+                        toast({
+                          title: "Verification Email Sent",
+                          description: "Please check your inbox for the verification link.",
+                        });
+                      } else {
+                        toast({
+                          title: "Failed to Send Verification",
+                          description: data.message || "Please try again later.",
+                          variant: "destructive"
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Error resending verification:", error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to request verification email. Please try again.",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                >
+                  Resend Verification Email
+                </Button>
               </AlertDescription>
             </Alert>
           )}

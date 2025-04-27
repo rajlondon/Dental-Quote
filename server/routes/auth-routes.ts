@@ -325,6 +325,86 @@ router.post("/change-password", async (req: Request, res: Response) => {
   }
 });
 
+// Resend verification email
+router.post("/resend-verification", async (req: Request, res: Response) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "You must be logged in to request a new verification email" 
+      });
+    }
+    
+    const userId = req.user?.id;
+    
+    // Get user with current verification status
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+    
+    // Check if email is already verified
+    if (user.emailVerified) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Your email is already verified" 
+      });
+    }
+    
+    // Create new verification token
+    const verificationToken = await createVerificationToken(userId, "email_verification");
+    
+    // Generate verification URL
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+    
+    // Format verification email data
+    const userName = user.firstName || "User";
+    const verificationData = {
+      userEmail: user.email,
+      userName: userName,
+      verificationLink: verificationUrl
+    };
+    
+    // Import the Mailjet service
+    try {
+      const { sendVerificationEmail } = await import('../mailjet-service');
+      const emailSent = await sendVerificationEmail(verificationData);
+      
+      if (!emailSent) {
+        console.warn('Mailjet email sending failed or not configured');
+        return res.status(500).json({ 
+          success: false, 
+          message: "Failed to send verification email. Please try again later." 
+        });
+      } else {
+        console.log('Verification email resent successfully via Mailjet');
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Failed to send verification email. Please try again later." 
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: "Verification email has been sent to your email address. Please check your inbox."
+    });
+  } catch (error: any) {
+    console.error("Resend verification error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to resend verification email: " + error.message 
+    });
+  }
+});
+
 
 
 export default router;
