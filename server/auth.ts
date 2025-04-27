@@ -140,14 +140,41 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint
+  // Login endpoint with enhanced email verification handling
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ success: false, message: info?.message || "Authentication failed" });
+      
+      if (!user) {
+        // Check if this is specifically a verification issue
+        if (info && info.message === "Please verify your email before logging in") {
+          return res.status(403).json({ 
+            success: false, 
+            message: "Your email address has not been verified yet",
+            code: "EMAIL_NOT_VERIFIED",
+            email: req.body.email
+          });
+        }
+        
+        // General authentication failure
+        return res.status(401).json({ 
+          success: false, 
+          message: info?.message || "Authentication failed" 
+        });
+      }
       
       req.login(user, (err: Error | null) => {
         if (err) return next(err);
+        
+        // Include unverified status warning in the response if needed
+        if (user.role === 'patient' && !user.emailVerified) {
+          return res.json({ 
+            success: true, 
+            user,
+            warnings: ["Your email is not verified. Some features may be limited."]
+          });
+        }
+        
         return res.json({ success: true, user });
       });
     })(req, res, next);
