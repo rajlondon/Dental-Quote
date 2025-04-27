@@ -45,8 +45,8 @@ const mailjet = MailJet.apiConnect(
   process.env.MAILJET_SECRET_KEY || ''
 );
 
-// Configuration 
-const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com';
+// Configuration with verified domain
+const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'noreply@mydentalfly.com';
 const SENDER_NAME = process.env.MAILJET_SENDER_NAME || 'MyDentalFly';
 const ADMIN_EMAIL = process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com';
 
@@ -252,9 +252,10 @@ export async function sendEmailNotification(notificationData: NotificationData):
     }
 
     const { quoteData, isCalculationOnly } = notificationData;
-    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com';
+    // Use the configured sender email constant for consistency
+    const senderEmail = SENDER_EMAIL;
     // Admin notification recipient - using environment variable with fallback
-    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com';
+    const recipientEmail = ADMIN_EMAIL;
 
     console.log(`[Notification] Using sender email: ${senderEmail}`);
     console.log(`[Notification] Using recipient email: ${recipientEmail}`);
