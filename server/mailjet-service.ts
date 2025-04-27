@@ -692,7 +692,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
                 <p>We've attached a comprehensive PDF quote to this email that includes more details about:</p>
                 <ul>
                   <li>Price comparisons with UK clinics</li>
-                  <li>Our partner clinics in Istanbul</li>
+                  <li>Our partner clinics in Turkey</li>
                   <li>Treatment process and timelines</li>
                   <li>Accommodation and travel options</li>
                 </ul>
@@ -756,7 +756,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
         },
         To: [
           {
-            Email: 'rajsingh140186@googlemail.com',
+            Email: process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com',
             Name: "MyDentalFly Admin"
           }
         ],
