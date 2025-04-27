@@ -11,26 +11,26 @@ import { useToast } from "@/hooks/use-toast";
 interface User {
   id: number;
   email: string;
-  username: string;
   firstName?: string;
   lastName?: string;
   role: string;
-  isVerified: boolean;
+  isVerified?: boolean;
+  emailVerified?: boolean;
   stripeCustomerId?: string;
 }
 
 interface LoginData {
-  username: string;
+  email: string;
   password: string;
 }
 
 interface RegisterData {
-  username: string;
   email: string;
   password: string;
   firstName?: string;
   lastName?: string;
-  role?: string;
+  phone?: string;
+  consent?: boolean;
 }
 
 // Context type
@@ -79,10 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      // Passport.js expects username/password fields
-      // But our server expects email/password
+      // Server expects email/password
       const res = await apiRequest("POST", "/api/auth/login", {
-        email: credentials.username,
+        email: credentials.email,
         password: credentials.password
       });
       if (!res.ok) {
@@ -97,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/auth/user"], user);
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.firstName || user.username}!`,
+        description: `Welcome back, ${user.firstName || user.email}!`,
       });
     },
     onError: (error: Error) => {
@@ -124,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/auth/user"], user);
       toast({
         title: "Registration successful",
-        description: "Your account has been created",
+        description: "Please check your email to verify your account",
       });
     },
     onError: (error: Error) => {
