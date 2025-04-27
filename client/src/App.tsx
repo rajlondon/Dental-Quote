@@ -132,6 +132,9 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/verify-email" component={VerifyEmailPage} />
+      <Route path="/verification-sent" component={VerificationSentPage} />
+      <Route path="/email-verified" component={EmailVerifiedPage} />
+      <Route path="/verification-failed" component={VerificationFailedPage} />
       
       {/* Admin-only Protected Routes */}
       <ProtectedRoute path="/admin-portal" component={AdminPortalPage} requiredRole="admin" />

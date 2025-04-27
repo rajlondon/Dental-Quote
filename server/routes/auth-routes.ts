@@ -137,14 +137,30 @@ router.get("/verify-email", async (req: Request, res: Response) => {
       .set({ status: "active" })
       .where(eq(users.id, userId));
     
-    // Redirect to login page with success message
-    res.redirect("/portal-login?verified=true");
+    // Redirect to email verified success page
+    res.redirect("/email-verified");
   } catch (error: any) {
     console.error("Email verification error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Email verification failed: " + error.message 
-    });
+    
+    // Try to extract user email if possible
+    let userEmail = "";
+    if (userId) {
+      try {
+        const [user] = await db.select().from(users).where(eq(users.id, userId));
+        if (user && user.email) {
+          userEmail = user.email;
+        }
+      } catch (dbError) {
+        console.error("Error getting user email for verification failed page:", dbError);
+      }
+    }
+    
+    // Redirect to verification-failed page with email if available
+    if (userEmail) {
+      res.redirect(`/verification-failed?email=${encodeURIComponent(userEmail)}`);
+    } else {
+      res.redirect("/verification-failed");
+    }
   }
 });
 
@@ -406,5 +422,81 @@ router.post("/resend-verification", async (req: Request, res: Response) => {
 });
 
 
+
+// Public resend verification (used after registration for users who aren't logged in)
+router.post("/public-resend-verification", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+    
+    // Get user with email
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    
+    if (!user) {
+      // For security, don't reveal if the user exists
+      return res.status(200).json({
+        success: true,
+        message: "If your email is registered and not yet verified, a verification link has been sent."
+      });
+    }
+    
+    // Check if email is already verified
+    if (user.emailVerified) {
+      return res.status(200).json({
+        success: true,
+        message: "If your email is registered and not yet verified, a verification link has been sent."
+      });
+    }
+    
+    // Create new verification token
+    const verificationToken = await createVerificationToken(user.id, "email_verification");
+    
+    // Generate verification URL
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+    
+    // Format verification email data
+    const userName = user.firstName || "User";
+    const verificationData = {
+      userEmail: user.email,
+      userName: userName,
+      verificationLink: verificationUrl
+    };
+    
+    // Import the Mailjet service
+    try {
+      const { sendVerificationEmail } = await import('../mailjet-service');
+      const emailSent = await sendVerificationEmail(verificationData);
+      
+      if (!emailSent) {
+        console.warn('Mailjet email sending failed or not configured');
+        // Don't reveal error details for security
+      } else {
+        console.log('Verification email sent successfully via Mailjet');
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Don't reveal error details for security
+    }
+    
+    // For security, always return a successful response
+    res.status(200).json({
+      success: true,
+      message: "If your email is registered and not yet verified, a verification link has been sent."
+    });
+  } catch (error: any) {
+    console.error("Public resend verification error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to process your request. Please try again later." 
+    });
+  }
+});
 
 export default router;
