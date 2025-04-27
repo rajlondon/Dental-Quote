@@ -35,10 +35,8 @@ const VerificationSentPage: React.FC = () => {
     try {
       setIsResending(true);
       
-      // Make API call to resend verification
-      // This will only work if the user is logged in, so we may need to create a different endpoint
-      // that doesn't require authentication for just registered users
-      const response = await fetch('/api/auth/resend-verification', {
+      // Use the public endpoint that doesn't require authentication
+      const response = await fetch('/api/auth/public-resend-verification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -51,7 +49,7 @@ const VerificationSentPage: React.FC = () => {
       if (response.ok) {
         toast({
           title: "Verification Email Sent",
-          description: "Please check your inbox for the verification link.",
+          description: "If your email is registered and not yet verified, you will receive a verification link.",
         });
       } else {
         toast({
