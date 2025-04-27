@@ -22,6 +22,8 @@ declare global {
       lastName?: string;
       profileImage?: string;
       clinicId?: number;
+      emailVerified?: boolean;
+      status?: string;
     }
   }
 }
@@ -69,6 +71,11 @@ export async function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect password" });
         }
         
+        // Check if email is verified for patients (admin and clinic users can bypass)
+        if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
+          return done(null, false, { message: "Please verify your email before logging in" });
+        }
+        
         // Return user without password
         const { password: _, ...userWithoutPassword } = user;
         // Cast to match the Express.User interface
@@ -79,7 +86,9 @@ export async function setupAuth(app: Express) {
           firstName: user.firstName || undefined,
           lastName: user.lastName || undefined,
           profileImage: user.profileImage || undefined,
-          clinicId: user.clinicId || undefined
+          clinicId: user.clinicId || undefined,
+          emailVerified: user.emailVerified || false,
+          status: user.status || 'pending'
         };
         return done(null, userForAuth);
       } catch (err) {
@@ -103,7 +112,9 @@ export async function setupAuth(app: Express) {
         firstName: users.firstName,
         lastName: users.lastName,
         profileImage: users.profileImage,
-        clinicId: users.clinicId
+        clinicId: users.clinicId,
+        emailVerified: users.emailVerified,
+        status: users.status
       }).from(users).where(eq(users.id, id));
       
       if (!user) {
@@ -118,7 +129,9 @@ export async function setupAuth(app: Express) {
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
         profileImage: user.profileImage || undefined,
-        clinicId: user.clinicId || undefined
+        clinicId: user.clinicId || undefined,
+        emailVerified: user.emailVerified || false,
+        status: user.status || 'pending'
       };
       
       done(null, userForAuth);
