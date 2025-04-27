@@ -14,8 +14,10 @@ interface User {
   firstName?: string;
   lastName?: string;
   role: string;
-  isVerified?: boolean;
   emailVerified?: boolean;
+  status?: string;
+  profileImage?: string;
+  clinicId?: number;
   stripeCustomerId?: string;
 }
 
@@ -94,10 +96,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/auth/user"], user);
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.firstName || user.email}!`,
-      });
+      
+      // Show appropriate messages based on verification status
+      if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${user.firstName || user.email}! Please verify your email to access all features.`,
+          variant: "warning"
+        });
+      } else {
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${user.firstName || user.email}!`,
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
