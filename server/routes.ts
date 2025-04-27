@@ -201,6 +201,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register routes for email verification, password reset, and user registration
   app.use('/api/auth', authRoutesRouter);
   
+  // Redirect the frontend /verify-email route to the backend API route
+  app.get('/verify-email', (req, res) => {
+    const token = req.query.token;
+    res.redirect(`/api/auth/verify-email?token=${token}`);
+  });
+  
   // Register payment routes
   app.use('/api/payments', paymentRoutes);
   

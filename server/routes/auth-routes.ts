@@ -103,8 +103,11 @@ router.post("/register", async (req: Request, res: Response) => {
   }
 });
 
-// Verify email
+// Verify email - This route is accessed via /verify-email?token=X on frontend
+// but mapped to /api/auth/verify-email?token=X in the server
 router.get("/verify-email", async (req: Request, res: Response) => {
+  let userId: number | undefined;
+  
   try {
     const { token } = req.query;
     
@@ -116,7 +119,9 @@ router.get("/verify-email", async (req: Request, res: Response) => {
     }
     
     // Verify token
-    const { valid, userId } = await verifyToken(token, "email_verification");
+    const tokenResult = await verifyToken(token, "email_verification");
+    userId = tokenResult.userId;
+    const valid = tokenResult.valid;
     
     if (!valid || !userId) {
       return res.status(400).json({ 
@@ -142,8 +147,21 @@ router.get("/verify-email", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Email verification error:", error);
     
-    // Try to extract user email if possible
+    // Try to extract user email if possible from the token
     let userEmail = "";
+    let userId: number | undefined;
+    
+    // Try to get userId from the token in the query
+    try {
+      const token = req.query.token as string;
+      if (token) {
+        const tokenData = await verifyToken(token, "email_verification");
+        userId = tokenData.userId;
+      }
+    } catch (tokenError) {
+      console.error("Error getting userId from token:", tokenError);
+    }
+    
     if (userId) {
       try {
         const [user] = await db.select().from(users).where(eq(users.id, userId));
