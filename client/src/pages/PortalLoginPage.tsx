@@ -153,7 +153,7 @@ const PortalLoginPage: React.FC = () => {
       
       // Use the loginMutation from useAuth hook
       const userData = await loginMutation.mutateAsync({
-        username: values.email,
+        email: values.email,
         password: values.password
       });
       
@@ -231,6 +231,16 @@ const PortalLoginPage: React.FC = () => {
               <AlertTitle>You selected {selectedClinicName}</AlertTitle>
               <AlertDescription>
                 Please log in or create an account to continue with your booking.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {/* Display verification reminder for unverified users */}
+          {user && user.role === 'patient' && !user.emailVerified && user.status === 'pending' && (
+            <Alert className="mb-6 bg-amber-50 border-amber-200">
+              <AlertTitle>Email Verification Required</AlertTitle>
+              <AlertDescription>
+                Please check your email inbox and click the verification link to activate your account.
               </AlertDescription>
             </Alert>
           )}

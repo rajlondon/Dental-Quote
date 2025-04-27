@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Login successful",
           description: `Welcome back, ${user.firstName || user.email}! Please verify your email to access all features.`,
-          variant: "warning"
+          variant: "destructive"
         });
       } else {
         toast({
