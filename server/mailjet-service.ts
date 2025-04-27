@@ -252,9 +252,9 @@ export async function sendEmailNotification(notificationData: NotificationData):
     }
 
     const { quoteData, isCalculationOnly } = notificationData;
-    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
-    // Hardcoding the correct email address to solve the issue
-    const recipientEmail = 'rajsingh140186@googlemail.com';
+    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com';
+    // Admin notification recipient - using environment variable with fallback
+    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com';
 
     console.log(`[Notification] Using sender email: ${senderEmail}`);
     console.log(`[Notification] Using recipient email: ${recipientEmail}`);
