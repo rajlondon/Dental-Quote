@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
   
-  // Login mutation
+  // Login mutation with enhanced verification handling
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       // Server expects email/password
@@ -86,19 +86,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: credentials.email,
         password: credentials.password
       });
+      
+      // Handle specific response codes
       if (!res.ok) {
         const errorData = await res.json();
+        
+        // Special handling for verification errors
+        if (res.status === 403 && errorData.code === "EMAIL_NOT_VERIFIED") {
+          const verificationError = new Error(errorData.message);
+          // @ts-ignore - Add custom properties to the error
+          verificationError.code = "EMAIL_NOT_VERIFIED";
+          // @ts-ignore
+          verificationError.email = errorData.email;
+          throw verificationError;
+        }
+        
         throw new Error(errorData.message || "Login failed");
       }
+      
       const data = await res.json();
+      
+      // Store any warnings for display
+      if (data.warnings && data.warnings.length > 0) {
+        // Store warnings temporarily
+        localStorage.setItem('auth_warnings', JSON.stringify(data.warnings));
+      } else {
+        localStorage.removeItem('auth_warnings');
+      }
+      
       // The server returns {success: true, user: {...}}
       return data.user || data;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/auth/user"], user);
       
+      // Check for auth warnings from localStorage
+      const warningsStr = localStorage.getItem('auth_warnings');
+      const warnings = warningsStr ? JSON.parse(warningsStr) : [];
+      
       // Show appropriate messages based on verification status
-      if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
+      if (warnings.length > 0) {
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${user.firstName || user.email}! ${warnings[0]}`,
+          variant: "warning"
+        });
+        localStorage.removeItem('auth_warnings');
+      } else if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
         toast({
           title: "Login successful",
           description: `Welcome back, ${user.firstName || user.email}! Please verify your email to access all features.`,
@@ -112,6 +146,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
+      // @ts-ignore - Check for custom error properties
+      if (error.code === "EMAIL_NOT_VERIFIED") {
+        toast({
+          title: "Email verification required",
+          description: "Your email has not been verified yet. Please check your inbox for the verification link.",
+          variant: "destructive",
+        });
+        
+        // @ts-ignore - Use the email from the error
+        if (error.email) {
+          // Redirect to verification sent page to allow resending
+          window.location.href = `/verification-sent?email=${encodeURIComponent(error.email)}`;
+        }
+        return;
+      }
+      
+      // Regular error handling
       toast({
         title: "Login failed",
         description: error.message || "Invalid credentials",
