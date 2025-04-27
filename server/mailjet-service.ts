@@ -289,7 +289,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
     const adminMessage: any = {
       From: {
         Email: senderEmail,
-        Name: "Istanbul Dental Smile"
+        Name: "MyDentalFly"
       },
       To: [
         {
@@ -302,7 +302,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
             <h1 style="margin: 0;">${isCalculationOnly ? 'New Quote Calculation' : 'New Quote Downloaded'}</h1>
-            <p style="margin: 5px 0 0 0;">Istanbul Dental Smile</p>
+            <p style="margin: 5px 0 0 0;">MyDentalFly</p>
           </div>
 
           <div style="background-color: #f9f9f9; padding: 20px;">
@@ -377,8 +377,8 @@ export async function sendEmailNotification(notificationData: NotificationData):
           </div>
 
           <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-            <p>This is an automated notification from the Istanbul Dental Smile website.</p>
-            <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
+            <p>This is an automated notification from the MyDentalFly platform.</p>
+            <p style="margin-bottom: 0;">mydentalfly.com | info@mydentalfly.com</p>
           </div>
         </div>
       `
@@ -454,7 +454,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     }
 
     const { pdfBuffer, quoteData, filename } = emailData;
-    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk';
+    const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com';
     // Hardcoding the correct email address to solve the issue
     const recipientEmail = 'rajsingh140186@googlemail.com';
 
@@ -612,8 +612,8 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
           </div>
 
           <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-            <p>This is an automated notification from the Istanbul Dental Smile website.</p>
-            <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
+            <p>This is an automated notification from the MyDentalFly platform.</p>
+            <p style="margin-bottom: 0;">mydentalfly.com | info@mydentalfly.com</p>
           </div>
         </div>
       `,
@@ -705,7 +705,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
 
             <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
               <p>Istanbul Dental Smile | Your UK-Based Dental Tourism Specialists</p>
-              <p style="margin-bottom: 0;">istanbuldentalsmile.co.uk | info@istanbuldentalsmile.co.uk</p>
+              <p style="margin-bottom: 0;">mydentalfly.com | info@mydentalfly.com</p>
             </div>
           </div>
         `,
@@ -751,7 +751,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       // Create a simplified message for the fallback attempt
       const fallbackMessage: any = {
         From: {
-          Email: process.env.MAILJET_SENDER_EMAIL || 'info@istanbuldentalsmile.co.uk',
+          Email: process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com',
           Name: "Istanbul Dental Smile"
         },
         To: [
