@@ -294,7 +294,7 @@ export async function sendEmailNotification(notificationData: NotificationData):
       To: [
         {
           Email: recipientEmail,
-          Name: "Raj Singh"
+          Name: "MyDentalFly Admin"
         }
       ],
       Subject: `${isCalculationOnly ? 'New Quote Calculation' : 'New Quote Downloaded'}: ${quoteData.patientName || 'Unnamed Patient'} - ${totalPriceFormatted}`,
@@ -455,8 +455,8 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
 
     const { pdfBuffer, quoteData, filename } = emailData;
     const senderEmail = process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com';
-    // Hardcoding the correct email address to solve the issue
-    const recipientEmail = 'rajsingh140186@googlemail.com';
+    // Admin notification recipient - using environment variable with fallback
+    const recipientEmail = process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com';
 
     console.log(`Using sender email: ${senderEmail}`);
     console.log(`Using recipient email: ${recipientEmail}`);
@@ -537,12 +537,12 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
     const message: any = {
       From: {
         Email: senderEmail,
-        Name: "Istanbul Dental Smile"
+        Name: "MyDentalFly"
       },
       To: [
         {
           Email: recipientEmail,
-          Name: "Raj Singh"
+          Name: "MyDentalFly Admin"
         }
       ],
       Subject: `New Quote Generated: ${quoteData.patientName || 'Unnamed Patient'} - ${totalPriceFormatted}`,
@@ -550,7 +550,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
             <h1 style="margin: 0;">New Quote Generated</h1>
-            <p style="margin: 5px 0 0 0;">Istanbul Dental Smile</p>
+            <p style="margin: 5px 0 0 0;">MyDentalFly</p>
           </div>
 
           <div style="background-color: #f9f9f9; padding: 20px;">
@@ -636,7 +636,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       const patientMessage: any = {
         From: {
           Email: senderEmail,
-          Name: "Istanbul Dental Smile"
+          Name: "MyDentalFly"
         },
         To: [
           {
@@ -644,17 +644,17 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
             Name: quoteData.patientName || 'Valued Customer'
           }
         ],
-        Subject: `Your Dental Treatment Quote from Istanbul Dental Smile`,
+        Subject: `Your Dental Treatment Quote from MyDentalFly`,
         HTMLPart: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #00688B; color: white; padding: 15px; text-align: center;">
               <h1 style="margin: 0;">Your Dental Treatment Quote</h1>
-              <p style="margin: 5px 0 0 0;">Thank you for choosing Istanbul Dental Smile</p>
+              <p style="margin: 5px 0 0 0;">Thank you for choosing MyDentalFly</p>
             </div>
 
             <div style="background-color: #f9f9f9; padding: 20px;">
               <h2 style="color: #007B9E; margin-top: 0;">Hello ${quoteData.patientName || 'there'},</h2>
-              <p>Thank you for your interest in dental treatment with Istanbul Dental Smile. We have prepared a detailed quote based on your requirements.</p>
+              <p>Thank you for your interest in dental treatment with MyDentalFly. We have prepared a detailed quote based on your requirements.</p>
 
               <div style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
                 <h3 style="color: #007B9E; margin-top: 0;">Your Selected Treatments</h3>
@@ -704,7 +704,7 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
             </div>
 
             <div style="background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-              <p>Istanbul Dental Smile | Your UK-Based Dental Tourism Specialists</p>
+              <p>MyDentalFly | Your UK-Based Dental Tourism Specialists</p>
               <p style="margin-bottom: 0;">mydentalfly.com | info@mydentalfly.com</p>
             </div>
           </div>
@@ -752,12 +752,12 @@ export async function sendQuoteEmail(emailData: EmailData): Promise<boolean> {
       const fallbackMessage: any = {
         From: {
           Email: process.env.MAILJET_SENDER_EMAIL || 'info@mydentalfly.com',
-          Name: "Istanbul Dental Smile"
+          Name: "MyDentalFly"
         },
         To: [
           {
             Email: 'rajsingh140186@googlemail.com',
-            Name: "Raj Singh"
+            Name: "MyDentalFly Admin"
           }
         ],
         Subject: `FALLBACK: Quote Generated: ${quoteData.patientName || 'Unnamed Patient'}`,
