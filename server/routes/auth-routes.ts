@@ -15,12 +15,22 @@ router.post("/register", async (req: Request, res: Response) => {
       contentType: req.headers['content-type']
     }));
     
-    const { email, password, firstName, lastName, phone, consentGDPR } = req.body;
-    const consent = consentGDPR; // Match the frontend field name
+    const { email, password, firstName, lastName, phone, consent, consentGDPR } = req.body;
+    // Support both field names for consent (from different parts of the app)
+    const userConsent = consent === true || consentGDPR === true;
+    
+    // Log full validation data for debugging
+    console.log("Full validation check:", { 
+      email: !!email, 
+      password: !!password, 
+      consentField: consent,
+      consentGDPRField: consentGDPR,  
+      finalConsent: userConsent
+    });
     
     // Validate required fields
-    if (!email || !password || !consent) {
-      console.log("Registration validation failed:", { email: !!email, password: !!password, consent: !!consent });
+    if (!email || !password || !userConsent) {
+      console.log("Registration validation failed:", { email: !!email, password: !!password, consent: userConsent });
       return res.status(400).json({ 
         success: false, 
         message: "Email, password, and consent are required" 
