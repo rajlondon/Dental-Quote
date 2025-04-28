@@ -1,40 +1,55 @@
-import React, { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useLocation, Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Check, Lock, Mail, Phone, User, Hospital } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useLocation, Link } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { useTranslation } from 'react-i18next';
+import { 
+  AlertCircle, Check, Lock, Mail, Phone, User 
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
-// Form schema for login
+// Login form schema
 const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }),
 });
 
-// Form schemas for login and registration
-
-// Form schema for registration
+// Registration form schema
 const registerSchema = z.object({
-  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  phone: z.string().min(5, { message: "Please enter a valid phone number" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  fullName: z.string().min(2, {
+    message: "Full name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  phone: z.string().min(6, {
+    message: "Please enter a valid phone number.",
+  }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+  }),
   confirmPassword: z.string(),
   termsConsent: z.boolean().refine(val => val === true, {
-    message: "You must agree to the Terms, Privacy Policy, and Medical Disclaimer to continue."
+    message: "You must accept the terms and conditions.",
   }),
-  contactConsent: z.boolean().optional(),
-  promotionalConsent: z.boolean().optional(),
+  contactConsent: z.boolean(),
+  promotionalConsent: z.boolean(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -42,38 +57,25 @@ const registerSchema = z.object({
 
 const PortalLoginPage: React.FC = () => {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const { user, loginMutation } = useAuth();
-  const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
   const [selectedClinicName, setSelectedClinicName] = useState("");
   
-  // Check if user is already logged in and redirect if needed
+  // Check if user is already authenticated
   useEffect(() => {
-    if (user) {
-      console.log("User already logged in, redirecting:", user.role);
-      if (user.role === 'admin') {
-        navigate('/admin-portal');
-      } else if (user.role === 'clinic_staff') {
-        navigate('/clinic-portal');
-      } else {
-        navigate('/client-portal');
-      }
-    }
-  }, [user, navigate]);
-
-  // Check for query parameters and set selected clinic data
-  useEffect(() => {
-    // Check for clinic type in URL
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get('type');
-    if (type === 'clinic') {
-      document.getElementById('clinic-tab')?.click();
+    if (user && user.role === 'admin') {
+      setLocation('/admin-portal');
+    } else if (user && user.role === 'clinic_staff') {
+      setLocation('/clinic-portal');
+    } else if (user && user.role === 'patient' && user.emailVerified) {
+      setLocation('/client-portal');
     }
     
-    // Check for selected clinic data
-    if (localStorage.getItem('selectedClinic')) {
+    // Check if user came from clinic selection
+    if (localStorage.getItem('selectedClinicId')) {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
@@ -146,7 +148,7 @@ const PortalLoginPage: React.FC = () => {
       });
       
       // Redirect to verification notice page
-      navigate('/verification-sent?email=' + encodeURIComponent(values.email));
+      setLocation('/verification-sent?email=' + encodeURIComponent(values.email));
       
     } catch (error) {
       console.error("Registration error:", error);
@@ -193,14 +195,14 @@ const PortalLoginPage: React.FC = () => {
       
       if (userData.role === 'admin') {
         console.log("Admin user detected, redirecting to admin portal");
-        navigate('/admin-portal');
+        setLocation('/admin-portal');
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
-        navigate('/clinic-portal');
+        setLocation('/clinic-portal');
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");
-        navigate('/client-portal');
+        setLocation('/client-portal');
       }
       
     } catch (error) {
@@ -406,7 +408,7 @@ const PortalLoginPage: React.FC = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Clinic Email</FormLabel>
+                            <FormLabel>{t("form.email", "Email Address")}</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -426,7 +428,7 @@ const PortalLoginPage: React.FC = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>{t("portal.login.password", "Password")}</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -447,14 +449,12 @@ const PortalLoginPage: React.FC = () => {
                       </Button>
                     </form>
                   </Form>
+                  <div className="mt-4 text-sm text-center">
+                    <p className="text-neutral-500">
+                      To register as a new clinic partner, please <Link href="/contact" className="text-primary hover:underline">contact us</Link>.
+                    </p>
+                  </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Link href="/forgot-password">
-                    <Button variant="link" className="px-0">
-                      Forgot password?
-                    </Button>
-                  </Link>
-                </CardFooter>
               </Card>
             </TabsContent>
             
@@ -469,7 +469,11 @@ const PortalLoginPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <Form {...registerForm}>
-                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      console.log("Form submitted with values:", registerForm.getValues());
+                      registerForm.handleSubmit(onRegisterSubmit)(e);
+                    }} className="space-y-4">
                       <FormField
                         control={registerForm.control}
                         name="fullName"
