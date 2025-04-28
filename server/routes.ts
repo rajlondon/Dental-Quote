@@ -27,6 +27,7 @@ import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
+import testRoutes from "./routes/test-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import security middleware
@@ -209,6 +210,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register payment routes
   app.use('/api/payments', paymentRoutes);
+  
+  // Register test routes (only available in development mode)
+  if (process.env.NODE_ENV !== 'production') {
+    app.use('/api/test', testRoutes);
+    console.log('✅ Test routes registered (only available in development mode)');
+  }
   
   // Create the uploads directory for files if it doesn't exist
   const uploadsDir = path.join(process.cwd(), 'uploads');
