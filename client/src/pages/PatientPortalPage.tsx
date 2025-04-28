@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { NotificationsPopover } from '@/components/ui/notifications-popover';
 
 // Import client portal components
 import MessagingSection from '@/components/portal/MessagingSection';
@@ -195,7 +196,7 @@ const PatientPortalPage: React.FC = () => {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
         <div className="p-6">
-          <div className="flex items-center mb-4">
+          <div className="flex items-center justify-between mb-4">
             <a href="/" className="block">
               <img 
                 src="/images/mydentalfly-logo.png" 
@@ -203,6 +204,7 @@ const PatientPortalPage: React.FC = () => {
                 className="h-10 w-auto mb-2 cursor-pointer" 
               />
             </a>
+            <NotificationsPopover />
           </div>
           <h1 className="text-xl font-bold text-blue-600">
             {t('portal.title', 'Patient Portal')}
@@ -281,81 +283,83 @@ const PatientPortalPage: React.FC = () => {
             </h1>
           </div>
           
-          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <a href="/" className="block">
-                      <img 
-                        src="/images/mydentalfly-logo.png" 
-                        alt="MyDentalFly Logo" 
-                        className="h-12 w-auto mb-2 shadow-sm border border-gray-100 rounded-md p-1 cursor-pointer" 
-                      />
-                    </a>
-                    <h2 className="text-lg font-bold text-blue-600">
-                      {t('portal.title', 'Patient Portal')}
-                    </h2>
+          <div className="flex items-center gap-2">
+            <NotificationsPopover />
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <a href="/" className="block">
+                        <img 
+                          src="/images/mydentalfly-logo.png" 
+                          alt="MyDentalFly Logo" 
+                          className="h-12 w-auto mb-2 shadow-sm border border-gray-100 rounded-md p-1 cursor-pointer" 
+                        />
+                      </a>
+                      <h2 className="text-lg font-bold text-blue-600">
+                        {t('portal.title', 'Patient Portal')}
+                      </h2>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
+                      <X className="h-5 w-5" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
-                    <X className="h-5 w-5" />
+                  <p className="text-sm text-gray-500">
+                    {t('portal.welcome', 'Welcome back')}
+                  </p>
+                </div>
+              
+                <Separator />
+                
+                <ScrollArea className="h-[calc(100vh-12rem)]">
+                  <nav className="p-4">
+                    <ul className="space-y-1">
+                      {navItems.map((item) => (
+                        <li key={item.id}>
+                          <Button
+                            variant={activeSection === item.id ? "default" : "ghost"}
+                            className={`w-full justify-start ${activeSection === item.id ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800' : ''}`}
+                            onClick={() => handleNavigation(item.id)}
+                          >
+                            <div className="flex items-center w-full">
+                              <span className="mr-3">{item.icon}</span>
+                              <span>{t(`portal.nav.${item.id}`, item.label)}</span>
+                              {item.notificationCount && (
+                                <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
+                              )}
+                            </div>
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                </ScrollArea>
+                
+                <div className="p-4 mt-auto border-t border-gray-200">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-gray-700 mb-2"
+                    onClick={() => setLocation('/account-settings')}
+                  >
+                    <UserCog className="h-5 w-5 mr-3" />
+                    {t('portal.account_settings', 'Account Settings')}
+                  </Button>
+                
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-gray-700"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5 mr-3" />
+                    {t('portal.logout', 'Logout')}
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500">
-                  {t('portal.welcome', 'Welcome back')}
-                </p>
-              </div>
-              
-              <Separator />
-              
-              <ScrollArea className="h-[calc(100vh-12rem)]">
-                <nav className="p-4">
-                  <ul className="space-y-1">
-                    {navItems.map((item) => (
-                      <li key={item.id}>
-                        <Button
-                          variant={activeSection === item.id ? "default" : "ghost"}
-                          className={`w-full justify-start ${activeSection === item.id ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800' : ''}`}
-                          onClick={() => handleNavigation(item.id)}
-                        >
-                          <div className="flex items-center w-full">
-                            <span className="mr-3">{item.icon}</span>
-                            <span>{t(`portal.nav.${item.id}`, item.label)}</span>
-                            {item.notificationCount && (
-                              <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
-                            )}
-                          </div>
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </ScrollArea>
-              
-              <div className="p-4 mt-auto border-t border-gray-200">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start text-gray-700 mb-2"
-                  onClick={() => setLocation('/account-settings')}
-                >
-                  <UserCog className="h-5 w-5 mr-3" />
-                  {t('portal.account_settings', 'Account Settings')}
-                </Button>
-              
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start text-gray-700"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-5 w-5 mr-3" />
-                  {t('portal.logout', 'Logout')}
-                </Button>
-              </div>
             </SheetContent>
           </Sheet>
         </div>
@@ -368,6 +372,8 @@ const PatientPortalPage: React.FC = () => {
     </div>
   );
 };
+
+export default PatientPortalPage;
 
 // Dashboard section component
 interface DashboardSectionProps {
