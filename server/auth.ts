@@ -6,10 +6,11 @@ import bcrypt from "bcrypt";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
-import memorystore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
-// Create memory store for sessions
-const MemoryStore = memorystore(session);
+// Create PostgreSQL session store with automatic table creation
+const PgSessionStore = connectPgSimple(session);
 
 // Extend Express.User interface
 declare global {
@@ -34,12 +35,17 @@ export async function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "mydentalfly_dev_secret",
     resave: false,
     saveUninitialized: false,
-    store: new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    store: new PgSessionStore({
+      pool, // Use the existing Neon pooled database connection
+      tableName: 'session', // Default session table name
+      createTableIfMissing: true, // Auto-create the session table if it doesn't exist
+      pruneSessionInterval: 60 * 60 // Prune expired sessions every hour
     }),
     cookie: { 
       secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days for longer persistence
+      sameSite: 'lax',
+      path: '/'
     }
   };
 
