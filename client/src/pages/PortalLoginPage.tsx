@@ -84,31 +84,60 @@ const PortalLoginPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Make API call to register endpoint
+      console.log("Starting registration with values:", {
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone,
+        termsConsent: values.termsConsent,
+        contactConsent: values.contactConsent,
+        promotionalConsent: values.promotionalConsent
+      });
+      
+      const firstName = values.fullName.split(' ')[0] || '';
+      const lastName = values.fullName.split(' ').slice(1).join(' ') || '';
+      
+      const requestBody = {
+        firstName,
+        lastName,
+        email: values.email,
+        phone: values.phone,
+        password: values.password,
+        role: 'patient', // Default role for new registrations
+        consent: values.termsConsent, // Match the backend field name
+        consentContact: values.contactConsent || false,
+        consentMarketing: values.promotionalConsent || false,
+      };
+      
+      console.log("Sending registration request with body:", requestBody);
+      
+      // Make direct API call to debug
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          firstName: values.fullName.split(' ')[0],
-          lastName: values.fullName.split(' ').slice(1).join(' '),
-          email: values.email,
-          phone: values.phone,
-          password: values.password,
-          role: 'patient', // Default role for new registrations
-          consentGDPR: values.termsConsent,
-          consentContact: values.contactConsent || false,
-          consentMarketing: values.promotionalConsent || false,
-        }),
+        body: JSON.stringify(requestBody),
+        credentials: 'include' // Important to include cookies
       });
       
+      console.log("Registration response status:", response.status);
+      
+      const respText = await response.text();
+      console.log("Response text:", respText);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
+        try {
+          const errorData = JSON.parse(respText);
+          console.error("Registration error data:", errorData);
+          throw new Error(errorData.message || "Registration failed");
+        } catch (parseError) {
+          console.error("Error parsing response:", parseError);
+          throw new Error("Registration failed with status: " + response.status);
+        }
       }
       
-      const data = await response.json();
+      // Parse the response text as JSON since we already consumed the response body
+      const data = respText ? JSON.parse(respText) : {};
       
       // Show success message based on response
       toast({
