@@ -152,9 +152,14 @@ const PortalLoginPage: React.FC = () => {
       
     } catch (error) {
       console.error("Registration error:", error);
+      // Extract specific error message if available
+      const errorMessage = (error instanceof Error) ? error.message : "There was a problem with your registration. Please try again.";
+      
       toast({
         title: "Registration Failed",
-        description: "There was a problem with your registration. Please try again.",
+        description: errorMessage.includes("User with this email already exists") 
+          ? "This email is already registered. Please use a different email or try logging in." 
+          : errorMessage,
         variant: "destructive",
       });
     } finally {
