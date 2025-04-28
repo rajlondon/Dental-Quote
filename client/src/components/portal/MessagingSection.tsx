@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/use-notifications';
 import type { Message, Attachment } from '@/types/clientPortal';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -132,6 +133,8 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
   const { t } = useTranslation();
   const { toast } = useToast();
   const location = window.location.hash;
+  // Add notifications integration
+  const { notifications, markAsRead } = useNotifications();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -171,6 +174,19 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
       }
     }
   }, [messages]);
+  
+  // Mark message notifications as read when component mounts
+  useEffect(() => {
+    // Find any message notifications that are unread
+    const messageNotifications = notifications.filter(
+      notification => notification.type === 'message' && !notification.read
+    );
+    
+    // Mark them as read
+    messageNotifications.forEach(notification => {
+      markAsRead(notification.id);
+    });
+  }, [notifications, markAsRead]);
 
   // State to track upload progress for each attachment
   const [uploadingFiles, setUploadingFiles] = useState<{[key: string]: boolean}>({});
@@ -384,8 +400,14 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
   return (
     <div className="flex flex-col h-full">
       <Card className="flex flex-col h-full">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex justify-between items-center">
           <CardTitle>{t('portal.messages.title', 'Messages')}</CardTitle>
+          {/* Show unread message count from notifications */}
+          {notifications.filter(n => n.type === 'message' && !n.read).length > 0 && (
+            <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+              {notifications.filter(n => n.type === 'message' && !n.read).length} {t('portal.messages.new', 'New')}
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className="flex-grow overflow-hidden p-0">

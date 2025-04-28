@@ -249,8 +249,18 @@ const PatientPortalPage: React.FC = () => {
   // Nav items with icons
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { id: 'messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, notificationCount: 3 },
-    { id: 'appointments', label: 'Appointments', icon: <Calendar className="h-5 w-5" />, notificationCount: 1 },
+    { 
+      id: 'messages', 
+      label: 'Messages', 
+      icon: <MessageSquare className="h-5 w-5" />, 
+      notificationCount: notifications.filter(n => n.type === 'message' && !n.read).length 
+    },
+    { 
+      id: 'appointments', 
+      label: 'Appointments', 
+      icon: <Calendar className="h-5 w-5" />, 
+      notificationCount: notifications.filter(n => n.type === 'appointment' && !n.read).length 
+    },
     { id: 'documents', label: 'Documents', icon: <FileText className="h-5 w-5" /> },
     { id: 'treatment_plan', label: 'Treatment Plan', icon: <Stethoscope className="h-5 w-5" /> },
     { id: 'dental_chart', label: 'Dental Chart', icon: <BarChart2 className="h-5 w-5" /> },
