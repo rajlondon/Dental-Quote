@@ -252,4 +252,51 @@ router.get("/session-check", (req: Request, res: Response) => {
   }
 });
 
+// Test endpoint to delete a user by email (ONLY available in development mode)
+router.delete("/delete-user-by-email/:email", async (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  try {
+    const { email } = req.params;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email parameter is required" 
+      });
+    }
+    
+    // Find the user first to confirm it exists
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found with this email" 
+      });
+    }
+    
+    // Delete the user
+    await db.delete(users).where(eq(users.email, email));
+    
+    return res.status(200).json({
+      success: true,
+      message: `User with email ${email} has been successfully deleted`
+    });
+  } catch (error: any) {
+    console.error("User deletion error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+      error: error
+    });
+  }
+});
+
 export default router;
