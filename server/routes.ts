@@ -28,6 +28,8 @@ import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
+import messagingRoutes from "./routes/messaging-routes";
+import notificationRoutes from "./routes/notification-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import security middleware
@@ -210,6 +212,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register payment routes
   app.use('/api/payments', paymentRoutes);
+  
+  // Register messaging routes for cross-portal communication
+  app.use('/api/messages', messagingRoutes);
+  
+  // Register notification routes
+  app.use('/api/notifications', notificationRoutes);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
