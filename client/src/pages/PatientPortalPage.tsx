@@ -44,8 +44,8 @@ const mockBookingData = {
   journeyProgress: 35
 };
 
-// Each section component will be defined in its own file in a real application
-const MessagingSection = () => <div className="p-4">Messaging functionality would go here</div>;
+// Import MessagingSection component
+import MessagingSection from '@/components/portal/MessagingSection';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
