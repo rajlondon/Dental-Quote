@@ -244,7 +244,7 @@ const PatientPortalPage: React.FC = () => {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const { t } = useTranslation();
-  const { unreadCount, notifications } = useNotifications();
+  const { unreadCount, notifications, markAsRead, markAllAsRead } = useNotifications();
 
   // Nav items with icons
   const navItems = [
@@ -446,7 +446,12 @@ const PatientPortalPage: React.FC = () => {
           
           {/* Add notifications icon in mobile header */}
           <div className="flex items-center space-x-2">
-            <NotificationsPopover notifications={notifications} unreadCount={unreadCount} />
+            <NotificationsPopover 
+              notifications={notifications} 
+              unreadCount={unreadCount}
+              markAsRead={markAsRead}
+              markAllAsRead={markAllAsRead}
+            />
           </div>
         </div>
       </div>
@@ -463,7 +468,12 @@ const PatientPortalPage: React.FC = () => {
             </div>
             <div className="ml-4 flex items-center md:ml-6 space-x-3">
               {/* Desktop notifications icon */}
-              <NotificationsPopover notifications={notifications} unreadCount={unreadCount} />
+              <NotificationsPopover 
+                notifications={notifications} 
+                unreadCount={unreadCount}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead} 
+              />
               
               <Button 
                 variant="ghost" 
