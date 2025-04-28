@@ -3,6 +3,8 @@ import { db } from "../db";
 import { createVerificationToken } from "../services/email-service";
 import { users } from "../../shared/schema";
 import { eq } from "drizzle-orm";
+import passport from "passport";
+import bcrypt from "bcrypt";
 
 const router: Router = express.Router();
 
@@ -79,6 +81,132 @@ router.post("/test-verification-email", async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error("Test verification email error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+      error: error
+    });
+  }
+});
+
+// Test login endpoint (ONLY available in development mode)
+router.post("/test-login", async (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email and password are required" 
+      });
+    }
+    
+    // Get user with email
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    
+    if (!user) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid credentials" 
+      });
+    }
+    
+    // Check if the user's email is verified
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Email not verified",
+        code: "EMAIL_NOT_VERIFIED",
+        userId: user.id
+      });
+    }
+    
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid credentials" 
+      });
+    }
+    
+    // Login the user
+    req.login(user, (err) => {
+      if (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Login failed",
+          error: err.message
+        });
+      }
+      
+      // Return user data (without sensitive information)
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        user: userWithoutPassword
+      });
+    });
+  } catch (error: any) {
+    console.error("Test login error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+      error: error
+    });
+  }
+});
+
+// Test user verification status endpoint (ONLY available in development mode)
+router.get("/verification-status/:email", async (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  try {
+    const { email } = req.params;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email is required" 
+      });
+    }
+    
+    // Get user with email
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found with this email" 
+      });
+    }
+    
+    // Return verification status
+    return res.status(200).json({
+      success: true,
+      email: user.email,
+      verified: user.emailVerified,
+      verifiedAt: user.emailVerifiedAt
+    });
+  } catch (error: any) {
+    console.error("Verification status error:", error);
     return res.status(500).json({
       success: false,
       message: `Server error: ${error.message}`,
