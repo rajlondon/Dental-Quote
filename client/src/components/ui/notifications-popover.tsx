@@ -1,162 +1,150 @@
-import React from 'react';
-import { Bell, Check, CheckCheck, Trash2, X } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useState } from 'react';
+import { useLocation } from 'wouter';
+import { format, formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { useNotifications, Notification } from '@/hooks/use-notifications';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Notification } from '@/hooks/use-notifications';
 
-export function NotificationsPopover() {
+interface NotificationsPopoverProps {
+  notifications: Notification[];
+  unreadCount: number;
+  markAsRead?: (id: string) => void;
+  markAllAsRead?: () => void;
+}
+
+export function NotificationsPopover({ 
+  notifications, 
+  unreadCount, 
+  markAsRead = () => {}, 
+  markAllAsRead = () => {} 
+}: NotificationsPopoverProps) {
   const { t } = useTranslation();
-  const { 
-    notifications, 
-    unreadCount, 
-    isLoading, 
-    markAsRead, 
-    markAllAsRead,
-    deleteNotification 
-  } = useNotifications();
-  const [open, setOpen] = React.useState(false);
-  
-  const handleMarkAsRead = (notification: Notification) => {
-    if (!notification.isRead) {
-      markAsRead(notification.id);
+  const [isOpen, setIsOpen] = useState(false);
+  const [_, setLocation] = useLocation();
+
+  const handleNotificationClick = (notification: Notification) => {
+    markAsRead(notification.id);
+    if (notification.actionUrl) {
+      setLocation(notification.actionUrl);
     }
+    setIsOpen(false);
   };
-  
-  const handleMarkAllAsRead = () => {
-    markAllAsRead();
-  };
-  
-  const handleDelete = (e: React.MouseEvent, notificationId: number) => {
-    e.stopPropagation();
-    deleteNotification(notificationId);
-  };
-  
+
   // Get notification icon based on type
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
-      case 'success':
-        return <div className="bg-green-100 text-green-600 p-2 rounded-full"><Check className="h-4 w-4" /></div>;
-      case 'warning':
-        return <div className="bg-amber-100 text-amber-600 p-2 rounded-full"><Bell className="h-4 w-4" /></div>;
-      case 'error':
-        return <div className="bg-red-100 text-red-600 p-2 rounded-full"><X className="h-4 w-4" /></div>;
-      case 'info':
+      case 'message':
+        return <div className="bg-blue-100 text-blue-600 p-2 rounded-full">💬</div>;
+      case 'appointment':
+        return <div className="bg-green-100 text-green-600 p-2 rounded-full">📅</div>;
+      case 'system':
+        return <div className="bg-orange-100 text-orange-600 p-2 rounded-full">📋</div>;
+      case 'update':
+        return <div className="bg-purple-100 text-purple-600 p-2 rounded-full">✈️</div>;
       default:
-        return <div className="bg-blue-100 text-blue-600 p-2 rounded-full"><Bell className="h-4 w-4" /></div>;
+        return <div className="bg-gray-100 text-gray-600 p-2 rounded-full">🔔</div>;
     }
   };
-  
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
+              className="absolute -top-1 -right-1 px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs"
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {unreadCount}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between p-4 bg-primary/5">
-          <h3 className="font-medium">{t('notifications.title', 'Notifications')}</h3>
-          {unreadCount > 0 && (
+      <PopoverContent className="w-80 p-0" align="end">
+        <Card className="border-0 shadow-none">
+          <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
+            <CardTitle className="text-lg font-medium">
+              {t('notifications.title', 'Notifications')}
+            </CardTitle>
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs text-blue-600 hover:text-blue-800"
+                onClick={markAllAsRead}
+              >
+                {t('notifications.mark_all_read', 'Mark all as read')}
+              </Button>
+            )}
+          </CardHeader>
+          <Separator />
+          <CardContent className="p-0">
+            {notifications.length === 0 ? (
+              <div className="py-6 text-center text-sm text-gray-500">
+                {t('notifications.empty', 'No notifications yet')}
+              </div>
+            ) : (
+              <ScrollArea className="h-[300px]">
+                <div className="divide-y">
+                  {notifications.map((notification) => (
+                    <div 
+                      key={notification.id}
+                      className={`p-4 cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-blue-50/30' : ''}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex items-start gap-3">
+                        {getNotificationIcon(notification.type)}
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className={`text-sm font-medium ${!notification.read ? 'text-blue-800' : 'text-gray-800'}`}>
+                              {notification.title}
+                            </p>
+                            {!notification.read && (
+                              <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+          <Separator />
+          <CardFooter className="p-3 justify-center">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs h-8"
-              onClick={handleMarkAllAsRead}
+              className="text-xs"
+              onClick={() => setLocation('/patient-portal?section=messages')}
             >
-              <CheckCheck className="h-3.5 w-3.5 mr-1" />
-              {t('notifications.mark_all_read', 'Mark all as read')}
+              {t('notifications.view_all', 'View all')}
             </Button>
-          )}
-        </div>
-        
-        <ScrollArea className="max-h-[500px]">
-          {isLoading ? (
-            <div className="space-y-4 p-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="py-8 px-4 text-center">
-              <p className="text-muted-foreground">
-                {t('notifications.empty', 'No notifications yet')}
-              </p>
-            </div>
-          ) : (
-            <div>
-              {notifications.map((notification) => (
-                <React.Fragment key={notification.id}>
-                  <div 
-                    className={cn(
-                      "flex gap-3 p-4 cursor-pointer hover:bg-accent/50 transition-colors", 
-                      !notification.isRead && "bg-primary/5"
-                    )}
-                    onClick={() => handleMarkAsRead(notification)}
-                  >
-                    <div className="flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        "text-sm",
-                        !notification.isRead && "font-medium"
-                      )}>
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                        </span>
-                        {notification.action && (
-                          <Button variant="link" size="sm" className="h-auto p-0 text-xs">
-                            {notification.action}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 opacity-70 hover:opacity-100 self-start flex-shrink-0"
-                      onClick={(e) => handleDelete(e, notification.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Separator />
-                </React.Fragment>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+          </CardFooter>
+        </Card>
       </PopoverContent>
     </Popover>
   );
