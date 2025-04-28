@@ -134,7 +134,7 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
   const { toast } = useToast();
   const location = window.location.hash;
   // Add notifications integration
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead, createNotification } = useNotifications();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -216,13 +216,44 @@ const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, cl
       };
       
       // In production, this would be an API call to save the message
-      // For now, we'll just add it to the local state
-      // Example API call: await apiRequest('POST', '/api/messages', { message: newMsg });
+      // Example API call:
+      // const response = await apiRequest('POST', '/api/messages', { message: newMsg });
+      // const savedMessage = await response.json();
       
-      setMessages([...messages, newMsg]);
+      // For development, simulate API response with our local message
+      const savedMessage = newMsg;
+      
+      // Add message to the local state
+      setMessages([...messages, savedMessage]);
       setNewMessage('');
       setAttachments([]);
       setProcessedAttachments([]);
+      
+      // Create and broadcast notification to the recipient
+      // Determine if this was sent to admin or clinic
+      const recipientType = savedMessage.senderType === 'patient' 
+        ? (activeClinic ? 'clinic' : 'admin') 
+        : 'patient';
+      
+      // Create notification using our notification system
+      try {
+        // Create notification with dynamic content from the message
+        createNotification({
+          title: 'New Message',
+          message: `${savedMessage.content.substring(0, 50)}${savedMessage.content.length > 50 ? '...' : ''}`,
+          type: 'message',
+          recipientType: recipientType,
+          actionUrl: recipientType === 'patient' 
+            ? '/patient-portal?section=messages' 
+            : (recipientType === 'admin' 
+              ? '/admin-portal?section=messages' 
+              : '/clinic-portal?section=messages')
+        });
+        
+        console.log(`Notification sent to ${recipientType} about new message`);
+      } catch (error) {
+        console.error('Error creating notification:', error);
+      }
       
       toast({
         title: t('portal.message_sent', 'Message Sent'),
