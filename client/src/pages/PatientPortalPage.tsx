@@ -14,7 +14,8 @@ import {
   X,
   Stethoscope,
   BarChart2,
-  TestTube
+  TestTube,
+  Bell
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,362 +25,47 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
+import { useNotifications } from '@/hooks/use-notifications';
 
-// Import client portal components
-import MessagingSection from '@/components/portal/MessagingSection';
-import DocumentsSection from '@/components/portal/DocumentsSection';
-import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
-import AppointmentsSection from '@/components/portal/AppointmentsSection';
-import SupportSection from '@/components/portal/SupportSection';
-import ProfileSection from '@/components/portal/ProfileSection';
-import DentalChartSection from '@/components/portal/DentalChartSection';
-import TreatmentComparisonSection from '@/components/portal/TreatmentComparisonSection';
-import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
-import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
-import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
-import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
-import { 
-  EXAMPLE_BOOKING, 
-  EXAMPLE_CLINIC_HOTEL_OPTIONS, 
-  EXAMPLE_SELF_ARRANGED_STATUS,
-  EXAMPLE_FLIGHT_DETAILS
-} from '@/components/dashboard/exampleHotelData';
-
-// Temporary Mock Data
-const mockUserData = {
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  phone: '+44 7123 456789',
-};
-
+// Mock data for the dashboard view
 const mockBookingData = {
-  id: 123,
-  clinic: 'DentGroup Istanbul',
-  status: 'confirmed',
-  depositPaid: true,
+  status: "Confirmed",
+  clinic: "DentSpa Istanbul",
   treatmentPlan: {
     items: [
-      { treatment: 'Dental Implant', quantity: 2 },
-      { treatment: 'Dental Crown', quantity: 4 },
+      { treatment: "Dental Implant", quantity: 4 },
+      { treatment: "Porcelain Crown", quantity: 6 },
+      { treatment: "Root Canal", quantity: 2 }
     ],
-    totalGBP: 1800,
+    totalGBP: 3200
   },
   unreadMessages: 3,
   upcomingAppointments: 1,
+  journeyProgress: 35
 };
 
-// Navigation items
-const navItems = [
-  { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, id: 'dashboard' },
-  { label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, id: 'messages', notificationCount: 3 },
-  { label: 'Treatment Plan', icon: <FileText className="h-5 w-5" />, id: 'treatment_plan' },
-  { label: 'Dental Chart', icon: <Stethoscope className="h-5 w-5" />, id: 'dental_chart' },
-  { label: 'Treatment Comparison', icon: <BarChart2 className="h-5 w-5" />, id: 'treatment_comparison' },
-  { label: 'Appointments', icon: <Calendar className="h-5 w-5" />, id: 'appointments' },
-  { label: 'Documents', icon: <FileText className="h-5 w-5" />, id: 'documents' },
-  { label: 'Support', icon: <UserCog className="h-5 w-5" />, id: 'support' },
-  { label: 'My Details', icon: <Users className="h-5 w-5" />, id: 'profile' },
-  { label: 'Testing Mode', icon: <TestTube className="h-5 w-5" />, id: 'testing' },
-];
+// Each section component will be defined in its own file in a real application
+const MessagingSection = () => <div className="p-4">Messaging functionality would go here</div>;
+const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
+const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
+const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
+const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
+const TreatmentPlanSection = () => <div className="p-4">Treatment Plan details would go here</div>;
+const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
+const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
+const PatientPortalTesting = ({ setActiveSection }: { setActiveSection: (section: string) => void }) => (
+  <div className="p-4">
+    <h2 className="text-2xl font-bold mb-4">Testing Area</h2>
+    <Button onClick={() => setActiveSection('dashboard')}>Back to Dashboard</Button>
+  </div>
+);
 
-// Patient portal page component
-const PatientPortalPage: React.FC = () => {
-  const { t } = useTranslation();
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<string>('dashboard');
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  // Handle navigation
-  const handleNavigation = (sectionId: string) => {
-    setActiveSection(sectionId);
-    setMobileNavOpen(false);
-  };
-
-  // Get auth context for logout functionality
-  const { logoutMutation } = useAuth();
-  
-  // Handle logout using authentication system
-  // Using a variable to prevent multiple clicks
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = () => {
-    // Prevent double-clicking
-    if (isLoggingOut) return;
-    
-    // Set logging out state to prevent additional clicks
-    setIsLoggingOut(true);
-    
-    // Using direct window location change instead of wouter navigation
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        // When successful, show toast and redirect
-        toast({
-          title: t('portal.logout_success', 'Successfully logged out'),
-          description: t('portal.logout_message', 'You have been logged out of your account.'),
-        });
-        
-        // Use direct URL navigation which is more reliable for logout
-        window.location.href = '/#/portal-login';
-      },
-      onError: (error) => {
-        console.error("Logout error:", error);
-        toast({
-          title: t('portal.logout_error', 'Logout failed'),
-          description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
-          variant: "destructive",
-        });
-        // Reset logging out state on error
-        setIsLoggingOut(false);
-      }
-    });
-  };
-
-  // Check URL for section parameter with more robust parsing
-  useEffect(() => {
-    try {
-      // Get the hash part of the URL (e.g., #/client-portal?section=messages or #/patient-portal?section=messages)
-      const hash = window.location.hash;
-      
-      // Check if there are query parameters
-      if (hash.includes('?')) {
-        // Extract the query string part
-        const queryString = hash.split('?')[1];
-        const params = new URLSearchParams(queryString);
-        
-        // Get section parameter
-        const sectionParam = params.get('section');
-        
-        // Only set active section if it's valid
-        if (sectionParam && navItems.some(item => item.id === sectionParam)) {
-          setActiveSection(sectionParam);
-          console.log(`Setting active section from URL: ${sectionParam}`);
-        }
-      }
-    } catch (error) {
-      console.error("Error parsing URL parameters:", error);
-      // Fallback to dashboard if there's an error
-      setActiveSection('dashboard');
-    }
-  }, []);
-
-  // Render the appropriate section based on activeSection
-  const renderActiveSection = () => {
-    switch (activeSection) {
-      case 'dashboard':
-        return <DashboardSection setActiveSection={setActiveSection} />;
-      case 'messages':
-        return <MessagingSection />;
-      case 'appointments':
-        return <AppointmentsSection />;
-      case 'documents':
-        return <DocumentsSection />;
-      case 'support':
-        return <SupportSection />;
-      case 'profile':
-        return <ProfileSection />;
-      case 'treatment_plan':
-        return <TreatmentPlanSection />;
-      case 'dental_chart':
-        return <DentalChartSection />;
-      case 'treatment_comparison':
-        return <TreatmentComparisonSection />;
-      case 'testing':
-        return <PatientPortalTesting setActiveSection={setActiveSection} />;
-      default:
-        return <DashboardSection setActiveSection={setActiveSection} />;
-    }
-  };
-
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <a href="/" className="block">
-              <img 
-                src="/images/mydentalfly-logo.png" 
-                alt="MyDentalFly Logo" 
-                className="h-10 w-auto mb-2 cursor-pointer" 
-              />
-            </a>
-            <NotificationsPopover />
-          </div>
-          <h1 className="text-xl font-bold text-blue-600">
-            {t('portal.title', 'Patient Portal')}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {t('portal.welcome', 'Welcome back')}
-          </p>
-        </div>
-        
-        <Separator />
-        
-        <nav className="flex-1 p-4">
-          <ul className="space-y-1">
-            {navItems.map((item) => (
-              <li key={item.id}>
-                <Button
-                  variant={activeSection === item.id ? "default" : "ghost"}
-                  className={`w-full justify-start ${activeSection === item.id ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800' : ''}`}
-                  onClick={() => handleNavigation(item.id)}
-                >
-                  <div className="flex items-center w-full">
-                    <span className="mr-3">{item.icon}</span>
-                    <span>{t(`portal.nav.${item.id}`, item.label)}</span>
-                    {item.notificationCount && (
-                      <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
-                    )}
-                  </div>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        
-        <div className="p-4 mt-auto">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start text-gray-700 mb-2"
-            onClick={() => setLocation('/account-settings')}
-          >
-            <UserCog className="h-5 w-5 mr-3" />
-            {t('portal.account_settings', 'Account Settings')}
-          </Button>
-        
-          <Button 
-            variant="outline" 
-            className="w-full justify-start text-gray-700"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            {t('portal.logout', 'Logout')}
-          </Button>
-          
-          <div className="mt-4 p-3 bg-gray-50 rounded-md">
-            <p className="text-xs text-gray-500">
-              {t('portal.need_help', 'Need help?')} <br />
-              <a href="tel:+447572445856" className="text-blue-600 hover:underline">+44 7572 445856</a><br />
-              <a href="mailto:info@istanbuldentalsmile.co.uk" className="text-blue-600 hover:underline">info@istanbuldentalsmile.co.uk</a>
-            </p>
-          </div>
-        </div>
-      </aside>
-      
-      {/* Mobile Header and Navigation */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white z-30 border-b border-gray-200">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center">
-            <a href="/" className="flex-shrink-0">
-              <img 
-                src="/images/mydentalfly-logo.png" 
-                alt="MyDentalFly Logo" 
-                className="h-10 w-auto mr-3 shadow-sm border border-gray-100 rounded-md p-1 cursor-pointer" 
-              />
-            </a>
-            <h1 className="text-lg font-bold text-blue-600">
-              {t('portal.title', 'Patient Portal')}
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <NotificationsPopover />
-            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <a href="/" className="block">
-                        <img 
-                          src="/images/mydentalfly-logo.png" 
-                          alt="MyDentalFly Logo" 
-                          className="h-12 w-auto mb-2 shadow-sm border border-gray-100 rounded-md p-1 cursor-pointer" 
-                        />
-                      </a>
-                      <h2 className="text-lg font-bold text-blue-600">
-                        {t('portal.title', 'Patient Portal')}
-                      </h2>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    {t('portal.welcome', 'Welcome back')}
-                  </p>
-                </div>
-              
-                <Separator />
-                
-                <ScrollArea className="h-[calc(100vh-12rem)]">
-                  <nav className="p-4">
-                    <ul className="space-y-1">
-                      {navItems.map((item) => (
-                        <li key={item.id}>
-                          <Button
-                            variant={activeSection === item.id ? "default" : "ghost"}
-                            className={`w-full justify-start ${activeSection === item.id ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800' : ''}`}
-                            onClick={() => handleNavigation(item.id)}
-                          >
-                            <div className="flex items-center w-full">
-                              <span className="mr-3">{item.icon}</span>
-                              <span>{t(`portal.nav.${item.id}`, item.label)}</span>
-                              {item.notificationCount && (
-                                <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
-                              )}
-                            </div>
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
-                </ScrollArea>
-                
-                <div className="p-4 mt-auto border-t border-gray-200">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start text-gray-700 mb-2"
-                    onClick={() => setLocation('/account-settings')}
-                  >
-                    <UserCog className="h-5 w-5 mr-3" />
-                    {t('portal.account_settings', 'Account Settings')}
-                  </Button>
-                
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start text-gray-700"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="h-5 w-5 mr-3" />
-                    {t('portal.logout', 'Logout')}
-                  </Button>
-                </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-      
-      {/* Main Content */}
-      <main className="flex-1 md:p-8 p-4 md:pt-8 pt-20 overflow-auto">
-        {renderActiveSection()}
-      </main>
-    </div>
-  );
-};
-
-export default PatientPortalPage;
-
-// Dashboard section component
+// Dashboard section component interface
 interface DashboardSectionProps {
   setActiveSection: (section: string) => void;
 }
 
+// Dashboard section component
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const { t } = useTranslation();
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
@@ -464,6 +150,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         </div>
       </div>
       
+      {/* Dashboard status cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -544,211 +231,255 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </CardContent>
         </Card>
       </div>
-
-      {/* Next Steps and Dental Journey Section */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Next Steps */}
-        <Card id="next-steps-section">
-          <CardHeader>
-            <CardTitle>{t('portal.dashboard.next_steps', 'Next Steps')}</CardTitle>
-            <CardDescription>
-              {t('portal.dashboard.to_do', 'Things you need to do')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 mt-0.5">
-                  <span className="text-blue-600 text-xs font-medium">1</span>
-                </div>
-                <div>
-                  <p className="font-medium">{t('portal.dashboard.upload_xrays', 'Upload your dental X-rays')}</p>
-                  <p className="text-sm text-gray-600">
-                    {t('portal.dashboard.upload_description', 'This helps your dentist provide an accurate treatment plan')}
-                  </p>
-                </div>
-              </li>
-              
-              <li className="flex items-start">
-                <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 mt-0.5">
-                  <span className="text-blue-600 text-xs font-medium">2</span>
-                </div>
-                <div>
-                  <p className="font-medium">{t('portal.dashboard.complete_medical', 'Complete your medical history form')}</p>
-                  <p className="text-sm text-gray-600">
-                    {t('portal.dashboard.medical_description', 'Your health information is important for safe treatment')}
-                  </p>
-                </div>
-              </li>
-              
-              <li className="flex items-start">
-                <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2 mt-0.5">
-                  <span className="text-blue-600 text-xs font-medium">3</span>
-                </div>
-                <div>
-                  <p className="font-medium">{t('portal.dashboard.schedule_consultation', 'Schedule your online consultation')}</p>
-                  <p className="text-sm text-gray-600">
-                    {t('portal.dashboard.consultation_description', 'Discuss your treatment plan with your dentist')}
-                  </p>
-                </div>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-        
-        {/* Your Dental Journey */}
-        <Card id="dental-journey-section">
-          <CardHeader>
-            <CardTitle>{t('portal.dashboard.your_journey', 'Your Dental Journey')}</CardTitle>
-            <CardDescription>
-              {t('portal.dashboard.journey_description', 'Track your progress through the treatment process')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-              
-              <div className="space-y-8 relative">
-                <div className="relative pl-10">
-                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-green-100 border-4 border-white flex items-center justify-center">
-                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                  </div>
-                  <h3 className="font-medium">{t('portal.dashboard.step1', 'Initial Quote & Booking')}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {t('portal.dashboard.step1_description', 'You\'ve received your quote and secured your booking with a deposit')}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {t('portal.dashboard.completed', 'Completed')}
-                  </p>
-                </div>
-                
-                <div className="relative pl-10">
-                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-blue-100 border-4 border-white flex items-center justify-center">
-                    <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                  </div>
-                  <h3 className="font-medium">{t('portal.dashboard.step2', 'Consultation & Treatment Planning')}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {t('portal.dashboard.step2_description', 'Your dentist will review your records and create a personalized treatment plan')}
-                  </p>
-                  <p className="text-xs text-blue-500 mt-1">
-                    {t('portal.dashboard.in_progress', 'In Progress')}
-                  </p>
-                </div>
-                
-                <div className="relative pl-10">
-                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center">
-                    <div className="h-3 w-3 rounded-full bg-gray-300"></div>
-                  </div>
-                  <h3 className="font-medium text-gray-500">{t('portal.dashboard.step3', 'Travel & Treatment')}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {t('portal.dashboard.step3_description', 'Travel to Istanbul and receive your dental treatment')}
-                  </p>
-                </div>
-                
-                <div className="relative pl-10">
-                  <div className="absolute left-0 top-1 h-8 w-8 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center">
-                    <div className="h-3 w-3 rounded-full bg-gray-300"></div>
-                  </div>
-                  <h3 className="font-medium text-gray-500">{t('portal.dashboard.step4', 'Aftercare & Follow-up')}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {t('portal.dashboard.step4_description', 'Receive post-treatment support and follow-up care')}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
       
-      {/* Hotel Accommodation Section */}
-      <div id="hotel-section" className="grid md:grid-cols-1 gap-6 mt-6">
-        {/* Hotel Accommodation Section with view toggle controls */}
-        <Card className="mb-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Demonstration Controls</CardTitle>
-            <CardDescription>Toggle between different accommodation views</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant={hotelViewMode === 'selection' ? 'default' : 'outline'} 
-                onClick={() => setHotelViewMode('selection')}
-                size="sm"
-              >
-                Hotel Selection View
-              </Button>
-              <Button 
-                variant={hotelViewMode === 'confirmed' ? 'default' : 'outline'} 
-                onClick={() => setHotelViewMode('confirmed')}
-                size="sm"
-              >
-                Confirmed Hotel View
-              </Button>
-              <Button 
-                variant={hotelViewMode === 'self-arranged' ? 'default' : 'outline'} 
-                onClick={() => setHotelViewMode('self-arranged')}
-                size="sm"
-              >
-                Self-Arranged View
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Hotel Selection View - Multiple hotel options to choose from */}
-        {hotelViewMode === 'selection' && (
-          <HotelSelectionSection 
-            hotelOptions={EXAMPLE_CLINIC_HOTEL_OPTIONS}
-            checkInDate={new Date('2025-06-10')}
-            checkOutDate={new Date('2025-06-17')}
-            numberOfGuests={2}
-            clinicName="DentGroup Istanbul"
-            showSelfArrangedOption={true}
-            onSelectHotel={(hotelId) => console.log('Selected hotel ID:', hotelId)}
-            onAddSelfArranged={(data) => console.log('Self-arranged data:', data)}
-          />
-        )}
-        
-        {/* Confirmed Hotel View - After a hotel has been selected and confirmed */}
-        {hotelViewMode === 'confirmed' && (
-          <HotelAccommodationSection 
-            hotelBooking={EXAMPLE_BOOKING} 
-            isLoading={false} 
-          />
-        )}
-        
-        {/* Self-Arranged Accommodation View - When user arranges their own hotel */}
-        {hotelViewMode === 'self-arranged' && (
-          <HotelSelectionSection 
-            hotelOptions={EXAMPLE_CLINIC_HOTEL_OPTIONS}
-            checkInDate={new Date('2025-06-10')}
-            checkOutDate={new Date('2025-06-17')}
-            numberOfGuests={2}
-            clinicName="DentGroup Istanbul"
-            showSelfArrangedOption={true}
-            selfArrangedStatus={EXAMPLE_SELF_ARRANGED_STATUS}
-            onSelectHotel={(hotelId) => console.log('Selected hotel ID:', hotelId)}
-            onAddSelfArranged={(data) => console.log('Self-arranged data:', data)}
-          />
-        )}
-      </div>
-      
-      {/* Flight Details Section */}
-      <div id="flight-section" className="mt-6">
-        <FlightDetailsSection />
-      </div>
+      {/* More dashboard content would go here... */}
     </div>
   );
 };
 
-// Placeholder section component
-const PlaceholderSection: React.FC<{ title: string }> = ({ title }) => {
+const PatientPortalPage: React.FC = () => {
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { logoutMutation } = useAuth();
+  const { toast } = useToast();
+  const [_, setLocation] = useLocation();
+  const { t } = useTranslation();
+  const { unreadCount, notifications } = useNotifications();
+
+  // Nav items with icons
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { id: 'messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, notificationCount: 3 },
+    { id: 'appointments', label: 'Appointments', icon: <Calendar className="h-5 w-5" />, notificationCount: 1 },
+    { id: 'documents', label: 'Documents', icon: <FileText className="h-5 w-5" /> },
+    { id: 'treatment_plan', label: 'Treatment Plan', icon: <Stethoscope className="h-5 w-5" /> },
+    { id: 'dental_chart', label: 'Dental Chart', icon: <BarChart2 className="h-5 w-5" /> },
+    { id: 'support', label: 'Support', icon: <Users className="h-5 w-5" /> },
+    { id: 'testing', label: 'Testing', icon: <TestTube className="h-5 w-5" /> }
+  ];
+
+  // Handle navigation item click
+  const handleNavigation = (sectionId: string) => {
+    setActiveSection(sectionId);
+    setMobileNavOpen(false); // Close mobile nav when an item is selected
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        setLocation('/auth');
+        toast({
+          title: t('auth.logout_success', 'Logged out successfully'),
+          description: t('auth.logout_message', 'You have been logged out of your account'),
+        });
+      }
+    });
+  };
+
+  // Initialize based on URL parameters
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const section = params.get('section');
+      if (section && navItems.some(item => item.id === section)) {
+        setActiveSection(section);
+      }
+    } catch (error) {
+      console.error("Error parsing URL parameters:", error);
+      // Fallback to dashboard if there's an error
+      setActiveSection('dashboard');
+    }
+  }, []);
+
+  // Render the appropriate section based on activeSection
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <DashboardSection setActiveSection={setActiveSection} />;
+      case 'messages':
+        return <MessagingSection />;
+      case 'appointments':
+        return <AppointmentsSection />;
+      case 'documents':
+        return <DocumentsSection />;
+      case 'support':
+        return <SupportSection />;
+      case 'profile':
+        return <ProfileSection />;
+      case 'treatment_plan':
+        return <TreatmentPlanSection />;
+      case 'dental_chart':
+        return <DentalChartSection />;
+      case 'treatment_comparison':
+        return <TreatmentComparisonSection />;
+      case 'testing':
+        return <PatientPortalTesting setActiveSection={setActiveSection} />;
+      default:
+        return <DashboardSection setActiveSection={setActiveSection} />;
+    }
+  };
+
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      <p className="text-gray-600 text-center max-w-md">
-        This section is coming soon. Here you'll be able to manage your {title.toLowerCase()}.
-      </p>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <div className="flex flex-col flex-grow border-r border-gray-200 bg-white pt-5 pb-4 overflow-y-auto">
+          <div className="flex items-center flex-shrink-0 px-4 mb-5">
+            <img className="h-8 w-auto" src="/logo.svg" alt="MyDentalFly" />
+            <h1 className="ml-2 text-xl font-bold text-gray-900">MyDentalFly</h1>
+          </div>
+          <nav className="mt-5 flex-1 px-4 space-y-1">
+            {navItems.map((item) => (
+              <Button
+                key={item.id}
+                variant={activeSection === item.id ? "default" : "ghost"}
+                className={`w-full justify-start mb-1 ${activeSection === item.id ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800' : ''}`}
+                onClick={() => handleNavigation(item.id)}
+              >
+                <div className="flex items-center w-full">
+                  <span className="mr-3">{item.icon}</span>
+                  <span>{t(`portal.nav.${item.id}`, item.label)}</span>
+                  {item.notificationCount && (
+                    <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
+                  )}
+                </div>
+              </Button>
+            ))}
+          </nav>
+          <div className="mt-auto p-4 border-t border-gray-200">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-gray-700 mb-2"
+              onClick={() => setLocation('/account-settings')}
+            >
+              <UserCog className="h-5 w-5 mr-3" />
+              {t('portal.account_settings', 'Account Settings')}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-gray-700"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              {t('portal.logout', 'Logout')}
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile header and navigation */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between h-16 px-4">
+          <div className="flex items-center">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="pt-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <img className="h-8 w-auto" src="/logo.svg" alt="MyDentalFly" />
+                    <h1 className="ml-2 text-xl font-bold text-gray-900">MyDentalFly</h1>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">
+                  {t('portal.welcome', 'Welcome back')}
+                </p>
+              
+                <Separator />
+                
+                <ScrollArea className="h-[calc(100vh-12rem)]">
+                  <nav className="p-4">
+                    <ul className="space-y-1">
+                      {navItems.map((item) => (
+                        <li key={item.id}>
+                          <Button
+                            variant={activeSection === item.id ? "default" : "ghost"}
+                            className={`w-full justify-start ${activeSection === item.id ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800' : ''}`}
+                            onClick={() => handleNavigation(item.id)}
+                          >
+                            <div className="flex items-center w-full">
+                              <span className="mr-3">{item.icon}</span>
+                              <span>{t(`portal.nav.${item.id}`, item.label)}</span>
+                              {item.notificationCount && (
+                                <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
+                              )}
+                            </div>
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                </ScrollArea>
+                
+                <div className="p-4 mt-auto border-t border-gray-200">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-gray-700 mb-2"
+                    onClick={() => setLocation('/account-settings')}
+                  >
+                    <UserCog className="h-5 w-5 mr-3" />
+                    {t('portal.account_settings', 'Account Settings')}
+                  </Button>
+                
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-gray-700"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5 mr-3" />
+                    {t('portal.logout', 'Logout')}
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <div className="ml-4">
+              <h1 className="text-lg font-semibold">{t(`portal.nav.${activeSection}`, navItems.find(item => item.id === activeSection)?.label || 'Dashboard')}</h1>
+            </div>
+          </div>
+          
+          {/* Add notifications icon in mobile header */}
+          <div className="flex items-center space-x-2">
+            <NotificationsPopover notifications={notifications} unreadCount={unreadCount} />
+          </div>
+        </div>
+      </div>
+      
+      {/* Main Content Area */}
+      <div className="md:pl-64 flex flex-col flex-1">
+        {/* Desktop header */}
+        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white border-b border-gray-200 md:flex hidden">
+          <div className="flex-1 px-4 flex justify-between">
+            <div className="flex-1 flex items-center">
+              <h1 className="text-2xl font-semibold text-gray-900">
+                {t(`portal.nav.${activeSection}`, navItems.find(item => item.id === activeSection)?.label || 'Dashboard')}
+              </h1>
+            </div>
+            <div className="ml-4 flex items-center md:ml-6 space-x-3">
+              {/* Desktop notifications icon */}
+              <NotificationsPopover notifications={notifications} unreadCount={unreadCount} />
+              
+              <Button 
+                variant="ghost" 
+                size="icon"
+              >
+                <UserCog className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      
+        {/* Main Content */}
+        <main className="flex-1 md:p-8 p-4 md:pt-8 pt-20 overflow-auto">
+          {renderActiveSection()}
+        </main>
+      </div>
     </div>
   );
 };

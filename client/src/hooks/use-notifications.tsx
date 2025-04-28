@@ -1,279 +1,135 @@
-import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useWebSocket, WebSocketMessage } from './use-websocket';
-import { useAuth } from './use-auth';
-import { useToast } from './use-toast';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
-// Define notification type
 export interface Notification {
-  id: number;
-  userId: number;
+  id: string;
   title: string;
   message: string;
-  isRead: boolean;
-  type: 'info' | 'success' | 'warning' | 'error';
-  action?: string;
-  entityType?: string;
-  entityId?: number;
-  createdAt: string;
+  timestamp: string;
+  read: boolean;
+  type: 'message' | 'appointment' | 'system' | 'update';
+  actionUrl?: string;
 }
 
 interface NotificationsContextType {
   notifications: Notification[];
   unreadCount: number;
-  isLoading: boolean;
-  error: Error | null;
-  markAsRead: (notificationId: number) => void;
+  markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  deleteNotification: (notificationId: number) => void;
 }
 
-const NotificationsContext = createContext<NotificationsContextType | null>(null);
+const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
-export function NotificationsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { connected, registerMessageHandler, unregisterMessageHandler } = useWebSocket();
-  const [unreadCount, setUnreadCount] = useState(0);
-  
-  // Query for fetching notifications
-  const {
-    data: notifications = [],
-    isLoading,
-    error,
-    refetch
-  } = useQuery<Notification[]>({
+export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
+  // In a real implementation, we would fetch this from the server
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: '1',
+      title: 'New Message',
+      message: 'You have a new message from DentSpa Clinic',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+      read: false,
+      type: 'message',
+      actionUrl: '/patient-portal?section=messages'
+    },
+    {
+      id: '2',
+      title: 'Appointment Reminder',
+      message: 'Your consultation is scheduled for tomorrow at 2:00 PM',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+      read: false,
+      type: 'appointment',
+      actionUrl: '/patient-portal?section=appointments'
+    },
+    {
+      id: '3',
+      title: 'Document Uploaded',
+      message: 'Your treatment plan has been updated with new documents',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+      read: true,
+      type: 'system',
+      actionUrl: '/patient-portal?section=documents'
+    },
+    {
+      id: '4',
+      title: 'Flight Details Added',
+      message: 'Your travel itinerary has been updated with your flight information',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+      read: true,
+      type: 'update'
+    }
+  ]);
+
+  // For a real-world implementation, we'd use a query like this:
+  /*
+  const { data = [], isLoading, error } = useQuery({
     queryKey: ['/api/notifications'],
     queryFn: async () => {
-      if (!user) return [];
-      
       const response = await apiRequest('GET', '/api/notifications');
       const data = await response.json();
-      
-      if (data.success) {
-        return data.notifications;
-      }
-      
-      throw new Error(data.message || 'Failed to fetch notifications');
+      return data.notifications || [];
     },
-    enabled: !!user, // Only fetch if user is logged in
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
-  
-  // Query for fetching unread count
-  const { data: unreadCountData, refetch: refetchUnreadCount } = useQuery<{ count: number }>({
-    queryKey: ['/api/notifications/unread/count'],
-    queryFn: async () => {
-      if (!user) return { count: 0 };
-      
-      const response = await apiRequest('GET', '/api/notifications/unread/count');
-      const data = await response.json();
-      
-      if (data.success) {
-        return { count: data.count };
-      }
-      
-      throw new Error(data.message || 'Failed to fetch unread count');
-    },
-    enabled: !!user, // Only fetch if user is logged in
-  });
-  
-  // Update unread count when data changes
-  useEffect(() => {
-    if (unreadCountData) {
-      setUnreadCount(unreadCountData.count);
-    }
-  }, [unreadCountData]);
-  
-  // Handle real-time notifications via WebSocket
-  useEffect(() => {
-    if (!connected || !user) return;
+  */
+
+  const unreadCount = notifications.filter(notification => !notification.read).length;
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true } 
+          : notification
+      )
+    );
     
-    const handleNewNotification = (message: WebSocketMessage) => {
-      // Add the new notification to the cache
-      if (message.payload) {
-        const newNotification = message.payload as Notification;
-        
-        // Update the notifications list
-        queryClient.setQueryData<Notification[]>(
-          ['/api/notifications'],
-          (old = []) => [newNotification, ...old]
-        );
-        
-        // Update the unread count
-        setUnreadCount((prev) => prev + 1);
-        
-        // Show a toast notification
-        toast({
-          title: newNotification.title,
-          description: newNotification.message,
-          variant: newNotification.type === 'error' ? 'destructive' : 'default'
-        });
-      }
-    };
-    
-    // Register WebSocket handler for notifications
-    registerMessageHandler('notification', handleNewNotification);
-    
-    // Cleanup
-    return () => {
-      unregisterMessageHandler('notification');
-    };
-  }, [connected, user, queryClient, registerMessageHandler, unregisterMessageHandler, toast]);
-  
-  // Mutation for marking a notification as read
-  const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await apiRequest('PUT', `/api/notifications/${notificationId}/read`);
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to mark notification as read');
-      }
-      
-      return notificationId;
-    },
-    onSuccess: (notificationId) => {
-      // Update the notifications cache
-      queryClient.setQueryData<Notification[]>(
-        ['/api/notifications'],
-        (old = []) => old.map(notification => 
-          notification.id === notificationId 
-            ? { ...notification, isRead: true } 
-            : notification
-        )
-      );
-      
-      // Decrement the unread count
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to mark notification as read: ${error.message}`,
-        variant: 'destructive'
-      });
-    }
-  });
-  
-  // Mutation for marking all notifications as read
-  const markAllAsReadMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('PUT', '/api/notifications/read/all');
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to mark all notifications as read');
-      }
-    },
-    onSuccess: () => {
-      // Update all notifications in the cache to be read
-      queryClient.setQueryData<Notification[]>(
-        ['/api/notifications'],
-        (old = []) => old.map(notification => ({ ...notification, isRead: true }))
-      );
-      
-      // Reset the unread count
-      setUnreadCount(0);
-      
-      toast({
-        title: 'Success',
-        description: 'All notifications marked as read'
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to mark all notifications as read: ${error.message}`,
-        variant: 'destructive'
-      });
-    }
-  });
-  
-  // Mutation for deleting a notification
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      const response = await apiRequest('DELETE', `/api/notifications/${notificationId}`);
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to delete notification');
-      }
-      
-      return notificationId;
-    },
-    onSuccess: (notificationId) => {
-      // Remove the notification from the cache
-      queryClient.setQueryData<Notification[]>(
-        ['/api/notifications'],
-        (old = []) => old.filter(notification => notification.id !== notificationId)
-      );
-      
-      // Update unread count if the deleted notification was unread
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      if (deletedNotification && !deletedNotification.isRead) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-      
-      toast({
-        title: 'Success',
-        description: 'Notification deleted'
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to delete notification: ${error.message}`,
-        variant: 'destructive'
-      });
-    }
-  });
-  
-  // Refetch data when WebSocket connection changes
-  useEffect(() => {
-    if (connected && user) {
-      refetch();
-      refetchUnreadCount();
-    }
-  }, [connected, user, refetch, refetchUnreadCount]);
-  
-  // Helper functions
-  const markAsRead = (notificationId: number) => {
-    markAsReadMutation.mutate(notificationId);
+    // In a real implementation, we would make an API call here
+    /*
+    apiRequest('POST', `/api/notifications/${id}/read`)
+      .catch(error => console.error('Failed to mark notification as read:', error));
+    */
   };
-  
+
   const markAllAsRead = () => {
-    markAllAsReadMutation.mutate();
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+    
+    // In a real implementation, we would make an API call here
+    /*
+    apiRequest('POST', '/api/notifications/mark-all-read')
+      .catch(error => console.error('Failed to mark all notifications as read:', error));
+    */
   };
-  
-  const deleteNotification = (notificationId: number) => {
-    deleteNotificationMutation.mutate(notificationId);
-  };
-  
-  const value = {
-    notifications,
-    unreadCount,
-    isLoading,
-    error,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification
-  };
-  
+
+  useEffect(() => {
+    // Setup WebSocket connection for real-time notifications
+    // This would be implemented when the backend is ready
+    return () => {
+      // Clean up WebSocket connection
+    };
+  }, []);
+
   return (
-    <NotificationsContext.Provider value={value}>
+    <NotificationsContext.Provider value={{ 
+      notifications, 
+      unreadCount, 
+      markAsRead, 
+      markAllAsRead 
+    }}>
       {children}
     </NotificationsContext.Provider>
   );
-}
+};
 
-export function useNotifications() {
+export const useNotifications = () => {
   const context = useContext(NotificationsContext);
   
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useNotifications must be used within a NotificationsProvider');
   }
   
   return context;
-}
+};
