@@ -336,8 +336,12 @@ const PatientPortalPage: React.FC = () => {
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex flex-col flex-grow border-r border-gray-200 bg-white pt-5 pb-4 overflow-y-auto">
           <div className="flex items-center flex-shrink-0 px-4 mb-5">
-            <img className="h-8 w-auto" src="/logo.svg" alt="MyDentalFly" />
-            <h1 className="ml-2 text-xl font-bold text-gray-900">MyDentalFly</h1>
+            <img 
+              className="h-8 w-auto shadow-sm border border-gray-100 rounded-md p-1" 
+              src="/images/mydentalfly-logo.png" 
+              alt="MyDentalFly" 
+            />
+            <h1 className="ml-2 text-xl font-bold text-blue-600">MyDentalFly</h1>
           </div>
           <nav className="mt-5 flex-1 px-4 space-y-1">
             {navItems.map((item) => (
@@ -391,8 +395,12 @@ const PatientPortalPage: React.FC = () => {
               <SheetContent side="left" className="pt-10">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
-                    <img className="h-8 w-auto" src="/logo.svg" alt="MyDentalFly" />
-                    <h1 className="ml-2 text-xl font-bold text-gray-900">MyDentalFly</h1>
+                    <img 
+                      className="h-8 w-auto shadow-sm border border-gray-100 rounded-md p-1" 
+                      src="/images/mydentalfly-logo.png" 
+                      alt="MyDentalFly" 
+                    />
+                    <h1 className="ml-2 text-xl font-bold text-blue-600">MyDentalFly</h1>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
                     <X className="h-5 w-5" />
