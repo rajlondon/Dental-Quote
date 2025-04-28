@@ -1,6 +1,9 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useWebSocket, WebSocketMessage } from './use-websocket';
+import { useAuth } from './use-auth';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Notification {
   id: string;
@@ -17,11 +20,27 @@ interface NotificationsContextType {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  createNotification: (notification: {
+    title: string;
+    message: string;
+    type: 'message' | 'appointment' | 'system' | 'update';
+    recipientId?: string;
+    recipientType?: 'patient' | 'clinic' | 'admin';
+    actionUrl?: string;
+  }) => Notification;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
 export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
+  const { 
+    connected, 
+    registerMessageHandler, 
+    unregisterMessageHandler,
+    sendMessage
+  } = useWebSocket();
+  
   // In a real implementation, we would fetch this from the server
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -104,20 +123,119 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
     */
   };
 
-  useEffect(() => {
-    // Setup WebSocket connection for real-time notifications
-    // This would be implemented when the backend is ready
-    return () => {
-      // Clean up WebSocket connection
+  // Function to add a new notification
+  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: uuidv4(), // Generate a unique ID
+      timestamp: new Date().toISOString(),
+      read: false
     };
-  }, []);
+    
+    setNotifications(prev => [newNotification, ...prev]);
+    return newNotification;
+  };
+
+  // Register WebSocket handler for notifications
+  useEffect(() => {
+    if (!connected || !user) return;
+    
+    // Handler for incoming notification messages
+    const handleNotification = (message: WebSocketMessage) => {
+      if (message.type === 'notification' && message.payload) {
+        const notificationData = message.payload;
+        
+        // Add the notification to our local state
+        addNotification({
+          title: notificationData.title,
+          message: notificationData.message,
+          type: notificationData.type || 'system',
+          actionUrl: notificationData.actionUrl
+        });
+      }
+    };
+    
+    // Register our handler
+    registerMessageHandler('notification', handleNotification);
+    
+    // Cleanup when component unmounts
+    return () => {
+      unregisterMessageHandler('notification');
+    };
+  }, [connected, user, registerMessageHandler, unregisterMessageHandler]);
+  
+  // This is a utility function that can be used to create and broadcast a notification
+  // This would normally happen server-side
+  const createAndBroadcastNotification = (data: {
+    title: string;
+    message: string;
+    type: 'message' | 'appointment' | 'system' | 'update';
+    recipientId?: string;
+    recipientType?: 'patient' | 'clinic' | 'admin';
+    actionUrl?: string;
+  }) => {
+    // 1. Create local notification for the sender if needed
+    
+    // 2. Send WebSocket message to broadcast to others
+    if (connected) {
+      sendMessage({
+        type: 'notification',
+        payload: {
+          ...data,
+          timestamp: new Date().toISOString()
+        },
+        target: data.recipientId || 'all',
+        sender: user ? {
+          id: user.id.toString(),
+          type: user.role as 'patient' | 'clinic' | 'admin'
+        } : undefined
+      });
+    }
+  };
+
+  // Combine the addNotification and broadcast functions
+  const createNotification = (data: {
+    title: string;
+    message: string;
+    type: 'message' | 'appointment' | 'system' | 'update';
+    recipientId?: string;
+    recipientType?: 'patient' | 'clinic' | 'admin';
+    actionUrl?: string;
+  }) => {
+    // Create a local notification
+    const notification = addNotification({
+      title: data.title,
+      message: data.message,
+      type: data.type,
+      actionUrl: data.actionUrl
+    });
+    
+    // Broadcast to others if needed
+    if (connected && (data.recipientId || data.recipientType)) {
+      sendMessage({
+        type: 'notification',
+        payload: {
+          ...data,
+          timestamp: notification.timestamp
+        },
+        target: data.recipientId || (data.recipientType ? data.recipientType : 'all'),
+        sender: user ? {
+          id: user.id.toString(),
+          type: user.role as 'patient' | 'clinic' | 'admin'
+        } : undefined
+      });
+    }
+    
+    return notification;
+  };
 
   return (
     <NotificationsContext.Provider value={{ 
       notifications, 
       unreadCount, 
       markAsRead, 
-      markAllAsRead 
+      markAllAsRead,
+      createNotification
     }}>
       {children}
     </NotificationsContext.Provider>
