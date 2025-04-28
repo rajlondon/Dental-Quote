@@ -10,10 +10,17 @@ const router = Router();
 // Register new user
 router.post("/register", async (req: Request, res: Response) => {
   try {
-    const { email, password, firstName, lastName, phone, consent } = req.body;
+    console.log("Registration request received:", JSON.stringify({
+      requestBody: req.body,
+      contentType: req.headers['content-type']
+    }));
+    
+    const { email, password, firstName, lastName, phone, consentGDPR } = req.body;
+    const consent = consentGDPR; // Match the frontend field name
     
     // Validate required fields
     if (!email || !password || !consent) {
+      console.log("Registration validation failed:", { email: !!email, password: !!password, consent: !!consent });
       return res.status(400).json({ 
         success: false, 
         message: "Email, password, and consent are required" 
