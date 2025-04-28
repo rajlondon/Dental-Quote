@@ -129,7 +129,14 @@ router.post("/test-login", async (req: Request, res: Response) => {
       });
     }
     
-    // Verify password
+    // Verify password (handle null password safely)
+    if (!user.password) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid credentials" 
+      });
+    }
+    
     const isPasswordValid = await bcrypt.compare(password, user.password);
     
     if (!isPasswordValid) {
@@ -202,8 +209,7 @@ router.get("/verification-status/:email", async (req: Request, res: Response) =>
     return res.status(200).json({
       success: true,
       email: user.email,
-      verified: user.emailVerified,
-      verifiedAt: user.emailVerifiedAt
+      verified: user.emailVerified
     });
   } catch (error: any) {
     console.error("Verification status error:", error);
@@ -211,6 +217,37 @@ router.get("/verification-status/:email", async (req: Request, res: Response) =>
       success: false,
       message: `Server error: ${error.message}`,
       error: error
+    });
+  }
+});
+
+// Test session endpoint to check if the user is authenticated
+router.get("/session-check", (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  // Check if the user is authenticated
+  if (req.isAuthenticated()) {
+    const user = req.user;
+    // Return user data (without sensitive information)
+    const { password, ...userWithoutPassword } = user as any;
+    return res.status(200).json({
+      success: true,
+      message: "User is authenticated",
+      user: userWithoutPassword,
+      session: req.session
+    });
+  } else {
+    return res.status(401).json({
+      success: false,
+      message: "Not authenticated",
+      sessionID: req.sessionID,
+      cookies: req.headers.cookie
     });
   }
 });
