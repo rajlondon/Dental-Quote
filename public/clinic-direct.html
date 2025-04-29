@@ -158,12 +158,10 @@
               .then(userData => {
                 if (userData && userData.success && userData.user) {
                   console.log('User session confirmed:', userData.user);
-                  // Use replace instead of href to force a complete page reload
-                  console.log('Redirecting to clinic portal page...');
-                  // First try with a slight delay
-                  setTimeout(function() {
-                    window.location.replace('/clinic-portal');
-                  }, 500);
+                  // Use the server-side redirect endpoint instead of client-side navigation
+                  console.log('Using server-side redirect to clinic portal...');
+                  // Let the server handle the redirect for us
+                  window.location.href = '/api/auth/redirect-to-clinic';
                   return true;
                 } else {
                   throw new Error('Session verification failed');

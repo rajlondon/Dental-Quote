@@ -268,11 +268,16 @@
               .then(userData => {
                 if (userData && userData.success && userData.user) {
                   console.log('User session confirmed:', userData.user);
-                  // Use replace instead of href to force a complete page reload
-                  console.log('Redirecting to portal page:', redirectPath);
-                  setTimeout(function() {
-                    window.location.replace(redirectPath);
-                  }, 500);
+                  // Use the server-side redirect endpoints based on user role
+                  console.log('Using server-side redirect for user:', userData.user.role);
+                  
+                  if (userData.user.role === 'admin') {
+                    window.location.href = '/api/auth/redirect-to-admin';
+                  } else if (userData.user.role === 'clinic' || userData.user.role === 'clinic_staff') {
+                    window.location.href = '/api/auth/redirect-to-clinic';
+                  } else {
+                    window.location.href = '/api/auth/redirect-to-patient';
+                  }
                   return true;
                 } else {
                   throw new Error('Session verification failed');
