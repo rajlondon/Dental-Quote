@@ -80,12 +80,90 @@
         
         // Add a direct access button
         const container = document.querySelector('.container');
-        const directButton = document.createElement('a');
-        directButton.href = '/clinic-portal';
-        directButton.className = 'btn';
+        const directButton = document.createElement('button');
+        directButton.type = 'button';
+        directButton.id = 'portalButton';
+        directButton.className = 'btn go-portal';
         directButton.style.marginTop = '20px';
+        directButton.style.marginLeft = '10px';
+        directButton.style.backgroundColor = '#28c78f';
+        directButton.style.color = 'white';
+        directButton.style.border = 'none';
+        directButton.style.cursor = 'pointer';
+        directButton.style.padding = '10px 20px';
+        directButton.style.borderRadius = '4px';
         directButton.textContent = 'Go to Clinic Portal';
-        container.appendChild(directButton);
+        
+        // Replace the existing paragraph with new message and buttons div
+        const paragraph = document.querySelector('p');
+        paragraph.remove();
+        
+        // Create div for buttons
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.style.marginTop = '25px';
+        buttonsDiv.style.display = 'flex';
+        buttonsDiv.style.justifyContent = 'center';
+        buttonsDiv.style.gap = '10px';
+        
+        // Create home button
+        const homeButton = document.createElement('a');
+        homeButton.href = '/';
+        homeButton.className = 'btn';
+        homeButton.style.backgroundColor = '#28c78f';
+        homeButton.style.color = 'white';
+        homeButton.style.textDecoration = 'none';
+        homeButton.style.padding = '10px 20px';
+        homeButton.style.borderRadius = '4px';
+        homeButton.textContent = 'Return to Home';
+        
+        // Add message paragraph
+        const newParagraph = document.createElement('p');
+        newParagraph.textContent = 'Already logged in. Please click the button below to access the clinic portal.';
+        newParagraph.style.textAlign = 'center';
+        newParagraph.style.margin = '20px 0';
+        
+        // Append all elements
+        container.insertBefore(newParagraph, container.firstChild);
+        buttonsDiv.appendChild(homeButton);
+        buttonsDiv.appendChild(directButton);
+        container.appendChild(buttonsDiv);
+        
+        // Add click event handler to clinic portal button
+        directButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Make sure we're logged in
+          const loginAttempt = async () => {
+            try {
+              // Force a new login to ensure session is active
+              const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  email: 'clinic@mydentalfly.com',
+                  password: 'Clinic123!'
+                })
+              });
+              
+              if (response.ok) {
+                // If login was successful, go directly to clinic portal
+                window.location.href = '/clinic-portal';
+              } else {
+                console.error('Login failed');
+                alert('Login failed. Please try again.');
+              }
+            } catch (error) {
+              console.error('Error during login:', error);
+              alert('Login failed. Please try again.');
+            }
+          };
+          
+          loginAttempt();
+        });
         
         return;
       }
