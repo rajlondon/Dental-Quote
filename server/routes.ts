@@ -214,11 +214,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Force to always use the original clinic portal HTML file that shows the dashboard
     // with appointments, quotes, messages, etc. as shown in screenshots (client request)
     if (req.isAuthenticated() && (req.user.role === 'clinic' || req.user.role === 'clinic_staff')) {
-      console.log("Serving the previous version of the clinic portal HTML file");
-      return res.sendFile('clinic-portal-redirect.html', { root: path.join(process.cwd(), 'public') });
+      console.log("Serving the standalone clinic portal HTML file");
+      return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
     } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth) {
-      console.log("Authenticated with cookies, serving previous clinic portal");
-      return res.sendFile('clinic-portal-redirect.html', { root: path.join(process.cwd(), 'public') });
+      console.log("Authenticated with cookies, serving standalone clinic portal");
+      return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
     } else {
       // Otherwise redirect to the direct login
       return res.redirect('/clinic-direct');
@@ -268,9 +268,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000
     });
     
-    // Redirect to the old portal version as requested by the client
-    console.log("Redirecting to previous clinic portal version from POST handler");
-    res.redirect('/clinic-portal-redirect.html');
+    // Redirect directly to the standalone clinic portal
+    console.log("Redirecting to standalone clinic portal from POST handler");
+    res.redirect('/clinic-standalone.html');
   });
 
   app.get('/client-portal', (req, res) => {
@@ -371,6 +371,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       domain_test: true,
       time: new Date().toISOString()
     });
+  });
+  
+  // Endpoint to handle clinic portal preference (used by the client-side to request original portal)
+  app.post('/api/use-old-clinic-portal', (req, res) => {
+    console.log("Client requested to use old clinic portal");
+    // Set a cookie to remember this preference
+    res.cookie('use_old_clinic_portal', 'true', {
+      maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production'
+    });
+    res.status(200).json({ success: true, message: "Preference saved" });
   });
   
   // EmailJS Config endpoint
