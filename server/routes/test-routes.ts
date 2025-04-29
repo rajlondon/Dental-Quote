@@ -147,8 +147,20 @@ router.post("/test-login", async (req: Request, res: Response) => {
       });
     }
     
+    // Convert user to compatible format to fix type issues
+    const userForAuth = {
+      ...user,
+      // Convert null values to undefined to satisfy Express.User interface
+      firstName: user.firstName || undefined,
+      lastName: user.lastName || undefined,
+      phone: user.phone || undefined,
+      profileImage: user.profileImage || undefined,
+      jobTitle: user.jobTitle || undefined,
+      clinicId: user.clinicId || undefined
+    };
+    
     // Login the user
-    req.login(user, (err) => {
+    req.login(userForAuth, (err) => {
       if (err) {
         console.error("Login error:", err);
         return res.status(500).json({
@@ -375,11 +387,11 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
       });
     }
     
-    // Create a new booking
-    const bookingReference = `TEST-${randomUUID().substring(0, 8).toUpperCase()}`;
+    // Create a new booking with a reference number
+    const reference = `TEST-${randomUUID().substring(0, 8).toUpperCase()}`;
     
     const [newBooking] = await db.insert(bookings).values({
-      bookingReference,
+      bookingReference: reference,
       userId: patient.id,
       clinicId: clinic.id,
       status: 'confirmed',
