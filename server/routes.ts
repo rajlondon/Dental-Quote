@@ -210,15 +210,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If the direct=true flag is present, or they have auth cookies, serve the index.html
     const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
     const hasClinicAuth = req.cookies && req.cookies.clinic_auth === 'true';
-    const useStandalone = true; // Force using standalone for now (as per user preference)
     
-    if (useStandalone && req.isAuthenticated() && (req.user.role === 'clinic' || req.user.role === 'clinic_staff')) {
-      console.log("Redirecting to standalone clinic portal");
-      return res.redirect('/clinic-standalone.html');
+    // Force to always use the original clinic portal HTML file that shows the dashboard
+    // with appointments, quotes, messages, etc. as shown in screenshots (client request)
+    if (req.isAuthenticated() && (req.user.role === 'clinic' || req.user.role === 'clinic_staff')) {
+      console.log("Serving the previous version of the clinic portal HTML file");
+      return res.sendFile('clinic-portal-redirect.html', { root: path.join(process.cwd(), 'public') });
     } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth) {
-      console.log("Serving clinic portal React app");
-      // Use express.static's sendFile to serve the file
-      return res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
+      console.log("Authenticated with cookies, serving previous clinic portal");
+      return res.sendFile('clinic-portal-redirect.html', { root: path.join(process.cwd(), 'public') });
     } else {
       // Otherwise redirect to the direct login
       return res.redirect('/clinic-direct');
@@ -268,9 +268,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000
     });
     
-    // Redirect to the standalone solution which is more reliable
-    console.log("Redirecting to standalone clinic portal from POST handler");
-    res.redirect('/clinic-standalone.html');
+    // Redirect to the old portal version as requested by the client
+    console.log("Redirecting to previous clinic portal version from POST handler");
+    res.redirect('/clinic-portal-redirect.html');
   });
 
   app.get('/client-portal', (req, res) => {

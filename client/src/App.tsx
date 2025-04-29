@@ -144,11 +144,22 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Routes */}
+      {/* Clinic Staff Routes - Force redirect to server-rendered clinic page */}
       <Route path="/clinic-portal">
         {() => {
-          window.location.href = "/clinic-standalone.html";
-          return null;
+          console.log("Redirecting to old clinic portal");
+          // Use fetch to tell server we want old portal
+          fetch('/api/use-old-clinic-portal', { method: 'POST' })
+            .then(() => {
+              // Then reload the page which will be caught by the server route
+              window.location.href = "/clinic-portal";
+            })
+            .catch(error => {
+              console.error("Failed to set old portal preference:", error);
+              // Fallback to direct HTML access
+              window.location.href = "/public/clinic-portal-redirect.html";
+            });
+          return <div>Redirecting to clinic portal...</div>;
         }}
       </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
