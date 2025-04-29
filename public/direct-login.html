@@ -268,8 +268,11 @@
               .then(userData => {
                 if (userData && userData.success && userData.user) {
                   console.log('User session confirmed:', userData.user);
-                  // Instead of a timeout, try to navigate immediately
-                  window.location.href = redirectPath;
+                  // Use replace instead of href to force a complete page reload
+                  console.log('Redirecting to portal page:', redirectPath);
+                  setTimeout(function() {
+                    window.location.replace(redirectPath);
+                  }, 500);
                   return true;
                 } else {
                   throw new Error('Session verification failed');
