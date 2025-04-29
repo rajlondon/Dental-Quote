@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth Debug Page</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 800px;
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #115db5;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .section-title {
+      color: #333;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      background-color: #115db5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background-color: #0d4a8f;
+    }
+    
+    .card {
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    code {
+      background-color: #f0f0f0;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    
+    pre {
+      background-color: #282c34;
+      color: #abb2bf;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    
+    #results {
+      min-height: 100px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    
+    .row {
+      display: flex;
+      margin: 10px 0;
+    }
+    
+    .col {
+      flex: 1;
+      padding: 0 10px;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #115db5;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Authentication Debug Test Page</h1>
+    
+    <div class="section">
+      <h2 class="section-title">Authentication Endpoints Test</h2>
+      
+      <div class="card">
+        <div class="row">
+          <div class="col">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="clinic@mydentalfly.com" />
+          </div>
+          <div class="col">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="Clinic123!" />
+          </div>
+        </div>
+        
+        <div style="text-align: center;">
+          <button id="testDebugBtn">Test Debug API</button>
+          <button id="testLoginBtn">Test Login API</button>
+          <button id="getUserBtn">Get Current User</button>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </div>
+      
+      <h3>Test Options:</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <button class="user-btn" data-email="admin@mydentalfly.com" data-password="Admin123!">Admin User</button>
+        <button class="user-btn" data-email="clinic@mydentalfly.com" data-password="Clinic123!">Clinic User</button>
+        <button class="user-btn" data-email="patient@mydentalfly.com" data-password="Patient123!">Patient User</button>
+      </div>
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <button class="format-btn" data-format="json">JSON Format</button>
+        <button class="format-btn" data-format="formdata">FormData Format</button>
+      </div>
+      
+      <h3>Results:</h3>
+      <pre id="results">No results yet</pre>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">Quick Links</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="/direct-login"><button>Direct Login Page</button></a>
+        <a href="/admin-direct"><button>Admin Direct Page</button></a>
+        <a href="/clinic-direct"><button>Clinic Direct Page</button></a>
+        <a href="/patient-direct"><button>Patient Direct Page</button></a>
+        <a href="/"><button>Homepage</button></a>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const resultsDiv = document.getElementById('results');
+      let currentFormat = 'json'; // Default format
+      
+      // Set active format
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          currentFormat = this.dataset.format;
+          document.querySelectorAll('.format-btn').forEach(b => b.style.opacity = '0.7');
+          this.style.opacity = '1';
+          
+          updateResults(`Format set to: ${currentFormat}`);
+        });
+      });
+      
+      // Quick user selection
+      document.querySelectorAll('.user-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          emailInput.value = this.dataset.email;
+          passwordInput.value = this.dataset.password;
+          
+          updateResults(`User set to: ${this.dataset.email}`);
+        });
+      });
+      
+      // Test the debug endpoint
+      document.getElementById('testDebugBtn').addEventListener('click', function() {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        
+        if (!email || !password) {
+          updateResults('Please enter email and password');
+          return;
+        }
+        
+        this.innerHTML = 'Testing... <span class="spinner"></span>';
+        this.disabled = true;
+        
+        let requestBody;
+        let headers = {};
+        
+        if (currentFormat === 'json') {
+          requestBody = JSON.stringify({ email, password });
+          headers = {
+            'Content-Type': 'application/json'
+          };
+        } else {
+          // FormData
+          const formData = new FormData();
+          formData.append('email', email);
+          formData.append('password', password);
+          requestBody = formData;
+        }
+        
+        fetch('/api/auth/debug-login', {
+          method: 'POST',
+          headers,
+          body: requestBody,
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+          updateResults(JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+          updateResults(`Error: ${error.message}`);
+        })
+        .finally(() => {
+          this.innerHTML = 'Test Debug API';
+          this.disabled = false;
+        });
+      });
+      
+      // Test the login endpoint
+      document.getElementById('testLoginBtn').addEventListener('click', function() {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        
+        if (!email || !password) {
+          updateResults('Please enter email and password');
+          return;
+        }
+        
+        this.innerHTML = 'Logging in... <span class="spinner"></span>';
+        this.disabled = true;
+        
+        let requestBody;
+        let headers = {};
+        
+        if (currentFormat === 'json') {
+          requestBody = JSON.stringify({ email, password });
+          headers = {
+            'Content-Type': 'application/json'
+          };
+        } else {
+          // FormData
+          const formData = new FormData();
+          formData.append('email', email);
+          formData.append('password', password);
+          requestBody = formData;
+        }
+        
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers,
+          body: requestBody,
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+          updateResults(JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+          updateResults(`Error: ${error.message}`);
+        })
+        .finally(() => {
+          this.innerHTML = 'Test Login API';
+          this.disabled = false;
+        });
+      });
+      
+      // Get current user
+      document.getElementById('getUserBtn').addEventListener('click', function() {
+        this.innerHTML = 'Getting user... <span class="spinner"></span>';
+        this.disabled = true;
+        
+        fetch('/api/auth/user', {
+          method: 'GET',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+          updateResults(JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+          updateResults(`Error: ${error.message}`);
+        })
+        .finally(() => {
+          this.innerHTML = 'Get Current User';
+          this.disabled = false;
+        });
+      });
+      
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        this.innerHTML = 'Logging out... <span class="spinner"></span>';
+        this.disabled = true;
+        
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+          updateResults(JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+          updateResults(`Error: ${error.message}`);
+        })
+        .finally(() => {
+          this.innerHTML = 'Logout';
+          this.disabled = false;
+        });
+      });
+      
+      // Helper function to update results
+      function updateResults(text) {
+        resultsDiv.textContent = text;
+      }
+      
+      // Set initial active format
+      document.querySelector('.format-btn[data-format="json"]').style.opacity = '1';
+    });
+  </script>
+</body>
+</html>

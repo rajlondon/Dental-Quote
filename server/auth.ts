@@ -294,6 +294,35 @@ export async function setupAuth(app: Express) {
     }
     res.json({ success: true, user: req.user });
   });
+  
+  // Debug endpoint to test auth flow - only in development
+  app.post("/api/auth/debug-login", (req, res) => {
+    console.log("Debug login request:", {
+      body: req.body,
+      headers: {
+        contentType: req.headers['content-type'],
+        cookie: req.headers.cookie
+      }
+    });
+    
+    if (!req.body.email || !req.body.password) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing email or password",
+        received: {
+          hasEmail: !!req.body.email,
+          hasPassword: !!req.body.password,
+          contentType: req.headers['content-type']
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: "Debug login endpoint received data correctly",
+      email: req.body.email
+    });
+  });
 
   // Create admin and clinic users if they don't exist
   await seedUsers();
