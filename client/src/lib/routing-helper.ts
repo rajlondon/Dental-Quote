@@ -58,6 +58,79 @@ export function determineUserPortal(): 'admin' | 'clinic' | 'patient' | null {
     }
   }
   
+  // Check for new auth state format in localStorage
+  try {
+    // Check for clinic authentication state
+    const clinicAuthState = localStorage.getItem('clinic_auth_state');
+    if (clinicAuthState) {
+      const { user, timestamp } = JSON.parse(clinicAuthState);
+      const now = new Date().getTime();
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (user && (now - timestamp < maxAge)) {
+        if (user.role === 'clinic_staff' || user.role === 'clinic') {
+          console.log('Using clinic auth state from localStorage');
+          
+          // Set a cookie to maintain consistency with cookie-based auth checks
+          document.cookie = `clinic_auth=true; path=/; max-age=${60 * 60}`; // 1 hour
+          document.cookie = `mdf_user_role=clinic_staff; path=/; max-age=${60 * 60}`;
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${60 * 60}`;
+          if (user.id) {
+            document.cookie = `mdf_user_id=${user.id}; path=/; max-age=${60 * 60}`;
+          }
+          
+          return 'clinic';
+        }
+        if (user.role === 'admin') {
+          console.log('Using admin auth state from localStorage');
+          
+          // Set a cookie for admin auth
+          document.cookie = `admin_auth=true; path=/; max-age=${60 * 60}`;
+          document.cookie = `mdf_user_role=admin; path=/; max-age=${60 * 60}`;
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${60 * 60}`;
+          if (user.id) {
+            document.cookie = `mdf_user_id=${user.id}; path=/; max-age=${60 * 60}`;
+          }
+          
+          return 'admin';
+        }
+      }
+    }
+    
+    // Check legacy format: is_clinic flag + clinic_user combo
+    const isClinic = localStorage.getItem('is_clinic') === 'true';
+    const clinicUser = localStorage.getItem('clinic_user');
+    
+    if (isClinic && clinicUser) {
+      try {
+        const user = JSON.parse(clinicUser);
+        if (user && (user.role === 'clinic_staff' || user.role === 'clinic')) {
+          console.log('Using legacy clinic auth from localStorage');
+          
+          // Set cookies for consistency
+          document.cookie = `clinic_auth=true; path=/; max-age=${60 * 60}`;
+          document.cookie = `mdf_user_role=clinic_staff; path=/; max-age=${60 * 60}`;
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${60 * 60}`;
+          if (user.id) {
+            document.cookie = `mdf_user_id=${user.id}; path=/; max-age=${60 * 60}`;
+          }
+          
+          // Migrate to new format
+          localStorage.setItem('clinic_auth_state', JSON.stringify({
+            user,
+            timestamp: new Date().getTime()
+          }));
+          
+          return 'clinic';
+        }
+      } catch (e) {
+        console.error('Error parsing clinic user:', e);
+      }
+    }
+  } catch (e) {
+    console.error('Error checking auth state:', e);
+  }
+  
   // No valid authentication found
   return null;
 }
@@ -112,8 +185,69 @@ export function navigateToUserPortal(): void {
  * Check if a user is authenticated based on cookies and session data
  */
 export function isAuthenticated(): boolean {
-  return getCookie('mdf_authenticated') === 'true' || 
-         getCookie('admin_auth') === 'true' || 
-         getCookie('clinic_auth') === 'true' || 
-         getCookie('patient_auth') === 'true';
+  // First check cookies
+  const cookieAuth = getCookie('mdf_authenticated') === 'true' || 
+                     getCookie('admin_auth') === 'true' || 
+                     getCookie('clinic_auth') === 'true' || 
+                     getCookie('patient_auth') === 'true';
+  
+  if (cookieAuth) {
+    return true;
+  }
+  
+  // Then check localStorage auth state
+  try {
+    const authState = localStorage.getItem('clinic_auth_state');
+    if (authState) {
+      const { user, timestamp } = JSON.parse(authState);
+      const now = new Date().getTime();
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (user && (now - timestamp < maxAge)) {
+        // Valid auth state found - update cookies for system consistency
+        document.cookie = `mdf_authenticated=true; path=/; max-age=${60 * 60}`;
+        document.cookie = `mdf_user_role=${user.role}; path=/; max-age=${60 * 60}`;
+        
+        if (user.role === 'clinic_staff' || user.role === 'clinic') {
+          document.cookie = `clinic_auth=true; path=/; max-age=${60 * 60}`;
+        } else if (user.role === 'admin') {
+          document.cookie = `admin_auth=true; path=/; max-age=${60 * 60}`;
+        } else {
+          document.cookie = `patient_auth=true; path=/; max-age=${60 * 60}`;
+        }
+        
+        return true;
+      }
+    }
+    
+    // Check legacy format
+    const isClinic = localStorage.getItem('is_clinic') === 'true';
+    const clinicUser = localStorage.getItem('clinic_user');
+    
+    if (isClinic && clinicUser) {
+      try {
+        const user = JSON.parse(clinicUser);
+        if (user && user.role) {
+          // Migrate to new format
+          localStorage.setItem('clinic_auth_state', JSON.stringify({
+            user,
+            timestamp: new Date().getTime()
+          }));
+          
+          // Set cookies for system consistency
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${60 * 60}`;
+          document.cookie = `clinic_auth=true; path=/; max-age=${60 * 60}`;
+          document.cookie = `mdf_user_role=clinic_staff; path=/; max-age=${60 * 60}`;
+          
+          return true;
+        }
+      } catch (e) {
+        console.error('Error parsing clinic user:', e);
+      }
+    }
+  } catch (e) {
+    console.error('Error checking localStorage auth:', e);
+  }
+  
+  return false;
 }

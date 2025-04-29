@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,11 +6,85 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Loader2 } from 'lucide-react';
 
+// Helper function to check if user is already authenticated as clinic staff
+const checkExistingAuthentication = () => {
+  try {
+    // Check for the new authentication state format
+    const authState = localStorage.getItem('clinic_auth_state');
+    if (authState) {
+      const { user, timestamp } = JSON.parse(authState);
+      const now = new Date().getTime();
+      // Auth is valid for 24 hours
+      const maxAge = 24 * 60 * 60 * 1000;
+      
+      if (user && user.role === 'clinic_staff' && (now - timestamp < maxAge)) {
+        console.log('Found valid clinic auth state');
+        return true;
+      }
+    }
+    
+    // Check if we should fallback to using basic cookies/localStorage as auth check
+    const clinicUser = localStorage.getItem('clinic_user');
+    const isClinic = localStorage.getItem('is_clinic') === 'true';
+    
+    if (clinicUser && isClinic) {
+      try {
+        const user = JSON.parse(clinicUser);
+        if (user && user.role === 'clinic_staff') {
+          console.log('Found valid clinic user in localStorage');
+          
+          // Migrate to new auth state format
+          localStorage.setItem('clinic_auth_state', JSON.stringify({
+            user,
+            timestamp: new Date().getTime()
+          }));
+          
+          return true;
+        }
+      } catch (e) {
+        console.error('Error parsing clinic user:', e);
+      }
+    }
+    
+    return false;
+  } catch (e) {
+    console.error('Error checking authentication:', e);
+    return false;
+  }
+};
+
 const ClinicDirectLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutoRedirecting, setIsAutoRedirecting] = useState(false);
   const { toast } = useToast();
+  
+  // Check if already authenticated on component mount
+  useEffect(() => {
+    const isAuthenticated = checkExistingAuthentication();
+    
+    if (isAuthenticated) {
+      setIsAutoRedirecting(true);
+      toast({
+        title: 'Using existing session',
+        description: 'You are already authenticated as clinic staff.'
+      });
+      
+      console.log('Redirecting to clinic portal with existing authentication');
+      setTimeout(() => {
+        // Use our routing helper for more consistent navigation
+        import("../lib/routing-helper")
+          .then(({ navigateToUserPortal }) => {
+            navigateToUserPortal();
+          })
+          .catch(error => {
+            console.error("Failed to import routing helper:", error);
+            window.location.href = '/clinic-portal';
+          });
+      }, 1000);
+    }
+  }, [toast]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +142,15 @@ const ClinicDirectLogin: React.FC = () => {
       localStorage.setItem('clinic_user', JSON.stringify(user));
       sessionStorage.setItem('clinic_user', JSON.stringify(user));
       
+      // Store in our new auth state format for better persistence
+      localStorage.setItem('clinic_auth_state', JSON.stringify({
+        user,
+        timestamp: new Date().getTime()
+      }));
+      
+      // Set role-specific flag for backward compatibility
+      localStorage.setItem('is_clinic', 'true');
+      
       // Create a robust session cookie check
       document.cookie = "session_check=1; path=/; max-age=3600";
       
@@ -109,6 +192,38 @@ const ClinicDirectLogin: React.FC = () => {
     }
   };
 
+  // Show auto-redirecting UI if we're using existing auth
+  if (isAutoRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Clinic Portal</CardTitle>
+            <p className="text-sm text-center text-muted-foreground">
+              Using existing session
+            </p>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-center text-muted-foreground">
+              Redirecting to clinic portal with your existing session...
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              variant="link" 
+              onClick={() => window.location.href = '/portal-login'} 
+              size="sm"
+            >
+              Cancel and return to login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // Normal login form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
@@ -130,7 +245,7 @@ const ClinicDirectLogin: React.FC = () => {
                   className="pl-10"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || isAutoRedirecting}
                   required
                 />
               </div>
@@ -146,12 +261,16 @@ const ClinicDirectLogin: React.FC = () => {
                   className="pl-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || isAutoRedirecting}
                   required
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || isAutoRedirecting}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -164,7 +283,12 @@ const ClinicDirectLogin: React.FC = () => {
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button variant="link" onClick={() => window.location.href = '/portal-login'} size="sm">
+          <Button 
+            variant="link" 
+            onClick={() => window.location.href = '/portal-login'} 
+            size="sm"
+            disabled={isAutoRedirecting}
+          >
             Return to main login page
           </Button>
         </CardFooter>
