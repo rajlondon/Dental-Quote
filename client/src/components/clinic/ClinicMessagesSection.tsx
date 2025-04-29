@@ -72,16 +72,27 @@ const ClinicMessagesSection: React.FC = () => {
   const [selectedBooking, setSelectedBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
+  const initialLoadDoneRef = useRef<boolean>(false);
   
+  // Only fetch conversations once on initial mount
   useEffect(() => {
-    // Fetch conversations on component mount
-    fetchConversations();
+    // Only fetch if we haven't already
+    if (!initialLoadDoneRef.current) {
+      console.log("ClinicMessagesSection: Initial conversations fetch");
+      fetchConversations();
+      initialLoadDoneRef.current = true;
+    }
   }, []);
   
+  // Use a ref to track the previous selected booking ID to prevent unnecessary fetches
+  const prevSelectedBookingIdRef = useRef<number | null>(null);
+  
   useEffect(() => {
-    // Fetch messages when a conversation is selected
-    if (selectedBookingId) {
+    // Only fetch messages if a booking is selected and it's different from the previous one
+    if (selectedBookingId && selectedBookingId !== prevSelectedBookingIdRef.current) {
+      console.log(`ClinicMessagesSection: Fetching messages for booking ${selectedBookingId}`);
       fetchMessages(selectedBookingId);
+      prevSelectedBookingIdRef.current = selectedBookingId;
     }
   }, [selectedBookingId]);
   
@@ -141,21 +152,61 @@ const ClinicMessagesSection: React.FC = () => {
     }
   };
   
+  // Throttled fetch to prevent too many updates
+  const updateDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
   // New function to update unread counts without changing selection
   const updateUnreadCounts = async () => {
-    try {
-      const response = await fetch('/api/messages/clinic/conversations');
-      const data = await response.json();
-      
-      if (data.success) {
-        setConversations(data.conversations);
-        // Don't select a new conversation here
-      } else {
-        console.error('Failed to update conversations:', data.message);
-      }
-    } catch (error) {
-      console.error('Error updating conversations:', error);
+    // Cancel any pending update
+    if (updateDebounceRef.current) {
+      clearTimeout(updateDebounceRef.current);
     }
+    
+    // Debounce the update to prevent too many requests
+    updateDebounceRef.current = setTimeout(async () => {
+      console.log("ClinicMessagesSection: Updating unread counts");
+      try {
+        const response = await fetch('/api/messages/clinic/conversations');
+        const data = await response.json();
+        
+        if (data.success) {
+          // Only update if there's a difference in unread counts
+          const hasUnreadChanges = hasUnreadCountsChanged(conversations, data.conversations);
+          if (hasUnreadChanges) {
+            console.log("ClinicMessagesSection: Unread counts changed, updating state");
+            setConversations(data.conversations);
+          }
+        } else {
+          console.error('Failed to update conversations:', data.message);
+        }
+      } catch (error) {
+        console.error('Error updating conversations:', error);
+      }
+    }, 2000); // Wait 2 seconds before actually updating
+  };
+  
+  // Helper function to check if unread counts changed
+  const hasUnreadCountsChanged = (
+    oldConversations: Conversation[], 
+    newConversations: Conversation[]
+  ): boolean => {
+    if (oldConversations.length !== newConversations.length) return true;
+    
+    // Create a map of unread counts by conversation ID for easy comparison
+    const oldUnreadMap = new Map<number, number>();
+    oldConversations.forEach(conv => {
+      oldUnreadMap.set(conv.bookingId, conv.unreadCount);
+    });
+    
+    // Check for differences
+    for (const newConv of newConversations) {
+      const oldUnread = oldUnreadMap.get(newConv.bookingId) || 0;
+      if (newConv.unreadCount !== oldUnread) {
+        return true;
+      }
+    }
+    
+    return false;
   };
 
   // Message status indicators
