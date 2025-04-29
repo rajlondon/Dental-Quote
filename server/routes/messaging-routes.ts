@@ -152,16 +152,16 @@ router.post('/', isAuthenticated, async (req, res) => {
     // Determine the recipient if not explicitly provided
     let recipient = recipientId;
     if (!recipient) {
-      if (senderId === booking.patientId) {
+      if (senderId === booking.userId) {
         // If sender is patient, recipient is clinic
         recipient = booking.clinicId;
       } else if (senderId === booking.clinicId) {
         // If sender is clinic, recipient is patient
-        recipient = booking.patientId;
+        recipient = booking.userId;
       } else {
         // If sender is admin, need to determine context
         // For simplicity, default to patient as recipient
-        recipient = booking.patientId;
+        recipient = booking.userId;
       }
     }
     
@@ -249,7 +249,7 @@ router.post('/upload-attachment', isAuthenticated, upload.single('file'), async 
     const booking = await db.query.bookings.findFirst({
       where: and(
         eq(bookings.id, parseInt(bookingId)),
-        sql`(${bookings.patientId} = ${userId} OR ${bookings.clinicId} = ${userId} OR ${req.user!.role} = 'admin')`
+        sql`(${bookings.userId} = ${userId} OR ${bookings.clinicId} = ${userId} OR ${req.user!.role} = 'admin')`
       )
     });
     
@@ -642,6 +642,7 @@ router.post('/send', isAuthenticated, async (req, res) => {
     
     if (isClinicStaff || isAdmin) {
       // If sender is clinic staff or admin, recipient is the patient
+      // The userId in bookings table is the patient's ID
       recipientId = booking.userId;
     } else if (isPatient) {
       // If sender is patient, recipient is a clinic staff (assigned to the booking if available)
