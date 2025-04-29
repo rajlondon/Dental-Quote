@@ -70,6 +70,29 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Check if we've already attempted login (to prevent infinite loops)
+      const hasAttemptedLogin = sessionStorage.getItem('clinic_login_attempted');
+      
+      if (hasAttemptedLogin) {
+        // If we've already tried to log in, just show a different message
+        document.querySelector('.loader').style.display = 'none';
+        document.querySelector('p').textContent = 'Already logged in. Please click the button below to access the clinic portal.';
+        
+        // Add a direct access button
+        const container = document.querySelector('.container');
+        const directButton = document.createElement('a');
+        directButton.href = '/clinic-portal';
+        directButton.className = 'btn';
+        directButton.style.marginTop = '20px';
+        directButton.textContent = 'Go to Clinic Portal';
+        container.appendChild(directButton);
+        
+        return;
+      }
+      
+      // Mark that we've attempted login
+      sessionStorage.setItem('clinic_login_attempted', 'true');
+      
       // Clinic credentials
       const clinicCredentials = {
         email: 'clinic@mydentalfly.com',
@@ -121,9 +144,9 @@
           document.cookie = `clinic_session_id=${userId}; path=/; max-age=${maxAge}`;
           document.cookie = `portal_type=clinic; path=/; max-age=${maxAge}`;
           
-          // Redirect to the clinic portal with timestamp to prevent caching
+          // Redirect to React app with special parameter to ensure proper session handling
           const timestamp = Date.now();
-          window.location.href = `/clinic-portal?t=${timestamp}`;
+          window.location.href = `/?portal=clinic&t=${timestamp}`;
           
         } catch (error) {
           console.error('Login failed:', error);

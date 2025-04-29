@@ -192,6 +192,37 @@ function App() {
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
   
+  // Check for portal direct access parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const portalType = urlParams.get('portal');
+  
+  // If direct portal access was requested, handle the redirection
+  if (portalType) {
+    // Remove the portal parameter from URL to prevent infinite loops
+    if (window.history.replaceState) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({path: newUrl}, '', newUrl);
+    }
+    
+    // Redirect based on portal type
+    setTimeout(() => {
+      switch(portalType) {
+        case 'admin':
+          window.location.href = '/admin-portal';
+          break;
+        case 'clinic':
+          window.location.href = '/clinic-portal';
+          break;
+        case 'patient':
+          window.location.href = '/client-portal';
+          break;
+        default:
+          // No valid portal type specified, do nothing
+          break;
+      }
+    }, 100); // Short delay to ensure state update
+  }
+  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

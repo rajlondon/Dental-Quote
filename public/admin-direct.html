@@ -70,6 +70,29 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Check if we've already attempted login (to prevent infinite loops)
+      const hasAttemptedLogin = sessionStorage.getItem('admin_login_attempted');
+      
+      if (hasAttemptedLogin) {
+        // If we've already tried to log in, just show a different message
+        document.querySelector('.loader').style.display = 'none';
+        document.querySelector('p').textContent = 'Already logged in. Please click the button below to access the admin portal.';
+        
+        // Add a direct access button
+        const container = document.querySelector('.container');
+        const directButton = document.createElement('a');
+        directButton.href = '/';
+        directButton.className = 'btn';
+        directButton.style.marginTop = '20px';
+        directButton.textContent = 'Go to Main Page';
+        container.appendChild(directButton);
+        
+        return;
+      }
+      
+      // Mark that we've attempted login
+      sessionStorage.setItem('admin_login_attempted', 'true');
+      
       // Admin credentials
       const adminCredentials = {
         email: 'admin@mydentalfly.com',
@@ -121,9 +144,9 @@
           document.cookie = `admin_session_id=${userId}; path=/; max-age=${maxAge}`;
           document.cookie = `portal_type=admin; path=/; max-age=${maxAge}`;
           
-          // Redirect to the admin portal with timestamp to prevent caching
+          // Redirect to React app with special parameter to ensure proper session handling
           const timestamp = Date.now();
-          window.location.href = `/admin-portal?t=${timestamp}`;
+          window.location.href = `/?portal=admin&t=${timestamp}`;
           
         } catch (error) {
           console.error('Login failed:', error);
