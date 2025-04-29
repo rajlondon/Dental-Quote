@@ -65,8 +65,8 @@ const ClinicPortalPage: React.FC = () => {
     }
   }, []);
   
-  // Handle logout
-  const handleLogout = () => {
+  // Handle logout - memoized to prevent unnecessary re-renders
+  const handleLogout = useCallback(() => {
     // Using non-async function to make sure the button click handler completes immediately
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
@@ -76,8 +76,9 @@ const ClinicPortalPage: React.FC = () => {
           description: t('portal.logout_message', 'You have been logged out of your account.'),
         });
         
-        // Use wouter navigation instead of direct URL change
-        setLocation('/portal-login');
+        // Use window.location.href for a full page refresh on logout
+        // This ensures all state is cleared
+        window.location.href = '/portal-login';
       },
       onError: (error) => {
         console.error("Logout error:", error);
@@ -88,7 +89,7 @@ const ClinicPortalPage: React.FC = () => {
         });
       }
     });
-  };
+  }, [logoutMutation, toast, t]);
 
   // Clinic navigation items
   const navItems = [
@@ -107,19 +108,25 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'testing', label: t("clinic.nav.testing", "Testing Mode"), icon: <TestTube className="h-5 w-5" /> },
   ];
 
-  // Payment section redirect effect
-  useEffect(() => {
+  // Payment section redirect handler - memoized
+  const handlePaymentRedirect = useCallback(() => {
     if (activeSection === 'payments') {
       // Short timeout to allow the state to update before navigating
       const redirectTimer = setTimeout(() => {
-        setLocation('/treatment-payment');
+        // Use window.location.href for a full page redirect
+        window.location.href = '/treatment-payment';
       }, 100);
       return () => clearTimeout(redirectTimer);
     }
-  }, [activeSection, setLocation]);
+  }, [activeSection]);
+  
+  // Set up the payment redirect effect using the memoized handler
+  useEffect(() => {
+    return handlePaymentRedirect();
+  }, [handlePaymentRedirect]);
 
-  // Render the active section content
-  const renderSection = () => {
+  // Render the active section content - memoized to prevent unnecessary re-renders
+  const renderSection = useCallback((): React.ReactNode => {
     // For the dashboard section, we'll render an embedded dashboard directly
     if (activeSection === 'dashboard') {
       // Hard-coded dashboard data
@@ -306,7 +313,7 @@ const ClinicPortalPage: React.FC = () => {
           </div>
         );
     }
-  };
+  }, [activeSection, setActiveSection, setIsMobileMenuOpen]);
 
   // Sample clinic data (in a real app, this would come from an API/context)
   const clinicData = {
@@ -464,4 +471,5 @@ const ClinicPortalPage: React.FC = () => {
   );
 };
 
-export default ClinicPortalPage;
+// Wrap in memo to prevent unnecessary re-renders
+export default memo(ClinicPortalPage);
