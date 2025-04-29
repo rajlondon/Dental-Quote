@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db';
-import { eq, and, desc, sql, asc } from 'drizzle-orm';
+import { eq, and, desc, sql, asc, inArray } from 'drizzle-orm';
 import { messages, users, bookings, files, notifications } from '@shared/schema';
 import { isAuthenticated } from '../middleware/auth-middleware';
 import multer from 'multer';
@@ -533,10 +533,13 @@ router.get('/patient/booking/:bookingId/messages', isAuthenticated, async (req, 
       .map(msg => msg.id);
     
     if (messagesToUpdate.length > 0) {
-      await db
-        .update(messages)
-        .set({ isRead: true, readAt: new Date() })
-        .where(sql`id IN (${messagesToUpdate.join(', ')})`);
+      // Update messages one by one instead of using IN clause
+      for (const msgId of messagesToUpdate) {
+        await db
+          .update(messages)
+          .set({ isRead: true, readAt: new Date() })
+          .where(eq(messages.id, msgId));
+      }
     }
 
     // Format messages for client
@@ -713,10 +716,13 @@ router.get('/clinic/booking/:bookingId/messages', isAuthenticated, async (req, r
       .map(msg => msg.id);
     
     if (messagesToUpdate.length > 0) {
-      await db
-        .update(messages)
-        .set({ isRead: true })
-        .where(sql`id IN (${messagesToUpdate.join(', ')})`);
+      // Update messages one by one instead of using IN clause
+      for (const msgId of messagesToUpdate) {
+        await db
+          .update(messages)
+          .set({ isRead: true })
+          .where(eq(messages.id, msgId));
+      }
     }
 
     // Format messages for client
