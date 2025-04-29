@@ -70,6 +70,7 @@ import VerificationSentPage from "@/pages/VerificationSentPage";
 import EmailVerifiedPage from "@/pages/EmailVerifiedPage";
 import VerificationFailedPage from "@/pages/VerificationFailedPage";
 import PackageDetailPage from "@/pages/PackageDetailPage";
+import ClinicDirectLogin from "@/pages/ClinicDirectLogin";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/package/:id" component={PackageDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
+      <Route path="/clinic-login" component={ClinicDirectLogin} />
       <Route path="/portal">
         {() => <Redirect to="/portal-login" />}
       </Route>
