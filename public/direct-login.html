@@ -101,6 +101,7 @@
       margin-top: 15px;
       transition: background-color 0.2s;
       border: 1px solid #dee2e6;
+      cursor: pointer;
     }
     
     .btn:hover {
@@ -190,34 +191,19 @@
       <div class="card admin-card">
         <h2>Admin Portal</h2>
         <p>Access the administrative dashboard to manage users, clinics, and platform settings.</p>
-        <form action="/api/auth/login" method="post" class="admin-form">
-          <input type="hidden" name="email" value="admin@mydentalfly.com">
-          <input type="hidden" name="password" value="Admin123!">
-          <input type="hidden" name="redirect" value="/admin-portal">
-          <button type="submit" class="btn btn-admin">Access Admin Portal</button>
-        </form>
+        <button id="adminBtn" class="btn btn-admin">Access Admin Portal</button>
       </div>
       
       <div class="card clinic-card">
         <h2>Clinic Portal</h2>
         <p>For dental clinics to manage appointments, patient treatments, and communications.</p>
-        <form action="/api/auth/login" method="post" class="clinic-form">
-          <input type="hidden" name="email" value="clinic@mydentalfly.com">
-          <input type="hidden" name="password" value="Clinic123!">
-          <input type="hidden" name="redirect" value="/clinic-portal">
-          <button type="submit" class="btn btn-clinic">Access Clinic Portal</button>
-        </form>
+        <button id="clinicBtn" class="btn btn-clinic">Access Clinic Portal</button>
       </div>
       
       <div class="card patient-card">
         <h2>Patient Portal</h2>
         <p>For patients to view treatment plans, appointments, and communicate with clinics.</p>
-        <form action="/api/auth/login" method="post" class="patient-form">
-          <input type="hidden" name="email" value="patient@mydentalfly.com">
-          <input type="hidden" name="password" value="Patient123!">
-          <input type="hidden" name="redirect" value="/client-portal">
-          <button type="submit" class="btn btn-patient">Access Patient Portal</button>
-        </form>
+        <button id="patientBtn" class="btn btn-patient">Access Patient Portal</button>
       </div>
     </div>
     
@@ -228,15 +214,56 @@
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const forms = document.querySelectorAll('form');
-      
-      forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-          const button = this.querySelector('button');
-          button.innerHTML = button.innerHTML + ' <span class="spinner"></span>';
-          button.disabled = true;
-        });
+      // Admin portal login
+      document.getElementById('adminBtn').addEventListener('click', function() {
+        this.innerHTML = 'Accessing Admin Portal <span class="spinner"></span>';
+        this.disabled = true;
+        loginAndRedirect('admin@mydentalfly.com', 'Admin123!', '/admin-portal');
       });
+      
+      // Clinic portal login
+      document.getElementById('clinicBtn').addEventListener('click', function() {
+        this.innerHTML = 'Accessing Clinic Portal <span class="spinner"></span>';
+        this.disabled = true;
+        loginAndRedirect('clinic@mydentalfly.com', 'Clinic123!', '/clinic-portal');
+      });
+      
+      // Patient portal login
+      document.getElementById('patientBtn').addEventListener('click', function() {
+        this.innerHTML = 'Accessing Patient Portal <span class="spinner"></span>';
+        this.disabled = true;
+        loginAndRedirect('patient@mydentalfly.com', 'Patient123!', '/client-portal');
+      });
+      
+      // Function to handle login and redirect
+      function loginAndRedirect(email, password, redirectPath) {
+        // Create form data
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+        
+        // Use fetch API to log in
+        fetch('/api/auth/login', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        })
+        .then(response => {
+          if (response.ok || response.redirected) {
+            console.log(`Login successful, redirecting to ${redirectPath}`);
+            setTimeout(() => {
+              window.location.href = redirectPath;
+            }, 1000);
+          } else {
+            throw new Error('Login failed');
+          }
+        })
+        .catch(error => {
+          console.error('Login error:', error);
+          alert('Failed to login. Please try again or contact support.');
+          window.location.reload();
+        });
+      }
     });
   </script>
 </body>
