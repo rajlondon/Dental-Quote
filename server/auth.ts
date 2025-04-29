@@ -347,8 +347,8 @@ export async function setupAuth(app: Express) {
       return res.status(403).send("Access denied. You don't have clinic permissions.");
     }
     
-    console.log("Redirecting authenticated clinic user to clinic portal via intermediate page");
-    res.redirect("/clinic-portal-redirect.html");
+    console.log("Redirecting authenticated clinic user to auto-login page");
+    res.redirect("/clinic-auto.html");
   });
   
   app.get("/api/auth/redirect-to-patient", (req, res) => {

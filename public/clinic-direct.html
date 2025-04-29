@@ -158,10 +158,10 @@
               .then(userData => {
                 if (userData && userData.success && userData.user) {
                   console.log('User session confirmed:', userData.user);
-                  // Use the server-side redirect endpoint instead of client-side navigation
-                  console.log('Using server-side redirect to clinic portal...');
-                  // Let the server handle the redirect for us
-                  window.location.href = '/api/auth/redirect-to-clinic';
+                  // Use our new auto-login page
+                  console.log('Redirecting to clinic auto-login page...');
+                  // This page has special form-based redirect logic
+                  window.location.href = '/clinic-auto.html';
                   return true;
                 } else {
                   throw new Error('Session verification failed');

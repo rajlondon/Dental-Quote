@@ -212,6 +212,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.redirect('/clinic-direct');
     }
   });
+  
+  // Add POST handler for clinic portal to support form submissions
+  app.post('/clinic-portal', (req, res) => {
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      console.log("POST to clinic portal but user not authenticated");
+      return res.redirect('/clinic-direct');
+    }
+    
+    // Check if user has the correct role
+    if (req.user.role !== 'clinic' && req.user.role !== 'clinic_staff') {
+      console.log("POST to clinic portal with incorrect role:", req.user.role);
+      return res.status(403).send("Access denied. You don't have clinic permissions.");
+    }
+    
+    console.log("POST to clinic portal accepted for user:", req.user.email);
+    
+    // Set special clinic auth cookie that can be used by the GET handler
+    res.cookie('clinic_auth', 'true', { 
+      httpOnly: false, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
+    // Redirect to clinic portal with direct flag to ensure it loads
+    return res.redirect('/clinic-portal?direct=true');
+  });
 
   app.get('/client-portal', (req, res) => {
     // If the direct=true flag is present, or they have auth cookies, serve the index.html
