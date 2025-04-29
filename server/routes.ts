@@ -239,9 +239,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
       
-      // Serve the main React application
-      console.log("Serving React-based clinic portal dashboard");
-      return res.sendFile('index.html', { 
+      // Serve the standalone clinic portal HTML file
+      console.log("Serving standalone clinic portal HTML file");
+      return res.sendFile('clinic-standalone.html', { 
         root: path.join(process.cwd(), 'public'),
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -250,8 +250,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth || hasLoginTimestamp) {
-      console.log("Authenticated with cookies, serving React-based clinic portal");
-      return res.sendFile('index.html', { 
+      console.log("Authenticated with cookies, serving standalone clinic portal");
+      return res.sendFile('clinic-standalone.html', { 
         root: path.join(process.cwd(), 'public'),
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -335,12 +335,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const target = req.body.target || 'clinic';
     
     // Log the redirect information
-    console.log(`Redirecting to React-based clinic portal from POST handler (target: ${target})`);
+    console.log(`Redirecting to standalone clinic portal from POST handler (target: ${target})`);
     
     // Add cache-busting query parameter to avoid cache issues
     const timestamp = Date.now();
-    console.log("Redirecting to React-based clinic portal dashboard");
-    res.redirect(`/index.html?t=${timestamp}`);
+    console.log("Redirecting to standalone clinic portal");
+    res.redirect(`/clinic-standalone.html?t=${timestamp}`);
   });
 
   app.get('/client-portal', (req, res) => {
