@@ -273,7 +273,10 @@ const PatientPortalPage: React.FC = () => {
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
-        setLocation('/portal-login');
+        // Use direct window.location for more reliable navigation after logout
+        window.location.href = '/portal-login';
+        
+        // Toast notification will be shown before redirect
         toast({
           title: t('auth.logout_success', 'Logged out successfully'),
           description: t('auth.logout_message', 'You have been logged out of your account'),
@@ -360,7 +363,7 @@ const PatientPortalPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full justify-start text-gray-700 mb-2"
-              onClick={() => setLocation('/account-settings')}
+              onClick={() => window.location.href = '/account-settings'}
             >
               <UserCog className="h-5 w-5 mr-3" />
               {t('portal.account_settings', 'Account Settings')}
@@ -435,7 +438,7 @@ const PatientPortalPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-gray-700 mb-2"
-                    onClick={() => setLocation('/account-settings')}
+                    onClick={() => window.location.href = '/account-settings'}
                   >
                     <UserCog className="h-5 w-5 mr-3" />
                     {t('portal.account_settings', 'Account Settings')}
