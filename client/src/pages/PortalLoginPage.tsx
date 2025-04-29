@@ -242,19 +242,53 @@ const PortalLoginPage: React.FC = () => {
         // Use full URL construction for more reliable navigation
         const baseUrl = window.location.origin;
         
+        // Set role-specific cookies to improve persistence
         if (user.role === 'admin') {
-          console.log("Admin user detected, redirecting to admin portal");
-          window.location.href = baseUrl + '/admin-portal';
+          document.cookie = `admin_session=${user.id}; path=/; max-age=86400`;
         } else if (user.role === 'clinic_staff') {
-          console.log("Clinic staff detected, redirecting to clinic portal");
-          // For clinic staff, use our optimized direct approach
-          window.location.href = baseUrl + '/clinic-portal';
+          document.cookie = `clinic_session=${user.id}; path=/; max-age=86400`;
         } else {
-          // Default to patient portal for any other role
-          console.log("Patient user detected, redirecting to patient portal");
-          window.location.href = baseUrl + '/client-portal';
+          document.cookie = `patient_session=${user.id}; path=/; max-age=86400`;
         }
-      }, 800); // Slightly longer delay to ensure cookie is set
+        
+        // Debug: Log all cookies before redirect
+        console.log("Cookies before redirect:", document.cookie);
+        
+        try {
+          // Add timestamp to prevent caching
+          const timestamp = Date.now();
+          let redirectUrl;
+          
+          if (user.role === 'admin') {
+            console.log("Admin user detected, redirecting to admin portal");
+            redirectUrl = `${baseUrl}/admin-portal?t=${timestamp}`;
+          } else if (user.role === 'clinic_staff') {
+            console.log("Clinic staff detected, redirecting to clinic portal");
+            // For clinic staff, use our optimized direct approach
+            redirectUrl = `${baseUrl}/clinic-portal?t=${timestamp}`;
+          } else {
+            // Default to patient portal for any other role
+            console.log("Patient user detected, redirecting to patient portal");
+            redirectUrl = `${baseUrl}/client-portal?t=${timestamp}`;
+          }
+          
+          console.log("Redirecting to:", redirectUrl);
+          
+          // Force reload approach instead of simple location change
+          window.location.replace(redirectUrl);
+        } catch (e) {
+          console.error("Redirect error:", e);
+          
+          // Fall back to a direct redirect on error
+          if (user.role === 'admin') {
+            window.location.href = '/admin-portal';
+          } else if (user.role === 'clinic_staff') {
+            window.location.href = '/clinic-portal';
+          } else {
+            window.location.href = '/client-portal';
+          }
+        }
+      }, 1200); // Longer delay to ensure cookie is set
       
     } catch (error: any) {
       console.error("Login error:", error);
