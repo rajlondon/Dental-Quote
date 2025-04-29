@@ -124,27 +124,29 @@
       document.getElementById('loginBtn').disabled = true;
       document.getElementById('statusMessage').style.display = 'none';
       
+      // We need to send the credentials as form data instead of JSON
+      const formData = new FormData();
+      formData.append('email', 'patient@mydentalfly.com');
+      formData.append('password', 'Patient123!');
+      formData.append('redirect', '/client-portal');
+      
       fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: 'patient@mydentalfly.com',
-          password: 'Patient123!',
-          redirect: '/client-portal'
-        }),
-        credentials: 'include'
+        body: formData,
+        credentials: 'include',
+        // Don't set Content-Type header - the browser will set it correctly with the boundary for multipart/form-data
+        redirect: 'follow' // This tells fetch to follow redirects automatically
       })
       .then(response => {
-        // Check if login was successful
-        if (response.ok) {
+        // If we get a response (even after redirects), check if it was successful
+        if (response.ok || response.redirected) {
           document.getElementById('statusMessage').textContent = 'Login successful! Redirecting...';
           document.getElementById('statusMessage').className = 'status success';
           document.getElementById('statusMessage').style.display = 'block';
           
-          // Redirect with a slight delay to show the success message
+          // Wait 1 second and then do a full page navigation to the portal
           setTimeout(() => {
+            // Use reload() to ensure a clean page load
             window.location.href = '/client-portal?direct=true&t=' + Date.now();
           }, 1000);
         } else {
