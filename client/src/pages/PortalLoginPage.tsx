@@ -194,16 +194,18 @@ const PortalLoginPage: React.FC = () => {
       // Direct redirect based on user role from response
       console.log("Login successful, redirecting based on role:", userData.role);
       
+      // Use a direct window location change instead of wouter's setLocation
+      // This forces a page reload which should clear any stale state
       if (userData.role === 'admin') {
         console.log("Admin user detected, redirecting to admin portal");
-        setLocation('/admin-portal');
+        window.location.href = '/admin-portal';
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
-        setLocation('/clinic-portal');
+        window.location.href = '/clinic-portal';
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");
-        setLocation('/client-portal');
+        window.location.href = '/client-portal';
       }
       
     } catch (error) {
