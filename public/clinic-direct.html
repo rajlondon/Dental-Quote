@@ -158,8 +158,12 @@
               .then(userData => {
                 if (userData && userData.success && userData.user) {
                   console.log('User session confirmed:', userData.user);
-                  // Instead of a timeout, try to navigate immediately
-                  window.location.href = '/clinic-portal';
+                  // Use replace instead of href to force a complete page reload
+                  console.log('Redirecting to clinic portal page...');
+                  // First try with a slight delay
+                  setTimeout(function() {
+                    window.location.replace('/clinic-portal');
+                  }, 500);
                   return true;
                 } else {
                   throw new Error('Session verification failed');
