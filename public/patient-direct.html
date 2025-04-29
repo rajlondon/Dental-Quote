@@ -93,17 +93,11 @@
   <div class="container">
     <h1>MyDentalFly Patient Portal</h1>
     <div id="loginForm">
-      <form action="/api/auth/login" method="post">
-        <input type="hidden" name="email" value="patient@mydentalfly.com">
-        <input type="hidden" name="password" value="Patient123!">
-        <input type="hidden" name="redirect" value="/client-portal">
-        
-        <p>Click the button below to access the patient portal with the default patient account.</p>
-        <div class="buttons">
-          <a href="/" class="btn secondary">Return Home</a>
-          <button type="submit" class="btn">Access Patient Portal</button>
-        </div>
-      </form>
+      <p>Click the button below to access the patient portal with the default patient account.</p>
+      <div class="buttons">
+        <a href="/" class="btn secondary">Return Home</a>
+        <button id="directAccessBtn" class="btn">Access Patient Portal</button>
+      </div>
     </div>
     
     <div id="loadingMessage" style="display: none;">
@@ -112,23 +106,56 @@
   </div>
   
   <script>
-    // Check if we need to automatically login
     document.addEventListener('DOMContentLoaded', function() {
-      // Create a form for submission
-      const form = document.querySelector('form');
-      if (form) {
-        form.addEventListener('submit', function(e) {
-          document.getElementById('loginForm').style.display = 'none';
-          document.getElementById('loadingMessage').style.display = 'block';
+      // Button click listener
+      const directAccessBtn = document.getElementById('directAccessBtn');
+      if (directAccessBtn) {
+        directAccessBtn.addEventListener('click', function() {
+          performDirectLogin();
         });
       }
       
-      // Handle auto-login parameter
+      // Auto-login handler
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autologin') === 'true') {
-        if (form) {
-          form.submit();
-        }
+        performDirectLogin();
+      }
+      
+      // Function to perform the login
+      function performDirectLogin() {
+        // Show loading state
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('loadingMessage').style.display = 'block';
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('email', 'patient@mydentalfly.com');
+        formData.append('password', 'Patient123!');
+        
+        // Use fetch API to log in
+        fetch('/api/auth/login', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        })
+        .then(response => {
+          if (response.ok || response.redirected) {
+            // Manually redirect to the patient portal
+            console.log('Login successful, redirecting to patient portal');
+            setTimeout(() => {
+              window.location.href = '/client-portal';
+            }, 1000);
+          } else {
+            throw new Error('Login failed');
+          }
+        })
+        .catch(error => {
+          console.error('Login error:', error);
+          alert('Failed to login. Please try again or contact support.');
+          // Show the form again
+          document.getElementById('loginForm').style.display = 'block';
+          document.getElementById('loadingMessage').style.display = 'none';
+        });
       }
     });
   </script>
