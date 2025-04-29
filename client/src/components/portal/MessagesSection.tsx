@@ -73,11 +73,11 @@ interface Message {
   hasAttachment?: boolean;
 }
 
-export const MessagesSection: React.FC = () => {
+const MessagesSection: React.FC = () => {
   const { t } = useTranslation();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { socket, connected } = useWebSocket();
+  const { connected, lastMessage } = useWebSocket();
   const { markAsRead } = useNotifications();
   
   const [loading, setLoading] = useState<boolean>(true);
@@ -134,48 +134,32 @@ export const MessagesSection: React.FC = () => {
     }
   }, [messages]);
   
-  // Listen for new messages from WebSocket
+  // Listen for new messages from WebSocket via lastMessage
   useEffect(() => {
-    if (socket && connected) {
-      const handleNewMessage = (event: MessageEvent) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'new_message' && data.payload) {
-            const newMsg = data.payload;
-            
-            // If this message is for the current active booking, add it to messages
-            if (activeBookingId && newMsg.bookingId === activeBookingId) {
-              setMessages(prevMessages => [...prevMessages, {
-                id: newMsg.id,
-                bookingId: newMsg.bookingId,
-                content: newMsg.content,
-                sender: newMsg.senderId === activeBookingId ? 'clinic' : 'patient',
-                senderName: newMsg.sender?.firstName || 'Clinic Staff',
-                senderAvatar: newMsg.sender?.profileImage,
-                timestamp: newMsg.createdAt,
-                isRead: false,
-                messageType: newMsg.messageType || 'text',
-                attachmentId: newMsg.attachmentId,
-                hasAttachment: newMsg.hasAttachment
-              }]);
-            }
-            
-            // Refresh conversations to update last message and unread count
-            fetchConversations();
-          }
-        } catch (error) {
-          console.error('Error processing WebSocket message', error);
-        }
-      };
+    if (lastMessage && lastMessage.type === 'new_message' && lastMessage.payload) {
+      const newMsg = lastMessage.payload;
       
-      socket.addEventListener('message', handleNewMessage);
+      // If this message is for the current active booking, add it to messages
+      if (activeBookingId && newMsg.bookingId === activeBookingId) {
+        setMessages(prevMessages => [...prevMessages, {
+          id: newMsg.id,
+          bookingId: newMsg.bookingId,
+          content: newMsg.content,
+          sender: newMsg.senderId === activeBookingId ? 'clinic' : 'patient',
+          senderName: newMsg.sender?.firstName || 'Clinic Staff',
+          senderAvatar: newMsg.sender?.profileImage,
+          timestamp: newMsg.createdAt,
+          isRead: false,
+          messageType: newMsg.messageType || 'text',
+          attachmentId: newMsg.attachmentId,
+          hasAttachment: newMsg.hasAttachment
+        }]);
+      }
       
-      return () => {
-        socket.removeEventListener('message', handleNewMessage);
-      };
+      // Refresh conversations to update last message and unread count
+      fetchConversations();
     }
-  }, [socket, connected, activeBookingId]);
+  }, [lastMessage, activeBookingId]);
   
   const fetchConversations = async () => {
     setLoading(true);
@@ -835,3 +819,5 @@ export const MessagesSection: React.FC = () => {
     </div>
   );
 };
+
+export default MessagesSection;
