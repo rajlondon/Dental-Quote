@@ -406,4 +406,184 @@ router.get('/unread/count', isAuthenticated, async (req, res) => {
   }
 });
 
+// Get all conversations for a clinic
+router.get('/clinic/conversations', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    // Get the clinic ID for this clinic staff
+    const clinicStaff = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (!clinicStaff.length || clinicStaff[0].role !== 'clinic_staff' || !clinicStaff[0].clinicId) {
+      return res.status(403).json({ success: false, message: 'User is not authorized as clinic staff' });
+    }
+    
+    const clinicId = clinicStaff[0].clinicId;
+
+    // Get all bookings for this clinic with patient info
+    const clinicBookings = await db.query.bookings.findMany({
+      where: eq(bookings.clinicId, clinicId),
+      with: {
+        user: true,
+      },
+      orderBy: [desc(bookings.updatedAt)]
+    });
+
+    // For each booking, get the latest message
+    const conversationsWithLatestMessage = await Promise.all(
+      clinicBookings.map(async (booking) => {
+        // Get the latest message for this booking
+        const latestMessage = await db.query.messages.findFirst({
+          where: eq(messages.bookingId, booking.id),
+          orderBy: [desc(messages.createdAt)]
+        });
+
+        // Count unread messages for this booking where clinic staff is recipient
+        const unreadCount = await db.select({
+          count: sql<number>`count(*)`
+        })
+        .from(messages)
+        .where(
+          and(
+            eq(messages.bookingId, booking.id),
+            eq(messages.recipientId, userId),
+            eq(messages.isRead, false)
+          )
+        );
+
+        return {
+          bookingId: booking.id,
+          bookingReference: booking.bookingReference,
+          patientId: booking.userId,
+          patientName: `${booking.user.firstName || ''} ${booking.user.lastName || ''}`.trim(),
+          patientEmail: booking.user.email,
+          patientAvatar: booking.user.profileImage,
+          status: booking.status,
+          lastMessage: latestMessage?.content || 'No messages yet',
+          lastMessageTime: latestMessage?.createdAt || booking.createdAt,
+          unreadCount: unreadCount[0]?.count || 0,
+          treatmentType: booking.treatmentType || 'Dental Treatment'
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      conversations: conversationsWithLatestMessage
+    });
+  } catch (error: any) {
+    console.error('Error getting clinic conversations:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get clinic conversations',
+      error: error.message
+    });
+  }
+});
+
+// Get all messages for a specific booking with patient and clinic details
+router.get('/clinic/booking/:bookingId/messages', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { bookingId } = req.params;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    // Get the clinic ID for this clinic staff
+    const clinicStaff = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (!clinicStaff.length || clinicStaff[0].role !== 'clinic_staff' || !clinicStaff[0].clinicId) {
+      return res.status(403).json({ success: false, message: 'User is not authorized as clinic staff' });
+    }
+    
+    const clinicId = clinicStaff[0].clinicId;
+
+    // Verify booking belongs to this clinic
+    const booking = await db.query.bookings.findFirst({
+      where: and(
+        eq(bookings.id, parseInt(bookingId)),
+        eq(bookings.clinicId, clinicId)
+      ),
+      with: {
+        user: true
+      }
+    });
+
+    if (!booking) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Booking not found or you do not have permission to view messages for this booking' 
+      });
+    }
+
+    // Get all messages for this booking
+    const messagesList = await db.query.messages.findMany({
+      where: eq(messages.bookingId, parseInt(bookingId)),
+      with: {
+        sender: true,
+        recipient: true
+      },
+      orderBy: [asc(messages.createdAt)]
+    });
+
+    // Mark messages as read if clinic staff is the recipient
+    const messagesToUpdate = messagesList
+      .filter(msg => msg.recipientId === userId && !msg.isRead)
+      .map(msg => msg.id);
+    
+    if (messagesToUpdate.length > 0) {
+      await db
+        .update(messages)
+        .set({ isRead: true })
+        .where(sql`id IN (${messagesToUpdate.join(', ')})`);
+    }
+
+    // Format messages for client
+    const formattedMessages = messagesList.map(message => ({
+      id: message.id,
+      bookingId: message.bookingId,
+      content: message.content,
+      sender: message.sender.id === userId ? 'clinic' : 'patient',
+      senderName: message.sender.id === userId 
+        ? `${message.sender.firstName || ''} ${message.sender.lastName || 'Clinic Staff'}`.trim()
+        : `${message.sender.firstName || ''} ${message.sender.lastName || 'Patient'}`.trim(),
+      senderAvatar: message.sender.profileImage,
+      timestamp: message.createdAt,
+      isRead: message.isRead,
+      messageType: message.messageType,
+      attachmentUrl: message.attachmentUrl,
+      attachmentType: message.attachmentType
+    }));
+
+    return res.status(200).json({
+      success: true,
+      booking: {
+        id: booking.id,
+        reference: booking.bookingReference,
+        status: booking.status,
+        treatmentType: booking.treatmentType,
+        patient: {
+          id: booking.user.id,
+          name: `${booking.user.firstName || ''} ${booking.user.lastName || ''}`.trim(),
+          email: booking.user.email,
+          avatar: booking.user.profileImage
+        }
+      },
+      messages: formattedMessages
+    });
+  } catch (error: any) {
+    console.error('Error getting booking messages:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get booking messages',
+      error: error.message
+    });
+  }
+});
+
 export default router;
