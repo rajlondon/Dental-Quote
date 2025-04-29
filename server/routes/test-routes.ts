@@ -1,7 +1,7 @@
 import express, { Router, Request, Response } from "express";
 import { db } from "../db";
 import { createVerificationToken } from "../services/email-service";
-import { users, bookings, clinics, messages } from "../../shared/schema";
+import { users, bookings, clinics, messages, notifications } from "../../shared/schema";
 import { eq, and } from "drizzle-orm";
 import passport from "passport";
 import bcrypt from "bcrypt";
@@ -391,15 +391,15 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
     const reference = `TEST-${randomUUID().substring(0, 8).toUpperCase()}`;
     
     const [newBooking] = await db.insert(bookings).values({
-      bookingReference: reference,
-      userId: patient.id,
-      clinicId: clinic.id,
+      booking_reference: reference,
+      user_id: patient.id,
+      clinic_id: clinic.id,
       status: 'confirmed',
-      assignedClinicStaffId: clinicStaff.id,
-      depositPaid: true,
-      depositAmount: 200.00,
-      adminNotes: 'This is a test booking for messaging',
-      clinicNotes: 'Created for testing purposes'
+      assigned_clinic_staff_id: clinicStaff.id,
+      deposit_paid: true,
+      deposit_amount: 200.00,
+      admin_notes: 'This is a test booking for messaging',
+      clinic_notes: 'Created for testing purposes'
     }).returning();
     
     // Create initial welcome message from clinic to patient
@@ -411,11 +411,37 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
       messageType: 'text',
     }).returning();
     
+    // Create a notification for the patient about the new message
+    const [notification] = await db.insert(notifications).values({
+      userId: patient.id,
+      title: 'New Message',
+      message: `You have a new message from ${clinic.name}`,
+      type: 'message',
+      entityType: 'message',
+      entityId: welcomeMessage.id,
+      isRead: false
+    }).returning();
+    
+    // Try to send real-time notification via WebSocket if available
+    const wsService = req.app.locals.wsService;
+    if (wsService) {
+      wsService.broadcast({
+        type: 'notification',
+        payload: notification,
+        sender: {
+          id: clinicStaff.id.toString(),
+          type: 'clinic_staff'
+        },
+        target: patient.id.toString()
+      });
+    }
+    
     return res.status(201).json({
       success: true,
       message: "Test booking created successfully with initial message",
       booking: newBooking,
-      welcomeMessage
+      welcomeMessage,
+      notification
     });
     
   } catch (error: any) {
