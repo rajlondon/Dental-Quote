@@ -1,10 +1,11 @@
 import express, { Router, Request, Response } from "express";
 import { db } from "../db";
 import { createVerificationToken } from "../services/email-service";
-import { users } from "../../shared/schema";
-import { eq } from "drizzle-orm";
+import { users, bookings, clinics, messages } from "../../shared/schema";
+import { eq, and } from "drizzle-orm";
 import passport from "passport";
 import bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
 
 const router: Router = express.Router();
 
@@ -291,6 +292,122 @@ router.delete("/delete-user-by-email/:email", async (req: Request, res: Response
     });
   } catch (error: any) {
     console.error("User deletion error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+      error: error
+    });
+  }
+});
+
+// Test endpoint to create a booking between patient and clinic
+// This will set up a test environment to test messaging functionality
+router.post("/create-test-booking", async (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  try {
+    const { patientEmail, clinicEmail } = req.body;
+    
+    if (!patientEmail || !clinicEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Patient email and clinic email are required" 
+      });
+    }
+    
+    // Get patient with email
+    const [patient] = await db.select().from(users).where(eq(users.email, patientEmail));
+    
+    if (!patient) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Patient not found with this email" 
+      });
+    }
+    
+    // Get clinic staff with email
+    const [clinicStaff] = await db.select().from(users).where(eq(users.email, clinicEmail));
+    
+    if (!clinicStaff || clinicStaff.role !== 'clinic_staff') {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Clinic staff not found with this email" 
+      });
+    }
+    
+    if (!clinicStaff.clinicId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Clinic staff has no associated clinic" 
+      });
+    }
+    
+    // Get clinic info
+    const [clinic] = await db.select().from(clinics).where(eq(clinics.id, clinicStaff.clinicId));
+    
+    if (!clinic) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Clinic not found for this staff member" 
+      });
+    }
+    
+    // Check if a booking already exists between these users
+    const existingBooking = await db.query.bookings.findFirst({
+      where: and(
+        eq(bookings.userId, patient.id),
+        eq(bookings.clinicId, clinic.id)
+      )
+    });
+    
+    if (existingBooking) {
+      // Return the existing booking
+      return res.status(200).json({
+        success: true,
+        message: "Existing booking found between this patient and clinic",
+        booking: existingBooking
+      });
+    }
+    
+    // Create a new booking
+    const bookingReference = `TEST-${randomUUID().substring(0, 8).toUpperCase()}`;
+    
+    const [newBooking] = await db.insert(bookings).values({
+      bookingReference,
+      userId: patient.id,
+      clinicId: clinic.id,
+      status: 'confirmed',
+      assignedClinicStaffId: clinicStaff.id,
+      depositPaid: true,
+      depositAmount: 200.00,
+      adminNotes: 'This is a test booking for messaging',
+      clinicNotes: 'Created for testing purposes'
+    }).returning();
+    
+    // Create initial welcome message from clinic to patient
+    const [welcomeMessage] = await db.insert(messages).values({
+      bookingId: newBooking.id,
+      senderId: clinicStaff.id,
+      recipientId: patient.id,
+      content: `Welcome to ${clinic.name}! This is a test conversation to check messaging functionality. Feel free to ask any questions about your treatment.`,
+      messageType: 'text',
+    }).returning();
+    
+    return res.status(201).json({
+      success: true,
+      message: "Test booking created successfully with initial message",
+      booking: newBooking,
+      welcomeMessage
+    });
+    
+  } catch (error: any) {
+    console.error("Test booking creation error:", error);
     return res.status(500).json({
       success: false,
       message: `Server error: ${error.message}`,
