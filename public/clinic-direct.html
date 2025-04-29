@@ -63,6 +63,14 @@
     .btn:hover {
       background-color: #1ea97c;
     }
+
+    .btn.secondary {
+      background-color: #6c757d;
+    }
+
+    .btn.secondary:hover {
+      background-color: #5a6268;
+    }
   </style>
 </head>
 <body>
@@ -71,47 +79,17 @@
     
     <p>Click the button below to access the clinic portal with the default clinic account.</p>
     
-    <div class="buttons">
-      <a href="/" class="btn" style="background-color: #6c757d;">Return Home</a>
-      <a href="#" class="btn" onclick="loginAndRedirect()">Access Clinic Portal</a>
-    </div>
+    <!-- Use a direct form submission instead of JavaScript -->
+    <form action="/api/auth/login" method="POST">
+      <input type="hidden" name="email" value="clinic@mydentalfly.com">
+      <input type="hidden" name="password" value="Clinic123!">
+      <input type="hidden" name="redirect" value="/clinic-portal">
+      
+      <div class="buttons">
+        <a href="/" class="btn secondary">Return Home</a>
+        <button type="submit" class="btn">Access Clinic Portal</button>
+      </div>
+    </form>
   </div>
-  
-  <script>
-    function loginAndRedirect() {
-      // Create a form for submitting login credentials
-      const form = document.createElement('form');
-      form.style.display = 'none';
-      form.method = 'POST';
-      form.action = '/api/auth/login';
-      
-      // Create email field
-      const emailField = document.createElement('input');
-      emailField.type = 'hidden';
-      emailField.name = 'email';
-      emailField.value = 'clinic@mydentalfly.com';
-      
-      // Create password field
-      const passwordField = document.createElement('input');
-      passwordField.type = 'hidden';
-      passwordField.name = 'password';
-      passwordField.value = 'Clinic123!';
-      
-      // Add fields to form
-      form.appendChild(emailField);
-      form.appendChild(passwordField);
-      
-      // Add a hidden field to redirect after login
-      const redirectField = document.createElement('input');
-      redirectField.type = 'hidden';
-      redirectField.name = 'redirect';
-      redirectField.value = '/clinic-portal';
-      form.appendChild(redirectField);
-      
-      // Add form to body and submit
-      document.body.appendChild(form);
-      form.submit();
-    }
-  </script>
 </body>
 </html>
