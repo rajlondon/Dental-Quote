@@ -144,12 +144,20 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Protected Routes */}
-      <ProtectedRoute path="/clinic-portal" component={ClinicPortalPage} requiredRole="clinic_staff" />
+      {/* Clinic Staff Routes */}
+      <Route path="/clinic-portal">
+        {() => {
+          window.location.href = "/clinic-standalone.html";
+          return null;
+        }}
+      </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       <Route path="/clinic">
-        {() => <Redirect to="/clinic-portal" />}
+        {() => {
+          window.location.href = "/clinic-standalone.html";
+          return null;
+        }}
       </Route>
       {/* Redirect all test routes to home */}
       <Route path="/test">
@@ -211,7 +219,7 @@ function App() {
           window.location.href = '/admin-portal';
           break;
         case 'clinic':
-          window.location.href = '/clinic-portal';
+          window.location.href = '/clinic-standalone.html';
           break;
         case 'patient':
           window.location.href = '/client-portal';
