@@ -406,6 +406,182 @@ router.get('/unread/count', isAuthenticated, async (req, res) => {
   }
 });
 
+// Get all conversations for a patient
+router.get('/patient/conversations', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    // Get the patient record
+    const patient = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (!patient.length || patient[0].role !== 'patient') {
+      return res.status(403).json({ success: false, message: 'User is not authorized as a patient' });
+    }
+
+    // Get all bookings for this patient with clinic info
+    const patientBookings = await db.query.bookings.findMany({
+      where: eq(bookings.userId, userId),
+      with: {
+        clinic: true, // Join with clinic table
+      },
+      orderBy: [desc(bookings.updatedAt)]
+    });
+
+    // For each booking, get the latest message
+    const conversationsWithLatestMessage = await Promise.all(
+      patientBookings.map(async (booking) => {
+        // Get the latest message for this booking
+        const latestMessage = await db.query.messages.findFirst({
+          where: eq(messages.bookingId, booking.id),
+          orderBy: [desc(messages.createdAt)]
+        });
+
+        // Count unread messages for this booking where patient is recipient
+        const unreadCount = await db.select({
+          count: sql<number>`count(*)`
+        })
+        .from(messages)
+        .where(
+          and(
+            eq(messages.bookingId, booking.id),
+            eq(messages.recipientId, userId),
+            eq(messages.isRead, false)
+          )
+        );
+
+        return {
+          bookingId: booking.id,
+          bookingReference: booking.bookingReference,
+          clinicId: booking.clinicId,
+          clinicName: booking.clinic?.name || 'MyDentalFly Clinic',
+          clinicEmail: booking.clinic?.email,
+          clinicAvatar: booking.clinic?.logoUrl,
+          status: booking.status,
+          lastMessage: latestMessage?.content || 'No messages yet',
+          lastMessageTime: latestMessage?.createdAt || booking.createdAt,
+          unreadCount: unreadCount[0]?.count || 0,
+          treatmentType: booking.treatmentType || 'Dental Treatment'
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      conversations: conversationsWithLatestMessage
+    });
+  } catch (error: any) {
+    console.error('Error getting patient conversations:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get patient conversations',
+      error: error.message
+    });
+  }
+});
+
+// Get all messages for a specific booking for a patient
+router.get('/patient/booking/:bookingId/messages', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { bookingId } = req.params;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    // Verify patient
+    const patient = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (!patient.length || patient[0].role !== 'patient') {
+      return res.status(403).json({ success: false, message: 'User is not authorized as a patient' });
+    }
+
+    // Verify booking belongs to this patient
+    const booking = await db.query.bookings.findFirst({
+      where: and(
+        eq(bookings.id, parseInt(bookingId)),
+        eq(bookings.userId, userId)
+      ),
+      with: {
+        clinic: true
+      }
+    });
+
+    if (!booking) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Booking not found or you do not have permission to view messages for this booking' 
+      });
+    }
+
+    // Get all messages for this booking
+    const messagesList = await db.query.messages.findMany({
+      where: eq(messages.bookingId, parseInt(bookingId)),
+      with: {
+        sender: true,
+        recipient: true
+      },
+      orderBy: [asc(messages.createdAt)]
+    });
+
+    // Mark messages as read if patient is the recipient
+    const messagesToUpdate = messagesList
+      .filter(msg => msg.recipientId === userId && !msg.isRead)
+      .map(msg => msg.id);
+    
+    if (messagesToUpdate.length > 0) {
+      await db
+        .update(messages)
+        .set({ isRead: true, readAt: new Date() })
+        .where(sql`id IN (${messagesToUpdate.join(', ')})`);
+    }
+
+    // Format messages for client
+    const formattedMessages = messagesList.map(message => ({
+      id: message.id,
+      bookingId: message.bookingId,
+      content: message.content,
+      sender: message.senderId === userId ? 'patient' : 'clinic',
+      senderName: message.senderId === userId 
+        ? `${message.sender.firstName || ''} ${message.sender.lastName || 'You'}`.trim()
+        : `${message.sender.firstName || ''} ${message.sender.lastName || 'Clinic Staff'}`.trim(),
+      senderAvatar: message.sender.profileImage,
+      timestamp: message.createdAt,
+      isRead: message.isRead,
+      messageType: message.messageType,
+      attachmentId: message.attachmentId,
+      hasAttachment: message.hasAttachment
+    }));
+
+    return res.status(200).json({
+      success: true,
+      booking: {
+        id: booking.id,
+        reference: booking.bookingReference,
+        status: booking.status,
+        treatmentType: booking.treatmentType || booking.treatmentName || 'Dental Treatment',
+        clinic: {
+          id: booking.clinicId,
+          name: booking.clinic?.name || 'MyDentalFly Clinic',
+          email: booking.clinic?.email,
+          avatar: booking.clinic?.logoUrl
+        }
+      },
+      messages: formattedMessages
+    });
+  } catch (error: any) {
+    console.error('Error getting booking messages for patient:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get booking messages',
+      error: error.message
+    });
+  }
+});
+
 // Get all conversations for a clinic
 router.get('/clinic/conversations', isAuthenticated, async (req, res) => {
   try {
