@@ -71,6 +71,36 @@
     .btn.secondary:hover {
       background-color: #5a6268;
     }
+    
+    .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #115db5;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .status {
+      margin-top: 20px;
+      display: none;
+      font-weight: 500;
+    }
+    
+    .status.success {
+      color: #115db5;
+    }
+    
+    .status.error {
+      color: #dc3545;
+    }
   </style>
 </head>
 <body>
@@ -79,22 +109,21 @@
     
     <p>Click the button below to access the admin portal with the default admin account.</p>
     
-    <!-- Use a direct form submission with JavaScript fallback -->
-    <form id="loginForm" action="/api/auth/login" method="POST">
-      <input type="hidden" name="email" value="admin@mydentalfly.com">
-      <input type="hidden" name="password" value="Admin123!">
-      <input type="hidden" name="redirect" value="/admin-portal">
-      
-      <div class="buttons">
-        <a href="/" class="btn secondary">Return Home</a>
-        <a href="#" onclick="document.getElementById('loginForm').submit(); return false;" class="btn">Access Admin Portal</a>
-      </div>
-    </form>
+    <div class="buttons">
+      <a href="/" class="btn secondary">Return Home</a>
+      <button onclick="loginAndRedirect()" class="btn" id="loginBtn">Access Admin Portal <span id="spinner" class="spinner"></span></button>
+    </div>
+    
+    <div id="statusMessage" class="status"></div>
   </div>
   
   <script>
-    // Alternative method using fetch API
-    function directLogin() {
+    function loginAndRedirect() {
+      // Show spinner
+      document.getElementById('spinner').style.display = 'inline-block';
+      document.getElementById('loginBtn').disabled = true;
+      document.getElementById('statusMessage').style.display = 'none';
+      
       fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -108,14 +137,38 @@
         credentials: 'include'
       })
       .then(response => {
-        // Even if we get a redirect response, manually navigate
-        window.location.href = '/admin-portal?direct=true';
+        // Check if login was successful
+        if (response.ok) {
+          document.getElementById('statusMessage').textContent = 'Login successful! Redirecting...';
+          document.getElementById('statusMessage').className = 'status success';
+          document.getElementById('statusMessage').style.display = 'block';
+          
+          // Redirect with a slight delay to show the success message
+          setTimeout(() => {
+            window.location.href = '/admin-portal?direct=true&t=' + Date.now();
+          }, 1000);
+        } else {
+          // Handle login error
+          throw new Error('Login failed. Please try again.');
+        }
       })
       .catch(error => {
         console.error('Login error:', error);
-        alert('Login failed. Please try again.');
+        document.getElementById('statusMessage').textContent = error.message;
+        document.getElementById('statusMessage').className = 'status error';
+        document.getElementById('statusMessage').style.display = 'block';
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('loginBtn').disabled = false;
       });
     }
+    
+    // Auto-login if requested via query parameter
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('autologin') === 'true') {
+        loginAndRedirect();
+      }
+    });
   </script>
 </body>
 </html>
