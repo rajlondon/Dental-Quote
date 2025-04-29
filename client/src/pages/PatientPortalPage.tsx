@@ -45,7 +45,7 @@ const mockBookingData = {
 };
 
 // Import components 
-import MessagingSection from '@/components/portal/MessagingSection';
+import MessagesSection from '@/components/portal/MessagesSection';
 import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
@@ -306,7 +306,7 @@ const PatientPortalPage: React.FC = () => {
       case 'dashboard':
         return <DashboardSection setActiveSection={setActiveSection} />;
       case 'messages':
-        return <MessagingSection />;
+        return <MessagesSection />;
       case 'appointments':
         return <AppointmentsSection />;
       case 'documents':
