@@ -146,23 +146,8 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint with enhanced email verification handling and redirect support
+  // Login endpoint with enhanced email verification handling
   app.post("/api/auth/login", (req, res, next) => {
-    // Log request info for debugging
-    console.log("Login request received:", {
-      contentType: req.headers['content-type'],
-      hasEmail: !!req.body.email,
-      hasPassword: !!req.body.password,
-    });
-
-    // Handle missing credentials
-    if (!req.body.email || !req.body.password) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Missing credentials"
-      });
-    }
-    
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       
@@ -187,48 +172,6 @@ export async function setupAuth(app: Express) {
       req.login(user, (err: Error | null) => {
         if (err) return next(err);
         
-        // Set additional role-specific HTTP-only cookies to enhance session persistence
-        const cookieOptions = {
-          httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000, // 24 hours
-          path: '/',
-          secure: process.env.NODE_ENV === "production"
-        };
-        
-        // Set role-specific session cookies
-        if (user.role === 'admin') {
-          res.cookie('admin_auth', 'true', cookieOptions);
-          res.cookie('admin_session_id', user.id.toString(), cookieOptions);
-          res.cookie('portal_type', 'admin', cookieOptions);
-        } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
-          res.cookie('clinic_auth', 'true', cookieOptions);
-          res.cookie('clinic_session_id', user.id.toString(), cookieOptions);
-          res.cookie('portal_type', 'clinic', cookieOptions);
-        } else {
-          res.cookie('patient_auth', 'true', cookieOptions);
-          res.cookie('patient_session_id', user.id.toString(), cookieOptions);
-          res.cookie('portal_type', 'patient', cookieOptions);
-        }
-        
-        // Set a global auth cookie for more persistent routing
-        res.cookie('mdf_authenticated', 'true', cookieOptions);
-        res.cookie('mdf_user_id', user.id.toString(), cookieOptions);
-        res.cookie('mdf_user_role', user.role, cookieOptions);
-        
-        console.log("Set enhanced session cookies for user:", user.id, user.role);
-        
-        // Check if redirect parameter is provided
-        // This allows for direct form-based login with redirect
-        const redirect = req.body.redirect;
-        if (redirect && typeof redirect === 'string') {
-          // Only allow redirects to specific portal routes
-          const allowedRedirects = ['/admin-portal', '/clinic-portal', '/client-portal'];
-          if (allowedRedirects.includes(redirect)) {
-            console.log(`Redirecting after login to: ${redirect}`);
-            return res.redirect(redirect);
-          }
-        }
-        
         // Include unverified status warning in the response if needed
         if (user.role === 'patient' && !user.emailVerified) {
           return res.json({ 
@@ -243,190 +186,20 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Logout endpoint with enhanced cookie clearing
+  // Logout endpoint
   app.post("/api/auth/logout", (req, res) => {
     req.logout((err) => {
       if (err) return res.status(500).json({ success: false, message: "Logout failed" });
-      
-      // Clear all of our auth cookies
-      const cookieOptions = {
-        httpOnly: true,
-        path: '/',
-        expires: new Date(0), // Expire immediately
-        secure: process.env.NODE_ENV === "production"
-      };
-      
-      // Clear role-specific cookies
-      res.cookie('admin_auth', '', cookieOptions);
-      res.cookie('admin_session_id', '', cookieOptions);
-      res.cookie('clinic_auth', '', cookieOptions);
-      res.cookie('clinic_session_id', '', cookieOptions);
-      res.cookie('patient_auth', '', cookieOptions);
-      res.cookie('patient_session_id', '', cookieOptions);
-      
-      // Clear portal type cookie
-      res.cookie('portal_type', '', cookieOptions);
-      
-      // Clear global auth cookies
-      res.cookie('mdf_authenticated', '', cookieOptions);
-      res.cookie('mdf_user_id', '', cookieOptions);
-      res.cookie('mdf_user_role', '', cookieOptions);
-      
-      // Clear all cookies with same options but different paths
-      ['/admin-portal', '/clinic-portal', '/client-portal'].forEach(path => {
-        const pathOptions = {...cookieOptions, path};
-        res.cookie('admin_auth', '', pathOptions);
-        res.cookie('clinic_auth', '', pathOptions);
-        res.cookie('patient_auth', '', pathOptions);
-        res.cookie('mdf_authenticated', '', pathOptions);
-      });
-      
-      console.log("All authentication cookies cleared");
-      
       res.json({ success: true, message: "Logged out successfully" });
     });
   });
 
-  // Current user endpoint - enhanced for reliable authentication
-  app.get("/api/auth/user", async (req, res) => {
-    try {
-      if (!req.isAuthenticated() || !req.user || !req.user.id) {
-        console.log("Auth check failed: User not authenticated", { 
-          isAuthenticated: req.isAuthenticated(),
-          hasUser: !!req.user,
-          hasSession: !!req.session,
-          sessionID: req.sessionID
-        });
-        return res.status(401).json({ success: false, message: "Not authenticated" });
-      }
-      
-      // Get fresh user data from database to ensure we have the latest information
-      const userId = req.user.id;
-      const [freshUserData] = await db.select({
-        id: users.id,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        phone: users.phone,
-        profileImage: users.profileImage,
-        role: users.role,
-        emailVerified: users.emailVerified,
-        profileComplete: users.profileComplete,
-        status: users.status,
-        clinicId: users.clinicId,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt
-      })
-      .from(users)
-      .where(eq(users.id, userId));
-      
-      if (!freshUserData) {
-        console.error("Auth error: User found in session but not in database", { userId });
-        return res.status(401).json({ success: false, message: "User not found" });
-      }
-      
-      // Update the session with the fresh user data
-      req.user = freshUserData as Express.User;
-      
-      console.log("Auth check successful: User authenticated", { 
-        userId: freshUserData.id,
-        role: freshUserData.role
-      });
-      
-      // Return success with user data
-      res.json({ 
-        success: true, 
-        user: freshUserData,
-        // Add additional auth data for browser storage
-        csrfToken: req.csrfToken?.() || null
-      });
-    } catch (error) {
-      console.error("Error in auth user endpoint:", error);
-      res.status(500).json({ success: false, message: "Server error checking authentication" });
-    }
-  });
-  
-  // Debug endpoint to test auth flow - only in development
-  app.post("/api/auth/debug-login", (req, res) => {
-    console.log("Debug login request:", {
-      body: req.body,
-      headers: {
-        contentType: req.headers['content-type'],
-        cookie: req.headers.cookie
-      }
-    });
-    
-    if (!req.body.email || !req.body.password) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing email or password",
-        received: {
-          hasEmail: !!req.body.email,
-          hasPassword: !!req.body.password,
-          contentType: req.headers['content-type']
-        }
-      });
-    }
-    
-    res.json({
-      success: true,
-      message: "Debug login endpoint received data correctly",
-      email: req.body.email
-    });
-  });
-  
-  // Special redirect routes that can be used after login
-  app.get("/api/auth/redirect-to-admin", (req, res) => {
+  // Current user endpoint
+  app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated. Please log in first.");
+      return res.status(401).json({ success: false, message: "Not authenticated" });
     }
-    
-    if (req.user.role !== 'admin') {
-      return res.status(403).send("Access denied. You don't have admin permissions.");
-    }
-    
-    console.log("Redirecting authenticated admin user to admin portal via intermediate page");
-    res.redirect("/admin-portal-redirect.html");
-  });
-  
-  app.get("/api/auth/redirect-to-clinic", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated. Please log in first.");
-    }
-    
-    if (req.user.role !== 'clinic' && req.user.role !== 'clinic_staff') {
-      return res.status(403).send("Access denied. You don't have clinic permissions.");
-    }
-    
-    console.log("Redirecting authenticated clinic user to standalone clinic portal");
-    // Always use the standalone HTML clinic portal to avoid React routing issues
-    res.cookie('mdf_authenticated', 'true', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    
-    res.cookie('clinic_auth', 'true', { 
-      httpOnly: false, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    
-    // Direct to the standalone HTML clinic portal as per user preference
-    res.redirect("/clinic-standalone.html");
-  });
-  
-  app.get("/api/auth/redirect-to-patient", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated. Please log in first.");
-    }
-    
-    if (req.user.role !== 'patient') {
-      return res.status(403).send("Access denied. You don't have patient permissions.");
-    }
-    
-    console.log("Redirecting authenticated patient user to patient portal via intermediate page");
-    res.redirect("/patient-portal-redirect.html");
+    res.json({ success: true, user: req.user });
   });
 
   // Create admin and clinic users if they don't exist

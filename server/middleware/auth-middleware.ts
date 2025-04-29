@@ -34,16 +34,10 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
 
 /**
  * Middleware to check if the user has clinic role
- * This will check if the user is authenticated and has role = 'clinic_staff' or 'clinic'
+ * This will check if the user is authenticated and has role = 'clinic'
  */
 export const isClinic = (req: Request, res: Response, next: NextFunction) => {
-  // Debug session information
-  console.log("Auth check - isClinic middleware");
-  console.log("User authenticated:", req.isAuthenticated());
-  console.log("User role:", req.user?.role);
-  
-  // Accept both 'clinic_staff' and 'clinic' roles for backward compatibility
-  if (req.isAuthenticated() && (req.user?.role === 'clinic_staff' || req.user?.role === 'clinic')) {
+  if (req.isAuthenticated() && req.user?.role === 'clinic') {
     return next();
   }
   
@@ -74,19 +68,10 @@ export const isPatient = (req: Request, res: Response, next: NextFunction) => {
 
 /**
  * Middleware to check if the user is admin or clinic
- * This will check if the user is authenticated and has role = 'admin' or 'clinic' or 'clinic_staff'
+ * This will check if the user is authenticated and has role = 'admin' or 'clinic'
  */
 export const isAdminOrClinic = (req: Request, res: Response, next: NextFunction) => {
-  // Debug session information
-  console.log("Auth check - isAdminOrClinic middleware");
-  console.log("User authenticated:", req.isAuthenticated());
-  console.log("User role:", req.user?.role);
-  
-  // Accept 'admin', 'clinic_staff' and 'clinic' roles for backward compatibility
-  if (req.isAuthenticated() && 
-      (req.user?.role === 'admin' || 
-       req.user?.role === 'clinic' || 
-       req.user?.role === 'clinic_staff')) {
+  if (req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'clinic')) {
     return next();
   }
   

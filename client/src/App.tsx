@@ -70,7 +70,6 @@ import VerificationSentPage from "@/pages/VerificationSentPage";
 import EmailVerifiedPage from "@/pages/EmailVerifiedPage";
 import VerificationFailedPage from "@/pages/VerificationFailedPage";
 import PackageDetailPage from "@/pages/PackageDetailPage";
-import ClinicDirectLogin from "@/pages/ClinicDirectLogin";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -107,7 +106,6 @@ function Router() {
       <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/package/:id" component={PackageDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
-      <Route path="/clinic-login" component={ClinicDirectLogin} />
       <Route path="/portal">
         {() => <Redirect to="/portal-login" />}
       </Route>
@@ -144,37 +142,12 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Routes - Handle direct POST and GET access differently */}
-      <Route path="/clinic-portal">
-        {() => {
-          console.log("Client-side React router caught clinic-portal access");
-          // Create a form submission to the server to force server-side handling
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = '/clinic-portal';
-          
-          // Add hidden fields for the portal target
-          const targetField = document.createElement('input');
-          targetField.type = 'hidden';
-          targetField.name = 'target';
-          targetField.value = 'clinic';
-          form.appendChild(targetField);
-          
-          // Submit the form immediately to hand over to server-side routing
-          console.log("Submitting form to server-side clinic portal handler");
-          document.body.appendChild(form);
-          form.submit();
-          
-          return <div>Redirecting to clinic portal...</div>;
-        }}
-      </Route>
+      {/* Clinic Staff Protected Routes */}
+      <ProtectedRoute path="/clinic-portal" component={ClinicPortalPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       <Route path="/clinic">
-        {() => {
-          window.location.href = "/clinic-standalone.html";
-          return null;
-        }}
+        {() => <Redirect to="/clinic-portal" />}
       </Route>
       {/* Redirect all test routes to home */}
       <Route path="/test">
@@ -216,37 +189,6 @@ function App() {
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
-  
-  // Check for portal direct access parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const portalType = urlParams.get('portal');
-  
-  // If direct portal access was requested, handle the redirection
-  if (portalType) {
-    // Remove the portal parameter from URL to prevent infinite loops
-    if (window.history.replaceState) {
-      const newUrl = window.location.pathname;
-      window.history.replaceState({path: newUrl}, '', newUrl);
-    }
-    
-    // Redirect based on portal type
-    setTimeout(() => {
-      switch(portalType) {
-        case 'admin':
-          window.location.href = '/admin-portal';
-          break;
-        case 'clinic':
-          window.location.href = '/clinic-standalone.html';
-          break;
-        case 'patient':
-          window.location.href = '/client-portal';
-          break;
-        default:
-          // No valid portal type specified, do nothing
-          break;
-      }
-    }, 100); // Short delay to ensure state update
-  }
   
   return (
     <QueryClientProvider client={queryClient}>
