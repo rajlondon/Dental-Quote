@@ -77,6 +77,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
   });
   
+  // Direct login page to bypass React router completely
+  app.get('/direct-login', (req, res) => {
+    console.log("Serving direct login page");
+    res.sendFile(path.join(__dirname, '../public/direct-login.html'));
+  });
+  
   // Special route for blog page - completely new file to bypass caching
   app.get('/blog', (req, res) => {
     // Set strong cache control headers to prevent caching
@@ -165,7 +171,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Direct server-side blocking of portal routes for security
   // This prevents direct access to portal routes without authentication
   app.get(["/admin-portal*", "/clinic-portal*", "/client-portal*"], (req, res) => {
-    // If they're trying to access directly, redirect to login
+    // Special exception - if we have a direct=true parameter, allow access as 
+    // this means they're coming from our direct login page
+    if (req.query.direct === 'true') {
+      console.log("Allowing direct portal access with direct=true parameter");
+      return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    }
+    
+    // Check if they have valid auth cookies
+    const hasMdfAuth = req.cookies.mdf_authenticated === 'true';
+    const hasRoleAuth = req.cookies.admin_auth === 'true' || 
+                       req.cookies.clinic_auth === 'true' || 
+                       req.cookies.patient_auth === 'true';
+    
+    if (hasMdfAuth || hasRoleAuth) {
+      console.log("Allowing portal access with auth cookies present");
+      return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    }
+    
+    // If they're trying to access directly without auth, redirect to login
     return res.redirect("/portal-login");
   });
   

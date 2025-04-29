@@ -237,58 +237,75 @@ const PortalLoginPage: React.FC = () => {
         description: `Welcome back, ${user.firstName || user.email}!`,
       });
       
-      // Use a timeout to ensure the session cookie is set before redirecting
-      setTimeout(() => {
-        // Use full URL construction for more reliable navigation
-        const baseUrl = window.location.origin;
-        
-        // Set role-specific cookies to improve persistence
-        if (user.role === 'admin') {
-          document.cookie = `admin_session=${user.id}; path=/; max-age=86400`;
-        } else if (user.role === 'clinic_staff') {
-          document.cookie = `clinic_session=${user.id}; path=/; max-age=86400`;
-        } else {
-          document.cookie = `patient_session=${user.id}; path=/; max-age=86400`;
-        }
-        
-        // Debug: Log all cookies before redirect
-        console.log("Cookies before redirect:", document.cookie);
-        
-        try {
-          // Add timestamp to prevent caching
-          const timestamp = Date.now();
-          let redirectUrl;
-          
-          if (user.role === 'admin') {
-            console.log("Admin user detected, redirecting to admin portal");
-            redirectUrl = `${baseUrl}/admin-portal?t=${timestamp}`;
-          } else if (user.role === 'clinic_staff') {
-            console.log("Clinic staff detected, redirecting to clinic portal");
-            // For clinic staff, use our optimized direct approach
-            redirectUrl = `${baseUrl}/clinic-portal?t=${timestamp}`;
-          } else {
-            // Default to patient portal for any other role
-            console.log("Patient user detected, redirecting to patient portal");
-            redirectUrl = `${baseUrl}/client-portal?t=${timestamp}`;
+      // We'll use our routing helper for more consistent navigation
+      import("../lib/routing-helper")
+        .then(({ navigateToUserPortal }) => {
+          // Add some local persistence to reinforce the server-side cookies
+          try {
+            // Store user data redundantly
+            localStorage.setItem('user_data', JSON.stringify(user));
+            sessionStorage.setItem('user_data', JSON.stringify(user));
+            
+            // Set manual role cookies in case HTTP-only cookies aren't working properly
+            const cookieMaxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+            document.cookie = `user_role=${user.role}; path=/; max-age=${cookieMaxAge}`;
+            document.cookie = `user_id=${user.id}; path=/; max-age=${cookieMaxAge}`;
+            document.cookie = `is_authenticated=true; path=/; max-age=${cookieMaxAge}`;
+            
+            // Set role-specific flags
+            if (user.role === 'admin') {
+              localStorage.setItem('is_admin', 'true');
+              sessionStorage.setItem('is_admin', 'true');
+            } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
+              localStorage.setItem('is_clinic', 'true');
+              sessionStorage.setItem('is_clinic', 'true');
+            } else {
+              localStorage.setItem('is_patient', 'true');
+              sessionStorage.setItem('is_patient', 'true');
+            }
+            
+            console.log("User data stored in local storage:", user.role);
+          } catch (e) {
+            console.warn("Failed to store user data locally:", e);
           }
           
-          console.log("Redirecting to:", redirectUrl);
-          
-          // Force reload approach instead of simple location change
-          window.location.replace(redirectUrl);
-        } catch (e) {
-          console.error("Redirect error:", e);
-          
-          // Fall back to a direct redirect on error
-          if (user.role === 'admin') {
-            window.location.href = '/admin-portal';
-          } else if (user.role === 'clinic_staff') {
-            window.location.href = '/clinic-portal';
-          } else {
-            window.location.href = '/client-portal';
-          }
-        }
-      }, 1200); // Longer delay to ensure cookie is set
+          // Wait before redirecting to ensure all data is saved
+          setTimeout(() => {
+            console.log("Performing enhanced redirect based on role:", user.role);
+            
+            // We'll use our own custom redirect rule rather than navigateToUserPortal
+            // This is more specific since we know exactly which role the user has
+            const baseUrl = window.location.origin;
+            const timestamp = Date.now();
+            
+            try {
+              if (user.role === 'admin') {
+                console.log("Admin user detected, redirecting to admin portal");
+                window.location.replace(`${baseUrl}/admin-portal?uid=${user.id}&t=${timestamp}`);
+              } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
+                console.log("Clinic staff detected, redirecting to clinic portal");
+                window.location.replace(`${baseUrl}/clinic-portal?uid=${user.id}&t=${timestamp}`);
+              } else {
+                console.log("Patient user detected, redirecting to patient portal");
+                window.location.replace(`${baseUrl}/client-portal?uid=${user.id}&t=${timestamp}`);
+              }
+            } catch (e) {
+              console.error("Direct redirect failed, trying navigateToUserPortal:", e);
+              navigateToUserPortal();
+            }
+          }, 1500);
+        })
+        .catch(error => {
+          console.error("Failed to import routing helper:", error);
+          // Fallback with basic redirect
+          setTimeout(() => {
+            const baseUrl = window.location.origin;
+            const portal = user.role === 'admin' ? 'admin-portal' : 
+                          (user.role === 'clinic_staff' || user.role === 'clinic') ? 'clinic-portal' : 
+                          'client-portal';
+            window.location.href = `${baseUrl}/${portal}`;
+          }, 1500);
+        });
       
     } catch (error: any) {
       console.error("Login error:", error);

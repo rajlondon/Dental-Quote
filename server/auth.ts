@@ -216,10 +216,46 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Logout endpoint
+  // Logout endpoint with enhanced cookie clearing
   app.post("/api/auth/logout", (req, res) => {
     req.logout((err) => {
       if (err) return res.status(500).json({ success: false, message: "Logout failed" });
+      
+      // Clear all of our auth cookies
+      const cookieOptions = {
+        httpOnly: true,
+        path: '/',
+        expires: new Date(0), // Expire immediately
+        secure: process.env.NODE_ENV === "production"
+      };
+      
+      // Clear role-specific cookies
+      res.cookie('admin_auth', '', cookieOptions);
+      res.cookie('admin_session_id', '', cookieOptions);
+      res.cookie('clinic_auth', '', cookieOptions);
+      res.cookie('clinic_session_id', '', cookieOptions);
+      res.cookie('patient_auth', '', cookieOptions);
+      res.cookie('patient_session_id', '', cookieOptions);
+      
+      // Clear portal type cookie
+      res.cookie('portal_type', '', cookieOptions);
+      
+      // Clear global auth cookies
+      res.cookie('mdf_authenticated', '', cookieOptions);
+      res.cookie('mdf_user_id', '', cookieOptions);
+      res.cookie('mdf_user_role', '', cookieOptions);
+      
+      // Clear all cookies with same options but different paths
+      ['/admin-portal', '/clinic-portal', '/client-portal'].forEach(path => {
+        const pathOptions = {...cookieOptions, path};
+        res.cookie('admin_auth', '', pathOptions);
+        res.cookie('clinic_auth', '', pathOptions);
+        res.cookie('patient_auth', '', pathOptions);
+        res.cookie('mdf_authenticated', '', pathOptions);
+      });
+      
+      console.log("All authentication cookies cleared");
+      
       res.json({ success: true, message: "Logged out successfully" });
     });
   });
