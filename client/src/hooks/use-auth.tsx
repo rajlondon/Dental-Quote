@@ -198,12 +198,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Logout mutation
+  // Logout mutation with enhanced client-side cleanup
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/auth/logout");
       if (!res.ok) {
         throw new Error("Logout failed");
+      }
+      
+      // Client-side cleanup regardless of API response
+      try {
+        // Clear all portal-specific localStorage items
+        localStorage.removeItem('user_data');
+        localStorage.removeItem('is_admin');
+        localStorage.removeItem('is_clinic');
+        localStorage.removeItem('is_patient');
+        localStorage.removeItem('auth_warnings');
+        localStorage.removeItem('clinic_session');
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('patient_session');
+        
+        // Clear sessionStorage
+        sessionStorage.removeItem('user_data');
+        sessionStorage.removeItem('is_admin');
+        sessionStorage.removeItem('is_clinic');
+        sessionStorage.removeItem('is_patient');
+        
+        // Clear manual cookies
+        document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'user_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        
+        // Clear specific portal cookies (server clears HTTP-only ones, but we'll handle the non-HTTP ones)
+        ['/', '/admin-portal', '/clinic-portal', '/client-portal'].forEach(path => {
+          document.cookie = `admin_auth=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          document.cookie = `clinic_auth=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          document.cookie = `patient_auth=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          document.cookie = `mdf_authenticated=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        });
+        
+        console.log("Client-side authentication data cleared");
+      } catch (e) {
+        console.warn("Error during client-side cleanup:", e);
       }
     },
     onSuccess: () => {
@@ -212,6 +248,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been successfully logged out",
       });
+      
+      // Redirect to login page after logout
+      setTimeout(() => {
+        window.location.href = '/portal-login';
+      }, 1000);
     },
     onError: (error: Error) => {
       toast({

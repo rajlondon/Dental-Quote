@@ -1,10 +1,12 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 
+type ClientType = 'patient' | 'clinic' | 'admin' | 'clinic_staff';
+
 interface Client {
   ws: WebSocket;
   id: string;
-  type: 'patient' | 'clinic' | 'admin';
+  type: ClientType;
 }
 
 interface Message {
@@ -12,7 +14,7 @@ interface Message {
   payload: any;
   sender: {
     id: string;
-    type: 'patient' | 'clinic' | 'admin';
+    type: ClientType;
   };
   target?: string; // Optional target client ID
 }
@@ -69,11 +71,11 @@ export class WebSocketService {
           
           // Map 'clinic_staff' role to 'clinic' for WebSocket consistency
           if (clientType === 'clinic_staff') {
-            clientType = 'clinic' as const;
+            clientType = 'clinic' as ClientType;
             console.log('Mapped clinic_staff role to clinic for WebSocket');
           }
           
-          this.registerClient(ws, data.sender.id, clientType as 'patient' | 'clinic' | 'admin');
+          this.registerClient(ws, data.sender.id, clientType);
           break;
           
         case 'sync_appointment':
@@ -107,7 +109,7 @@ export class WebSocketService {
     }
   }
   
-  private registerClient(ws: WebSocket, id: string, type: 'patient' | 'clinic' | 'admin') {
+  private registerClient(ws: WebSocket, id: string, type: ClientType) {
     // Check if this client is already registered with a different connection
     const existingClient = this.clients.get(id);
     if (existingClient) {
@@ -228,7 +230,7 @@ export class WebSocketService {
   }
   
   // Broadcast to all clients of a specific type
-  public broadcast(message: any, targetType?: 'patient' | 'clinic' | 'admin') {
+  public broadcast(message: any, targetType?: ClientType) {
     const payload = JSON.stringify(message);
     
     this.clients.forEach((client) => {
