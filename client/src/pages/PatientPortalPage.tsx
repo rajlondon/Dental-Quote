@@ -273,7 +273,7 @@ const PatientPortalPage: React.FC = () => {
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
-        setLocation('/auth');
+        setLocation('/portal-login');
         toast({
           title: t('auth.logout_success', 'Logged out successfully'),
           description: t('auth.logout_message', 'You have been logged out of your account'),
