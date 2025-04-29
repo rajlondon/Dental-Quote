@@ -76,29 +76,26 @@ const ClinicDirectLogin: React.FC = () => {
       console.log("User role:", user.role);
       console.log("User ID:", user.id);
       
-      // Hard redirect with a slight delay to ensure toast is visible
-      setTimeout(() => {
-        console.log("Performing hard redirect to clinic portal");
-        
-        // Forcefully set session cookie value to improve persistence
-        document.cookie = `clinic_session=${user.id}; path=/; max-age=86400`;
-        
-        // Debug: Log all cookies before redirect
-        console.log("Cookies before redirect:", document.cookie);
-        
-        try {
-          // Use full URL structure to avoid any React Router interference
-          // Include timestamp to prevent caching
-          const redirectUrl = `${window.location.origin}/clinic-portal?t=${Date.now()}`;
-          console.log("Redirecting to:", redirectUrl);
-          
-          // Force reload approach
-          window.location.replace(redirectUrl);
-        } catch (e) {
-          console.error("Redirect error:", e);
-          alert("Redirect failed. Please navigate to /clinic-portal manually.");
-        }
-      }, 1500);
+      // We'll use our routing helper for more consistent navigation
+      import("../lib/routing-helper")
+        .then(({ navigateToUserPortal }) => {
+          // Wait for toast to be visible before redirecting
+          setTimeout(() => {
+            console.log("Performing enhanced redirect to clinic portal");
+            navigateToUserPortal();
+          }, 1500);
+        })
+        .catch(error => {
+          console.error("Failed to import routing helper:", error);
+          // Fallback to the old redirect method if import fails
+          setTimeout(() => {
+            try {
+              window.location.replace(`${window.location.origin}/clinic-portal?t=${Date.now()}`);
+            } catch (e) {
+              window.location.href = '/clinic-portal';
+            }
+          }, 1500);
+        });
       
     } catch (error: any) {
       console.error("Login error:", error);

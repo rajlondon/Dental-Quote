@@ -172,6 +172,36 @@ export async function setupAuth(app: Express) {
       req.login(user, (err: Error | null) => {
         if (err) return next(err);
         
+        // Set additional role-specific HTTP-only cookies to enhance session persistence
+        const cookieOptions = {
+          httpOnly: true,
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          path: '/',
+          secure: process.env.NODE_ENV === "production"
+        };
+        
+        // Set role-specific session cookies
+        if (user.role === 'admin') {
+          res.cookie('admin_auth', 'true', cookieOptions);
+          res.cookie('admin_session_id', user.id.toString(), cookieOptions);
+          res.cookie('portal_type', 'admin', cookieOptions);
+        } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
+          res.cookie('clinic_auth', 'true', cookieOptions);
+          res.cookie('clinic_session_id', user.id.toString(), cookieOptions);
+          res.cookie('portal_type', 'clinic', cookieOptions);
+        } else {
+          res.cookie('patient_auth', 'true', cookieOptions);
+          res.cookie('patient_session_id', user.id.toString(), cookieOptions);
+          res.cookie('portal_type', 'patient', cookieOptions);
+        }
+        
+        // Set a global auth cookie for more persistent routing
+        res.cookie('mdf_authenticated', 'true', cookieOptions);
+        res.cookie('mdf_user_id', user.id.toString(), cookieOptions);
+        res.cookie('mdf_user_role', user.role, cookieOptions);
+        
+        console.log("Set enhanced session cookies for user:", user.id, user.role);
+        
         // Include unverified status warning in the response if needed
         if (user.role === 'patient' && !user.emailVerified) {
           return res.json({ 
