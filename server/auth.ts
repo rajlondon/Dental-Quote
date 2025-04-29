@@ -334,8 +334,8 @@ export async function setupAuth(app: Express) {
       return res.status(403).send("Access denied. You don't have admin permissions.");
     }
     
-    console.log("Redirecting authenticated admin user to admin portal");
-    res.redirect("/admin-portal");
+    console.log("Redirecting authenticated admin user to admin portal via intermediate page");
+    res.redirect("/admin-portal-redirect.html");
   });
   
   app.get("/api/auth/redirect-to-clinic", (req, res) => {
@@ -347,8 +347,8 @@ export async function setupAuth(app: Express) {
       return res.status(403).send("Access denied. You don't have clinic permissions.");
     }
     
-    console.log("Redirecting authenticated clinic user to clinic portal");
-    res.redirect("/clinic-portal");
+    console.log("Redirecting authenticated clinic user to clinic portal via intermediate page");
+    res.redirect("/clinic-portal-redirect.html");
   });
   
   app.get("/api/auth/redirect-to-patient", (req, res) => {
@@ -360,8 +360,8 @@ export async function setupAuth(app: Express) {
       return res.status(403).send("Access denied. You don't have patient permissions.");
     }
     
-    console.log("Redirecting authenticated patient user to patient portal");
-    res.redirect("/client-portal");
+    console.log("Redirecting authenticated patient user to patient portal via intermediate page");
+    res.redirect("/patient-portal-redirect.html");
   });
 
   // Create admin and clinic users if they don't exist
