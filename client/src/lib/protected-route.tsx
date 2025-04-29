@@ -12,153 +12,175 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ path, component: Component, requiredRole }: ProtectedRouteProps) {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Check for stored user in localStorage or sessionStorage as fallback
-    const checkBackupAuth = () => {
-      console.log("Checking for backup auth sources...");
-      // Try getting user from sessionStorage first (more secure, cleared on tab close)
-      let storedUser = null;
-      try {
-        const sessionUser = sessionStorage.getItem('clinic_user');
-        if (sessionUser) {
-          storedUser = JSON.parse(sessionUser);
-          console.log("Found user in sessionStorage:", storedUser);
+  // Unified function to get authentication state from local storage
+  const getStoredAuth = () => {
+    // First try getting the auth from localStorage
+    try {
+      // Create a "clinic_auth_state" key for storing authentication state
+      const authState = localStorage.getItem('clinic_auth_state');
+      if (authState) {
+        // Parse stored state which should have user and role
+        const { user: storedUser, timestamp } = JSON.parse(authState);
+        
+        // Check if auth state isn't too old (24 hours)
+        const now = new Date().getTime();
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (storedUser && (now - timestamp < maxAge)) {
+          console.log("Found valid auth state in localStorage");
+          return storedUser;
         } else {
-          // Fallback to localStorage
-          const localUser = localStorage.getItem('clinic_user');
-          if (localUser) {
-            storedUser = JSON.parse(localUser);
-            console.log("Found user in localStorage:", storedUser);
-          }
+          console.log("Stored auth state expired or invalid");
+          // Clear the expired state
+          localStorage.removeItem('clinic_auth_state');
         }
-      } catch (e) {
-        console.error("Error parsing stored user:", e);
       }
-      return storedUser;
-    };
+    } catch (e) {
+      console.error("Error parsing stored auth state:", e);
+      localStorage.removeItem('clinic_auth_state');
+    }
+    
+    return null;
+  };
+  
+  // Function to save authentication state to localStorage
+  const saveAuthState = (userData: any) => {
+    if (!userData) return;
+    
+    try {
+      const authState = {
+        user: userData,
+        timestamp: new Date().getTime()
+      };
+      localStorage.setItem('clinic_auth_state', JSON.stringify(authState));
+      console.log("Auth state saved to localStorage");
+    } catch (e) {
+      console.error("Error saving auth state:", e);
+    }
+  };
 
-    // Direct API call to get user info, bypassing React Query
+  // Effect for checking authentication - runs once on mount
+  useEffect(() => {
     async function checkAuth() {
       try {
         setIsLoading(true);
         
-        // First check if we're on the clinic portal path - this needs special handling
-        if (path === '/clinic-portal' || path.startsWith('/clinic-')) {
-          console.log("Clinic portal detected, checking for backup auth first");
-          const backupUser = checkBackupAuth();
+        // Try to get stored auth first to avoid flicker
+        const storedUser = getStoredAuth();
+        if (storedUser) {
+          console.log("Using stored auth state:", storedUser.role);
           
-          // For clinic routes, try using the backup auth first to avoid session issues
-          if (backupUser && backupUser.role === 'clinic_staff') {
-            console.log("Using backup auth for clinic user:", backupUser);
-            setUser(backupUser);
-            setIsLoading(false);
-            return;
-          }
+          // Check if the stored user has the required role
+          const hasRequiredRole = !requiredRole || storedUser.role === requiredRole;
+          
+          setUser(storedUser);
+          setIsAuthorized(hasRequiredRole);
+          // Don't complete auth check yet - still verify with server
         }
-
-        // Normal API auth check
-        console.log("Performing server auth check");
+        
+        // Always perform the server check, even if we have stored auth
+        console.log("Verifying authentication with server");
         const response = await fetch('/api/auth/user', {
-          credentials: 'include', // Important: include cookies for session auth
-          cache: 'no-store', // Prevent caching
+          credentials: 'include',
+          cache: 'no-store',
           headers: {
             'Pragma': 'no-cache',
             'Cache-Control': 'no-cache'
           }
         });
         
+        // Handle 401 Unauthorized
         if (response.status === 401) {
-          console.log("Server returned 401 - trying backup auth");
-          const backupUser = checkBackupAuth();
-          
-          if (backupUser) {
-            console.log("Using backup user data:", backupUser);
-            setUser(backupUser);
-            
-            // Try to restore session with a direct login if we have clinic staff
-            if (backupUser.role === 'clinic_staff' && requiredRole === 'clinic_staff') {
-              console.log("Attempting session restoration for clinic staff");
-              toast({
-                title: "Restoring session...",
-                description: "Please wait while we reconnect your session"
-              });
-              setTimeout(() => {
-                window.location.href = '/clinic-login';
-              }, 1500);
-              return;
-            }
-          } else {
-            setUser(null);
-            setError("Not authenticated");
-            console.log("No backup auth found, redirecting to login");
-            setTimeout(() => {
-              window.location.href = '/portal-login';
-            }, 100);
-          }
+          console.log("Server returned 401 - user not authenticated");
+          setUser(null);
+          setIsAuthorized(false);
+          setAuthCheckComplete(true);
+          setIsLoading(false);
           return;
         }
         
+        // Handle other errors
         if (!response.ok) {
-          throw new Error("Failed to fetch user data");
+          console.error("Server error during auth check:", response.status);
+          
+          // If we have stored auth, continue with that
+          if (storedUser) {
+            console.log("Using stored auth due to server error");
+            setAuthCheckComplete(true);
+            setIsLoading(false);
+            return;
+          }
+          
+          throw new Error(`Server error: ${response.status}`);
         }
         
+        // Process successful response
         const data = await response.json();
-        console.log("Auth check - User data:", data.user);
         
         if (data.success && data.user) {
-          // Store user in session storage for backup
-          sessionStorage.setItem('clinic_user', JSON.stringify(data.user));
+          console.log("Server auth successful:", data.user.role);
+          
+          // Save the authenticated user data
+          saveAuthState(data.user);
+          
+          // Check if user has the required role
+          const hasRequiredRole = !requiredRole || data.user.role === requiredRole;
           
           setUser(data.user);
-          
-          // Check role access
-          if (requiredRole && data.user.role !== requiredRole) {
-            setError(`Access denied. You need ${requiredRole} role.`);
-            toast({
-              title: "Access Denied",
-              description: `This page requires ${requiredRole} permissions.`,
-              variant: "destructive"
-            });
-            
-            // Redirect based on actual role
-            setTimeout(() => {
-              if (data.user.role === 'admin') {
-                window.location.href = '/admin-portal';
-              } else if (data.user.role === 'clinic_staff') {
-                window.location.href = '/clinic-portal';
-              } else {
-                window.location.href = '/client-portal';
-              }
-            }, 500);
-          }
+          setIsAuthorized(hasRequiredRole);
+        } else {
+          console.log("Server returned no user data");
+          setUser(null);
+          setIsAuthorized(false);
+        }
+      } catch (err) {
+        console.error("Error during auth check:", err);
+        
+        // If we have stored auth, use it as fallback
+        const storedUser = getStoredAuth();
+        if (storedUser) {
+          console.log("Using stored auth after error");
+          const hasRequiredRole = !requiredRole || storedUser.role === requiredRole;
+          setUser(storedUser);
+          setIsAuthorized(hasRequiredRole);
         } else {
           setUser(null);
-        }
-      } catch (err: any) {
-        console.error("Error checking authentication:", err);
-        setError(err.message);
-        
-        // Try backup authentication as a last resort
-        const backupUser = checkBackupAuth();
-        if (backupUser) {
-          console.log("Using backup auth after error:", backupUser);
-          setUser(backupUser);
+          setIsAuthorized(false);
         }
       } finally {
+        setAuthCheckComplete(true);
         setIsLoading(false);
       }
     }
 
     checkAuth();
-  }, [path, requiredRole, toast]);
+    // Don't add path, requiredRole, or toast to the dependency array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Wait until the authentication check is complete
+  if (!authCheckComplete) {
+    return (
+      <Route
+        path={path}
+        component={() => (
+          <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+      />
+    );
+  }
 
   return (
     <Route
       path={path}
       component={(props) => {
+        // Still loading
         if (isLoading) {
           return (
             <div className="flex items-center justify-center min-h-screen">
@@ -167,13 +189,15 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
           );
         }
 
+        // Not authenticated
         if (!user) {
           console.log("No user found, redirecting to login page");
           return <Redirect to="/portal-login" />;
         }
 
-        if (requiredRole && user.role !== requiredRole) {
-          // User is logged in but doesn't have required role
+        // Not authorized (wrong role)
+        if (isAuthorized === false) {
+          console.log(`User role (${user.role}) doesn't match required role (${requiredRole})`);
           return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-4 text-center">
               <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
@@ -186,14 +210,9 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
                   </span>
                 )}
               </p>
-              {/* Redirect based on role */}
-              {user.role === 'admin' ? (
-                <Redirect to="/admin-portal" />
-              ) : user.role === 'clinic_staff' ? (
-                <Redirect to="/clinic-portal" />
-              ) : (
-                <Redirect to="/client-portal" />
-              )}
+              <div className="mt-4">
+                <Redirect to="/portal-login" />
+              </div>
             </div>
           );
         }
