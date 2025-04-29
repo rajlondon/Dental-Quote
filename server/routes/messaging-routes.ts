@@ -692,9 +692,10 @@ router.post('/send', isAuthenticated, async (req, res) => {
         title: 'New Message',
         message: `You have a new message from ${isClinicStaff ? 'clinic staff' : 'patient'}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
         type: 'message',
-        referenceId: message.id,
-        referenceType: 'message',
-        read: false
+        action: `/bookings/${bookingId}/messages`,
+        entityType: 'message',
+        entityId: message.id,
+        isRead: false
       });
     }
     
