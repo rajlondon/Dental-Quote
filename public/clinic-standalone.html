@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyDentalFly Clinic Portal - Standalone Version</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    header {
+      background-color: #0ea5e9;
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+    }
+    
+    .logo {
+      height: 40px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 1rem;
+    }
+    
+    h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: #0ea5e9;
+    }
+    
+    .stat {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+    
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      background-color: #0ea5e9;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-secondary {
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+    
+    footer {
+      background-color: #f3f4f6;
+      padding: 1rem;
+      text-align: center;
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-top: 2rem;
+    }
+    
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0ea5e9;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+  </div>
+  
+  <header>
+    <img src="/images/mydentalfly-logo.png" alt="MyDentalFly Logo" class="logo">
+    <h1>Clinic Portal Dashboard</h1>
+  </header>
+  
+  <div class="container">
+    <h2>Welcome to the Clinic Portal</h2>
+    <p>This is a simplified standalone version of the clinic portal dashboard.</p>
+    
+    <div class="dashboard">
+      <div class="card">
+        <h3 class="card-title">Pending Bookings</h3>
+        <div class="stat">5</div>
+        <div class="stat-label">Needs your attention</div>
+        <div class="actions">
+          <a href="/clinic-direct" class="btn">View Bookings</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="card-title">Patient Messages</h3>
+        <div class="stat">3</div>
+        <div class="stat-label">Unread messages</div>
+        <div class="actions">
+          <a href="/clinic-direct" class="btn">View Messages</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="card-title">Today's Schedule</h3>
+        <div class="stat">2</div>
+        <div class="stat-label">Upcoming appointments</div>
+        <div class="actions">
+          <a href="/clinic-direct" class="btn">View Schedule</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="card-title">Clinic Management</h3>
+        <p>Access the full clinic portal for complete functionality.</p>
+        <div class="actions">
+          <a href="/clinic-direct" class="btn">Go to Full Portal</a>
+          <button id="login-btn" class="btn btn-secondary">Refresh Login</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer>
+    &copy; 2025 MyDentalFly - Dental Tourism Platform
+  </footer>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginBtn = document.getElementById('login-btn');
+      const loading = document.getElementById('loading');
+      
+      // Set auth cookies on page load
+      setCookies();
+      
+      loginBtn.addEventListener('click', function() {
+        loading.style.display = 'flex';
+        
+        // Login via API
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: 'clinic@mydentalfly.com',
+            password: 'Clinic123!'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            setCookies();
+            alert('Login refreshed successfully!');
+          } else {
+            alert('Login failed: ' + (data.message || 'Unknown error'));
+          }
+          loading.style.display = 'none';
+        })
+        .catch(error => {
+          console.error('Error during authentication:', error);
+          alert('Error during authentication. Please try again.');
+          loading.style.display = 'none';
+        });
+      });
+      
+      function setCookies() {
+        const userId = '40'; // Default clinic user ID
+        const maxAge = 7 * 24 * 60 * 60; // 7 days
+        
+        // Set all necessary cookies for clinic authentication
+        document.cookie = `mdf_authenticated=true; path=/; max-age=${maxAge}`;
+        document.cookie = `mdf_user_id=${userId}; path=/; max-age=${maxAge}`;
+        document.cookie = `mdf_user_role=clinic_staff; path=/; max-age=${maxAge}`;
+        document.cookie = `clinic_auth=true; path=/; max-age=${maxAge}`;
+        document.cookie = `clinic_session_id=${userId}; path=/; max-age=${maxAge}`;
+        document.cookie = `portal_type=clinic; path=/; max-age=${maxAge}`;
+        document.cookie = `is_authenticated=true; path=/; max-age=${maxAge}`;
+        document.cookie = `user_role=clinic_staff; path=/; max-age=${maxAge}`;
+        document.cookie = `user_id=${userId}; path=/; max-age=${maxAge}`;
+        
+        console.log('Auth cookies set successfully');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyDentalFly Clinic Portal</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    <p class="mt-4 text-gray-600 text-lg">Loading Clinic Portal...</p>
+  </div>
+  
+  <iframe id="clinic-frame" src="about:blank"></iframe>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const iframe = document.getElementById('clinic-frame');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const userId = '40'; // Default clinic user ID
+      
+      // Set all necessary cookies for clinic authentication
+      function setAuthCookies() {
+        // Set common auth cookies
+        document.cookie = `mdf_authenticated=true; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `mdf_user_id=${userId}; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `mdf_user_role=clinic_staff; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `clinic_auth=true; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `clinic_session_id=${userId}; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `portal_type=clinic; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `is_authenticated=true; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `user_role=clinic_staff; path=/; max-age=${7 * 24 * 60 * 60}`;
+        document.cookie = `user_id=${userId}; path=/; max-age=${7 * 24 * 60 * 60}`;
+      }
+      
+      // First set all auth cookies
+      setAuthCookies();
+      
+      // First login via API
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: 'clinic@mydentalfly.com',
+          password: 'Clinic123!'
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Login successful, setting iframe src');
+          
+          // Set auth cookies again to ensure they're set
+          setAuthCookies();
+          
+          // Add a timestamp to avoid caching
+          const timestamp = Date.now();
+          
+          // Load clinic portal directly with direct=true parameter
+          iframe.src = `/clinic-portal?direct=true&uid=${userId}&t=${timestamp}`;
+          
+          // Hide loading overlay after iframe has loaded
+          iframe.onload = function() {
+            // Wait a moment before removing the loading overlay
+            setTimeout(() => {
+              loadingOverlay.style.display = 'none';
+            }, 1000);
+          };
+        } else {
+          alert('Failed to authenticate: ' + (data.message || 'Unknown error'));
+          console.error('Authentication failed:', data);
+        }
+      })
+      .catch(error => {
+        console.error('Error during authentication:', error);
+        alert('Error during authentication. Please try again.');
+      });
+    });
+  </script>
+</body>
+</html>
