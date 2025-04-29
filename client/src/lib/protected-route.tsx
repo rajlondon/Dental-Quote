@@ -1,6 +1,7 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Route, Redirect } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProtectedRouteProps {
   path: string;
@@ -9,15 +10,78 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ path, component: Component, requiredRole }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Check if user is logged in and has the required role (if specified)
-  const hasAccess = user && (!requiredRole || user.role === requiredRole);
+  useEffect(() => {
+    // Direct API call to get user info, bypassing React Query
+    async function checkAuth() {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/auth/user', {
+          credentials: 'include' // Important: include cookies for session auth
+        });
+        
+        if (response.status === 401) {
+          setUser(null);
+          setError("Not authenticated");
+          console.log("User not authenticated, redirecting to login");
+          setTimeout(() => {
+            window.location.href = '/portal-login';
+          }, 100);
+          return;
+        }
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        
+        const data = await response.json();
+        console.log("Auth check - User data:", data.user);
+        
+        if (data.success && data.user) {
+          setUser(data.user);
+          
+          // Check role access
+          if (requiredRole && data.user.role !== requiredRole) {
+            setError(`Access denied. You need ${requiredRole} role.`);
+            toast({
+              title: "Access Denied",
+              description: `This page requires ${requiredRole} permissions.`,
+              variant: "destructive"
+            });
+            
+            // Redirect based on actual role
+            setTimeout(() => {
+              if (data.user.role === 'admin') {
+                window.location.href = '/admin-portal';
+              } else if (data.user.role === 'clinic_staff') {
+                window.location.href = '/clinic-portal';
+              } else {
+                window.location.href = '/client-portal';
+              }
+            }, 500);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (err: any) {
+        console.error("Error checking authentication:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    checkAuth();
+  }, [path, requiredRole, toast]);
 
   return (
     <Route
       path={path}
-      component={props => {
+      component={(props) => {
         if (isLoading) {
           return (
             <div className="flex items-center justify-center min-h-screen">
@@ -27,6 +91,7 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
         }
 
         if (!user) {
+          console.log("No user found, redirecting to login page");
           return <Redirect to="/portal-login" />;
         }
 
@@ -44,13 +109,20 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
                   </span>
                 )}
               </p>
-              <Redirect to="/" />
+              {/* Redirect based on role */}
+              {user.role === 'admin' ? (
+                <Redirect to="/admin-portal" />
+              ) : user.role === 'clinic_staff' ? (
+                <Redirect to="/clinic-portal" />
+              ) : (
+                <Redirect to="/client-portal" />
+              )}
             </div>
           );
         }
 
-        // User has access
-        return <Component {...props} />;
+        // User has access - render the component
+        return <Component {...props} user={user} />;
       }}
     />
   );
