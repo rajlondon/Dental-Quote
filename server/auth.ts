@@ -287,12 +287,63 @@ export async function setupAuth(app: Express) {
     });
   });
 
-  // Current user endpoint
-  app.get("/api/auth/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ success: false, message: "Not authenticated" });
+  // Current user endpoint - enhanced for reliable authentication
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user || !req.user.id) {
+        console.log("Auth check failed: User not authenticated", { 
+          isAuthenticated: req.isAuthenticated(),
+          hasUser: !!req.user,
+          hasSession: !!req.session,
+          sessionID: req.sessionID
+        });
+        return res.status(401).json({ success: false, message: "Not authenticated" });
+      }
+      
+      // Get fresh user data from database to ensure we have the latest information
+      const userId = req.user.id;
+      const [freshUserData] = await db.select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        phone: users.phone,
+        profileImage: users.profileImage,
+        role: users.role,
+        emailVerified: users.emailVerified,
+        profileComplete: users.profileComplete,
+        status: users.status,
+        clinicId: users.clinicId,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+      
+      if (!freshUserData) {
+        console.error("Auth error: User found in session but not in database", { userId });
+        return res.status(401).json({ success: false, message: "User not found" });
+      }
+      
+      // Update the session with the fresh user data
+      req.user = freshUserData as Express.User;
+      
+      console.log("Auth check successful: User authenticated", { 
+        userId: freshUserData.id,
+        role: freshUserData.role
+      });
+      
+      // Return success with user data
+      res.json({ 
+        success: true, 
+        user: freshUserData,
+        // Add additional auth data for browser storage
+        csrfToken: req.csrfToken?.() || null
+      });
+    } catch (error) {
+      console.error("Error in auth user endpoint:", error);
+      res.status(500).json({ success: false, message: "Server error checking authentication" });
     }
-    res.json({ success: true, user: req.user });
   });
   
   // Debug endpoint to test auth flow - only in development
