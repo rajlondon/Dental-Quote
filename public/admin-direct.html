@@ -71,40 +71,6 @@
     .btn.secondary:hover {
       background-color: #5a6268;
     }
-    
-    .spinner {
-      display: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #115db5;
-      animation: spin 1s linear infinite;
-      margin-left: 10px;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .status {
-      margin-top: 20px;
-      display: none;
-      font-weight: 500;
-    }
-    
-    .status.success {
-      color: #115db5;
-    }
-    
-    .status.error {
-      color: #dc3545;
-    }
-    
-    form {
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -113,61 +79,18 @@
     
     <p>Click the button below to access the admin portal with the default admin account.</p>
     
-    <form id="loginForm" action="/api/auth/login" method="POST" target="_self">
-      <input type="hidden" name="email" value="admin@mydentalfly.com">
-      <input type="hidden" name="password" value="Admin123!">
-      <input type="hidden" name="redirect" value="/admin-portal">
-    </form>
-    
     <div class="buttons">
       <a href="/" class="btn secondary">Return Home</a>
-      <button onclick="submitForm()" class="btn" id="loginBtn">Access Admin Portal <span id="spinner" class="spinner"></span></button>
+      <a href="/admin-portal" class="btn">Access Admin Portal</a>
     </div>
-    
-    <div id="statusMessage" class="status"></div>
   </div>
   
   <script>
-    // Handle form submission with visual feedback
-    function submitForm() {
-      // Show spinner and disable button
-      document.getElementById('spinner').style.display = 'inline-block';
-      document.getElementById('loginBtn').disabled = true;
-      document.getElementById('statusMessage').style.display = 'none';
-      
-      // Show success message
-      document.getElementById('statusMessage').textContent = 'Logging in... Please wait.';
-      document.getElementById('statusMessage').className = 'status success';
-      document.getElementById('statusMessage').style.display = 'block';
-      
-      // Submit the form after a brief delay to show the loading state
-      setTimeout(function() {
-        document.getElementById('loginForm').submit();
-        
-        // Since form submission will navigate away, we add an additional fallback
-        // in case the redirect doesn't happen automatically
-        setTimeout(function() {
-          window.location.href = '/admin-portal?direct=true&t=' + Date.now();
-        }, 3000);
-      }, 500);
-    }
-    
-    // Listen for any login errors from the parent page
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.loginError) {
-        document.getElementById('statusMessage').textContent = event.data.loginError;
-        document.getElementById('statusMessage').className = 'status error';
-        document.getElementById('statusMessage').style.display = 'block';
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('loginBtn').disabled = false;
-      }
-    });
-    
-    // Auto-login if requested via query parameter
+    // Automatically redirect to admin portal
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autologin') === 'true') {
-        submitForm();
+        window.location.href = '/admin-portal';
       }
     });
   </script>
