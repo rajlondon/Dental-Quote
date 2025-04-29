@@ -71,26 +71,64 @@
     .btn.secondary:hover {
       background-color: #5a6268;
     }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #115db5;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>MyDentalFly Admin Portal</h1>
+    <div id="loginForm">
+      <form action="/api/auth/login" method="post">
+        <input type="hidden" name="email" value="admin@mydentalfly.com">
+        <input type="hidden" name="password" value="Admin123!">
+        <input type="hidden" name="redirect" value="/admin-portal">
+        
+        <p>Click the button below to access the admin portal with the default admin account.</p>
+        <div class="buttons">
+          <a href="/" class="btn secondary">Return Home</a>
+          <button type="submit" class="btn">Access Admin Portal</button>
+        </div>
+      </form>
+    </div>
     
-    <p>Click the button below to access the admin portal with the default admin account.</p>
-    
-    <div class="buttons">
-      <a href="/" class="btn secondary">Return Home</a>
-      <a href="/admin-portal" class="btn">Access Admin Portal</a>
+    <div id="loadingMessage" style="display: none;">
+      <p>Authenticating as admin user... <span class="spinner"></span></p>
     </div>
   </div>
   
   <script>
-    // Automatically redirect to admin portal
+    // Check if we need to automatically login
     document.addEventListener('DOMContentLoaded', function() {
+      // Create a form for submission
+      const form = document.querySelector('form');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('loadingMessage').style.display = 'block';
+        });
+      }
+      
+      // Handle auto-login parameter
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autologin') === 'true') {
-        window.location.href = '/admin-portal';
+        if (form) {
+          form.submit();
+        }
       }
     });
   </script>

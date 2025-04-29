@@ -71,26 +71,64 @@
     .btn.secondary:hover {
       background-color: #5a6268;
     }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #7c3aed;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>MyDentalFly Patient Portal</h1>
+    <div id="loginForm">
+      <form action="/api/auth/login" method="post">
+        <input type="hidden" name="email" value="patient@mydentalfly.com">
+        <input type="hidden" name="password" value="Patient123!">
+        <input type="hidden" name="redirect" value="/client-portal">
+        
+        <p>Click the button below to access the patient portal with the default patient account.</p>
+        <div class="buttons">
+          <a href="/" class="btn secondary">Return Home</a>
+          <button type="submit" class="btn">Access Patient Portal</button>
+        </div>
+      </form>
+    </div>
     
-    <p>Click the button below to access the patient portal with the default patient account.</p>
-    
-    <div class="buttons">
-      <a href="/" class="btn secondary">Return Home</a>
-      <a href="/client-portal" class="btn">Access Patient Portal</a>
+    <div id="loadingMessage" style="display: none;">
+      <p>Authenticating as patient user... <span class="spinner"></span></p>
     </div>
   </div>
   
   <script>
-    // Automatically redirect to patient portal
+    // Check if we need to automatically login
     document.addEventListener('DOMContentLoaded', function() {
+      // Create a form for submission
+      const form = document.querySelector('form');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('loadingMessage').style.display = 'block';
+        });
+      }
+      
+      // Handle auto-login parameter
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autologin') === 'true') {
-        window.location.href = '/client-portal';
+        if (form) {
+          form.submit();
+        }
       }
     });
   </script>
