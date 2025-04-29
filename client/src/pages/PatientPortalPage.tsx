@@ -44,8 +44,9 @@ const mockBookingData = {
   journeyProgress: 35
 };
 
-// Import MessagingSection component
+// Import components 
 import MessagingSection from '@/components/portal/MessagingSection';
+import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
@@ -53,12 +54,6 @@ const ProfileSection = () => <div className="p-4">Profile functionality would go
 const TreatmentPlanSection = () => <div className="p-4">Treatment Plan details would go here</div>;
 const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
 const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
-const PatientPortalTesting = ({ setActiveSection }: { setActiveSection: (section: string) => void }) => (
-  <div className="p-4">
-    <h2 className="text-2xl font-bold mb-4">Testing Area</h2>
-    <Button onClick={() => setActiveSection('dashboard')}>Back to Dashboard</Button>
-  </div>
-);
 
 // Dashboard section component interface
 interface DashboardSectionProps {
