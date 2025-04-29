@@ -239,13 +239,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
       
-      // Serve the main index.html file which will load the React app
-      console.log("Serving React-based clinic portal");
-      res.cookie('use_react_portal', 'true', {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
+      // Serve the main React application
+      console.log("Serving React-based clinic portal dashboard");
       return res.sendFile('index.html', { 
         root: path.join(process.cwd(), 'public'),
         headers: {
@@ -256,11 +251,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth || hasLoginTimestamp) {
       console.log("Authenticated with cookies, serving React-based clinic portal");
-      res.cookie('use_react_portal', 'true', {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
       return res.sendFile('index.html', { 
         root: path.join(process.cwd(), 'public'),
         headers: {
@@ -347,15 +337,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Log the redirect information
     console.log(`Redirecting to React-based clinic portal from POST handler (target: ${target})`);
     
-    // Redirect to index.html to load the React-based clinic portal 
-    // This will serve the main app which will render the React-based portal
-    console.log("Redirecting to React-based clinic portal");
-    res.cookie('use_react_portal', 'true', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    res.redirect('/index.html');
+    // Add cache-busting query parameter to avoid cache issues
+    const timestamp = Date.now();
+    console.log("Redirecting to React-based clinic portal dashboard");
+    res.redirect(`/index.html?t=${timestamp}`);
   });
 
   app.get('/client-portal', (req, res) => {
