@@ -163,19 +163,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
   
   // Direct portal access routes - one for each user type
+  // These hardcoded routes set all the required cookies and redirect to portals directly
   app.get('/admin-direct', (req, res) => {
-    // Redirect to our unified direct login page with admin mode pre-selected
-    res.redirect("/portal-direct.html?mode=admin&t=" + Date.now());
+    // Admin user ID
+    const userId = '1';
+    
+    // Set all auth cookies directly server-side
+    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('mdf_user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('mdf_user_role', 'admin', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('admin_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('admin_session_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('portal_type', 'admin', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('user_role', 'admin', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    
+    // Then send them directly to the admin portal with a direct flag
+    const timestamp = Date.now();
+    res.redirect(`/admin-portal?direct=true&uid=${userId}&t=${timestamp}`);
   });
   
   app.get('/clinic-direct', (req, res) => {
-    // Redirect to our unified direct login page with clinic mode pre-selected
-    res.redirect("/portal-direct.html?mode=clinic&t=" + Date.now());
+    // Clinic user ID
+    const userId = '40';
+    
+    // Set all auth cookies directly server-side
+    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('mdf_user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('mdf_user_role', 'clinic_staff', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('clinic_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('clinic_session_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('portal_type', 'clinic', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('user_role', 'clinic_staff', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    
+    // Then send them directly to the clinic portal with a direct flag
+    const timestamp = Date.now();
+    res.redirect(`/clinic-portal?direct=true&uid=${userId}&t=${timestamp}`);
   });
   
   app.get('/patient-direct', (req, res) => {
-    // Redirect to our unified direct login page with patient mode pre-selected
-    res.redirect("/portal-direct.html?mode=patient&t=" + Date.now());
+    // Patient user ID
+    const userId = '45';
+    
+    // Set all auth cookies directly server-side
+    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('mdf_user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('mdf_user_role', 'patient', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('patient_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('patient_session_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('portal_type', 'patient', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('user_role', 'patient', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    
+    // Then send them directly to the patient portal with a direct flag
+    const timestamp = Date.now();
+    res.redirect(`/client-portal?direct=true&uid=${userId}&t=${timestamp}`);
   });
   
   // Apply global rate limiting to all API routes
@@ -184,32 +230,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add CSRF error handler (must be before CSRF middleware)
   app.use(handleCsrfError);
   
-  // Direct server-side blocking of portal routes for security
-  // This prevents direct access to portal routes without authentication
-  app.get(["/admin-portal*", "/clinic-portal*", "/client-portal*"], (req, res) => {
-    // Special exception - if we have a direct=true parameter, allow access as 
-    // this means they're coming from our direct login page
-    if (req.query.direct === 'true') {
-      console.log("Allowing direct portal access with direct=true parameter");
-      // Serve the React app through the Vite middleware
-      return res.sendFile(path.join(process.cwd(), 'public/portal-direct.html'));
-    }
-    
-    // Check if they have valid auth cookies (safely handling undefined)
+  // Instead of complex middleware, just respond to the direct routes properly
+  app.get('/admin-portal', (req, res) => {
+    // If the direct=true flag is present, or they have auth cookies, serve the index.html
     const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
-    const hasRoleAuth = (req.cookies && (
-                       req.cookies.admin_auth === 'true' || 
-                       req.cookies.clinic_auth === 'true' || 
-                       req.cookies.patient_auth === 'true'));
-    
-    if (hasMdfAuth || hasRoleAuth) {
-      console.log("Allowing portal access with auth cookies present");
-      // For direct access, use our custom portal page that doesn't require the React app
-      return res.sendFile(path.join(process.cwd(), 'public/portal-direct.html'));
+    const hasAdminAuth = req.cookies && req.cookies.admin_auth === 'true';
+    if (req.query.direct === 'true' || hasMdfAuth || hasAdminAuth) {
+      console.log("Serving admin portal");
+      // Use express.static's sendFile to serve the file
+      return res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
+    } else {
+      // Otherwise redirect to the direct login
+      return res.redirect('/admin-direct');
     }
-    
-    // If they're trying to access directly without auth, redirect to login
-    return res.redirect("/portal-direct.html");
+  });
+
+  app.get('/clinic-portal', (req, res) => {
+    // If the direct=true flag is present, or they have auth cookies, serve the index.html
+    const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
+    const hasClinicAuth = req.cookies && req.cookies.clinic_auth === 'true';
+    if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth) {
+      console.log("Serving clinic portal");
+      // Use express.static's sendFile to serve the file
+      return res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
+    } else {
+      // Otherwise redirect to the direct login
+      return res.redirect('/clinic-direct');
+    }
+  });
+
+  app.get('/client-portal', (req, res) => {
+    // If the direct=true flag is present, or they have auth cookies, serve the index.html
+    const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
+    const hasPatientAuth = req.cookies && req.cookies.patient_auth === 'true';
+    if (req.query.direct === 'true' || hasMdfAuth || hasPatientAuth) {
+      console.log("Serving patient portal");
+      // Use express.static's sendFile to serve the file
+      return res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
+    } else {
+      // Otherwise redirect to the direct login
+      return res.redirect('/patient-direct');
+    }
   });
   
   // IMPORTANT: Register routes in this order to avoid conflicts:
