@@ -160,7 +160,7 @@
                   console.log('User session confirmed:', userData.user);
                   // Go directly to standalone page to avoid React and routing issues
                   console.log('Redirecting to standalone clinic portal...');
-                  window.location.href = '/clinic-portal';
+                  window.location.href = '/clinic-standalone.html';
                   return true;
                 } else {
                   throw new Error('Session verification failed');

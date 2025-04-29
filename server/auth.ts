@@ -399,6 +399,19 @@ export async function setupAuth(app: Express) {
     }
     
     console.log("Redirecting authenticated clinic user to standalone clinic portal");
+    // Always use the standalone HTML clinic portal to avoid React routing issues
+    res.cookie('mdf_authenticated', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
+    res.cookie('clinic_auth', 'true', { 
+      httpOnly: false, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
     // Direct to the standalone HTML clinic portal as per user preference
     res.redirect("/clinic-standalone.html");
   });
