@@ -79,17 +79,43 @@
     
     <p>Click the button below to access the admin portal with the default admin account.</p>
     
-    <!-- Use a direct form submission instead of JavaScript -->
-    <form action="/api/auth/login" method="POST">
+    <!-- Use a direct form submission with JavaScript fallback -->
+    <form id="loginForm" action="/api/auth/login" method="POST">
       <input type="hidden" name="email" value="admin@mydentalfly.com">
       <input type="hidden" name="password" value="Admin123!">
       <input type="hidden" name="redirect" value="/admin-portal">
       
       <div class="buttons">
         <a href="/" class="btn secondary">Return Home</a>
-        <button type="submit" class="btn">Access Admin Portal</button>
+        <a href="#" onclick="document.getElementById('loginForm').submit(); return false;" class="btn">Access Admin Portal</a>
       </div>
     </form>
   </div>
+  
+  <script>
+    // Alternative method using fetch API
+    function directLogin() {
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: 'admin@mydentalfly.com',
+          password: 'Admin123!',
+          redirect: '/admin-portal'
+        }),
+        credentials: 'include'
+      })
+      .then(response => {
+        // Even if we get a redirect response, manually navigate
+        window.location.href = '/admin-portal?direct=true';
+      })
+      .catch(error => {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+      });
+    }
+  </script>
 </body>
 </html>
