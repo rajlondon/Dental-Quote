@@ -60,11 +60,20 @@ export class WebSocketService {
   private handleMessage(ws: WebSocket, message: string) {
     try {
       const data = JSON.parse(message) as Message;
+      console.log('WebSocket message received:', data.type);
       
       switch (data.type) {
         case 'register':
-          // Register a new client
-          this.registerClient(ws, data.sender.id, data.sender.type);
+          // Register a new client - validate and map role if needed
+          let clientType = data.sender.type;
+          
+          // Map 'clinic_staff' role to 'clinic' for WebSocket consistency
+          if (clientType === 'clinic_staff') {
+            clientType = 'clinic' as const;
+            console.log('Mapped clinic_staff role to clinic for WebSocket');
+          }
+          
+          this.registerClient(ws, data.sender.id, clientType as 'patient' | 'clinic' | 'admin');
           break;
           
         case 'sync_appointment':
@@ -87,24 +96,45 @@ export class WebSocketService {
       }
     } catch (error) {
       console.error('Error handling WebSocket message:', error);
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Invalid message format',
-      }));
+      try {
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid message format',
+        }));
+      } catch (sendError) {
+        console.error('Error sending error message:', sendError);
+      }
     }
   }
   
   private registerClient(ws: WebSocket, id: string, type: 'patient' | 'clinic' | 'admin') {
+    // Check if this client is already registered with a different connection
+    const existingClient = this.clients.get(id);
+    if (existingClient) {
+      console.log(`Client ${id} is already connected, closing old connection`);
+      try {
+        existingClient.ws.close();
+      } catch (error) {
+        console.error('Error closing existing connection:', error);
+      }
+    }
+    
     const newClient: Client = { ws, id, type };
     this.clients.set(id, newClient);
+    console.log(`Client registered successfully: ${id} (${type})`);
+    
+    // Confirm registration to client
+    try {
+      ws.send(JSON.stringify({
+        type: 'registered',
+        message: `Successfully registered as ${type} with ID ${id}`,
+      }));
+      console.log(`Registration confirmation sent to ${type} client ${id}`);
+    } catch (error) {
+      console.error('Error sending registration confirmation:', error);
+    }
     
     console.log(`New ${type} client registered with ID: ${id}`);
-    
-    // Notify client of successful registration
-    ws.send(JSON.stringify({
-      type: 'registered',
-      message: `Registered as ${type} with ID: ${id}`,
-    }));
   }
   
   private syncAppointmentData(data: Message) {
