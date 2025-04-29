@@ -149,23 +149,36 @@
           return response.json().then(data => {
             if (response.ok) {
               console.log('Login successful with data:', data);
-              // First verify we're actually logged in by making a second request
-              return fetch('/api/auth/user', {
-                method: 'GET',
-                credentials: 'include'
-              })
-              .then(userResponse => userResponse.json())
-              .then(userData => {
-                if (userData && userData.success && userData.user) {
-                  console.log('User session confirmed:', userData.user);
-                  // Go directly to standalone page to avoid React and routing issues
-                  console.log('Redirecting to standalone clinic portal...');
-                  window.location.href = '/clinic-standalone.html';
-                  return true;
-                } else {
-                  throw new Error('Session verification failed');
+              // Store authentication in localStorage for persistence
+              if (data.user) {
+                console.log('Saving user data to localStorage:', data.user.role);
+                try {
+                  localStorage.setItem('clinic_auth_state', JSON.stringify({
+                    user: data.user,
+                    timestamp: new Date().getTime()
+                  }));
+                  localStorage.setItem('is_clinic', 'true');
+                } catch (err) {
+                  console.error('Failed to store auth state:', err);
                 }
-              });
+              }
+              
+              // Create a form to POST to /clinic-portal for proper server-side handling
+              console.log('Creating and submitting POST form to clinic-portal');
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = '/clinic-portal';
+              
+              // Add hidden fields for the portal target
+              const targetField = document.createElement('input');
+              targetField.type = 'hidden';
+              targetField.name = 'target';
+              targetField.value = 'clinic';
+              form.appendChild(targetField);
+              
+              document.body.appendChild(form);
+              form.submit();
+              return true;
             } else {
               // Login failed with a valid JSON response
               throw new Error(data.message || 'Authentication failed');
