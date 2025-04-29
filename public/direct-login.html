@@ -253,18 +253,41 @@
           credentials: 'include'
         })
         .then(response => {
-          if (response.ok || response.redirected) {
-            console.log(`Login successful, redirecting to ${redirectPath}`);
-            setTimeout(() => {
-              window.location.href = redirectPath;
-            }, 1000);
-          } else {
-            throw new Error('Login failed');
-          }
+          console.log('Login response status:', response.status);
+          
+          // Handle any response status
+          return response.json().then(data => {
+            if (response.ok) {
+              console.log('Login successful with data:', data);
+              // First verify we're actually logged in by making a second request
+              return fetch('/api/auth/user', {
+                method: 'GET',
+                credentials: 'include'
+              })
+              .then(userResponse => userResponse.json())
+              .then(userData => {
+                if (userData && userData.success && userData.user) {
+                  console.log('User session confirmed:', userData.user);
+                  // Instead of a timeout, try to navigate immediately
+                  window.location.href = redirectPath;
+                  return true;
+                } else {
+                  throw new Error('Session verification failed');
+                }
+              });
+            } else {
+              // Login failed with a valid JSON response
+              throw new Error(data.message || 'Authentication failed');
+            }
+          }).catch(err => {
+            // JSON parsing error or other error in the then chain
+            console.error('Error processing response:', err);
+            throw new Error('Login processing failed');
+          });
         })
         .catch(error => {
           console.error('Login error:', error);
-          alert('Failed to login. Please try again or contact support.');
+          alert('Failed to login: ' + error.message);
           window.location.reload();
         });
       }
