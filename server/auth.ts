@@ -146,7 +146,7 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint with enhanced email verification handling
+  // Login endpoint with enhanced email verification handling and redirect support
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
@@ -201,6 +201,18 @@ export async function setupAuth(app: Express) {
         res.cookie('mdf_user_role', user.role, cookieOptions);
         
         console.log("Set enhanced session cookies for user:", user.id, user.role);
+        
+        // Check if redirect parameter is provided
+        // This allows for direct form-based login with redirect
+        const redirect = req.body.redirect;
+        if (redirect && typeof redirect === 'string') {
+          // Only allow redirects to specific portal routes
+          const allowedRedirects = ['/admin-portal', '/clinic-portal', '/client-portal'];
+          if (allowedRedirects.includes(redirect)) {
+            console.log(`Redirecting after login to: ${redirect}`);
+            return res.redirect(redirect);
+          }
+        }
         
         // Include unverified status warning in the response if needed
         if (user.role === 'patient' && !user.emailVerified) {
