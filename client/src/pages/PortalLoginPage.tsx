@@ -189,11 +189,7 @@ const PortalLoginPage: React.FC = () => {
         password: values.password
       });
       
-      // Show success message
-      toast({
-        title: "Login Successful",
-        description: `Welcome back to MyDentalFly, ${userData.firstName || ''}!`,
-      });
+      // Success toast is handled by the useAuth hook
       
       // Direct redirect based on user role from response
       console.log("Login successful, redirecting based on role:", userData.role);
