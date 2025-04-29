@@ -178,11 +178,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
     }
     
-    // Check if they have valid auth cookies
-    const hasMdfAuth = req.cookies.mdf_authenticated === 'true';
-    const hasRoleAuth = req.cookies.admin_auth === 'true' || 
+    // Check if they have valid auth cookies (safely handling undefined)
+    const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
+    const hasRoleAuth = (req.cookies && (
+                       req.cookies.admin_auth === 'true' || 
                        req.cookies.clinic_auth === 'true' || 
-                       req.cookies.patient_auth === 'true';
+                       req.cookies.patient_auth === 'true'));
     
     if (hasMdfAuth || hasRoleAuth) {
       console.log("Allowing portal access with auth cookies present");

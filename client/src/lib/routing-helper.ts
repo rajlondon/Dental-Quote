@@ -71,16 +71,19 @@ export function navigateToUserPortal(): void {
   const baseUrl = window.location.origin;
   const timestamp = Date.now(); // Add timestamp to avoid caching
   
+  // Attempt to get user ID from cookie for better direct link targeting
+  const userId = getCookie('mdf_user_id') || '0';
+  
   try {
     switch (portal) {
       case 'admin':
-        window.location.replace(`${baseUrl}/admin-portal?t=${timestamp}`);
+        window.location.replace(`${baseUrl}/admin-portal?uid=${userId}&t=${timestamp}`);
         break;
       case 'clinic':
-        window.location.replace(`${baseUrl}/clinic-portal?t=${timestamp}`);
+        window.location.replace(`${baseUrl}/clinic-portal?uid=${userId}&t=${timestamp}`);
         break;
       case 'patient':
-        window.location.replace(`${baseUrl}/client-portal?t=${timestamp}`);
+        window.location.replace(`${baseUrl}/client-portal?uid=${userId}&t=${timestamp}`);
         break;
       default:
         // Not authenticated, go to login
@@ -88,16 +91,16 @@ export function navigateToUserPortal(): void {
     }
   } catch (e) {
     console.error('Navigation error:', e);
-    // Fallback approach
+    // Fallback approach with direct parameter
     switch (portal) {
       case 'admin':
-        window.location.href = '/admin-portal';
+        window.location.href = `/admin-portal?uid=${userId}&direct=true`;
         break;
       case 'clinic':
-        window.location.href = '/clinic-portal';
+        window.location.href = `/clinic-portal?uid=${userId}&direct=true`;
         break;
       case 'patient':
-        window.location.href = '/client-portal';
+        window.location.href = `/client-portal?uid=${userId}&direct=true`;
         break;
       default:
         window.location.href = '/portal-login';
