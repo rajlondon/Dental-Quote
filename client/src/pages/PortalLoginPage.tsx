@@ -426,6 +426,18 @@ const PortalLoginPage: React.FC = () => {
                   <CardDescription>
                     Access your clinic dashboard and patient management
                   </CardDescription>
+                  <div className="mt-3 text-center">
+                    <Button 
+                      variant="secondary"
+                      className="w-full"
+                      onClick={() => window.location.href = '/clinic-login'}
+                    >
+                      Use Direct Clinic Login Instead (Recommended)
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Direct login provides a more stable connection to the clinic portal
+                    </p>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <Form {...loginForm}>

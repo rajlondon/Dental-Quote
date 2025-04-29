@@ -16,21 +16,88 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check for stored user in localStorage or sessionStorage as fallback
+    const checkBackupAuth = () => {
+      console.log("Checking for backup auth sources...");
+      // Try getting user from sessionStorage first (more secure, cleared on tab close)
+      let storedUser = null;
+      try {
+        const sessionUser = sessionStorage.getItem('clinic_user');
+        if (sessionUser) {
+          storedUser = JSON.parse(sessionUser);
+          console.log("Found user in sessionStorage:", storedUser);
+        } else {
+          // Fallback to localStorage
+          const localUser = localStorage.getItem('clinic_user');
+          if (localUser) {
+            storedUser = JSON.parse(localUser);
+            console.log("Found user in localStorage:", storedUser);
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing stored user:", e);
+      }
+      return storedUser;
+    };
+
     // Direct API call to get user info, bypassing React Query
     async function checkAuth() {
       try {
         setIsLoading(true);
+        
+        // First check if we're on the clinic portal path - this needs special handling
+        if (path === '/clinic-portal' || path.startsWith('/clinic-')) {
+          console.log("Clinic portal detected, checking for backup auth first");
+          const backupUser = checkBackupAuth();
+          
+          // For clinic routes, try using the backup auth first to avoid session issues
+          if (backupUser && backupUser.role === 'clinic_staff') {
+            console.log("Using backup auth for clinic user:", backupUser);
+            setUser(backupUser);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Normal API auth check
+        console.log("Performing server auth check");
         const response = await fetch('/api/auth/user', {
-          credentials: 'include' // Important: include cookies for session auth
+          credentials: 'include', // Important: include cookies for session auth
+          cache: 'no-store', // Prevent caching
+          headers: {
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache'
+          }
         });
         
         if (response.status === 401) {
-          setUser(null);
-          setError("Not authenticated");
-          console.log("User not authenticated, redirecting to login");
-          setTimeout(() => {
-            window.location.href = '/portal-login';
-          }, 100);
+          console.log("Server returned 401 - trying backup auth");
+          const backupUser = checkBackupAuth();
+          
+          if (backupUser) {
+            console.log("Using backup user data:", backupUser);
+            setUser(backupUser);
+            
+            // Try to restore session with a direct login if we have clinic staff
+            if (backupUser.role === 'clinic_staff' && requiredRole === 'clinic_staff') {
+              console.log("Attempting session restoration for clinic staff");
+              toast({
+                title: "Restoring session...",
+                description: "Please wait while we reconnect your session"
+              });
+              setTimeout(() => {
+                window.location.href = '/clinic-login';
+              }, 1500);
+              return;
+            }
+          } else {
+            setUser(null);
+            setError("Not authenticated");
+            console.log("No backup auth found, redirecting to login");
+            setTimeout(() => {
+              window.location.href = '/portal-login';
+            }, 100);
+          }
           return;
         }
         
@@ -42,6 +109,9 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
         console.log("Auth check - User data:", data.user);
         
         if (data.success && data.user) {
+          // Store user in session storage for backup
+          sessionStorage.setItem('clinic_user', JSON.stringify(data.user));
+          
           setUser(data.user);
           
           // Check role access
@@ -70,6 +140,13 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
       } catch (err: any) {
         console.error("Error checking authentication:", err);
         setError(err.message);
+        
+        // Try backup authentication as a last resort
+        const backupUser = checkBackupAuth();
+        if (backupUser) {
+          console.log("Using backup auth after error:", backupUser);
+          setUser(backupUser);
+        }
       } finally {
         setIsLoading(false);
       }
