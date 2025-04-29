@@ -236,8 +236,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
     
-    // Redirect to clinic portal with direct flag to ensure it loads
-    return res.redirect('/clinic-portal?direct=true');
+    // Set mdf_authenticated cookie for general auth
+    res.cookie('mdf_authenticated', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
+    // Set path, portal type, and portal-specific cookies for the client-side app to use
+    res.cookie('mdf_path', '/clinic-portal', {
+      httpOnly: false, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    
+    res.cookie('mdf_portal_type', 'clinic', {
+      httpOnly: false, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    
+    // Instead of redirecting to the same URL, serve the app directly with proper flags
+    res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
   });
 
   app.get('/client-portal', (req, res) => {

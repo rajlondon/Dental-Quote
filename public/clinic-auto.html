@@ -144,10 +144,25 @@
       .then(data => {
         if (data && data.success && data.user && (data.user.role === 'clinic' || data.user.role === 'clinic_staff')) {
           console.log('Already authenticated as clinic user:', data.user);
-          // Directly navigate using POST form submission for more reliable navigation
+          // Create more detailed form submission with navigation flags
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = '/clinic-portal';
+          
+          // Add hidden fields to help with portal navigation
+          const hiddenField1 = document.createElement('input');
+          hiddenField1.type = 'hidden';
+          hiddenField1.name = 'target';
+          hiddenField1.value = 'clinic';
+          form.appendChild(hiddenField1);
+          
+          const hiddenField2 = document.createElement('input');
+          hiddenField2.type = 'hidden';
+          hiddenField2.name = 'portal_type'; 
+          hiddenField2.value = 'clinic';
+          form.appendChild(hiddenField2);
+          
+          // Append and submit the form
           document.body.appendChild(form);
           form.style.display = 'none';
           form.submit();
@@ -199,10 +214,25 @@
             if (response.ok) {
               console.log('Login successful with data:', data);
               
-              // Create a form and submit it to force a full post navigation
+              // Create a more detailed form submission with navigation flags
               const form = document.createElement('form');
               form.method = 'POST';
               form.action = '/clinic-portal';
+              
+              // Add hidden fields to help with portal navigation
+              const hiddenField1 = document.createElement('input');
+              hiddenField1.type = 'hidden';
+              hiddenField1.name = 'target';
+              hiddenField1.value = 'clinic';
+              form.appendChild(hiddenField1);
+              
+              const hiddenField2 = document.createElement('input');
+              hiddenField2.type = 'hidden';
+              hiddenField2.name = 'portal_type'; 
+              hiddenField2.value = 'clinic';
+              form.appendChild(hiddenField2);
+              
+              // Append and submit the form
               document.body.appendChild(form);
               form.style.display = 'none';
               form.submit();
