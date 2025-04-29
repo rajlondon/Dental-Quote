@@ -207,36 +207,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/clinic-portal', (req, res) => {
-    // If the direct=true flag is present, or they have auth cookies, serve the index.html
+    console.log("GET request to clinic-portal received", {
+      isAuthenticated: req.isAuthenticated(),
+      hasUser: !!req.user,
+      userRole: req.user?.role,
+      cookies: {
+        hasMdfAuth: req.cookies?.mdf_authenticated === 'true',
+        hasClinicAuth: req.cookies?.clinic_auth === 'true',
+        hasTimestamp: !!req.cookies?.clinic_login_timestamp
+      }
+    });
+    
+    // If the direct=true flag is present, or they have auth cookies, serve the standalone portal
     const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
     const hasClinicAuth = req.cookies && req.cookies.clinic_auth === 'true';
+    const hasLoginTimestamp = req.cookies && req.cookies.clinic_login_timestamp;
     
-    // Force to always use the original clinic portal HTML file that shows the dashboard
+    // Check for authentication through cookies or session
+    const isAuthenticated = req.isAuthenticated() && 
+                           (req.user.role === 'clinic' || req.user.role === 'clinic_staff');
+    
+    // Force to always use the standalone clinic portal HTML file that shows the dashboard
     // with appointments, quotes, messages, etc. as shown in screenshots (client request)
-    if (req.isAuthenticated() && (req.user.role === 'clinic' || req.user.role === 'clinic_staff')) {
-      console.log("Serving the standalone clinic portal HTML file");
-      return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
-    } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth) {
+    if (isAuthenticated) {
+      console.log("User authenticated via session, serving standalone clinic portal");
+      
+      // Set cookies to ensure they're fresh
+      res.cookie('clinic_auth', 'true', { 
+        httpOnly: false, 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+      
+      // Add cache-busting timestamp
+      const timestamp = Date.now();
+      return res.sendFile('clinic-standalone.html', { 
+        root: path.join(process.cwd(), 'public'),
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+    } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth || hasLoginTimestamp) {
       console.log("Authenticated with cookies, serving standalone clinic portal");
-      return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
+      return res.sendFile('clinic-standalone.html', { 
+        root: path.join(process.cwd(), 'public'),
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     } else {
       // Otherwise redirect to the direct login
+      console.log("Not authenticated, redirecting to clinic-direct login page");
       return res.redirect('/clinic-direct');
     }
   });
   
   // Add POST handler for clinic portal to support form submissions
   app.post('/clinic-portal', (req, res) => {
+    console.log("POST request to clinic-portal received", {
+      isAuthenticated: req.isAuthenticated(),
+      target: req.body.target,
+      hasBody: !!req.body,
+    });
+    
     // Check if user is authenticated
     if (!req.isAuthenticated()) {
-      console.log("POST to clinic portal but user not authenticated");
-      return res.redirect('/clinic-direct');
+      console.log("POST to clinic portal but user not authenticated, redirecting to direct login");
+      return res.redirect('/clinic-direct?auth_failed=true');
     }
     
     // Check if user has the correct role
     if (req.user.role !== 'clinic' && req.user.role !== 'clinic_staff') {
       console.log("POST to clinic portal with incorrect role:", req.user.role);
-      return res.status(403).send("Access denied. You don't have clinic permissions.");
+      return res.status(403).send(`
+        <html>
+        <head><title>Access Denied</title></head>
+        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+          <h1 style="color: #e53e3e;">Access Denied</h1>
+          <p>You don't have clinic permissions. Your role is: ${req.user.role}</p>
+          <p><a href="/portal-login" style="color: #2c9754;">Return to login page</a></p>
+        </body>
+        </html>
+      `);
     }
     
     console.log("POST to clinic portal accepted for user:", req.user.email);
@@ -255,6 +311,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
     
+    // Set a special clinic login timestamp cookie to track the last successful login
+    res.cookie('clinic_login_timestamp', Date.now().toString(), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
     // Set path, portal type, and portal-specific cookies for the client-side app to use
     res.cookie('mdf_path', '/clinic-portal', {
       httpOnly: false, 
@@ -268,9 +331,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000
     });
     
-    // Redirect directly to the standalone clinic portal
-    console.log("Redirecting to standalone clinic portal from POST handler");
-    res.redirect('/clinic-standalone.html');
+    // Get the target if specified
+    const target = req.body.target || 'clinic';
+    
+    // Log the redirect information
+    console.log(`Redirecting to standalone clinic portal from POST handler (target: ${target})`);
+    
+    // Add cache-busting query parameter to avoid cache issues
+    const timestamp = Date.now();
+    res.redirect(`/clinic-standalone.html?t=${timestamp}`);
   });
 
   app.get('/client-portal', (req, res) => {

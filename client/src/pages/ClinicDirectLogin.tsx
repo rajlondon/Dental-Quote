@@ -72,15 +72,22 @@ const ClinicDirectLogin: React.FC = () => {
       });
       
       console.log('Redirecting directly to standalone clinic portal with existing authentication');
-      setTimeout(() => {
-        // Always redirect to standalone clinic portal as per user preference
-        try {
-          window.location.replace('/clinic-standalone.html');
-        } catch (error) {
-          console.error("Failed to redirect to clinic portal:", error);
-          window.location.href = '/clinic-standalone.html';
-        }
-      }, 1000);
+      // Create a form to POST to clinic-portal endpoint
+      console.log("Creating and submitting form to clinic-portal endpoint from auto redirect");
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/clinic-portal';
+      
+      // Add a hidden field
+      const targetField = document.createElement('input');
+      targetField.type = 'hidden';
+      targetField.name = 'target';
+      targetField.value = 'clinic';
+      form.appendChild(targetField);
+      
+      // Append and submit the form
+      document.body.appendChild(form);
+      form.submit();
     }
   }, [toast]);
 
@@ -157,16 +164,24 @@ const ClinicDirectLogin: React.FC = () => {
       console.log("User role:", user.role);
       console.log("User ID:", user.id);
       
-      // Direct redirect to standalone clinic portal as per user preference
-      setTimeout(() => {
-        console.log("Redirecting directly to standalone clinic portal after login");
-        try {
-          window.location.replace(`${window.location.origin}/clinic-standalone.html?t=${Date.now()}`);
-        } catch (error) {
-          console.error("Failed to redirect to standalone clinic portal:", error);
-          window.location.href = '/clinic-standalone.html';
-        }
-      }, 1500);
+      // Use form submission to POST to clinic-portal endpoint
+      console.log("Submitting post form to clinic-portal endpoint");
+      
+      // Create a form to POST to /clinic-portal for proper server-side handling
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/clinic-portal';
+      
+      // Add hidden fields for the portal target
+      const targetField = document.createElement('input');
+      targetField.type = 'hidden';
+      targetField.name = 'target';
+      targetField.value = 'clinic';
+      form.appendChild(targetField);
+      
+      // Append to document and submit
+      document.body.appendChild(form);
+      form.submit();
       
     } catch (error: any) {
       console.error("Login error:", error);

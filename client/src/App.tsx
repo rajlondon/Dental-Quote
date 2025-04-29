@@ -144,21 +144,27 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Routes - Force redirect to server-rendered clinic page */}
+      {/* Clinic Staff Routes - Handle direct POST and GET access differently */}
       <Route path="/clinic-portal">
         {() => {
-          console.log("Redirecting to old clinic portal");
-          // Use fetch to tell server we want old portal
-          fetch('/api/use-old-clinic-portal', { method: 'POST' })
-            .then(() => {
-              // Then reload the page which will be caught by the server route
-              window.location.href = "/clinic-portal";
-            })
-            .catch(error => {
-              console.error("Failed to set old portal preference:", error);
-              // Fallback to direct HTML access
-              window.location.href = "/public/clinic-portal-redirect.html";
-            });
+          console.log("Client-side React router caught clinic-portal access");
+          // Create a form submission to the server to force server-side handling
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/clinic-portal';
+          
+          // Add hidden fields for the portal target
+          const targetField = document.createElement('input');
+          targetField.type = 'hidden';
+          targetField.name = 'target';
+          targetField.value = 'clinic';
+          form.appendChild(targetField);
+          
+          // Submit the form immediately to hand over to server-side routing
+          console.log("Submitting form to server-side clinic portal handler");
+          document.body.appendChild(form);
+          form.submit();
+          
           return <div>Redirecting to clinic portal...</div>;
         }}
       </Route>
