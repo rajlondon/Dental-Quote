@@ -101,6 +101,10 @@
     .status.error {
       color: #dc3545;
     }
+    
+    form {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -109,66 +113,61 @@
     
     <p>Click the button below to access the clinic portal with the default clinic account.</p>
     
+    <form id="loginForm" action="/api/auth/login" method="POST" target="_self">
+      <input type="hidden" name="email" value="clinic@mydentalfly.com">
+      <input type="hidden" name="password" value="Clinic123!">
+      <input type="hidden" name="redirect" value="/clinic-portal">
+    </form>
+    
     <div class="buttons">
       <a href="/" class="btn secondary">Return Home</a>
-      <button onclick="loginAndRedirect()" class="btn" id="loginBtn">Access Clinic Portal <span id="spinner" class="spinner"></span></button>
+      <button onclick="submitForm()" class="btn" id="loginBtn">Access Clinic Portal <span id="spinner" class="spinner"></span></button>
     </div>
     
     <div id="statusMessage" class="status"></div>
   </div>
   
   <script>
-    function loginAndRedirect() {
-      // Show spinner
+    // Handle form submission with visual feedback
+    function submitForm() {
+      // Show spinner and disable button
       document.getElementById('spinner').style.display = 'inline-block';
       document.getElementById('loginBtn').disabled = true;
       document.getElementById('statusMessage').style.display = 'none';
       
-      // We need to send the credentials as form data instead of JSON
-      const formData = new FormData();
-      formData.append('email', 'clinic@mydentalfly.com');
-      formData.append('password', 'Clinic123!');
-      formData.append('redirect', '/clinic-portal');
+      // Show success message
+      document.getElementById('statusMessage').textContent = 'Logging in... Please wait.';
+      document.getElementById('statusMessage').className = 'status success';
+      document.getElementById('statusMessage').style.display = 'block';
       
-      fetch('/api/auth/login', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        // Don't set Content-Type header - the browser will set it correctly with the boundary for multipart/form-data
-        redirect: 'follow' // This tells fetch to follow redirects automatically
-      })
-      .then(response => {
-        // If we get a response (even after redirects), check if it was successful
-        if (response.ok || response.redirected) {
-          document.getElementById('statusMessage').textContent = 'Login successful! Redirecting...';
-          document.getElementById('statusMessage').className = 'status success';
-          document.getElementById('statusMessage').style.display = 'block';
-          
-          // Wait 1 second and then do a full page navigation to the portal
-          setTimeout(() => {
-            // Use reload() to ensure a clean page load
-            window.location.href = '/clinic-portal?direct=true&t=' + Date.now();
-          }, 1000);
-        } else {
-          // Handle login error
-          throw new Error('Login failed. Please try again.');
-        }
-      })
-      .catch(error => {
-        console.error('Login error:', error);
-        document.getElementById('statusMessage').textContent = error.message;
+      // Submit the form after a brief delay to show the loading state
+      setTimeout(function() {
+        document.getElementById('loginForm').submit();
+        
+        // Since form submission will navigate away, we add an additional fallback
+        // in case the redirect doesn't happen automatically
+        setTimeout(function() {
+          window.location.href = '/clinic-portal?direct=true&t=' + Date.now();
+        }, 3000);
+      }, 500);
+    }
+    
+    // Listen for any login errors from the parent page
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.loginError) {
+        document.getElementById('statusMessage').textContent = event.data.loginError;
         document.getElementById('statusMessage').className = 'status error';
         document.getElementById('statusMessage').style.display = 'block';
         document.getElementById('spinner').style.display = 'none';
         document.getElementById('loginBtn').disabled = false;
-      });
-    }
+      }
+    });
     
     // Auto-login if requested via query parameter
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autologin') === 'true') {
-        loginAndRedirect();
+        submitForm();
       }
     });
   </script>
