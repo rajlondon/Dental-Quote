@@ -165,14 +165,22 @@
           localStorage.setItem('user_data', JSON.stringify(user));
           sessionStorage.setItem('user_data', JSON.stringify(user));
           
-          // Set manual cookies
+          // Set manual cookies - explicit setting of all auth cookies
           document.cookie = `user_role=${user.role}; path=/; max-age=${7 * 24 * 60 * 60}`;
           document.cookie = `user_id=${user.id}; path=/; max-age=${7 * 24 * 60 * 60}`;
           document.cookie = `is_authenticated=true; path=/; max-age=${7 * 24 * 60 * 60}`;
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${7 * 24 * 60 * 60}`;
+          document.cookie = `mdf_user_id=${user.id}; path=/; max-age=${7 * 24 * 60 * 60}`;
+          document.cookie = `mdf_user_role=${user.role}; path=/; max-age=${7 * 24 * 60 * 60}`;
+          document.cookie = `clinic_auth=true; path=/; max-age=${7 * 24 * 60 * 60}`;
+          document.cookie = `clinic_session_id=${user.id}; path=/; max-age=${7 * 24 * 60 * 60}`;
+          document.cookie = `portal_type=clinic; path=/; max-age=${7 * 24 * 60 * 60}`;
           
-          // Set specific clinic flag
+          // Set specific clinic flag in multiple storage types for redundancy
           localStorage.setItem('is_clinic', 'true');
           sessionStorage.setItem('is_clinic', 'true');
+          localStorage.setItem('clinic_session', 'true');
+          sessionStorage.setItem('clinic_session', 'true');
           
           // Show success message
           loadingContainer.classList.add('hidden');
