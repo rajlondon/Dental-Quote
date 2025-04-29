@@ -50,20 +50,38 @@ const ClinicDirectLogin: React.FC = () => {
       
       console.log("Login successful, redirecting...");
       
+      // Extract user information
+      const user = data.user;
+      
+      // Store CSRF token if available
+      if (data.csrfToken) {
+        localStorage.setItem('csrf_token', data.csrfToken);
+      }
+      
       // Show success message
       toast({
         title: "Login successful",
-        description: `Welcome back, ${data.user.firstName || data.user.email}!`
+        description: `Welcome back, ${user.firstName || user.email}!`
       });
       
-      // Store user data in sessionStorage as backup
-      sessionStorage.setItem('clinic_user', JSON.stringify(data.user));
+      // Store user data in localStorage and sessionStorage for redundancy
+      localStorage.setItem('clinic_user', JSON.stringify(user));
+      sessionStorage.setItem('clinic_user', JSON.stringify(user));
+      
+      // Create a robust session cookie check
+      document.cookie = "session_check=1; path=/; max-age=3600";
+      
+      // Log session information for debugging
+      console.log("Session established successfully");
+      console.log("User role:", user.role);
+      console.log("User ID:", user.id);
       
       // Hard redirect with a slight delay to ensure toast is visible
       setTimeout(() => {
         console.log("Performing hard redirect to clinic portal");
-        window.location.href = '/clinic-portal';
-      }, 1000);
+        // Use full URL structure to avoid any React Router interference
+        window.location.href = window.location.origin + '/clinic-portal';
+      }, 1200);
       
     } catch (error: any) {
       console.error("Login error:", error);
