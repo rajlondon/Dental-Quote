@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Search, Send, Paperclip, User, Phone, Calendar, 
   Video, MoreVertical, Image, FileText, ArrowRight,
-  CheckCircle2, Languages, Globe 
+  CheckCircle2, Languages, Globe, MessageSquare 
 } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -197,7 +197,7 @@ const ClinicMessagesSection: React.FC = () => {
       
       messages.forEach(message => {
         const translateTo = i18n.language === 'en' ? 'tr' : 'en';
-        const translatedText = translateText(message.text, translateTo);
+        const translatedText = translateText(message.content, translateTo);
         newTranslations[message.id] = translatedText;
       });
       
@@ -205,19 +205,50 @@ const ClinicMessagesSection: React.FC = () => {
     }
   }, [messages, i18n.language, autoTranslate]);
 
-  const handleSendMessage = () => {
-    if (messageText.trim()) {
-      // In a real app, this would send the message to the API
-      // and then add it to the conversation after confirmation
-      console.log("Sending message:", messageText);
-      
-      // Show success toast
-      toast({
-        title: t("clinic.messages.message_sent", "Message Sent"),
-        description: t("clinic.messages.successfully_sent", "Your message has been sent to the patient."),
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !selectedBookingId) return;
+    
+    try {
+      const response = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bookingId: selectedBookingId,
+          content: messageText,
+          messageType: 'text'
+        }),
       });
       
-      setMessageText('');
+      const data = await response.json();
+      
+      if (data.success) {
+        // Show success toast
+        toast({
+          title: t("clinic.messages.message_sent", "Message Sent"),
+          description: t("clinic.messages.successfully_sent", "Your message has been sent to the patient."),
+        });
+        
+        // Clear the input field
+        setMessageText('');
+        
+        // Refresh messages to show the new message
+        fetchMessages(selectedBookingId);
+      } else {
+        toast({
+          title: t("clinic.messages.send_error", "Send Error"),
+          description: data.message || t("clinic.messages.failed_to_send", "Failed to send message. Please try again."),
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: t("clinic.messages.send_error", "Send Error"),
+        description: t("clinic.messages.failed_to_send", "Failed to send message. Please try again."),
+        variant: "destructive",
+      });
     }
   };
 
@@ -333,59 +364,151 @@ const ClinicMessagesSection: React.FC = () => {
               </TabsContent>
               
               <TabsContent value="unread" className="mt-0">
-                <div className="flex items-center justify-center h-64 text-center p-4">
-                  <div>
-                    <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <h3 className="font-medium mb-1">{t("clinic.messages.all_caught_up", "All Caught Up!")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t("clinic.messages.no_unread", "You have no unread messages")}
-                    </p>
+                <ScrollArea className="h-[calc(100vh-20rem)]">
+                  <div className="divide-y">
+                    {loading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                          <p className="text-sm text-muted-foreground">
+                            {t("clinic.messages.loading_conversations", "Loading conversations...")}
+                          </p>
+                        </div>
+                      </div>
+                    ) : conversations.filter(conv => conv.unreadCount > 0).length === 0 ? (
+                      <div className="flex items-center justify-center h-64 text-center p-4">
+                        <div>
+                          <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                          <h3 className="font-medium mb-1">{t("clinic.messages.all_caught_up", "All Caught Up!")}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("clinic.messages.no_unread", "You have no unread messages")}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      conversations
+                        .filter(conv => conv.unreadCount > 0)
+                        .map((conversation) => (
+                          <div 
+                            key={conversation.bookingId} 
+                            onClick={() => setSelectedBookingId(conversation.bookingId)}
+                            className={`px-4 py-3 flex items-start space-x-3 hover:bg-muted/50 cursor-pointer transition ${
+                              selectedBookingId === conversation.bookingId ? "bg-muted/50" : ""
+                            }`}
+                          >
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={conversation.patientAvatar || ""} alt={conversation.patientName} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {conversation.patientName.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <div className="truncate font-medium">{conversation.patientName}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(conversation.lastMessageTime).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <Badge variant="outline" className="px-1 h-5 text-xs font-normal">
+                                  {conversation.treatmentType}
+                                </Badge>
+                                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                  statusColors[conversation.status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
+                                }`}>
+                                  {conversation.status}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center mt-1">
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {conversation.lastMessage}
+                                </p>
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                  {conversation.unreadCount}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                    )}
                   </div>
-                </div>
+                </ScrollArea>
               </TabsContent>
               
               <TabsContent value="active" className="mt-0">
                 <ScrollArea className="h-[calc(100vh-20rem)]">
                   <div className="divide-y">
-                    {conversations
-                      .filter(conv => conv.status === "active")
-                      .map((conversation) => (
-                        <div 
-                          key={conversation.id} 
-                          className="px-4 py-3 flex items-start space-x-3 hover:bg-muted/50 cursor-pointer transition"
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={conversation.avatar || ""} alt={conversation.patientName} />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {conversation.patientName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start">
-                              <div className="truncate font-medium">{conversation.patientName}</div>
-                              <div className="text-xs text-muted-foreground">{conversation.time}</div>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Badge variant="outline" className="px-1 h-5 text-xs font-normal">
-                                {conversation.treatmentType}
-                              </Badge>
-                              <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
-                                {conversation.status}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center mt-1">
-                              <p className="text-sm text-muted-foreground truncate">
-                                {conversation.lastMessage}
-                              </p>
-                              {conversation.unread > 0 && (
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                                  {conversation.unread}
+                    {loading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                          <p className="text-sm text-muted-foreground">
+                            {t("clinic.messages.loading_conversations", "Loading conversations...")}
+                          </p>
+                        </div>
+                      </div>
+                    ) : conversations.filter(conv => conv.status === 'active').length === 0 ? (
+                      <div className="flex items-center justify-center h-64 text-center p-4">
+                        <div>
+                          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                          <h3 className="font-medium mb-1">{t("clinic.messages.no_active", "No Active Conversations")}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("clinic.messages.no_active_desc", "You don't have any active conversations at the moment")}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      conversations
+                        .filter(conv => conv.status === 'active')
+                        .map((conversation) => (
+                          <div 
+                            key={conversation.bookingId} 
+                            onClick={() => setSelectedBookingId(conversation.bookingId)}
+                            className={`px-4 py-3 flex items-start space-x-3 hover:bg-muted/50 cursor-pointer transition ${
+                              selectedBookingId === conversation.bookingId ? "bg-muted/50" : ""
+                            }`}
+                          >
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={conversation.patientAvatar || ""} alt={conversation.patientName} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {conversation.patientName.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <div className="truncate font-medium">{conversation.patientName}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(conversation.lastMessageTime).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <Badge variant="outline" className="px-1 h-5 text-xs font-normal">
+                                  {conversation.treatmentType}
+                                </Badge>
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
+                                  {conversation.status}
                                 </span>
-                              )}
+                              </div>
+                              <div className="flex justify-between items-center mt-1">
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {conversation.lastMessage}
+                                </p>
+                                {conversation.unreadCount > 0 && (
+                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                    {conversation.unreadCount}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                   </div>
                 </ScrollArea>
               </TabsContent>
@@ -393,165 +516,216 @@ const ClinicMessagesSection: React.FC = () => {
           </div>
 
           {/* Message thread */}
-          <div className="hidden md:flex md:w-2/3 flex-col h-full">
-            {/* Chat header */}
-            <div className="p-4 border-b flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src="" alt="James Wilson" />
-                  <AvatarFallback className="bg-primary/10 text-primary">JW</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-medium">James Wilson</h3>
-                  <div className="flex items-center text-xs text-muted-foreground gap-2">
-                    <span className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      P-2025-041
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Apr 15, 2025
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" title={t("clinic.messages.call", "Call Patient")}>
-                  <Phone className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" title={t("clinic.messages.video", "Video Call")}>
-                  <Video className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" title={t("clinic.messages.patient_details", "Patient Details")}>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" title={t("clinic.messages.more", "More Options")}>
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            {/* Translation toggle */}
-            <div className="flex justify-end items-center px-4 py-2 border-b">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="auto-translate" className="text-sm">
-                  {t("clinic.messages.auto_translate", "Auto-Translate Messages")}
-                </Label>
-                <Switch
-                  id="auto-translate"
-                  checked={autoTranslate}
-                  onCheckedChange={setAutoTranslate}
-                />
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Languages className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("clinic.messages.translation_tooltip", "When enabled, messages are automatically translated between English and Turkish.")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-            
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {messages.map((message) => {
-                  const isCurrentLanguageTurkish = i18n.language === 'tr';
-                  const hasTranslation = !!translatedMessages[message.id];
-                  
-                  return (
-                    <div 
-                      key={message.id} 
-                      className={`flex ${message.sender === 'clinic' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div 
-                        className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                          message.sender === 'clinic' 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-muted'
-                        }`}
-                      >
-                        {/* Original message */}
-                        <p>{message.text}</p>
-                        
-                        {/* Translation section shown when autoTranslate is on */}
-                        {autoTranslate && hasTranslation && (
-                          <>
-                            <Separator className="my-2 opacity-50" />
-                            <div className="flex items-center gap-1 text-xs mb-1 opacity-70">
-                              <Globe className="h-3 w-3" />
-                              {isCurrentLanguageTurkish 
-                                ? t("clinic.messages.english_translation", "English Translation:") 
-                                : t("clinic.messages.turkish_translation", "Turkish Translation:")}
-                            </div>
-                            <p className="text-sm opacity-90">{translatedMessages[message.id]}</p>
-                          </>
-                        )}
-                        
-                        <div 
-                          className={`text-xs mt-1 flex justify-end ${
-                            message.sender === 'clinic' 
-                              ? 'text-primary-foreground/70' 
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          {message.time}
-                        </div>
+          <div className={`hidden md:flex md:w-2/3 flex-col h-full ${selectedBookingId ? 'flex' : 'hidden'}`}>
+            {selectedBooking && (
+              <>
+                {/* Chat header */}
+                <div className="p-4 border-b flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={selectedBooking.patient.avatar || ""} alt={selectedBooking.patient.name} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {selectedBooking.patient.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-medium">{selectedBooking.patient.name}</h3>
+                      <div className="flex items-center text-xs text-muted-foreground gap-2">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {selectedBooking.reference}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Badge variant="outline" className="px-1 h-5 text-xs font-normal">
+                            {selectedBooking.treatmentType || 'Dental Treatment'}
+                          </Badge>
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-            
-            {/* Message input */}
-            <div className="p-4 border-t">
-              <div className="flex items-end gap-2">
-                <Textarea 
-                  placeholder={t("clinic.messages.type_message", "Type your message...")}
-                  className="min-h-[80px]"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                />
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="icon" title={t("clinic.messages.attach", "Attach file")}>
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    className="bg-primary" 
-                    size="icon"
-                    onClick={handleSendMessage}
-                    title={t("clinic.messages.send", "Send message")}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" title={t("clinic.messages.call", "Call Patient")}>
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" title={t("clinic.messages.patient_details", "Patient Details")}>
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" title={t("clinic.messages.more", "More Options")}>
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button variant="ghost" size="sm" className="h-8 text-xs">
-                  <Image className="h-3 w-3 mr-1" />
-                  {t("clinic.messages.image", "Image")}
-                </Button>
-                <Button variant="ghost" size="sm" className="h-8 text-xs">
-                  <FileText className="h-3 w-3 mr-1" />
-                  {t("clinic.messages.document", "Document")}
-                </Button>
-              </div>
-            </div>
+                
+                {/* Translation toggle */}
+                <div className="flex justify-end items-center px-4 py-2 border-b">
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="auto-translate" className="text-sm">
+                      {t("clinic.messages.auto_translate", "Auto-Translate Messages")}
+                    </Label>
+                    <Switch
+                      id="auto-translate"
+                      checked={autoTranslate}
+                      onCheckedChange={setAutoTranslate}
+                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Languages className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t("clinic.messages.translation_tooltip", "When enabled, messages are automatically translated between English and Turkish.")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+                
+                {/* Messages */}
+                <ScrollArea className="flex-1 p-4">
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="flex flex-col items-center">
+                        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                        <p className="text-sm text-muted-foreground">
+                          {t("clinic.messages.loading_messages", "Loading messages...")}
+                        </p>
+                      </div>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-center">
+                      <div>
+                        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                        <h3 className="font-medium mb-1">
+                          {t("clinic.messages.no_messages", "No messages yet")}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {t("clinic.messages.no_messages_desc", "Start the conversation by sending a message to this patient.")}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {messages.map((message) => {
+                        const isCurrentLanguageTurkish = i18n.language === 'tr';
+                        const hasTranslation = !!translatedMessages[message.id];
+                        
+                        return (
+                          <div 
+                            key={message.id} 
+                            className={`flex ${message.sender === 'clinic' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div 
+                              className={`max-w-[80%] px-4 py-2 rounded-lg ${
+                                message.sender === 'clinic' 
+                                  ? 'bg-primary text-primary-foreground' 
+                                  : 'bg-muted'
+                              }`}
+                            >
+                              {/* Message content */}
+                              <p>{message.content}</p>
+                              
+                              {/* Translation section shown when autoTranslate is on */}
+                              {autoTranslate && hasTranslation && (
+                                <>
+                                  <Separator className="my-2 opacity-30" />
+                                  <div className="flex items-center gap-1 text-xs mb-1 opacity-70">
+                                    <Globe className="h-3 w-3" />
+                                    {isCurrentLanguageTurkish 
+                                      ? t("clinic.messages.english_translation", "English Translation:") 
+                                      : t("clinic.messages.turkish_translation", "Turkish Translation:")}
+                                  </div>
+                                  <p className="text-sm opacity-90">{translatedMessages[message.id]}</p>
+                                </>
+                              )}
+                              
+                              <div 
+                                className={`text-xs mt-1 flex justify-end ${
+                                  message.sender === 'clinic' 
+                                    ? 'text-primary-foreground/70' 
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                {new Date(message.timestamp).toLocaleTimeString('en-US', {
+                                  hour: 'numeric',
+                                  minute: 'numeric',
+                                  hour12: true
+                                })}
+                                {message.sender === 'clinic' && (
+                                  <span className="ml-1">
+                                    {message.isRead ? '✓✓' : '✓'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
+                
+                {/* Message input */}
+                <div className="p-4 border-t mt-auto">
+                  <div className="flex gap-2">
+                    <Textarea 
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder={t("clinic.messages.type_message", "Type a message...")}
+                      className="min-h-[60px]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title={t("clinic.messages.attach", "Attach File")}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        onClick={handleSendMessage}
+                        disabled={!messageText.trim() || !selectedBookingId}
+                        title={t("clinic.messages.send", "Send Message")}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                        <FileText className="h-3 w-3 mr-1" />
+                        {t("clinic.messages.documents", "Documents")}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                        <Image className="h-3 w-3 mr-1" />
+                        {t("clinic.messages.gallery", "Gallery")}
+                      </Button>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground">
+                      {t("clinic.messages.secure_messaging", "End-to-end encrypted messaging")}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           
-          {/* Empty state for mobile (message not selected) */}
-          <div className="md:hidden w-full flex items-center justify-center">
-            <div className="text-center p-8">
-              <Image className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-              <h3 className="font-medium text-lg mb-2">
-                {t("clinic.messages.select_convo", "Select a Conversation")}
-              </h3>
+          {/* Empty state */}
+          <div className={`md:w-2/3 flex-col items-center justify-center text-center p-8 ${!selectedBookingId ? 'md:flex' : 'hidden'}`}>
+            <div className="max-w-md">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-xl font-medium mb-2">{t("clinic.messages.select_convo", "Select a Conversation")}</h3>
               <p className="text-muted-foreground">
                 {t("clinic.messages.select_convo_desc", "Choose a patient conversation from the list to view messages")}
               </p>
