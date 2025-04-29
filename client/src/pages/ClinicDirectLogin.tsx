@@ -71,17 +71,15 @@ const ClinicDirectLogin: React.FC = () => {
         description: 'You are already authenticated as clinic staff.'
       });
       
-      console.log('Redirecting to clinic portal with existing authentication');
+      console.log('Redirecting directly to standalone clinic portal with existing authentication');
       setTimeout(() => {
-        // Use our routing helper for more consistent navigation
-        import("../lib/routing-helper")
-          .then(({ navigateToUserPortal }) => {
-            navigateToUserPortal();
-          })
-          .catch(error => {
-            console.error("Failed to import routing helper:", error);
-            window.location.href = '/clinic-portal';
-          });
+        // Always redirect to standalone clinic portal as per user preference
+        try {
+          window.location.replace('/clinic-standalone.html');
+        } catch (error) {
+          console.error("Failed to redirect to clinic portal:", error);
+          window.location.href = '/clinic-standalone.html';
+        }
       }, 1000);
     }
   }, [toast]);
@@ -159,26 +157,16 @@ const ClinicDirectLogin: React.FC = () => {
       console.log("User role:", user.role);
       console.log("User ID:", user.id);
       
-      // We'll use our routing helper for more consistent navigation
-      import("../lib/routing-helper")
-        .then(({ navigateToUserPortal }) => {
-          // Wait for toast to be visible before redirecting
-          setTimeout(() => {
-            console.log("Performing enhanced redirect to clinic portal");
-            navigateToUserPortal();
-          }, 1500);
-        })
-        .catch(error => {
-          console.error("Failed to import routing helper:", error);
-          // Fallback to the old redirect method if import fails
-          setTimeout(() => {
-            try {
-              window.location.replace(`${window.location.origin}/clinic-portal?t=${Date.now()}`);
-            } catch (e) {
-              window.location.href = '/clinic-portal';
-            }
-          }, 1500);
-        });
+      // Direct redirect to standalone clinic portal as per user preference
+      setTimeout(() => {
+        console.log("Redirecting directly to standalone clinic portal after login");
+        try {
+          window.location.replace(`${window.location.origin}/clinic-standalone.html?t=${Date.now()}`);
+        } catch (error) {
+          console.error("Failed to redirect to standalone clinic portal:", error);
+          window.location.href = '/clinic-standalone.html';
+        }
+      }, 1500);
       
     } catch (error: any) {
       console.error("Login error:", error);
