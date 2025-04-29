@@ -94,8 +94,9 @@ const ClinicMessagesSection: React.FC = () => {
       if (data.success) {
         setConversations(data.conversations);
         
-        // If we have conversations and none selected, select the first one
-        if (data.conversations.length > 0 && !selectedBookingId) {
+        // Only select the first conversation if no conversation is selected
+        // and this is the initial load (loading is true)
+        if (data.conversations.length > 0 && !selectedBookingId && loading) {
           setSelectedBookingId(data.conversations[0].bookingId);
         }
       } else {
@@ -123,8 +124,8 @@ const ClinicMessagesSection: React.FC = () => {
         setMessages(data.messages);
         setSelectedBooking(data.booking);
         
-        // After fetching messages, fetch conversations again to update unread counts
-        fetchConversations();
+        // Only update conversations without selecting a new one
+        updateUnreadCounts();
       } else {
         console.error('Failed to fetch messages:', data.message);
       }
@@ -137,6 +138,23 @@ const ClinicMessagesSection: React.FC = () => {
       });
     } finally {
       setLoadingMessages(false);
+    }
+  };
+  
+  // New function to update unread counts without changing selection
+  const updateUnreadCounts = async () => {
+    try {
+      const response = await fetch('/api/messages/clinic/conversations');
+      const data = await response.json();
+      
+      if (data.success) {
+        setConversations(data.conversations);
+        // Don't select a new conversation here
+      } else {
+        console.error('Failed to update conversations:', data.message);
+      }
+    } catch (error) {
+      console.error('Error updating conversations:', error);
     }
   };
 
