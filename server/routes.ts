@@ -162,66 +162,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
-  // Direct portal access routes - one for each user type
-  // These hardcoded routes set all the required cookies and redirect to portals directly
+  // Direct portal access routes - each serving a static HTML file with auto-login script
   app.get('/admin-direct', (req, res) => {
-    // Admin user ID
-    const userId = '1';
-    
-    // Set all auth cookies directly server-side
-    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_role', 'admin', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('admin_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('admin_session_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('portal_type', 'admin', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_role', 'admin', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    
-    // Then send them directly to the admin portal with a direct flag
-    const timestamp = Date.now();
-    res.redirect(`/admin-portal?direct=true&uid=${userId}&t=${timestamp}`);
+    // Serve the direct access HTML file that contains auto-login script
+    res.sendFile(path.resolve(process.cwd(), 'public/admin-direct.html'));
   });
   
   app.get('/clinic-direct', (req, res) => {
-    // Clinic user ID
-    const userId = '40';
-    
-    // Set all auth cookies directly server-side
-    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_role', 'clinic_staff', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('clinic_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('clinic_session_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('portal_type', 'clinic', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_role', 'clinic_staff', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    
-    // Then send them directly to the clinic portal with a direct flag
-    const timestamp = Date.now();
-    res.redirect(`/clinic-portal?direct=true&uid=${userId}&t=${timestamp}`);
+    // Serve the direct access HTML file that contains auto-login script
+    res.sendFile(path.resolve(process.cwd(), 'public/clinic-direct.html'));
   });
   
   app.get('/patient-direct', (req, res) => {
-    // Patient user ID
-    const userId = '45';
-    
-    // Set all auth cookies directly server-side
-    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_role', 'patient', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('patient_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('patient_session_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('portal_type', 'patient', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_role', 'patient', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_id', userId, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    
-    // Then send them directly to the patient portal with a direct flag
-    const timestamp = Date.now();
-    res.redirect(`/client-portal?direct=true&uid=${userId}&t=${timestamp}`);
+    // Serve the direct access HTML file that contains auto-login script
+    res.sendFile(path.resolve(process.cwd(), 'public/patient-direct.html'));
   });
   
   // Apply global rate limiting to all API routes
