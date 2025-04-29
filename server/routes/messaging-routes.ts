@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../db';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
-import { messages, users, bookings, files } from '@shared/schema';
+import { messages, users, bookings, files, notifications } from '@shared/schema';
 import { isAuthenticated } from '../middleware/auth-middleware';
 import multer from 'multer';
 import { CloudStorage } from '../services/cloudStorage';
@@ -698,13 +698,20 @@ router.post('/send', isAuthenticated, async (req, res) => {
       });
     }
     
-    // Update the booking's lastMessageAt
+    // Update the booking's last message timestamp based on sender role
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    
+    if (isClinicStaff) {
+      updateData.lastClinicMessageAt = new Date();
+    } else if (isPatient) {
+      updateData.lastPatientMessageAt = new Date();
+    } else if (isAdmin) {
+      updateData.lastAdminMessageAt = new Date();
+    }
+    
     await db
       .update(bookings)
-      .set({ 
-        lastMessageAt: new Date(),
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(bookings.id, bookingId));
     
     return res.status(200).json({
