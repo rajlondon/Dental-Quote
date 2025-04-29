@@ -162,23 +162,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
-  // Direct hardcoded clinic access route - special solution for bypassing React Router
+  // Direct portal access routes - one for each user type
+  app.get('/admin-direct', (req, res) => {
+    // Redirect to our unified direct login page with admin mode pre-selected
+    res.redirect("/portal-direct.html?mode=admin&t=" + Date.now());
+  });
+  
   app.get('/clinic-direct', (req, res) => {
-    console.log("Using special direct clinic access path");
-    
-    // Set all auth cookies directly server-side
-    res.cookie('mdf_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_id', '40', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('mdf_user_role', 'clinic_staff', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('clinic_auth', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('clinic_session_id', '40', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('portal_type', 'clinic', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('is_authenticated', 'true', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_role', 'clinic_staff', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.cookie('user_id', '40', { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    
-    // Then send them directly to the clinic portal with a direct flag
-    res.redirect("/clinic-portal?direct=true&uid=40&t=" + Date.now());
+    // Redirect to our unified direct login page with clinic mode pre-selected
+    res.redirect("/portal-direct.html?mode=clinic&t=" + Date.now());
+  });
+  
+  app.get('/patient-direct', (req, res) => {
+    // Redirect to our unified direct login page with patient mode pre-selected
+    res.redirect("/portal-direct.html?mode=patient&t=" + Date.now());
   });
   
   // Apply global rate limiting to all API routes
@@ -194,7 +191,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // this means they're coming from our direct login page
     if (req.query.direct === 'true') {
       console.log("Allowing direct portal access with direct=true parameter");
-      return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+      // Serve the React app through the Vite middleware
+      return res.sendFile(path.join(process.cwd(), 'public/portal-direct.html'));
     }
     
     // Check if they have valid auth cookies (safely handling undefined)
@@ -206,11 +204,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     if (hasMdfAuth || hasRoleAuth) {
       console.log("Allowing portal access with auth cookies present");
-      return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+      // For direct access, use our custom portal page that doesn't require the React app
+      return res.sendFile(path.join(process.cwd(), 'public/portal-direct.html'));
     }
     
     // If they're trying to access directly without auth, redirect to login
-    return res.redirect("/portal-login");
+    return res.redirect("/portal-direct.html");
   });
   
   // IMPORTANT: Register routes in this order to avoid conflicts:

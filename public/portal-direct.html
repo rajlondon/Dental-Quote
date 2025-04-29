@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyDentalFly Portal Access</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f7f7f7;
+    }
+    
+    .card {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .bg-primary { background-color: #0ea5e9; }
+    .text-primary { color: #0ea5e9; }
+    .border-primary { border-color: #0ea5e9; }
+    .hover\:bg-primary-dark:hover { background-color: #0284c7; }
+    
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
+      }
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="w-full max-w-4xl bg-white shadow-md rounded-lg p-6 mb-6 card">
+    <div class="flex justify-center mb-6">
+      <img src="/images/mydentalfly-logo.png" alt="MyDentalFly Logo" class="h-16">
+    </div>
+
+    <h1 id="heading" class="text-2xl font-bold text-center text-gray-800 mb-6">MyDentalFly Portal Access</h1>
+    
+    <div id="login-container">
+      <form id="login-form" class="space-y-4">
+        <div class="space-y-2">
+          <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            placeholder="email@example.com"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+        </div>
+        
+        <div class="space-y-2">
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            placeholder="••••••••"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+        </div>
+        
+        <div class="space-y-2">
+          <label for="portal-type" class="block text-sm font-medium text-gray-700">Portal Type</label>
+          <select
+            id="portal-type"
+            name="portal-type"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+            <option value="patient">Patient Portal</option>
+            <option value="clinic">Clinic Portal</option>
+            <option value="admin">Admin Portal</option>
+          </select>
+        </div>
+        
+        <div class="pt-2">
+          <button 
+            id="submit-btn"
+            type="submit" 
+            class="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+          >
+            Sign In
+          </button>
+        </div>
+        
+        <div id="error-message" class="hidden p-3 bg-red-100 text-red-700 rounded-md text-sm"></div>
+      </form>
+      
+      <div class="mt-6 space-y-4">
+        <div class="border border-gray-200 rounded-md p-3">
+          <h3 class="text-lg font-medium mb-2">Quick Login Buttons</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <button id="patient-btn" class="bg-blue-100 text-blue-700 py-2 px-4 rounded-md hover:bg-blue-200">
+              Patient Login
+            </button>
+            <button id="clinic-btn" class="bg-green-100 text-green-700 py-2 px-4 rounded-md hover:bg-green-200">
+              Clinic Login
+            </button>
+            <button id="admin-btn" class="bg-purple-100 text-purple-700 py-2 px-4 rounded-md hover:bg-purple-200">
+              Admin Login
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="loading-container" class="hidden flex flex-col items-center justify-center py-6">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p class="mt-4 text-gray-600">Logging you in...</p>
+    </div>
+    
+    <div id="success-container" class="hidden flex flex-col items-center justify-center py-6">
+      <div class="bg-green-100 text-green-700 p-3 rounded-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <p id="success-message" class="mt-4 text-gray-600">Login successful! Redirecting...</p>
+    </div>
+    
+    <div class="text-center mt-4">
+      <a href="/" class="text-sm text-primary hover:underline">
+        Return to main website
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    // Direct login script that bypasses React router
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('login-form');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const portalTypeSelect = document.getElementById('portal-type');
+      const submitButton = document.getElementById('submit-btn');
+      const errorMessage = document.getElementById('error-message');
+      const loginContainer = document.getElementById('login-container');
+      const loadingContainer = document.getElementById('loading-container');
+      const successContainer = document.getElementById('success-container');
+      const successMessage = document.getElementById('success-message');
+      
+      // Quick login buttons
+      const patientBtn = document.getElementById('patient-btn');
+      const clinicBtn = document.getElementById('clinic-btn');
+      const adminBtn = document.getElementById('admin-btn');
+      
+      // Quick login credentials
+      const credentials = {
+        patient: { email: 'patient@mydentalfly.com', password: 'Patient123!', type: 'patient' },
+        clinic: { email: 'clinic@mydentalfly.com', password: 'Clinic123!', type: 'clinic' },
+        admin: { email: 'admin@mydentalfly.com', password: 'Admin123!', type: 'admin' }
+      };
+      
+      // Setup quick login buttons
+      patientBtn.addEventListener('click', () => quickLogin('patient'));
+      clinicBtn.addEventListener('click', () => quickLogin('clinic'));
+      adminBtn.addEventListener('click', () => quickLogin('admin'));
+      
+      // Handle form submission
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get values from form
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        const portalType = portalTypeSelect.value;
+        
+        // Attempt login
+        performLogin(email, password, portalType);
+      });
+      
+      // Function to perform quick login
+      function quickLogin(type) {
+        const cred = credentials[type];
+        emailInput.value = cred.email;
+        passwordInput.value = cred.password;
+        portalTypeSelect.value = cred.type;
+        
+        // Attempt login
+        performLogin(cred.email, cred.password, cred.type);
+      }
+      
+      // Function to perform login
+      async function performLogin(email, password, portalType) {
+        // Hide any previous error messages
+        errorMessage.classList.add('hidden');
+        
+        // Show loading spinner
+        loginContainer.classList.add('hidden');
+        loadingContainer.classList.remove('hidden');
+        
+        try {
+          // Make direct login request
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: email,
+              password: password
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Authentication failed');
+          }
+          
+          // Login successful
+          const user = data.user;
+          
+          // Store user data in localStorage and sessionStorage
+          localStorage.setItem('user_data', JSON.stringify(user));
+          sessionStorage.setItem('user_data', JSON.stringify(user));
+          
+          // Set portal-specific flags in localStorage and sessionStorage
+          if (portalType === 'admin') {
+            localStorage.setItem('is_admin', 'true');
+            sessionStorage.setItem('is_admin', 'true');
+          } else if (portalType === 'clinic') {
+            localStorage.setItem('is_clinic', 'true');
+            sessionStorage.setItem('is_clinic', 'true');
+          } else if (portalType === 'patient') {
+            localStorage.setItem('is_patient', 'true');
+            sessionStorage.setItem('is_patient', 'true');
+          }
+          
+          // Set manual cookies - explicit setting of all auth cookies
+          const userId = user.id.toString();
+          const maxAge = 7 * 24 * 60 * 60; // 7 days
+          
+          // Common auth cookies
+          document.cookie = `user_role=${user.role}; path=/; max-age=${maxAge}`;
+          document.cookie = `user_id=${userId}; path=/; max-age=${maxAge}`;
+          document.cookie = `is_authenticated=true; path=/; max-age=${maxAge}`;
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${maxAge}`;
+          document.cookie = `mdf_user_id=${userId}; path=/; max-age=${maxAge}`;
+          document.cookie = `mdf_user_role=${user.role}; path=/; max-age=${maxAge}`;
+          
+          // Portal-specific cookies
+          if (portalType === 'admin') {
+            document.cookie = `admin_auth=true; path=/; max-age=${maxAge}`;
+            document.cookie = `admin_session_id=${userId}; path=/; max-age=${maxAge}`;
+            document.cookie = `portal_type=admin; path=/; max-age=${maxAge}`;
+          } else if (portalType === 'clinic') {
+            document.cookie = `clinic_auth=true; path=/; max-age=${maxAge}`;
+            document.cookie = `clinic_session_id=${userId}; path=/; max-age=${maxAge}`;
+            document.cookie = `portal_type=clinic; path=/; max-age=${maxAge}`;
+          } else if (portalType === 'patient') {
+            document.cookie = `patient_auth=true; path=/; max-age=${maxAge}`;
+            document.cookie = `patient_session_id=${userId}; path=/; max-age=${maxAge}`;
+            document.cookie = `portal_type=patient; path=/; max-age=${maxAge}`;
+          }
+          
+          // Show success message
+          loadingContainer.classList.add('hidden');
+          successContainer.classList.remove('hidden');
+          
+          // Set success message based on portal type
+          if (portalType === 'admin') {
+            successMessage.textContent = 'Admin login successful! Redirecting to admin portal...';
+          } else if (portalType === 'clinic') {
+            successMessage.textContent = 'Clinic login successful! Redirecting to clinic portal...';
+          } else if (portalType === 'patient') {
+            successMessage.textContent = 'Patient login successful! Redirecting to patient portal...';
+          }
+          
+          // Redirect after a short delay to show success message
+          setTimeout(() => {
+            // Add timestamp to prevent caching
+            const timestamp = Date.now();
+            
+            // Redirect to appropriate portal
+            if (portalType === 'admin') {
+              window.location.href = `/admin-portal?direct=true&uid=${userId}&t=${timestamp}`;
+            } else if (portalType === 'clinic') {
+              window.location.href = `/clinic-portal?direct=true&uid=${userId}&t=${timestamp}`;
+            } else if (portalType === 'patient') {
+              window.location.href = `/client-portal?direct=true&uid=${userId}&t=${timestamp}`;
+            }
+          }, 1500);
+          
+        } catch (error) {
+          // Show error message
+          errorMessage.textContent = error.message || 'Login failed. Please try again.';
+          errorMessage.classList.remove('hidden');
+          
+          // Hide loading, show form again
+          loadingContainer.classList.add('hidden');
+          loginContainer.classList.remove('hidden');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
