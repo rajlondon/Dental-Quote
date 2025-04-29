@@ -46,6 +46,21 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 
+// Create a simple store for auth persistence during redirects
+const ensureAuthStorage = (userData: any) => {
+  if (!userData) return;
+  
+  try {
+    // Store user data in localStorage for auth persistence
+    localStorage.setItem('clinic_user', JSON.stringify(userData));
+    // Set role-specific flag
+    localStorage.setItem('is_clinic', 'true');
+    console.log("Clinic user data stored for auth persistence");
+  } catch (e) {
+    console.error("Failed to store clinic user data:", e);
+  }
+};
+
 const ClinicPortalPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
@@ -54,16 +69,23 @@ const ClinicPortalPage: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [initComplete, setInitComplete] = useState<boolean>(false);
 
-  // Get auth context for logout functionality
-  const { logoutMutation } = useAuth();
+  // Get auth context for logout functionality and current user
+  const { logoutMutation, user } = useAuth();
   
-  // Initialize the component once on mount
+  // Initialize the component once on mount - with auth persistence
   useEffect(() => {
     if (!initComplete) {
       console.log("ClinicPortalPage: Initial mount");
+      
+      // Store user data from auth context for persistence
+      if (user) {
+        console.log("Storing clinic user data for auth persistence");
+        ensureAuthStorage(user);
+      }
+      
       setInitComplete(true);
     }
-  }, []);
+  }, [user, initComplete]);
   
   // Handle logout - memoized to prevent unnecessary re-renders
   const handleLogout = useCallback(() => {
