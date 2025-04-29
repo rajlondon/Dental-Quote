@@ -156,7 +156,9 @@ router.post("/test-login", async (req: Request, res: Response) => {
       phone: user.phone || undefined,
       profileImage: user.profileImage || undefined,
       jobTitle: user.jobTitle || undefined,
-      clinicId: user.clinicId || undefined
+      clinicId: user.clinicId || undefined,
+      // Ensure emailVerified is never null (convert null to false)
+      emailVerified: user.emailVerified === true
     };
     
     // Login the user
@@ -391,15 +393,15 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
     const reference = `TEST-${randomUUID().substring(0, 8).toUpperCase()}`;
     
     const [newBooking] = await db.insert(bookings).values({
-      booking_reference: reference,
-      user_id: patient.id,
-      clinic_id: clinic.id,
+      bookingReference: reference,
+      userId: patient.id,
+      clinicId: clinic.id,
       status: 'confirmed',
-      assigned_clinic_staff_id: clinicStaff.id,
-      deposit_paid: true,
-      deposit_amount: 200.00,
-      admin_notes: 'This is a test booking for messaging',
-      clinic_notes: 'Created for testing purposes'
+      assignedClinicStaffId: clinicStaff.id,
+      depositPaid: true,
+      depositAmount: 200.00,
+      adminNotes: 'This is a test booking for messaging',
+      clinicNotes: 'Created for testing purposes'
     }).returning();
     
     // Create initial welcome message from clinic to patient
