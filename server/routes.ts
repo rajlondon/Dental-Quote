@@ -239,9 +239,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
       
-      // Add cache-busting timestamp
-      const timestamp = Date.now();
-      return res.sendFile('clinic-standalone.html', { 
+      // Serve the main index.html file which will load the React app
+      console.log("Serving React-based clinic portal");
+      res.cookie('use_react_portal', 'true', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+      return res.sendFile('index.html', { 
         root: path.join(process.cwd(), 'public'),
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -250,8 +255,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth || hasLoginTimestamp) {
-      console.log("Authenticated with cookies, serving standalone clinic portal");
-      return res.sendFile('clinic-standalone.html', { 
+      console.log("Authenticated with cookies, serving React-based clinic portal");
+      res.cookie('use_react_portal', 'true', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+      return res.sendFile('index.html', { 
         root: path.join(process.cwd(), 'public'),
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -335,11 +345,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const target = req.body.target || 'clinic';
     
     // Log the redirect information
-    console.log(`Redirecting to standalone clinic portal from POST handler (target: ${target})`);
+    console.log(`Redirecting to React-based clinic portal from POST handler (target: ${target})`);
     
-    // Add cache-busting query parameter to avoid cache issues
-    const timestamp = Date.now();
-    res.redirect(`/clinic-standalone.html?t=${timestamp}`);
+    // Redirect to index.html to load the React-based clinic portal 
+    // This will serve the main app which will render the React-based portal
+    console.log("Redirecting to React-based clinic portal");
+    res.cookie('use_react_portal', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    res.redirect('/index.html');
   });
 
   app.get('/client-portal', (req, res) => {
