@@ -586,4 +586,140 @@ router.get('/clinic/booking/:bookingId/messages', isAuthenticated, async (req, r
   }
 });
 
+// Send a message
+router.post('/send', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { bookingId, content, messageType = 'text', attachmentId = null } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+    
+    if (!bookingId || !content) {
+      return res.status(400).json({ success: false, message: 'Missing required fields: bookingId, content' });
+    }
+    
+    // Validate the booking
+    const booking = await db.query.bookings.findFirst({
+      where: eq(bookings.id, bookingId),
+      with: {
+        user: true
+      }
+    });
+    
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    
+    // Determine if this user is authorized to send messages for this booking
+    const isClinicStaff = req.user?.role === 'clinic_staff';
+    const isPatient = req.user?.role === 'patient';
+    const isAdmin = req.user?.role === 'admin';
+    
+    if (!isAdmin) {
+      if (isClinicStaff) {
+        // Check if the clinic staff belongs to the clinic associated with this booking
+        if (req.user?.clinicId !== booking.clinicId) {
+          return res.status(403).json({ 
+            success: false, 
+            message: 'Not authorized: You do not belong to the clinic associated with this booking' 
+          });
+        }
+      } else if (isPatient) {
+        // Check if the patient is the one associated with this booking
+        if (req.user?.id !== booking.userId) {
+          return res.status(403).json({ 
+            success: false, 
+            message: 'Not authorized: This booking does not belong to you' 
+          });
+        }
+      }
+    }
+    
+    // Determine the recipient based on sender role
+    let recipientId = null;
+    
+    if (isClinicStaff || isAdmin) {
+      // If sender is clinic staff or admin, recipient is the patient
+      recipientId = booking.userId;
+    } else if (isPatient) {
+      // If sender is patient, recipient is a clinic staff (assigned to the booking if available)
+      if (booking.assignedClinicStaffId) {
+        recipientId = booking.assignedClinicStaffId;
+      } else {
+        // Find a clinic staff to assign to this booking
+        const [clinicStaff] = await db
+          .select()
+          .from(users)
+          .where(
+            and(
+              eq(users.role, 'clinic_staff'),
+              eq(users.clinicId, booking.clinicId!)
+            )
+          )
+          .limit(1);
+        
+        if (clinicStaff) {
+          // Update the booking with the assigned staff
+          await db
+            .update(bookings)
+            .set({ 
+              assignedClinicStaffId: clinicStaff.id,
+              updatedAt: new Date()
+            })
+            .where(eq(bookings.id, bookingId));
+            
+          recipientId = clinicStaff.id;
+        }
+      }
+    }
+    
+    // Create the message
+    const [message] = await db.insert(messages).values({
+      bookingId,
+      senderId: userId,
+      recipientId,
+      content,
+      messageType,
+      attachmentId
+    }).returning();
+    
+    // Create a notification for the recipient
+    if (recipientId) {
+      await db.insert(notifications).values({
+        userId: recipientId,
+        title: 'New Message',
+        message: `You have a new message from ${isClinicStaff ? 'clinic staff' : 'patient'}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+        type: 'message',
+        referenceId: message.id,
+        referenceType: 'message',
+        read: false
+      });
+    }
+    
+    // Update the booking's lastMessageAt
+    await db
+      .update(bookings)
+      .set({ 
+        lastMessageAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, bookingId));
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Message sent successfully',
+      data: message
+    });
+  } catch (error: any) {
+    console.error('Error sending message:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send message',
+      error: error.message
+    });
+  }
+});
+
 export default router;
