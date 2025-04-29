@@ -3,239 +3,115 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Portal Access - MyDentalFly</title>
+  <title>MyDentalFly Admin Portal</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      background-color: #f7f7f7;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
       margin: 0;
       padding: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 500px;
+      padding: 30px;
       text-align: center;
     }
-    .container {
-      max-width: 500px;
-      padding: 20px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
+    
     h1 {
-      color: #0284c7;
-      margin-bottom: 20px;
+      color: #0a84ff;
+      margin-bottom: 30px;
+      font-size: 28px;
     }
-    .loader {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #0284c7;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1.5s linear infinite;
-      margin: 30px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    
     p {
-      margin: 15px 0;
-      color: #333;
+      color: #4b4b4b;
+      margin-bottom: 25px;
+      font-size: 16px;
+      line-height: 1.5;
     }
+    
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
     .btn {
       display: inline-block;
-      padding: 10px 20px;
-      background-color: #0284c7;
+      background-color: #0a84ff;
       color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
       text-decoration: none;
-      border-radius: 4px;
-      margin-top: 20px;
       transition: background-color 0.3s;
+      font-weight: 500;
     }
+    
     .btn:hover {
-      background-color: #0369a1;
+      background-color: #0969da;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>MyDentalFly Admin Portal Access</h1>
-    <div class="loader"></div>
-    <p>Logging you in automatically...</p>
-    <p>Please wait while we securely access the admin portal.</p>
-    <a href="/" class="btn">Return to Home</a>
+    <h1>MyDentalFly Admin Portal</h1>
+    
+    <p>Click the button below to access the admin portal with the default admin account.</p>
+    
+    <div class="buttons">
+      <a href="/" class="btn" style="background-color: #6c757d;">Return Home</a>
+      <a href="#" class="btn" onclick="loginAndRedirect()">Access Admin Portal</a>
+    </div>
   </div>
-
+  
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Check if we've already attempted login (to prevent infinite loops)
-      const hasAttemptedLogin = sessionStorage.getItem('admin_login_attempted');
+    function loginAndRedirect() {
+      // Create a form for submitting login credentials
+      const form = document.createElement('form');
+      form.style.display = 'none';
+      form.method = 'POST';
+      form.action = '/api/auth/login';
       
-      if (hasAttemptedLogin) {
-        // If we've already tried to log in, just show a different message
-        document.querySelector('.loader').style.display = 'none';
-        document.querySelector('p').textContent = 'Already logged in. Please click the button below to access the admin portal.';
-        
-        // Add a direct access button
-        const container = document.querySelector('.container');
-        const directButton = document.createElement('button');
-        directButton.type = 'button';
-        directButton.id = 'portalButton';
-        directButton.className = 'btn go-portal';
-        directButton.style.marginTop = '20px';
-        directButton.style.marginLeft = '10px';
-        directButton.style.backgroundColor = '#0a84ff';
-        directButton.style.color = 'white';
-        directButton.style.border = 'none';
-        directButton.style.cursor = 'pointer';
-        directButton.style.padding = '10px 20px';
-        directButton.style.borderRadius = '4px';
-        directButton.textContent = 'Go to Admin Portal';
-        
-        // Replace the existing paragraph with new message and buttons div
-        const paragraph = document.querySelector('p');
-        paragraph.remove();
-        
-        // Create div for buttons
-        const buttonsDiv = document.createElement('div');
-        buttonsDiv.style.marginTop = '25px';
-        buttonsDiv.style.display = 'flex';
-        buttonsDiv.style.justifyContent = 'center';
-        buttonsDiv.style.gap = '10px';
-        
-        // Create home button
-        const homeButton = document.createElement('a');
-        homeButton.href = '/';
-        homeButton.className = 'btn';
-        homeButton.style.backgroundColor = '#0a84ff';
-        homeButton.style.color = 'white';
-        homeButton.style.textDecoration = 'none';
-        homeButton.style.padding = '10px 20px';
-        homeButton.style.borderRadius = '4px';
-        homeButton.textContent = 'Return to Home';
-        
-        // Add message paragraph
-        const newParagraph = document.createElement('p');
-        newParagraph.textContent = 'Already logged in. Please click the button below to access the admin portal.';
-        newParagraph.style.textAlign = 'center';
-        newParagraph.style.margin = '20px 0';
-        
-        // Append all elements
-        container.insertBefore(newParagraph, container.firstChild);
-        buttonsDiv.appendChild(homeButton);
-        buttonsDiv.appendChild(directButton);
-        container.appendChild(buttonsDiv);
-        
-        // Add click event handler to admin portal button
-        directButton.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          // Make sure we're logged in
-          const loginAttempt = async () => {
-            try {
-              // Force a new login to ensure session is active
-              const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Cache-Control': 'no-cache'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                  email: 'admin@mydentalfly.com',
-                  password: 'Admin123!'
-                })
-              });
-              
-              if (response.ok) {
-                // If login was successful, go directly to admin portal
-                window.location.href = '/admin-portal';
-              } else {
-                console.error('Login failed');
-                alert('Login failed. Please try again.');
-              }
-            } catch (error) {
-              console.error('Error during login:', error);
-              alert('Login failed. Please try again.');
-            }
-          };
-          
-          loginAttempt();
-        });
-        
-        return;
-      }
+      // Create email field
+      const emailField = document.createElement('input');
+      emailField.type = 'hidden';
+      emailField.name = 'email';
+      emailField.value = 'admin@mydentalfly.com';
       
-      // Mark that we've attempted login
-      sessionStorage.setItem('admin_login_attempted', 'true');
+      // Create password field
+      const passwordField = document.createElement('input');
+      passwordField.type = 'hidden';
+      passwordField.name = 'password';
+      passwordField.value = 'Admin123!';
       
-      // Admin credentials
-      const adminCredentials = {
-        email: 'admin@mydentalfly.com',
-        password: 'Admin123!'
-      };
+      // Add fields to form
+      form.appendChild(emailField);
+      form.appendChild(passwordField);
       
-      async function autoLogin() {
-        try {
-          // First make a direct login request
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache'
-            },
-            credentials: 'include',
-            body: JSON.stringify(adminCredentials)
-          });
-          
-          if (!response.ok) {
-            throw new Error('Authentication failed');
-          }
-          
-          const data = await response.json();
-          const user = data.user;
-          
-          // Store user data in localStorage and sessionStorage
-          localStorage.setItem('user_data', JSON.stringify(user));
-          sessionStorage.setItem('user_data', JSON.stringify(user));
-          
-          // Set portal-specific flags
-          localStorage.setItem('is_admin', 'true');
-          sessionStorage.setItem('is_admin', 'true');
-          
-          // Set manual cookies
-          const userId = user.id.toString();
-          const maxAge = 7 * 24 * 60 * 60; // 7 days
-          
-          // Common auth cookies
-          document.cookie = `user_role=admin; path=/; max-age=${maxAge}`;
-          document.cookie = `user_id=${userId}; path=/; max-age=${maxAge}`;
-          document.cookie = `is_authenticated=true; path=/; max-age=${maxAge}`;
-          document.cookie = `mdf_authenticated=true; path=/; max-age=${maxAge}`;
-          document.cookie = `mdf_user_id=${userId}; path=/; max-age=${maxAge}`;
-          document.cookie = `mdf_user_role=admin; path=/; max-age=${maxAge}`;
-          
-          // Portal-specific cookies
-          document.cookie = `admin_auth=true; path=/; max-age=${maxAge}`;
-          document.cookie = `admin_session_id=${userId}; path=/; max-age=${maxAge}`;
-          document.cookie = `portal_type=admin; path=/; max-age=${maxAge}`;
-          
-          // Redirect to React app with special parameter to ensure proper session handling
-          const timestamp = Date.now();
-          window.location.href = `/?portal=admin&t=${timestamp}`;
-          
-        } catch (error) {
-          console.error('Login failed:', error);
-          document.querySelector('.loader').style.display = 'none';
-          document.querySelector('p').textContent = 'Login failed. Please try again or use the regular login page.';
-        }
-      }
+      // Add a hidden field to redirect after login
+      const redirectField = document.createElement('input');
+      redirectField.type = 'hidden';
+      redirectField.name = 'redirect';
+      redirectField.value = '/admin-portal';
+      form.appendChild(redirectField);
       
-      // Start auto-login process
-      autoLogin();
-    });
+      // Add form to body and submit
+      document.body.appendChild(form);
+      form.submit();
+    }
   </script>
 </body>
 </html>
