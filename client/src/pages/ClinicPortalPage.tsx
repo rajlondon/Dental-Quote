@@ -52,9 +52,18 @@ const ClinicPortalPage: React.FC = () => {
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [initComplete, setInitComplete] = useState<boolean>(false);
 
   // Get auth context for logout functionality
   const { logoutMutation } = useAuth();
+  
+  // Initialize the component once on mount
+  useEffect(() => {
+    if (!initComplete) {
+      console.log("ClinicPortalPage: Initial mount");
+      setInitComplete(true);
+    }
+  }, []);
   
   // Handle logout
   const handleLogout = () => {
