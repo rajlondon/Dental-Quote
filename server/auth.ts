@@ -323,6 +323,46 @@ export async function setupAuth(app: Express) {
       email: req.body.email
     });
   });
+  
+  // Special redirect routes that can be used after login
+  app.get("/api/auth/redirect-to-admin", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated. Please log in first.");
+    }
+    
+    if (req.user.role !== 'admin') {
+      return res.status(403).send("Access denied. You don't have admin permissions.");
+    }
+    
+    console.log("Redirecting authenticated admin user to admin portal");
+    res.redirect("/admin-portal");
+  });
+  
+  app.get("/api/auth/redirect-to-clinic", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated. Please log in first.");
+    }
+    
+    if (req.user.role !== 'clinic' && req.user.role !== 'clinic_staff') {
+      return res.status(403).send("Access denied. You don't have clinic permissions.");
+    }
+    
+    console.log("Redirecting authenticated clinic user to clinic portal");
+    res.redirect("/clinic-portal");
+  });
+  
+  app.get("/api/auth/redirect-to-patient", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated. Please log in first.");
+    }
+    
+    if (req.user.role !== 'patient') {
+      return res.status(403).send("Access denied. You don't have patient permissions.");
+    }
+    
+    console.log("Redirecting authenticated patient user to patient portal");
+    res.redirect("/client-portal");
+  });
 
   // Create admin and clinic users if they don't exist
   await seedUsers();
