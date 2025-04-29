@@ -69,7 +69,8 @@ const PortalLoginPage: React.FC = () => {
     if (user && user.role === 'admin') {
       setLocation('/admin-portal');
     } else if (user && user.role === 'clinic_staff') {
-      setLocation('/clinic-portal');
+      // Use standalone clinic portal for all clinic staff redirects
+      window.location.href = '/clinic-standalone.html';
     } else if (user && user.role === 'patient' && user.emailVerified) {
       setLocation('/client-portal');
     }
@@ -283,8 +284,8 @@ const PortalLoginPage: React.FC = () => {
                 console.log("Admin user detected, redirecting to admin portal");
                 window.location.replace(`${baseUrl}/admin-portal?uid=${user.id}&t=${timestamp}`);
               } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
-                console.log("Clinic staff detected, redirecting to clinic portal");
-                window.location.replace(`${baseUrl}/clinic-portal?uid=${user.id}&t=${timestamp}`);
+                console.log("Clinic staff detected, redirecting to standalone clinic portal");
+                window.location.replace(`${baseUrl}/clinic-standalone.html?uid=${user.id}&t=${timestamp}`);
               } else {
                 console.log("Patient user detected, redirecting to patient portal");
                 window.location.replace(`${baseUrl}/client-portal?uid=${user.id}&t=${timestamp}`);
@@ -301,7 +302,7 @@ const PortalLoginPage: React.FC = () => {
           setTimeout(() => {
             const baseUrl = window.location.origin;
             const portal = user.role === 'admin' ? 'admin-portal' : 
-                          (user.role === 'clinic_staff' || user.role === 'clinic') ? 'clinic-portal' : 
+                          (user.role === 'clinic_staff' || user.role === 'clinic') ? 'clinic-standalone.html' : 
                           'client-portal';
             window.location.href = `${baseUrl}/${portal}`;
           }, 1500);
@@ -513,7 +514,7 @@ const PortalLoginPage: React.FC = () => {
                       className="w-full"
                       onClick={() => window.location.href = '/clinic-login'}
                     >
-                      Use Direct Clinic Login Instead (Recommended)
+                      Go to Standalone Clinic Portal (Recommended)
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">
                       Direct login provides a more stable connection to the clinic portal
