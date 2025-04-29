@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Portal Access - MyDentalFly</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container {
+      max-width: 500px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #3b82f6;
+      margin-bottom: 20px;
+    }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1.5s linear infinite;
+      margin: 30px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    p {
+      margin: 15px 0;
+      color: #333;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #3b82f6;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+      transition: background-color 0.3s;
+    }
+    .btn:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MyDentalFly Patient Portal Access</h1>
+    <div class="loader"></div>
+    <p>Logging you in automatically...</p>
+    <p>Please wait while we securely access your patient portal.</p>
+    <a href="/" class="btn">Return to Home</a>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Patient credentials
+      const patientCredentials = {
+        email: 'patient@mydentalfly.com',
+        password: 'Patient123!'
+      };
+      
+      async function autoLogin() {
+        try {
+          // First make a direct login request
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
+            },
+            credentials: 'include',
+            body: JSON.stringify(patientCredentials)
+          });
+          
+          if (!response.ok) {
+            throw new Error('Authentication failed');
+          }
+          
+          const data = await response.json();
+          const user = data.user;
+          
+          // Store user data in localStorage and sessionStorage
+          localStorage.setItem('user_data', JSON.stringify(user));
+          sessionStorage.setItem('user_data', JSON.stringify(user));
+          
+          // Set portal-specific flags
+          localStorage.setItem('is_patient', 'true');
+          sessionStorage.setItem('is_patient', 'true');
+          
+          // Set manual cookies
+          const userId = user.id.toString();
+          const maxAge = 7 * 24 * 60 * 60; // 7 days
+          
+          // Common auth cookies
+          document.cookie = `user_role=patient; path=/; max-age=${maxAge}`;
+          document.cookie = `user_id=${userId}; path=/; max-age=${maxAge}`;
+          document.cookie = `is_authenticated=true; path=/; max-age=${maxAge}`;
+          document.cookie = `mdf_authenticated=true; path=/; max-age=${maxAge}`;
+          document.cookie = `mdf_user_id=${userId}; path=/; max-age=${maxAge}`;
+          document.cookie = `mdf_user_role=patient; path=/; max-age=${maxAge}`;
+          
+          // Portal-specific cookies
+          document.cookie = `patient_auth=true; path=/; max-age=${maxAge}`;
+          document.cookie = `patient_session_id=${userId}; path=/; max-age=${maxAge}`;
+          document.cookie = `portal_type=patient; path=/; max-age=${maxAge}`;
+          
+          // Redirect to the patient portal with timestamp to prevent caching
+          const timestamp = Date.now();
+          window.location.href = `/client-portal?t=${timestamp}`;
+          
+        } catch (error) {
+          console.error('Login failed:', error);
+          document.querySelector('.loader').style.display = 'none';
+          document.querySelector('p').textContent = 'Login failed. Please try again or use the regular login page.';
+        }
+      }
+      
+      // Start auto-login process
+      autoLogin();
+    });
+  </script>
+</body>
+</html>
