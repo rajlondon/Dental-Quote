@@ -19,110 +19,126 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
+interface Conversation {
+  bookingId: number;
+  bookingReference: string;
+  patientId: number;
+  patientName: string;
+  patientEmail: string;
+  patientAvatar: string | null;
+  status: string;
+  lastMessage: string;
+  lastMessageTime: Date;
+  unreadCount: number;
+  treatmentType: string;
+}
+
+interface Message {
+  id: number;
+  bookingId: number;
+  content: string;
+  sender: 'clinic' | 'patient';
+  senderName: string;
+  senderAvatar: string | null;
+  timestamp: Date;
+  isRead: boolean;
+  messageType: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+}
+
+interface BookingDetails {
+  id: number;
+  reference: string;
+  status: string;
+  treatmentType: string;
+  patient: {
+    id: number;
+    name: string;
+    email: string;
+    avatar: string | null;
+  };
+}
+
 const ClinicMessagesSection: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [messageText, setMessageText] = useState<string>('');
   const [autoTranslate, setAutoTranslate] = useState<boolean>(true);
   const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<BookingDetails | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
   
-  // Sample conversations data - in a real app, this would come from an API
-  const conversations = [
-    {
-      id: "conv1",
-      patientName: "James Wilson",
-      patientId: "P-2025-041",
-      lastMessage: "When should I arrive for my appointment?",
-      unread: 2,
-      time: "10:45 AM",
-      avatar: null,
-      status: "upcoming", // upcoming, active, completed
-      treatmentType: "Dental Implants"
-    },
-    {
-      id: "conv2",
-      patientName: "Sarah Johnson",
-      patientId: "P-2025-039",
-      lastMessage: "Do I need to bring anything with me?",
-      unread: 0,
-      time: "Yesterday",
-      avatar: null,
-      status: "active",
-      treatmentType: "Veneers"
-    },
-    {
-      id: "conv3",
-      patientName: "Michael Brown",
-      patientId: "P-2025-037",
-      lastMessage: "Thank you for the treatment plan!",
-      unread: 0,
-      time: "Apr 10",
-      avatar: null,
-      status: "upcoming",
-      treatmentType: "Full Mouth Restoration"
-    },
-    {
-      id: "conv4",
-      patientName: "Emma Davis",
-      patientId: "P-2025-035",
-      lastMessage: "I'll see you tomorrow at the clinic.",
-      unread: 0,
-      time: "Apr 5",
-      avatar: null,
-      status: "active",
-      treatmentType: "Root Canal"
-    },
-    {
-      id: "conv5",
-      patientName: "Robert Taylor",
-      patientId: "P-2025-033",
-      lastMessage: "Your aftercare has been excellent, thank you.",
-      unread: 0,
-      time: "Mar 28",
-      avatar: null,
-      status: "completed",
-      treatmentType: "Dental Implants"
+  useEffect(() => {
+    // Fetch conversations on component mount
+    fetchConversations();
+  }, []);
+  
+  useEffect(() => {
+    // Fetch messages when a conversation is selected
+    if (selectedBookingId) {
+      fetchMessages(selectedBookingId);
     }
-  ];
-
-  // Sample messages for the currently selected conversation
-  const messages = [
-    {
-      id: "msg1",
-      sender: "patient",
-      text: "Hello, I have some questions about my upcoming treatment.",
-      time: "10:30 AM",
-      read: true
-    },
-    {
-      id: "msg2",
-      sender: "clinic",
-      text: "Hello James, of course! How can I help you today?",
-      time: "10:32 AM",
-      read: true
-    },
-    {
-      id: "msg3",
-      sender: "patient",
-      text: "When should I arrive for my appointment? And is there anything I should bring with me?",
-      time: "10:35 AM",
-      read: true
-    },
-    {
-      id: "msg4",
-      sender: "clinic",
-      text: "We recommend arriving 15 minutes early to complete any paperwork. Please bring your passport or ID, and any medical records or x-rays related to your dental history if you have them. If you've already sent us your x-rays, you don't need to bring them again.",
-      time: "10:40 AM",
-      read: true
-    },
-    {
-      id: "msg5",
-      sender: "patient",
-      text: "When should I arrive for my appointment?",
-      time: "10:45 AM",
-      read: false
+  }, [selectedBookingId]);
+  
+  const fetchConversations = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/messages/clinic/conversations');
+      const data = await response.json();
+      
+      if (data.success) {
+        setConversations(data.conversations);
+        
+        // If we have conversations and none selected, select the first one
+        if (data.conversations.length > 0 && !selectedBookingId) {
+          setSelectedBookingId(data.conversations[0].bookingId);
+        }
+      } else {
+        console.error('Failed to fetch conversations:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      toast({
+        title: t("clinic.messages.error", "Error"),
+        description: t("clinic.messages.conversations_error", "Failed to load conversations. Please try again."),
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+  
+  const fetchMessages = async (bookingId: number) => {
+    setLoadingMessages(true);
+    try {
+      const response = await fetch(`/api/messages/clinic/booking/${bookingId}/messages`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setMessages(data.messages);
+        setSelectedBooking(data.booking);
+        
+        // After fetching messages, fetch conversations again to update unread counts
+        fetchConversations();
+      } else {
+        console.error('Failed to fetch messages:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast({
+        title: t("clinic.messages.error", "Error"),
+        description: t("clinic.messages.messages_error", "Failed to load messages. Please try again."),
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
 
   // Message status indicators
   const statusColors = {
@@ -239,47 +255,79 @@ const ClinicMessagesSection: React.FC = () => {
               <TabsContent value="all" className="mt-0">
                 <ScrollArea className="h-[calc(100vh-20rem)]">
                   <div className="divide-y">
-                    {conversations.map((conversation) => (
-                      <div 
-                        key={conversation.id} 
-                        className={`px-4 py-3 flex items-start space-x-3 hover:bg-muted/50 cursor-pointer transition ${
-                          conversation.id === "conv1" ? "bg-muted/50" : ""
-                        }`}
-                      >
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={conversation.avatar || ""} alt={conversation.patientName} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {conversation.patientName.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <div className="truncate font-medium">{conversation.patientName}</div>
-                            <div className="text-xs text-muted-foreground">{conversation.time}</div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="outline" className="px-1 h-5 text-xs font-normal">
-                              {conversation.treatmentType}
-                            </Badge>
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${
-                              statusColors[conversation.status as keyof typeof statusColors]
-                            }`}>
-                              {conversation.status}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <p className="text-sm text-muted-foreground truncate">
-                              {conversation.lastMessage}
-                            </p>
-                            {conversation.unread > 0 && (
-                              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                                {conversation.unread}
-                              </span>
-                            )}
-                          </div>
+                    {loading ? (
+                      // Loading placeholder
+                      <div className="flex items-center justify-center p-8">
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                          <p className="text-sm text-muted-foreground">
+                            {t("clinic.messages.loading_conversations", "Loading conversations...")}
+                          </p>
                         </div>
                       </div>
-                    ))}
+                    ) : conversations.length === 0 ? (
+                      // Empty state
+                      <div className="flex items-center justify-center p-8">
+                        <div className="flex flex-col items-center text-center">
+                          <MessageSquare className="h-8 w-8 text-muted-foreground mb-2 opacity-50" />
+                          <h3 className="font-medium mb-1">
+                            {t("clinic.messages.no_conversations", "No conversations")}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("clinic.messages.no_conversations_desc", "You don't have any message threads yet. Create a test message to see how it works.")}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      // Conversations list
+                      conversations.map((conversation) => (
+                        <div 
+                          key={conversation.bookingId} 
+                          onClick={() => setSelectedBookingId(conversation.bookingId)}
+                          className={`px-4 py-3 flex items-start space-x-3 hover:bg-muted/50 cursor-pointer transition ${
+                            selectedBookingId === conversation.bookingId ? "bg-muted/50" : ""
+                          }`}
+                        >
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={conversation.patientAvatar || ""} alt={conversation.patientName} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {conversation.patientName.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start">
+                              <div className="truncate font-medium">{conversation.patientName}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(conversation.lastMessageTime).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge variant="outline" className="px-1 h-5 text-xs font-normal">
+                                {conversation.treatmentType}
+                              </Badge>
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                statusColors[conversation.status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
+                              }`}>
+                                {conversation.status}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center mt-1">
+                              <p className="text-sm text-muted-foreground truncate">
+                                {conversation.lastMessage}
+                              </p>
+                              {conversation.unreadCount > 0 && (
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                  {conversation.unreadCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
               </TabsContent>
