@@ -456,4 +456,33 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
   }
 });
 
+// Create test booking data for messaging testing
+router.post('/create-messaging-test-data', async (req, res) => {
+  try {
+    const { createTestBookingData } = await import('./test-booking-data');
+    const result = await createTestBookingData();
+    
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: 'Test booking data created successfully',
+        data: result
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create test booking data',
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error('Error in create-messaging-test-data endpoint:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create test booking data',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;
