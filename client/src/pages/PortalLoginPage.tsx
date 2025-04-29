@@ -189,6 +189,8 @@ const PortalLoginPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         },
         credentials: 'include', // Important! This ensures cookies are sent with the request
         body: JSON.stringify({
@@ -205,26 +207,54 @@ const PortalLoginPage: React.FC = () => {
       const data = await response.json();
       console.log("Login successful, redirecting based on role:", data.user.role);
       
+      // Extract user information
+      const user = data.user;
+      
+      // Store user data in localStorage and sessionStorage for redundancy
+      try {
+        const userKey = user.role === 'clinic_staff' ? 'clinic_user' : 
+                        user.role === 'admin' ? 'admin_user' : 'patient_user';
+        
+        localStorage.setItem(userKey, JSON.stringify(user));
+        sessionStorage.setItem(userKey, JSON.stringify(user));
+        
+        // Create a robust session cookie check
+        document.cookie = "session_check=1; path=/; max-age=3600";
+        
+        // Store CSRF token if available
+        if (data.csrfToken) {
+          localStorage.setItem('csrf_token', data.csrfToken);
+        }
+        
+        console.log("Authentication data stored locally for", user.role);
+      } catch (e) {
+        console.warn("Could not store authentication data locally:", e);
+      }
+      
       // Show a custom toast message
       toast({
         title: "Login successful",
-        description: `Welcome back, ${data.user.firstName || data.user.email}!`,
+        description: `Welcome back, ${user.firstName || user.email}!`,
       });
       
       // Use a timeout to ensure the session cookie is set before redirecting
       setTimeout(() => {
-        if (data.user.role === 'admin') {
+        // Use full URL construction for more reliable navigation
+        const baseUrl = window.location.origin;
+        
+        if (user.role === 'admin') {
           console.log("Admin user detected, redirecting to admin portal");
-          window.location.href = '/admin-portal';
-        } else if (data.user.role === 'clinic_staff') {
+          window.location.href = baseUrl + '/admin-portal';
+        } else if (user.role === 'clinic_staff') {
           console.log("Clinic staff detected, redirecting to clinic portal");
-          window.location.href = '/clinic-portal';
+          // For clinic staff, use our optimized direct approach
+          window.location.href = baseUrl + '/clinic-portal';
         } else {
           // Default to patient portal for any other role
           console.log("Patient user detected, redirecting to patient portal");
-          window.location.href = '/client-portal';
+          window.location.href = baseUrl + '/client-portal';
         }
-      }, 500); // Short delay to ensure cookie is set
+      }, 800); // Slightly longer delay to ensure cookie is set
       
     } catch (error: any) {
       console.error("Login error:", error);
