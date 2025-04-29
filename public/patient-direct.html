@@ -127,15 +127,19 @@
         document.getElementById('loginForm').style.display = 'none';
         document.getElementById('loadingMessage').style.display = 'block';
         
-        // Create form data
-        const formData = new FormData();
-        formData.append('email', 'patient@mydentalfly.com');
-        formData.append('password', 'Patient123!');
+        // Use JSON format instead of FormData
+        const loginData = {
+          email: 'patient@mydentalfly.com',
+          password: 'Patient123!'
+        };
         
         // Use fetch API to log in
         fetch('/api/auth/login', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(loginData),
           credentials: 'include'
         })
         .then(response => {

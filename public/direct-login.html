@@ -237,15 +237,19 @@
       
       // Function to handle login and redirect
       function loginAndRedirect(email, password, redirectPath) {
-        // Create form data
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
+        // Use JSON format instead of FormData
+        const loginData = {
+          email: email,
+          password: password
+        };
         
         // Use fetch API to log in
         fetch('/api/auth/login', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(loginData),
           credentials: 'include'
         })
         .then(response => {

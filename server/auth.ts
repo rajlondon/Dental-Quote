@@ -148,6 +148,21 @@ export async function setupAuth(app: Express) {
 
   // Login endpoint with enhanced email verification handling and redirect support
   app.post("/api/auth/login", (req, res, next) => {
+    // Log request info for debugging
+    console.log("Login request received:", {
+      contentType: req.headers['content-type'],
+      hasEmail: !!req.body.email,
+      hasPassword: !!req.body.password,
+    });
+
+    // Handle missing credentials
+    if (!req.body.email || !req.body.password) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Missing credentials"
+      });
+    }
+    
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       
