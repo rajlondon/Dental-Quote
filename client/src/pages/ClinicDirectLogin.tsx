@@ -79,9 +79,26 @@ const ClinicDirectLogin: React.FC = () => {
       // Hard redirect with a slight delay to ensure toast is visible
       setTimeout(() => {
         console.log("Performing hard redirect to clinic portal");
-        // Use full URL structure to avoid any React Router interference
-        window.location.href = window.location.origin + '/clinic-portal';
-      }, 1200);
+        
+        // Forcefully set session cookie value to improve persistence
+        document.cookie = `clinic_session=${user.id}; path=/; max-age=86400`;
+        
+        // Debug: Log all cookies before redirect
+        console.log("Cookies before redirect:", document.cookie);
+        
+        try {
+          // Use full URL structure to avoid any React Router interference
+          // Include timestamp to prevent caching
+          const redirectUrl = `${window.location.origin}/clinic-portal?t=${Date.now()}`;
+          console.log("Redirecting to:", redirectUrl);
+          
+          // Force reload approach
+          window.location.replace(redirectUrl);
+        } catch (e) {
+          console.error("Redirect error:", e);
+          alert("Redirect failed. Please navigate to /clinic-portal manually.");
+        }
+      }, 1500);
       
     } catch (error: any) {
       console.error("Login error:", error);
