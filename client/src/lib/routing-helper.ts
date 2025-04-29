@@ -153,7 +153,8 @@ export function navigateToUserPortal(): void {
         window.location.replace(`${baseUrl}/admin-portal?uid=${userId}&t=${timestamp}`);
         break;
       case 'clinic':
-        window.location.replace(`${baseUrl}/clinic-portal?uid=${userId}&t=${timestamp}`);
+        // Redirect to standalone clinic portal as per user preference
+        window.location.replace(`${baseUrl}/clinic-standalone.html?uid=${userId}&t=${timestamp}`);
         break;
       case 'patient':
         window.location.replace(`${baseUrl}/client-portal?uid=${userId}&t=${timestamp}`);
@@ -170,7 +171,8 @@ export function navigateToUserPortal(): void {
         window.location.href = `/admin-portal?uid=${userId}&direct=true`;
         break;
       case 'clinic':
-        window.location.href = `/clinic-portal?uid=${userId}&direct=true`;
+        // Fallback to standalone clinic portal
+        window.location.href = `/clinic-standalone.html?uid=${userId}&direct=true`;
         break;
       case 'patient':
         window.location.href = `/client-portal?uid=${userId}&direct=true`;

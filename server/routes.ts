@@ -199,15 +199,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct route for standalone clinic portal HTML file
+  app.get('/clinic-standalone.html', (req, res) => {
+    console.log("Serving standalone clinic portal HTML through direct path");
+    // Serve the standalone clinic portal
+    return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
+  });
+
   app.get('/clinic-portal', (req, res) => {
     // If the direct=true flag is present, or they have auth cookies, serve the index.html
     const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
     const hasClinicAuth = req.cookies && req.cookies.clinic_auth === 'true';
-    const useStandalone = true; // Force using standalone for now (temporary)
+    const useStandalone = true; // Force using standalone for now (as per user preference)
     
     if (useStandalone && req.isAuthenticated() && (req.user.role === 'clinic' || req.user.role === 'clinic_staff')) {
-      console.log("Serving standalone clinic portal");
-      return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
+      console.log("Redirecting to standalone clinic portal");
+      return res.redirect('/clinic-standalone.html');
     } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth) {
       console.log("Serving clinic portal React app");
       // Use express.static's sendFile to serve the file
@@ -261,8 +268,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000
     });
     
-    // Use the standalone solution which is more reliable
-    res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
+    // Redirect to the standalone solution which is more reliable
+    console.log("Redirecting to standalone clinic portal from POST handler");
+    res.redirect('/clinic-standalone.html');
   });
 
   app.get('/client-portal', (req, res) => {
