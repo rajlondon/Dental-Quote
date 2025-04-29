@@ -226,6 +226,142 @@ const PatientPortalTesting: React.FC<{
             </Card>
           </div>
           
+          <div className="grid md:grid-cols-2 gap-4 mt-6">
+            <Card className="border-blue-200">
+              <CardHeader className="pb-3 bg-blue-50">
+                <CardTitle className="text-lg flex items-center">
+                  <MessageSquare className="h-5 w-5 mr-2 text-blue-600" />
+                  Quick Login: Test Accounts
+                </CardTitle>
+                <CardDescription>
+                  Auto-login to test accounts for quick testing
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Patient Account</h3>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Email: patient@mydentalfly.com<br />
+                      Password: Patient123!
+                    </p>
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          const response = await apiRequest('POST', '/api/test/login', {
+                            email: 'patient@mydentalfly.com',
+                            password: 'Patient123!'
+                          });
+                          if (response.ok) {
+                            toast({
+                              title: "Patient Login Successful",
+                              description: "You are now logged in as the test patient user.",
+                              variant: "default"
+                            });
+                            window.location.href = '/patient-portal';
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Login Failed",
+                            description: "Failed to login as test patient.",
+                            variant: "destructive"
+                          });
+                        }
+                      }} 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                    >
+                      Login as Patient
+                    </Button>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Clinic Account</h3>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Email: clinic@mydentalfly.com<br />
+                      Password: Clinic123!
+                    </p>
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          const response = await apiRequest('POST', '/api/test/login', {
+                            email: 'clinic@mydentalfly.com',
+                            password: 'Clinic123!'
+                          });
+                          if (response.ok) {
+                            toast({
+                              title: "Clinic Login Successful",
+                              description: "You are now logged in as the test clinic user.",
+                              variant: "default"
+                            });
+                            window.location.href = '/clinic-portal';
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Login Failed",
+                            description: "Failed to login as test clinic.",
+                            variant: "destructive"
+                          });
+                        }
+                      }} 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                    >
+                      Login as Clinic Staff
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-blue-200">
+              <CardHeader className="pb-3 bg-blue-50">
+                <CardTitle className="text-lg flex items-center">
+                  <MessageSquare className="h-5 w-5 mr-2 text-blue-600" />
+                  Test Messaging System
+                </CardTitle>
+                <CardDescription>
+                  Create a test booking and test messaging between patient and clinic
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  This will ensure messaging infrastructure is working properly by creating test
+                  data between clinic and patient. Use after logging in as either user type.
+                </p>
+                <Button 
+                  onClick={async () => {
+                    try {
+                      const response = await apiRequest('POST', '/api/test/create-messaging-test-data', {});
+                      const data = await response.json();
+                      
+                      if (data.success) {
+                        toast({
+                          title: "Test Messaging Setup Complete",
+                          description: "Test booking and messages have been created between patient and clinic.",
+                          variant: "default"
+                        });
+                      } else {
+                        throw new Error(data.message || 'Failed to create test messaging data');
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Error Setting Up Test Messages",
+                        description: error instanceof Error ? error.message : "An unexpected error occurred",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                  className="w-full"
+                >
+                  Setup Test Messaging Data
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          
           <div className="flex justify-end mt-6">
             <Button onClick={() => setActiveSection('dashboard')}>
               Return to Dashboard
