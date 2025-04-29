@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PortalTestingGuide from './PortalTestingGuide';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, FileText, Lightbulb, MessageSquare, Upload } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, FileText, Lightbulb, MessageSquare, Upload, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 /**
  * Patient Portal Testing Component
@@ -23,6 +24,7 @@ const PatientPortalTesting: React.FC<{
   setActiveSection: (section: string) => void;
 }> = ({ setActiveSection }) => {
   const { toast } = useToast();
+  const [isCreatingTestBooking, setIsCreatingTestBooking] = useState(false);
   
   // Quick action to create a demo quote
   const createDemoQuote = () => {
@@ -50,17 +52,62 @@ const PatientPortalTesting: React.FC<{
     }, 1500);
   };
   
-  // Quick action to create a demo message
-  const createDemoMessage = () => {
-    toast({
-      title: "Demo Message Created",
-      description: "A sample conversation with DentGroup Istanbul has been created.",
-    });
+  // Create a real test booking with clinic for messaging
+  const createTestBooking = async () => {
+    setIsCreatingTestBooking(true);
     
-    // Navigate to messages section
-    setTimeout(() => {
-      setActiveSection('messages');
-    }, 1500);
+    try {
+      // Call our test API endpoint to create a booking between patient and clinic
+      const response = await apiRequest('POST', '/api/test/create-test-booking', {
+        patientEmail: 'patient@mydentalfly.com',
+        clinicEmail: 'clinic@mydentalfly.com'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Test Booking Created",
+          description: `A test booking has been created with booking reference ${data.booking?.bookingReference || 'TEST-BOOKING'}.`,
+          variant: "default"
+        });
+        
+        // Navigate to messages section
+        setTimeout(() => {
+          setActiveSection('messages');
+        }, 1500);
+      } else {
+        // If booking already exists, still show success
+        if (data.message?.includes('Existing booking found')) {
+          toast({
+            title: "Existing Test Booking Found",
+            description: "A booking already exists between you and the clinic. You can use this for messaging tests.",
+            variant: "default"
+          });
+          
+          // Navigate to messages section
+          setTimeout(() => {
+            setActiveSection('messages');
+          }, 1500);
+        } else {
+          throw new Error(data.message || 'Failed to create test booking');
+        }
+      }
+    } catch (error) {
+      console.error('Error creating test booking:', error);
+      toast({
+        title: "Error Creating Test Booking",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingTestBooking(false);
+    }
+  };
+  
+  // Deprecated demo message function (replaced with actual API implementation)
+  const createDemoMessage = () => {
+    createTestBooking();
   };
   
   return (
@@ -161,8 +208,19 @@ const PatientPortalTesting: React.FC<{
                   This will create a sample message thread with a clinic, allowing you to
                   test the messaging and communication features.
                 </p>
-                <Button onClick={createDemoMessage} className="w-full">
-                  Create Demo Messages
+                <Button 
+                  onClick={createDemoMessage} 
+                  className="w-full"
+                  disabled={isCreatingTestBooking}
+                >
+                  {isCreatingTestBooking ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Setting Up Messaging...
+                    </>
+                  ) : (
+                    "Create Test Booking & Messages"
+                  )}
                 </Button>
               </CardContent>
             </Card>
