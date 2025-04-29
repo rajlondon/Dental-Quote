@@ -158,10 +158,9 @@
               .then(userData => {
                 if (userData && userData.success && userData.user) {
                   console.log('User session confirmed:', userData.user);
-                  // Use our new auto-login page
-                  console.log('Redirecting to clinic auto-login page...');
-                  // This page has special form-based redirect logic
-                  window.location.href = '/clinic-auto.html';
+                  // Go directly to standalone page to avoid React and routing issues
+                  console.log('Redirecting to standalone clinic portal...');
+                  window.location.href = '/clinic-portal';
                   return true;
                 } else {
                   throw new Error('Session verification failed');

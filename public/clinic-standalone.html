@@ -3,254 +3,433 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyDentalFly Clinic Portal - Standalone Version</title>
+  <title>MyDentalFly Clinic Portal</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png">
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    :root {
+      --primary-color: #35B064;
+      --secondary-color: #2C9754;
+      --text-color: #333;
+      --light-gray: #f8f9fa;
+      --border-color: #ddd;
+    }
+    
+    * {
       margin: 0;
       padding: 0;
-      background-color: #f7f7f7;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+      background-color: #f5f5f5;
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    
+    .app-container {
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
     
-    header {
-      background-color: #0ea5e9;
-      color: white;
-      padding: 1rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-      flex: 1;
+    .header {
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     
     .logo {
       height: 40px;
-      display: inline-block;
-      vertical-align: middle;
-      margin-right: 1rem;
     }
     
-    h1 {
-      display: inline-block;
-      vertical-align: middle;
-      margin: 0;
-      font-size: 1.5rem;
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    .nav-link {
+      color: var(--text-color);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      position: relative;
+    }
+    
+    .nav-link.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: var(--primary-color);
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
     }
     
     .dashboard {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1.5rem;
-      margin-top: 2rem;
+      margin-bottom: 2rem;
     }
     
     .card {
       background-color: white;
-      border-radius: 0.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       padding: 1.5rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     
     .card-title {
-      font-size: 1.25rem;
-      margin-top: 0;
-      margin-bottom: 1rem;
-      color: #0ea5e9;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    .card-icon {
+      background-color: var(--light-gray);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--primary-color);
+    }
+    
+    .card-body {
+      color: #666;
     }
     
     .stat {
       font-size: 2rem;
-      font-weight: bold;
+      font-weight: 700;
       margin-bottom: 0.5rem;
-    }
-    
-    .stat-label {
-      color: #6b7280;
-      font-size: 0.875rem;
-    }
-    
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
+      color: var(--text-color);
     }
     
     .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 0.25rem;
-      background-color: #0ea5e9;
+      display: inline-block;
+      background-color: var(--primary-color);
       color: white;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
       border: none;
       cursor: pointer;
-      font-size: 0.875rem;
-      text-decoration: none;
-      display: inline-block;
+      transition: background-color 0.2s;
     }
     
-    .btn-secondary {
-      background-color: #f3f4f6;
-      color: #374151;
+    .btn:hover {
+      background-color: var(--secondary-color);
     }
     
-    footer {
-      background-color: #f3f4f6;
-      padding: 1rem;
-      text-align: center;
-      color: #6b7280;
-      font-size: 0.875rem;
-      margin-top: 2rem;
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
     
-    .loading {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .data-table {
       width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.8);
+      border-collapse: collapse;
+    }
+    
+    .data-table th, .data-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .data-table th {
+      background-color: var(--light-gray);
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .data-table tr:hover {
+      background-color: var(--light-gray);
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .status-pending {
+      background-color: #FFF3CD;
+      color: #856404;
+    }
+    
+    .status-confirmed {
+      background-color: #D4EDDA;
+      color: #155724;
+    }
+    
+    .status-cancelled {
+      background-color: #F8D7DA;
+      color: #721C24;
+    }
+    
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--light-gray);
+      display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      font-weight: 600;
     }
     
+    .footer {
+      background-color: white;
+      padding: 1.5rem;
+      text-align: center;
+      margin-top: auto;
+      color: #777;
+      font-size: 0.875rem;
+    }
+    
+    /* Loading Animation */
     .loading-spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #0ea5e9;
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
+      border-top-color: var(--primary-color);
+      animation: spin 1s ease-in-out infinite;
+      margin: 2rem auto;
     }
     
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-links {
+        display: none;
+      }
+      
+      .header {
+        padding: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="loading" class="loading">
-    <div class="loading-spinner"></div>
-  </div>
-  
-  <header>
-    <img src="/images/mydentalfly-logo.png" alt="MyDentalFly Logo" class="logo">
-    <h1>Clinic Portal Dashboard</h1>
-  </header>
-  
-  <div class="container">
-    <h2>Welcome to the Clinic Portal</h2>
-    <p>This is a simplified standalone version of the clinic portal dashboard.</p>
+  <div class="app-container">
+    <header class="header">
+      <img src="/static/logo.png" alt="MyDentalFly" class="logo">
+      <nav class="nav-links">
+        <a href="#dashboard" class="nav-link active">Dashboard</a>
+        <a href="#patients" class="nav-link">Patients</a>
+        <a href="#appointments" class="nav-link">Appointments</a>
+        <a href="#quotes" class="nav-link">Quotes</a>
+        <a href="#messages" class="nav-link">Messages</a>
+      </nav>
+      <div class="user-profile">
+        <div class="user-avatar">C</div>
+        <span id="user-name">Clinic</span>
+      </div>
+    </header>
     
-    <div class="dashboard">
-      <div class="card">
-        <h3 class="card-title">Pending Bookings</h3>
-        <div class="stat">5</div>
-        <div class="stat-label">Needs your attention</div>
-        <div class="actions">
-          <a href="/clinic-direct" class="btn">View Bookings</a>
-        </div>
-      </div>
+    <main class="main-content">
+      <h1 class="section-title" style="margin-bottom: 2rem;">Clinic Dashboard</h1>
       
-      <div class="card">
-        <h3 class="card-title">Patient Messages</h3>
-        <div class="stat">3</div>
-        <div class="stat-label">Unread messages</div>
-        <div class="actions">
-          <a href="/clinic-direct" class="btn">View Messages</a>
+      <section class="dashboard">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Appointments</h2>
+            <div class="card-icon">📅</div>
+          </div>
+          <div class="card-body">
+            <div class="stat">12</div>
+            <p>Upcoming appointments</p>
+          </div>
         </div>
-      </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Quotes</h2>
+            <div class="card-icon">💰</div>
+          </div>
+          <div class="card-body">
+            <div class="stat">8</div>
+            <p>Quotes sent this month</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Patients</h2>
+            <div class="card-icon">👥</div>
+          </div>
+          <div class="card-body">
+            <div class="stat">24</div>
+            <p>Total active patients</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Messages</h2>
+            <div class="card-icon">✉️</div>
+          </div>
+          <div class="card-body">
+            <div class="stat">5</div>
+            <p>Unread messages</p>
+          </div>
+        </div>
+      </section>
       
-      <div class="card">
-        <h3 class="card-title">Today's Schedule</h3>
-        <div class="stat">2</div>
-        <div class="stat-label">Upcoming appointments</div>
-        <div class="actions">
-          <a href="/clinic-direct" class="btn">View Schedule</a>
+      <section>
+        <div class="section-header">
+          <h2 class="section-title">Recent Appointments</h2>
+          <a href="#appointments" class="btn">View All</a>
         </div>
-      </div>
-      
-      <div class="card">
-        <h3 class="card-title">Clinic Management</h3>
-        <p>Access the full clinic portal for complete functionality.</p>
-        <div class="actions">
-          <a href="/clinic-direct" class="btn">Go to Full Portal</a>
-          <button id="login-btn" class="btn btn-secondary">Refresh Login</button>
+        
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Treatment</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Sarah Johnson</td>
+                <td>30 Apr 2025, 10:00</td>
+                <td>Dental Implants</td>
+                <td><span class="status-badge status-confirmed">Confirmed</span></td>
+                <td><a href="#details" class="btn">Details</a></td>
+              </tr>
+              <tr>
+                <td>Michael Brown</td>
+                <td>1 May 2025, 14:30</td>
+                <td>Veneers</td>
+                <td><span class="status-badge status-pending">Pending</span></td>
+                <td><a href="#details" class="btn">Details</a></td>
+              </tr>
+              <tr>
+                <td>Emma Wilson</td>
+                <td>3 May 2025, 11:15</td>
+                <td>Hollywood Smile</td>
+                <td><span class="status-badge status-confirmed">Confirmed</span></td>
+                <td><a href="#details" class="btn">Details</a></td>
+              </tr>
+              <tr>
+                <td>David Lee</td>
+                <td>28 Apr 2025, 09:00</td>
+                <td>Dental Implants</td>
+                <td><span class="status-badge status-cancelled">Cancelled</span></td>
+                <td><a href="#details" class="btn">Details</a></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
+    
+    <footer class="footer">
+      <p>&copy; 2025 MyDentalFly. All rights reserved.</p>
+    </footer>
   </div>
-  
-  <footer>
-    &copy; 2025 MyDentalFly - Dental Tourism Platform
-  </footer>
   
   <script>
+    // Display the user's name from the session if available
     document.addEventListener('DOMContentLoaded', function() {
-      const loginBtn = document.getElementById('login-btn');
-      const loading = document.getElementById('loading');
-      
-      // Set auth cookies on page load
-      setCookies();
-      
-      loginBtn.addEventListener('click', function() {
-        loading.style.display = 'flex';
-        
-        // Login via API
-        fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            email: 'clinic@mydentalfly.com',
-            password: 'Clinic123!'
-          })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            setCookies();
-            alert('Login refreshed successfully!');
-          } else {
-            alert('Login failed: ' + (data.message || 'Unknown error'));
-          }
-          loading.style.display = 'none';
-        })
-        .catch(error => {
-          console.error('Error during authentication:', error);
-          alert('Error during authentication. Please try again.');
-          loading.style.display = 'none';
-        });
+      // Fetch the current user
+      fetch('/api/auth/user', {
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.success && data.user) {
+          const userName = data.user.firstName + ' ' + data.user.lastName;
+          document.getElementById('user-name').textContent = userName;
+          
+          // Also set the avatar
+          const userAvatar = document.querySelector('.user-avatar');
+          userAvatar.textContent = data.user.firstName.charAt(0);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching user data:', error);
       });
-      
-      function setCookies() {
-        const userId = '40'; // Default clinic user ID
-        const maxAge = 7 * 24 * 60 * 60; // 7 days
-        
-        // Set all necessary cookies for clinic authentication
-        document.cookie = `mdf_authenticated=true; path=/; max-age=${maxAge}`;
-        document.cookie = `mdf_user_id=${userId}; path=/; max-age=${maxAge}`;
-        document.cookie = `mdf_user_role=clinic_staff; path=/; max-age=${maxAge}`;
-        document.cookie = `clinic_auth=true; path=/; max-age=${maxAge}`;
-        document.cookie = `clinic_session_id=${userId}; path=/; max-age=${maxAge}`;
-        document.cookie = `portal_type=clinic; path=/; max-age=${maxAge}`;
-        document.cookie = `is_authenticated=true; path=/; max-age=${maxAge}`;
-        document.cookie = `user_role=clinic_staff; path=/; max-age=${maxAge}`;
-        document.cookie = `user_id=${userId}; path=/; max-age=${maxAge}`;
-        
-        console.log('Auth cookies set successfully');
-      }
     });
   </script>
 </body>
