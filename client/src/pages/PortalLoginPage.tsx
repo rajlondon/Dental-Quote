@@ -69,8 +69,7 @@ const PortalLoginPage: React.FC = () => {
     if (user && user.role === 'admin') {
       setLocation('/admin-portal');
     } else if (user && user.role === 'clinic_staff') {
-      // Use standalone clinic portal for all clinic staff redirects
-      window.location.href = '/clinic-standalone.html';
+      setLocation('/clinic-portal');
     } else if (user && user.role === 'patient' && user.emailVerified) {
       setLocation('/client-portal');
     }
@@ -182,141 +181,34 @@ const PortalLoginPage: React.FC = () => {
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      setIsLoading(true);
       console.log("Login attempt with:", values);
       
-      // Make direct API call rather than using loginMutation
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        credentials: 'include', // Important! This ensures cookies are sent with the request
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password
-        }),
+      // Use the loginMutation from useAuth hook
+      const userData = await loginMutation.mutateAsync({
+        email: values.email,
+        password: values.password
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+      // Success toast is handled by the useAuth hook
+      
+      // Direct redirect based on user role from response
+      console.log("Login successful, redirecting based on role:", userData.role);
+      
+      if (userData.role === 'admin') {
+        console.log("Admin user detected, redirecting to admin portal");
+        setLocation('/admin-portal');
+      } else if (userData.role === 'clinic_staff') {
+        console.log("Clinic staff detected, redirecting to clinic portal");
+        setLocation('/clinic-portal');
+      } else {
+        // Default to patient portal for any other role
+        console.log("Patient user detected, redirecting to patient portal");
+        setLocation('/client-portal');
       }
       
-      const data = await response.json();
-      console.log("Login successful, redirecting based on role:", data.user.role);
-      
-      // Extract user information
-      const user = data.user;
-      
-      // Store user data in localStorage and sessionStorage for redundancy
-      try {
-        const userKey = user.role === 'clinic_staff' ? 'clinic_user' : 
-                        user.role === 'admin' ? 'admin_user' : 'patient_user';
-        
-        localStorage.setItem(userKey, JSON.stringify(user));
-        sessionStorage.setItem(userKey, JSON.stringify(user));
-        
-        // Create a robust session cookie check
-        document.cookie = "session_check=1; path=/; max-age=3600";
-        
-        // Store CSRF token if available
-        if (data.csrfToken) {
-          localStorage.setItem('csrf_token', data.csrfToken);
-        }
-        
-        console.log("Authentication data stored locally for", user.role);
-      } catch (e) {
-        console.warn("Could not store authentication data locally:", e);
-      }
-      
-      // Show a custom toast message
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.firstName || user.email}!`,
-      });
-      
-      // We'll use our routing helper for more consistent navigation
-      import("../lib/routing-helper")
-        .then(({ navigateToUserPortal }) => {
-          // Add some local persistence to reinforce the server-side cookies
-          try {
-            // Store user data redundantly
-            localStorage.setItem('user_data', JSON.stringify(user));
-            sessionStorage.setItem('user_data', JSON.stringify(user));
-            
-            // Set manual role cookies in case HTTP-only cookies aren't working properly
-            const cookieMaxAge = 7 * 24 * 60 * 60; // 7 days in seconds
-            document.cookie = `user_role=${user.role}; path=/; max-age=${cookieMaxAge}`;
-            document.cookie = `user_id=${user.id}; path=/; max-age=${cookieMaxAge}`;
-            document.cookie = `is_authenticated=true; path=/; max-age=${cookieMaxAge}`;
-            
-            // Set role-specific flags
-            if (user.role === 'admin') {
-              localStorage.setItem('is_admin', 'true');
-              sessionStorage.setItem('is_admin', 'true');
-            } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
-              localStorage.setItem('is_clinic', 'true');
-              sessionStorage.setItem('is_clinic', 'true');
-            } else {
-              localStorage.setItem('is_patient', 'true');
-              sessionStorage.setItem('is_patient', 'true');
-            }
-            
-            console.log("User data stored in local storage:", user.role);
-          } catch (e) {
-            console.warn("Failed to store user data locally:", e);
-          }
-          
-          // Wait before redirecting to ensure all data is saved
-          setTimeout(() => {
-            console.log("Performing enhanced redirect based on role:", user.role);
-            
-            // We'll use our own custom redirect rule rather than navigateToUserPortal
-            // This is more specific since we know exactly which role the user has
-            const baseUrl = window.location.origin;
-            const timestamp = Date.now();
-            
-            try {
-              if (user.role === 'admin') {
-                console.log("Admin user detected, redirecting to admin portal");
-                window.location.replace(`${baseUrl}/admin-portal?uid=${user.id}&t=${timestamp}`);
-              } else if (user.role === 'clinic_staff' || user.role === 'clinic') {
-                console.log("Clinic staff detected, redirecting to standalone clinic portal");
-                window.location.replace(`${baseUrl}/clinic-standalone.html?uid=${user.id}&t=${timestamp}`);
-              } else {
-                console.log("Patient user detected, redirecting to patient portal");
-                window.location.replace(`${baseUrl}/client-portal?uid=${user.id}&t=${timestamp}`);
-              }
-            } catch (e) {
-              console.error("Direct redirect failed, trying navigateToUserPortal:", e);
-              navigateToUserPortal();
-            }
-          }, 1500);
-        })
-        .catch(error => {
-          console.error("Failed to import routing helper:", error);
-          // Fallback with basic redirect
-          setTimeout(() => {
-            const baseUrl = window.location.origin;
-            const portal = user.role === 'admin' ? 'admin-portal' : 
-                          (user.role === 'clinic_staff' || user.role === 'clinic') ? 'clinic-standalone.html' : 
-                          'client-portal';
-            window.location.href = `${baseUrl}/${portal}`;
-          }, 1500);
-        });
-      
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login Failed",
-        description: error.message || "Authentication failed",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // The loginMutation will handle error toasts automatically
     }
   };
 
@@ -508,18 +400,6 @@ const PortalLoginPage: React.FC = () => {
                   <CardDescription>
                     Access your clinic dashboard and patient management
                   </CardDescription>
-                  <div className="mt-3 text-center">
-                    <Button 
-                      variant="secondary"
-                      className="w-full"
-                      onClick={() => window.location.href = '/clinic-login'}
-                    >
-                      Go to Standalone Clinic Portal (Recommended)
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Direct login provides a more stable connection to the clinic portal
-                    </p>
-                  </div>
                 </CardHeader>
                 <CardContent>
                   <Form {...loginForm}>

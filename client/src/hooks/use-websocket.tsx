@@ -38,83 +38,41 @@ export const useWebSocket = (): WebSocketHookResult => {
   const initializeSocket = useCallback(() => {
     if (!user) {
       // No WebSocket connection if not authenticated
-      console.log('No WebSocket connection - user not authenticated');
       return;
     }
     
     try {
       // Close existing socket if any
-      if (socketRef.current) {
-        console.log('Closing existing WebSocket connection');
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
         socketRef.current.close();
-        socketRef.current = null;
-      }
-      
-      // Don't attempt to reconnect if user is not logged in
-      if (!user.id) {
-        console.log('User ID missing, not connecting WebSocket');
-        return;
       }
       
       // Determine correct protocol based on HTTPS/HTTP
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
-      console.log('Initializing WebSocket connection to:', wsUrl);
       
-      // Create new WebSocket connection with error handling
-      let socketInitialized = false;
-      try {
-        const socket = new WebSocket(wsUrl);
-        socketRef.current = socket;
-        socketInitialized = true;
+      // Create new WebSocket connection
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+      
+      socket.addEventListener('open', () => {
+        console.log('WebSocket connection established');
+        setConnected(true);
         
-        // Set a connection timeout
-        const connectionTimeout = setTimeout(() => {
-          if (socket.readyState !== WebSocket.OPEN) {
-            console.log('WebSocket connection timeout');
-            socket.close();
+        // Register client with the server
+        socket.send(JSON.stringify({
+          type: 'register',
+          sender: {
+            id: user.id.toString(),
+            type: user.role
           }
-        }, 10000); // 10-second connection timeout
-        
-        socket.addEventListener('open', () => {
-          console.log('WebSocket connection established successfully');
-          clearTimeout(connectionTimeout);
-          setConnected(true);
-          
-          // Register client with the server - with retry
-          try {
-            socket.send(JSON.stringify({
-              type: 'register',
-              sender: {
-                id: user.id.toString(),
-                type: user.role === 'clinic_staff' ? 'clinic' : user.role
-              }
-            }));
-            console.log('Sent registration message to WebSocket server');
-          } catch (sendError) {
-            console.error('Failed to send registration message:', sendError);
-          }
-        });
-      } catch (socketError) {
-        console.error('Failed to create WebSocket instance:', socketError);
-        socketInitialized = false;
-      }
+        }));
+      });
       
-      if (!socketInitialized || !socketRef.current) {
-        console.log('Socket not initialized properly, will retry later');
-        reconnectTimeoutRef.current = setTimeout(() => {
-          initializeSocket();
-        }, 5000);
-        return;
-      }
-      
-      socketRef.current.addEventListener('message', (event) => {
+      socket.addEventListener('message', (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
           setLastMessage(message);
-          
-          // Log all incoming messages for debugging
-          console.log('WebSocket message received:', message.type);
           
           // Handle connection confirmation
           if (message.type === 'connection' || message.type === 'registered') {
@@ -124,15 +82,12 @@ export const useWebSocket = (): WebSocketHookResult => {
           
           // Handle error messages
           if (message.type === 'error') {
-            console.error('WebSocket server error:', message.message);
-            // Only show toast for major errors, not connection retries
-            if (message.message !== 'Reconnecting' && message.message !== 'Retrying connection') {
-              toast({
-                title: 'Server Message',
-                description: message.message || 'Unknown error occurred',
-                variant: 'destructive'
-              });
-            }
+            console.error('WebSocket error:', message.message);
+            toast({
+              title: 'Connection Error',
+              description: message.message || 'Unknown error occurred',
+              variant: 'destructive'
+            });
             return;
           }
           
@@ -140,8 +95,6 @@ export const useWebSocket = (): WebSocketHookResult => {
           const handler = messageHandlersRef.current[message.type];
           if (handler) {
             handler(message);
-          } else {
-            console.log('No handler registered for message type:', message.type);
           }
           
         } catch (error) {
@@ -149,44 +102,34 @@ export const useWebSocket = (): WebSocketHookResult => {
         }
       });
       
-      socketRef.current.addEventListener('close', (event) => {
+      socket.addEventListener('close', (event) => {
         console.log('WebSocket connection closed:', event.code, event.reason);
         setConnected(false);
         
-        // Only attempt to reconnect if we have a user and it wasn't a clean close
-        if (user) {
-          const delay = event.wasClean ? 10000 : 3000; // longer delay for clean closes
-          
+        // Attempt to reconnect after delay
+        if (user && !event.wasClean) {
           if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
           }
           
-          console.log(`Will attempt to reconnect WebSocket in ${delay/1000} seconds`);
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('Attempting to reconnect WebSocket now...');
+            console.log('Attempting to reconnect WebSocket...');
             initializeSocket();
-          }, delay);
+          }, 5000); // 5-second reconnect delay
         }
       });
       
-      socketRef.current.addEventListener('error', (error) => {
-        console.error('WebSocket connection error:', error);
-        // Don't show toast for every error to avoid spamming the user
-        // Only use console logs for debugging
+      socket.addEventListener('error', (error) => {
+        console.error('WebSocket error:', error);
+        toast({
+          title: 'Connection Error',
+          description: 'Failed to connect to the server. Retrying...',
+          variant: 'destructive'
+        });
       });
       
     } catch (error) {
-      console.error('Error in WebSocket initialization:', error);
-      
-      // Schedule retry
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      
-      reconnectTimeoutRef.current = setTimeout(() => {
-        console.log('Retrying WebSocket initialization after error...');
-        initializeSocket();
-      }, 8000); // 8-second retry delay after errors
+      console.error('Error initializing WebSocket:', error);
     }
   }, [user, toast]);
   

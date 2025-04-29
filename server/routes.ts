@@ -77,12 +77,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
   });
   
-  // Direct login page to bypass React router completely
-  app.get('/direct-login', (req, res) => {
-    console.log("Serving direct login page");
-    res.sendFile(path.join(__dirname, '../public/direct-login.html'));
-  });
-  
   // Special route for blog page - completely new file to bypass caching
   app.get('/blog', (req, res) => {
     // Set strong cache control headers to prevent caching
@@ -162,199 +156,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
-  // Direct portal access routes - each serving a static HTML file with auto-login script
-  app.get('/admin-direct', (req, res) => {
-    // Serve the direct access HTML file that contains auto-login script
-    res.sendFile(path.resolve(process.cwd(), 'public/admin-direct.html'));
-  });
-  
-  app.get('/clinic-direct', (req, res) => {
-    // Serve the direct access HTML file that contains auto-login script
-    res.sendFile(path.resolve(process.cwd(), 'public/clinic-direct.html'));
-  });
-  
-  app.get('/patient-direct', (req, res) => {
-    // Serve the direct access HTML file that contains auto-login script
-    res.sendFile(path.resolve(process.cwd(), 'public/patient-direct.html'));
-  });
-  
   // Apply global rate limiting to all API routes
   app.use('/api', apiRateLimit);
   
   // Add CSRF error handler (must be before CSRF middleware)
   app.use(handleCsrfError);
   
-  // Instead of complex middleware, just respond to the direct routes properly
-  app.get('/admin-portal', (req, res) => {
-    // If the direct=true flag is present, or they have auth cookies, serve the index.html
-    const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
-    const hasAdminAuth = req.cookies && req.cookies.admin_auth === 'true';
-    if (req.query.direct === 'true' || hasMdfAuth || hasAdminAuth) {
-      console.log("Serving admin portal");
-      // Use express.static's sendFile to serve the file
-      return res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
-    } else {
-      // Otherwise redirect to the direct login
-      return res.redirect('/admin-direct');
-    }
-  });
-
-  // Direct route for standalone clinic portal HTML file
-  app.get('/clinic-standalone.html', (req, res) => {
-    console.log("Serving standalone clinic portal HTML through direct path");
-    // Serve the standalone clinic portal
-    return res.sendFile('clinic-standalone.html', { root: path.join(process.cwd(), 'public') });
-  });
-
-  app.get('/clinic-portal', (req, res) => {
-    console.log("GET request to clinic-portal received", {
-      isAuthenticated: req.isAuthenticated(),
-      hasUser: !!req.user,
-      userRole: req.user?.role,
-      cookies: {
-        hasMdfAuth: req.cookies?.mdf_authenticated === 'true',
-        hasClinicAuth: req.cookies?.clinic_auth === 'true',
-        hasTimestamp: !!req.cookies?.clinic_login_timestamp
-      }
-    });
-    
-    // If the direct=true flag is present, or they have auth cookies, serve the standalone portal
-    const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
-    const hasClinicAuth = req.cookies && req.cookies.clinic_auth === 'true';
-    const hasLoginTimestamp = req.cookies && req.cookies.clinic_login_timestamp;
-    
-    // Check for authentication through cookies or session
-    const isAuthenticated = req.isAuthenticated() && 
-                           (req.user.role === 'clinic' || req.user.role === 'clinic_staff');
-    
-    // Force to always use the standalone clinic portal HTML file that shows the dashboard
-    // with appointments, quotes, messages, etc. as shown in screenshots (client request)
-    if (isAuthenticated) {
-      console.log("User authenticated via session, serving standalone clinic portal");
-      
-      // Set cookies to ensure they're fresh
-      res.cookie('clinic_auth', 'true', { 
-        httpOnly: false, 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
-      
-      // Serve the standalone clinic portal HTML file
-      console.log("Serving standalone clinic portal HTML file");
-      return res.sendFile('clinic-standalone.html', { 
-        root: path.join(process.cwd(), 'public'),
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-    } else if (req.query.direct === 'true' || hasMdfAuth || hasClinicAuth || hasLoginTimestamp) {
-      console.log("Authenticated with cookies, serving standalone clinic portal");
-      return res.sendFile('clinic-standalone.html', { 
-        root: path.join(process.cwd(), 'public'),
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-    } else {
-      // Otherwise redirect to the direct login
-      console.log("Not authenticated, redirecting to clinic-direct login page");
-      return res.redirect('/clinic-direct');
-    }
-  });
-  
-  // Add POST handler for clinic portal to support form submissions
-  app.post('/clinic-portal', (req, res) => {
-    console.log("POST request to clinic-portal received", {
-      isAuthenticated: req.isAuthenticated(),
-      target: req.body.target,
-      hasBody: !!req.body,
-    });
-    
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      console.log("POST to clinic portal but user not authenticated, redirecting to direct login");
-      return res.redirect('/clinic-direct?auth_failed=true');
-    }
-    
-    // Check if user has the correct role
-    if (req.user.role !== 'clinic' && req.user.role !== 'clinic_staff') {
-      console.log("POST to clinic portal with incorrect role:", req.user.role);
-      return res.status(403).send(`
-        <html>
-        <head><title>Access Denied</title></head>
-        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-          <h1 style="color: #e53e3e;">Access Denied</h1>
-          <p>You don't have clinic permissions. Your role is: ${req.user.role}</p>
-          <p><a href="/portal-login" style="color: #2c9754;">Return to login page</a></p>
-        </body>
-        </html>
-      `);
-    }
-    
-    console.log("POST to clinic portal accepted for user:", req.user.email);
-    
-    // Set special clinic auth cookie that can be used by the GET handler
-    res.cookie('clinic_auth', 'true', { 
-      httpOnly: false, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    
-    // Set mdf_authenticated cookie for general auth
-    res.cookie('mdf_authenticated', 'true', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    
-    // Set a special clinic login timestamp cookie to track the last successful login
-    res.cookie('clinic_login_timestamp', Date.now().toString(), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
-    
-    // Set path, portal type, and portal-specific cookies for the client-side app to use
-    res.cookie('mdf_path', '/clinic-portal', {
-      httpOnly: false, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    });
-    
-    res.cookie('mdf_portal_type', 'clinic', {
-      httpOnly: false, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    });
-    
-    // Get the target if specified
-    const target = req.body.target || 'clinic';
-    
-    // Log the redirect information
-    console.log(`Redirecting to standalone clinic portal from POST handler (target: ${target})`);
-    
-    // Add cache-busting query parameter to avoid cache issues
-    const timestamp = Date.now();
-    console.log("Redirecting to standalone clinic portal");
-    res.redirect(`/clinic-standalone.html?t=${timestamp}`);
-  });
-
-  app.get('/client-portal', (req, res) => {
-    // If the direct=true flag is present, or they have auth cookies, serve the index.html
-    const hasMdfAuth = req.cookies && req.cookies.mdf_authenticated === 'true';
-    const hasPatientAuth = req.cookies && req.cookies.patient_auth === 'true';
-    if (req.query.direct === 'true' || hasMdfAuth || hasPatientAuth) {
-      console.log("Serving patient portal");
-      // Use express.static's sendFile to serve the file
-      return res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
-    } else {
-      // Otherwise redirect to the direct login
-      return res.redirect('/patient-direct');
-    }
+  // Direct server-side blocking of portal routes for security
+  // This prevents direct access to portal routes without authentication
+  app.get(["/admin-portal*", "/clinic-portal*", "/client-portal*"], (req, res) => {
+    // If they're trying to access directly, redirect to login
+    return res.redirect("/portal-login");
   });
   
   // IMPORTANT: Register routes in this order to avoid conflicts:
@@ -441,18 +253,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       domain_test: true,
       time: new Date().toISOString()
     });
-  });
-  
-  // Endpoint to handle clinic portal preference (used by the client-side to request original portal)
-  app.post('/api/use-old-clinic-portal', (req, res) => {
-    console.log("Client requested to use old clinic portal");
-    // Set a cookie to remember this preference
-    res.cookie('use_old_clinic_portal', 'true', {
-      maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production'
-    });
-    res.status(200).json({ success: true, message: "Preference saved" });
   });
   
   // EmailJS Config endpoint

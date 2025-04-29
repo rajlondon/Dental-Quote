@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
@@ -46,49 +46,18 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 
-// Create a simple store for auth persistence during redirects
-const ensureAuthStorage = (userData: any) => {
-  if (!userData) return;
-  
-  try {
-    // Store user data in localStorage for auth persistence
-    localStorage.setItem('clinic_user', JSON.stringify(userData));
-    // Set role-specific flag
-    localStorage.setItem('is_clinic', 'true');
-    console.log("Clinic user data stored for auth persistence");
-  } catch (e) {
-    console.error("Failed to store clinic user data:", e);
-  }
-};
-
 const ClinicPortalPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-  const [initComplete, setInitComplete] = useState<boolean>(false);
 
-  // Get auth context for logout functionality and current user
-  const { logoutMutation, user } = useAuth();
+  // Get auth context for logout functionality
+  const { logoutMutation } = useAuth();
   
-  // Initialize the component once on mount - with auth persistence
-  useEffect(() => {
-    if (!initComplete) {
-      console.log("ClinicPortalPage: Initial mount");
-      
-      // Store user data from auth context for persistence
-      if (user) {
-        console.log("Storing clinic user data for auth persistence");
-        ensureAuthStorage(user);
-      }
-      
-      setInitComplete(true);
-    }
-  }, [user, initComplete]);
-  
-  // Handle logout - memoized to prevent unnecessary re-renders
-  const handleLogout = useCallback(() => {
+  // Handle logout
+  const handleLogout = () => {
     // Using non-async function to make sure the button click handler completes immediately
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
@@ -98,9 +67,8 @@ const ClinicPortalPage: React.FC = () => {
           description: t('portal.logout_message', 'You have been logged out of your account.'),
         });
         
-        // Use window.location.href for a full page refresh on logout
-        // This ensures all state is cleared
-        window.location.href = '/portal-login';
+        // Use wouter navigation instead of direct URL change
+        setLocation('/portal-login');
       },
       onError: (error) => {
         console.error("Logout error:", error);
@@ -111,7 +79,7 @@ const ClinicPortalPage: React.FC = () => {
         });
       }
     });
-  }, [logoutMutation, toast, t]);
+  };
 
   // Clinic navigation items
   const navItems = [
@@ -130,25 +98,19 @@ const ClinicPortalPage: React.FC = () => {
     { id: 'testing', label: t("clinic.nav.testing", "Testing Mode"), icon: <TestTube className="h-5 w-5" /> },
   ];
 
-  // Payment section redirect handler - memoized
-  const handlePaymentRedirect = useCallback(() => {
+  // Payment section redirect effect
+  useEffect(() => {
     if (activeSection === 'payments') {
       // Short timeout to allow the state to update before navigating
       const redirectTimer = setTimeout(() => {
-        // Use window.location.href for a full page redirect
-        window.location.href = '/treatment-payment';
+        setLocation('/treatment-payment');
       }, 100);
       return () => clearTimeout(redirectTimer);
     }
-  }, [activeSection]);
-  
-  // Set up the payment redirect effect using the memoized handler
-  useEffect(() => {
-    return handlePaymentRedirect();
-  }, [handlePaymentRedirect]);
+  }, [activeSection, setLocation]);
 
-  // Render the active section content - memoized to prevent unnecessary re-renders
-  const renderSection = useCallback((): React.ReactNode => {
+  // Render the active section content
+  const renderSection = () => {
     // For the dashboard section, we'll render an embedded dashboard directly
     if (activeSection === 'dashboard') {
       // Hard-coded dashboard data
@@ -335,7 +297,7 @@ const ClinicPortalPage: React.FC = () => {
           </div>
         );
     }
-  }, [activeSection, setActiveSection, setIsMobileMenuOpen]);
+  };
 
   // Sample clinic data (in a real app, this would come from an API/context)
   const clinicData = {
@@ -493,5 +455,4 @@ const ClinicPortalPage: React.FC = () => {
   );
 };
 
-// Wrap in memo to prevent unnecessary re-renders
-export default memo(ClinicPortalPage);
+export default ClinicPortalPage;
