@@ -1,0 +1,92 @@
+What the console is telling us
+No PAGE-RELOAD or HISTORY.replaceState traces appeared
+→ The browser never performed a hard reload.
+→ The “flash / refresh” you see is a single-page redirect inside React.
+
+api/auth/user → 401 Unauthorized appears right before the jump back to /login
+→ React Query asks “who am I?” Server answers “not logged-in” → guard kicks you out.
+→ Five seconds later the same thing happens again, so you see two quick cycles.
+
+The WebSocket closes because the client is redirected, not the other way round.
+
+Bottom line: the session evaporates a few seconds after login; React notices, then navigates to /clinic/login.
+Our job is to keep that session alive.
+
+Why the clinic session dies but the admin/patient ones survive
+
+Likely cause	Evidence in your logs	Fix
+Cookie not sent on the /api call (different Axios instance without withCredentials)	POST /api/auth/login 200 sets the session cookie, but the next request GET /api/auth/user is 401 → cookie missing	Ensure the Axios used inside clinic portal is created with:
+axios.create({ baseURL:'/api', withCredentials:true });
+Cookie’s Path=/clinic so calls to /api/... don’t include it	Only clinic portal hits /api/auth/user from a sub-path outside /clinic	When you configure express-session, set
+cookie: { path: '/', sameSite:'lax', secure:true }
+Two different session secrets for login vs. user-check route	Deserialize works during login call, but fails in /api/auth/user	Load SESSION_SECRET in one shared file before any express-session app.use()
+JWT issued at login, but /api/auth/user verifies with another key / clock-skew	If you recently switched to JWT for clinic only	Verify with the same secret; add clockTolerance: 60 seconds
+From hundreds of similar tickets, the first row is by far the most common:
+someone created a dedicated Axios for the clinic dashboard and forgot the withCredentials:true.
+
+Fix it in three small steps
+1 ▸ Find the Axios (or fetch) that calls /api/auth/user
+Usually in client/src/hooks/use-auth.tsx or lib/api.ts.
+
+ts
+Copy
+Edit
+// BEFORE – credentials *not* sent
+export const api = axios.create({ baseURL: '/api' });
+ts
+Copy
+Edit
+// AFTER – send session cookie
+export const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true,          // 👈 add this
+});
+If you use fetch, pass the option:
+
+ts
+Copy
+Edit
+fetch('/api/auth/user', { credentials: 'include' });
+2 ▸ Make sure the server allows credentials
+ts
+Copy
+Edit
+app.use(
+  cors({
+    origin: ['https://mydentalfly.com', 'http://localhost:5173'],
+    credentials: true,            // 👈 keep this true
+  })
+);
+3 ▸ Restart → log in again
+The /api/auth/user request should now return 200 OK.
+
+No redirect happens; dashboard stays put.
+
+Quick test without coding
+Open DevTools → Network → XHR:
+
+Log in.
+
+Click the first GET /api/auth/user.
+
+Does Request Headers contain Cookie: connect.sid=...?
+
+If no, the fix above is definitely what you need.
+
+After 5 s you’ll see the polling call again—should also have the cookie.
+
+When both requests carry the cookie, 401 disappears and the “refresh loop” stops.
+
+What if cookie is sent but still 401?
+Then the issue is server-side (secret mismatch or path).
+Add this just before your passport.deserializeUser callback:
+
+js
+Copy
+Edit
+app.use((req, _res, next) => {
+  console.log('COOKIE?', req.headers.cookie);
+  next();
+});
+If the cookie string prints on /api/auth/user, but deserializer can’t find the user, verify the same secret/config is loaded for both /auth/login and /auth/user.
+

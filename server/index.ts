@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import cors from "cors";
 import { createErrorHandler, logError } from "./services/error-logger";
 
 // Make sure Stripe env variables are set
@@ -23,6 +24,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const app = express();
 // Enable trust proxy for rate limiters in Replit environment
 app.set('trust proxy', 1);
+
+// Configure CORS to explicitly support credentials
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://mydentalfly.com', 'https://www.mydentalfly.com'] 
+    : ['http://localhost:5000', 'http://0.0.0.0:5000', 'http://127.0.0.1:5000'],
+  credentials: true, // CRITICAL: This allows cookies to be sent with requests
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
