@@ -8,7 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 import { useEffect } from "react";
 import { initPreventReloads } from "@/utils/prevent-reloads";
-import SimpleClinicPortal from "@/pages/SimpleClinicPortal";
+import SimpleClinicPage from "@/pages/SimpleClinicPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -79,6 +79,7 @@ import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
 import { Suspense } from "react";
+import ClinicGuard from "@/components/ClinicGuard";
 
 function Router() {
   return (
@@ -147,7 +148,13 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Protected Routes - Back to the regular clinic portal with fixed refresh prevention */}
+      {/* Clinic Staff Protected Routes */}
+      {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
+      <Route path="/simple-clinic">
+        {() => <ClinicGuard><SimpleClinicPage /></ClinicGuard>}
+      </Route>
+      
+      {/* Original clinic portal - keep this route for backward compatibility */}
       <ProtectedRoute 
         path="/clinic-portal" 
         component={ClinicPortalPage} 
@@ -156,7 +163,7 @@ function Router() {
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       <Route path="/clinic">
-        {() => <Redirect to="/clinic-portal" />}
+        {() => <Redirect to="/simple-clinic" />}
       </Route>
       {/* Redirect all test routes to home */}
       <Route path="/test">
