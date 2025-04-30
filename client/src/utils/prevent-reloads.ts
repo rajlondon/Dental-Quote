@@ -1,96 +1,88 @@
 /**
- * Anti-refresh utility that prevents unwanted page reloads
- * This utility intercepts and blocks automatic page refreshes 
- * that might be triggered by various parts of the application
+ * Utility to prevent unwanted page reloads in the clinic portal
+ * This is especially important for preventing WebSocket reconnection cycles
  */
 
-// Store original reload function
-const originalReload = window.location.reload;
+let initialized = false;
 
-// Count of prevented reloads for debugging
-let preventedReloads = 0;
-
-// Log info about blocked reloads
-const logBlockedReload = () => {
-  preventedReloads++;
-  console.log(`⚠️ Prevented page reload #${preventedReloads} at ${new Date().toISOString()}`);
-  console.trace('Reload call stack');
-};
-
-// Whitelist of allowed reload paths
-const allowedReloadPaths = [
-  '/portal-login', // Allow refreshes on login page
-  '/patient-portal', // Allow refreshes on patient portal
-];
-
-/**
- * Initialize the reload prevention system
- * Call this function early in your application
- */
 export function initPreventReloads() {
-  console.log('🛡️ Initializing reload prevention system');
+  if (initialized) {
+    console.log('Reload prevention already initialized');
+    return;
+  }
   
-  // Override the reload method
-  window.location.reload = function(...args) {
-    const currentPath = window.location.pathname;
+  console.log('Initializing reload prevention');
+  
+  // Only run in browser environment
+  if (typeof window === 'undefined') return;
+  
+  // Store original reload function
+  const originalReload = window.location.reload;
+  
+  // Override reload to check for clinic portal pages
+  window.location.reload = function customReload(...args) {
+    const isClinicPortal = window.location.pathname.includes('clinic-portal') || 
+                          window.location.pathname.includes('/clinic');
     
-    // Allow reloads on whitelisted paths
-    if (allowedReloadPaths.some(path => currentPath.includes(path))) {
-      console.log(`✅ Allowing reload on whitelisted path: ${currentPath}`);
+    if (isClinicPortal) {
+      console.warn('BLOCKED: Automatic page reload prevented in clinic portal');
+      console.trace('Reload stack trace');
+      return false;
+    } else {
       return originalReload.apply(this, args);
     }
-    
-    // Block reload on clinic portal specifically
-    if (currentPath.includes('clinic-portal')) {
-      logBlockedReload();
-      return undefined; // Don't reload
-    }
-    
-    // Default behavior - allow reload but log it
-    console.log(`⚠️ Detected reload on path: ${currentPath}`);
-    return originalReload.apply(this, args);
   };
   
-  // Create a property descriptor that prevents overriding our custom reload
-  Object.defineProperty(window.location, 'reload', {
-    writable: false,
-    configurable: false
-  });
-  
-  // Disable history-based refreshes (navigation to same URL)
+  // Intercept history API in clinic portal
   const originalPushState = history.pushState;
-  history.pushState = function(...args) {
-    const currentPath = window.location.pathname;
-    const newPath = args[2];
+  const originalReplaceState = history.replaceState;
+  
+  history.pushState = function customPushState(...args) {
+    const isClinicPortal = window.location.pathname.includes('clinic-portal') || 
+                          window.location.pathname.includes('/clinic');
     
-    // Check if trying to navigate to same URL (which causes a refresh)
-    if (currentPath === newPath && currentPath.includes('clinic-portal')) {
-      logBlockedReload();
-      return undefined; // Block redundant navigation
+    if (isClinicPortal) {
+      console.log('HISTORY API: pushState in clinic portal', args);
     }
-    
     return originalPushState.apply(this, args);
   };
   
-  // Add protection against refresh shortcuts (F5, Ctrl+R)
-  window.addEventListener('keydown', (e) => {
-    // Block F5 and Ctrl+R on clinic portal
-    if (window.location.pathname.includes('clinic-portal') && 
-        (e.key === 'F5' || (e.ctrlKey && e.key === 'r'))) {
-      e.preventDefault();
-      logBlockedReload();
+  history.replaceState = function customReplaceState(...args) {
+    const isClinicPortal = window.location.pathname.includes('clinic-portal') || 
+                          window.location.pathname.includes('/clinic');
+    
+    if (isClinicPortal) {
+      console.log('HISTORY API: replaceState in clinic portal', args);
+    }
+    return originalReplaceState.apply(this, args);
+  };
+  
+  // Capture reload key combinations
+  window.addEventListener('keydown', function(e) {
+    const isClinicPortal = window.location.pathname.includes('clinic-portal') || 
+                          window.location.pathname.includes('/clinic');
+    
+    if (isClinicPortal) {
+      // Prevent F5 and Ctrl+R
+      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+        console.warn('BLOCKED: Manual reload attempt in clinic portal');
+        e.preventDefault();
+        return false;
+      }
+    }
+  }, { capture: true });
+  
+  // Add custom event for when a component manually forces a reload
+  window.addEventListener('manual-force-reload', function(e) {
+    const isClinicPortal = window.location.pathname.includes('clinic-portal') || 
+                          window.location.pathname.includes('/clinic');
+    
+    if (isClinicPortal) {
+      console.warn('DETECTED: Manual forced reload in clinic portal');
+      console.trace('Manual reload stack trace');
       return false;
     }
   });
   
-  console.log('✅ Reload prevention system active');
-}
-
-/**
- * Force a reload (bypassing the prevention mechanism)
- * Use this when a reload is actually needed
- */
-export function forceReload() {
-  console.log('⚠️ Force reloading page...');
-  originalReload.apply(window.location);
+  initialized = true;
 }

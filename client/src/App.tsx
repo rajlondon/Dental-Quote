@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,7 +7,6 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
-import { useEffect } from "react";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
 
@@ -50,7 +50,8 @@ import FullMouthPage from "@/pages/FullMouthPage";
 import BookingPage from "@/pages/BookingPage";
 import PatientPortalPage from "@/pages/PatientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
-import ClinicPortalPage from "@/pages/ClinicPortalPage";
+// Special import with WebSocket disabled for clinic portal to prevent refresh cycles
+const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
 import PortalLoginPage from "@/pages/PortalLoginPage";
 import PortalTestingHub from "@/pages/PortalTestingHub";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
@@ -78,8 +79,8 @@ import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
-import { Suspense } from "react";
 import ClinicGuard from "@/components/ClinicGuard";
+import { Suspense } from "react";
 
 function Router() {
   return (
