@@ -1,43 +1,69 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import api from "@/lib/api"; // Import our configured API client
+import { useQuery } from "@tanstack/react-query";
 
-type Auth = { loading: boolean; ok: boolean };
-const Ctx = createContext<Auth>({ loading: true, ok: false });
+// Enhanced Auth type with user data
+type Auth = { 
+  loading: boolean; 
+  ok: boolean;
+  user: any | null; // Add user data to the context
+};
+
+// Initialize context with loading state
+const Ctx = createContext<Auth>({ loading: true, ok: false, user: null });
 export const useClinicAuth = () => useContext(Ctx);
 
+// Function to fetch user data with proper credentials
+async function fetchMe() {
+  try {
+    // Use our configured API client to ensure cookies are sent
+    const response = await api.get("/api/auth/user");
+    return response.data.user;
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return null;
+  }
+}
+
 export function ClinicAuthProvider({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = useState(true);
-  const [ok, setOK] = useState(false);
+  // Using React Query to properly fetch and cache user data
+  // This is the key part of the fix - we use the isLoading state to prevent
+  // premature redirect decisions, and we WAIT for the API call to complete
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    queryFn: fetchMe,
+    staleTime: 30000,         // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: false, // Don't refetch when window gets focus
+    retry: 1,                 // Retry once if the request fails
+  });
 
+  // Determine authentication status based on user data
+  const ok = !!user && user.role === "clinic_staff";
+
+  // Log diagnostic information
   useEffect(() => {
-    const token = localStorage.getItem("clinicToken");
-    if (!token) {
-      // No token exists, we're not authenticated
-      console.log("No clinic token found in localStorage");
-      return setLoading(false);
+    if (isLoading) {
+      console.log("ClinicAuth: Loading user data...");
+    } else if (ok) {
+      console.log("ClinicAuth: User authenticated as clinic staff", user?.email);
+      
+      // Store a session marker to prevent repeated redirects
+      sessionStorage.setItem('clinic_auth_timestamp', Date.now().toString());
+    } else {
+      console.log("ClinicAuth: User not authenticated or not clinic staff");
     }
+  }, [isLoading, ok, user]);
 
-    // Set token in axios defaults
-    console.log("Found clinic token, checking validity...");
-    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-    
-    // CRITICAL FIX: Add withCredentials to ensure cookies are sent
-    // This is needed for clinic portal authentication to work consistently
-    
-    // Check if token is valid - we use the existing session authentication
-    axios.get("/api/auth/clinic/me", { withCredentials: true })
-         .then((response) => {
-           console.log("Clinic token valid, user authenticated");
-           setOK(true);
-         })
-         .catch((error) => {
-           console.error("Clinic authentication failed:", error);
-           localStorage.removeItem("clinicToken");
-         })
-         .finally(() => {
-           setLoading(false);
-         });
-  }, []);
-
-  return <Ctx.Provider value={{ loading, ok }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider 
+      value={{ 
+        loading: isLoading, 
+        ok, 
+        user 
+      }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
 }

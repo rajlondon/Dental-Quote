@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
               
               return userData;
-            } catch (error) {
+            } catch (error: any) { // Type error as any to access properties safely
               if (error.response?.status === 401) {
                 console.warn("Authentication failed - session may have expired");
                 // Clear cache on authentication failure
@@ -160,21 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 sessionStorage.removeItem('cached_user_timestamp');
                 return null;
               }
-              throw new Error(`Failed to fetch user data: ${error.message}`);
+              throw new Error(`Failed to fetch user data: ${error.message || 'Unknown error'}`);
             }
-            
-            // Cache the user data for future use
-            if (userData) {
-              sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
-              sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-            } else {
-              // Clear cache if user is null
-              sessionStorage.removeItem('cached_user_data');
-              sessionStorage.removeItem('cached_user_timestamp');
-            }
-            
-            return userData;
-          } catch (error) {
+          } catch (error: any) {
             console.error("Error fetching user data:", error);
             return null;
           }
