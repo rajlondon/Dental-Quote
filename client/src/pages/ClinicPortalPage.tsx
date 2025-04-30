@@ -47,13 +47,42 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 
-const ClinicPortalPage: React.FC = () => {
+interface ClinicPortalPageProps {
+  disableAutoRefresh?: boolean;
+}
+
+const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh = false }) => {
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
+  
+  // When disableAutoRefresh is true, block any programmatic refreshes
+  React.useEffect(() => {
+    if (disableAutoRefresh && typeof window !== 'undefined') {
+      console.log("🛡️ Setting up refresh prevention for ClinicPortalPage");
+      
+      // Store original reload function
+      const originalReload = window.location.reload;
+      
+      // Override window.location.reload
+      window.location.reload = function(...args) {
+        if (window.location.pathname.includes('clinic-portal')) {
+          console.log("🛡️ Blocked programmatic page reload on clinic portal");
+          return undefined; 
+        } else {
+          return originalReload.apply(this, args);
+        }
+      };
+      
+      // Cleanup function
+      return () => {
+        window.location.reload = originalReload;
+      };
+    }
+  }, [disableAutoRefresh]);
 
   // Get auth context for user info and logout functionality
   const { user, logoutMutation } = useAuth();

@@ -8,7 +8,6 @@ import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 import { useEffect } from "react";
 import { initPreventReloads } from "@/utils/prevent-reloads";
-import SimpleClinicPortal from "@/pages/SimpleClinicPortal";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -149,9 +148,9 @@ function Router() {
       <ProtectedRoute 
         path="/clinic-portal" 
         component={() => {
-          // Use simplified component without any automatic refresh
-          console.log("🔒 Using SimpleClinicPortal component with minimal feature set");
-          return <SimpleClinicPortal />;
+          // Modified ClinicPortalPage that disables auto-refreshes
+          console.log("🔒 Using original ClinicPortalPage with refresh prevention");
+          return <ClinicPortalPage disableAutoRefresh={true} />;
         }} 
         requiredRole="clinic_staff" 
       />
