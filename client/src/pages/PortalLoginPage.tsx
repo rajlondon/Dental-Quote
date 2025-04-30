@@ -18,6 +18,41 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
+// Debug tracking for reload issue - remove after debugging
+function setupReloadTracker() {
+  if (typeof window !== 'undefined') {
+    // Only set up once
+    if ((window as any).__reloadTrackerSetup) return;
+    (window as any).__reloadTrackerSetup = true;
+    
+    console.log("🔍 Setting up reload tracker");
+    
+    // Track events
+    ['visibilitychange', 'message', 'beforeunload'].forEach(e =>
+      window.addEventListener(e, () => console.log('EVENT', e, performance.now())));
+
+    // Intercept reload calls
+    const originalReload = window.location.reload;
+    window.location.reload = function() {
+      console.trace('🔄 RELOAD called at', performance.now());
+      return originalReload.call(window.location);
+    };
+    
+    // Intercept history navigation
+    const originalPushState = history.pushState;
+    history.pushState = function(state: any, title: string, url?: string | URL | null) {
+      console.trace('📌 pushState called at', performance.now(), { state, title, url });
+      return originalPushState.call(history, state, title, url);
+    };
+    
+    const originalReplaceState = history.replaceState;
+    history.replaceState = function(state: any, title: string, url?: string | URL | null) {
+      console.trace('📌 replaceState called at', performance.now(), { state, title, url });
+      return originalReplaceState.call(history, state, title, url);
+    };
+  }
+}
+
 // Login form schema
 const loginSchema = z.object({
   email: z.string().email({
@@ -63,6 +98,11 @@ const PortalLoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
   const [selectedClinicName, setSelectedClinicName] = useState("");
+  
+  // Set up reload tracking for debugging the clinic portal issue
+  useEffect(() => {
+    setupReloadTracker();
+  }, []);
   
   // Check if user is already authenticated
   useEffect(() => {
