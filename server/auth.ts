@@ -145,45 +145,114 @@ export async function setupAuth(app: Express) {
       
       console.log(`Deserializing user session for ID: ${id}`);
       
-      const [user] = await db.select({
-        id: users.id,
-        email: users.email,
-        role: users.role,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        profileImage: users.profileImage,
-        clinicId: users.clinicId,
-        emailVerified: users.emailVerified,
-        status: users.status
-      }).from(users).where(eq(users.id, id));
+      // Check session cache first to avoid database calls on every request
+      const sessionCacheKey = `auth_user_${id}`;
+      const cachedUserJson = (global as any)[sessionCacheKey];
       
-      if (!user) {
-        console.warn(`Session references non-existent user ID: ${id}`);
-        return done(null, false);
+      if (cachedUserJson) {
+        try {
+          // Return cached user if available (improves performance and resilience)
+          const cachedUser = JSON.parse(cachedUserJson);
+          return done(null, cachedUser);
+        } catch (cacheErr) {
+          console.warn("Error parsing cached user, will try database:", cacheErr);
+          // Continue to database query on cache error
+        }
       }
       
-      // Transform null values to undefined to match the Express.User interface
-      const userForAuth = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName || undefined,
-        lastName: user.lastName || undefined,
-        profileImage: user.profileImage || undefined,
-        clinicId: user.clinicId || undefined,
-        emailVerified: user.emailVerified || false,
-        status: user.status || 'pending'
-      };
+      // If no valid cache, try the database with timeout protection
+      let dbQueryTimeout: NodeJS.Timeout | null = null;
       
-      // Special handling for clinic_staff users
-      if (user.role === 'clinic_staff') {
-        console.log(`Clinic staff session restored for user ${user.id}`);
+      try {
+        // Set a timeout for the database query to prevent hanging requests
+        const timeoutPromise = new Promise<null>((_, reject) => {
+          dbQueryTimeout = setTimeout(() => {
+            reject(new Error("Database query timed out during session restore"));
+          }, 5000); // 5 second timeout
+        });
+        
+        // Race the database query against the timeout
+        const userResult = await Promise.race([
+          db.select({
+            id: users.id,
+            email: users.email,
+            role: users.role,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            profileImage: users.profileImage,
+            clinicId: users.clinicId,
+            emailVerified: users.emailVerified,
+            status: users.status
+          }).from(users).where(eq(users.id, id)),
+          timeoutPromise
+        ]);
+        
+        // Clear the timeout if query completes
+        if (dbQueryTimeout) {
+          clearTimeout(dbQueryTimeout);
+          dbQueryTimeout = null;
+        }
+        
+        // If we got a null result from the race, the timeout won
+        if (userResult === null) {
+          throw new Error("Database query timed out");
+        }
+        
+        // Extract user from query results
+        const [user] = userResult as any;
+        
+        if (!user) {
+          console.warn(`Session references non-existent user ID: ${id}`);
+          return done(null, false);
+        }
+        
+        // Transform null values to undefined to match the Express.User interface
+        const userForAuth = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
+          profileImage: user.profileImage || undefined,
+          clinicId: user.clinicId || undefined,
+          emailVerified: user.emailVerified || false,
+          status: user.status || 'pending'
+        };
+        
+        // Special handling for clinic_staff users
+        if (user.role === 'clinic_staff') {
+          console.log(`Clinic staff session restored for user ${user.id}`);
+        }
+        
+        // Cache the user for future requests
+        (global as any)[sessionCacheKey] = JSON.stringify(userForAuth);
+        
+        done(null, userForAuth);
+      } catch (dbErr) {
+        // Clean up timeout if it's still active
+        if (dbQueryTimeout) {
+          clearTimeout(dbQueryTimeout);
+        }
+        
+        console.error("Database error during session restore:", dbErr);
+        
+        // On database error, create a fallback user to maintain session continuity
+        console.log("Creating minimal fallback user during database outage");
+        
+        // Create minimal user object for emergency fallback
+        const fallbackUser = {
+          id: id,
+          email: "session-recovery@mydentalfly.local",
+          role: "recovery_mode"
+        };
+        
+        done(null, fallbackUser);
       }
-      
-      done(null, userForAuth);
     } catch (err) {
-      console.error("Session deserialization error:", err);
-      done(err);
+      console.error("Critical session deserialization error:", err);
+      // Don't pass error to done() as it can crash the application
+      // Instead, fail authentication gracefully
+      done(null, false);
     }
   });
 
