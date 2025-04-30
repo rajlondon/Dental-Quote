@@ -1,0 +1,76 @@
+ rest-express@1.0.0 dev
+Setting up WebSocket for Neon Serverless in Node.js environment
+Stripe client initialized successfully
+🔧 Running in DEVELOPMENT mode - using local storage by default
+Storage mode: local (DEVELOPMENT environment)
+Attempting to initialize S3 client...
+S3 configuration check:
+  - Access Key exists: true
+  - Secret Key exists: true
+  - Region: eu-north-1
+  - Bucket: mydentalfly-documents-prod
+  
+[INFO] 2025-04-30T12:24:44.361Z
+Error: AWS S3 client initialized successfully
+---
+S3 client created successfully
+Storage provider from config: local
+CloudStorage configured: true
+Environment S3 keys exist: true
+Environment has S3 bucket: true
+Environment: DEVELOPMENT
+FORCED: Using AWS S3 storage (keys are configured)
+File storage configured to use: aws-s3
+Gemini API initialized with API key: Key is set
+Using model: gemini-pro with controlled temperature
+AWS credentials not provided, using local storage
+✅ Test routes registered (only available in development mode)
+WebSocket service initialized
+WebSocket service initialized for patient-clinic data synchronization
+12:24:44 PM [express] serving on port 5000
+12:24:44 PM [express] Server is accessible at http://0.0.0.0:5000
+12:24:44 PM [express] For Replit environments, use the "Open in new tab" button
+✅ Database connection successful
+ℹ️ Admin user already exists
+ℹ️ Clinic user already exists
+ℹ️ Patient user already exists
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+12:24:56 PM [express] GET /api/auth/user 401 in 2ms :: {"success":false,"message":"Not authenticated"}
+12:25:58 PM [vite] hmr update /src/pages/PortalLoginPage.tsx, /src/index.css?v=MMC12fo5yj17d0kHx9dg
+12:26:14 PM [vite] hmr update /src/pages/PortalLoginPage.tsx, /src/index.css?v=MMC12fo5yj17d0kHx9dg (x2)
+12:26:35 PM [vite] hmr update /src/pages/PortalLoginPage.tsx, /src/index.css?v=MMC12fo5yj17d0kHx9dg (x3)
+12:26:51 PM [express] GET /api/auth/user 401 in 1ms :: {"success":false,"message":"Not authenticated"}
+Deserializing user session for ID: 40
+Clinic staff session restored for user 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+12:27:35 PM [express] GET /api/auth/user 304 in 74ms :: {"success":true,"user":{"id":40,"email":"clin…
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+12:29:30 PM [express] GET /api/auth/user 304 in 75ms :: {"success":true,"user":{"id":40,"email":"clin…
+New clinic_staff client registered with ID: 40
+Client 40 disconnected
+Using cached user session for ID: 40
+12:30:29 PM [express] GET /api/auth/user 304 in 77ms :: {"success":true,"user":{"id":40,"email":"clin…
+Using cached user session for ID: 40
+New clinic_staff client registered with ID: 40
+12:31:26 PM [vite] hmr update /src/pages/PortalLoginPage.tsx, /src/index.css?v=MMC12fo5yj17d0kHx9dg (x4)
+Client 40 disconnected
+12:32:12 PM [express] GET /api/auth/user 401 in 1ms :: {"success":false,"message":"Not authenticated"}
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+Using cached user session for ID: 40
+12:32:27 PM [express] GET /api/auth/user 304 in 73ms :: {"success":true,"user":{"id":40,"email":"clin…
+New clinic_staff client registered with ID: 40
+Already authenticated as clinic staff with same email, reusing session
+12:33:27 PM [express] POST /api/auth/login 200 in 204ms :: {"success":true,"user":{"id":40,"email":"c…
+Client 40 disconnected
