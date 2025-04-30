@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Route, Redirect } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface ProtectedRouteProps {
   path: string;
@@ -15,28 +15,65 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   // Check if user is logged in and has the required role (if specified)
   const hasAccess = user && (!requiredRole || user.role === requiredRole);
   
-  // Use local sessionStorage to track if this is a fresh login (avoid double refresh)
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+  
+  // Use a ref to track if we're already processing to prevent duplicate state changes
+  const isProcessingRef = useRef(false);
+  
+  // Check if this is the clinic staff portal and determine ready state
   const [readyForClinic, setReadyForClinic] = useState(() => {
-    // If not clinic staff or we've already done initial render, we're ready
+    // If not clinic staff, always ready
     if (requiredRole !== 'clinic_staff') return true;
     
-    // Check if we've already completed an initial render for this session
-    const hasRendered = sessionStorage.getItem('clinic_portal_rendered');
-    return !!hasRendered;
+    // Check if we have a valid user and role match
+    if (!user || user.role !== 'clinic_staff') return false;
+    
+    // Get current timestamp to detect session validity
+    const currentTime = Date.now();
+    const lastRenderTime = parseInt(sessionStorage.getItem('clinic_portal_timestamp') || '0', 10);
+    
+    // If we rendered recently (within 5 minutes), assume session is valid
+    const isRecentRender = (currentTime - lastRenderTime) < 300000; // 5 minutes
+    
+    // Return true if we've rendered recently, preventing reload
+    return isRecentRender;
   });
   
+  // Update session timestamp when component successfully renders with valid user
   useEffect(() => {
-    // Only for initial clinic staff auth
-    if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic) {
-      console.log("Setting up clinic staff session...");
+    // Only apply for clinic staff users with matching role
+    if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff') {
+      // Save current timestamp to track last successful render
+      const timestamp = Date.now().toString();
+      sessionStorage.setItem('clinic_portal_timestamp', timestamp);
       
-      // Mark as ready immediately, but with requestAnimationFrame to avoid layout thrashing
-      requestAnimationFrame(() => {
-        // Mark that we've rendered this session
-        sessionStorage.setItem('clinic_portal_rendered', 'true');
-        setReadyForClinic(true);
-        console.log("Clinic staff session fully established");
-      });
+      console.log(`Clinic portal session timestamp updated: ${new Date(parseInt(timestamp)).toLocaleTimeString()}`);
+    }
+    
+    // Cleanup function
+    return () => {
+      console.log("ProtectedRoute unmounting, setting isMounted to false");
+      isMountedRef.current = false;
+    };
+  }, [user, requiredRole]);
+  
+  // Handle clinic staff session establishment
+  useEffect(() => {
+    // Only execute for clinic staff that's not ready yet
+    if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic && !isProcessingRef.current) {
+      console.log("Setting up clinic staff session...");
+      isProcessingRef.current = true;
+      
+      // Use a minimal delay to ensure session is established properly
+      setTimeout(() => {
+        // Only update if component is still mounted
+        if (isMountedRef.current) {
+          setReadyForClinic(true);
+          console.log("Clinic staff session fully established");
+        }
+        isProcessingRef.current = false;
+      }, 100);
     }
   }, [user, requiredRole, readyForClinic]);
 
