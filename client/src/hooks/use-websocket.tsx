@@ -150,10 +150,47 @@ export const useWebSocket = (): WebSocketHookResult => {
     }
   }, [user, toast]);
   
+  // State to track if initial connection has been made
+  const initialConnectionMadeRef = useRef(false);
+  const lastLoginTimestampRef = useRef(0);
+  
+  // Track how often we're initializing to avoid repeated reconnects
+  const connectionAttemptCountRef = useRef(0);
+  
   // Initialize WebSocket on login
   useEffect(() => {
+    // If user just logged in (check session flag)
+    const justLoggedIn = sessionStorage.getItem('just_logged_in') === 'true';
+    const loginTimestamp = parseInt(sessionStorage.getItem('login_timestamp') || '0', 10);
+    
+    // Check if this is a new login session
+    const isNewLoginSession = justLoggedIn && loginTimestamp > lastLoginTimestampRef.current;
+    
+    if (isNewLoginSession) {
+      console.log("New login session detected, updating timestamp", loginTimestamp);
+      lastLoginTimestampRef.current = loginTimestamp;
+      initialConnectionMadeRef.current = false;
+      connectionAttemptCountRef.current = 0;
+      
+      // Clear the logged in flag (only want to detect it once)
+      sessionStorage.removeItem('just_logged_in');
+    }
+    
     if (user) {
-      initializeSocket();
+      // Only initialize if not already connected and we haven't tried too many times
+      if (!initialConnectionMadeRef.current && connectionAttemptCountRef.current < 2) {
+        console.log(`WebSocket initialization attempt #${connectionAttemptCountRef.current + 1}`);
+        connectionAttemptCountRef.current++;
+        
+        // Add a slight delay before connecting to avoid race conditions
+        const timeoutId = setTimeout(() => {
+          console.log("Initializing WebSocket connection for user:", user.id);
+          initializeSocket();
+          initialConnectionMadeRef.current = true;
+        }, 300);
+        
+        return () => clearTimeout(timeoutId);
+      }
       
       // Setup manual close event listener (for logout scenarios)
       const handleManualClose = () => {
@@ -187,9 +224,14 @@ export const useWebSocket = (): WebSocketHookResult => {
         document.removeEventListener('manual-websocket-close', handleManualClose);
       };
     } else {
+      // Reset connection state when user logs out
+      initialConnectionMadeRef.current = false;
+      connectionAttemptCountRef.current = 0;
+      
       // Close socket on logout
       if (socketRef.current) {
-        socketRef.current.close();
+        (socketRef.current as any)._manualClose = true;
+        socketRef.current.close(1000, "User logged out");
         socketRef.current = null;
       }
       setConnected(false);

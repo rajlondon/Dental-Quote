@@ -202,18 +202,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
-      // @ts-ignore - Check for custom error properties
-      if (error.code === "EMAIL_NOT_VERIFIED") {
+      // Define a custom error type with the properties we need
+      interface VerificationError extends Error {
+        code?: string;
+        email?: string;
+      }
+      
+      // Cast the error to our custom type
+      const verificationError = error as VerificationError;
+      
+      // Check for specific verification error
+      if (verificationError.code === "EMAIL_NOT_VERIFIED") {
         toast({
           title: "Email verification required",
           description: "Your email has not been verified yet. Please check your inbox for the verification link.",
           variant: "destructive",
         });
         
-        // @ts-ignore - Use the email from the error
-        if (error.email) {
+        // Use the email from the custom error property
+        if (verificationError.email) {
           // Redirect to verification sent page to allow resending
-          window.location.href = `/verification-sent?email=${encodeURIComponent(error.email)}`;
+          window.location.href = `/verification-sent?email=${encodeURIComponent(verificationError.email)}`;
         }
         return;
       }
