@@ -61,35 +61,55 @@ const ClinicPortalPage: React.FC = () => {
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // Effect for handling first-time initialization
-  useEffect(() => {
-    // If this is the first load and we have a user
-    if (!initialLoadComplete.current && user) {
-      console.log("ClinicPortalPage: First-time initialization with user:", user.id);
+  // Check for existing initialization timestamp to avoid refresh loops
+  const shouldInitialize = React.useCallback(() => {
+    const existingTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
+    
+    if (existingTimestamp) {
+      const timestamp = parseInt(existingTimestamp, 10);
+      const now = Date.now();
+      const age = now - timestamp;
       
-      // Set initialization flag to prevent repeated execution
-      initialLoadComplete.current = true;
-      
-      // Mark the portal as initialized in session storage
-      const timestamp = Date.now();
-      sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
-      
-      // Reset any "just logged in" flags 
-      sessionStorage.removeItem('just_logged_in');
-      
-      // Pre-cache the user data
-      if (user) {
-        sessionStorage.setItem('cached_user_data', JSON.stringify(user));
-        sessionStorage.setItem('cached_user_timestamp', timestamp.toString());
+      // If the timestamp is less than 10 seconds old, don't re-initialize
+      if (age < 10000) {
+        console.log(`Skipping initialization, recent timestamp exists (${age}ms old)`);
+        return false;
       }
     }
+    return true;
+  }, []);
+  
+  // Effect for handling first-time initialization
+  useEffect(() => {
+    // Skip initialization if not needed
+    if (!user || initialLoadComplete.current || !shouldInitialize()) {
+      return;
+    }
+    
+    console.log("ClinicPortalPage: First-time initialization with user:", user.id);
+    
+    // Set initialization flag to prevent repeated execution
+    initialLoadComplete.current = true;
+    
+    // Mark the portal as initialized in session storage
+    const timestamp = Date.now();
+    sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+    
+    // Reset any "just logged in" flags 
+    sessionStorage.removeItem('just_logged_in');
+    
+    // Pre-cache the user data
+    sessionStorage.setItem('cached_user_data', JSON.stringify(user));
+    sessionStorage.setItem('cached_user_timestamp', timestamp.toString());
+    
+    // Do not force a page reload as this causes navigation loop issues
     
     // Cleanup function for component unmount
     return () => {
-      console.log("ProtectedRoute unmounting, setting isMounted to false");
+      console.log("ClinicPortalPage unmounting, setting isMounted to false");
       isMounted.current = false;
     };
-  }, [user]);
+  }, [user, shouldInitialize]);
   
   // Component unmount cleanup effect
   useEffect(() => {
