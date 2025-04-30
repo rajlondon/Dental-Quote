@@ -58,7 +58,26 @@ router.post("/api/portal/update-profile", ensureAuthenticated, csrfProtection, a
     const sanitizedData: Record<string, any> = {};
     Object.keys(updateData).forEach(key => {
       if (allowedFields.includes(key)) {
-        sanitizedData[key] = updateData[key];
+        // Handle mapping of camelCase field names to snake_case DB columns
+        const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        
+        // Special handling for JSON fields
+        if (key === 'medicalInfo') {
+          sanitizedData['medical_info'] = updateData[key];
+        } else if (key === 'emergencyContact') {
+          sanitizedData['emergency_contact'] = updateData[key];
+        } else if (key === 'dateOfBirth') {
+          sanitizedData['date_of_birth'] = updateData[key];
+        } else if (key === 'preferredLanguage') {
+          sanitizedData['preferred_language'] = updateData[key];
+        } else if (key === 'passportNumber') {
+          sanitizedData['passport_number'] = updateData[key];
+        } else if (key === 'profileImage') {
+          sanitizedData['profile_image'] = updateData[key];
+        } else {
+          // For fields that don't need special handling
+          sanitizedData[dbKey] = updateData[key];
+        }
       }
     });
 
@@ -68,13 +87,27 @@ router.post("/api/portal/update-profile", ensureAuthenticated, csrfProtection, a
     }
 
     // Mark profile as complete if critical fields are filled
-    const criticalFields = ['firstName', 'lastName', 'phone'];
-    let isProfileComplete = criticalFields.every(field => 
-      sanitizedData[field] !== undefined || (req.user && req.user[field as keyof typeof req.user])
-    );
+    // Map to database field names
+    const criticalFieldsMapping = {
+      'firstName': 'first_name', 
+      'lastName': 'last_name', 
+      'phone': 'phone'
+    };
+    
+    // Check if critical fields are present in sanitized data or in existing user data
+    let isProfileComplete = Object.entries(criticalFieldsMapping).every(([fieldName, dbField]) => {
+      // Check if field is in our sanitized data
+      if (sanitizedData[dbField] !== undefined) {
+        return true;
+      }
+      
+      // If not in sanitized data, check existing user data
+      const user_any = req.user as any;
+      return user_any && user_any[fieldName] !== null && user_any[fieldName] !== undefined;
+    });
     
     if (isProfileComplete) {
-      sanitizedData.profileComplete = true;
+      sanitizedData['profile_complete'] = true;
     }
 
     // Update user in database
@@ -349,16 +382,17 @@ router.get("/api/portal/extended-profile", ensureAuthenticated, async (req, res)
       });
     }
 
-    // Extract just the fields we need
-    const { 
-      medicalInfo, 
-      emergencyContact,
-      address,
-      dateOfBirth,
-      nationality,
-      preferredLanguage,
-      passportNumber
-    } = userData;
+    // Extract just the fields we need, handling potentially missing fields
+    // TypeScript doesn't know about our new fields, so we need to use type assertions
+    const userData_any = userData as any;
+    
+    const medicalInfo = userData_any.medical_info || null;
+    const emergencyContact = userData_any.emergency_contact || null;
+    const address = userData_any.address || null;
+    const dateOfBirth = userData_any.date_of_birth || null;
+    const nationality = userData_any.nationality || null;
+    const preferredLanguage = userData_any.preferred_language || null;
+    const passportNumber = userData_any.passport_number || null;
     
     res.json({
       success: true,

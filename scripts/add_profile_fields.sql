@@ -1,0 +1,9 @@
+-- Add additional fields to users table
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS address VARCHAR(255),
+ADD COLUMN IF NOT EXISTS date_of_birth VARCHAR(20),
+ADD COLUMN IF NOT EXISTS nationality VARCHAR(100),
+ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(50) DEFAULT 'English',
+ADD COLUMN IF NOT EXISTS passport_number VARCHAR(50),
+ADD COLUMN IF NOT EXISTS emergency_contact JSONB,
+ADD COLUMN IF NOT EXISTS medical_info JSONB;
