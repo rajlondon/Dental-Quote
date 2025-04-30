@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
+import { useWebSocketWatchdog } from './use-websocket-watchdog';
 
 // Define WebSocket message types
 export interface WebSocketMessage {
