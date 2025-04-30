@@ -116,12 +116,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               
               // More aggressive caching when needed (10s instead of 5s)
               // Also extend caching when prevent flag is active
-              const shouldUseCache = preventDuplicateQueries.current ? (age < 30000) : (age < 10000);
+              // Significantly extend cache lifetime for clinic_staff to prevent refresh issues
+              // This is a key part of fixing the clinic portal refresh problem
+              const isCacheStillValid = preventDuplicateQueries.current ? (age < 60000) : (age < 30000);
+              
+              // Special extended caching for clinic staff
+              // This is critical to prevent the clinic portal refresh issue
+              const parsedUser = JSON.parse(cachedUserData);
+              const isClinicStaff = parsedUser?.role === 'clinic_staff';
+              const shouldUseCache = isClinicStaff ? isCacheStillValid : (age < 10000);
               
               if (shouldUseCache) {
-                console.log(`Using cached user data (${age}ms old) for request ${requestId}`);
-                const user = JSON.parse(cachedUserData);
-                return user;
+                console.log(`Using cached user data (${age}ms old, role: ${parsedUser?.role}) for request ${requestId}`);
+                return parsedUser;
               }
             }
             
