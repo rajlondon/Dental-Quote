@@ -44,12 +44,14 @@ export function useWebSocketWatchdog(
             title: 'Connection Issue',
             description: 'Connection to server was lost. Click to reconnect.',
             duration: 10000,
-            action: {
-              label: 'Reconnect',
-              onClick: () => {
-                reconnectCallback();
-              }
-            }
+            action: (
+              <button
+                onClick={() => reconnectCallback()}
+                className="bg-primary text-white px-3 py-1 rounded-md text-xs"
+              >
+                Reconnect
+              </button>
+            )
           });
           
           // Attempt to reconnect automatically as a fallback
