@@ -113,7 +113,7 @@ const PortalLoginPage: React.FC = () => {
     if (user && user.role === 'admin') {
       setLocation('/admin-portal');
     } else if (user && user.role === 'clinic_staff') {
-      setLocation('/simple-clinic');
+      setLocation('/clinic-portal');
     } else if (user && user.role === 'patient' && user.emailVerified) {
       setLocation('/client-portal');
     }
@@ -290,7 +290,7 @@ const PortalLoginPage: React.FC = () => {
         // Add delay to ensure caches are written before redirect
         setTimeout(() => {
           console.log("Redirecting to clinic portal with pre-cached session");
-          setLocation('/simple-clinic');
+          setLocation('/clinic-portal');
         }, 50);
       } else {
         // Default to patient portal for any other role
