@@ -332,6 +332,25 @@ export async function setupAuth(app: Express) {
     });
   });
 
+  // Add diagnostic middleware to log session and cookie information
+  app.use("/api/auth/user", (req, res, next) => {
+    console.log(`
+====== AUTH REQUEST DIAGNOSTICS ======
+Path: ${req.path}
+Method: ${req.method}
+Authenticated: ${req.isAuthenticated()}
+User ID: ${req.user?.id}
+User Role: ${req.user?.role}
+Has Cookie Header: ${!!req.headers.cookie}
+Cookie Length: ${req.headers.cookie ? req.headers.cookie.length : 0}
+Cookie Preview: ${req.headers.cookie ? req.headers.cookie.substring(0, 40) + '...' : 'NONE'}
+Session ID: ${req.sessionID || 'NONE'}
+Session Created: ${req.session.cookie.originalMaxAge !== undefined}
+======================================
+    `);
+    next();
+  });
+  
   // Current user endpoint
   app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated()) {

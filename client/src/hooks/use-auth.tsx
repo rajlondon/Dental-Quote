@@ -132,14 +132,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
             
-            // Fetch fresh data
+            // Fetch fresh data with credentials ALWAYS included
             console.log("Fetching fresh user data");
-            const res = await fetch("/api/auth/user");
+            const res = await fetch("/api/auth/user", {
+              credentials: 'include', // Critical fix: ALWAYS include credentials
+              headers: {
+                'Cache-Control': 'no-cache', // Prevent caching issues
+                'Pragma': 'no-cache'
+              }
+            });
             if (res.status === 401) {
+              console.warn("Authentication failed - session may have expired");
               return null;
             }
             if (!res.ok) {
-              throw new Error("Failed to fetch user data");
+              throw new Error(`Failed to fetch user data: ${res.status} ${res.statusText}`);
             }
             
             const data = await res.json();
