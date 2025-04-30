@@ -1,0 +1,78 @@
+Good — the session now survives; what you’re seeing is one last timer inside the clinic bundle that still forces two reloads (≈ 5 s then ≈ 2 s) and then keeps quiet. That pattern comes from a watchdog that tries to reconnect something (usually the WebSocket or a “heartbeat”) and, if it can’t, calls window.location.reload() exactly twice.
+
+Let’s kill that watchdog and be done.
+
+1 Find the timer in 30 seconds
+A. Console trap
+Open the Console (F12).
+
+Paste + Enter:
+
+js
+Copy
+Edit
+const origReload = window.location.reload.bind(window.location);
+window.location.reload = () => console.trace('🔄 RELOAD');       // log stack
+Click “Patients” (or any tab).
+
+When it flashes, you’ll see two stack-traces:
+
+php
+Copy
+Edit
+🔄 RELOAD
+    at watchdog (src/hooks/use-websocket.tsx:142:9)
+    ……
+Note the file and line (you’ll see the same place for both).
+That’s the only code path that still reloads the page.
+
+2 Patch the file (1-line)
+Open the file from the trace, e.g. client/src/hooks/use-websocket.tsx.
+
+You’ll find something like:
+
+ts
+Copy
+Edit
+// after socket disconnect
+setTimeout(() => {
+  if (socketRef.current?.readyState !== WebSocket.OPEN) {
+    window.location.reload();          // ← remove this
+  }
+}, 5000);
+
+setTimeout(() => {
+  if (socketRef.current?.readyState !== WebSocket.OPEN) {
+    window.location.reload();          // ← and this one
+  }
+}, 2000);
+Replace each reload with a gentle toast—or just do nothing:
+
+ts
+Copy
+Edit
+import { toast } from '@/components/ui/use-toast';
+
+setTimeout(() => {
+  if (socketRef.current?.readyState !== WebSocket.OPEN) {
+    toast.error('Connection lost – click to reconnect');
+    // you can call reconnectSocket() here instead of reloading
+  }
+}, 5000);
+Remove the second timer entirely; reconnect logic should live in the hook, not a full-page refresh.
+
+3 Re-build & retest
+DevTools → Network → clear.
+
+Log in → navigate through tabs.
+
+You should no longer see any 🔄 RELOAD traces, and there’s no flash.
+
+Why this is safe
+We’re touching one isolated timer; the rest of the portal stays intact.
+
+Admin/patient portals never had this watchdog, which is why they never flashed.
+
+If the socket really dies, users get a toast and can press “Refresh” themselves.
+
+Do this quick search-and-delete, deploy, and the double refresh is gone for good. If the stack-trace points to a different file, post that path and I’ll give the exact edit for 
