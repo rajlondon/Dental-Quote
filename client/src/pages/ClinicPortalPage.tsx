@@ -53,9 +53,55 @@ const ClinicPortalPage: React.FC = () => {
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const initialLoadComplete = React.useRef(false);
 
-  // Get auth context for logout functionality
-  const { logoutMutation } = useAuth();
+  // Get auth context for user info and logout functionality
+  const { user, logoutMutation } = useAuth();
+  
+  // Flag to track component mount status
+  const isMounted = React.useRef(true);
+  
+  // Effect for handling first-time initialization
+  useEffect(() => {
+    // If this is the first load and we have a user
+    if (!initialLoadComplete.current && user) {
+      console.log("ClinicPortalPage: First-time initialization with user:", user.id);
+      
+      // Set initialization flag to prevent repeated execution
+      initialLoadComplete.current = true;
+      
+      // Mark the portal as initialized in session storage
+      const timestamp = Date.now();
+      sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+      
+      // Reset any "just logged in" flags 
+      sessionStorage.removeItem('just_logged_in');
+      
+      // Pre-cache the user data
+      if (user) {
+        sessionStorage.setItem('cached_user_data', JSON.stringify(user));
+        sessionStorage.setItem('cached_user_timestamp', timestamp.toString());
+      }
+    }
+    
+    // Cleanup function for component unmount
+    return () => {
+      console.log("ProtectedRoute unmounting, setting isMounted to false");
+      isMounted.current = false;
+    };
+  }, [user]);
+  
+  // Component unmount cleanup effect
+  useEffect(() => {
+    return () => {
+      // Prevent WebSocket connection errors on unmount
+      if (isMounted.current) {
+        console.log("ClinicPortalPage unmounting, performing cleanup");
+        // Clear any stored session data
+        sessionStorage.removeItem('clinic_portal_active');
+      }
+    };
+  }, []);
   
   // Handle logout with simplified, more reliable cleanup sequence
   const handleLogout = async () => {
