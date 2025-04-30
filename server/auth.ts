@@ -129,12 +129,15 @@ export async function setupAuth(app: Express) {
     }
   ));
 
+  // User session cache to reduce database load
+  const userSessionCache = new Map<number, Express.User>();
+
   // Serialize user to session
   passport.serializeUser((user, done) => {
     done(null, user.id);
   });
 
-  // Deserialize user from session with improved error handling and logging
+  // Deserialize user from session with improved error handling and memory caching
   passport.deserializeUser(async (id: number, done) => {
     try {
       // First, validate the ID is actually a number
@@ -143,22 +146,16 @@ export async function setupAuth(app: Express) {
         return done(null, false);
       }
       
-      console.log(`Deserializing user session for ID: ${id}`);
-      
-      // Check session cache first to avoid database calls on every request
-      const sessionCacheKey = `auth_user_${id}`;
-      const cachedUserJson = (global as any)[sessionCacheKey];
-      
-      if (cachedUserJson) {
-        try {
-          // Return cached user if available (improves performance and resilience)
-          const cachedUser = JSON.parse(cachedUserJson);
-          return done(null, cachedUser);
-        } catch (cacheErr) {
-          console.warn("Error parsing cached user, will try database:", cacheErr);
-          // Continue to database query on cache error
+      // Check our fast in-memory session cache first
+      if (userSessionCache.has(id)) {
+        // Only log occasionally to reduce console noise
+        if (Math.random() < 0.01) { // Log 1% of cache hits
+          console.log(`Using cached user session for ID: ${id}`);
         }
+        return done(null, userSessionCache.get(id));
       }
+      
+      console.log(`Deserializing user session for ID: ${id}`);
       
       // If no valid cache, try the database with timeout protection
       let dbQueryTimeout: NodeJS.Timeout | null = null;
@@ -224,8 +221,8 @@ export async function setupAuth(app: Express) {
           console.log(`Clinic staff session restored for user ${user.id}`);
         }
         
-        // Cache the user for future requests
-        (global as any)[sessionCacheKey] = JSON.stringify(userForAuth);
+        // Cache the user in memory for future requests (much faster)
+        userSessionCache.set(id, userForAuth);
         
         done(null, userForAuth);
       } catch (dbErr) {
@@ -319,8 +316,18 @@ export async function setupAuth(app: Express) {
 
   // Logout endpoint
   app.post("/api/auth/logout", (req, res) => {
+    // Get user ID before logout to clear from cache
+    const userId = req.user?.id;
+    
     req.logout((err) => {
       if (err) return res.status(500).json({ success: false, message: "Logout failed" });
+      
+      // Clear user from session cache if we have the ID
+      if (userId && userSessionCache.has(userId)) {
+        userSessionCache.delete(userId);
+        console.log(`Cleared user ${userId} from session cache on logout`);
+      }
+      
       res.json({ success: true, message: "Logged out successfully" });
     });
   });
