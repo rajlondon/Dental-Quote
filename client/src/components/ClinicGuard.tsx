@@ -1,26 +1,45 @@
-import { Redirect } from "wouter";
-import { Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import React, { useEffect } from 'react';
+import { Redirect, useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
 
-export default function ClinicGuard({ children }: { children: JSX.Element }) {
-  const { user, isLoading } = useAuth();  // Already fetches /auth/user once
-  
-  // Wait for the auth check to complete
+// A simpler clinic guard that uses the standard auth mechanism
+const ClinicGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // If loading, show a loading spinner
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-2">
+      <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Verifying clinic staff access...</p>
       </div>
     );
   }
-  
-  // Check if user is authenticated and has clinic_staff role
-  if (!user || user.role !== "clinic_staff") {
-    console.log("ClinicGuard: Not authenticated as clinic staff, redirecting to login");
-    return <Redirect to="/portal-login" replace />;
+
+  // If no user is logged in, redirect to login
+  if (!user) {
+    return <Redirect to="/portal-login" />;
   }
-  
-  // User is authenticated and has the correct role
-  return children;
-}
+
+  // If user isn't a clinic role, redirect appropriately
+  if (user.role !== 'clinic_staff') {
+    // If admin, go to admin portal
+    if (user.role === 'admin') {
+      return <Redirect to="/admin-portal" />;
+    }
+    
+    // If patient, go to patient portal
+    if (user.role === 'patient') {
+      return <Redirect to="/patient-portal" />;
+    }
+    
+    // For any other role, go to home
+    return <Redirect to="/" />;
+  }
+
+  // Allow access to clinic staff
+  return <>{children}</>;
+};
+
+export default ClinicGuard;

@@ -90,64 +90,23 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // Simplified initialization check - we've disabled complex refresh-triggering logic
-  const shouldInitialize = React.useCallback(() => {
-    // Just check if the component needs initialization at all
-    return !initialLoadComplete.current;
-  }, []);
-  
-  // FIXED: Initialization effect with stronger refresh prevention
+  // SIMPLIFIED: Just a simple effect for initialization - no complicated checks
   useEffect(() => {
     // Skip if no user
     if (!user) {
       return;
     }
     
-    // IMPORTANT: Enhanced check for initialization with a more robust, multi-layered approach
-    // Check both local ref and session storage to ensure we don't initialize twice
-    if (initialLoadComplete.current || sessionStorage.getItem('clinic_portal_timestamp')) {
-      console.log("ClinicPortalPage: Already initialized, skipping to prevent refresh");
-      
-      // Make absolutely sure the timestamp exists even if the ref is true but storage was cleared
-      if (!sessionStorage.getItem('clinic_portal_timestamp')) {
-        const timestamp = Date.now();
-        sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
-        console.log("Restoring missing clinic_portal_timestamp:", timestamp);
-      } else {
-        console.log("Using existing clinic_portal_timestamp to prevent refresh");
-      }
-      
-      // Set the ref in case we have the opposite situation
-      initialLoadComplete.current = true;
-      
-      return;
-    }
+    console.log("ClinicPortalPage: Initializing for clinic staff user:", user.id);
     
-    console.log("ClinicPortalPage: Simple initialization for user:", user.id);
-    
-    // Set initialization flag to prevent repeated execution
+    // Simple straightforward initialization
     initialLoadComplete.current = true;
-    
-    // Store session timestamp - always set it on first load
-    // This is critical to prevent refresh cycles
-    const timestamp = Date.now();
-    sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
-    console.log("Set initial clinic_portal_timestamp:", timestamp);
-    
-    // Also set a global flag for extra protection
-    if (typeof window !== 'undefined') {
-      (window as any).__clinicPortalInitialized = true;
-    }
     
     // Cleanup function for component unmount
     return () => {
-      console.log("ClinicPortalPage unmounting, setting isMounted to false");
+      console.log("ClinicPortalPage unmounting");
       isMounted.current = false;
       
-      // Clear the global lock on unmount
-      (window as any).__clinicPortalInitializing = false;
-      
-      // Set a timeout to clear the mounted flag when navigating away
       // This prevents issues with WebSocket connection management
       setTimeout(() => {
         if (window.location.pathname !== '/clinic-portal') {
@@ -156,7 +115,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
         }
       }, 1000);
     };
-  }, [user, shouldInitialize]);
+  }, [user]);
   
   // Component unmount cleanup effect with advanced WebSocket handling
   useEffect(() => {
