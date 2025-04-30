@@ -174,7 +174,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user || data;
     },
     onSuccess: (user: User) => {
+      // Update query cache with the new user data
       queryClient.setQueryData(["/api/auth/user"], user);
+      
+      // Set session flag for WebSocket initialization
+      sessionStorage.setItem('just_logged_in', 'true');
+      sessionStorage.setItem('login_timestamp', Date.now().toString());
+      
+      // Cache user data for faster access
+      sessionStorage.setItem('cached_user_data', JSON.stringify(user));
+      sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+
+      // Clear any clinic portal session timestamps (force reload)
+      if (user.role === 'clinic_staff') {
+        sessionStorage.removeItem('clinic_portal_timestamp');
+      }
       
       // Check for auth warnings from localStorage
       const warningsStr = localStorage.getItem('auth_warnings');
