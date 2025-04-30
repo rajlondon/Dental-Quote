@@ -145,10 +145,10 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Protected Routes - Using simple version that prevents refreshes */}
+      {/* Clinic Staff Protected Routes - Back to the regular clinic portal with fixed refresh prevention */}
       <ProtectedRoute 
         path="/clinic-portal" 
-        component={SimpleClinicPortal} 
+        component={ClinicPortalPage} 
         requiredRole="clinic_staff" 
       />
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />

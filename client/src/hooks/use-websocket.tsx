@@ -299,8 +299,24 @@ export const useWebSocket = (): WebSocketHookResult => {
     };
   };
   
-  // Initialize WebSocket on login
+  // Initialize WebSocket on login - with improved refresh prevention
   useEffect(() => {
+    // Special case: if we're on the clinic portal, don't auto-connect WebSockets
+    // This helps prevent refresh cycles
+    if (typeof window !== 'undefined' && 
+        window.location.pathname.includes('clinic-portal') &&
+        !initialConnectionMadeRef.current) {
+      console.log('CLINIC PORTAL OPTIMIZATION: Delaying WebSocket connection to prevent refresh cycles');
+      
+      // Set a small timeout before attempting to connect
+      setTimeout(() => {
+        initialConnectionMadeRef.current = true;
+        console.log('Safe to initialize WebSocket now on clinic portal');
+      }, 2000);
+      
+      return;
+    }
+    
     // If user just logged in (check session flag)
     const justLoggedIn = sessionStorage.getItem('just_logged_in') === 'true';
     const loginTimestamp = parseInt(sessionStorage.getItem('login_timestamp') || '0', 10);
