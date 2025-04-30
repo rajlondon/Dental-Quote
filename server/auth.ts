@@ -146,8 +146,24 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint with enhanced email verification handling
+  // Login endpoint with enhanced email verification handling and clinic session optimization
   app.post("/api/auth/login", (req, res, next) => {
+    // Special session optimization for clinic staff to prevent double login
+    // Check if already authenticated as clinic_staff with same email
+    if (req.isAuthenticated() && 
+        req.user.role === 'clinic_staff' && 
+        req.user.email === req.body.email) {
+      
+      console.log("Already authenticated as clinic staff with same email, reusing session");
+      
+      // Return the existing session instead of creating a new one
+      return res.json({ 
+        success: true, 
+        user: req.user,
+        sessionReused: true
+      });
+    }
+    
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       
@@ -179,6 +195,11 @@ export async function setupAuth(app: Express) {
             user,
             warnings: ["Your email is not verified. Some features may be limited."]
           });
+        }
+        
+        // Add special logging for clinic staff
+        if (user.role === 'clinic_staff') {
+          console.log(`Authenticated clinic staff: ${user.id} (${user.email})`);
         }
         
         return res.json({ success: true, user });
