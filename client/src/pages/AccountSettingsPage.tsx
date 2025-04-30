@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import ProfileSection from "@/components/portal/ProfileSection";
 
 // Password change form schema
 const passwordChangeSchema = z.object({
@@ -83,6 +84,10 @@ const AccountSettingsPage = () => {
           </p>
         </div>
 
+        {/* Profile Information Section */}
+        <ProfileSection />
+
+        {/* Password Change Section */}
         <Card>
           <CardHeader>
             <CardTitle>Change Password</CardTitle>
@@ -166,9 +171,6 @@ const AccountSettingsPage = () => {
             </Form>
           </CardContent>
         </Card>
-
-        {/* Additional account settings sections can be added here */}
-        {/* E.g., Update personal info, communication preferences, etc. */}
       </div>
     </div>
   );
