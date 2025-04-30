@@ -219,8 +219,8 @@ function App() {
         <NotificationsProvider>
           <Suspense fallback={<div>Loading...</div>}>
             <ScrollToTop />
-            {/* Only include ReloadTranslations when not on clinic portal */}
-            {typeof window !== 'undefined' && !window.location.pathname.includes('clinic-portal') && 
+            {/* Only exclude ReloadTranslations on clinic portal path */}
+            {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
               <ReloadTranslations />
             }
             <Router />

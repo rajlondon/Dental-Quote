@@ -64,22 +64,22 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
     if (disableAutoRefresh && typeof window !== 'undefined') {
       console.log("🛡️ Setting up refresh prevention for ClinicPortalPage");
       
-      // Store original reload function
-      const originalReload = window.location.reload;
-      
-      // Override window.location.reload
-      window.location.reload = function(...args) {
+      // Use a safer approach - intercept reload attempts with an event handler
+      const preventReload = (e: BeforeUnloadEvent) => {
         if (window.location.pathname.includes('clinic-portal')) {
           console.log("🛡️ Blocked programmatic page reload on clinic portal");
-          return undefined; 
-        } else {
-          return originalReload.apply(this, args);
+          e.preventDefault();
+          e.returnValue = '';
+          return '';
         }
       };
       
+      // Add event listener
+      window.addEventListener('beforeunload', preventReload);
+      
       // Cleanup function
       return () => {
-        window.location.reload = originalReload;
+        window.removeEventListener('beforeunload', preventReload);
       };
     }
   }, [disableAutoRefresh]);
