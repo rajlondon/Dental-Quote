@@ -33,46 +33,144 @@ export const useWebSocket = (): WebSocketHookResult => {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messageHandlersRef = useRef<Record<string, MessageHandler>>({});
+  const isComponentMounted = useRef(true);
+  
+  // Track additional state
+  const connectionIdRef = useRef<string>(`ws-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+  const reconnectCountRef = useRef(0);
+  const lastSuccessfulConnectionRef = useRef<number | null>(null);
   
   // Function to initialize WebSocket connection
   const initializeSocket = useCallback(() => {
-    if (!user) {
-      // No WebSocket connection if not authenticated
+    if (!user || !isComponentMounted.current) {
+      // No WebSocket connection if not authenticated or if component is unmounting
+      console.log('Skipping WebSocket initialization - user not available or component unmounting');
       return;
     }
     
     try {
-      // Close existing socket if any
-      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-        socketRef.current.close();
+      // Clean up any existing connection first
+      if (socketRef.current) {
+        // Mark for manual close to prevent reconnect loop
+        (socketRef.current as any)._manualClose = true;
+        
+        if (socketRef.current.readyState === WebSocket.OPEN || 
+            socketRef.current.readyState === WebSocket.CONNECTING) {
+          console.log('Closing existing socket before creating new one');
+          socketRef.current.close(1000, "Creating new connection");
+        }
+        
+        // Always reset reference to avoid memory leak
+        socketRef.current = null;
+      }
+      
+      // Create timestamp for this connection attempt
+      const connectionAttemptTime = Date.now();
+      
+      // Check connection throttling
+      if (lastSuccessfulConnectionRef.current) {
+        const timeSinceLastConnection = connectionAttemptTime - lastSuccessfulConnectionRef.current;
+        
+        // If we're attempting to reconnect too quickly (within 2 seconds), add a delay
+        if (timeSinceLastConnection < 2000) {
+          console.log(`Connection attempts too frequent (${timeSinceLastConnection}ms apart). Adding delay.`);
+          const delayTime = 2000 - timeSinceLastConnection;
+          
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (isComponentMounted.current) {
+              // Try again after delay
+              initializeSocket();
+            }
+          }, delayTime);
+          
+          return;
+        }
       }
       
       // Determine correct protocol based on HTTPS/HTTP
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
+      console.log(`WebSocket attempt #${reconnectCountRef.current + 1} at ${new Date().toISOString()}`);
+      
+      // Create connection with timeout protection
+      let connectionTimeoutId: NodeJS.Timeout | null = setTimeout(() => {
+        console.log('WebSocket connection attempt timed out');
+        if (socketRef.current && socketRef.current.readyState === WebSocket.CONNECTING) {
+          // Close the hanging connection
+          socketRef.current.close();
+          socketRef.current = null;
+          
+          // Update reconnect count and schedule retry
+          reconnectCountRef.current++;
+          
+          if (reconnectCountRef.current < 3 && isComponentMounted.current) {
+            console.log('Scheduling another connection attempt after timeout');
+            reconnectTimeoutRef.current = setTimeout(() => {
+              if (isComponentMounted.current) {
+                initializeSocket();
+              }
+            }, 3000);
+          }
+        }
+      }, 10000); // 10 second connection timeout
       
       // Create new WebSocket connection
       const socket = new WebSocket(wsUrl);
+      socket.binaryType = 'blob';
       socketRef.current = socket;
       
+      // Create unique ID for this connection instance
+      const thisConnectionId = connectionIdRef.current;
+      (socket as any)._connectionId = thisConnectionId;
+      
       socket.addEventListener('open', () => {
-        console.log('WebSocket connection established');
-        setConnected(true);
+        // Clear the connection timeout
+        if (connectionTimeoutId) {
+          clearTimeout(connectionTimeoutId);
+          connectionTimeoutId = null;
+        }
         
-        // Register client with the server
-        socket.send(JSON.stringify({
-          type: 'register',
-          sender: {
-            id: user.id.toString(),
-            type: user.role
-          }
-        }));
+        console.log(`WebSocket connection ${thisConnectionId} established`);
+        
+        // Only update state if this is still the current socket
+        if (isComponentMounted.current && 
+            socketRef.current === socket && 
+            (socketRef.current as any)._connectionId === thisConnectionId) {
+          setConnected(true);
+          
+          // Track successful connection
+          lastSuccessfulConnectionRef.current = Date.now();
+          reconnectCountRef.current = 0;
+          
+          // Register client with the server
+          socket.send(JSON.stringify({
+            type: 'register',
+            sender: {
+              id: user.id.toString(),
+              type: user.role
+            }
+          }));
+        }
       });
       
       socket.addEventListener('message', (event) => {
         try {
+          // Check if this is from the current socket
+          if (socketRef.current !== socket || (socket as any)._connectionId !== thisConnectionId) {
+            console.log('Ignoring message from obsolete socket connection');
+            return;
+          }
+          
           const message: WebSocketMessage = JSON.parse(event.data);
-          setLastMessage(message);
+          
+          // Only update state if component is still mounted
+          if (isComponentMounted.current) {
+            setLastMessage(message);
+          }
           
           // Handle connection confirmation
           if (message.type === 'connection' || message.type === 'registered') {
@@ -83,66 +181,97 @@ export const useWebSocket = (): WebSocketHookResult => {
           // Handle error messages
           if (message.type === 'error') {
             console.error('WebSocket error:', message.message);
-            toast({
-              title: 'Connection Error',
-              description: message.message || 'Unknown error occurred',
-              variant: 'destructive'
-            });
+            if (isComponentMounted.current) {
+              toast({
+                title: 'Connection Error',
+                description: message.message || 'Unknown error occurred',
+                variant: 'destructive'
+              });
+            }
             return;
           }
           
-          // Dispatch message to the appropriate handler
-          const handler = messageHandlersRef.current[message.type];
-          if (handler) {
-            handler(message);
+          // Dispatch message to the appropriate handler if component still mounted
+          if (isComponentMounted.current) {
+            const handler = messageHandlersRef.current[message.type];
+            if (handler) {
+              handler(message);
+            }
           }
-          
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
       });
       
       socket.addEventListener('close', (event) => {
-        console.log('WebSocket connection closed:', event.code, event.reason);
-        setConnected(false);
-        
-        // Check if this was a manual close (triggered during logout)
-        const wasManualClose = (socket as any)._manualClose === true;
-        
-        if (wasManualClose) {
-          console.log('WebSocket closed manually - skip reconnect');
-          socketRef.current = null;
-          
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-          }
-          return;
+        // Clear the connection timeout if it's still active
+        if (connectionTimeoutId) {
+          clearTimeout(connectionTimeoutId);
+          connectionTimeoutId = null;
         }
         
-        // Attempt to reconnect after delay (if user is still logged in and socket wasn't manually closed)
-        if (user && !event.wasClean) {
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
+        console.log(`WebSocket connection ${thisConnectionId} closed:`, event.code, event.reason);
+        
+        // Only update state if this is still the current socket and component is mounted
+        if (isComponentMounted.current && 
+            socketRef.current === socket && 
+            (socketRef.current as any)._connectionId === thisConnectionId) {
+          
+          setConnected(false);
+          
+          // Check if this was a manual close (triggered during logout)
+          const wasManualClose = (socket as any)._manualClose === true;
+          
+          if (wasManualClose) {
+            console.log(`WebSocket ${thisConnectionId} closed manually - skip reconnect`);
+            socketRef.current = null;
+            
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
+              reconnectTimeoutRef.current = null;
+            }
+            return;
           }
           
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('Attempting to reconnect WebSocket...');
-            if (socketRef.current === null) {
-              // Only reconnect if we haven't already created a new socket
-              initializeSocket();
+          // Attempt to reconnect after delay (if user is still logged in and socket wasn't manually closed)
+          if (user && !event.wasClean && isComponentMounted.current) {
+            // Increment reconnect count
+            reconnectCountRef.current++;
+            
+            // Calculate backoff delay (gradually increasing with each attempt)
+            const reconnectDelay = Math.min(2000 + (reconnectCountRef.current * 1000), 10000);
+            
+            console.log(`Scheduling reconnect attempt #${reconnectCountRef.current} in ${reconnectDelay}ms`);
+            
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
             }
-          }, 5000); // 5-second reconnect delay
+            
+            reconnectTimeoutRef.current = setTimeout(() => {
+              // Only reconnect if component is still mounted
+              if (isComponentMounted.current) {
+                console.log(`Executing reconnect attempt #${reconnectCountRef.current}`);
+                initializeSocket();
+              }
+            }, reconnectDelay);
+          }
         }
       });
       
       socket.addEventListener('error', (error) => {
-        console.error('WebSocket error:', error);
-        toast({
-          title: 'Connection Error',
-          description: 'Failed to connect to the server. Retrying...',
-          variant: 'destructive'
-        });
+        console.error(`WebSocket ${thisConnectionId} error:`, error);
+        
+        // Only show toast if this is the current socket and component is mounted
+        if (isComponentMounted.current && 
+            socketRef.current === socket && 
+            (socketRef.current as any)._connectionId === thisConnectionId) {
+          
+          toast({
+            title: 'Connection Error',
+            description: 'Failed to connect to the server. Retrying...',
+            variant: 'destructive'
+          });
+        }
       });
       
     } catch (error) {
@@ -240,14 +369,49 @@ export const useWebSocket = (): WebSocketHookResult => {
   
   // Cleanup on unmount
   useEffect(() => {
+    // Set as mounted
+    isComponentMounted.current = true;
+    
+    // Generate a new connection ID for this component instance
+    connectionIdRef.current = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Comprehensive cleanup on unmount
     return () => {
+      console.log(`WebSocket hook unmounting with connection ID: ${connectionIdRef.current}`);
+      
+      // Mark component as unmounted to prevent state updates
+      isComponentMounted.current = false;
+      
+      // Clear all timers
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
       
+      // Close any active socket connections
       if (socketRef.current) {
-        socketRef.current.close();
+        try {
+          // Mark as manually closed to prevent reconnect attempts
+          (socketRef.current as any)._manualClose = true;
+          
+          // Only try to close if not already closed/closing
+          if (socketRef.current.readyState === WebSocket.OPEN || 
+              socketRef.current.readyState === WebSocket.CONNECTING) {
+            console.log('Closing WebSocket during component unmount');
+            socketRef.current.close(1000, "Component unmount");
+          }
+        } catch (err) {
+          console.error('Error closing WebSocket during unmount:', err);
+        } finally {
+          // Always null the reference
+          socketRef.current = null;
+        }
       }
+      
+      // Reset state tracking
+      initialConnectionMadeRef.current = false;
+      connectionAttemptCountRef.current = 0;
+      reconnectCountRef.current = 0;
     };
   }, []);
   

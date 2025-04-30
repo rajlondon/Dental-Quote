@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Bell } from 'lucide-react';
+import { Bell, BellOff, WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -20,23 +20,48 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Notification } from '@/hooks/use-notifications';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface NotificationsPopoverProps {
   notifications: Notification[];
   unreadCount: number;
   markAsRead?: (id: string) => void;
   markAllAsRead?: () => void;
+  connected?: boolean;
+  onRetryConnection?: () => void;
 }
 
 export function NotificationsPopover({ 
   notifications, 
   unreadCount, 
   markAsRead = () => {}, 
-  markAllAsRead = () => {} 
+  markAllAsRead = () => {},
+  connected = true,
+  onRetryConnection = () => {}
 }: NotificationsPopoverProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [_, setLocation] = useLocation();
+  const [showTooltip, setShowTooltip] = useState(false);
+  
+  // Show connectivity tooltip after short delay when disconnected
+  useEffect(() => {
+    let tooltipTimer: NodeJS.Timeout | null = null;
+    
+    if (!connected) {
+      tooltipTimer = setTimeout(() => {
+        setShowTooltip(true);
+      }, 5000);
+    } else {
+      setShowTooltip(false);
+    }
+    
+    return () => {
+      if (tooltipTimer) {
+        clearTimeout(tooltipTimer);
+      }
+    };
+  }, [connected]);
 
   const handleNotificationClick = (notification: Notification) => {
     markAsRead(notification.id);
@@ -64,18 +89,56 @@ export function NotificationsPopover({
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              className="absolute -top-1 -right-1 px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs"
+      <div className="relative">
+        {showTooltip && !connected && (
+          <div className="absolute -top-10 -right-1 bg-amber-50 text-amber-800 border border-amber-200 shadow-sm rounded-md p-2 text-xs w-48 z-50">
+            <div className="flex items-center gap-1 mb-1">
+              <WifiOff className="h-3 w-3" />
+              <span className="font-bold">Connection issue</span>
+            </div>
+            <p className="mb-1">Real-time notifications may be delayed</p>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 text-xs p-1 hover:bg-amber-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRetryConnection();
+                setShowTooltip(false);
+              }}
             >
-              {unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Reconnect
+            </Button>
+          </div>
+        )}
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative">
+            {connected ? (
+              <Bell className="h-5 w-5" />
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <BellOff className="h-5 w-5 text-amber-500" />
+                    <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">Notification service disconnected</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {unreadCount > 0 && (
+              <Badge 
+                className="absolute -top-1 -right-1 px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs"
+              >
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+      </div>
       <PopoverContent className="w-80 p-0" align="end">
         <Card className="border-0 shadow-none">
           <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
