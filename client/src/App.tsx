@@ -6,6 +6,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
+import { useEffect } from "react";
+import { initPreventReloads } from "@/utils/prevent-reloads";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -228,6 +230,19 @@ function App() {
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
+  
+  // Initialize reload prevention system
+  useEffect(() => {
+    // Check if we're in the browser and not in server-side rendering
+    if (typeof window !== 'undefined') {
+      console.log('Initializing reload prevention for clinic portal');
+      try {
+        initPreventReloads();
+      } catch (error) {
+        console.error('Failed to initialize reload prevention:', error);
+      }
+    }
+  }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
