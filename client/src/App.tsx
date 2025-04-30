@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 import { useEffect } from "react";
 import { initPreventReloads } from "@/utils/prevent-reloads";
+import StableClinicPortal from "@/components/StableClinicPortal";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -150,9 +151,6 @@ function Router() {
         component={() => {
           // Use the special stable component without refresh issues
           console.log("🔒 Using StableClinicPortal component without refresh issues");
-          
-          // Import the StableClinicPortal component
-          const StableClinicPortal = require('@/components/StableClinicPortal').default;
           return <StableClinicPortal />;
         }} 
         requiredRole="clinic_staff" 
