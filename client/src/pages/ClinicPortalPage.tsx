@@ -57,47 +57,48 @@ const ClinicPortalPage: React.FC = () => {
   // Get auth context for logout functionality
   const { logoutMutation } = useAuth();
   
-  // Handle logout with more aggressive cleanup
+  // Handle logout with simplified, more reliable cleanup sequence
   const handleLogout = async () => {
     try {
-      // Manually clear any WebSocket connections before logout
-      if (window.WebSocket) {
-        console.log("Manually closing any open WebSocket connections");
-        document.dispatchEvent(new CustomEvent('manual-websocket-close'));
-      }
-      
-      // Show toast first (will still be visible during redirect)
+      // Step 1: Show feedback to the user first
       toast({
         title: t('portal.logout_success', 'Successfully logged out'),
         description: t('portal.logout_message', 'You have been logged out of your account.'),
       });
       
-      // Perform proper logout to clear server session
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-      } catch (error) {
-        console.error("Fetch-based logout error:", error);
-      }
+      // Step 2: Clear WebSocket connections to prevent reconnect loops
+      console.log("Manually closing any open WebSocket connections");
+      document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       
-      // Force query client to forget user data
+      // Step 3: Mark session as needing reset (for next login)
+      sessionStorage.removeItem('clinic_portal_rendered');
+      
+      // Step 4: Parallel processing - server logout and client cleanup
+      // A. Server-side session termination
+      const logoutPromise = fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      }).catch(error => {
+        // Log but continue even if server logout fails
+        console.error("Server logout error:", error);
+      });
+      
+      // B. Client-side cleanup
       queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Immediately redirect to login without waiting for mutation
-      console.log("Redirecting to login page");
+      // Step 5: Complete both operations
+      await logoutPromise;
+      
+      // Step 6: Redirect to login page
+      console.log("Logout sequence complete, redirecting to login page");
       setLocation('/portal-login');
       
-      // Then trigger the mutation to properly clear auth state
-      logoutMutation.mutate();
     } catch (err) {
       console.error("Logout handler error:", err);
       
-      // Ensure we still redirect even on error
+      // Fallback: redirect even if something fails
       setLocation('/portal-login');
     }
   };
