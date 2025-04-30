@@ -64,6 +64,7 @@ import ClinicTreatmentMapperPage from "@/pages/ClinicTreatmentMapperPage";
 import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
 import TreatmentComparisonPage from "./pages/TreatmentComparisonPage";
 import AccountSettingsPage from "@/pages/AccountSettingsPage";
+import ProfilePage from "@/pages/ProfilePage";
 import DataArchitecturePage from "@/pages/DataArchitecturePage";
 import DentalAdvicePage from "@/pages/DentalAdvicePage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
@@ -132,6 +133,7 @@ function Router() {
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
       <Route path="/account-settings" component={AccountSettingsPage} />
+      <Route path="/my-profile" component={ProfilePage} />
       <Route path="/dental-advice" component={DentalAdvicePage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
