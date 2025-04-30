@@ -30,22 +30,28 @@ declare global {
 }
 
 export async function setupAuth(app: Express) {
-  // Session middleware config
+  // Session middleware config with enhanced stability
   const sessionConfig: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "mydentalfly_dev_secret",
     resave: false,
     saveUninitialized: false,
+    // Prevent race conditions by using rolling sessions and longer cookie maxAge
+    rolling: true, // Reset maxAge on every response
     store: new PgSessionStore({
       pool, // Use the existing Neon pooled database connection
       tableName: 'session', // Default session table name
       createTableIfMissing: true, // Auto-create the session table if it doesn't exist
-      pruneSessionInterval: 60 * 60 // Prune expired sessions every hour
+      pruneSessionInterval: 60 * 60, // Prune expired sessions every hour
+      errorCallback: (err) => {
+        console.error("Session store error:", err);
+      }
     }),
     cookie: { 
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days for longer persistence
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for clinic staff persistence
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      httpOnly: true
     }
   };
 
@@ -54,31 +60,38 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure LocalStrategy
+  // Configure LocalStrategy with special handling for clinic staff
   passport.use(new LocalStrategy(
     { usernameField: "email" },
     async (email, password, done) => {
       try {
+        // Log authentication request
+        console.log(`Authentication attempt for email: ${email}`);
+        
         // Find user by email
         const [user] = await db.select().from(users).where(eq(users.email, email));
         
         if (!user) {
+          console.log(`Authentication failed: Unknown user with email ${email}`);
           return done(null, false, { message: "Unknown user" });
         }
         
         // Check if user has a password
         if (!user.password) {
+          console.log(`Authentication failed: Password not set for user ${user.id}`);
           return done(null, false, { message: "Password not set" });
         }
         
         // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+          console.log(`Authentication failed: Incorrect password for user ${user.id}`);
           return done(null, false, { message: "Incorrect password" });
         }
         
         // Check if email is verified for patients (admin and clinic users can bypass)
         if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
+          console.log(`Authentication failed: Unverified email for patient ${user.id}`);
           return done(null, false, { message: "Please verify your email before logging in" });
         }
         
@@ -96,8 +109,12 @@ export async function setupAuth(app: Express) {
           emailVerified: user.emailVerified || false,
           status: user.status || 'pending'
         };
+        
+        console.log(`Authentication successful for user ${user.id} with role ${user.role}`);
+        
         return done(null, userForAuth);
       } catch (err) {
+        console.error("Authentication error:", err);
         return done(err);
       }
     }
@@ -108,9 +125,17 @@ export async function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  // Deserialize user from session
+  // Deserialize user from session with improved error handling and logging
   passport.deserializeUser(async (id: number, done) => {
     try {
+      // First, validate the ID is actually a number
+      if (typeof id !== 'number' || isNaN(id)) {
+        console.error(`Invalid session user ID (${typeof id}): ${id}`);
+        return done(null, false);
+      }
+      
+      console.log(`Deserializing user session for ID: ${id}`);
+      
       const [user] = await db.select({
         id: users.id,
         email: users.email,
@@ -124,6 +149,7 @@ export async function setupAuth(app: Express) {
       }).from(users).where(eq(users.id, id));
       
       if (!user) {
+        console.warn(`Session references non-existent user ID: ${id}`);
         return done(null, false);
       }
       
@@ -140,8 +166,14 @@ export async function setupAuth(app: Express) {
         status: user.status || 'pending'
       };
       
+      // Special handling for clinic_staff users
+      if (user.role === 'clinic_staff') {
+        console.log(`Clinic staff session restored for user ${user.id}`);
+      }
+      
       done(null, userForAuth);
     } catch (err) {
+      console.error("Session deserialization error:", err);
       done(err);
     }
   });
