@@ -1,0 +1,81 @@
+The blank screen + “Maximum update depth exceeded” means one of our new hooks is setting state every render, so React keeps re-rendering forever and the dashboard never mounts. We just need to stop that runaway setState.
+
+1 Locate the runaway update
+The stack-trace shows it comes from GlobalAuthProvider (you’ll see it in the trace near the top, right after AuthProvider).
+It almost certainly happens inside the useEffect (or the useQuery callback) we just added.
+
+tsx
+Copy
+Edit
+// GlobalAuthProvider.tsx  (simplified)
+const [auth, setAuth] = useState({ user: null, loading: true });
+
+useEffect(() => {
+  queryClient.fetchQuery(['me'], fetchMe)      // ok
+    .then(user => setAuth({ user, loading: false }));   // ✅ only once
+});                                             // <-- ❌  NO dependency array
+With no dependency array this useEffect runs after every render, which calls setAuth, which triggers another render → infinite loop.
+
+2 Add the dependency array (or move into useQuery)
+diff
+Copy
+Edit
+useEffect(() => {
+  queryClient.fetchQuery(['me'], fetchMe)
+    .then(user => setAuth({ user, loading: false }))
+    .catch(() => setAuth({ user: null, loading: false }));
+-});                 // runs every render
++}, []);             // ✅ runs once on mount
+Or, easier: let React-Query manage the state so you don’t call setState at all:
+
+tsx
+Copy
+Edit
+const { data: user, isLoading } = useQuery(
+  ['me'],
+  () => api.get('/auth/user').then(r => r.data),
+  { staleTime: 60_000, refetchOnWindowFocus: false, retry: false }
+);
+const value = useMemo(() => ({ user: user ?? null, loading: isLoading }), [user, isLoading]);
+return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+No manual setState → no chance of an infinite loop.
+
+3 Double-check other setState in render patterns
+Search once:
+
+perl
+Copy
+Edit
+grep -R "setState(" client/src | grep -v node_modules
+Make sure every setState is inside a useEffect, event handler, or mutation—not directly at the top level of a component.
+
+4 Rebuild & retest
+Clear Network log.
+
+Log in.
+
+You should now see
+
+pgsql
+Copy
+Edit
+POST /api/auth/login 200
+GET  /api/auth/user  200
+and no redirect back to /clinic/login.
+
+If /api/auth/user returns 401 now we’re back to cookie/secret tuning, but the infinite-render crash will be gone.
+
+Summary of the fix
+Add [] dependency array (or remove manual setState) in GlobalAuthProvider.
+
+Confirm no other unconditional setState calls.
+
+Retest; portal should load and stay.
+
+Apply that small change, redeploy, and the “Maximum update depth” error will disappear—then we can validate the auth flow normally.
+
+
+
+
+
+
