@@ -31,25 +31,29 @@ function setupReloadTracker() {
     ['visibilitychange', 'message', 'beforeunload'].forEach(e =>
       window.addEventListener(e, () => console.log('EVENT', e, performance.now())));
 
-    // Intercept reload calls
-    const originalReload = window.location.reload;
-    window.location.reload = function() {
-      console.trace('🔄 RELOAD called at', performance.now());
-      return originalReload.call(window.location);
-    };
-    
-    // Intercept history navigation
-    const originalPushState = history.pushState;
-    history.pushState = function(state: any, title: string, url?: string | URL | null) {
-      console.trace('📌 pushState called at', performance.now(), { state, title, url });
-      return originalPushState.call(history, state, title, url);
-    };
-    
-    const originalReplaceState = history.replaceState;
-    history.replaceState = function(state: any, title: string, url?: string | URL | null) {
-      console.trace('📌 replaceState called at', performance.now(), { state, title, url });
-      return originalReplaceState.call(history, state, title, url);
-    };
+    // We can't override native browser methods directly, so we'll use event listeners instead
+    try {
+      // Monitor beforeunload which happens before page refresh 
+      window.addEventListener('beforeunload', () => {
+        console.trace('🔄 Page unloading at', performance.now());
+      });
+      
+      // Monitor navigation events with performance observer
+      if (typeof PerformanceObserver !== 'undefined') {
+        const navigationObserver = new PerformanceObserver((entries) => {
+          entries.getEntries().forEach(entry => {
+            console.log('📊 Navigation performance entry:', entry.entryType, entry);
+          });
+        });
+        navigationObserver.observe({ entryTypes: ['navigation'] });
+      }
+      
+      // Manually add a small helper to console for testing
+      (window as any).traceReloads = true;
+      console.log('🔍 Reload tracing enabled - view in console');
+    } catch (error) {
+      console.error('Error setting up reload tracker:', error);
+    }
   }
 }
 
