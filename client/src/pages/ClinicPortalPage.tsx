@@ -61,81 +61,27 @@ const ClinicPortalPage: React.FC = () => {
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // Check for existing initialization timestamp to avoid refresh loops
+  // Simplified initialization check - we've disabled complex refresh-triggering logic
   const shouldInitialize = React.useCallback(() => {
-    const existingTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
-    
-    if (existingTimestamp) {
-      const timestamp = parseInt(existingTimestamp, 10);
-      const now = Date.now();
-      const age = now - timestamp;
-      
-      // If the timestamp is less than 10 seconds old, don't re-initialize
-      if (age < 10000) {
-        console.log(`Skipping initialization, recent timestamp exists (${age}ms old)`);
-        return false;
-      }
-    }
-    return true;
+    // Just check if the component needs initialization at all
+    return !initialLoadComplete.current;
   }, []);
   
-  // Effect for handling first-time initialization with synchronization lock
+  // Simplified initialization effect to avoid any refresh triggers
   useEffect(() => {
-    // Implement a more aggressive initialization lock
-    const existingTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
-    const currentTime = Date.now();
-    
-    // Skip initialization if timestamp exists and is recent (within 20 seconds)
-    if (existingTimestamp) {
-      const elapsed = currentTime - parseInt(existingTimestamp, 10);
-      if (elapsed < 20000) {
-        console.log(`Skipping initialization, recent timestamp exists (${elapsed}ms old)`);
-        return;
-      }
-    }
-    
-    // Skip initialization if not needed
-    if (!user || initialLoadComplete.current || !shouldInitialize()) {
+    // Skip if no user or already initialized
+    if (!user || initialLoadComplete.current) {
       return;
     }
     
-    // Use a global window lock to prevent multiple initializations across components
-    if ((window as any).__clinicPortalInitializing) {
-      console.log("Another initialization is in progress, skipping");
-      return;
-    }
+    console.log("ClinicPortalPage: Simple initialization for user:", user.id);
     
-    // Set global lock
-    (window as any).__clinicPortalInitializing = true;
+    // Set initialization flag to prevent repeated execution
+    initialLoadComplete.current = true;
     
-    console.log("ClinicPortalPage: First-time initialization with user:", user.id);
-    
-    try {
-      // Set initialization flag to prevent repeated execution
-      initialLoadComplete.current = true;
-      
-      // Mark the portal as initialized in session storage with current timestamp
-      const timestamp = currentTime;
-      sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
-      
-      // Reset any "just logged in" flags 
-      sessionStorage.removeItem('just_logged_in');
-      
-      // Pre-cache the user data
-      sessionStorage.setItem('cached_user_data', JSON.stringify(user));
-      sessionStorage.setItem('cached_user_timestamp', timestamp.toString());
-      
-      // Store a global reference to prevent duplicate component mounting
-      (window as any).__clinicPortalMounted = true;
-      
-      // We've removed the timeout here to avoid potential refresh triggers
-      // Just clear the lock immediately as it's no longer needed
-      (window as any).__clinicPortalInitializing = false;
-    } catch (error) {
-      console.error("Error during clinic portal initialization:", error);
-      // Make sure we clear the lock on error
-      (window as any).__clinicPortalInitializing = false;
-    }
+    // Store session timestamp but with no refresh logic
+    const timestamp = Date.now();
+    sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
     
     // Cleanup function for component unmount
     return () => {
