@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
+import { ClinicAuthProvider } from "./contexts/ClinicAuth";
+import ClinicGuard from "./components/ClinicGuard";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 
@@ -142,10 +144,28 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
-      {/* Clinic Staff Protected Routes */}
-      <ProtectedRoute path="/clinic-portal" component={ClinicPortalPage} requiredRole="clinic_staff" />
-      <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
-      <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
+      {/* Clinic Staff Protected Routes - Using specialized ClinicGuard */}
+      <Route path="/clinic-portal">
+        {() => (
+          <ClinicGuard>
+            <ClinicPortalPage />
+          </ClinicGuard>
+        )}
+      </Route>
+      <Route path="/clinic-treatment-mapper">
+        {() => (
+          <ClinicGuard>
+            <ClinicTreatmentMapperPage />
+          </ClinicGuard>
+        )}
+      </Route>
+      <Route path="/clinic-dental-charts">
+        {() => (
+          <ClinicGuard>
+            <ClinicDentalCharts />
+          </ClinicGuard>
+        )}
+      </Route>
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>

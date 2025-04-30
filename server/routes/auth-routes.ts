@@ -4,6 +4,7 @@ import { db } from "../db";
 import { users } from "../../shared/schema";
 import { eq } from "drizzle-orm";
 import { createVerificationToken, formatVerificationEmail, formatPasswordResetEmail, verifyToken, markTokenAsUsed, markEmailAsVerified, getUserByEmail } from "../services/email-service";
+import { isAuthenticated } from "../middleware/auth-middleware";
 
 const router = Router();
 
@@ -310,6 +311,32 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     res.status(500).json({ 
       success: false, 
       message: "Password reset failed: " + error.message 
+    });
+  }
+});
+
+// Special clinic authentication check endpoint
+router.get("/clinic/me", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    // Only return data if user is a clinic staff
+    if (req.user && req.user.role === 'clinic_staff') {
+      console.log("Clinic auth check successful for user:", req.user.id);
+      return res.json({
+        success: true,
+        user: req.user
+      });
+    } else {
+      console.log("Clinic auth check failed - not a clinic staff:", req.user?.role);
+      return res.status(403).json({
+        success: false,
+        message: "You don't have clinic staff permissions"
+      });
+    }
+  } catch (error) {
+    console.error("Clinic auth check error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error checking clinic authentication"
     });
   }
 });
