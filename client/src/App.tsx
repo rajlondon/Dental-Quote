@@ -143,7 +143,46 @@ function Router() {
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
       {/* Clinic Staff Protected Routes */}
-      <ProtectedRoute path="/clinic-portal" component={ClinicPortalPage} requiredRole="clinic_staff" />
+      <ProtectedRoute 
+        path="/clinic-portal" 
+        component={() => {
+          // Use a ref within this render function to prevent the route from re-rendering
+          if (!(window as any).__clinicPortalMounted) {
+            console.log("First render of clinic portal");
+            (window as any).__clinicPortalMounted = true;
+            // Set a timeout to reset this flag later (30s after unmount)
+            setTimeout(() => {
+              if (window.location.pathname !== '/clinic-portal') {
+                console.log("Resetting clinic portal mount flag");
+                (window as any).__clinicPortalMounted = false;
+              }
+            }, 30000);
+            
+            // Store timestamp when clinic portal was first rendered
+            sessionStorage.setItem('clinic_portal_mount_time', Date.now().toString());
+            
+            return <ClinicPortalPage />;
+          } else {
+            // Check if enough time has passed to allow rerendering
+            const mountTime = sessionStorage.getItem('clinic_portal_mount_time');
+            if (mountTime) {
+              const elapsed = Date.now() - parseInt(mountTime, 10);
+              // Only rerender if more than 10 seconds have passed
+              if (elapsed > 10000) {
+                console.log(`Allowing clinic portal re-render after ${elapsed}ms`);
+                (window as any).__clinicPortalMounted = true;
+                sessionStorage.setItem('clinic_portal_mount_time', Date.now().toString());
+                return <ClinicPortalPage />;
+              }
+            }
+            
+            console.log("Preventing duplicate clinic portal render");
+            // Return the component without re-rendering
+            return <ClinicPortalPage key="stable-clinic-portal" />;
+          }
+        }} 
+        requiredRole="clinic_staff" 
+      />
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       <Route path="/clinic">
