@@ -8,7 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 import { useEffect } from "react";
 import { initPreventReloads } from "@/utils/prevent-reloads";
-import StableClinicPortal from "@/components/StableClinicPortal";
+import SimpleClinicPortal from "@/pages/SimpleClinicPortal";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -149,9 +149,9 @@ function Router() {
       <ProtectedRoute 
         path="/clinic-portal" 
         component={() => {
-          // Use the special stable component without refresh issues
-          console.log("🔒 Using StableClinicPortal component without refresh issues");
-          return <StableClinicPortal />;
+          // Use simplified component without any automatic refresh
+          console.log("🔒 Using SimpleClinicPortal component with minimal feature set");
+          return <SimpleClinicPortal />;
         }} 
         requiredRole="clinic_staff" 
       />
