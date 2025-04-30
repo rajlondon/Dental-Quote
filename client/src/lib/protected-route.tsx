@@ -87,9 +87,13 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
     }
   }, [user, requiredRole, readyForClinic]);
 
+  // Generate a stable key for this route to prevent unnecessary remounts
+  const stableRouteKey = `protected-route-${path.replace(/\//g, '-')}`;
+  
   return (
     <Route
       path={path}
+      key={stableRouteKey}
       component={props => {
         // Show loading while auth is loading or waiting for clinic session to be fully established
         if (isLoading || (requiredRole === 'clinic_staff' && !readyForClinic)) {
@@ -126,8 +130,11 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
           );
         }
 
-        // User has access
-        return <Component {...props} />;
+        // Generate a stable component key to prevent recreation of the component
+        const componentKey = `${stableRouteKey}-content-${user?.id || 'anonymous'}`;
+        
+        // User has access - use a stable key to prevent remounting
+        return <Component {...props} key={componentKey} />;
       }}
     />
   );
