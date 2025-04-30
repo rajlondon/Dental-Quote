@@ -36,13 +36,74 @@ router.post("/api/portal/update-profile", ensureAuthenticated, csrfProtection, a
         message: "User not authenticated"
       });
     }
-    
-    // TODO: Implement update user profile in storage
-    
-    res.json({
-      success: true,
-      message: "Profile updated successfully"
+
+    // Validate the update data before proceeding
+    // Only allow specific fields to be updated
+    const allowedFields = [
+      'firstName', 
+      'lastName', 
+      'phone', 
+      'profileImage',
+      'address', 
+      'dateOfBirth', 
+      'nationality', 
+      'preferredLanguage',
+      'passportNumber',
+      'jobTitle', // Only for clinic_staff
+      'medicalInfo', // Only for patients
+      'emergencyContact' // Only for patients
+    ];
+
+    // Filter out any fields that shouldn't be updated
+    const sanitizedData: Record<string, any> = {};
+    Object.keys(updateData).forEach(key => {
+      if (allowedFields.includes(key)) {
+        sanitizedData[key] = updateData[key];
+      }
     });
+
+    // Specific validation for role-specific fields
+    if (req.user?.role !== 'clinic_staff' && sanitizedData.hasOwnProperty('jobTitle')) {
+      delete sanitizedData.jobTitle;
+    }
+
+    // Mark profile as complete if critical fields are filled
+    const criticalFields = ['firstName', 'lastName', 'phone'];
+    let isProfileComplete = criticalFields.every(field => 
+      sanitizedData[field] !== undefined || (req.user && req.user[field as keyof typeof req.user])
+    );
+    
+    if (isProfileComplete) {
+      sanitizedData.profileComplete = true;
+    }
+
+    // Update user in database
+    try {
+      const updatedUser = await storage.updateUser(userId, sanitizedData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+
+      // Return success with updated user (excluding sensitive fields)
+      const { password, ...safeUserData } = updatedUser;
+      
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        user: safeUserData
+      });
+    } catch (dbError) {
+      console.error("Database error updating profile:", dbError);
+      return res.status(500).json({
+        success: false,
+        message: "Database error updating profile",
+        error: dbError instanceof Error ? dbError.message : String(dbError)
+      });
+    }
   } catch (error) {
     console.error("Error updating user profile:", error);
     res.status(500).json({
@@ -259,6 +320,63 @@ router.get("/api/portal/dashboard", ensureAuthenticated, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to get dashboard data",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Get additional profile information - medical info and emergency contacts
+router.get("/api/portal/extended-profile", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      });
+    }
+    
+    // For now, just return the complete user data
+    // In a real production environment, we'd store these in separate tables
+    // and join the data here
+    const userData = await storage.getUser(userId);
+    
+    if (!userData) {
+      return res.status(404).json({
+        success: false, 
+        message: "User not found"
+      });
+    }
+
+    // Extract just the fields we need
+    const { 
+      medicalInfo, 
+      emergencyContact,
+      address,
+      dateOfBirth,
+      nationality,
+      preferredLanguage,
+      passportNumber
+    } = userData;
+    
+    res.json({
+      success: true,
+      data: {
+        medicalInfo: medicalInfo || null,
+        emergencyContact: emergencyContact || null,
+        address: address || null,
+        dateOfBirth: dateOfBirth || null,
+        nationality: nationality || null,
+        preferredLanguage: preferredLanguage || null,
+        passportNumber: passportNumber || null
+      }
+    });
+  } catch (error) {
+    console.error("Error retrieving extended profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve extended profile data",
       error: error instanceof Error ? error.message : String(error)
     });
   }
