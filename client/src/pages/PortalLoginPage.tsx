@@ -178,10 +178,32 @@ const PortalLoginPage: React.FC = () => {
 
 
 
+  // Flag to prevent duplicate login submissions
+  const loginInProgress = React.useRef(false);
+
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
+    // Prevent duplicate submissions
+    if (loginInProgress.current) {
+      console.log("Login already in progress, ignoring duplicate submission");
+      return;
+    }
+    
+    // Set loading state for button
+    setIsLoading(true);
+    
     try {
+      // Set flag to prevent duplicate submissions
+      loginInProgress.current = true;
       console.log("Login attempt with:", values);
+      
+      // Store login intent in session storage before login
+      // This helps identify the transition is from a fresh login
+      sessionStorage.setItem('just_logged_in', 'true');
+      sessionStorage.setItem('login_timestamp', Date.now().toString());
+      
+      // Pre-cache clinic portal data to avoid reload
+      sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
       
       // Use the loginMutation from useAuth hook
       const userData = await loginMutation.mutateAsync({
@@ -196,29 +218,42 @@ const PortalLoginPage: React.FC = () => {
       
       if (userData.role === 'admin') {
         console.log("Admin user detected, redirecting to admin portal");
+        // Pre-cache user data
+        sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
+        sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         setLocation('/admin-portal');
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
         
-        // Prepare clinic portal session for redirect
-        // Clear any existing session storage timestamp to force a fresh check
-        sessionStorage.removeItem('clinic_portal_timestamp');
+        // Pre-cache the user data to avoid double fetching on redirect
+        sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
+        sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         
-        // Ensure the user data is fresh in the cache
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-        
-        // Set a flag to indicate this is a fresh login and redirect
-        console.log("Redirecting to clinic portal with fresh session");
-        setLocation('/clinic-portal');
+        // Add delay to ensure caches are written before redirect
+        setTimeout(() => {
+          console.log("Redirecting to clinic portal with pre-cached session");
+          setLocation('/clinic-portal');
+        }, 50);
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");
+        // Pre-cache user data
+        sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
+        sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         setLocation('/client-portal');
       }
       
     } catch (error) {
       console.error("Login error:", error);
       // The loginMutation will handle error toasts automatically
+    } finally {
+      // Reset loading state
+      setIsLoading(false);
+      
+      // Reset flag after a delay to prevent rapid duplicate submissions
+      setTimeout(() => {
+        loginInProgress.current = false;
+      }, 1000);
     }
   };
 
