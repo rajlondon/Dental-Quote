@@ -1,14 +1,12 @@
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-// import { useGlobalAuth } from "@/contexts/GlobalAuthProvider";
 
 export default function ClinicGuard({ children }: { children: JSX.Element }) {
-  // TEMPORARY: Revert back to useAuth until we fix GlobalAuthProvider
-  const { user, isLoading: loading } = useAuth();
+  const { user, isLoading } = useAuth();  // Already fetches /auth/user once
   
-  // Wait for the global auth check to complete
-  if (loading) {
+  // Wait for the auth check to complete
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-2">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -24,6 +22,5 @@ export default function ClinicGuard({ children }: { children: JSX.Element }) {
   }
   
   // User is authenticated and has the correct role
-  console.log(`ClinicGuard: Authenticated as clinic staff: ${user.email}`);
   return children;
 }

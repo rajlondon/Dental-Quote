@@ -1,0 +1,75 @@
+1 — ClinicGuard.tsx  (†create or edit)
+tsx
+Copy
+Edit
+import { Navigate } from 'react-router-dom';
+import { useAuth }    from '@/hooks/use-auth';   // ← your original provider
+
+export default function ClinicGuard({ children }: { children: JSX.Element }) {
+  const { user, loading } = useAuth();           // ← already fetches /auth/user once
+
+  if (loading) return null;                      // 🕒 wait for the query
+  if (!user || user.role !== 'clinic_staff') {   // 🛑 not clinic staff → login
+    return <Navigate to="/clinic/login" replace />;
+  }
+  return children;                               // ✅ authorised
+}
+2 — fetchMe helper (or wherever /auth/user is called)
+ts
+Copy
+Edit
+// api.ts   (make sure this is the ONLY place the request is made)
+
+import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: '/api',
+  withCredentials: true,         // 🏷️ send session cookie every time
+});
+
+export const fetchMe = () =>
+  api.get('/auth/user').then(r => r.data);
+Your existing AuthProvider already calls fetchMe; leave everything else as-is.
+
+3 — Wrap Clinic routes with the guard
+tsx
+Copy
+Edit
+// in your router (App.tsx or routes.tsx)
+<Route
+  path="/clinic/*"
+  element={
+    <ClinicGuard>
+      <ClinicLayout />           {/* dashboard & nested routes */}
+    </ClinicGuard>
+  }
+/>
+4 — Remove experimental code
+Delete (or comment out) GlobalAuthProvider.tsx and any “prevent reload” wrappers you added earlier.
+
+Ensure only one AuthProvider wraps <App> (the one that already works for admin/patient).
+
+5 — Re-deploy & verify
+Network → XHR should show
+POST /api/auth/login 200
+GET /api/auth/user 200
+
+No redirect; dashboard stays up.
+
+If /auth/user comes back 401 at this point, tell the agent to check the server’s SESSION_SECRET / cookie.sameSite flags. Otherwise, the loop is gone.
+
+How to hand this to the Replit agent
+
+bash
+Copy
+Edit
+Please apply the following patch exactly:
+
+1. Create/replace client/src/components/ClinicGuard.tsx with the code block below.
+2. Ensure axios in client/src/lib/api.ts (or equivalent) includes withCredentials:true.
+3. Wrap the /clinic routes in <ClinicGuard> as shown.
+
+<insert the code snippets above>
+
+Remove GlobalAuthProvider and other recent prevent-reload hacks, then Restart.
+That message gives the agent everything it needs. Let me know if you’d like an even more detailed diff or run command!
