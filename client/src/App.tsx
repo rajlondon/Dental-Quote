@@ -148,11 +148,7 @@ function Router() {
       {/* Clinic Staff Protected Routes */}
       <ProtectedRoute 
         path="/clinic-portal" 
-        component={() => {
-          // Use the simplified component without any refresh issues
-          console.log("🔒 Using SimpleClinicPortal component with minimal feature set");
-          return <SimpleClinicPortal />;
-        }} 
+        component={ClinicPortalPage} 
         requiredRole="clinic_staff" 
       />
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
