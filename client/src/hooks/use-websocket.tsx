@@ -404,6 +404,32 @@ export const useWebSocket = (): WebSocketHookResult => {
     }
   }, [user, initializeSocket]);
   
+  // Listen for external component unmount events
+  useEffect(() => {
+    const handleWebSocketCleanup = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && user && customEvent.detail.userId == user.id) {
+        console.log(`Received external cleanup request for user ${user.id}`);
+        // Force close any open connections
+        if (socketRef.current) {
+          (socketRef.current as any)._manualClose = true;
+          if (socketRef.current.readyState === WebSocket.OPEN || 
+              socketRef.current.readyState === WebSocket.CONNECTING) {
+            socketRef.current.close(1000, "Component cleanup requested");
+          }
+          socketRef.current = null;
+        }
+      }
+    };
+    
+    // Add event listener for component cleanup events
+    document.addEventListener('websocket-component-cleanup', handleWebSocketCleanup);
+    
+    return () => {
+      document.removeEventListener('websocket-component-cleanup', handleWebSocketCleanup);
+    };
+  }, [user]);
+  
   // Cleanup on unmount
   useEffect(() => {
     // Set as mounted
@@ -412,12 +438,18 @@ export const useWebSocket = (): WebSocketHookResult => {
     // Generate a new connection ID for this component instance
     connectionIdRef.current = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     
+    // Register time of component mount to help with race conditions
+    (window as any).__lastWebSocketMountTime = Date.now();
+    
     // Comprehensive cleanup on unmount
     return () => {
       console.log(`WebSocket hook unmounting with connection ID: ${connectionIdRef.current}`);
       
       // Mark component as unmounted to prevent state updates
       isComponentMounted.current = false;
+      
+      // Record time of unmount to ensure cleanup doesn't interfere with new mounts
+      (window as any).__lastWebSocketUnmountTime = Date.now();
       
       // Clear all timers
       if (reconnectTimeoutRef.current) {
