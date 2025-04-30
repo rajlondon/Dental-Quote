@@ -13,8 +13,23 @@ const ReloadTranslations: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Skip translation reload events on clinic portal
+    const isClinicPortal = typeof window !== 'undefined' && 
+      window.location.pathname.includes('clinic-portal');
+      
+    if (isClinicPortal) {
+      console.log('🛡️ ReloadTranslations component disabled on clinic portal');
+      return; // Early return to prevent setting up listeners
+    }
+    
     // Monitor for language changes
     const handleLanguageChanged = (lng: string) => {
+      // Prevent handling on clinic portal to avoid refreshes
+      if (window.location.pathname.includes('clinic-portal')) {
+        console.log('🛡️ Blocked translation event on clinic portal');
+        return;
+      }
+      
       if (lng !== previousLang) {
         // Get language names for display
         const prevLangData = languages[previousLang as keyof typeof languages] || languages.en;
