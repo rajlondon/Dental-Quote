@@ -1,0 +1,106 @@
+Below is the quickest —and safest—way to get the clinic portal behaving exactly like the patient and admin portals without spending another four-hour marathon. It’s a two–stage plan:
+
+Stage 1 — Put the login/redirect loop under a microscope
+Goal: prove whether the token is never written … or written but rejected on the very next request.
+
+
+What to do	What you’ll learn
+1. Open the Network tab → Preserve log.
+Log in once.	Scenario A – you see
+POST /auth/clinic/login 200 only → token never stored.
+Scenario B – you see
+POST /auth/clinic/login 200 plus GET /clinic/me 401 → token sent but back-end throws it out.
+2. Open Application → Local Storage → look for clinicToken.	If it flashes in then vanishes, an effect is wiping it (usually a rogue logout() in useEffect([], [])).
+Whichever scenario appears tells us exactly which chunk of code to patch in Stage 2.
+
+Stage 2 — Drop-in “single source of truth” auth that can’t loop
+Below is a battle-tested pattern you can paste in without disturbing patient/admin code. Do this in a feature branch first:
+
+1 ▸ /src/contexts/ClinicAuth.tsx
+tsx
+Copy
+Edit
+import { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
+
+type Auth = { loading: boolean; ok: boolean };
+const Ctx = createContext<Auth>({ loading: true, ok: false });
+export const useClinicAuth = () => useContext(Ctx);
+
+export function ClinicAuthProvider({ children }: { children: React.ReactNode }) {
+  const [loading, setLoading] = useState(true);
+  const [ok, setOK] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("clinicToken");
+    if (!token) return setLoading(false);
+
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+    axios.get("/api/clinic/me")
+         .then(() => setOK(true))
+         .catch(() => localStorage.removeItem("clinicToken"))
+         .finally(() => setLoading(false));
+  }, []);
+
+  return <Ctx.Provider value={{ loading, ok }}>{children}</Ctx.Provider>;
+}
+2 ▸ /src/components/ClinicGuard.tsx
+tsx
+Copy
+Edit
+import { Navigate } from "react-router-dom";
+import { useClinicAuth } from "../contexts/ClinicAuth";
+
+export default function ClinicGuard({ children }: { children: JSX.Element }) {
+  const { loading, ok } = useClinicAuth();
+  if (loading) return null;                    // or a spinner
+  if (!ok)     return <Navigate to="/clinic/login" replace />;
+  return children;
+}
+3 ▸ Router slice
+tsx
+Copy
+Edit
+<ClinicAuthProvider>
+  <Routes>
+    <Route path="/clinic/login" element={<ClinicLogin />} />
+    <Route path="/clinic/*" element={
+      <ClinicGuard><ClinicLayout /></ClinicGuard>
+    }/>
+  </Routes>
+</ClinicAuthProvider>
+Everything else (React Query, message polling, etc.) stays untouched.
+Because the provider only runs once per mount and writes/reads the token once, it cannot trigger the bounce you saw yesterday.
+
+What if Stage 1 said “token never stored”?
+Then patch the login handler instead:
+
+tsx
+Copy
+Edit
+const { data } = await axios.post("/auth/clinic/login", { email, pass });
+localStorage.setItem("clinicToken", data.token);   // ‼ ensure no try/catch swallows errors
+navigate("/clinic");
+…and remove every other place that writes or clears clinicToken except an explicit “Log out” button.
+
+Why this fixes the “refresh, refresh, back-to-login” saga
+
+Typical pitfall	How the pattern avoids it
+Guard fires while token still undefined → loop	loading gate renders nothing until we know for sure.
+State wiped on hard refresh	Provider re-hydrates from LocalStorage every mount.
+Two components redirecting at once	Only ClinicGuard performs redirects.
+Token stored under mismatched key	One literal key, used exactly twice.
+Backend rejects token every request	You’ll see 401 in Stage 1 and can fix header/secret once.
+If you’re happy with a “good enough for now” fix
+Drop the code in, deploy, and walk away.
+When you’re ready for a deeper spring-clean:
+
+Unify all three portals behind a single AuthProvider + role flags (role = 'admin' | 'clinic' | 'patient').
+
+Replace message-polling loops with a WebSocket (or at least React Query’s refetchInterval + staleTime combo).
+
+Remove duplicate portal code by composing shared components (sidebar, top bar, message list, etc.).
+
+That refactor can be done incrementally—module by module—without another late-night debugging spiral.
+
+Next step: run Stage 1 right now and post the two network entries (login 200 + me 401? or just login 200?). I’ll point to the exact line you need to tweak if anything still jumps.
