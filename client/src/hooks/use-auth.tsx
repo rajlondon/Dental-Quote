@@ -19,6 +19,9 @@ interface User {
   profileImage?: string;
   clinicId?: number;
   stripeCustomerId?: string;
+  phone?: string;
+  // New profile fields added for type safety
+  profileComplete?: boolean;
 }
 
 interface LoginData {
