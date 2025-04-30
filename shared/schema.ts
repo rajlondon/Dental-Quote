@@ -12,6 +12,25 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 100 }),
   phone: varchar("phone", { length: 50 }),
   profileImage: varchar("profile_image", { length: 255 }),
+  // Additional personal information
+  address: varchar("address", { length: 255 }),
+  dateOfBirth: varchar("date_of_birth", { length: 20 }), // Store as YYYY-MM-DD
+  nationality: varchar("nationality", { length: 100 }),
+  preferredLanguage: varchar("preferred_language", { length: 50 }).default("English"),
+  passportNumber: varchar("passport_number", { length: 50 }),
+  // JSON fields for structured data
+  emergencyContact: json("emergency_contact").$type<{
+    name: string;
+    relationship: string;
+    phone: string;
+    email: string;
+  }>(),
+  medicalInfo: json("medical_info").$type<{
+    allergies: string[];
+    medications: string[];
+    conditions: string[];
+    notes: string;
+  }>(),
   // Role-based fields
   role: varchar("role", { length: 20 }).default("patient").notNull(), // patient, admin, clinic_staff
   clinicId: integer("clinic_id").references(() => clinics.id), // For clinic_staff only
