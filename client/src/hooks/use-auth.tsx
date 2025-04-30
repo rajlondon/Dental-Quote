@@ -216,10 +216,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem('cached_user_data', JSON.stringify(user));
       sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
 
-      // Clear any clinic portal session timestamps (force reload)
+      // FIXED: Don't force reload for clinic staff by removing timestamp
+      // Commenting out this part as it's causing the refresh cycles
+      /*
       if (user.role === 'clinic_staff') {
         sessionStorage.removeItem('clinic_portal_timestamp');
       }
+      */
       
       // Check for auth warnings from localStorage
       const warningsStr = localStorage.getItem('auth_warnings');
