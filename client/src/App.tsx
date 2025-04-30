@@ -163,7 +163,7 @@ function Router() {
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       <Route path="/clinic">
-        {() => <Redirect to="/simple-clinic" />}
+        {() => <Redirect to="/clinic-portal" />}
       </Route>
       {/* Redirect all test routes to home */}
       <Route path="/test">
