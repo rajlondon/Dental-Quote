@@ -103,9 +103,23 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
       return;
     }
     
-    // IMPORTANT: Check if we've already initialized to prevent refresh cycles
-    if (initialLoadComplete.current) {
+    // IMPORTANT: Enhanced check for initialization with a more robust, multi-layered approach
+    // Check both local ref and session storage to ensure we don't initialize twice
+    if (initialLoadComplete.current || sessionStorage.getItem('clinic_portal_timestamp')) {
       console.log("ClinicPortalPage: Already initialized, skipping to prevent refresh");
+      
+      // Make absolutely sure the timestamp exists even if the ref is true but storage was cleared
+      if (!sessionStorage.getItem('clinic_portal_timestamp')) {
+        const timestamp = Date.now();
+        sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+        console.log("Restoring missing clinic_portal_timestamp:", timestamp);
+      } else {
+        console.log("Using existing clinic_portal_timestamp to prevent refresh");
+      }
+      
+      // Set the ref in case we have the opposite situation
+      initialLoadComplete.current = true;
+      
       return;
     }
     
@@ -114,14 +128,15 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
     // Set initialization flag to prevent repeated execution
     initialLoadComplete.current = true;
     
-    // Store session timestamp but don't modify if already exists
+    // Store session timestamp - always set it on first load
     // This is critical to prevent refresh cycles
-    if (!sessionStorage.getItem('clinic_portal_timestamp')) {
-      const timestamp = Date.now();
-      sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
-      console.log("Set initial clinic_portal_timestamp:", timestamp);
-    } else {
-      console.log("Using existing clinic_portal_timestamp to prevent refresh");
+    const timestamp = Date.now();
+    sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+    console.log("Set initial clinic_portal_timestamp:", timestamp);
+    
+    // Also set a global flag for extra protection
+    if (typeof window !== 'undefined') {
+      (window as any).__clinicPortalInitialized = true;
     }
     
     // Cleanup function for component unmount
