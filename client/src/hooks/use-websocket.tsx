@@ -470,26 +470,76 @@ export const useWebSocket = (): WebSocketHookResult => {
   
   // Function to send message through WebSocket
   const sendMessage = useCallback((message: WebSocketMessage) => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      console.error('Cannot send message: WebSocket not connected');
-      toast({
-        title: 'Connection Error',
-        description: 'Not connected to server. Please try again later.',
-        variant: 'destructive'
-      });
-      return;
-    }
+    // Add retry logic for sending messages
+    const attemptSend = (attempt: number = 0, maxAttempts: number = 3) => {
+      // If we've exhausted retries, notify the user
+      if (attempt >= maxAttempts) {
+        console.error(`Failed to send message after ${maxAttempts} attempts`);
+        toast({
+          title: 'Connection Error',
+          description: 'Failed to send message after multiple attempts. Please try again later.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      // If not connected, try to force a new connection
+      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+        console.log(`WebSocket not ready (attempt ${attempt + 1}/${maxAttempts}), status: ${socketRef.current?.readyState}`);
+        
+        // For first attempt, try to reconnect immediately
+        if (attempt === 0) {
+          console.log('Attempting to reconnect WebSocket...');
+          initializeSocket(); // Try to reestablish connection
+          
+          // Try again after a short delay
+          setTimeout(() => attemptSend(attempt + 1, maxAttempts), 1000);
+          return;
+        } else {
+          // For subsequent attempts, use longer backoff
+          setTimeout(() => attemptSend(attempt + 1, maxAttempts), 2000 * attempt);
+          return;
+        }
+      }
+      
+      try {
+        // Ensure sender information is included
+        if (!message.sender && user) {
+          message.sender = {
+            id: user.id.toString(),
+            type: user.role as 'patient' | 'clinic' | 'admin'
+          };
+        }
+        
+        // Track message in session storage to detect duplicates
+        const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const messageToSend = { ...message, _messageId: messageId };
+        
+        // Add to pending messages
+        const pendingMessages = JSON.parse(sessionStorage.getItem('pendingWebSocketMessages') || '{}');
+        pendingMessages[messageId] = {
+          timestamp: Date.now(),
+          attempt: attempt + 1
+        };
+        sessionStorage.setItem('pendingWebSocketMessages', JSON.stringify(pendingMessages));
+        
+        // Send the message
+        socketRef.current.send(JSON.stringify(messageToSend));
+        console.log(`Message sent (attempt ${attempt + 1}): ${messageId}`);
+        
+        // Consider message sent successfully
+        return true;
+      } catch (error) {
+        console.error(`Error sending message (attempt ${attempt + 1}):`, error);
+        
+        // Try again with backoff
+        setTimeout(() => attemptSend(attempt + 1, maxAttempts), 2000 * attempt);
+      }
+    };
     
-    // Ensure sender information is included
-    if (!message.sender && user) {
-      message.sender = {
-        id: user.id.toString(),
-        type: user.role as 'patient' | 'clinic' | 'admin'
-      };
-    }
-    
-    socketRef.current.send(JSON.stringify(message));
-  }, [user, toast]);
+    // Start the send attempt sequence
+    return attemptSend(0);
+  }, [user, toast, initializeSocket]);
   
   // Register a message handler for a specific message type
   const registerMessageHandler = useCallback((type: string, handler: MessageHandler) => {
