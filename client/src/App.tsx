@@ -213,16 +213,18 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <NotificationsProvider>
-          <Suspense fallback={<div>Loading...</div>}>
-            <ScrollToTop />
-            <ReloadTranslations />
-            <Router />
-            <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-            <EnvironmentBadge />
-            <Toaster />
-          </Suspense>
-        </NotificationsProvider>
+        <ClinicAuthProvider>
+          <NotificationsProvider>
+            <Suspense fallback={<div>Loading...</div>}>
+              <ScrollToTop />
+              <ReloadTranslations />
+              <Router />
+              <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+              <EnvironmentBadge />
+              <Toaster />
+            </Suspense>
+          </NotificationsProvider>
+        </ClinicAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
