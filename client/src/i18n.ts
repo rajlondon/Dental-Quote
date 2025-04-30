@@ -17,10 +17,15 @@ export const languages = {
 // Create a static cache key to prevent browser caching
 const cacheKey = `v=${new Date().getFullYear()}${new Date().getMonth()}${new Date().getDate()}${new Date().getHours()}`;
 
-// Force reload translations on startup - disabled for clinic portal
+// Force reload translations on startup - DISABLED for stability
+// This function caused refresh cycles - it's now disabled
 const forceReload = () => {
   try {
-    // Skip resource reload on clinic portal to prevent refresh cycles
+    // Completely disable automatic reloads to prevent refresh cycles
+    console.log('🛡️ Automatic translation reloads are now disabled to prevent refresh cycles');
+    return;
+    
+    // Dead code below - kept for reference but will never execute
     if (typeof window !== 'undefined' && 
         window.location.pathname.includes('clinic-portal')) {
       console.log('🛡️ Skipping translation reload on clinic portal to prevent refresh');

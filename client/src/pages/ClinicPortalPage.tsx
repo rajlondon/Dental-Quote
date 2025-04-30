@@ -96,10 +96,16 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
     return !initialLoadComplete.current;
   }, []);
   
-  // Simplified initialization effect to avoid any refresh triggers
+  // FIXED: Initialization effect with stronger refresh prevention
   useEffect(() => {
-    // Skip if no user or already initialized
-    if (!user || initialLoadComplete.current) {
+    // Skip if no user
+    if (!user) {
+      return;
+    }
+    
+    // IMPORTANT: Check if we've already initialized to prevent refresh cycles
+    if (initialLoadComplete.current) {
+      console.log("ClinicPortalPage: Already initialized, skipping to prevent refresh");
       return;
     }
     
@@ -108,9 +114,15 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
     // Set initialization flag to prevent repeated execution
     initialLoadComplete.current = true;
     
-    // Store session timestamp but with no refresh logic
-    const timestamp = Date.now();
-    sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+    // Store session timestamp but don't modify if already exists
+    // This is critical to prevent refresh cycles
+    if (!sessionStorage.getItem('clinic_portal_timestamp')) {
+      const timestamp = Date.now();
+      sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+      console.log("Set initial clinic_portal_timestamp:", timestamp);
+    } else {
+      console.log("Using existing clinic_portal_timestamp to prevent refresh");
+    }
     
     // Cleanup function for component unmount
     return () => {
