@@ -1,0 +1,100 @@
+What we’ve learned
+Case B — after logging in the clinic dashboard never calls /api/auth/user at all.
+Only the initial POST /api/auth/login appears, then a mysterious request called 6.
+Because there is no user-check call, the React guard still has user === undefined and kicks you back to /clinic/login, creating the flash.
+
+Root cause
+The React-Query hook that should fetch the current user is never mounted (or it mounts and immediately unmounts before it can fire).
+Until we ensure that hook runs once and is allowed to finish, the portal will always treat the session as unknown.
+
+1 Add a single, global AuthProvider that fetches the user once
+Create client/src/contexts/AuthProvider.tsx
+
+tsx
+Copy
+Edit
+import React, { createContext, useContext } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';          // axios instance withCredentials:true
+
+type AuthCtx = { user: any | null; loading: boolean };
+const Ctx = createContext<AuthCtx>({ user: null, loading: true });
+export const useAuth = () => useContext(Ctx);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { data, isLoading } = useQuery(
+    ['me'],
+    () => api.get('/auth/user').then(r => r.data),
+    { staleTime: 60_000, retry: false, refetchOnWindowFocus: false }
+  );
+
+  return (
+    <Ctx.Provider value={{ user: data ?? null, loading: isLoading }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+2 Wrap your router once (e.g. in App.tsx)
+tsx
+Copy
+Edit
+import { AuthProvider } from '@/contexts/AuthProvider';
+
+function App() {
+  return (
+    <AuthProvider>
+      {/* existing <BrowserRouter> with all routes */}
+    </AuthProvider>
+  );
+}
+3 Make the ClinicGuard wait for the query
+tsx
+Copy
+Edit
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthProvider';
+
+export default function ClinicGuard({ children }: { children: JSX.Element }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;                     // or a nice spinner
+  if (!user || user.role !== 'clinic_staff') {
+    return <Navigate to="/clinic/login" replace />;
+  }
+  return children;
+}
+No more direct fetches or redirects inside ClinicPortalPage itself.
+
+4 Remove any extra “prevent reload” timers
+Delete (or comment) ad-hoc code that:
+
+ts
+Copy
+Edit
+if (!isLoggedIn) navigate('/clinic/login');
+window.location.reload();
+They’re no longer necessary—authentication is decided centrally in the provider.
+
+5 Retest
+Network tab → Clear → Preserve log.
+
+Log in once.
+
+You should now see:
+
+pgsql
+Copy
+Edit
+POST /api/auth/login 200
+GET  /api/auth/user  200 (or 304)
+…and no redirect back to /clinic/login. The dashboard stays.
+
+Why this fixes the loop
+The user query is issued from a component that is mounted once for the whole app, so it always runs and has time to complete.
+
+Guards wait for loading === false before evaluating the user object—no premature redirects.
+
+React-Query keeps the result in cache (staleTime 1 min) so subsequent route changes are instant and don’t ping the server again.
+
+Give this a try—you only need the three small files/changes above.
+Once /api/auth/user appears (even once) and returns 200, the clinic portal will stop refreshing. If you still get a 401 in that request, let me know—then we’ll tune cookie/session settings on the server side.
