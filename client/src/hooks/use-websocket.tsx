@@ -286,6 +286,19 @@ export const useWebSocket = (): WebSocketHookResult => {
   // Track how often we're initializing to avoid repeated reconnects
   const connectionAttemptCountRef = useRef(0);
   
+  // Shared WebSocket connection tracking across components
+  const getSharedConnectionState = () => {
+    // Check for a global connection pool to prevent duplicate connections
+    if (!(window as any).__websocketConnections) {
+      (window as any).__websocketConnections = {};
+      (window as any).__websocketLastActivity = {};
+    }
+    return {
+      connections: (window as any).__websocketConnections,
+      lastActivity: (window as any).__websocketLastActivity
+    };
+  };
+  
   // Initialize WebSocket on login
   useEffect(() => {
     // If user just logged in (check session flag)
@@ -306,6 +319,25 @@ export const useWebSocket = (): WebSocketHookResult => {
     }
     
     if (user) {
+      // Check if another component already has an active WebSocket connection for this user
+      const { connections, lastActivity } = getSharedConnectionState();
+      const userKey = `user-${user.id}`;
+      const hasExistingConnection = connections[userKey] && 
+                                   (Date.now() - (lastActivity[userKey] || 0)) < 30000; // Connection activity in last 30 seconds
+      
+      if (hasExistingConnection) {
+        console.log(`Reusing existing WebSocket connection for user ${user.id}`);
+        // Mark our usage of the shared connection
+        lastActivity[userKey] = Date.now();
+        
+        // Still set connected state to true since we're reusing a connection
+        if (isComponentMounted.current) {
+          setConnected(true);
+          initialConnectionMadeRef.current = true;
+        }
+        return;
+      }
+      
       // Only initialize if not already connected and we haven't tried too many times
       if (!initialConnectionMadeRef.current && connectionAttemptCountRef.current < 2) {
         console.log(`WebSocket initialization attempt #${connectionAttemptCountRef.current + 1}`);
@@ -316,6 +348,11 @@ export const useWebSocket = (): WebSocketHookResult => {
           console.log("Initializing WebSocket connection for user:", user.id);
           initializeSocket();
           initialConnectionMadeRef.current = true;
+          
+          // Register as an active connection
+          const { connections, lastActivity } = getSharedConnectionState();
+          connections[userKey] = true;
+          lastActivity[userKey] = Date.now();
         }, 300);
         
         return () => clearTimeout(timeoutId);
@@ -387,8 +424,24 @@ export const useWebSocket = (): WebSocketHookResult => {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+
+      // Check if we should preserve the connection
+      if (user) {
+        const { connections, lastActivity } = getSharedConnectionState();
+        const userKey = `user-${user.id}`;
+        
+        // Update last activity timestamp on unmount
+        if (connections[userKey]) {
+          console.log(`Preserving WebSocket connection for user ${user.id} (other components may be using it)`);
+          lastActivity[userKey] = Date.now();
+          
+          // Don't close the socket, just update our state
+          setConnected(false);
+          return;
+        }
+      }
       
-      // Close any active socket connections
+      // Close any active socket connections if no other components are using it
       if (socketRef.current) {
         try {
           // Mark as manually closed to prevent reconnect attempts
@@ -413,7 +466,7 @@ export const useWebSocket = (): WebSocketHookResult => {
       connectionAttemptCountRef.current = 0;
       reconnectCountRef.current = 0;
     };
-  }, []);
+  }, [user]);
   
   // Function to send message through WebSocket
   const sendMessage = useCallback((message: WebSocketMessage) => {
