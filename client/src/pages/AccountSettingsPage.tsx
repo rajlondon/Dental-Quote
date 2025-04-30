@@ -85,7 +85,10 @@ const AccountSettingsPage = () => {
         </div>
 
         {/* Profile Information Section */}
-        <ProfileSection />
+        <div className="border-2 border-red-500 p-2 mb-4">
+          <h2 className="text-xl font-bold mb-2">Profile Section Container</h2>
+          <ProfileSection />
+        </div>
 
         {/* Password Change Section */}
         <Card>
