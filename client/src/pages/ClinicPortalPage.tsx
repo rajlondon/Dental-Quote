@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { queryClient } from "@/lib/queryClient";
 import {
   Select,
   SelectContent,
@@ -56,30 +57,49 @@ const ClinicPortalPage: React.FC = () => {
   // Get auth context for logout functionality
   const { logoutMutation } = useAuth();
   
-  // Handle logout
-  const handleLogout = () => {
-    // Using non-async function to make sure the button click handler completes immediately
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        // Show toast and redirect
-        toast({
-          title: t('portal.logout_success', 'Successfully logged out'),
-          description: t('portal.logout_message', 'You have been logged out of your account.'),
-        });
-        
-        // Use wouter navigation instead of direct URL change
-        setLocation('/portal-login');
-      },
-      onError: (error) => {
-        console.error("Logout error:", error);
-        
-        toast({
-          title: t('portal.logout_error', 'Logout failed'),
-          description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
-          variant: "destructive",
-        });
+  // Handle logout with more aggressive cleanup
+  const handleLogout = async () => {
+    try {
+      // Manually clear any WebSocket connections before logout
+      if (window.WebSocket) {
+        console.log("Manually closing any open WebSocket connections");
+        document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       }
-    });
+      
+      // Show toast first (will still be visible during redirect)
+      toast({
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
+      });
+      
+      // Perform proper logout to clear server session
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (error) {
+        console.error("Fetch-based logout error:", error);
+      }
+      
+      // Force query client to forget user data
+      queryClient.setQueryData(["/api/auth/user"], null);
+      
+      // Immediately redirect to login without waiting for mutation
+      console.log("Redirecting to login page");
+      setLocation('/portal-login');
+      
+      // Then trigger the mutation to properly clear auth state
+      logoutMutation.mutate();
+    } catch (err) {
+      console.error("Logout handler error:", err);
+      
+      // Ensure we still redirect even on error
+      setLocation('/portal-login');
+    }
   };
 
   // Clinic navigation items
