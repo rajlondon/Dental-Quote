@@ -75,9 +75,6 @@ i18n
     
     load: 'currentOnly', // Only load the current language
     preload: ['en'], // Preload English as fallback
-  }, () => {
-    // After initialization, force a reload of resources
-    setTimeout(forceReload, 500);
   });
 
 // Helper function to explicitly reload translations 

@@ -85,10 +85,10 @@ const ClinicPortalPage: React.FC = () => {
     const existingTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
     const currentTime = Date.now();
     
-    // Skip initialization if timestamp exists and is recent (within 10 seconds)
+    // Skip initialization if timestamp exists and is recent (within 20 seconds)
     if (existingTimestamp) {
       const elapsed = currentTime - parseInt(existingTimestamp, 10);
-      if (elapsed < 10000) {
+      if (elapsed < 20000) {
         console.log(`Skipping initialization, recent timestamp exists (${elapsed}ms old)`);
         return;
       }
@@ -128,11 +128,9 @@ const ClinicPortalPage: React.FC = () => {
       // Store a global reference to prevent duplicate component mounting
       (window as any).__clinicPortalMounted = true;
       
-      // Set cleanup timeout to be executed later
-      setTimeout(() => {
-        // Clear the global lock after a delay
-        (window as any).__clinicPortalInitializing = false;
-      }, 2000);
+      // We've removed the timeout here to avoid potential refresh triggers
+      // Just clear the lock immediately as it's no longer needed
+      (window as any).__clinicPortalInitializing = false;
     } catch (error) {
       console.error("Error during clinic portal initialization:", error);
       // Make sure we clear the lock on error
