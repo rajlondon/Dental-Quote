@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Route, Redirect } from "wouter";
+import { useState, useEffect } from "react";
 
 interface ProtectedRouteProps {
   path: string;
@@ -15,9 +16,9 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   const hasAccess = user && (!requiredRole || user.role === requiredRole);
   
   // Add extra delay for clinic_staff to ensure session is fully established
-  const [readyForClinic, setReadyForClinic] = React.useState(requiredRole !== 'clinic_staff');
+  const [readyForClinic, setReadyForClinic] = useState(requiredRole !== 'clinic_staff');
   
-  React.useEffect(() => {
+  useEffect(() => {
     // For clinic staff, add a short delay before showing content to ensure session is set up
     if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic) {
       console.log("Adding short delay for clinic staff authentication...");
