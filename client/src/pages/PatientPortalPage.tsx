@@ -363,6 +363,14 @@ const PatientPortalPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full justify-start text-gray-700 mb-2"
+              onClick={() => window.location.href = '/my-profile'}
+            >
+              <Users className="h-5 w-5 mr-3" />
+              {t('portal.my_profile', 'My Profile')}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-gray-700 mb-2"
               onClick={() => window.location.href = '/account-settings'}
             >
               <UserCog className="h-5 w-5 mr-3" />
