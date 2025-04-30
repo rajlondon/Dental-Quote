@@ -123,8 +123,8 @@ const ClinicMessagesSection: React.FC = () => {
         setMessages(data.messages);
         setSelectedBooking(data.booking);
         
-        // After fetching messages, fetch conversations again to update unread counts
-        fetchConversations();
+        // Only update unread counts, don't call full fetchConversations which can trigger a loop
+        updateUnreadCounts();
       } else {
         console.error('Failed to fetch messages:', data.message);
       }
@@ -137,6 +137,23 @@ const ClinicMessagesSection: React.FC = () => {
       });
     } finally {
       setLoadingMessages(false);
+    }
+  };
+  
+  // New function to update only unread counts without selecting a new conversation
+  const updateUnreadCounts = async () => {
+    try {
+      const response = await fetch('/api/messages/clinic/conversations');
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update the conversations but maintain the current selection
+        setConversations(data.conversations);
+      } else {
+        console.error('Failed to update conversation counts:', data.message);
+      }
+    } catch (error) {
+      console.error('Error updating conversation counts:', error);
     }
   };
 
@@ -233,8 +250,25 @@ const ClinicMessagesSection: React.FC = () => {
         // Clear the input field
         setMessageText('');
         
-        // Refresh messages to show the new message
-        fetchMessages(selectedBookingId);
+        // Add the new message to the current messages list directly
+        if (data.message) {
+          setMessages(prevMessages => [...prevMessages, data.message]);
+        } else {
+          // If the API doesn't return the sent message, fetch messages again but safely
+          try {
+            const msgResponse = await fetch(`/api/messages/clinic/booking/${selectedBookingId}/messages`);
+            const msgData = await msgResponse.json();
+            
+            if (msgData.success) {
+              setMessages(msgData.messages);
+            }
+          } catch (fetchError) {
+            console.error('Error fetching updated messages:', fetchError);
+          }
+        }
+        
+        // Update conversation list counts without triggering a loop
+        updateUnreadCounts();
       } else {
         toast({
           title: t("clinic.messages.send_error", "Send Error"),
