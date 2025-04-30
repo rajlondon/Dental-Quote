@@ -1,0 +1,61 @@
+1 Confirm what the browser is (not) sending
+In the Network tab (XHR/Fetch filter on), click the very first
+GET /api/auth/user that returns 401.
+
+In the Request Headers pane look for a line that starts with
+Cookie:
+
+If it’s missing, the browser didn’t attach the session cookie → our front-end config is still wrong.
+
+If it’s present, the server is rejecting it → skip to step 4.
+
+(Judging by the persistent 401, it will almost certainly be missing.)
+
+2 Locate the one Axios instance the clinic portal uses
+Search once in the repo:
+
+perl
+Copy
+Edit
+grep -R "axios.create(" client/src | grep baseURL
+You will see something like:
+
+ts
+Copy
+Edit
+// client/src/lib/api.ts
+export const api = axios.create({
+  baseURL: '/api',
+  // 👇 this line is probably absent right now
+  // withCredentials: true,
+});
+3 Add withCredentials: true exactly once
+diff
+Copy
+Edit
+ export const api = axios.create({
+   baseURL: '/api',
++  withCredentials: true,   // send session cookie on every request
+ });
+No other fetch/axios hacks are needed.
+All React-Query hooks that import this api object will now automatically carry the cookie.
+
+Commit → redeploy → login once → /api/auth/user should now return 200 and the dashboard will stay.
+
+4 If the cookie is being sent but you still get 401
+Then the server invalidates the session. Two common causes:
+
+
+Cause	How to see it	Quick patch
+Two different SESSION_SECRETs	console.log(process.env.SESSION_SECRET) in both server/auth.ts and server/index.ts—they must print the same value	Load the secret from one shared file before any express-session call
+Clock-skewed JWT verification	Decode the token on jwt.io—iat and exp differ by seconds only	Add clockTolerance: 60 to jwt.verify() or issue tokens valid ≥ 30 min
+Fix the mismatch, restart the server, and the loop disappears.
+
+TL;DR
+401 after 5 s means the cookie never went with /api/auth/user.
+
+Put withCredentials: true on the single Axios instance → cookie travels.
+
+If 401 persists with the cookie present, align SESSION_SECRET or JWT settings.
+
+Apply that one-liner, redeploy, and the clinic portal will sit happily like the admin & patient portals. Ping me if /api/auth/user still returns 401 with the cookie—we’ll zero in on the server secret next.

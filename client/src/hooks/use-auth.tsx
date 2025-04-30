@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api"; // Import our configured axios instance
 
 // User types
 interface User {
@@ -133,24 +134,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             
             // Fetch fresh data with credentials ALWAYS included
-            console.log("Fetching fresh user data");
-            const res = await fetch("/api/auth/user", {
-              credentials: 'include', // Critical fix: ALWAYS include credentials
-              headers: {
-                'Cache-Control': 'no-cache', // Prevent caching issues
-                'Pragma': 'no-cache'
+            // NEW: Using our API client instead of fetch for consistent cookie handling
+            console.log("Fetching fresh user data via API client");
+            try {
+              const apiRes = await api.get("/api/auth/user");
+              // If we get here, the request was successful
+              const userData = apiRes.data.user || null;
+              
+              // Cache the user data for future use
+              if (userData) {
+                sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
+                sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+              } else {
+                // Clear cache if user is null
+                sessionStorage.removeItem('cached_user_data');
+                sessionStorage.removeItem('cached_user_timestamp');
               }
-            });
-            if (res.status === 401) {
-              console.warn("Authentication failed - session may have expired");
-              return null;
+              
+              return userData;
+            } catch (error) {
+              if (error.response?.status === 401) {
+                console.warn("Authentication failed - session may have expired");
+                // Clear cache on authentication failure
+                sessionStorage.removeItem('cached_user_data');
+                sessionStorage.removeItem('cached_user_timestamp');
+                return null;
+              }
+              throw new Error(`Failed to fetch user data: ${error.message}`);
             }
-            if (!res.ok) {
-              throw new Error(`Failed to fetch user data: ${res.status} ${res.statusText}`);
-            }
-            
-            const data = await res.json();
-            const userData = data.user || null;
             
             // Cache the user data for future use
             if (userData) {
