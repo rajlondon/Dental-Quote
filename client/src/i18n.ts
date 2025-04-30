@@ -17,10 +17,18 @@ export const languages = {
 // Create a static cache key to prevent browser caching
 const cacheKey = `v=${new Date().getFullYear()}${new Date().getMonth()}${new Date().getDate()}${new Date().getHours()}`;
 
-// Force reload translations on startup
+// Force reload translations on startup - disabled for clinic portal
 const forceReload = () => {
   try {
+    // Skip resource reload on clinic portal to prevent refresh cycles
+    if (typeof window !== 'undefined' && 
+        window.location.pathname.includes('clinic-portal')) {
+      console.log('🛡️ Skipping translation reload on clinic portal to prevent refresh');
+      return;
+    }
+    
     if (i18n.isInitialized) {
+      console.log('Reloading i18n resources (not on clinic portal)');
       i18n.reloadResources();
     }
   } catch (error) {

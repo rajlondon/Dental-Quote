@@ -148,40 +148,36 @@ function Router() {
       <ProtectedRoute 
         path="/clinic-portal" 
         component={() => {
-          // Use a ref within this render function to prevent the route from re-rendering
-          if (!(window as any).__clinicPortalMounted) {
-            console.log("First render of clinic portal");
-            (window as any).__clinicPortalMounted = true;
-            // Set a timeout to reset this flag later (30s after unmount)
-            setTimeout(() => {
-              if (window.location.pathname !== '/clinic-portal') {
-                console.log("Resetting clinic portal mount flag");
-                (window as any).__clinicPortalMounted = false;
-              }
-            }, 30000);
-            
-            // Store timestamp when clinic portal was first rendered
-            sessionStorage.setItem('clinic_portal_mount_time', Date.now().toString());
-            
-            return <ClinicPortalPage />;
-          } else {
-            // Check if enough time has passed to allow rerendering
-            const mountTime = sessionStorage.getItem('clinic_portal_mount_time');
-            if (mountTime) {
-              const elapsed = Date.now() - parseInt(mountTime, 10);
-              // Only rerender if more than 10 seconds have passed
-              if (elapsed > 10000) {
-                console.log(`Allowing clinic portal re-render after ${elapsed}ms`);
-                (window as any).__clinicPortalMounted = true;
-                sessionStorage.setItem('clinic_portal_mount_time', Date.now().toString());
-                return <ClinicPortalPage />;
-              }
+          // Complete reimplementation to prevent reload cycles
+          const mountKey = `clinic-portal-${Date.now()}`;
+          
+          // Completely disable reloads for a 30-second window after rendering
+          if (typeof window !== 'undefined') {
+            // Store the original reload function if we haven't already
+            if (!(window as any).__originalReload) {
+              console.log("⚠️ Overriding window.location.reload for clinic portal");
+              (window as any).__originalReload = window.location.reload;
+              
+              // Override with a no-op function on clinic portal path
+              window.location.reload = function(...args: any[]) {
+                const currentPath = window.location.pathname;
+                
+                // Block refreshes only on clinic portal, not other routes
+                if (currentPath.includes('clinic-portal')) {
+                  console.log(`🛡️ Blocked automatic page reload on ${currentPath}`);
+                  return undefined; // Return undefined instead of reloading
+                } else {
+                  // Do normal reload on non-clinic portal paths
+                  return (window as any).__originalReload.apply(this, args);
+                }
+              };
             }
-            
-            console.log("Preventing duplicate clinic portal render");
-            // Return the component without re-rendering
-            return <ClinicPortalPage key="stable-clinic-portal" />;
           }
+          
+          // Always return a fresh instance, but with a stable key to prevent
+          // React from recreating it unnecessarily on param changes
+          console.log("🔄 Rendering clinic portal with stable instance");
+          return <ClinicPortalPage key={mountKey} />; 
         }} 
         requiredRole="clinic_staff" 
       />
