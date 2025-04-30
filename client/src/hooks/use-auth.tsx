@@ -52,8 +52,31 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
-  // Track auth request state to avoid excessive queries
+  // Global tracking for auth request state
   const authRequestInFlight = React.useRef<Promise<User | null> | null>(null);
+  const lastInitTime = React.useRef<number>(0);
+  const preventDuplicateQueries = React.useRef<boolean>(false);
+  
+  // Track if we should use cached auth data from session storage
+  // This helps prevent duplicate requests during rapid navigation
+  React.useEffect(() => {
+    // Check if this is a rapid reinit (< 2s since last init)
+    const now = Date.now();
+    const timeSinceLastInit = now - lastInitTime.current;
+    
+    if (timeSinceLastInit < 2000 && lastInitTime.current > 0) {
+      console.log(`Rapid auth reinit detected (${timeSinceLastInit}ms), will use cache aggressively`);
+      preventDuplicateQueries.current = true;
+      
+      // Reset prevention flag after a short delay
+      setTimeout(() => {
+        preventDuplicateQueries.current = false;
+      }, 5000);
+    }
+    
+    // Update last init time
+    lastInitTime.current = now;
+  }, []);
   
   // User data query with deduplication and caching
   const {
@@ -69,6 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return authRequestInFlight.current;
       }
       
+      // Generate a unique request ID
+      const requestId = `auth-req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      console.log(`Starting new auth request: ${requestId}`);
+      
       // Otherwise, make a new request
       try {
         // Create promise and store it as the in-flight request
@@ -78,14 +105,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const cachedUserData = sessionStorage.getItem('cached_user_data');
             const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
             
-            // Use cache if it's fresh (less than 5 seconds old) to avoid double loads
+            // Use cache if it's fresh or if we're in the prevention window
+            // Extend cache time to 10s to avoid double loads more effectively
             if (cachedUserData && cachedTimestamp) {
               const timestamp = parseInt(cachedTimestamp, 10);
               const age = Date.now() - timestamp;
               
-              // Fresh cache (< 5 seconds old)
-              if (age < 5000) {
-                console.log(`Using cached user data (${age}ms old)`);
+              // More aggressive caching when needed (10s instead of 5s)
+              // Also extend caching when prevent flag is active
+              const shouldUseCache = preventDuplicateQueries.current ? (age < 30000) : (age < 10000);
+              
+              if (shouldUseCache) {
+                console.log(`Using cached user data (${age}ms old) for request ${requestId}`);
                 const user = JSON.parse(cachedUserData);
                 return user;
               }
