@@ -206,6 +206,27 @@ const ProfileSection: React.FC = () => {
     const isLoading = basicLoading || extendedLoading;
     setIsProfileLoading(isLoading);
     
+    console.log('ProfileSection data status:', { 
+      isLoading, 
+      basicLoading, 
+      extendedLoading,
+      hasUser: !!user,
+      hasBasicData: !!basicProfileData,
+      hasExtendedData: !!extendedProfileData
+    });
+    
+    if (user) {
+      console.log('User data available:', { 
+        firstName: user.firstName, 
+        lastName: user.lastName, 
+        email: user.email 
+      });
+    }
+    
+    if (extendedProfileData) {
+      console.log('Extended profile data:', extendedProfileData);
+    }
+    
     if (!isLoading && basicProfileData && user) {
       // Start with basic info from the authenticated user
       const mergedProfile = {
@@ -215,6 +236,8 @@ const ProfileSection: React.FC = () => {
         email: user.email || '',
         phone: user.phone || '',
       };
+      
+      console.log('Merged basic profile:', mergedProfile);
       
       // Add extended profile info if available
       if (extendedProfileData) {
@@ -233,6 +256,8 @@ const ProfileSection: React.FC = () => {
         if (extendedProfileData.medicalInfo) {
           mergedProfile.medicalInfo = extendedProfileData.medicalInfo;
         }
+        
+        console.log('Merged full profile:', mergedProfile);
       }
       
       // Update state with the merged profile
@@ -412,6 +437,14 @@ const ProfileSection: React.FC = () => {
     }
   };
   
+  console.log('ProfileSection render state:', {
+    isProfileLoading,
+    isMedicalLoading,
+    editMode,
+    tabsVisible: true,
+    profileDataPresent: Object.keys(profile).length > 0
+  });
+
   return (
     <div className="flex flex-col h-full">
       <Card className="flex flex-col h-full">
