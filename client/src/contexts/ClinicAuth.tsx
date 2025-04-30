@@ -21,8 +21,11 @@ export function ClinicAuthProvider({ children }: { children: React.ReactNode }) 
     console.log("Found clinic token, checking validity...");
     axios.defaults.headers.common.Authorization = `Bearer ${token}`;
     
+    // CRITICAL FIX: Add withCredentials to ensure cookies are sent
+    // This is needed for clinic portal authentication to work consistently
+    
     // Check if token is valid - we use the existing session authentication
-    axios.get("/api/auth/clinic/me")
+    axios.get("/api/auth/clinic/me", { withCredentials: true })
          .then((response) => {
            console.log("Clinic token valid, user authenticated");
            setOK(true);
