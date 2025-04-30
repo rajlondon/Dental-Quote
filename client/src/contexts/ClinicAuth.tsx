@@ -21,14 +21,14 @@ export function ClinicAuthProvider({ children }: { children: React.ReactNode }) 
     console.log("Found clinic token, checking validity...");
     axios.defaults.headers.common.Authorization = `Bearer ${token}`;
     
-    // Check if token is valid
+    // Check if token is valid - we use the existing session authentication
     axios.get("/api/auth/clinic/me")
          .then((response) => {
            console.log("Clinic token valid, user authenticated");
            setOK(true);
          })
          .catch((error) => {
-           console.error("Clinic token invalid or expired:", error);
+           console.error("Clinic authentication failed:", error);
            localStorage.removeItem("clinicToken");
          })
          .finally(() => {

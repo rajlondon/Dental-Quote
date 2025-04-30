@@ -199,7 +199,20 @@ const PortalLoginPage: React.FC = () => {
         setLocation('/admin-portal');
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
-        setLocation('/clinic-portal');
+        
+        // Special handling for clinic staff - store token separately
+        try {
+          // Store the clinic token for our specialized ClinicAuth context
+          localStorage.setItem("clinicToken", "session_authenticated");
+          console.log("Stored clinic authentication token");
+          
+          // Redirect to clinic portal
+          setLocation('/clinic-portal');
+        } catch (storageError) {
+          console.error("Error storing clinic token:", storageError);
+          // Fall back to regular redirect
+          setLocation('/clinic-portal');
+        }
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");

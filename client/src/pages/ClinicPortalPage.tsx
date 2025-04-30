@@ -61,7 +61,15 @@ const ClinicPortalPage: React.FC = () => {
     // Using non-async function to make sure the button click handler completes immediately
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
-        // When successful, show toast and redirect
+        // When successful, clear the clinicToken to fully log out
+        try {
+          localStorage.removeItem("clinicToken");
+          console.log("Cleared clinic token on logout");
+        } catch (err) {
+          console.error("Error clearing clinic token:", err);
+        }
+
+        // Show toast and redirect
         toast({
           title: t('portal.logout_success', 'Successfully logged out'),
           description: t('portal.logout_message', 'You have been logged out of your account.'),
@@ -72,6 +80,13 @@ const ClinicPortalPage: React.FC = () => {
       },
       onError: (error) => {
         console.error("Logout error:", error);
+        // Try to clear clinic token even on error
+        try {
+          localStorage.removeItem("clinicToken");
+        } catch (err) {
+          console.error("Error clearing clinic token:", err);
+        }
+        
         toast({
           title: t('portal.logout_error', 'Logout failed'),
           description: t('portal.logout_error_message', 'There was an issue logging out. Please try again.'),
