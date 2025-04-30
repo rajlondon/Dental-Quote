@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
@@ -52,7 +52,10 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
-  // User data query
+  // Track auth request state to avoid excessive queries
+  const authRequestInFlight = React.useRef<Promise<User | null> | null>(null);
+  
+  // User data query with deduplication and caching
   const {
     data: user,
     error,
@@ -60,22 +63,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
+      // If we already have a request in flight, reuse it to prevent duplicate calls
+      if (authRequestInFlight.current) {
+        console.log("Auth request already in flight, reusing");
+        return authRequestInFlight.current;
+      }
+      
+      // Otherwise, make a new request
       try {
-        const res = await fetch("/api/auth/user");
-        if (res.status === 401) {
-          return null;
-        }
-        if (!res.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-        const data = await res.json();
-        // The server returns {success: true, user: {...}}
-        return data.user || null;
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        return null;
+        // Create promise and store it as the in-flight request
+        authRequestInFlight.current = (async () => {
+          try {
+            // Try to read from sessionStorage first for clinic staff
+            const cachedUserData = sessionStorage.getItem('cached_user_data');
+            const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
+            
+            // Use cache if it's fresh (less than 5 seconds old) to avoid double loads
+            if (cachedUserData && cachedTimestamp) {
+              const timestamp = parseInt(cachedTimestamp, 10);
+              const age = Date.now() - timestamp;
+              
+              // Fresh cache (< 5 seconds old)
+              if (age < 5000) {
+                console.log(`Using cached user data (${age}ms old)`);
+                const user = JSON.parse(cachedUserData);
+                return user;
+              }
+            }
+            
+            // Fetch fresh data
+            console.log("Fetching fresh user data");
+            const res = await fetch("/api/auth/user");
+            if (res.status === 401) {
+              return null;
+            }
+            if (!res.ok) {
+              throw new Error("Failed to fetch user data");
+            }
+            
+            const data = await res.json();
+            const userData = data.user || null;
+            
+            // Cache the user data for future use
+            if (userData) {
+              sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
+              sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+            } else {
+              // Clear cache if user is null
+              sessionStorage.removeItem('cached_user_data');
+              sessionStorage.removeItem('cached_user_timestamp');
+            }
+            
+            return userData;
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+            return null;
+          }
+        })();
+        
+        // Wait for the request to complete
+        const result = await authRequestInFlight.current;
+        return result;
+      } finally {
+        // Clear the in-flight request after a short delay
+        setTimeout(() => {
+          authRequestInFlight.current = null;
+        }, 50);
       }
     },
+    staleTime: 10000, // Consider data fresh for 10 seconds
   });
   
   // Login mutation with enhanced verification handling
@@ -129,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Login successful",
           description: `Welcome back, ${user.firstName || user.email}! ${warnings[0]}`,
-          variant: "warning"
+          variant: "destructive"
         });
         localStorage.removeItem('auth_warnings');
       } else if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
@@ -207,7 +263,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
+      // Clear user data from query cache
       queryClient.setQueryData(["/api/auth/user"], null);
+      
+      // Clear all session-related caches for a clean logout
+      sessionStorage.removeItem('cached_user_data');
+      sessionStorage.removeItem('cached_user_timestamp');
+      sessionStorage.removeItem('clinic_portal_timestamp');
+      
+      console.log("Auth cache cleared during logout");
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
