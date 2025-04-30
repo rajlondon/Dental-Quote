@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
+import { GlobalAuthProvider } from "@/contexts/GlobalAuthProvider";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
@@ -214,21 +215,24 @@ function App() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationsProvider>
-          <Suspense fallback={<div>Loading...</div>}>
-            <ScrollToTop />
-            {/* Only exclude ReloadTranslations on clinic portal path */}
-            {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-              <ReloadTranslations />
-            }
-            <Router />
-            <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-            <EnvironmentBadge />
-            <Toaster />
-          </Suspense>
-        </NotificationsProvider>
-      </AuthProvider>
+      {/* CRITICAL FIX: Add GlobalAuthProvider as the top-level auth provider */}
+      <GlobalAuthProvider>
+        <AuthProvider>
+          <NotificationsProvider>
+            <Suspense fallback={<div>Loading...</div>}>
+              <ScrollToTop />
+              {/* Only exclude ReloadTranslations on clinic portal path */}
+              {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                <ReloadTranslations />
+              }
+              <Router />
+              <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+              <EnvironmentBadge />
+              <Toaster />
+            </Suspense>
+          </NotificationsProvider>
+        </AuthProvider>
+      </GlobalAuthProvider>
     </QueryClientProvider>
   );
 }

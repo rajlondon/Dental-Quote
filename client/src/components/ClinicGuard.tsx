@@ -1,25 +1,24 @@
 import { Redirect } from "wouter";
-import { useClinicAuth } from "../contexts/ClinicAuth";
 import { Loader2 } from "lucide-react";
+import { useGlobalAuth } from "@/contexts/GlobalAuthProvider";
 
 export default function ClinicGuard({ children }: { children: JSX.Element }) {
-  // Access the enhanced clinic auth context
-  const { loading, ok, user } = useClinicAuth();
+  // CRITICAL CHANGE: Use the global auth provider instead of the local one
+  // This ensures the auth check happens only once at the app level
+  const { user, loading } = useGlobalAuth();
   
-  // Wait for the API call to complete
-  // This is the critical fix - we wait for the loading state
-  // to become false before making any redirect decisions
+  // Wait for the global auth check to complete
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-2">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Verifying clinic staff session...</p>
+        <p className="text-sm text-muted-foreground">Verifying clinic staff access...</p>
       </div>
     );
   }
   
   // Check if user is authenticated and has clinic_staff role
-  if (!ok || !user || user.role !== "clinic_staff") {
+  if (!user || user.role !== "clinic_staff") {
     console.log("ClinicGuard: Not authenticated as clinic staff, redirecting to login");
     return <Redirect to="/portal-login" replace />;
   }
