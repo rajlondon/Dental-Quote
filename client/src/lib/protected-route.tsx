@@ -21,23 +21,15 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   // Use a ref to track if we're already processing to prevent duplicate state changes
   const isProcessingRef = useRef(false);
   
-  // Check if this is the clinic staff portal and determine ready state
+  // Simplified readiness check - assume ready if not clinic staff
   const [readyForClinic, setReadyForClinic] = useState(() => {
     // If not clinic staff, always ready
     if (requiredRole !== 'clinic_staff') return true;
     
-    // Check if we have a valid user and role match
-    if (!user || user.role !== 'clinic_staff') return false;
-    
-    // Get current timestamp to detect session validity
-    const currentTime = Date.now();
-    const lastRenderTime = parseInt(sessionStorage.getItem('clinic_portal_timestamp') || '0', 10);
-    
-    // If we rendered recently (within 5 minutes), assume session is valid
-    const isRecentRender = (currentTime - lastRenderTime) < 300000; // 5 minutes
-    
-    // Return true if we've rendered recently, preventing reload
-    return isRecentRender;
+    // For clinic staff, we'll trigger the readiness in the effect
+    // Regardless of timestamp, we'll enable immediately in the effect
+    // This check just controls whether we show loading first or not
+    return false;
   });
   
   // Update session timestamp when component successfully renders with valid user
@@ -58,22 +50,17 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
     };
   }, [user, requiredRole]);
   
-  // Handle clinic staff session establishment
+  // Immediately make ready for clinic - no delay needed
   useEffect(() => {
-    // Only execute for clinic staff that's not ready yet
+    // Only execute for clinic staff that's not ready yet and not already processing
     if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic && !isProcessingRef.current) {
-      console.log("Setting up clinic staff session...");
+      console.log("Setting up clinic staff session - immediately ready");
       isProcessingRef.current = true;
       
-      // Use a minimal delay to ensure session is established properly
-      setTimeout(() => {
-        // Only update if component is still mounted
-        if (isMountedRef.current) {
-          setReadyForClinic(true);
-          console.log("Clinic staff session fully established");
-        }
-        isProcessingRef.current = false;
-      }, 100);
+      // Set ready immediately - no timeout
+      setReadyForClinic(true);
+      console.log("Clinic staff session fully established");
+      isProcessingRef.current = false;
     }
   }, [user, requiredRole, readyForClinic]);
 
