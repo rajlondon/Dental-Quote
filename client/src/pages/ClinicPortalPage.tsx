@@ -71,7 +71,7 @@ const ClinicPortalPage: React.FC = () => {
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       
       // Step 3: Mark session as needing reset (for next login)
-      sessionStorage.removeItem('clinic_portal_rendered');
+      sessionStorage.removeItem('clinic_portal_timestamp');
       
       // Step 4: Parallel processing - server logout and client cleanup
       // A. Server-side session termination
