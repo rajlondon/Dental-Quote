@@ -1,5 +1,9 @@
 // Simple test script for OpenAI API access
-const OpenAI = require("openai");
+import OpenAI from "openai";
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,7 +12,7 @@ const openai = new OpenAI({
 async function testOpenAI() {
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-0125-preview",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",

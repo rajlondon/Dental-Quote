@@ -1,7 +1,16 @@
 // Script to analyze the clinic portal refresh issue with OpenAI
-const OpenAI = require("openai");
-const fs = require('fs');
-const path = require('path');
+import OpenAI from "openai";
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// Get current file's directory equivalent to __dirname in CommonJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure OpenAI API
 const openai = new OpenAI({
