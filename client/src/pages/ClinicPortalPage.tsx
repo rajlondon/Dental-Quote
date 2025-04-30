@@ -51,7 +51,7 @@ interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
 }
 
-const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh = false }) => {
+const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh = true }) => {
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();

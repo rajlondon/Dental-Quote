@@ -26,6 +26,16 @@ export function useWebSocketWatchdog(
   
   // Set up the safer watchdog timer
   useEffect(() => {
+    // Skip watchdog completely for clinic portal
+    const inClinicPortal = typeof window !== 'undefined' && 
+                            (window.location.pathname === '/clinic-portal' || 
+                             window.location.pathname === '/clinic');
+    
+    if (inClinicPortal) {
+      console.log('Skipping WebSocket watchdog in clinic portal to prevent refresh issues');
+      return;
+    }
+                             
     // Only run the watchdog if we're supposed to be connected but aren't
     if (!isConnected && socketRef.current) {
       // Clear any existing timers
