@@ -148,36 +148,12 @@ function Router() {
       <ProtectedRoute 
         path="/clinic-portal" 
         component={() => {
-          // Complete reimplementation to prevent reload cycles
-          const mountKey = `clinic-portal-${Date.now()}`;
+          // Use the special stable component without refresh issues
+          console.log("🔒 Using StableClinicPortal component without refresh issues");
           
-          // Completely disable reloads for a 30-second window after rendering
-          if (typeof window !== 'undefined') {
-            // Store the original reload function if we haven't already
-            if (!(window as any).__originalReload) {
-              console.log("⚠️ Overriding window.location.reload for clinic portal");
-              (window as any).__originalReload = window.location.reload;
-              
-              // Override with a no-op function on clinic portal path
-              window.location.reload = function(...args: any[]) {
-                const currentPath = window.location.pathname;
-                
-                // Block refreshes only on clinic portal, not other routes
-                if (currentPath.includes('clinic-portal')) {
-                  console.log(`🛡️ Blocked automatic page reload on ${currentPath}`);
-                  return undefined; // Return undefined instead of reloading
-                } else {
-                  // Do normal reload on non-clinic portal paths
-                  return (window as any).__originalReload.apply(this, args);
-                }
-              };
-            }
-          }
-          
-          // Always return a fresh instance, but with a stable key to prevent
-          // React from recreating it unnecessarily on param changes
-          console.log("🔄 Rendering clinic portal with stable instance");
-          return <ClinicPortalPage key={mountKey} />; 
+          // Import the StableClinicPortal component
+          const StableClinicPortal = require('@/components/StableClinicPortal').default;
+          return <StableClinicPortal />;
         }} 
         requiredRole="clinic_staff" 
       />
@@ -246,7 +222,10 @@ function App() {
         <NotificationsProvider>
           <Suspense fallback={<div>Loading...</div>}>
             <ScrollToTop />
-            <ReloadTranslations />
+            {/* Only include ReloadTranslations when not on clinic portal */}
+            {typeof window !== 'undefined' && !window.location.pathname.includes('clinic-portal') && 
+              <ReloadTranslations />
+            }
             <Router />
             <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
             <EnvironmentBadge />
