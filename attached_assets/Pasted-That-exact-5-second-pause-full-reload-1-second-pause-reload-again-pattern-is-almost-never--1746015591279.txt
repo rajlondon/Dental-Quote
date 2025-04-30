@@ -1,0 +1,78 @@
+That exact “ 5-second pause → full reload → 1-second pause → reload again ” pattern is almost never an auth redirect—it’s nearly always a timer-driven effect that calls window.location.reload() (or navigate('/')) after an async check.
+
+Because you can log out normally and the loop always happens five seconds after landing on the dashboard, focus on the three places that fire timers in a clinic-only context:
+
+
+#	Most common culprit	Where to look / how to prove it	Quick disable-and-test
+1	React-Query or SWR “keep session alive” fetch
+(refetchInterval: 5000 or cacheTime: 1000)	Open Network ► XHR/Fetch and filter for /refresh-token, /ping, /heartbeat.
+Does one fire at ~5000 ms and then another at ~6000 ms?	In the query that hits that endpoint, temporarily set
+enabled:false or remove refetchInterval.
+2	WebSocket reconnect watchdog
+(setTimeout(checkConn, 5000))	In Sources ► Search type setTimeout( then 5000.
+Look in use-websocket.tsx or ClinicPortalPage.tsx.	Comment out the block that runs window.location.reload() or navigate in its callback.
+3	Service-worker version check
+(app registers a SW that calls self.skipWaiting() and the page refreshes when it receives "NEW_VERSION" message)	Chrome DevTools ► Application ► Service Workers.
+If “Controller” column flips twice in 6 s, the SW is the culprit.	In serviceWorkerRegistration.ts, change
+workbox.addEventListener('installed', …) so it does not force reload—just shows a toast saying “New version available, click to refresh”.
+Fast way to see which one it is
+js
+Copy
+Edit
+// paste in the Console *before* you log in
+['visibilitychange','message','beforeunload'].forEach(e =>
+  window.addEventListener(e, () => console.log('EVENT', e, performance.now())));
+
+const _reload = window.location.reload;
+window.location.reload = (...a) => {
+  console.trace('RELOAD called at', performance.now());
+  _reload.apply(window, a);
+};
+Log in once.
+
+If you see “RELOAD called” with a stack-trace pointing into a React hook (usually useEffect → setTimeout), that file is the offender.
+
+If no trace appears but the tab still reloads, it’s the service-worker (SW triggers a browser-level reload that bypasses your override).
+
+One-line mitigations once you’ve found it
+React-Query:
+
+ts
+Copy
+Edit
+useQuery(['clinic','me'], fetchMe, {
+  staleTime: 60_000, refetchInterval: false   // ← stop 5-s polling
+});
+WebSocket watchdog:
+
+ts
+Copy
+Edit
+// before: reload page if socket closed > 5 s
+// after: just show toast and let user decide
+socket.onclose = () => toast.error('Connection lost – click to reconnect');
+Service Worker:
+
+ts
+Copy
+Edit
+workbox.addEventListener('waiting', () => {
+  // Old behaviour: window.location.reload()
+  toast('New version ready – refresh when convenient');
+});
+Why admin & patient portals don’t suffer
+The heartbeat/query or SW check is only imported in the clinic bundle (ClinicPortalPage.tsx imports useClinicHeartbeat() or registers the SW in its layout).
+
+They may poll a different endpoint that returns 204 quickly, so the timer’s catch never fires.
+
+Their WebSocket channel (patient_notifications) stays open, so the watchdog never trips.
+
+Next steps for you
+Run the console snippet → capture which function calls reload.
+
+Comment out that timer or polling line → npm run dev → log in.
+If the double reload disappears, you’ve confirmed the culprit in 2 minutes.
+
+Replace the forced reload with a toast + manual refresh, or crank refetchInterval up to 60–120 s so users never notice.
+
+Ping me back with the stack-trace path (or SW controller evidence) and I’ll give you the exact patch if you’d like.
