@@ -1,7 +1,8 @@
 import { Loader2 } from "lucide-react";
 import { Route, Redirect } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { useGlobalAuth } from "@/contexts/GlobalAuthProvider";
+import { useAuth } from "@/hooks/use-auth";
+// import { useGlobalAuth } from "@/contexts/GlobalAuthProvider";
 
 interface ProtectedRouteProps {
   path: string;
@@ -10,8 +11,8 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ path, component: Component, requiredRole }: ProtectedRouteProps) {
-  // CRITICAL FIX: Use the global auth provider instead of the hook
-  const { user, loading: isLoading } = useGlobalAuth();
+  // TEMPORARY: Revert back to useAuth until we fix GlobalAuthProvider
+  const { user, isLoading } = useAuth();
 
   // Check if user is logged in and has the required role (if specified)
   const hasAccess = user && (!requiredRole || user.role === requiredRole);

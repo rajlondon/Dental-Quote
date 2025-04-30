@@ -215,8 +215,8 @@ function App() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      {/* CRITICAL FIX: Add GlobalAuthProvider as the top-level auth provider */}
-      <GlobalAuthProvider>
+      {/* TEMPORARY FIX: Disable GlobalAuthProvider until we fix it */}
+      {/* <GlobalAuthProvider> */}
         <AuthProvider>
           <NotificationsProvider>
             <Suspense fallback={<div>Loading...</div>}>
@@ -232,7 +232,7 @@ function App() {
             </Suspense>
           </NotificationsProvider>
         </AuthProvider>
-      </GlobalAuthProvider>
+      {/* </GlobalAuthProvider> */}
     </QueryClientProvider>
   );
 }

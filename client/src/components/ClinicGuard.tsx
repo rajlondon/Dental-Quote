@@ -1,11 +1,11 @@
 import { Redirect } from "wouter";
 import { Loader2 } from "lucide-react";
-import { useGlobalAuth } from "@/contexts/GlobalAuthProvider";
+import { useAuth } from "@/hooks/use-auth";
+// import { useGlobalAuth } from "@/contexts/GlobalAuthProvider";
 
 export default function ClinicGuard({ children }: { children: JSX.Element }) {
-  // CRITICAL CHANGE: Use the global auth provider instead of the local one
-  // This ensures the auth check happens only once at the app level
-  const { user, loading } = useGlobalAuth();
+  // TEMPORARY: Revert back to useAuth until we fix GlobalAuthProvider
+  const { user, isLoading: loading } = useAuth();
   
   // Wait for the global auth check to complete
   if (loading) {
