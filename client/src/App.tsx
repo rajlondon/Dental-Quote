@@ -155,12 +155,14 @@ function Router() {
         {() => <ClinicGuard><SimpleClinicPage /></ClinicGuard>}
       </Route>
       
-      {/* Original clinic portal - keep this route for backward compatibility */}
-      <ProtectedRoute 
-        path="/clinic-portal" 
-        component={ClinicPortalPage} 
-        requiredRole="clinic_staff" 
-      />
+      {/* Original clinic portal route with special guard to prevent refresh issues */}
+      <Route path="/clinic-portal">
+        {() => (
+          <ClinicGuard>
+            <ClinicPortalPage disableAutoRefresh={true} />
+          </ClinicGuard>
+        )}
+      </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       <Route path="/clinic">
