@@ -79,49 +79,118 @@ const ClinicPortalPage: React.FC = () => {
     return true;
   }, []);
   
-  // Effect for handling first-time initialization
+  // Effect for handling first-time initialization with synchronization lock
   useEffect(() => {
+    // Implement a more aggressive initialization lock
+    const existingTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
+    const currentTime = Date.now();
+    
+    // Skip initialization if timestamp exists and is recent (within 10 seconds)
+    if (existingTimestamp) {
+      const elapsed = currentTime - parseInt(existingTimestamp, 10);
+      if (elapsed < 10000) {
+        console.log(`Skipping initialization, recent timestamp exists (${elapsed}ms old)`);
+        return;
+      }
+    }
+    
     // Skip initialization if not needed
     if (!user || initialLoadComplete.current || !shouldInitialize()) {
       return;
     }
     
+    // Use a global window lock to prevent multiple initializations across components
+    if ((window as any).__clinicPortalInitializing) {
+      console.log("Another initialization is in progress, skipping");
+      return;
+    }
+    
+    // Set global lock
+    (window as any).__clinicPortalInitializing = true;
+    
     console.log("ClinicPortalPage: First-time initialization with user:", user.id);
     
-    // Set initialization flag to prevent repeated execution
-    initialLoadComplete.current = true;
-    
-    // Mark the portal as initialized in session storage
-    const timestamp = Date.now();
-    sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
-    
-    // Reset any "just logged in" flags 
-    sessionStorage.removeItem('just_logged_in');
-    
-    // Pre-cache the user data
-    sessionStorage.setItem('cached_user_data', JSON.stringify(user));
-    sessionStorage.setItem('cached_user_timestamp', timestamp.toString());
-    
-    // Do not force a page reload as this causes navigation loop issues
+    try {
+      // Set initialization flag to prevent repeated execution
+      initialLoadComplete.current = true;
+      
+      // Mark the portal as initialized in session storage with current timestamp
+      const timestamp = currentTime;
+      sessionStorage.setItem('clinic_portal_timestamp', timestamp.toString());
+      
+      // Reset any "just logged in" flags 
+      sessionStorage.removeItem('just_logged_in');
+      
+      // Pre-cache the user data
+      sessionStorage.setItem('cached_user_data', JSON.stringify(user));
+      sessionStorage.setItem('cached_user_timestamp', timestamp.toString());
+      
+      // Store a global reference to prevent duplicate component mounting
+      (window as any).__clinicPortalMounted = true;
+      
+      // Set cleanup timeout to be executed later
+      setTimeout(() => {
+        // Clear the global lock after a delay
+        (window as any).__clinicPortalInitializing = false;
+      }, 2000);
+    } catch (error) {
+      console.error("Error during clinic portal initialization:", error);
+      // Make sure we clear the lock on error
+      (window as any).__clinicPortalInitializing = false;
+    }
     
     // Cleanup function for component unmount
     return () => {
       console.log("ClinicPortalPage unmounting, setting isMounted to false");
       isMounted.current = false;
+      
+      // Clear the global lock on unmount
+      (window as any).__clinicPortalInitializing = false;
+      
+      // Set a timeout to clear the mounted flag when navigating away
+      // This prevents issues with WebSocket connection management
+      setTimeout(() => {
+        if (window.location.pathname !== '/clinic-portal') {
+          console.log("Clearing clinic portal mounted flag after navigation");
+          (window as any).__clinicPortalMounted = false;
+        }
+      }, 1000);
     };
   }, [user, shouldInitialize]);
   
-  // Component unmount cleanup effect
+  // Component unmount cleanup effect with advanced WebSocket handling
   useEffect(() => {
+    // Set a flag on mount to track this instance
+    const instanceId = `clinic-portal-instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    (window as any).__lastClinicPortalInstance = instanceId;
+    
     return () => {
       // Prevent WebSocket connection errors on unmount
       if (isMounted.current) {
         console.log("ClinicPortalPage unmounting, performing cleanup");
-        // Clear any stored session data
-        sessionStorage.removeItem('clinic_portal_active');
+        
+        // Only perform full cleanup if this is the most recent instance
+        // This prevents older unmounted instances from clearing newer ones
+        if ((window as any).__lastClinicPortalInstance === instanceId) {
+          // Clear any stored session data
+          sessionStorage.removeItem('clinic_portal_active');
+          
+          // Disconnect WebSocket safely if this component is responsible for it
+          if (user) {
+            // Manually trigger WebSocket cleanup via custom event
+            // This event is caught by the useWebSocket hook
+            const cleanupEvent = new CustomEvent('websocket-component-cleanup', {
+              detail: { userId: user.id, componentId: instanceId }
+            });
+            document.dispatchEvent(cleanupEvent);
+            console.log(`Triggered WebSocket cleanup for user ${user.id}`);
+          }
+        } else {
+          console.log("Skipping full cleanup - newer instance exists");
+        }
       }
     };
-  }, []);
+  }, [user]);
   
   // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
