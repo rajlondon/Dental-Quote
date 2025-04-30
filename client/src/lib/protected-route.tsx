@@ -21,26 +21,47 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   // Use a ref to track if we're already processing to prevent duplicate state changes
   const isProcessingRef = useRef(false);
   
-  // Simplified readiness check - assume ready if not clinic staff
+  // Check if a recent valid session exists (less than 30 seconds old)
+  const hasRecentSession = useRef(() => {
+    if (requiredRole !== 'clinic_staff') return true;
+    
+    try {
+      const timestamp = sessionStorage.getItem('clinic_portal_timestamp');
+      if (!timestamp) return false;
+      
+      const parsed = parseInt(timestamp, 10);
+      const age = Date.now() - parsed;
+      
+      // Valid session if less than 30 seconds old
+      return !isNaN(parsed) && age < 30000;
+    } catch (err) {
+      return false;
+    }
+  });
+  
+  // Use session detection for initial state to avoid unnecessary loading states
   const [readyForClinic, setReadyForClinic] = useState(() => {
     // If not clinic staff, always ready
     if (requiredRole !== 'clinic_staff') return true;
     
-    // For clinic staff, we'll trigger the readiness in the effect
-    // Regardless of timestamp, we'll enable immediately in the effect
-    // This check just controls whether we show loading first or not
-    return false;
+    // If we have a recent valid session, start as ready
+    return hasRecentSession.current();
   });
   
-  // Update session timestamp when component successfully renders with valid user
+  // Update session timestamp when we have a user but only do it once per session
   useEffect(() => {
-    // Only apply for clinic staff users with matching role
+    // Only update for clinic staff with the right role
     if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff') {
-      // Save current timestamp to track last successful render
-      const timestamp = Date.now().toString();
-      sessionStorage.setItem('clinic_portal_timestamp', timestamp);
+      // Check if we've recently updated this timestamp
+      const currentTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
+      const now = Date.now();
       
-      console.log(`Clinic portal session timestamp updated: ${new Date(parseInt(timestamp)).toLocaleTimeString()}`);
+      // Only update if no timestamp exists or it's older than 5 seconds
+      if (!currentTimestamp || (now - parseInt(currentTimestamp, 10)) > 5000) {
+        // Save current timestamp to track last successful render
+        sessionStorage.setItem('clinic_portal_timestamp', now.toString());
+        console.log(`Clinic portal session timestamp updated: ${new Date(now).toLocaleTimeString()}`);
+      }
     }
     
     // Cleanup function
@@ -50,16 +71,18 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
     };
   }, [user, requiredRole]);
   
-  // Immediately make ready for clinic - no delay needed
+  // Make clinic staff ready if not already
   useEffect(() => {
-    // Only execute for clinic staff that's not ready yet and not already processing
+    // Only execute for clinic staff that's not ready yet
     if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic && !isProcessingRef.current) {
-      console.log("Setting up clinic staff session - immediately ready");
+      console.log("Setting up clinic staff session - marking as ready");
       isProcessingRef.current = true;
       
-      // Set ready immediately - no timeout
-      setReadyForClinic(true);
-      console.log("Clinic staff session fully established");
+      // Set ready immediately - no timeout needed
+      if (isMountedRef.current) {
+        setReadyForClinic(true);
+        console.log("Clinic staff session fully established");
+      }
       isProcessingRef.current = false;
     }
   }, [user, requiredRole, readyForClinic]);
