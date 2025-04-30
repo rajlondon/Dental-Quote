@@ -9,6 +9,15 @@ import { eq, sql } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 
+// Define extended session store options type to include errorCallback
+interface ExtendedPgStoreOptions {
+  pool: any;
+  tableName?: string;
+  createTableIfMissing?: boolean;
+  pruneSessionInterval?: number;
+  errorCallback?: (err: any) => void;
+}
+
 // Create PostgreSQL session store with automatic table creation
 const PgSessionStore = connectPgSimple(session);
 
@@ -42,10 +51,10 @@ export async function setupAuth(app: Express) {
       tableName: 'session', // Default session table name
       createTableIfMissing: true, // Auto-create the session table if it doesn't exist
       pruneSessionInterval: 60 * 60, // Prune expired sessions every hour
-      errorCallback: (err) => {
+      errorCallback: (err: any) => {
         console.error("Session store error:", err);
       }
-    }),
+    } as ExtendedPgStoreOptions),
     cookie: { 
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for clinic staff persistence

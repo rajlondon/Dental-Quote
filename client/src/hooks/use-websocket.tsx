@@ -106,7 +106,21 @@ export const useWebSocket = (): WebSocketHookResult => {
         console.log('WebSocket connection closed:', event.code, event.reason);
         setConnected(false);
         
-        // Attempt to reconnect after delay
+        // Check if this was a manual close (triggered during logout)
+        const wasManualClose = (socket as any)._manualClose === true;
+        
+        if (wasManualClose) {
+          console.log('WebSocket closed manually - skip reconnect');
+          socketRef.current = null;
+          
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+          return;
+        }
+        
+        // Attempt to reconnect after delay (if user is still logged in and socket wasn't manually closed)
         if (user && !event.wasClean) {
           if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
@@ -114,7 +128,10 @@ export const useWebSocket = (): WebSocketHookResult => {
           
           reconnectTimeoutRef.current = setTimeout(() => {
             console.log('Attempting to reconnect WebSocket...');
-            initializeSocket();
+            if (socketRef.current === null) {
+              // Only reconnect if we haven't already created a new socket
+              initializeSocket();
+            }
           }, 5000); // 5-second reconnect delay
         }
       });
@@ -142,15 +159,26 @@ export const useWebSocket = (): WebSocketHookResult => {
       const handleManualClose = () => {
         console.log("Manual WebSocket close triggered");
         if (socketRef.current) {
-          // Prevent automatic reconnect by marking this as "clean"
-          const closeEvent = new CloseEvent('close', { wasClean: true });
-          socketRef.current.dispatchEvent(closeEvent);
-          
-          // Properly close the connection
-          socketRef.current.close();
-          socketRef.current = null;
+          try {
+            // Just close the socket directly - the close event handler will handle cleanup
+            console.log(`Closing WebSocket connection with readyState: ${socketRef.current.readyState}`);
+            
+            // Set a flag to prevent automatic reconnection
+            (socketRef.current as any)._manualClose = true;
+            
+            // Only close if not already closing/closed
+            if (socketRef.current.readyState === WebSocket.OPEN ||
+                socketRef.current.readyState === WebSocket.CONNECTING) {
+              socketRef.current.close(1000, "Manual close during logout");
+            }
+          } catch (e) {
+            console.error("Error during manual WebSocket close:", e);
+          } finally {
+            // Always null out the reference and update state
+            socketRef.current = null;
+            setConnected(false);
+          }
         }
-        setConnected(false);
       };
       
       document.addEventListener('manual-websocket-close', handleManualClose);
