@@ -223,8 +223,13 @@ export const useWebSocket = (): WebSocketHookResult => {
           // Check if this was a manual close (triggered during logout)
           const wasManualClose = (socket as any)._manualClose === true;
           
-          if (wasManualClose) {
-            console.log(`WebSocket ${thisConnectionId} closed manually - skip reconnect`);
+          // Special check for clinic portal to prevent automatic reconnects
+          const inClinicPortal = typeof window !== 'undefined' && 
+                                 (window.location.pathname === '/clinic-portal' || 
+                                  window.location.pathname === '/clinic');
+          
+          if (wasManualClose || inClinicPortal) {
+            console.log(`WebSocket ${thisConnectionId} closed - skip reconnect - Manual: ${wasManualClose}, Clinic: ${inClinicPortal}`);
             socketRef.current = null;
             
             if (reconnectTimeoutRef.current) {
