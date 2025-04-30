@@ -103,29 +103,45 @@ const ClinicPortalPage: React.FC = () => {
     };
   }, []);
   
-  // Handle logout with simplified, more reliable cleanup sequence
+  // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
     try {
-      // Step 1: Show feedback to the user first
-      toast({
-        title: t('portal.logout_success', 'Successfully logged out'),
-        description: t('portal.logout_message', 'You have been logged out of your account.'),
-      });
+      // Clear shared state indicators first to prevent reconnection attempts
+      if (user) {
+        // Clear connection pooling references
+        if ((window as any).__websocketConnections) {
+          const userKey = `user-${user.id}`;
+          delete (window as any).__websocketConnections[userKey];
+          if ((window as any).__websocketLastActivity) {
+            delete (window as any).__websocketLastActivity[userKey];
+          }
+          console.log(`Cleared shared WebSocket references for user ${user.id}`);
+        }
+      }
+      
+      // Step 1: Mark session as needing reset (for next login)
+      sessionStorage.removeItem('clinic_portal_timestamp');
+      sessionStorage.removeItem('cached_user_data');
+      sessionStorage.removeItem('cached_user_timestamp');
       
       // Step 2: Clear WebSocket connections to prevent reconnect loops
       console.log("Manually closing any open WebSocket connections");
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       
-      // Step 3: Mark session as needing reset (for next login)
-      sessionStorage.removeItem('clinic_portal_timestamp');
+      // Add a brief delay to allow WebSocket to close properly
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Step 4: Parallel processing - server logout and client cleanup
-      // A. Server-side session termination
-      const logoutPromise = fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      }).catch(error => {
+      // Step 3: Parallel processing - server logout and client cleanup
+      // A. Server-side session termination with timeout protection
+      const logoutPromise = Promise.race([
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        // 5 second timeout to prevent hanging
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Logout request timeout")), 5000))
+      ]).catch(error => {
         // Log but continue even if server logout fails
         console.error("Server logout error:", error);
       });
@@ -134,8 +150,14 @@ const ClinicPortalPage: React.FC = () => {
       queryClient.setQueryData(["/api/auth/user"], null);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Step 5: Complete both operations
+      // Step 4: Complete both operations
       await logoutPromise;
+      
+      // Step 5: Provide feedback to the user after successful logout
+      toast({
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
+      });
       
       // Step 6: Redirect to login page
       console.log("Logout sequence complete, redirecting to login page");
@@ -143,6 +165,10 @@ const ClinicPortalPage: React.FC = () => {
       
     } catch (err) {
       console.error("Logout handler error:", err);
+      toast({
+        title: t('portal.logout_success', 'Logged out'),
+        description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
+      });
       
       // Fallback: redirect even if something fails
       setLocation('/portal-login');
