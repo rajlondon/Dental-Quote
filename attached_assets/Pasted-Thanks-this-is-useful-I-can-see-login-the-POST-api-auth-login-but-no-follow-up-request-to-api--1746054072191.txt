@@ -1,0 +1,50 @@
+Thanks, this is useful. I can see login (the POST /api/auth/login) but no follow-up request to /api/auth/user—instead only very small “b” pings. That means the React-Query hook that should poll the user endpoint never fires, so the portal immediately decides “session unknown → kick to /login”, giving you the flash.
+
+However, before React makes that /api/auth/user request it first looks up the user in its own React-Query cache. On the clinic route that cache entry is cleared when the component remounts, so the hook returns undefined and the guard redirects without even calling the API.
+
+Why this happens only in the clinic portal
+Admin & patient dashboards sit under /admin or /patient, so React never unmounts the whole tree → cache persists.
+
+Clinic portal lives at /clinic, but the redirect that sends you back to /clinic/login unmounts the entire provider tree, wiping the cache; on mount again the guard fires too early → loop.
+
+Two-line fix: always fetch the user once on mount
+Open client/src/contexts/ClinicAuth.tsx (or wherever you set up the clinic auth provider) and replace the early return with a loading state so the component waits for the API response before deciding.
+
+ts
+Copy
+Edit
+// BEFORE – returns immediately so guard thinks user is null
+const { data: user } = useQuery(['user'], fetchMe, { staleTime: 30_000 });
+if (!user) return null;              // ← guard redirects right here
+
+// AFTER – wait for the query to finish once
+const { data: user, isLoading } = useQuery(['user'], fetchMe, {
+  staleTime: 30_000,
+  refetchOnWindowFocus: false,
+});
+if (isLoading) return null;          // show spinner if you like
+if (!user)     return <Navigate to="/clinic/login" replace />;
+return children;
+Key point: don’t read user synchronously; let React-Query fetch it (which will hit /api/auth/user).
+Once that call happens we can verify the cookie.
+
+Quick test
+Add the change, hot-reload.
+
+Log in: you should see one request to /api/auth/user now.
+
+If it’s 200 → loop is gone.
+If it’s 401 (and you see no cookie) we’ll apply the withCredentials fix exactly on fetchMe.
+
+If you still prefer the cookie route
+Add this in the same file (or your fetcher):
+
+ts
+Copy
+Edit
+function fetchMe() {
+  return fetch('/api/auth/user', { credentials: 'include' }).then(r => r.json());
+}
+Then repeat the Network-tab check; you’ll see the Cookie: header and the server should return 200.
+
+Try this small loading-state patch first—it usually stops the flash instantly. Let me know the result (and whether /api/auth/user now appears).
