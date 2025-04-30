@@ -58,7 +58,7 @@ const StableClinicPortal: React.FC = () => {
       }} />
       
       {/* Actual portal component with stable key to prevent remounting */}
-      <ClinicPortalPage key={stableKey} />
+      <ClinicPortalPage key={stableKey} disableAutoRefresh={true} />
     </React.Fragment>
   );
 };
