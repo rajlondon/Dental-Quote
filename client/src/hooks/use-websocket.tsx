@@ -137,6 +137,27 @@ export const useWebSocket = (): WebSocketHookResult => {
   useEffect(() => {
     if (user) {
       initializeSocket();
+      
+      // Setup manual close event listener (for logout scenarios)
+      const handleManualClose = () => {
+        console.log("Manual WebSocket close triggered");
+        if (socketRef.current) {
+          // Prevent automatic reconnect by marking this as "clean"
+          const closeEvent = new CloseEvent('close', { wasClean: true });
+          socketRef.current.dispatchEvent(closeEvent);
+          
+          // Properly close the connection
+          socketRef.current.close();
+          socketRef.current = null;
+        }
+        setConnected(false);
+      };
+      
+      document.addEventListener('manual-websocket-close', handleManualClose);
+      
+      return () => {
+        document.removeEventListener('manual-websocket-close', handleManualClose);
+      };
     } else {
       // Close socket on logout
       if (socketRef.current) {
@@ -145,8 +166,10 @@ export const useWebSocket = (): WebSocketHookResult => {
       }
       setConnected(false);
     }
-    
-    // Cleanup on unmount
+  }, [user, initializeSocket]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -156,7 +179,7 @@ export const useWebSocket = (): WebSocketHookResult => {
         socketRef.current.close();
       }
     };
-  }, [user, initializeSocket]);
+  }, []);
   
   // Function to send message through WebSocket
   const sendMessage = useCallback((message: WebSocketMessage) => {
