@@ -200,23 +200,15 @@ const PortalLoginPage: React.FC = () => {
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
         
-        // More robust redirection sequence for clinic staff to ensure session is established
-        try {
-          console.log("Clinic staff authenticated, preparing session...");
-          
-          // First, verify user data is in cache by querying it
-          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-          
-          // Then redirect after a short delay to allow session to fully establish
-          setTimeout(() => {
-            console.log("Clinic session ready, redirecting to portal");
-            setLocation('/clinic-portal');
-          }, 300);
-        } catch (redirectError) {
-          console.error("Error during clinic staff redirect:", redirectError);
-          // Fallback to direct navigation
-          setLocation('/clinic-portal');
-        }
+        // Simplify redirection for clinic staff - the protected route will handle any necessary delay
+        // Clear any existing session storage markers to ensure the protected route handles auth correctly
+        sessionStorage.removeItem('clinic_portal_rendered');
+        
+        // Ensure the user data is fresh in the cache
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        
+        // Direct navigation - the ProtectedRoute will handle any necessary session setup
+        setLocation('/clinic-portal');
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");

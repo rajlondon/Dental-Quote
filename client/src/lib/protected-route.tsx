@@ -15,18 +15,28 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   // Check if user is logged in and has the required role (if specified)
   const hasAccess = user && (!requiredRole || user.role === requiredRole);
   
-  // Add extra delay for clinic_staff to ensure session is fully established
-  const [readyForClinic, setReadyForClinic] = useState(requiredRole !== 'clinic_staff');
+  // Use local sessionStorage to track if this is a fresh login (avoid double refresh)
+  const [readyForClinic, setReadyForClinic] = useState(() => {
+    // If not clinic staff or we've already done initial render, we're ready
+    if (requiredRole !== 'clinic_staff') return true;
+    
+    // Check if we've already completed an initial render for this session
+    const hasRendered = sessionStorage.getItem('clinic_portal_rendered');
+    return !!hasRendered;
+  });
   
   useEffect(() => {
-    // For clinic staff, add a short delay before showing content to ensure session is set up
+    // Only for initial clinic staff auth
     if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic) {
-      console.log("Adding short delay for clinic staff authentication...");
-      const timer = setTimeout(() => {
-        console.log("Clinic staff session fully established");
+      console.log("Setting up clinic staff session...");
+      
+      // Mark as ready immediately, but with requestAnimationFrame to avoid layout thrashing
+      requestAnimationFrame(() => {
+        // Mark that we've rendered this session
+        sessionStorage.setItem('clinic_portal_rendered', 'true');
         setReadyForClinic(true);
-      }, 500);
-      return () => clearTimeout(timer);
+        console.log("Clinic staff session fully established");
+      });
     }
   }, [user, requiredRole, readyForClinic]);
 
