@@ -230,19 +230,21 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <NotificationsProvider>
-          <Suspense fallback={<div>Loading...</div>}>
-            <ScrollToTop />
-            {/* Only exclude ReloadTranslations on clinic portal path */}
-            {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-              <ReloadTranslations />
-            }
-            <Router />
-            <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-            <EnvironmentBadge />
-            <Toaster />
-          </Suspense>
-        </NotificationsProvider>
+        <AdminAuthProvider>
+          <NotificationsProvider>
+            <Suspense fallback={<div>Loading...</div>}>
+              <ScrollToTop />
+              {/* Only exclude ReloadTranslations on clinic portal path */}
+              {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                <ReloadTranslations />
+              }
+              <Router />
+              <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+              <EnvironmentBadge />
+              <Toaster />
+            </Suspense>
+          </NotificationsProvider>
+        </AdminAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
