@@ -103,17 +103,29 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   // Simplified logout using our dedicated admin auth service
   const handleLogout = async () => {
     try {
+      // Notify user of logout
+      toast({
+        title: 'Logging out',
+        description: 'Please wait while we securely log you out...',
+      });
+      
       // Clear WebSocket connections
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       
       // Small delay to let connections close
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Use our dedicated admin logout function
+      // Set a flag in session storage to indicate this is an intentional logout
+      sessionStorage.setItem('admin_intentional_logout', 'true');
+      
+      // Use our dedicated admin logout function - this handles the redirect internally
       await adminLogout();
       
-      // Redirect to admin login page
-      navigate('/admin-login');
+      // The adminLogout function handles redirect, but as a fallback:
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+      
     } catch (err) {
       console.error("Admin logout error:", err);
       toast({
@@ -122,8 +134,8 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
         variant: "destructive"
       });
       
-      // Redirect anyway
-      navigate('/admin-login');
+      // Force redirect to home page as a fallback
+      window.location.href = '/';
     }
   };
   
