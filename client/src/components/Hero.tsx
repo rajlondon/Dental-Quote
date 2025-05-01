@@ -618,7 +618,7 @@ const Hero: React.FC = () => {
                 <a href="/offers/hotel-deal" className="mt-4 text-[#0071c2] font-medium text-sm hover:underline">See details</a>
               </div>
               <div className="md:w-3/5 p-0">
-                <img src="/images/clinics/premium-clinic.jpg" alt="Hotel deals" className="w-full h-full object-cover" style={{ minHeight: "160px" }} />
+                <img src="/images/offers/premium-hotel-new.png" alt="Hotel deals" className="w-full h-full object-cover" style={{ minHeight: "160px" }} />
               </div>
             </div>
           </div>
