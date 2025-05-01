@@ -73,9 +73,14 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
     
     // Only prevent actual page reloads, not navigation
     const preventReload = (e: BeforeUnloadEvent) => {
+      // If logout is in progress, don't block - check both local and session storage for safety
+      const isLoggingOut = 
+        sessionStorage.getItem('admin_intentional_logout') === 'true' || 
+        localStorage.getItem('admin_logout_in_progress') === 'true';
+        
       // Let normal navigation proceed
-      if (isNavigating) {
-        console.log('Detected intentional navigation, allowing it to proceed');
+      if (isNavigating || isLoggingOut) {
+        console.log('Detected intentional navigation or logout, allowing it to proceed');
         return undefined;
       }
       

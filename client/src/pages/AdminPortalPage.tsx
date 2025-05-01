@@ -100,33 +100,41 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     };
   }, [adminUser, navigate]);
   
-  // Fast logout handler using our special route
+  // Ultra-fast direct logout handler
   const handleLogout = () => {
     try {
-      // Set a flag in session storage to indicate this is an intentional logout
+      // Use both storage options to ensure the guard allows the navigation
+      localStorage.setItem('admin_logout_in_progress', 'true');
       sessionStorage.setItem('admin_intentional_logout', 'true');
       
-      // Mark the navigation as intentional to bypass the guard
+      // Mark the navigation as intentional
       if (typeof window.markAdminPortalNavigation === 'function') {
         window.markAdminPortalNavigation();
       }
       
-      // Clear WebSocket connections but don't wait
+      // First, send the server logout request
+      const logoutRequest = new XMLHttpRequest();
+      logoutRequest.open('POST', '/api/auth/logout', false); // Synchronous request
+      logoutRequest.setRequestHeader('Content-Type', 'application/json');
+      logoutRequest.withCredentials = true;
+      logoutRequest.send();
+      
+      // Clear WebSocket connections
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       
-      // Clear admin-specific storage flags immediately for faster logout
+      // Clear all local storage used by the app
       localStorage.removeItem('admin_session');
       localStorage.removeItem('auth_guard');
-      sessionStorage.removeItem('admin_portal_timestamp');
-      sessionStorage.removeItem('admin_protected_navigation');
-      sessionStorage.removeItem('admin_role_verified');
       
-      // Directly redirect to the logout route with no delay
-      window.location.href = '/admin-logout';
+      // Clear all session storage used by the app
+      sessionStorage.clear();
+      
+      // Force immediate redirect to home page
+      window.location.replace('/');
     } catch (err) {
       console.error("Admin logout error:", err);
       // Force redirect to home page as a fallback
-      window.location.href = '/';
+      window.location.replace('/');
     }
   };
   
