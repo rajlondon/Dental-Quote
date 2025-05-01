@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
+
+// Interface for component props
+interface AdminPortalPageProps {
+  disableAutoRefresh?: boolean;
+}
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -39,10 +44,6 @@ interface Notification {
   time: string;
   read: boolean;
   type: 'quote' | 'message' | 'booking' | 'system';
-}
-
-interface AdminPortalPageProps {
-  disableAutoRefresh?: boolean;
 }
 
 const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = true }) => {
@@ -231,8 +232,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Add the AdminPortalGuard to handle page security */}
-      <AdminPortalGuard />
+      {/* AdminPortalGuard is now applied as a wrapper in App.tsx */}
       {/* Top Navigation Bar */}
       <header className="bg-white border-b border-gray-200 z-30">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
