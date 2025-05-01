@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -48,7 +48,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, logoutMutation } = useAuth();
+  const { adminUser, adminLogout } = useAdminAuth();
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
@@ -63,57 +63,26 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // Special one-time setup when first entering admin portal
+  // Simple initialization for admin portal
   useEffect(() => {
-    // First check if this is a recent protected navigation from login
-    const isProtectedNavigation = sessionStorage.getItem('admin_protected_navigation') === 'true';
-    const directNavigation = (window as any).__directAdminNavigation === true;
-    
-    // Force cache our user data
-    if (user && user.id) {
-      console.log('📦 Caching admin user data to prevent refresh loops', user.id);
-      queryClient.setQueryData(['/api/auth/user'], user);
-      
-      // Mark as a direct navigation for AdminPortalGuard
-      if (!isProtectedNavigation && !directNavigation) {
-        console.log('📌 This is a protected direct navigation to admin portal - special handling enabled');
-        (window as any).__directAdminNavigation = true;
-      }
-    }
-    
-    // Check for initialization needs
-    if (isProtectedNavigation || directNavigation) {
-      console.log("📌 This is a protected direct navigation to admin portal - special handling enabled");
-      
-      // Clear the flag as we've handled it
-      sessionStorage.removeItem('admin_protected_navigation');
-      (window as any).__directAdminNavigation = false;
-      
-      // Apply strong caching to prevent unnecessary API calls
-      if (user) {
-        console.log("📦 Caching admin user data to prevent refresh loops");
-        // Cache the user object in sessionStorage again just to be safe
-        sessionStorage.setItem('admin_user_data', JSON.stringify(user));
-        sessionStorage.setItem('admin_session_start', Date.now().toString());
-      }
-    }
-    
-    // Skip remaining initialization if no user
-    if (!user) {
+    // Skip if no admin user
+    if (!adminUser) {
+      console.log("No admin user found, redirecting to login");
+      navigate('/admin-login');
       return;
     }
     
-    console.log("AdminPortalPage: Initializing for admin user:", user.id);
+    console.log("AdminPortalPage: Initializing for admin user:", adminUser.id);
     
-    // Simple straightforward initialization
+    // Set flag indicating successful initialization
     initialLoadComplete.current = true;
+    (window as any).__adminPortalMounted = true;
     
     // Cleanup function for component unmount
     return () => {
       console.log("AdminPortalPage unmounting");
       isMounted.current = false;
       
-      // This prevents issues with WebSocket connection management
       setTimeout(() => {
         if (window.location.pathname !== '/admin-portal') {
           console.log("Clearing admin portal mounted flag after navigation");
@@ -121,77 +90,32 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
         }
       }, 1000);
     };
-  }, [user]);
+  }, [adminUser, navigate]);
   
-  // Handle logout with improved cleanup sequence for better reliability
+  // Simplified logout using our dedicated admin auth service
   const handleLogout = async () => {
     try {
-      // Clear shared state indicators first to prevent reconnection attempts
-      if (user) {
-        // Clear connection pooling references
-        if ((window as any).__websocketConnections) {
-          const userKey = `user-${user.id}`;
-          delete (window as any).__websocketConnections[userKey];
-          if ((window as any).__websocketLastActivity) {
-            delete (window as any).__websocketLastActivity[userKey];
-          }
-          console.log(`Cleared shared WebSocket references for user ${user.id}`);
-        }
-      }
-      
-      // Step 1: Mark session as needing reset (for next login)
-      sessionStorage.removeItem('admin_portal_timestamp');
-      sessionStorage.removeItem('cached_user_data');
-      sessionStorage.removeItem('cached_user_timestamp');
-      
-      // Step 2: Clear WebSocket connections to prevent reconnect loops
-      console.log("Manually closing any open WebSocket connections");
+      // Clear WebSocket connections
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
       
-      // Add a brief delay to allow WebSocket to close properly
+      // Small delay to let connections close
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Step 3: Parallel processing - server logout and client cleanup
-      // A. Server-side session termination with timeout protection
-      const logoutPromise = Promise.race([
-        fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-        }),
-        // 5 second timeout to prevent hanging
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Logout request timeout")), 5000))
-      ]).catch(error => {
-        // Log but continue even if server logout fails
-        console.error("Server logout error:", error);
-      });
+      // Use our dedicated admin logout function
+      await adminLogout();
       
-      // B. Client-side cleanup
-      queryClient.setQueryData(["/api/auth/user"], null);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
-      // Step 4: Complete both operations
-      await logoutPromise;
-      
-      // Step 5: Provide feedback to the user after successful logout
-      toast({
-        title: t('portal.logout_success', 'Successfully logged out'),
-        description: t('portal.logout_message', 'You have been logged out of your account.'),
-      });
-      
-      // Step 6: Redirect to login page
-      console.log("Logout sequence complete, redirecting to login page");
-      navigate('/portal-login');
-      
+      // Redirect to admin login page
+      navigate('/admin-login');
     } catch (err) {
-      console.error("Logout handler error:", err);
+      console.error("Admin logout error:", err);
       toast({
-        title: t('portal.logout_success', 'Logged out'),
-        description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
+        title: t('admin.logout_error', 'Logout Error'),
+        description: t('admin.logout_error_message', 'There was a problem logging out, but your session has been terminated.'),
+        variant: "destructive"
       });
       
-      // Fallback: redirect even if something fails
-      navigate('/portal-login');
+      // Redirect anyway
+      navigate('/admin-login');
     }
   };
   
@@ -438,7 +362,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                   </div>
                   <div className="hidden md:block ml-2 text-sm">
                     <div className="font-medium text-gray-700">Admin</div>
-                    <div className="text-xs text-gray-500">{user?.email || "admin@mydentalfly.com"}</div>
+                    <div className="text-xs text-gray-500">{adminUser?.email || "admin@mydentalfly.com"}</div>
                   </div>
                 </div>
               </div>
