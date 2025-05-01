@@ -78,42 +78,98 @@ const AdminPortalGuard: React.FC = () => {
         realWebSocket = (window as any).__originalWebSocket;
       }
 
-      // We'll use a different pattern to avoid WebSocket reconnections
-      // Add a global event listener that detects specific WebSocket reconnect patterns
-      const interceptWebsocketReconnects = (event: MessageEvent) => {
-        try {
-          // Only intercept if we're in the admin portal
-          if (!(window as any).__inAdminPortal) {
-            return;
-          }
+      // Directly modify WebSocket prototype to block reconnections in admin portal
+      const originalWebSocketClose = WebSocket.prototype.close;
+      const originalWebSocketSend = WebSocket.prototype.send;
+      
+      // Monkey patch the WebSocket close method to detect disconnections
+      WebSocket.prototype.close = function(...args) {
+        if ((window as any).__inAdminPortal) {
+          console.log('🚫 AdminPortalGuard: WebSocket close detected in admin portal', this.url);
           
-          // Check if this is a WebSocket message that might trigger reconnection
-          const data = typeof event.data === 'string' ? event.data : '';
-          if (data.includes('reconnect') || 
-              data.includes('connection closed') || 
-              data.includes('disconnect')) {
-            
-            console.log('🚫 AdminPortalGuard: Intercepted potential reconnect message:', data);
-            
-            // Stop propagation of the event
-            event.stopImmediatePropagation();
-            event.preventDefault();
-            
-            // For safety, close any WebSocket that might be trying to reconnect
-            if (event.source && typeof (event.source as any).close === 'function') {
-              (event.source as any).close();
-            }
-            
-            return false;
+          // Store this WebSocket instance as closed to prevent reconnection
+          if (!((window as any).__closedWebSockets)) {
+            (window as any).__closedWebSockets = new Set();
           }
-        } catch (err) {
-          // Silent fail - don't break normal functionality
-          console.error('Error in WebSocket intercept:', err);
+          (window as any).__closedWebSockets.add(this.url);
+          
+          // If this is a system WebSocket, prevent reconnection
+          if (this.url && (
+              this.url.includes('vite') || 
+              this.url.includes('hmr') || 
+              this.url.includes('watchdog'))) {
+            console.log('🛑 AdminPortalGuard: Blocked system WebSocket reconnection:', this.url);
+            return; // Don't actually close it, just silently prevent the close/reconnect cycle
+          }
         }
+        
+        return originalWebSocketClose.apply(this, args);
       };
       
-      // Add global listeners for WebSocket events
-      window.addEventListener('message', interceptWebsocketReconnects, true);
+      // Prevent sending messages that might trigger reconnection
+      WebSocket.prototype.send = function(data) {
+        if ((window as any).__inAdminPortal && 
+            typeof data === 'string' && 
+            (data.includes('reconnect') || data.includes('ping'))) {
+          console.log('🚫 AdminPortalGuard: Blocking WebSocket reconnection message');
+          return; // Silently drop the message
+        }
+        
+        return originalWebSocketSend.apply(this, [data]);
+      };
+      
+      // Block connection attempts to URLs that were previously closed
+      const originalWebSocketConstructor = window.WebSocket;
+      
+      // Create the guarded constructor outside the block to avoid strict mode issues
+      const guardedWebSocketFactory = (originalCtor: typeof WebSocket) => {
+        // Return a function with the same signature as the WebSocket constructor
+        return function(url: string | URL, protocols?: string | string[]) {
+          const urlString = url instanceof URL ? url.toString() : url;
+          
+          // Check if we're in admin portal and this URL was previously closed
+          if ((window as any).__inAdminPortal && 
+              (window as any).__closedWebSockets && 
+              (window as any).__closedWebSockets.has(urlString)) {
+            console.log('⛔ AdminPortalGuard: Preventing reconnection to closed WebSocket:', urlString);
+            
+            // Return fake WebSocket that immediately appears closed
+            const fakeSocket = {
+              addEventListener: () => {},
+              removeEventListener: () => {},
+              dispatchEvent: () => true,
+              send: () => {},
+              close: () => {},
+              onopen: null,
+              onclose: null,
+              onmessage: null,
+              onerror: null,
+              readyState: 3, // CLOSED
+              url: urlString,
+              protocol: "",
+              extensions: "",
+              bufferedAmount: 0,
+              binaryType: "blob" as BinaryType,
+              CONNECTING: 0,
+              OPEN: 1,
+              CLOSING: 2, 
+              CLOSED: 3
+            };
+            
+            return fakeSocket as WebSocket;
+          }
+          
+          // Otherwise create a real WebSocket
+          return new originalCtor(url, protocols);
+        };
+      };
+      
+      // Create our guarded WebSocket constructor
+      const GuardedWebSocket = guardedWebSocketFactory(originalWebSocketConstructor);
+      
+      // Copy prototype and static properties
+      GuardedWebSocket.prototype = WebSocket.prototype;
+      window.WebSocket = GuardedWebSocket as any;
       
       // Listen for custom WebSocket events and prevent reconnection loops
       const handleManualClose = () => {
@@ -157,7 +213,11 @@ const AdminPortalGuard: React.FC = () => {
         
         // Remove event listeners
         document.removeEventListener('manual-websocket-close', handleManualClose);
-        window.removeEventListener('message', interceptWebsocketReconnects, true);
+        
+        // Restore original WebSocket prototype methods
+        WebSocket.prototype.close = originalWebSocketClose;
+        WebSocket.prototype.send = originalWebSocketSend;
+        window.WebSocket = originalWebSocketConstructor;
         
         // Remove global flags
         delete (window as any).__inAdminPortal;
