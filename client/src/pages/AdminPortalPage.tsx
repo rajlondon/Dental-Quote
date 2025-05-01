@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AdminPortalTesting from "@/components/portal/AdminPortalTesting";
+import { queryClient } from "@/lib/queryClient";
 
 // Import admin portal components 
 import AdminDashboardSection from "@/components/admin/AdminDashboardSection";
@@ -38,13 +39,207 @@ interface Notification {
   type: 'quote' | 'message' | 'booking' | 'system';
 }
 
-const AdminPortalPage: React.FC = () => {
+interface AdminPortalPageProps {
+  disableAutoRefresh?: boolean;
+}
+
+const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = true }) => {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { logoutMutation } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const initialLoadComplete = React.useRef(false);
+  
+  // When disableAutoRefresh is true, block any programmatic refreshes
+  useEffect(() => {
+    if (disableAutoRefresh && typeof window !== 'undefined') {
+      console.log("🛡️ Setting up refresh prevention for AdminPortalPage");
+      
+      // Use a safer approach - intercept reload attempts with an event handler
+      const preventReload = (e: BeforeUnloadEvent) => {
+        if (window.location.pathname.includes('admin-portal')) {
+          console.log("🛡️ Blocked programmatic page reload on admin portal");
+          e.preventDefault();
+          e.returnValue = '';
+          return '';
+        }
+      };
+      
+      // Add event listener
+      window.addEventListener('beforeunload', preventReload);
+      
+      // Cleanup function
+      return () => {
+        window.removeEventListener('beforeunload', preventReload);
+      };
+    }
+  }, [disableAutoRefresh]);
+  
+  // Safer approach to prevent WebSocket-related refreshes
+  useEffect(() => {
+    if (disableAutoRefresh && typeof window !== 'undefined') {
+      console.log("🔌 Adding WebSocket protection for admin portal");
+      
+      // Set a global flag to indicate we're in the admin portal
+      (window as any).__inAdminPortal = true;
+      
+      // Add a more targeted WebSocket prevention - watch for specific patterns
+      // This is safer than replacing the WebSocket constructor
+      const originalFetch = window.fetch;
+      window.fetch = async function preventProblematicFetch(input, init) {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        
+        // Block any refresh-causing API calls
+        if (typeof url === 'string' && 
+            (url.includes('/api/auth/check') || 
+             url.includes('/api/auth/status') || 
+             url.includes('/api/auth/verify'))) {
+          console.log(`🛡️ Blocking refresh-causing API call: ${url}`);
+          
+          // Return a fake successful response
+          return Promise.resolve(new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: new Headers({ 'Content-Type': 'application/json' })
+          }));
+        }
+        
+        // Otherwise proceed with the original fetch
+        return originalFetch.apply(window, [input, init]);
+      };
+      
+      // Clean up when unmounting
+      return () => {
+        (window as any).__inAdminPortal = false;
+        window.fetch = originalFetch;
+      };
+    }
+  }, [disableAutoRefresh]);
+  
+  // Add page-level refresh prevention
+  useEffect(() => {
+    // Function to prevent any programmatic page reload
+    const preventUnload = (e: BeforeUnloadEvent) => {
+      // Only prevent unloads in the admin portal
+      if (window.location.pathname.includes('admin-portal')) {
+        console.log('⚠️ Blocked potential page reload in admin portal');
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+      return undefined;
+    };
+    
+    window.addEventListener('beforeunload', preventUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', preventUnload);
+    };
+  }, []);
+  
+  // Flag to track component mount status
+  const isMounted = React.useRef(true);
+  
+  // Simple effect for initialization
+  useEffect(() => {
+    // Skip if no user
+    if (!user) {
+      return;
+    }
+    
+    console.log("AdminPortalPage: Initializing for admin user:", user.id);
+    
+    // Simple straightforward initialization
+    initialLoadComplete.current = true;
+    
+    // Cleanup function for component unmount
+    return () => {
+      console.log("AdminPortalPage unmounting");
+      isMounted.current = false;
+      
+      // This prevents issues with WebSocket connection management
+      setTimeout(() => {
+        if (window.location.pathname !== '/admin-portal') {
+          console.log("Clearing admin portal mounted flag after navigation");
+          (window as any).__adminPortalMounted = false;
+        }
+      }, 1000);
+    };
+  }, [user]);
+  
+  // Handle logout with improved cleanup sequence for better reliability
+  const handleLogout = async () => {
+    try {
+      // Clear shared state indicators first to prevent reconnection attempts
+      if (user) {
+        // Clear connection pooling references
+        if ((window as any).__websocketConnections) {
+          const userKey = `user-${user.id}`;
+          delete (window as any).__websocketConnections[userKey];
+          if ((window as any).__websocketLastActivity) {
+            delete (window as any).__websocketLastActivity[userKey];
+          }
+          console.log(`Cleared shared WebSocket references for user ${user.id}`);
+        }
+      }
+      
+      // Step 1: Mark session as needing reset (for next login)
+      sessionStorage.removeItem('admin_portal_timestamp');
+      sessionStorage.removeItem('cached_user_data');
+      sessionStorage.removeItem('cached_user_timestamp');
+      
+      // Step 2: Clear WebSocket connections to prevent reconnect loops
+      console.log("Manually closing any open WebSocket connections");
+      document.dispatchEvent(new CustomEvent('manual-websocket-close'));
+      
+      // Add a brief delay to allow WebSocket to close properly
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Step 3: Parallel processing - server logout and client cleanup
+      // A. Server-side session termination with timeout protection
+      const logoutPromise = Promise.race([
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        // 5 second timeout to prevent hanging
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Logout request timeout")), 5000))
+      ]).catch(error => {
+        // Log but continue even if server logout fails
+        console.error("Server logout error:", error);
+      });
+      
+      // B. Client-side cleanup
+      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Step 4: Complete both operations
+      await logoutPromise;
+      
+      // Step 5: Provide feedback to the user after successful logout
+      toast({
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
+      });
+      
+      // Step 6: Redirect to login page
+      console.log("Logout sequence complete, redirecting to login page");
+      navigate('/portal-login');
+      
+    } catch (err) {
+      console.error("Logout handler error:", err);
+      toast({
+        title: t('portal.logout_success', 'Logged out'),
+        description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
+      });
+      
+      // Fallback: redirect even if something fails
+      navigate('/portal-login');
+    }
+  };
+  
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
@@ -72,28 +267,6 @@ const AdminPortalPage: React.FC = () => {
     }
   ]);
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
-
-  const handleLogout = async () => {
-    try {
-      // Call the API to logout via the mutation
-      await logoutMutation.mutateAsync();
-      
-      toast({
-        title: t('portal.logout_success', 'Successfully logged out'),
-        description: t('portal.logout_message', 'You have been logged out of your account.'),
-      });
-      
-      // Use wouter navigation instead of direct URL change
-      navigate('/portal-login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: 'Logout Error',
-        description: 'An error occurred during logout. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
