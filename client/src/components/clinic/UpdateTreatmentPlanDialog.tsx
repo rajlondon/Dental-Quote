@@ -69,8 +69,8 @@ export const UpdateTreatmentPlanDialog = ({
 
   // Update form when data is loaded
   useEffect(() => {
-    if (treatmentPlanData?.data) {
-      const plan = treatmentPlanData.data;
+    if (treatmentPlanData?.data?.treatmentPlan) {
+      const plan = treatmentPlanData.data.treatmentPlan;
       form.reset({
         title: plan.title,
         description: plan.description || "",
