@@ -3,7 +3,7 @@
  * Handles all treatment plan operations for clinics and patients
  */
 import express from 'express';
-import { ensureRole } from '../middlewares/auth';
+import { ensureRole } from '../middleware/auth';
 import { TreatmentPlan, TreatmentPlanStatus, PaymentStatus } from '../../shared/models/treatment-plan';
 
 const router = express.Router();
@@ -339,7 +339,7 @@ router.post('/api/clinic/treatment-plans', ensureRole('clinic_staff'), async (re
     }
     
     // Check if items have valid prices and quantities
-    const invalidItems = treatmentItems.filter(item => 
+    const invalidItems = treatmentItems.filter((item: any) => 
       !item.name || 
       typeof item.price !== 'number' || 
       item.price <= 0 ||
@@ -357,7 +357,7 @@ router.post('/api/clinic/treatment-plans', ensureRole('clinic_staff'), async (re
     console.log(`Creating new treatment plan for clinic ${clinicId}, patient ${patientId}: ${title}`);
     
     // Calculate total price
-    const totalPrice = treatmentItems.reduce((sum, item) => 
+    const totalPrice = treatmentItems.reduce((sum: number, item: any) => 
       sum + (item.price * item.quantity), 0
     );
     
@@ -374,7 +374,7 @@ router.post('/api/clinic/treatment-plans', ensureRole('clinic_staff'), async (re
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       estimatedDuration: estimatedDuration || "",
-      treatmentItems: treatmentItems.map((item, index) => ({
+      treatmentItems: treatmentItems.map((item: any, index: number) => ({
         id: Date.now() + index, // Using timestamp + index as a mock ID
         name: item.name,
         price: item.price,
