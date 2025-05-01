@@ -10,7 +10,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import glob from 'glob';
+import * as globModule from 'glob';
+const glob = globModule.glob || globModule.default;
 
 // Convert import.meta.url to __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
