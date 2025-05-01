@@ -32,7 +32,68 @@
     },
     "treatment_plans": {
       "title": "Treatment Plans",
-      "description": "Create and manage treatment plans for your patients"
+      "description": "Create and manage treatment plans for your patients",
+      "new_button": "New Treatment Plan",
+      "search_placeholder": "Search by name or title...",
+      "error_loading": "Error loading treatment plans:",
+      "no_plans_found": "No treatment plans found",
+      "tabs": {
+        "all": "All",
+        "draft": "Draft",
+        "sent": "Sent",
+        "accepted": "Accepted",
+        "in_progress": "In Progress",
+        "completed": "Completed"
+      },
+      "columns": {
+        "patient": "Patient",
+        "title": "Title",
+        "created": "Created",
+        "status": "Status",
+        "payment": "Payment",
+        "total": "Total",
+        "actions": "Actions"
+      },
+      "status": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "accepted": "Accepted",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "payment": {
+        "paid": "Paid",
+        "partial": "Partial",
+        "pending": "Pending",
+        "refunded": "Refunded"
+      },
+      "actions": {
+        "send_to_patient": "Send to Patient"
+      },
+      "download": {
+        "title": "Downloading treatment plan",
+        "preparing": "Preparing the document for download...",
+        "complete_title": "Download complete",
+        "complete_description": "Treatment plan has been downloaded successfully.",
+        "failed_title": "Download failed",
+        "failed_description": "Could not download the treatment plan."
+      },
+      "send": {
+        "title": "Sending to patient",
+        "description": "Sending treatment plan to {{name}}...",
+        "success_title": "Success",
+        "success_description": "Treatment plan has been sent to {{name}}.",
+        "failed_title": "Send failed",
+        "failed_description": "Could not send the treatment plan to the patient."
+      },
+      "delete": {
+        "success_title": "Success",
+        "success_description": "Treatment plan has been deleted.",
+        "failed_title": "Delete failed",
+        "failed_description": "Could not delete the treatment plan."
+      }
     },
     "treatment_mapper": {
       "title": "Treatment Mapper",
@@ -276,7 +337,19 @@
     "phone": "Phone Number",
     "phone_number": "Phone Number",
     "phone_placeholder": "+44 7123 456789",
-    "phone_help_text": "We'll use this to contact you about your quote and treatment options"
+    "phone_help_text": "We'll use this to contact you about your quote and treatment options",
+    "actions": "Actions",
+    "view": "View",
+    "edit": "Edit",
+    "download": "Download",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "cancel": "Cancel",
+    "unknown_error": "Unknown error",
+    "confirm_delete": {
+      "title": "Are you sure?",
+      "description": "This action cannot be undone. This will permanently delete the item and remove it from our servers."
+    }
   },
   "pricing": {
     "pricing_title": "Dental Treatment Pricing",
