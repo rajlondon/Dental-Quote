@@ -264,31 +264,31 @@ export default function ClinicQuotesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Quote Requests</CardTitle>
+          <CardTitle>{t('clinic.quotes.title', 'Quote Requests')}</CardTitle>
           <CardDescription>
-            Manage quotes sent to your clinic. Review, approve, or decline quote requests.
+            {t('clinic.quotes.description', 'Manage quotes sent to your clinic. Review, approve, or decline quote requests.')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredQuotes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <FileText className="h-12 w-12 text-gray-400 mb-3" />
-              <h3 className="text-lg font-semibold">No quotes found</h3>
+              <h3 className="text-lg font-semibold">{t('clinic.quotes.no_quotes_found', 'No quotes found')}</h3>
               <p className="text-muted-foreground">
                 {searchTerm || filterStatus !== 'all' 
-                  ? "Try adjusting your search or filter criteria" 
-                  : "New quote requests will appear here when received"}
+                  ? t('clinic.quotes.adjust_filter', 'Try adjusting your search or filter criteria') 
+                  : t('clinic.quotes.new_quotes_appear', 'New quote requests will appear here when received')}
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Treatments</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('common.patient', 'Patient')}</TableHead>
+                  <TableHead>{t('common.date', 'Date')}</TableHead>
+                  <TableHead>{t('common.treatments', 'Treatments')}</TableHead>
+                  <TableHead>{t('common.status', 'Status')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions', 'Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -344,9 +344,9 @@ export default function ClinicQuotesSection() {
       <Dialog open={quoteDetailsOpen} onOpenChange={setQuoteDetailsOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Quote Details</DialogTitle>
+            <DialogTitle>{t('clinic.quotes.quote_details', 'Quote Details')}</DialogTitle>
             <DialogDescription>
-              Review and manage this quote request
+              {t('clinic.quotes.review_manage', 'Review and manage this quote request')}
             </DialogDescription>
           </DialogHeader>
 
@@ -354,38 +354,38 @@ export default function ClinicQuotesSection() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-semibold mb-2">Patient Information</h3>
+                  <h3 className="text-sm font-semibold mb-2">{t('clinic.quotes.patient_information', 'Patient Information')}</h3>
                   <div className="space-y-2">
                     <div>
-                      <span className="text-sm text-muted-foreground">Name:</span>{" "}
-                      <span className="font-medium">{selectedQuote.patientName || "N/A"}</span>
+                      <span className="text-sm text-muted-foreground">{t('common.name', 'Name')}:</span>{" "}
+                      <span className="font-medium">{selectedQuote.patientName || t('common.not_available', 'N/A')}</span>
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Email:</span>{" "}
-                      <span className="font-medium">{selectedQuote.patientEmail || "N/A"}</span>
+                      <span className="text-sm text-muted-foreground">{t('common.email', 'Email')}:</span>{" "}
+                      <span className="font-medium">{selectedQuote.patientEmail || t('common.not_available', 'N/A')}</span>
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Phone:</span>{" "}
-                      <span className="font-medium">{selectedQuote.patientPhone || "N/A"}</span>
+                      <span className="text-sm text-muted-foreground">{t('common.phone', 'Phone')}:</span>{" "}
+                      <span className="font-medium">{selectedQuote.patientPhone || t('common.not_available', 'N/A')}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold mb-2">Quote Details</h3>
+                  <h3 className="text-sm font-semibold mb-2">{t('clinic.quotes.quote_details', 'Quote Details')}</h3>
                   <div className="space-y-2">
                     <div>
-                      <span className="text-sm text-muted-foreground">Status:</span>{" "}
+                      <span className="text-sm text-muted-foreground">{t('common.status', 'Status')}:</span>{" "}
                       <StatusBadge status={selectedQuote.status} />
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Created:</span>{" "}
+                      <span className="text-sm text-muted-foreground">{t('common.created', 'Created')}:</span>{" "}
                       <span className="font-medium">
                         {new Date(selectedQuote.createdAt).toLocaleString()}
                       </span>
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Request ID:</span>{" "}
+                      <span className="text-sm text-muted-foreground">{t('clinic.quotes.request_id', 'Request ID')}:</span>{" "}
                       <span className="font-medium">#{selectedQuote.id}</span>
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export default function ClinicQuotesSection() {
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold mb-2">Requested Treatments</h3>
+                <h3 className="text-sm font-semibold mb-2">{t('clinic.quotes.requested_treatments', 'Requested Treatments')}</h3>
                 {selectedQuote.treatments?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {selectedQuote.treatments.map((treatment: string, i: number) => (
@@ -403,21 +403,21 @@ export default function ClinicQuotesSection() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No specific treatments requested</p>
+                  <p className="text-sm text-muted-foreground">{t('clinic.quotes.no_treatments_specified', 'No specific treatments requested')}</p>
                 )}
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold mb-2">Additional Notes</h3>
+                <h3 className="text-sm font-semibold mb-2">{t('clinic.quotes.additional_notes', 'Additional Notes')}</h3>
                 <div className="bg-secondary/50 p-3 rounded text-sm">
-                  {selectedQuote.patientNotes || "No additional notes provided by the patient."}
+                  {selectedQuote.patientNotes || t('clinic.quotes.no_patient_notes', 'No additional notes provided by the patient.')}
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold mb-2">Clinic Notes</h3>
+                <h3 className="text-sm font-semibold mb-2">{t('clinic.quotes.clinic_notes', 'Clinic Notes')}</h3>
                 <Textarea
-                  placeholder="Add your notes about this quote request..."
+                  placeholder={t('clinic.quotes.add_notes_placeholder', 'Add your notes about this quote request...')}
                   value={selectedQuote.clinicNotes || ""}
                   onChange={(e) => {
                     setSelectedQuote({
@@ -432,7 +432,7 @@ export default function ClinicQuotesSection() {
 
               {selectedQuote.status === "pending" && (
                 <div className="bg-secondary/30 p-4 rounded-md">
-                  <h3 className="text-sm font-semibold mb-3">Quote Response</h3>
+                  <h3 className="text-sm font-semibold mb-3">{t('clinic.quotes.quote_response', 'Quote Response')}</h3>
                   <div className="flex gap-2">
                     <Button 
                       variant="destructive" 
@@ -441,7 +441,7 @@ export default function ClinicQuotesSection() {
                       className="flex-1"
                     >
                       <XCircle className="mr-2 h-4 w-4" />
-                      Decline Quote
+                      {t('clinic.quotes.decline_quote', 'Decline Quote')}
                     </Button>
                     <Button 
                       variant="default"
@@ -450,11 +450,11 @@ export default function ClinicQuotesSection() {
                       className="flex-1"
                     >
                       <CheckCircle className="mr-2 h-4 w-4" />
-                      Accept Quote
+                      {t('clinic.quotes.accept_quote', 'Accept Quote')}
                     </Button>
                   </div>
                   <p className="text-center text-xs text-muted-foreground mt-2">
-                    This action will update the quote status and notify the patient.
+                    {t('clinic.quotes.status_update_notice', 'This action will update the quote status and notify the patient.')}
                   </p>
                 </div>
               )}
@@ -466,7 +466,7 @@ export default function ClinicQuotesSection() {
               variant="outline" 
               onClick={() => setQuoteDetailsOpen(false)}
             >
-              Close
+              {t('common.close', 'Close')}
             </Button>
             <Button 
               variant="secondary"
@@ -479,7 +479,7 @@ export default function ClinicQuotesSection() {
               }}
               disabled={updateQuoteMutation.isPending}
             >
-              Save Notes
+              {t('clinic.quotes.save_notes', 'Save Notes')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -490,18 +490,40 @@ export default function ClinicQuotesSection() {
 
 // Helper component for displaying status badges
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+  
   const getStatusDetails = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return { variant: 'outline', label: 'Pending', className: 'text-yellow-600 border-yellow-200 bg-yellow-50' };
+        return { 
+          variant: 'outline', 
+          label: t('status.pending', 'Pending'), 
+          className: 'text-yellow-600 border-yellow-200 bg-yellow-50' 
+        };
       case 'approved':
-        return { variant: 'outline', label: 'Approved', className: 'text-green-600 border-green-200 bg-green-50' };
+        return { 
+          variant: 'outline', 
+          label: t('status.approved', 'Approved'), 
+          className: 'text-green-600 border-green-200 bg-green-50' 
+        };
       case 'declined':
-        return { variant: 'outline', label: 'Declined', className: 'text-red-600 border-red-200 bg-red-50' };
+        return { 
+          variant: 'outline', 
+          label: t('status.declined', 'Declined'), 
+          className: 'text-red-600 border-red-200 bg-red-50' 
+        };
       case 'converted':
-        return { variant: 'outline', label: 'Converted', className: 'text-blue-600 border-blue-200 bg-blue-50' };
+        return { 
+          variant: 'outline', 
+          label: t('status.converted', 'Converted'), 
+          className: 'text-blue-600 border-blue-200 bg-blue-50' 
+        };
       default:
-        return { variant: 'outline', label: status.charAt(0).toUpperCase() + status.slice(1), className: '' };
+        return { 
+          variant: 'outline', 
+          label: status.charAt(0).toUpperCase() + status.slice(1), 
+          className: '' 
+        };
     }
   };
 
