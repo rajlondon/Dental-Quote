@@ -52,7 +52,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
-  // Use the exact same implementation as ClinicPortalPage which works
+  // EXACT duplicate of the working ClinicPortalPage implementation
   useEffect(() => {
     if (disableAutoRefresh && typeof window !== 'undefined') {
       console.log("🔌 Adding WebSocket protection for admin portal");
@@ -60,7 +60,8 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       // Set a global flag to indicate we're in the admin portal
       (window as any).__inAdminPortal = true;
       
-      // Add a fetch interceptor to prevent problematic API calls
+      // Add a more targeted WebSocket prevention - watch for specific patterns
+      // This is safer than replacing the WebSocket constructor
       const originalFetch = window.fetch;
       window.fetch = async function preventProblematicFetch(input, init) {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -91,7 +92,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     }
   }, [disableAutoRefresh]);
   
-  // Simple page-level refresh prevention
+  // Add page-level refresh prevention
   useEffect(() => {
     // Function to prevent any programmatic page reload
     const preventUnload = (e: BeforeUnloadEvent) => {
@@ -110,6 +111,21 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     return () => {
       window.removeEventListener('beforeunload', preventUnload);
     };
+  }, []);
+  
+  // Disable React Query retries for admin portal
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log("✋ Disabling React Query retries for admin portal");
+      
+      // Add a property to the window object that the query client can check
+      (window as any).__disableReactQueryRetries = true;
+      
+      // Clean up when unmounting
+      return () => {
+        delete (window as any).__disableReactQueryRetries;
+      };
+    }
   }, []);
   
   // Flag to track component mount status
