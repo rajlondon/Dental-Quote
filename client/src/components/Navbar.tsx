@@ -40,17 +40,17 @@ const Navbar: React.FC = () => {
               <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
               </svg>
-              Dental Services
+              {t('navbar.dental_services', 'Dental Services')}
             </Link>
             <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-1 py-1 z-50">
               <Link href="/dental-chart" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
-                Interactive Dental Chart
+                {t('navbar.interactive_chart', 'Interactive Dental Chart')}
               </Link>
               <Link href="/my-dental-chart" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
-                My Saved Dental Charts
+                {t('navbar.saved_charts', 'My Saved Dental Charts')}
               </Link>
               <Link href="/dental-advice" className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50">
-                AI Dental Treatment Advice
+                {t('navbar.ai_advice', 'AI Dental Treatment Advice')}
               </Link>
             </div>
           </div>
@@ -87,7 +87,7 @@ const Navbar: React.FC = () => {
             <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
             </svg>
-            Services
+            {t('navbar.dental_services', 'Services')}
           </Link>
           
           <LanguageSwitcher />
@@ -119,15 +119,15 @@ const Navbar: React.FC = () => {
           </Link>
           
           <Link href="/dental-chart" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            Interactive Dental Chart
+            {t('navbar.interactive_chart', 'Interactive Dental Chart')}
           </Link>
           
           <Link href="/my-dental-chart" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            My Saved Dental Charts
+            {t('navbar.saved_charts', 'My Saved Dental Charts')}
           </Link>
           
           <Link href="/dental-advice" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            AI Dental Treatment Advice
+            {t('navbar.ai_advice', 'AI Dental Treatment Advice')}
           </Link>
           
           <Link href="/portal-login" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
