@@ -652,12 +652,39 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
     // Apply pagination
     const paginatedPatients = filteredPatients.slice(skip, skip + limit);
     
-    // Return the paginated and filtered results
+    // Mask contact information for non-completed patients
+    const maskedPatients = paginatedPatients.map(patient => {
+      // Clone the patient object
+      const maskedPatient = { ...patient };
+      
+      // Only show full contact info for completed patients
+      if (maskedPatient.status !== "Completed") {
+        // Mask email if exists
+        if (maskedPatient.email) {
+          const [username, domain] = maskedPatient.email.split('@');
+          if (domain) {
+            maskedPatient.email = `${username.substring(0, 1)}***@${domain}`;
+          }
+        }
+        
+        // Mask phone if exists
+        if (maskedPatient.phone) {
+          const phoneLength = maskedPatient.phone.length;
+          if (phoneLength > 6) {
+            maskedPatient.phone = `${maskedPatient.phone.substring(0, 4)}•••••${maskedPatient.phone.substring(phoneLength - 3)}`;
+          }
+        }
+      }
+      
+      return maskedPatient;
+    });
+    
+    // Return the paginated, filtered, and masked results
     res.json({
       success: true,
       message: "Patients retrieved successfully",
       data: {
-        patients: paginatedPatients,
+        patients: maskedPatients,
         pagination: {
           page,
           limit,
