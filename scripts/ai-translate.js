@@ -128,7 +128,7 @@ async function translateWithGemini(text, sourceLang, targetLang) {
   console.log(`  Using Gemini for ${Object.keys(text).length} keys...`);
   
   try {
-    // Use gemini-1.5-pro model which is the current stable version
+    // Use gemini-1.5-pro model which was confirmed working with our API key
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
     const langName = getLanguageName(targetLang);
@@ -182,25 +182,8 @@ async function processTranslationsInChunks(translations, sourceLang, targetLang)
   for (const [index, chunk] of chunks.entries()) {
     console.log(`  Translating chunk ${index + 1}/${chunks.length} (${Object.keys(chunk).length} keys)...`);
     
-    // Use OpenAI for Arabic (better with RTL languages)
-    // Use Gemini for other languages (more cost-effective)
-    let translatedChunk = null;
-    
-    if (targetLang === 'ar') {
-      translatedChunk = await translateWithOpenAI(chunk, sourceLang, targetLang);
-      
-      // Fallback to Gemini if OpenAI fails
-      if (!translatedChunk) {
-        translatedChunk = await translateWithGemini(chunk, sourceLang, targetLang);
-      }
-    } else {
-      translatedChunk = await translateWithGemini(chunk, sourceLang, targetLang);
-      
-      // Fallback to OpenAI if Gemini fails
-      if (!translatedChunk) {
-        translatedChunk = await translateWithOpenAI(chunk, sourceLang, targetLang);
-      }
-    }
+    // Use Gemini for all languages since OpenAI has quota issues
+    let translatedChunk = await translateWithGemini(chunk, sourceLang, targetLang);
     
     if (translatedChunk) {
       translatedChunks.push(translatedChunk);
