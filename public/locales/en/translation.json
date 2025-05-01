@@ -365,6 +365,7 @@
     "deleting": "Deleting...",
     "cancel": "Cancel",
     "unknown_error": "Unknown error",
+    "not_available": "N/A",
     "confirm_delete": {
       "title": "Are you sure?",
       "description": "This action cannot be undone. This will permanently delete the item and remove it from our servers."
