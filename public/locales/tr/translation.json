@@ -308,7 +308,25 @@
       "treatments": "Tedaviler",
       "converted": "Dönüştürüldü",
       "declined": "Reddedildi",
-      "more": "daha fazla"
+      "more": "daha fazla",
+      "no_quotes_found": "Teklif bulunamadı",
+      "adjust_filter": "Arama veya filtre kriterlerinizi ayarlamayı deneyin",
+      "new_quotes_appear": "Alınan yeni teklif istekleri burada görünecek",
+      "quote_details": "Teklif Detayları",
+      "review_manage": "Bu teklif isteğini inceleyin ve yönetin",
+      "patient_information": "Hasta Bilgileri",
+      "request_id": "İstek No",
+      "requested_treatments": "İstenen Tedaviler",
+      "no_treatments_specified": "Belirli bir tedavi talep edilmedi",
+      "additional_notes": "Ek Notlar",
+      "no_patient_notes": "Hasta tarafından ek not sağlanmadı.",
+      "clinic_notes": "Klinik Notları",
+      "add_notes_placeholder": "Bu teklif isteği hakkında notlarınızı ekleyin...",
+      "quote_response": "Teklif Yanıtı",
+      "decline_quote": "Teklifi Reddet",
+      "accept_quote": "Teklifi Kabul Et",
+      "status_update_notice": "Bu işlem teklif durumunu güncelleyecek ve hastayı bilgilendirecek.",
+      "save_notes": "Notları Kaydet"
     },
     "analytics": {
       "title": "Analitik",
@@ -478,9 +496,22 @@
     "active": "Aktif",
     "completed": "Tamamlandı",
     "scheduled": "Planlandı",
+    "patient": "Hasta",
+    "date": "Tarih",
+    "treatments": "Tedaviler",
+    "status": "Durum",
+    "actions": "İşlemler",
+    "close": "Kapat",
+    "created": "Oluşturuldu",
     "confirm_delete": {
       "title": "Emin misiniz?",
       "description": "Bu işlem geri alınamaz. Bu, öğeyi kalıcı olarak silecek ve sunucularımızdan kaldıracaktır."
     }
+  },
+  "status": {
+    "pending": "Beklemede",
+    "approved": "Onaylandı",
+    "declined": "Reddedildi",
+    "converted": "Dönüştürüldü"
   }
 }
