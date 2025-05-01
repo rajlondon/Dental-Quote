@@ -5,6 +5,13 @@ import { Redirect } from 'wouter';
 import { Loader2 } from 'lucide-react';
 import { ClinicQueryProvider } from '@/hooks/use-clinic-queries';
 
+// Augment the window interface to add our navigation helper
+declare global {
+  interface Window {
+    markClinicPortalNavigation?: () => void;
+  }
+}
+
 // This component guards against unauthorized access to the clinic portal
 // and provides a protected environment that prevents refresh cycles
 interface ClinicGuardProps {
@@ -25,10 +32,52 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
     // Session storage key to track if we've shown the notification
     const SESSION_NOTIFICATION_KEY = 'clinic_refresh_notification_shown';
     
-    // Instead of trying to override window.location.reload (which is read-only),
-    // use the beforeunload event to catch reload attempts
+    // Track navigation actions to distinguish between navigation and reload
+    let isNavigating = false;
+    
+    // Create a function to mark when we're navigating intentionally
+    const markNavigating = () => {
+      isNavigating = true;
+      // Reset after a short delay
+      setTimeout(() => {
+        isNavigating = false;
+      }, 100);
+    };
+    
+    // Create a function that other components can call
+    window.markClinicPortalNavigation = markNavigating;
+    
+    // Listen for click events on links and buttons
+    const handleClick = (e: MouseEvent) => {
+      // Check if the click was on an anchor tag, a button, or any element with role="link" 
+      let target = e.target as HTMLElement;
+      while (target && target !== document.body) {
+        if (
+          target.tagName.toLowerCase() === 'a' || 
+          target.tagName.toLowerCase() === 'button' ||
+          target.getAttribute('role') === 'link' ||
+          target.getAttribute('role') === 'button' ||
+          target.classList.contains('dropdown-item') ||
+          target.closest('.dropdown-menu') ||
+          target.closest('nav')
+        ) {
+          markNavigating();
+          break;
+        }
+        target = target.parentElement as HTMLElement;
+      }
+    };
+    
+    // Only prevent actual page reloads, not navigation
     const preventReload = (e: BeforeUnloadEvent) => {
+      // Let normal navigation proceed
+      if (isNavigating) {
+        console.log('Detected intentional navigation, allowing it to proceed');
+        return undefined;
+      }
+      
       if (window.location.pathname.includes('clinic-portal')) {
+        console.log('🛡️ Blocked programmatic page reload on clinic portal');
         console.warn('⚠️ Automatic page reload blocked by ClinicGuard');
         
         // Only show the toast if we haven't shown it this session
@@ -56,11 +105,13 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       return undefined;
     };
     
-    // Add event listener for beforeunload
+    // Add event listeners
+    document.addEventListener('click', handleClick, { capture: true });
     window.addEventListener('beforeunload', preventReload);
     
-    // Remove event listener when the component unmounts
+    // Remove all event listeners when the component unmounts
     return () => {
+      document.removeEventListener('click', handleClick, { capture: true });
       window.removeEventListener('beforeunload', preventReload);
     };
   }, [toast]);

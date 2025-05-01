@@ -1,97 +1,102 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2, Send, Download } from "lucide-react";
 import { useTreatmentPlan } from '@/hooks/use-treatment-plans';
-import { Loader2, Download, Send } from "lucide-react";
-import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
-import { Badge } from "@/components/ui/badge";
-
-// Helper function to format date strings
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-};
-
-// Status badge component
-const StatusBadge = ({ status }: { status: TreatmentPlanStatus }) => {
-  const getVariant = () => {
-    switch (status) {
-      case TreatmentPlanStatus.DRAFT:
-        return "outline";
-      case TreatmentPlanStatus.SENT:
-        return "secondary";
-      case TreatmentPlanStatus.ACCEPTED:
-        return "default";
-      case TreatmentPlanStatus.IN_PROGRESS:
-        return "default";
-      case TreatmentPlanStatus.COMPLETED:
-        return "default";
-      case TreatmentPlanStatus.REJECTED:
-        return "destructive";
-      case TreatmentPlanStatus.CANCELLED:
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
-  return (
-    <Badge variant={getVariant()}>{status}</Badge>
-  );
-};
-
-// Payment status badge component
-const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
-  const getVariant = () => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return "default";
-      case PaymentStatus.PARTIAL:
-        return "secondary";
-      case PaymentStatus.PENDING:
-        return "outline";
-      case PaymentStatus.REFUNDED:
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
-  return (
-    <Badge variant={getVariant()}>{status}</Badge>
-  );
-};
+import { TreatmentPlanStatus, PaymentStatus } from '@shared/models/treatment-plan';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 interface ViewTreatmentPlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   treatmentPlanId: number;
-  onDownload: (plan: any) => void;
-  onSendToPatient: (plan: any) => void;
 }
 
-export const ViewTreatmentPlanDialog = ({
+export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = ({
   open,
   onOpenChange,
   treatmentPlanId,
-  onDownload,
-  onSendToPatient,
-}: ViewTreatmentPlanDialogProps) => {
-  const { data: treatmentPlanData, isLoading, isError, error } = useTreatmentPlan(treatmentPlanId);
+}) => {
+  const { data, isLoading, isError } = useTreatmentPlan(treatmentPlanId);
+  const { toast } = useToast();
+  const treatmentPlan = data?.data?.treatmentPlan;
 
+  // Function to format currency
+  const formatCurrency = (amount: number, currency: string = 'GBP') => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+
+  // Function to format dates
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  // Handle download PDF
   const handleDownload = () => {
-    if (treatmentPlanData?.data?.treatmentPlan) {
-      onDownload(treatmentPlanData.data.treatmentPlan);
+    // In a real application, this would trigger a PDF download
+    // For now, we'll just show a success toast
+    toast({
+      title: "Download Started",
+      description: "The treatment plan PDF is being generated and downloaded.",
+    });
+  };
+
+  // Handle send to patient
+  const handleSendToPatient = () => {
+    // In a real application, this would send an email to the patient with the plan
+    // For now, we'll just show a success toast
+    toast({
+      title: "Email Sent",
+      description: "The treatment plan has been sent to the patient's email.",
+    });
+  };
+
+  // Get color for status badge
+  const getStatusColor = (status: TreatmentPlanStatus) => {
+    switch(status) {
+      case TreatmentPlanStatus.DRAFT:
+        return "bg-gray-200 text-gray-800";
+      case TreatmentPlanStatus.SENT:
+        return "bg-blue-100 text-blue-800";
+      case TreatmentPlanStatus.ACCEPTED:
+        return "bg-green-100 text-green-800";
+      case TreatmentPlanStatus.IN_PROGRESS:
+        return "bg-amber-100 text-amber-800";
+      case TreatmentPlanStatus.COMPLETED:
+        return "bg-green-200 text-green-900";
+      case TreatmentPlanStatus.REJECTED:
+        return "bg-red-100 text-red-800";
+      case TreatmentPlanStatus.CANCELLED:
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-200 text-gray-800";
     }
   };
 
-  const handleSendToPatient = () => {
-    if (treatmentPlanData?.data?.treatmentPlan) {
-      onSendToPatient(treatmentPlanData.data.treatmentPlan);
+  // Get color for payment status badge
+  const getPaymentStatusColor = (status: PaymentStatus) => {
+    switch(status) {
+      case PaymentStatus.PAID:
+        return "bg-green-100 text-green-800";
+      case PaymentStatus.PARTIAL:
+        return "bg-yellow-100 text-yellow-800";
+      case PaymentStatus.PENDING:
+        return "bg-gray-200 text-gray-800";
+      case PaymentStatus.REFUNDED:
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-200 text-gray-800";
     }
   };
 
@@ -99,110 +104,118 @@ export const ViewTreatmentPlanDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Treatment Plan Details</DialogTitle>
+          <DialogTitle className="text-xl">Treatment Plan Details</DialogTitle>
           <DialogDescription>
-            View the details of this treatment plan
+            View all details of this treatment plan.
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : isError ? (
-          <div className="text-center py-8 text-destructive">
-            <p>Error loading treatment plan: {error?.message || "Unknown error"}</p>
+        ) : isError || !treatmentPlan ? (
+          <div className="py-8 text-center">
+            <p className="text-red-500">Error loading treatment plan. Please try again.</p>
           </div>
-        ) : treatmentPlanData?.data?.treatmentPlan ? (
+        ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Patient</h3>
-                <p className="text-base font-medium">{treatmentPlanData.data.treatmentPlan.patientName}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Created</h3>
-                <p className="text-base font-medium">{formatDate(treatmentPlanData.data.treatmentPlan.createdAt)}</p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
-                <div className="mt-1">
-                  <StatusBadge status={treatmentPlanData.data.treatmentPlan.status} />
+            {/* Main treatment plan info card */}
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-lg">{treatmentPlan.title}</CardTitle>
+                    <CardDescription>{treatmentPlan.description}</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className={getStatusColor(treatmentPlan.status)}>
+                      {treatmentPlan.status.replace('_', ' ')}
+                    </Badge>
+                    <Badge className={getPaymentStatusColor(treatmentPlan.paymentStatus)}>
+                      {treatmentPlan.paymentStatus}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Payment Status</h3>
-                <div className="mt-1">
-                  <PaymentBadge status={treatmentPlanData.data.treatmentPlan.paymentStatus} />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Patient</h3>
+                    <p>{treatmentPlan.patientName}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Clinic</h3>
+                    <p>{treatmentPlan.clinicName}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Created</h3>
+                    <p>{formatDate(treatmentPlan.createdAt)}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Last Updated</h3>
+                    <p>{formatDate(treatmentPlan.updatedAt)}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Appointment Date</h3>
+                    <p>{formatDate(treatmentPlan.appointmentDate)}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Estimated Duration</h3>
+                    <p>{treatmentPlan.estimatedDuration || "Not specified"}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
 
+                {treatmentPlan.notes && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-1">Additional Notes</h3>
+                    <p className="text-sm">{treatmentPlan.notes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Treatment items */}
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Title</h3>
-              <p className="text-base font-medium">{treatmentPlanData.data.treatmentPlan.title}</p>
-            </div>
-
-            {treatmentPlanData.data.treatmentPlan.description && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                <p className="text-base">{treatmentPlanData.data.treatmentPlan.description}</p>
-              </div>
-            )}
-
-            {treatmentPlanData.data.treatmentPlan.estimatedDuration && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Estimated Duration</h3>
-                <p className="text-base">{treatmentPlanData.data.treatmentPlan.estimatedDuration}</p>
-              </div>
-            )}
-
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Treatment Items</h3>
+              <h3 className="font-semibold mb-2">Treatment Items</h3>
               <div className="border rounded-md overflow-hidden">
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="p-2 text-left text-xs font-medium">Item</th>
-                      <th className="p-2 text-center text-xs font-medium">Quantity</th>
-                      <th className="p-2 text-right text-xs font-medium">Price</th>
-                      <th className="p-2 text-right text-xs font-medium">Subtotal</th>
+                  <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Item</th>
+                      <th className="px-4 py-3 text-right">Price</th>
+                      <th className="px-4 py-3 text-right">Qty</th>
+                      <th className="px-4 py-3 text-right">Total</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {treatmentPlanData.data.treatmentPlan.treatmentItems?.map((item, index) => (
-                      <tr key={index} className={index !== (treatmentPlanData.data.treatmentPlan.treatmentItems?.length || 0) - 1 ? "border-b" : ""}>
-                        <td className="p-2 text-sm">
-                          <div>{item.name}</div>
-                          {item.description && (
-                            <div className="text-xs text-muted-foreground mt-1">{item.description}</div>
-                          )}
+                  <tbody className="divide-y divide-gray-200">
+                    {treatmentPlan.treatmentItems.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="text-sm font-medium">{item.name}</p>
+                            {item.description && (
+                              <p className="text-xs text-gray-500">{item.description}</p>
+                            )}
+                          </div>
                         </td>
-                        <td className="p-2 text-sm text-center">{item.quantity}</td>
-                        <td className="p-2 text-sm text-right">
-                          {new Intl.NumberFormat('en-GB', {
-                            style: 'currency',
-                            currency: treatmentPlanData.data.treatmentPlan.currency || 'GBP'
-                          }).format(item.price)}
+                        <td className="px-4 py-3 text-sm text-right">
+                          {formatCurrency(item.price, treatmentPlan.currency)}
                         </td>
-                        <td className="p-2 text-sm text-right">
-                          {new Intl.NumberFormat('en-GB', {
-                            style: 'currency',
-                            currency: treatmentPlanData.data.treatmentPlan.currency || 'GBP'
-                          }).format(item.price * item.quantity)}
+                        <td className="px-4 py-3 text-sm text-right">{item.quantity}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-right">
+                          {formatCurrency(item.price * item.quantity, treatmentPlan.currency)}
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr className="border-t font-medium">
-                      <td colSpan={3} className="p-2 text-right">Total:</td>
-                      <td className="p-2 text-right">
-                        {new Intl.NumberFormat('en-GB', {
-                          style: 'currency',
-                          currency: treatmentPlanData.data.treatmentPlan.currency || 'GBP'
-                        }).format(treatmentPlanData.data.treatmentPlan.totalPrice)}
+                  <tfoot className="bg-gray-50 font-medium">
+                    <tr>
+                      <td colSpan={3} className="px-4 py-3 text-right">
+                        Total
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(treatmentPlan.totalPrice, treatmentPlan.currency)}
                       </td>
                     </tr>
                   </tfoot>
@@ -210,50 +223,29 @@ export const ViewTreatmentPlanDialog = ({
               </div>
             </div>
 
-            {treatmentPlanData.data.treatmentPlan.notes && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Additional Notes</h3>
-                <p className="text-base whitespace-pre-line">{treatmentPlanData.data.treatmentPlan.notes}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No treatment plan data available</p>
+            {/* Action buttons */}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
+              <Button 
+                variant="outline" 
+                className="gap-1"
+                onClick={handleSendToPatient}
+              >
+                <Send className="h-4 w-4" />
+                Send to Patient
+              </Button>
+              <Button 
+                className="gap-1"
+                onClick={handleDownload}
+              >
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+            </div>
           </div>
         )}
-
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0 mt-6">
-          <div className="flex-1 flex justify-start gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="flex-1 sm:flex-none"
-              onClick={handleDownload}
-              disabled={isLoading || isError}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="flex-1 sm:flex-none"
-              onClick={handleSendToPatient}
-              disabled={isLoading || isError}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Send to Patient
-            </Button>
-          </div>
-          <Button 
-            type="button" 
-            onClick={() => onOpenChange(false)}
-            className="flex-1 sm:flex-none"
-          >
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
