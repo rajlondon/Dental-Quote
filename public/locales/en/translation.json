@@ -1,4 +1,72 @@
 {
+  "clinic": {
+    "title": "Clinic Portal",
+    "back_to_site": "Back to Website",
+    "nav": {
+      "dashboard": "Dashboard",
+      "patients": "Patients",
+      "quotes": "Quotes",
+      "treatment_plans": "Treatment Plans",
+      "treatment_mapper": "Treatment Mapper",
+      "appointments": "Appointments",
+      "messages": "Messages",
+      "documents": "Documents",
+      "payments": "Payments",
+      "reports": "Reports",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "testing": "Testing Mode",
+      "logout": "Log out"
+    },
+    "dashboard": {
+      "title": "Clinic Dashboard",
+      "description": "Manage your patients, appointments, and clinic operations"
+    },
+    "patients": {
+      "title": "Patient Management",
+      "description": "View and manage your patient records and treatment history"
+    },
+    "quotes": {
+      "title": "Quote Management",
+      "description": "Generate and manage treatment quotes for patients"
+    },
+    "treatment_plans": {
+      "title": "Treatment Plans",
+      "description": "Create and manage treatment plans for your patients"
+    },
+    "treatment_mapper": {
+      "title": "Treatment Mapper",
+      "description": "Map standard treatments to your clinic's specific procedures"
+    },
+    "appointments": {
+      "title": "Appointment Management",
+      "description": "Manage patient appointments, schedules, and bookings"
+    },
+    "messages": {
+      "title": "Messages",
+      "description": "Communicate with patients and the MyDentalFly team"
+    },
+    "documents": {
+      "title": "Document Management",
+      "description": "Upload and manage patient documents and medical records"
+    },
+    "payments": {
+      "title": "Payment Processing",
+      "description": "Track payments, invoices, and financial records"
+    },
+    "reports": {
+      "title": "Reporting",
+      "description": "Generate and view clinic performance reports"
+    },
+    "analytics": {
+      "title": "Analytics Dashboard",
+      "description": "Analyze clinic data and performance metrics"
+    },
+    "settings": {
+      "title": "Clinic Settings",
+      "description": "Manage your clinic profile, staff, and preferences"
+    }
+  },
   "navbar": {
     "home": "Home",
     "services": "Services",
