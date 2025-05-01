@@ -41,6 +41,7 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Configure React Query globally with settings to prevent redirect on errors
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -49,9 +50,10 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
+      retryOnMount: false
     },
     mutations: {
-      retry: false,
+      retry: false
     },
   },
 });
