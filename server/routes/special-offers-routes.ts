@@ -144,8 +144,10 @@ router.get('/api/portal/clinic/special-offers', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
-  const clinicOffers = specialOffers.get(clinicId) || [];
+  const clinicId = req.user.clinicId;
+  // Convert clinicId to string since Map keys are strings
+  const clinicIdStr = String(clinicId);
+  const clinicOffers = specialOffers.get(clinicIdStr) || [];
   
   res.json(clinicOffers);
 });
@@ -156,7 +158,9 @@ router.post('/api/portal/clinic/special-offers', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId;
+  // Convert clinicId to string since Map keys are strings
+  const clinicIdStr = String(clinicId);
   
   try {
     // Validate the request body
@@ -187,7 +191,7 @@ router.post('/api/portal/clinic/special-offers', (req, res) => {
     }
     
     // Check if clinic has reached max active offers for their tier
-    const clinicOffers = specialOffers.get(clinicId) || [];
+    const clinicOffers = specialOffers.get(clinicIdStr) || [];
     const activeOffersCount = clinicOffers.filter(o => o.is_active).length;
     
     if (offerData.is_active && activeOffersCount >= selectedTier.max_active_offers) {
@@ -201,7 +205,7 @@ router.post('/api/portal/clinic/special-offers', (req, res) => {
     const newOffer: SpecialOffer = {
       ...offerData,
       id: uuidv4(),
-      clinic_id: clinicId,
+      clinic_id: clinicIdStr,
       admin_approved: false,
       homepage_display: offerData.homepage_display && selectedTier.homepage_display_included,
       created_at: now,
@@ -209,12 +213,12 @@ router.post('/api/portal/clinic/special-offers', (req, res) => {
     };
     
     // Get existing offers or initialize
-    const offers = specialOffers.get(clinicId) || [];
+    const offers = specialOffers.get(clinicIdStr) || [];
     offers.push(newOffer);
-    specialOffers.set(clinicId, offers);
+    specialOffers.set(clinicIdStr, offers);
     
     res.status(201).json(newOffer);
-  } catch (error) {
+  } catch (error: any) {
     if (error.errors) {
       return res.status(400).json({ error: error.errors });
     }
@@ -236,7 +240,8 @@ router.put('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     const updateData = createSpecialOfferSchema.partial().parse(req.body);
     
     // Get the clinic's offers
-    const clinicOffers = specialOffers.get(clinicId) || [];
+    const clinicIdStr = String(req.user.clinicId);
+    const clinicOffers = specialOffers.get(clinicIdStr) || [];
     const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
     
     if (offerIndex === -1) {
@@ -302,10 +307,10 @@ router.put('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     };
     
     // Save back to storage
-    specialOffers.set(clinicId, clinicOffers);
+    specialOffers.set(clinicIdStr, clinicOffers);
     
     res.json(clinicOffers[offerIndex]);
-  } catch (error) {
+  } catch (error: any) {
     if (error.errors) {
       return res.status(400).json({ error: error.errors });
     }
