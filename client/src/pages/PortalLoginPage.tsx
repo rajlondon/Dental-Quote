@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useTranslation } from 'react-i18next';
 import { 
-  AlertCircle, Check, Lock, Mail, Phone, User 
+  AlertCircle, Check, Lock, Mail, Phone, User, ShieldCheck, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -67,6 +68,16 @@ const loginSchema = z.object({
   }),
 });
 
+// Admin login schema
+const adminLoginSchema = z.object({
+  email: z.string().email({ 
+    message: "Enter a valid email address" 
+  }),
+  password: z.string().min(6, { 
+    message: "Password must be at least 6 characters" 
+  }),
+});
+
 // Registration form schema
 const registerSchema = z.object({
   fullName: z.string().min(2, {
@@ -98,10 +109,13 @@ const PortalLoginPage: React.FC = () => {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { user, loginMutation } = useAuth();
+  const { adminUser, adminLogin, isLoading: adminIsLoading } = useAdminAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
   const [selectedClinicName, setSelectedClinicName] = useState("");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
   
   // Set up reload tracking for debugging the clinic portal issue
   useEffect(() => {
@@ -354,6 +368,55 @@ const PortalLoginPage: React.FC = () => {
       promotionalConsent: false,
     },
   });
+  
+  // Admin login form
+  const adminLoginForm = useForm<z.infer<typeof adminLoginSchema>>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // Handle admin login form submission
+  const onAdminLoginSubmit = async (values: z.infer<typeof adminLoginSchema>) => {
+    setAdminLoginError(null);
+    
+    try {
+      // Call the admin-specific login function
+      await adminLogin(values.email, values.password);
+      
+      // Show success toast
+      toast({
+        title: 'Admin login successful',
+        description: 'Welcome to the admin portal',
+      });
+      
+      // Prepare the session for admin portal navigation
+      sessionStorage.setItem('admin_portal_timestamp', Date.now().toString());
+      sessionStorage.setItem('admin_role_verified', 'true');
+      sessionStorage.setItem('admin_protected_navigation', 'true');
+      
+      // Redirect to admin portal with intentional navigation flag
+      setTimeout(() => {
+        console.log("Admin portal redirect with specialized auth");
+        (window as any).__directAdminNavigation = true;
+        setLocation('/admin-portal');
+      }, 100);
+      
+    } catch (error) {
+      console.error('Admin login error:', error);
+      
+      // Handle login error
+      setAdminLoginError('Invalid admin credentials. Please try again.');
+      
+      toast({
+        title: 'Admin login failed',
+        description: 'Please check your credentials and try again',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="bg-neutral-50 min-h-screen flex items-center justify-center p-4">
@@ -442,9 +505,10 @@ const PortalLoginPage: React.FC = () => {
           )}
           
           <Tabs defaultValue="login" className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger id="login-tab" value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
               <TabsTrigger id="clinic-tab" value="clinic">Clinic Login</TabsTrigger>
+              <TabsTrigger id="admin-tab" value="admin">Admin</TabsTrigger>
               <TabsTrigger id="register-tab" value="register">{t("portal.login.register", "Register")}</TabsTrigger>
             </TabsList>
             
