@@ -84,14 +84,14 @@ export const ViewTreatmentPlanDialog = ({
   const { data: treatmentPlanData, isLoading, isError, error } = useTreatmentPlan(treatmentPlanId);
 
   const handleDownload = () => {
-    if (treatmentPlanData?.data) {
-      onDownload(treatmentPlanData.data);
+    if (treatmentPlanData?.data?.treatmentPlan) {
+      onDownload(treatmentPlanData.data.treatmentPlan);
     }
   };
 
   const handleSendToPatient = () => {
-    if (treatmentPlanData?.data) {
-      onSendToPatient(treatmentPlanData.data);
+    if (treatmentPlanData?.data?.treatmentPlan) {
+      onSendToPatient(treatmentPlanData.data.treatmentPlan);
     }
   };
 
@@ -113,48 +113,48 @@ export const ViewTreatmentPlanDialog = ({
           <div className="text-center py-8 text-destructive">
             <p>Error loading treatment plan: {error?.message || "Unknown error"}</p>
           </div>
-        ) : treatmentPlanData?.data ? (
+        ) : treatmentPlanData?.data?.treatmentPlan ? (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Patient</h3>
-                <p className="text-base font-medium">{treatmentPlanData.data.patientName}</p>
+                <p className="text-base font-medium">{treatmentPlanData.data.treatmentPlan.patientName}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Created</h3>
-                <p className="text-base font-medium">{formatDate(treatmentPlanData.data.createdAt)}</p>
+                <p className="text-base font-medium">{formatDate(treatmentPlanData.data.treatmentPlan.createdAt)}</p>
               </div>
 
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
                 <div className="mt-1">
-                  <StatusBadge status={treatmentPlanData.data.status} />
+                  <StatusBadge status={treatmentPlanData.data.treatmentPlan.status} />
                 </div>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Payment Status</h3>
                 <div className="mt-1">
-                  <PaymentBadge status={treatmentPlanData.data.paymentStatus} />
+                  <PaymentBadge status={treatmentPlanData.data.treatmentPlan.paymentStatus} />
                 </div>
               </div>
             </div>
 
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Title</h3>
-              <p className="text-base font-medium">{treatmentPlanData.data.title}</p>
+              <p className="text-base font-medium">{treatmentPlanData.data.treatmentPlan.title}</p>
             </div>
 
-            {treatmentPlanData.data.description && (
+            {treatmentPlanData.data.treatmentPlan.description && (
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                <p className="text-base">{treatmentPlanData.data.description}</p>
+                <p className="text-base">{treatmentPlanData.data.treatmentPlan.description}</p>
               </div>
             )}
 
-            {treatmentPlanData.data.estimatedDuration && (
+            {treatmentPlanData.data.treatmentPlan.estimatedDuration && (
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Estimated Duration</h3>
-                <p className="text-base">{treatmentPlanData.data.estimatedDuration}</p>
+                <p className="text-base">{treatmentPlanData.data.treatmentPlan.estimatedDuration}</p>
               </div>
             )}
 
@@ -171,8 +171,8 @@ export const ViewTreatmentPlanDialog = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {treatmentPlanData.data.treatmentItems?.map((item, index) => (
-                      <tr key={index} className={index !== (treatmentPlanData.data.treatmentItems?.length || 0) - 1 ? "border-b" : ""}>
+                    {treatmentPlanData.data.treatmentPlan.treatmentItems?.map((item, index) => (
+                      <tr key={index} className={index !== (treatmentPlanData.data.treatmentPlan.treatmentItems?.length || 0) - 1 ? "border-b" : ""}>
                         <td className="p-2 text-sm">
                           <div>{item.name}</div>
                           {item.description && (
@@ -183,13 +183,13 @@ export const ViewTreatmentPlanDialog = ({
                         <td className="p-2 text-sm text-right">
                           {new Intl.NumberFormat('en-GB', {
                             style: 'currency',
-                            currency: treatmentPlanData.data.currency || 'GBP'
+                            currency: treatmentPlanData.data.treatmentPlan.currency || 'GBP'
                           }).format(item.price)}
                         </td>
                         <td className="p-2 text-sm text-right">
                           {new Intl.NumberFormat('en-GB', {
                             style: 'currency',
-                            currency: treatmentPlanData.data.currency || 'GBP'
+                            currency: treatmentPlanData.data.treatmentPlan.currency || 'GBP'
                           }).format(item.price * item.quantity)}
                         </td>
                       </tr>
@@ -201,8 +201,8 @@ export const ViewTreatmentPlanDialog = ({
                       <td className="p-2 text-right">
                         {new Intl.NumberFormat('en-GB', {
                           style: 'currency',
-                          currency: treatmentPlanData.data.currency || 'GBP'
-                        }).format(treatmentPlanData.data.totalPrice)}
+                          currency: treatmentPlanData.data.treatmentPlan.currency || 'GBP'
+                        }).format(treatmentPlanData.data.treatmentPlan.totalPrice)}
                       </td>
                     </tr>
                   </tfoot>
@@ -210,10 +210,10 @@ export const ViewTreatmentPlanDialog = ({
               </div>
             </div>
 
-            {treatmentPlanData.data.notes && (
+            {treatmentPlanData.data.treatmentPlan.notes && (
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Additional Notes</h3>
-                <p className="text-base whitespace-pre-line">{treatmentPlanData.data.notes}</p>
+                <p className="text-base whitespace-pre-line">{treatmentPlanData.data.treatmentPlan.notes}</p>
               </div>
             )}
           </div>
