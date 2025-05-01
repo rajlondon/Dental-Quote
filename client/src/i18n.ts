@@ -8,6 +8,7 @@ export const languages = {
   en: { nativeName: 'English', flag: '🇬🇧' },
   tr: { nativeName: 'Türkçe', flag: '🇹🇷' },
   de: { nativeName: 'Deutsch', flag: '🇩🇪' },
+  ar: { nativeName: 'العربية', flag: '🇦🇪' },
   fr: { nativeName: 'Français', flag: '🇫🇷' },
   es: { nativeName: 'Español', flag: '🇪🇸' },
   nl: { nativeName: 'Nederlands', flag: '🇳🇱' },
