@@ -1,0 +1,59 @@
+Understood—so even after disabling the obvious WebSocket watchdog the dashboard still “blinks” twice (≈ 5 s then ≈ 2 s) the first time you click any side-menu item.
+
+Those timings match React Query’s default refetch sequence:
+
+sql
+Copy
+Edit
+•  refetchInterval      : 5000 ms   → first call at t ≈ 5 s
+•  retry delay (onError): 2000 ms   → second call at t ≈ 7 s
+If the first /api/… the page loads after navigation returns any non-2xx status, React Query retries once after two seconds.
+Your error handler (or onError in a query) still contains
+
+ts
+Copy
+Edit
+navigate('/clinic/login');
+which fires on every query failure—hence one redirect at 5 s, one at 7 s, then it stops (because the query eventually succeeds or React Query stops retrying).
+
+One-line fix for every clinic query
+Locate the shared query options (often in queryClient.ts, or inline in useClinic* hooks) and delete the redirect in onError.
+
+diff
+Copy
+Edit
+useQuery(['clinic','patients'], fetchPatients, {
+   refetchInterval: 5000,      // keep if you need polling
+-  onError: () => navigate('/clinic/login'),   // ← remove
++  onError: () => toast.error('Failed to load – retrying'),
+   retry: false,               // 👉 disable auto-retry so no 2 s bounce
+});
+Or set these sensible defaults once when you create the client:
+
+ts
+Copy
+Edit
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,                // ← no automatic 2 s retry
+      onError: () => {/* show toast, never navigate */},
+    },
+  },
+});
+Quick confirmation
+Network ▶ XHR – you’ll still see the 5-second poll, but no second call at 7 s.
+
+Dashboard blinks once (optional toast) and stays—no redirect to /login.
+
+If you need the retry, keep retry: 1 but still remove the navigate.
+
+What to tell the Replit agent
+csharp
+Copy
+Edit
+Please remove ALL navigate('/clinic/login') calls from React-Query onError
+handlers in clinic code and set retry:false on those queries. That stops the
+5-second and 2-second redirects while keeping the dashboard live.
+Once those onError redirects are gone, there’s no remaining code path that can force the double refresh. Let me know if any specific query still includes a redirect after you strip them out, and we can patch that file directly.
