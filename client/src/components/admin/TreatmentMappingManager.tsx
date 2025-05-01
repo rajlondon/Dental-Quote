@@ -752,6 +752,281 @@ export const TreatmentMappingManager: React.FC<TreatmentMappingManagerProps> = (
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Custom Treatments Section */}
+      <Card className="mt-6">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <CardTitle>Custom Clinic Treatments</CardTitle>
+            <CardDescription>
+              Add your own treatments that aren't in the standard list
+            </CardDescription>
+          </div>
+          <Button onClick={() => setShowCustomTreatmentDialog(true)}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add Custom Treatment
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoadingCustom ? (
+            <div className="py-6 text-center text-muted-foreground">Loading custom treatments...</div>
+          ) : customTreatments.length === 0 ? (
+            <div className="py-6 text-center border rounded-md bg-muted/10">
+              <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-2" />
+              <h3 className="text-lg font-medium mb-1">No custom treatments</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                You haven't added any custom treatments yet. Add treatments that are specific to your 
+                clinic and not in the standard list.
+              </p>
+              <Button 
+                variant="outline"
+                className="mt-4"
+                onClick={() => setShowCustomTreatmentDialog(true)}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Your First Custom Treatment
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {customTreatments.map((treatment, index) => (
+                <div key={index} className="border rounded-md p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{treatment.label}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Category: {treatment.optional_addons?.[0] || "Uncategorized"}
+                      </p>
+                      <p className="text-sm font-medium mt-2">
+                        Price: {treatment.price}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => 
+                          deleteCustomTreatmentMutation.mutate({
+                            clinicId: clinicId,
+                            treatmentId: treatment.clinic_id
+                          })
+                        }
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                  {treatment.includes?.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="text-sm font-medium mb-1">Includes:</h4>
+                      <ul className="text-sm pl-5 list-disc">
+                        {treatment.includes.map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Add Custom Treatment Dialog */}
+      <Dialog open={showCustomTreatmentDialog} onOpenChange={setShowCustomTreatmentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Custom Treatment</DialogTitle>
+            <DialogDescription>
+              Create a new treatment that's specific to your clinic
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="customName">Treatment Name *</Label>
+              <Input 
+                id="customName" 
+                value={newCustomTreatment.name}
+                onChange={(e) => setNewCustomTreatment({
+                  ...newCustomTreatment,
+                  name: e.target.value
+                })}
+                placeholder="e.g. Premium Zirconia Bridge"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="customCategory">Category *</Label>
+              <Select 
+                value={newCustomTreatment.category}
+                onValueChange={(value) => setNewCustomTreatment({
+                  ...newCustomTreatment,
+                  category: value
+                })}
+              >
+                <SelectTrigger id="customCategory">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="customDescription">Description</Label>
+              <Textarea 
+                id="customDescription"
+                value={newCustomTreatment.description}
+                onChange={(e) => setNewCustomTreatment({
+                  ...newCustomTreatment,
+                  description: e.target.value
+                })}
+                placeholder="Describe your treatment..."
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="customPrice">Price *</Label>
+              <Input 
+                id="customPrice"
+                value={newCustomTreatment.price}
+                onChange={(e) => setNewCustomTreatment({
+                  ...newCustomTreatment,
+                  price: e.target.value
+                })}
+                placeholder="e.g. £350 or £350-£500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>What's Included</Label>
+              <div className="border rounded-md p-3 space-y-2">
+                {newCustomTreatment.includes.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input 
+                      value={item} 
+                      onChange={(e) => {
+                        const newIncludes = [...newCustomTreatment.includes];
+                        newIncludes[index] = e.target.value;
+                        setNewCustomTreatment({
+                          ...newCustomTreatment,
+                          includes: newIncludes
+                        });
+                      }}
+                      placeholder="e.g. Consultation"
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => {
+                        const newIncludes = [...newCustomTreatment.includes];
+                        newIncludes.splice(index, 1);
+                        setNewCustomTreatment({
+                          ...newCustomTreatment,
+                          includes: newIncludes
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNewCustomTreatment({
+                      ...newCustomTreatment,
+                      includes: [...newCustomTreatment.includes, ""]
+                    });
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Optional Add-ons</Label>
+              <div className="border rounded-md p-3 space-y-2">
+                {newCustomTreatment.optional_addons.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input 
+                      value={item} 
+                      onChange={(e) => {
+                        const newAddons = [...newCustomTreatment.optional_addons];
+                        newAddons[index] = e.target.value;
+                        setNewCustomTreatment({
+                          ...newCustomTreatment,
+                          optional_addons: newAddons
+                        });
+                      }}
+                      placeholder="e.g. Premium material upgrade"
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => {
+                        const newAddons = [...newCustomTreatment.optional_addons];
+                        newAddons.splice(index, 1);
+                        setNewCustomTreatment({
+                          ...newCustomTreatment,
+                          optional_addons: newAddons
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNewCustomTreatment({
+                      ...newCustomTreatment,
+                      optional_addons: [...newCustomTreatment.optional_addons, ""]
+                    });
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Add-on
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowCustomTreatmentDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddCustomTreatment}
+              disabled={createCustomTreatmentMutation.isPending}
+            >
+              {createCustomTreatmentMutation.isPending ? "Creating..." : "Create Treatment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
