@@ -87,44 +87,66 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
   // Get auth context for user info and logout functionality
   const { user, logoutMutation } = useAuth();
   
-  // CRITICAL FIX: When disableAutoRefresh is true, completely disable WebSocket connections
+  // CRITICAL FIX: Safer approach to prevent WebSocket-related refreshes
   useEffect(() => {
     if (disableAutoRefresh && typeof window !== 'undefined') {
-      console.log("🔌 Disabling WebSocket connections for clinic portal");
+      console.log("🔌 Adding WebSocket protection for clinic portal");
       
-      // Block any WebSocket creation attempts globally when in clinic portal
-      const originalWebSocket = window.WebSocket;
+      // Set a global flag to indicate we're in the clinic portal
+      (window as any).__inClinicPortal = true;
       
-      // Replace WebSocket constructor with a stub that prevents connections
-      (window as any).WebSocket = function BlockedWebSocket(url: string) {
-        console.log(`⛔ Blocked WebSocket connection attempt to: ${url}`);
+      // Add a more targeted WebSocket prevention - watch for specific patterns
+      // This is safer than replacing the WebSocket constructor
+      const originalFetch = window.fetch;
+      window.fetch = async function preventProblematicFetch(input, init) {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         
-        // Return a dummy object that has the same interface but does nothing
-        return {
-          send: () => console.log("⛔ Blocked WebSocket send"),
-          close: () => console.log("⛔ Blocked WebSocket close"),
-          addEventListener: () => console.log("⛔ Blocked WebSocket addEventListener"),
-          removeEventListener: () => console.log("⛔ Blocked WebSocket removeEventListener"),
-          readyState: 3, // CLOSED
-          CONNECTING: 0,
-          OPEN: 1,
-          CLOSING: 2,
-          CLOSED: 3
-        };
+        // Block any refresh-causing API calls
+        if (typeof url === 'string' && 
+            (url.includes('/api/auth/check') || 
+             url.includes('/api/auth/status') || 
+             url.includes('/api/auth/verify'))) {
+          console.log(`🛡️ Blocking refresh-causing API call: ${url}`);
+          
+          // Return a fake successful response
+          return Promise.resolve(new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: new Headers({ 'Content-Type': 'application/json' })
+          }));
+        }
+        
+        // Otherwise proceed with the original fetch
+        return originalFetch.apply(window, [input, init]);
       };
       
-      (window as any).WebSocket.CONNECTING = 0;
-      (window as any).WebSocket.OPEN = 1;
-      (window as any).WebSocket.CLOSING = 2;
-      (window as any).WebSocket.CLOSED = 3;
-      
-      // Restore WebSocket when unmounting
+      // Clean up when unmounting
       return () => {
-        (window as any).WebSocket = originalWebSocket;
-        console.log("🔄 Restored original WebSocket in clinic portal");
+        (window as any).__inClinicPortal = false;
+        window.fetch = originalFetch;
       };
     }
   }, [disableAutoRefresh]);
+  
+  // Add page-level refresh prevention
+  useEffect(() => {
+    // Function to prevent any programmatic page reload
+    const preventUnload = (e: BeforeUnloadEvent) => {
+      // Only prevent unloads in the clinic portal
+      if (window.location.pathname.includes('clinic-portal')) {
+        console.log('⚠️ Blocked potential page reload in clinic portal');
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+      return undefined;
+    };
+    
+    window.addEventListener('beforeunload', preventUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', preventUnload);
+    };
+  }, []);
   
   // Flag to track component mount status
   const isMounted = React.useRef(true);

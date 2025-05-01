@@ -22,27 +22,33 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       return;
     }
 
-    // Store the original reload function
-    const originalReload = window.location.reload;
-    
-    // Override reload to check for clinic portal pages
-    window.location.reload = function preventReload(...args) {
-      console.warn('⚠️ Automatic page reload blocked by ClinicGuard');
-      refreshBlockedRef.current = true;
-      
-      toast({
-        title: 'Refresh Prevented',
-        description: 'Automatic refresh was blocked to prevent reconnection issues.',
-      });
-      
-      // Always return false to prevent the reload
-      return false;
+    // Instead of trying to override window.location.reload (which is read-only),
+    // use the beforeunload event to catch reload attempts
+    const preventReload = (e: BeforeUnloadEvent) => {
+      if (window.location.pathname.includes('clinic-portal')) {
+        console.warn('⚠️ Automatic page reload blocked by ClinicGuard');
+        refreshBlockedRef.current = true;
+        
+        // Show a toast notification
+        toast({
+          title: 'Refresh Prevented',
+          description: 'Automatic refresh was blocked to prevent reconnection issues.',
+        });
+        
+        // Cancel the event
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+      return undefined;
     };
     
-    // Restore the original reload function when the component unmounts
+    // Add event listener for beforeunload
+    window.addEventListener('beforeunload', preventReload);
+    
+    // Remove event listener when the component unmounts
     return () => {
-      // Use type assertion to restore the original function
-      (window.location as any).reload = originalReload;
+      window.removeEventListener('beforeunload', preventReload);
     };
   }, [toast]);
 
