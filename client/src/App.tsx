@@ -56,7 +56,6 @@ import AdminPortalPage from "@/pages/AdminPortalPage";
 // Special import with WebSocket disabled for clinic portal to prevent refresh cycles
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
 import PortalLoginPage from "@/pages/PortalLoginPage";
-import AdminLoginPage from "@/pages/AdminLoginPage";
 import PortalTestingHub from "@/pages/PortalTestingHub";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
@@ -147,8 +146,7 @@ function Router() {
       <Route path="/email-verified" component={EmailVerifiedPage} />
       <Route path="/verification-failed" component={VerificationFailedPage} />
       
-      {/* Admin Login Page - Public */}
-      <Route path="/admin-login" component={AdminLoginPage} />
+      {/* Admin login is now handled through the main portal login page */}
       
       {/* Admin-only Protected Routes using the same pattern that works for Clinic Portal */}
       <Route path="/admin-portal">

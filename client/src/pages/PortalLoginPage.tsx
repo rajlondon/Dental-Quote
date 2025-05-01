@@ -649,6 +649,95 @@ const PortalLoginPage: React.FC = () => {
               </Card>
             </TabsContent>
             
+            {/* Admin Login Tab */}
+            <TabsContent value="admin">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Admin Portal Login</CardTitle>
+                  <CardDescription>
+                    Secure access to the admin management system
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {adminLoginError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{adminLoginError}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <Form {...adminLoginForm}>
+                    <form onSubmit={adminLoginForm.handleSubmit(onAdminLoginSubmit)} className="space-y-4">
+                      <FormField
+                        control={adminLoginForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Admin Email</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  placeholder="admin@mydentalfly.com" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={adminLoginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Admin Password</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="pl-10" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        disabled={adminIsLoading}
+                        variant="default"
+                      >
+                        {adminIsLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Signing in to Admin...
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            Access Admin Portal
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                  <div className="mt-4 text-sm text-center">
+                    <p className="text-neutral-500">
+                      This area is restricted to authorized platform administrators.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
             {/* Registration Tab */}
             <TabsContent value="register">
               <Card>
