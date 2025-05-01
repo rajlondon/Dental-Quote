@@ -121,10 +121,10 @@ const ClinicPatientsSection: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert variant="warning" className="mb-4">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Privacy Protection Notice</AlertTitle>
-            <AlertDescription>
+          <Alert className="mb-4 border-yellow-500 bg-yellow-50">
+            <ShieldAlert className="h-4 w-4 text-yellow-500" />
+            <AlertTitle className="text-yellow-800">Privacy Protection Notice</AlertTitle>
+            <AlertDescription className="text-yellow-700">
               Patient contact information is partially masked for privacy and business protection. 
               Complete details are only visible for patients with completed treatments.
             </AlertDescription>
