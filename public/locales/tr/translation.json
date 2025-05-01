@@ -137,7 +137,23 @@
       "active": "Aktif",
       "inactive": "Pasif",
       "completed": "Tamamlandı",
-      "pending": "Bekliyor"
+      "pending": "Bekliyor",
+      "description": "Hasta kayıtlarınızı ve tedavi geçmişini görüntüleyin ve yönetin",
+      "contact": "İletişim",
+      "last_visit": "Son Ziyaret",
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "page_info": "{{total}} hastadan {{start}} - {{end}} arası gösteriliyor",
+      "status_filter": "Durum",
+      "all_statuses": "Tüm Durumlar",
+      "status_active": "Aktif",
+      "status_completed": "Tamamlandı",
+      "status_scheduled": "Planlandı",
+      "status_new": "Yeni Hasta",
+      "add_patient_desc": "Yeni hasta bilgilerini girin",
+      "add_patient_submit": "Hasta Ekle",
+      "privacy_protection_notice": "Gizlilik Koruma Bildirimi",
+      "patient_contact_masked": "Hasta iletişim bilgileri gizlilik ve işletme koruması için kısmen maskelenmiştir. Tam ayrıntılar yalnızca tamamlanmış tedavisi olan hastalar için görülebilir."
     },
     "appointments": {
       "title": "Randevular",
@@ -455,6 +471,13 @@
     "cancel": "İptal",
     "unknown_error": "Bilinmeyen hata",
     "not_available": "Mevcut Değil",
+    "loading": "Yükleniyor...",
+    "submit": "Gönder",
+    "save": "Kaydet",
+    "confirm": "Onayla",
+    "active": "Aktif",
+    "completed": "Tamamlandı",
+    "scheduled": "Planlandı",
     "confirm_delete": {
       "title": "Emin misiniz?",
       "description": "Bu işlem geri alınamaz. Bu, öğeyi kalıcı olarak silecek ve sunucularımızdan kaldıracaktır."
