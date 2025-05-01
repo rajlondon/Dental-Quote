@@ -53,81 +53,12 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
-  // EXACT duplicate of the working ClinicPortalPage implementation
-  useEffect(() => {
-    if (disableAutoRefresh && typeof window !== 'undefined') {
-      console.log("🔌 Adding WebSocket protection for admin portal");
-      
-      // Set a global flag to indicate we're in the admin portal
-      (window as any).__inAdminPortal = true;
-      
-      // Add a more targeted WebSocket prevention - watch for specific patterns
-      // This is safer than replacing the WebSocket constructor
-      const originalFetch = window.fetch;
-      window.fetch = async function preventProblematicFetch(input, init) {
-        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        
-        // Block any refresh-causing API calls
-        if (typeof url === 'string' && 
-            (url.includes('/api/auth/check') || 
-             url.includes('/api/auth/status') || 
-             url.includes('/api/auth/verify'))) {
-          console.log(`🛡️ Blocking refresh-causing API call: ${url}`);
-          
-          // Return a fake successful response
-          return Promise.resolve(new Response(JSON.stringify({ success: true }), {
-            status: 200,
-            headers: new Headers({ 'Content-Type': 'application/json' })
-          }));
-        }
-        
-        // Otherwise proceed with the original fetch
-        return originalFetch.apply(window, [input, init]);
-      };
-      
-      // Clean up when unmounting
-      return () => {
-        (window as any).__inAdminPortal = false;
-        window.fetch = originalFetch;
-      };
-    }
-  }, [disableAutoRefresh]);
+  // Removed duplicate WebSocket protection - AdminPortalGuard now handles this
   
-  // Add page-level refresh prevention
-  useEffect(() => {
-    // Function to prevent any programmatic page reload
-    const preventUnload = (e: BeforeUnloadEvent) => {
-      // Only prevent unloads in the admin portal
-      if (window.location.pathname.includes('admin-portal')) {
-        console.log('⚠️ Blocked potential page reload in admin portal');
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-      return undefined;
-    };
-    
-    window.addEventListener('beforeunload', preventUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', preventUnload);
-    };
-  }, []);
+  // Remove page-level refresh prevention - AdminPortalGuard now handles this more elegantly
+  // without showing a browser dialog
   
-  // Disable React Query retries for admin portal
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log("✋ Disabling React Query retries for admin portal");
-      
-      // Add a property to the window object that the query client can check
-      (window as any).__disableReactQueryRetries = true;
-      
-      // Clean up when unmounting
-      return () => {
-        delete (window as any).__disableReactQueryRetries;
-      };
-    }
-  }, []);
+  // Removed React Query retry disable logic - AdminPortalGuard now handles this
   
   // Flag to track component mount status
   const isMounted = React.useRef(true);
