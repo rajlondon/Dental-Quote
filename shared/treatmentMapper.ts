@@ -24,6 +24,16 @@ export interface TreatmentMap {
   [standardName: string]: StandardTreatment;
 }
 
+export interface CustomTreatment {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  clinic_id: string;
+  variant: ClinicTreatmentVariant;
+  created_at: string;
+}
+
 // Sample treatment mapper data structure
 export const INITIAL_TREATMENT_MAP: TreatmentMap = {
   "Dental Implant (Standard)": {

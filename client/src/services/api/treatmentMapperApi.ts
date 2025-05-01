@@ -1,4 +1,4 @@
-import { TreatmentMap, ClinicTreatmentVariant } from '@shared/treatmentMapper';
+import { TreatmentMap, ClinicTreatmentVariant, CustomTreatment } from '@shared/treatmentMapper';
 import { treatmentMapperService } from '../treatmentMapperService';
 
 /**
@@ -129,6 +129,98 @@ const treatmentMapperApi = {
     
     // Refresh the treatment map after delete
     await this.getTreatmentMap();
+    
+    return true;
+  },
+  
+  /**
+   * Get all custom treatments for a specific clinic
+   */
+  async getCustomTreatments(clinicId: string): Promise<ClinicTreatmentVariant[]> {
+    const response = await fetch(`/api/treatment-mapper/clinic/${clinicId}/custom`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get custom treatments: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  },
+  
+  /**
+   * Create a new custom treatment for a clinic
+   */
+  async createCustomTreatment(
+    clinicId: string,
+    name: string,
+    category: string,
+    description: string,
+    variant: ClinicTreatmentVariant
+  ): Promise<boolean> {
+    const response = await fetch(`/api/treatment-mapper/clinic/${clinicId}/custom`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        category,
+        description,
+        variant
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create custom treatment: ${response.statusText}`);
+    }
+    
+    return true;
+  },
+  
+  /**
+   * Delete a custom treatment
+   */
+  async deleteCustomTreatment(
+    clinicId: string,
+    treatmentId: string
+  ): Promise<boolean> {
+    const response = await fetch(`/api/treatment-mapper/clinic/${clinicId}/custom/${encodeURIComponent(treatmentId)}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to delete custom treatment: ${response.statusText}`);
+    }
+    
+    return true;
+  },
+  
+  /**
+   * Update a custom treatment
+   */
+  async updateCustomTreatment(
+    clinicId: string,
+    treatmentId: string,
+    name: string,
+    category: string,
+    description: string,
+    variant: ClinicTreatmentVariant
+  ): Promise<boolean> {
+    const response = await fetch(`/api/treatment-mapper/clinic/${clinicId}/custom/${encodeURIComponent(treatmentId)}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        category,
+        description,
+        variant
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update custom treatment: ${response.statusText}`);
+    }
     
     return true;
   }

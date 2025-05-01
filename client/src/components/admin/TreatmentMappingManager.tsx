@@ -12,13 +12,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Pencil, Save, Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Pencil, Save, Plus, Trash2, CheckCircle2, AlertCircle, FileText, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface TreatmentMappingManagerProps {
@@ -180,6 +180,156 @@ export const TreatmentMappingManager: React.FC<TreatmentMappingManagerProps> = (
     setShowAddVariantDialog(false);
   };
   
+  // Custom treatments functionality
+  const [customTreatments, setCustomTreatments] = useState<ClinicTreatmentVariant[]>([]);
+  const [showCustomTreatmentDialog, setShowCustomTreatmentDialog] = useState<boolean>(false);
+  const [newCustomTreatment, setNewCustomTreatment] = useState<{
+    name: string;
+    category: string;
+    description: string;
+    price: string;
+    includes: string[];
+    optional_addons: string[];
+  }>({
+    name: '',
+    category: 'Other',
+    description: '',
+    price: '',
+    includes: [],
+    optional_addons: []
+  });
+  
+  // Load custom treatments
+  const {
+    data: customTreatmentData,
+    isLoading: isLoadingCustom,
+    isError: isErrorCustom,
+    error: errorCustom
+  } = useQuery({
+    queryKey: ['/api/treatment-mapper/clinic/custom', clinicId],
+    queryFn: async () => {
+      return await treatmentMapperApi.getCustomTreatments(clinicId);
+    }
+  });
+  
+  useEffect(() => {
+    if (customTreatmentData) {
+      setCustomTreatments(customTreatmentData);
+    }
+  }, [customTreatmentData]);
+  
+  // Create custom treatment mutation
+  const createCustomTreatmentMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      category: string;
+      description: string;
+      clinicId: string;
+      variant: ClinicTreatmentVariant;
+    }) => {
+      return await treatmentMapperApi.createCustomTreatment(
+        data.clinicId,
+        data.name,
+        data.category,
+        data.description,
+        data.variant
+      );
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/treatment-mapper/clinic/custom', clinicId] });
+      
+      toast({
+        title: "Custom treatment created",
+        description: "Your custom treatment has been added successfully.",
+      });
+      
+      // Reset form
+      setNewCustomTreatment({
+        name: '',
+        category: 'Other',
+        description: '',
+        price: '',
+        includes: [],
+        optional_addons: []
+      });
+      setShowCustomTreatmentDialog(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error creating custom treatment",
+        description: error instanceof Error ? error.message : "Failed to create custom treatment",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Delete custom treatment mutation
+  const deleteCustomTreatmentMutation = useMutation({
+    mutationFn: async (params: {
+      clinicId: string;
+      treatmentId: string;
+    }) => {
+      return await treatmentMapperApi.deleteCustomTreatment(
+        params.clinicId,
+        params.treatmentId
+      );
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/treatment-mapper/clinic/custom', clinicId] });
+      
+      toast({
+        title: "Custom treatment deleted",
+        description: "The custom treatment has been removed successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting custom treatment",
+        description: error instanceof Error ? error.message : "Failed to delete custom treatment",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Handle adding a new custom treatment
+  const handleAddCustomTreatment = () => {
+    // Validate form
+    if (!newCustomTreatment.name.trim()) {
+      toast({
+        title: "Validation error",
+        description: "Treatment name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!newCustomTreatment.price.trim()) {
+      toast({
+        title: "Validation error",
+        description: "Price is required",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create the custom treatment
+    createCustomTreatmentMutation.mutate({
+      name: newCustomTreatment.name,
+      category: newCustomTreatment.category,
+      description: newCustomTreatment.description,
+      clinicId: clinicId,
+      variant: {
+        clinic_id: clinicId,
+        label: newCustomTreatment.name,
+        price: newCustomTreatment.price,
+        includes: newCustomTreatment.includes,
+        optional_addons: newCustomTreatment.optional_addons
+      }
+    });
+  };
+  
   return (
     <div className="space-y-6">
       {isError && (
@@ -200,6 +350,18 @@ export const TreatmentMappingManager: React.FC<TreatmentMappingManagerProps> = (
             {errorVariants instanceof Error 
               ? errorVariants.message 
               : "Failed to load clinic treatment variants"}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {isErrorCustom && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error loading custom treatments</AlertTitle>
+          <AlertDescription>
+            {errorCustom instanceof Error 
+              ? errorCustom.message 
+              : "Failed to load custom treatments"}
           </AlertDescription>
         </Alert>
       )}
