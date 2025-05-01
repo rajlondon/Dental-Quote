@@ -278,12 +278,23 @@ export function NotificationsPopover({
             )}
           </CardContent>
           <Separator />
-          <CardFooter className="p-3 justify-center">
+          <CardFooter className="p-3 flex justify-between">
             <Button 
               variant="ghost" 
               size="sm" 
               className="text-xs"
-              onClick={() => setLocation('/patient-portal?section=messages')}
+              onClick={() => setIsOpen(false)}
+            >
+              {t('common.close', 'Close')}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs text-blue-600"
+              onClick={() => {
+                setLocation('/patient-portal?section=messages');
+                setIsOpen(false);
+              }}
             >
               {t('notifications.view_all', 'View all')}
             </Button>

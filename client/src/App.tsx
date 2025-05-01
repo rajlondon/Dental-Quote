@@ -248,11 +248,16 @@ function App() {
   useEffect(() => {
     // Check if we're in the browser and not in server-side rendering
     if (typeof window !== 'undefined') {
-      console.log('Initializing reload prevention for clinic portal');
-      try {
-        initPreventReloads();
-      } catch (error) {
-        console.error('Failed to initialize reload prevention:', error);
+      // Only initialize for clinic portal path
+      if (window.location.pathname === '/clinic-portal') {
+        console.log('Initializing reload prevention for clinic portal');
+        try {
+          initPreventReloads();
+        } catch (error) {
+          console.error('Failed to initialize reload prevention:', error);
+        }
+      } else {
+        console.log('Skipping reload prevention for non-clinic portal path:', window.location.pathname);
       }
     }
   }, []);
