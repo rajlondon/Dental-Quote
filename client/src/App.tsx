@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
+import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
@@ -54,6 +55,7 @@ import AdminPortalPage from "@/pages/AdminPortalPage";
 // Special import with WebSocket disabled for clinic portal to prevent refresh cycles
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
 import PortalLoginPage from "@/pages/PortalLoginPage";
+import AdminLoginPage from "@/pages/AdminLoginPage";
 import PortalTestingHub from "@/pages/PortalTestingHub";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
@@ -143,6 +145,9 @@ function Router() {
       <Route path="/verification-sent" component={VerificationSentPage} />
       <Route path="/email-verified" component={EmailVerifiedPage} />
       <Route path="/verification-failed" component={VerificationFailedPage} />
+      
+      {/* Admin Login Page - Public */}
+      <Route path="/admin-login" component={AdminLoginPage} />
       
       {/* Admin-only Protected Routes */}
       <ProtectedRoute path="/admin-portal" component={AdminPortalPage} requiredRole="admin" />
