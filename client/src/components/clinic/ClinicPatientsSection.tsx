@@ -76,6 +76,33 @@ const ClinicPatientsSection: React.FC = () => {
       return dateString;
     }
   };
+  
+  // Helper to mask email addresses to protect patient privacy
+  const maskEmail = (email: string, patientStatus: string) => {
+    if (!email) return '';
+    
+    // Only show full email if treatment is completed
+    if (patientStatus === "Completed") return email;
+    
+    // Otherwise mask the email: jo***@example.com
+    const [username, domain] = email.split('@');
+    if (!domain) return email; // Return as is if not a valid email
+    
+    return `${username.substring(0, 2)}***@${domain}`;
+  };
+  
+  // Helper to mask phone numbers to protect patient privacy
+  const maskPhone = (phone: string, patientStatus: string) => {
+    if (!phone) return '';
+    
+    // Only show full phone if treatment is completed
+    if (patientStatus === "Completed") return phone;
+    
+    // Otherwise mask the middle digits
+    if (phone.length < 6) return phone; // Return as is if too short
+    
+    return `${phone.substring(0, 3)}•••••${phone.substring(phone.length - 3)}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -182,11 +209,15 @@ const ClinicPatientsSection: React.FC = () => {
                           <div className="space-y-1">
                             <div className="flex items-center text-sm">
                               <Mail className="h-3 w-3 mr-1 text-muted-foreground" />
-                              <span className="text-muted-foreground">{patient.email}</span>
+                              <span className="text-muted-foreground">
+                                {maskEmail(patient.email, patient.status)}
+                              </span>
                             </div>
                             <div className="flex items-center text-sm">
                               <Phone className="h-3 w-3 mr-1 text-muted-foreground" />
-                              <span className="text-muted-foreground">{patient.phone}</span>
+                              <span className="text-muted-foreground">
+                                {maskPhone(patient.phone, patient.status)}
+                              </span>
                             </div>
                           </div>
                         </TableCell>
