@@ -1,20 +1,21 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useCreateTreatmentPlan } from "@/hooks/use-treatment-plans";
-import { usePatients } from "@/hooks/use-patients";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Minus } from "lucide-react";
+import { TreatmentPlanStatus, PaymentStatus, CreateTreatmentPlanDto } from "@shared/models/treatment-plan";
+import { usePatients } from '@/hooks/use-patients';
+import { useCreateTreatmentPlan } from '@/hooks/use-treatment-plans';
 
 // Create a schema for our form
 const createTreatmentPlanSchema = z.object({
-  patientId: z.coerce.number().positive({ message: "Please select a patient" }),
+  patientId: z.coerce.number().min(1, { message: "Please select a patient" }),
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().optional(),
   treatmentItems: z.array(
@@ -27,23 +28,10 @@ const createTreatmentPlanSchema = z.object({
   ).min(1, { message: "At least one treatment item is required" }),
   estimatedDuration: z.string().optional(),
   notes: z.string().optional(),
-  currency: z.string().min(1, { message: "Currency is required" }),
+  currency: z.string().default("GBP"),
 });
 
 type FormValues = z.infer<typeof createTreatmentPlanSchema>;
-
-// Default form values
-const defaultValues: FormValues = {
-  patientId: 0,
-  title: "",
-  description: "",
-  treatmentItems: [
-    { name: "", price: 0, quantity: 1, description: "" }
-  ],
-  estimatedDuration: "",
-  notes: "",
-  currency: "GBP",
-};
 
 interface CreateTreatmentPlanDialogProps {
   open: boolean;
@@ -54,13 +42,23 @@ export const CreateTreatmentPlanDialog = ({
   open,
   onOpenChange,
 }: CreateTreatmentPlanDialogProps) => {
-  const { patients, isLoading: patientsLoading } = usePatients();
   const createMutation = useCreateTreatmentPlan();
+  const patientsQuery = usePatients();
 
-  // Setup form
+  // Setup form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(createTreatmentPlanSchema),
-    defaultValues,
+    defaultValues: {
+      patientId: 0,
+      title: "",
+      description: "",
+      treatmentItems: [
+        { name: "", price: 0, quantity: 1, description: "" }
+      ],
+      estimatedDuration: "",
+      notes: "",
+      currency: "GBP",
+    },
   });
 
   // Calculate total price
@@ -71,9 +69,9 @@ export const CreateTreatmentPlanDialog = ({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      await createMutation.mutateAsync(values);
+      await createMutation.mutateAsync(values as CreateTreatmentPlanDto);
+      form.reset(); // Reset the form after successful submission
       onOpenChange(false);
-      form.reset(defaultValues);
     } catch (error) {
       console.error("Error creating treatment plan:", error);
     }
@@ -92,7 +90,7 @@ export const CreateTreatmentPlanDialog = ({
   const removeTreatmentItem = (index: number) => {
     const currentItems = form.getValues("treatmentItems");
     if (currentItems.length > 1) {
-      form.setValue("treatmentItems", currentItems.filter((_, i) => i !== index));
+      form.setValue("treatmentItems", currentItems.filter((_: any, i: number) => i !== index));
     }
   };
 
@@ -106,7 +104,7 @@ export const CreateTreatmentPlanDialog = ({
         <DialogHeader>
           <DialogTitle>Create New Treatment Plan</DialogTitle>
           <DialogDescription>
-            Create a new treatment plan for a patient. Add all required treatments and their details.
+            Create a detailed treatment plan for your patient.
           </DialogDescription>
         </DialogHeader>
 
@@ -119,25 +117,23 @@ export const CreateTreatmentPlanDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Patient</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value.toString()}
-                    disabled={patientsLoading}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value.toString()}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a patient" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {patientsLoading ? (
-                        <div className="flex items-center justify-center py-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : patients?.length === 0 ? (
-                        <div className="py-2 text-center text-sm">No patients found</div>
+                      {patientsQuery.isLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading patients...
+                        </SelectItem>
+                      ) : patientsQuery.isError ? (
+                        <SelectItem value="error" disabled>
+                          Error loading patients
+                        </SelectItem>
                       ) : (
-                        patients?.map((patient) => (
+                        patientsQuery.data?.data?.patients.map((patient: any) => (
                           <SelectItem key={patient.id} value={patient.id.toString()}>
                             {patient.firstName} {patient.lastName}
                           </SelectItem>
@@ -180,6 +176,31 @@ export const CreateTreatmentPlanDialog = ({
               )}
             />
 
+            {/* Currency */}
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="GBP">British Pound (£)</SelectItem>
+                      <SelectItem value="USD">US Dollar ($)</SelectItem>
+                      <SelectItem value="EUR">Euro (€)</SelectItem>
+                      <SelectItem value="TRY">Turkish Lira (₺)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Treatment Items */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -189,7 +210,7 @@ export const CreateTreatmentPlanDialog = ({
                 </Button>
               </div>
 
-              {treatmentItems.map((_, index) => (
+              {treatmentItems.map((_: any, index: number) => (
                 <div key={index} className="grid grid-cols-12 gap-2 p-3 border rounded-md">
                   <div className="col-span-12 sm:col-span-6">
                     <FormField
@@ -274,7 +295,7 @@ export const CreateTreatmentPlanDialog = ({
               <div className="text-right text-sm">
                 Subtotal: {new Intl.NumberFormat('en-GB', {
                   style: 'currency',
-                  currency: form.watch('currency') || 'GBP'
+                  currency: form.getValues("currency") || 'GBP'
                 }).format(total)}
               </div>
             </div>
@@ -307,31 +328,6 @@ export const CreateTreatmentPlanDialog = ({
                   <FormControl>
                     <Textarea placeholder="Any additional information about the treatment plan" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Currency */}
-            <FormField
-              control={form.control}
-              name="currency"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Currency</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="TRY">TRY (₺)</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
