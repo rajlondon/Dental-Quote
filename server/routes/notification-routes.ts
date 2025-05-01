@@ -34,19 +34,17 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     // Map user role to notification target type
     let userType: 'patient' | 'clinic' | 'admin';
     
-    switch(req.user.role) {
-      case 'patient':
-        userType = 'patient';
-        break;
-      case 'clinic_staff':
-      case 'clinic_admin':
-        userType = 'clinic';
-        break;
-      case 'admin':
-        userType = 'admin';
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid user role' });
+    // Use string comparison for type safety
+    const userRole = req.user.role as string;
+    
+    if (userRole === 'patient') {
+      userType = 'patient';
+    } else if (userRole === 'clinic_staff' || userRole === 'clinic_admin') {
+      userType = 'clinic';
+    } else if (userRole === 'admin') {
+      userType = 'admin';
+    } else {
+      return res.status(400).json({ error: 'Invalid user role' });
     }
 
     // Get status filter from query params if provided
@@ -80,19 +78,18 @@ export const createNotificationRoutes = (notificationService: NotificationServic
       
       // Set source type based on authenticated user
       let sourceType: 'patient' | 'clinic' | 'admin' | 'system';
-      switch(req.user.role) {
-        case 'patient':
-          sourceType = 'patient';
-          break;
-        case 'clinic_staff':
-        case 'clinic_admin':
-          sourceType = 'clinic';
-          break;
-        case 'admin':
-          sourceType = 'admin';
-          break;
-        default:
-          sourceType = 'system';
+      
+      // Use a safer approach with string comparison instead of switch/case for better type safety
+      const userRole = req.user.role as string;
+      
+      if (userRole === 'patient') {
+        sourceType = 'patient';
+      } else if (userRole === 'clinic_staff' || userRole === 'clinic_admin') {
+        sourceType = 'clinic';
+      } else if (userRole === 'admin') {
+        sourceType = 'admin';
+      } else {
+        sourceType = 'system';
       }
       
       // Override source info with authenticated user
@@ -175,19 +172,17 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     // Map user role to notification target type
     let userType: 'patient' | 'clinic' | 'admin';
     
-    switch(req.user.role) {
-      case 'patient':
-        userType = 'patient';
-        break;
-      case 'clinic_staff':
-      case 'clinic_admin':
-        userType = 'clinic';
-        break;
-      case 'admin':
-        userType = 'admin';
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid user role' });
+    // Use string comparison for type safety
+    const userRole = req.user.role as string;
+    
+    if (userRole === 'patient') {
+      userType = 'patient';
+    } else if (userRole === 'clinic_staff' || userRole === 'clinic_admin') {
+      userType = 'clinic';
+    } else if (userRole === 'admin') {
+      userType = 'admin';
+    } else {
+      return res.status(400).json({ error: 'Invalid user role' });
     }
 
     try {
