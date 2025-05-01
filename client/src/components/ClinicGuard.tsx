@@ -22,18 +22,31 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       return;
     }
 
+    // Session storage key to track if we've shown the notification
+    const SESSION_NOTIFICATION_KEY = 'clinic_refresh_notification_shown';
+    
     // Instead of trying to override window.location.reload (which is read-only),
     // use the beforeunload event to catch reload attempts
     const preventReload = (e: BeforeUnloadEvent) => {
       if (window.location.pathname.includes('clinic-portal')) {
         console.warn('⚠️ Automatic page reload blocked by ClinicGuard');
-        refreshBlockedRef.current = true;
         
-        // Show a toast notification
-        toast({
-          title: 'Refresh Prevented',
-          description: 'Automatic refresh was blocked to prevent reconnection issues.',
-        });
+        // Only show the toast if we haven't shown it this session
+        const notificationShown = sessionStorage.getItem(SESSION_NOTIFICATION_KEY);
+        
+        if (!notificationShown && !refreshBlockedRef.current) {
+          refreshBlockedRef.current = true;
+          
+          // Mark that we've shown the notification this session
+          sessionStorage.setItem(SESSION_NOTIFICATION_KEY, 'true');
+          
+          // Show a toast notification with a short duration
+          toast({
+            title: 'Session Protection Active',
+            description: 'This portal prevents page reloads to maintain your secure session.',
+            duration: 3000, // 3 seconds
+          });
+        }
         
         // Cancel the event
         e.preventDefault();
