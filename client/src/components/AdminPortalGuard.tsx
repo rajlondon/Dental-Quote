@@ -1,102 +1,171 @@
-import React, { useEffect } from 'react';
-import { useLocation } from 'wouter';
+import React, { useEffect, useState, useRef } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { Redirect } from 'wouter';
+import { Loader2 } from 'lucide-react';
+import { AdminQueryProvider } from '@/hooks/use-admin-queries';
+
+// Augment the window interface to add our navigation helper
+declare global {
+  interface Window {
+    markAdminPortalNavigation?: () => void;
+  }
+}
 
 /**
- * AdminPortalGuard - Version using dedicated admin auth
- * This component ensures admin authentication is valid
- * and implements basic protections to prevent refreshing
+ * AdminPortalGuard - Implemented using the same pattern as the working ClinicGuard
+ * This component provides a protected environment that prevents refresh cycles
  */
-const AdminPortalGuard: React.FC = () => {
-  const [, navigate] = useLocation();
-  const { adminUser, isLoading } = useAdminAuth();
-  
-  // Redirect to admin login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !adminUser) {
-      console.log("🔒 AdminPortalGuard: No admin authentication, redirecting to login");
-      navigate('/admin-login');
-      return;
-    }
-  }, [adminUser, isLoading, navigate]);
+interface AdminPortalGuardProps {
+  children: React.ReactNode;
+}
 
-  // Install protections when we're authenticated and staying on the page
+const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
+  const { adminUser, isLoading } = useAdminAuth();
+  const { toast } = useToast();
+  const [initialized, setInitialized] = useState(false);
+  const refreshBlockedRef = useRef(false);
+
+  // Implement the navigation vs refresh detection system (from ClinicGuard)
   useEffect(() => {
-    // Don't install protections if still loading or not authenticated
-    if (isLoading || !adminUser) {
+    if (typeof window === 'undefined') {
       return;
     }
+
+    // Session storage key to track if we've shown the notification
+    const SESSION_NOTIFICATION_KEY = 'admin_refresh_notification_shown';
     
-    console.log("🛡️ AdminPortalGuard: Installing simplified protection");
+    // Track navigation actions to distinguish between navigation and reload
+    let isNavigating = false;
     
-    // Set a global flag for admin portal
-    if (typeof window !== 'undefined') {
-      (window as any).__inAdminPortal = true;
-      
-      // Add event handlers to block refresh
-      const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
-        if ((window as any).__inAdminPortal) {
-          // Cancel the event but don't show a dialog
-          e.preventDefault();
-          e.returnValue = '';
-          console.log('⛔ Blocked beforeunload event in admin portal');
-          return '';
+    // Create a function to mark when we're navigating intentionally
+    const markNavigating = () => {
+      isNavigating = true;
+      // Reset after a short delay
+      setTimeout(() => {
+        isNavigating = false;
+      }, 100);
+    };
+    
+    // Create a function that other components can call
+    window.markAdminPortalNavigation = markNavigating;
+    
+    // Listen for click events on links and buttons
+    const handleClick = (e: MouseEvent) => {
+      // Check if the click was on an anchor tag, a button, or any element with role="link" 
+      let target = e.target as HTMLElement;
+      while (target && target !== document.body) {
+        if (
+          target.tagName.toLowerCase() === 'a' || 
+          target.tagName.toLowerCase() === 'button' ||
+          target.getAttribute('role') === 'link' ||
+          target.getAttribute('role') === 'button' ||
+          target.classList.contains('dropdown-item') ||
+          target.closest('.dropdown-menu') ||
+          target.closest('nav')
+        ) {
+          markNavigating();
+          break;
         }
-      };
+        target = target.parentElement as HTMLElement;
+      }
+    };
+    
+    // Only prevent actual page reloads, not navigation
+    const preventReload = (e: BeforeUnloadEvent) => {
+      // Let normal navigation proceed
+      if (isNavigating) {
+        console.log('Detected intentional navigation, allowing it to proceed');
+        return undefined;
+      }
       
-      // Actually attach the event listener
-      window.addEventListener('beforeunload', beforeUnloadHandler);
-      
-      // Block some refresh-triggering requests
-      const originalFetch = window.fetch;
-      window.fetch = function(input, init) {
-        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url;
+      if (window.location.pathname.includes('admin-portal')) {
+        console.log('🛡️ Blocked programmatic page reload on admin portal');
+        console.warn('⚠️ Automatic page reload blocked by AdminPortalGuard');
         
-        // Basic pattern matching for problematic requests
-        // Ignore auth/user requests because the new admin hook uses its own cached authentication
-        if (typeof url === 'string' && 
-            (url.includes('/api/auth/check') || url.includes('/api/auth/status') || url.includes('/api/auth/user'))) {
-          console.log(`🛡️ Blocking problematic request: ${url}`);
-          return Promise.resolve(new Response(JSON.stringify({ success: true }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-          }));
+        // Only show the toast if we haven't shown it this session
+        const notificationShown = sessionStorage.getItem(SESSION_NOTIFICATION_KEY);
+        
+        if (!notificationShown && !refreshBlockedRef.current) {
+          refreshBlockedRef.current = true;
+          
+          // Mark that we've shown the notification this session
+          sessionStorage.setItem(SESSION_NOTIFICATION_KEY, 'true');
+          
+          // Show a toast notification with a short duration
+          toast({
+            title: 'Session Protection Active',
+            description: 'This portal prevents page reloads to maintain your secure session.',
+            duration: 3000, // 3 seconds
+          });
         }
         
-        return originalFetch.apply(window, [input, init] as any);
-      };
+        // Cancel the event
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+      return undefined;
+    };
+    
+    // Add event listeners
+    document.addEventListener('click', handleClick, { capture: true });
+    window.addEventListener('beforeunload', preventReload);
+    
+    // Remove all event listeners when the component unmounts
+    return () => {
+      document.removeEventListener('click', handleClick, { capture: true });
+      window.removeEventListener('beforeunload', preventReload);
+    };
+  }, [toast]);
+
+  // Wait for auth to load
+  useEffect(() => {
+    if (!isLoading) {
+      // Small delay to ensure everything is ready
+      const timer = setTimeout(() => {
+        setInitialized(true);
+      }, 500);
       
-      // Disable automatic React Query retries
-      (window as any).__disableReactQueryRetries = true;
-      
-      // Add a custom event listener instead of overriding postMessage
-      const messageHandler = (event: MessageEvent) => {
-        if (typeof event.data === 'object' && 
-            event.data && 
-            (event.data.type === 'vite:beforeUpdate' || 
-             event.data.type === 'vite:invalidate')) {
-          console.log('🛡️ Blocking HMR update in admin portal:', event.data.type);
-          event.stopImmediatePropagation();
-          return false;
-        }
-      };
-      
-      // Attach as a capturing listener to have priority
-      window.addEventListener('message', messageHandler, true);
-      
-      // Cleanup function
-      return () => {
-        console.log('🧹 AdminPortalGuard: Cleaning up simplified protection');
-        window.removeEventListener('beforeunload', beforeUnloadHandler);
-        window.removeEventListener('message', messageHandler, true);
-        window.fetch = originalFetch;
-        delete (window as any).__inAdminPortal;
-        delete (window as any).__disableReactQueryRetries;
-      };
+      return () => clearTimeout(timer);
     }
-  }, [adminUser, isLoading]);
-  
-  return null;
+  }, [isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  if (!adminUser) {
+    return <Redirect to="/admin-login" />;
+  }
+
+  if (adminUser.role !== 'admin') {
+    toast({
+      title: 'Access Denied',
+      description: 'You do not have permission to access the admin portal.',
+      variant: 'destructive',
+    });
+    return <Redirect to="/admin-login" />;
+  }
+
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  // Wrap children in AdminQueryProvider to prevent redirects in queries
+  return (
+    <AdminQueryProvider>
+      {children}
+    </AdminQueryProvider>
+  );
 };
 
 export default AdminPortalGuard;

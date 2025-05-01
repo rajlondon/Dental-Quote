@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
 import ClinicGuard from "@/components/ClinicGuard";
+import AdminPortalGuard from "@/components/AdminPortalGuard";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -149,8 +150,15 @@ function Router() {
       {/* Admin Login Page - Public */}
       <Route path="/admin-login" component={AdminLoginPage} />
       
-      {/* Admin-only Protected Routes */}
-      <ProtectedRoute path="/admin-portal" component={AdminPortalPage} requiredRole="admin" />
+      {/* Admin-only Protected Routes using the same pattern that works for Clinic Portal */}
+      <Route path="/admin-portal">
+        {() => (
+          <AdminPortalGuard>
+            <AdminPortalPage disableAutoRefresh={true} />
+          </AdminPortalGuard>
+        )}
+      </Route>
+      
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
