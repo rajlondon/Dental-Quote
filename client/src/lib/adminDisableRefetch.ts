@@ -45,8 +45,20 @@ export function useDisableRefetch(): void {
     window.fetch = function(input, init) {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url;
       
-      // Block ALL auth requests on admin portal
+      // Check if this is an intentional logout
+      const isLogout = typeof url === 'string' && url.includes('/api/auth/logout');
+      const isIntentionalLogout = isLogout && sessionStorage.getItem('admin_intentional_logout') === 'true';
+      
+      // Block auth requests on admin portal except intentional logout
       if (typeof url === 'string' && url.includes('/api/auth/')) {
+        // If this is an intentional logout, allow it through
+        if (isIntentionalLogout) {
+          console.log(`✅ [Admin Mode] Allowing intentional logout request: ${url}`);
+          // Clear the flag once used
+          sessionStorage.removeItem('admin_intentional_logout');
+          return originalFetch.apply(window, [input, init] as any);
+        }
+        
         console.log(`🛡️ [Admin Mode] Blocking auth request: ${url}`);
         
         // Return fake successful response

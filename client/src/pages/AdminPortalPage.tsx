@@ -100,7 +100,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     };
   }, [adminUser, navigate]);
   
-  // Simplified logout using our dedicated admin auth service
+  // Simplified logout using our special route for admin logout
   const handleLogout = async () => {
     try {
       // Notify user of logout
@@ -118,14 +118,13 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       // Set a flag in session storage to indicate this is an intentional logout
       sessionStorage.setItem('admin_intentional_logout', 'true');
       
-      // Use our dedicated admin logout function - this handles the redirect internally
-      await adminLogout();
+      // Mark the navigation as intentional to bypass the guard
+      if (typeof window.markAdminPortalNavigation === 'function') {
+        window.markAdminPortalNavigation();
+      }
       
-      // The adminLogout function handles redirect, but as a fallback:
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
-      
+      // Navigate to our special admin-logout route which handles the process properly
+      window.location.href = '/admin-logout';
     } catch (err) {
       console.error("Admin logout error:", err);
       toast({
@@ -135,7 +134,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       });
       
       // Force redirect to home page as a fallback
-      window.location.href = '/';
+      window.location.href = '/admin-logout';
     }
   };
   

@@ -148,6 +148,30 @@ function Router() {
       
       {/* Admin login is now handled through the main portal login page */}
       
+      {/* Special route for handling admin logout properly */}
+      <Route path="/admin-logout">
+        {() => {
+          // This is a special route that handles logout and redirect without using AdminPortalGuard
+          if (typeof window !== 'undefined') {
+            // Clear admin-specific storage flags
+            localStorage.removeItem('admin_session');
+            localStorage.removeItem('auth_guard');
+            sessionStorage.removeItem('admin_portal_timestamp');
+            sessionStorage.removeItem('admin_protected_navigation');
+            sessionStorage.removeItem('admin_role_verified');
+            sessionStorage.setItem('admin_logout_redirect', 'true');
+            
+            // Redirect to home page after a brief delay
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 100);
+          }
+          return <div className="flex items-center justify-center min-h-screen">
+            <p className="text-gray-500">Logging out...</p>
+          </div>;
+        }}
+      </Route>
+      
       {/* Admin-only Protected Routes using the same pattern that works for Clinic Portal */}
       <Route path="/admin-portal">
         {() => (
