@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send, Download } from "lucide-react";
@@ -20,6 +21,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
   onOpenChange,
   treatmentPlanId,
 }) => {
+  const { t } = useTranslation();
   const { data, isLoading, isError } = useTreatmentPlan(treatmentPlanId);
   const { toast } = useToast();
   const treatmentPlan = data?.data?.treatmentPlan;
