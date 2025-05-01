@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, User, Mail, Phone, Calendar, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Search, Plus, User, Mail, Phone, Calendar, MoreHorizontal, Loader2, ShieldAlert } from 'lucide-react';
 import { 
   Select, 
   SelectContent, 
@@ -15,6 +15,7 @@ import {
 import { usePatients, Patient } from '@/hooks/use-patients';
 import { format } from 'date-fns';
 import AddPatientDialog from './AddPatientDialog';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ClinicPatientsSection: React.FC = () => {
   const { t } = useTranslation();
@@ -120,6 +121,15 @@ const ClinicPatientsSection: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert variant="warning" className="mb-4">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Privacy Protection Notice</AlertTitle>
+            <AlertDescription>
+              Patient contact information is partially masked for privacy and business protection. 
+              Complete details are only visible for patients with completed treatments.
+            </AlertDescription>
+          </Alert>
+          
           <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
             {/* Search and filter section */}
             <div className="flex flex-col md:flex-row gap-2 w-full">
