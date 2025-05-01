@@ -26,18 +26,23 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
   const { toast } = useToast();
   const treatmentPlan = data?.data?.treatmentPlan;
 
-  // Function to format currency
+  // Get language code and corresponding locale from the i18n instance
+  const { i18n } = useTranslation();
+  const currentLanguage = i18n.language || 'en';
+  const locale = currentLanguage === 'tr' ? 'tr-TR' : 'en-GB';
+  
+  // Function to format currency based on user locale
   const formatCurrency = (amount: number, currency: string = 'GBP') => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency,
     }).format(amount);
   };
 
-  // Function to format dates
+  // Function to format dates based on user locale
   const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    if (!dateString) return t("common.not_available", "N/A");
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
@@ -132,10 +137,10 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
                   </div>
                   <div className="flex gap-2">
                     <Badge className={getStatusColor(treatmentPlan.status)}>
-                      {treatmentPlan.status.replace('_', ' ')}
+                      {t(`clinic.treatment_plans.status.${treatmentPlan.status.toLowerCase()}`, treatmentPlan.status.replace('_', ' '))}
                     </Badge>
                     <Badge className={getPaymentStatusColor(treatmentPlan.paymentStatus)}>
-                      {treatmentPlan.paymentStatus}
+                      {t(`clinic.treatment_plans.payment.${treatmentPlan.paymentStatus.toLowerCase()}`, treatmentPlan.paymentStatus)}
                     </Badge>
                   </div>
                 </div>
