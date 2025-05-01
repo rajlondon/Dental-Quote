@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SpecialOffer } from '@shared/specialOffers';
+import { TrendingPackage } from '@shared/trendingPackages';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,7 +31,7 @@ export function OffersApprovalDashboard() {
     data: pendingOffers,
     isLoading: isLoadingOffers,
     error: offersError
-  } = useQuery({
+  } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/portal/admin/special-offers/pending'],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -40,7 +41,7 @@ export function OffersApprovalDashboard() {
     data: pendingPackages,
     isLoading: isLoadingPackages,
     error: packagesError
-  } = useQuery({
+  } = useQuery<TrendingPackage[]>({
     queryKey: ['/api/portal/admin/packages/pending'],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -194,10 +195,10 @@ export function OffersApprovalDashboard() {
       <Tabs defaultValue="offers">
         <TabsList>
           <TabsTrigger value="offers">
-            Special Offers {pendingOffers?.length > 0 && `(${pendingOffers.length})`}
+            Special Offers {pendingOffers && pendingOffers.length > 0 && `(${pendingOffers.length})`}
           </TabsTrigger>
           <TabsTrigger value="packages">
-            Trending Packages {pendingPackages?.length > 0 && `(${pendingPackages.length})`}
+            Trending Packages {pendingPackages && pendingPackages.length > 0 && `(${pendingPackages.length})`}
           </TabsTrigger>
         </TabsList>
         
@@ -216,7 +217,7 @@ export function OffersApprovalDashboard() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {pendingOffers.map((offer: SpecialOffer) => (
+                  {pendingOffers && pendingOffers.map((offer: SpecialOffer) => (
                     <Card key={offer.id} className="border-2 border-amber-200">
                       <CardHeader className="bg-amber-50">
                         <div className="flex justify-between items-start">
@@ -343,7 +344,7 @@ export function OffersApprovalDashboard() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {pendingPackages.map((pkg: any) => (
+                  {pendingPackages && pendingPackages.map((pkg: TrendingPackage) => (
                     <Card key={pkg.id} className="border-2 border-amber-200">
                       <CardHeader className="bg-amber-50">
                         <div className="flex justify-between items-start">
@@ -377,7 +378,7 @@ export function OffersApprovalDashboard() {
                           <div>
                             <h3 className="font-medium">Included Treatments:</h3>
                             <ul className="list-disc ml-5">
-                              {pkg.included_treatments?.map((treatment: any, index: number) => (
+                              {pkg.included_treatments?.map((treatment: { treatment_id: string; quantity: number }, index: number) => (
                                 <li key={index}>
                                   {treatment.treatment_id} ({treatment.quantity}x)
                                 </li>
