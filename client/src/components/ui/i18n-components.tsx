@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, ComponentType, HTMLAttributes } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Create a context for the translation namespace
@@ -23,7 +23,7 @@ export function I18nProvider({
 }: { 
   namespace: string; 
   children: ReactNode 
-}) {
+}): JSX.Element {
   return (
     <I18nContext.Provider value={{ namespace }}>
       {children}
@@ -34,8 +34,15 @@ export function I18nProvider({
 /**
  * useI18nNamespace - Hook to get the current translation namespace
  */
-export function useI18nNamespace() {
+export function useI18nNamespace(): I18nContextType {
   return useContext(I18nContext);
+}
+
+interface TProps {
+  keyName?: string;
+  children: string;
+  values?: Record<string, unknown>;
+  namespace?: string;
 }
 
 /**
@@ -51,12 +58,7 @@ export function T({
   children,
   values,
   namespace: explicitNamespace
-}: { 
-  keyName?: string;
-  children: string;
-  values?: Record<string, any>;
-  namespace?: string;
-}) {
+}: TProps): JSX.Element {
   const { t } = useTranslation();
   const { namespace: contextNamespace } = useI18nNamespace();
   
@@ -78,7 +80,7 @@ export function T({
     fullKey = `${namespace}.${generatedKey}`;
   }
   
-  return <>{t(fullKey, children, values)}</>;
+  return <>{t(fullKey, { defaultValue: children, ...values })}</>;
 }
 
 /**
@@ -87,20 +89,28 @@ export function T({
  * @example
  * const QuotesPage = withNamespace(BaseQuotesPage, 'clinic.quotes');
  */
-export function withNamespace<P>(
-  Component: React.ComponentType<P>,
+export function withNamespace<P extends object>(
+  Component: ComponentType<P>,
   namespace: string
-) {
-  const WithNamespace = (props: P) => (
+): ComponentType<P> {
+  // Create a new component that wraps the original in the I18nProvider
+  const WithNamespace = (props: P): JSX.Element => (
     <I18nProvider namespace={namespace}>
       <Component {...props} />
     </I18nProvider>
   );
   
+  // Set a displayName for better debugging
   const displayName = Component.displayName || Component.name || 'Component';
   WithNamespace.displayName = `withNamespace(${displayName})`;
   
   return WithNamespace;
+}
+
+interface THProps extends HTMLAttributes<HTMLHeadingElement> {
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  keyName?: string;
+  children: string;
 }
 
 /**
@@ -111,19 +121,23 @@ export function TH({
   keyName,
   children,
   ...props
-}: { 
-  level?: 1 | 2 | 3 | 4 | 5 | 6;
+}: THProps): JSX.Element {
+  // Type assertion to handle the dynamic heading element creation
+  const HeadingTag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  
+  // Create the element based on the heading level
+  const heading = React.createElement(
+    HeadingTag,
+    props,
+    <T keyName={keyName}>{children}</T>
+  );
+  
+  return heading;
+}
+
+interface TPProps extends HTMLAttributes<HTMLParagraphElement> {
   keyName?: string;
   children: string;
-  [key: string]: any;
-}) {
-  const Component = `h${level}` as keyof JSX.IntrinsicElements;
-  
-  return (
-    <Component {...props}>
-      <T keyName={keyName}>{children}</T>
-    </Component>
-  );
 }
 
 /**
@@ -133,16 +147,17 @@ export function TP({
   keyName,
   children,
   ...props
-}: { 
-  keyName?: string;
-  children: string;
-  [key: string]: any;
-}) {
+}: TPProps): JSX.Element {
   return (
     <p {...props}>
       <T keyName={keyName}>{children}</T>
     </p>
   );
+}
+
+interface TSpanProps extends HTMLAttributes<HTMLSpanElement> {
+  keyName?: string;
+  children: string;
 }
 
 /**
@@ -152,16 +167,18 @@ export function TSpan({
   keyName,
   children,
   ...props
-}: { 
-  keyName?: string;
-  children: string;
-  [key: string]: any;
-}) {
+}: TSpanProps): JSX.Element {
   return (
     <span {...props}>
       <T keyName={keyName}>{children}</T>
     </span>
   );
+}
+
+interface TLabelProps extends HTMLAttributes<HTMLLabelElement> {
+  keyName?: string;
+  children: string;
+  htmlFor?: string;
 }
 
 /**
@@ -171,16 +188,17 @@ export function TLabel({
   keyName,
   children,
   ...props
-}: { 
-  keyName?: string;
-  children: string;
-  [key: string]: any;
-}) {
+}: TLabelProps): JSX.Element {
   return (
     <label {...props}>
       <T keyName={keyName}>{children}</T>
     </label>
   );
+}
+
+interface TButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  keyName?: string;
+  children: string;
 }
 
 /**
@@ -190,11 +208,7 @@ export function TButton({
   keyName,
   children,
   ...props
-}: { 
-  keyName?: string;
-  children: string;
-  [key: string]: any;
-}) {
+}: TButtonProps): JSX.Element {
   return (
     <button {...props}>
       <T keyName={keyName}>{children}</T>
