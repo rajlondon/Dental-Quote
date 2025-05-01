@@ -12,6 +12,18 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ path, component: Component, requiredRole }: ProtectedRouteProps) {
   // Use the original auth hook for authentication checks
   const { user, isLoading } = useAuth();
+  
+  // Check for cached user data to prevent refresh loops
+  useEffect(() => {
+    // Special handling for admin portal
+    if (path === '/admin-portal' && user) {
+      // Set session flag to indicate a protected navigation
+      sessionStorage.setItem('admin_protected_navigation', 'true');
+      
+      // Cache user data to prevent refresh loops
+      sessionStorage.setItem('admin_user_data', JSON.stringify(user));
+    }
+  }, [path, user]);
 
   // Check if user is logged in and has the required role (if specified)
   const hasAccess = user && (!requiredRole || user.role === requiredRole);
