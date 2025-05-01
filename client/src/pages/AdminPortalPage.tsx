@@ -100,21 +100,9 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     };
   }, [adminUser, navigate]);
   
-  // Simplified logout using our special route for admin logout
-  const handleLogout = async () => {
+  // Fast logout handler using our special route
+  const handleLogout = () => {
     try {
-      // Notify user of logout
-      toast({
-        title: 'Logging out',
-        description: 'Please wait while we securely log you out...',
-      });
-      
-      // Clear WebSocket connections
-      document.dispatchEvent(new CustomEvent('manual-websocket-close'));
-      
-      // Small delay to let connections close
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
       // Set a flag in session storage to indicate this is an intentional logout
       sessionStorage.setItem('admin_intentional_logout', 'true');
       
@@ -123,18 +111,22 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
         window.markAdminPortalNavigation();
       }
       
-      // Navigate to our special admin-logout route which handles the process properly
+      // Clear WebSocket connections but don't wait
+      document.dispatchEvent(new CustomEvent('manual-websocket-close'));
+      
+      // Clear admin-specific storage flags immediately for faster logout
+      localStorage.removeItem('admin_session');
+      localStorage.removeItem('auth_guard');
+      sessionStorage.removeItem('admin_portal_timestamp');
+      sessionStorage.removeItem('admin_protected_navigation');
+      sessionStorage.removeItem('admin_role_verified');
+      
+      // Directly redirect to the logout route with no delay
       window.location.href = '/admin-logout';
     } catch (err) {
       console.error("Admin logout error:", err);
-      toast({
-        title: t('admin.logout_error', 'Logout Error'),
-        description: t('admin.logout_error_message', 'There was a problem logging out, but your session has been terminated.'),
-        variant: "destructive"
-      });
-      
       // Force redirect to home page as a fallback
-      window.location.href = '/admin-logout';
+      window.location.href = '/';
     }
   };
   
