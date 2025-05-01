@@ -32,7 +32,7 @@ const ClinicPatientsSection: React.FC = () => {
   });
 
   // Status badge styles
-  const statusStyles = {
+  const statusStyles: Record<string, string> = {
     "Active": "bg-green-100 text-green-800",
     "Completed": "bg-blue-100 text-blue-800",
     "Scheduled": "bg-purple-100 text-purple-800",
@@ -156,7 +156,7 @@ const ClinicPatientsSection: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    data.patients.map((patient) => (
+                    data.patients.map((patient: Patient) => (
                       <TableRow key={patient.id}>
                         <TableCell className="font-medium">{patient.id}</TableCell>
                         <TableCell>
@@ -181,7 +181,7 @@ const ClinicPatientsSection: React.FC = () => {
                         </TableCell>
                         <TableCell>{patient.treatment}</TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[patient.status as keyof typeof statusStyles] || "bg-gray-100 text-gray-800"}`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[patient.status] || "bg-gray-100 text-gray-800"}`}>
                             {patient.status}
                           </span>
                         </TableCell>
