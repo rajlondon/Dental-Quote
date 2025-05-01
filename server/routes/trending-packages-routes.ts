@@ -7,6 +7,24 @@ import {
 } from '@shared/trendingPackages';
 import { CommissionTier } from '@shared/specialOffers';
 
+// Define User interface for proper typing
+interface User {
+  id: number;
+  clinicId?: number;
+  role?: string;
+}
+
+// Extend Express namespace
+declare global {
+  namespace Express {
+    interface User {
+      id: number;
+      clinicId?: number;
+      role?: string;
+    }
+  }
+}
+
 const router = express.Router();
 
 // In-memory storage for development (replace with DB in production)
@@ -235,7 +253,8 @@ router.put('/api/portal/clinic/packages/:packageId', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId;
+  const clinicIdStr = String(clinicId);
   const { packageId } = req.params;
   
   try {
@@ -243,7 +262,7 @@ router.put('/api/portal/clinic/packages/:packageId', (req, res) => {
     const updateData = createTrendingPackageSchema.partial().parse(req.body);
     
     // Get the clinic's packages
-    const clinicPackages = trendingPackages.get(clinicId) || [];
+    const clinicPackages = trendingPackages.get(clinicIdStr) || [];
     const packageIndex = clinicPackages.findIndex(p => p.id === packageId);
     
     if (packageIndex === -1) {
@@ -309,10 +328,10 @@ router.put('/api/portal/clinic/packages/:packageId', (req, res) => {
     };
     
     // Save back to storage
-    trendingPackages.set(clinicId, clinicPackages);
+    trendingPackages.set(clinicIdStr, clinicPackages);
     
     res.json(clinicPackages[packageIndex]);
-  } catch (error) {
+  } catch (error: any) {
     if (error.errors) {
       return res.status(400).json({ error: error.errors });
     }
@@ -326,11 +345,12 @@ router.delete('/api/portal/clinic/packages/:packageId', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId;
+  const clinicIdStr = String(clinicId);
   const { packageId } = req.params;
   
   // Get the clinic's packages
-  const clinicPackages = trendingPackages.get(clinicId) || [];
+  const clinicPackages = trendingPackages.get(clinicIdStr) || [];
   const packageIndex = clinicPackages.findIndex(p => p.id === packageId);
   
   if (packageIndex === -1) {
@@ -339,7 +359,7 @@ router.delete('/api/portal/clinic/packages/:packageId', (req, res) => {
   
   // Remove the package
   clinicPackages.splice(packageIndex, 1);
-  trendingPackages.set(clinicId, clinicPackages);
+  trendingPackages.set(clinicIdStr, clinicPackages);
   
   res.json({ success: true });
 });
