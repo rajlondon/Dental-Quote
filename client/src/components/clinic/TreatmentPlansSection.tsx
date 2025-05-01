@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTreatmentPlans, useDeleteTreatmentPlan } from "@/hooks/use-treatment-plans";
+import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Loader2, Search, PlusCircle, FileEdit, Trash2, CalendarRange, ChevronLe
 import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
 import { CreateTreatmentPlanDialog } from "./CreateTreatmentPlanDialog";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
+import { ViewTreatmentPlanDialog } from "./ViewTreatmentPlanDialog";
 
 // Helper function to format date strings
 const formatDate = (dateString?: string): string => {
@@ -82,6 +84,7 @@ export const TreatmentPlansSection = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState<boolean>(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
 
   // Convert tab to filter status
   const getStatusFilter = (): string | undefined => {
@@ -109,12 +112,7 @@ export const TreatmentPlansSection = () => {
   // Handle view
   const handleView = (plan: any) => {
     setSelectedPlanId(plan.id);
-    toast({
-      title: "Viewing treatment plan",
-      description: `Viewing details for plan: ${plan.title}`,
-    });
-    // In a real implementation, we would navigate to a detailed view page
-    // or open a modal with the full treatment plan details
+    setIsViewDialogOpen(true);
   };
 
   // Handle download
@@ -125,24 +123,29 @@ export const TreatmentPlansSection = () => {
         description: "Preparing the document for download...",
       });
       
-      // In a real implementation, we would make an API call to generate and download the PDF
-      // Example:
-      // const response = await fetch(`/api/treatment-plans/${plan.id}/download`, {
-      //   method: 'GET',
-      //   headers: { 'Content-Type': 'application/pdf' },
-      // });
-      // 
-      // if (response.ok) {
-      //   const blob = await response.blob();
-      //   const url = window.URL.createObjectURL(blob);
-      //   const a = document.createElement('a');
-      //   a.href = url;
-      //   a.download = `treatment-plan-${plan.id}.pdf`;
-      //   document.body.appendChild(a);
-      //   a.click();
-      //   window.URL.revokeObjectURL(url);
-      //   a.remove();
-      // }
+      // Make API call to get the PDF file
+      const response = await fetch(`/api/files/treatmentPlan/${plan.id}`, {
+        method: 'GET',
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `treatment-plan-${plan.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        
+        toast({
+          title: "Download complete",
+          description: "Treatment plan has been downloaded successfully.",
+        });
+      } else {
+        throw new Error("Failed to download file");
+      }
     } catch (error) {
       console.error("Error downloading treatment plan:", error);
       toast({
@@ -161,18 +164,28 @@ export const TreatmentPlansSection = () => {
         description: `Sending treatment plan to ${plan.patientName}...`,
       });
       
-      // In a real implementation, we would make an API call to send the treatment plan
-      // Example:
-      // const response = await fetch(`/api/treatment-plans/${plan.id}/send`, {
-      //   method: 'POST',
-      // });
-      // 
-      // if (response.ok) {
-      //   toast({
-      //     title: "Success",
-      //     description: `Treatment plan has been sent to ${plan.patientName}.`,
-      //   });
-      // }
+      // Make API call to send the treatment plan to the patient
+      const response = await fetch(`/api/treatment-plans/${plan.id}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        // Update the plan status to "sent" in the local state
+        if (plan.status === TreatmentPlanStatus.DRAFT) {
+          await updateStatus(plan.id, TreatmentPlanStatus.SENT);
+        }
+        
+        toast({
+          title: "Success",
+          description: `Treatment plan has been sent to ${plan.patientName}.`,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send treatment plan");
+      }
     } catch (error) {
       console.error("Error sending treatment plan:", error);
       toast({
@@ -180,6 +193,28 @@ export const TreatmentPlansSection = () => {
         description: "Could not send the treatment plan to the patient.",
         variant: "destructive",
       });
+    }
+  };
+  
+  // Helper function to update treatment plan status
+  const updateStatus = async (id: number, status: TreatmentPlanStatus) => {
+    try {
+      const response = await fetch(`/api/treatment-plans/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+      
+      // Invalidate the query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/treatment-plans'] });
+    } catch (error) {
+      console.error("Error updating treatment plan status:", error);
     }
   };
 
@@ -414,12 +449,23 @@ export const TreatmentPlansSection = () => {
         />
       )}
 
-      {/* Update Plan Dialog (placeholder) */}
+      {/* Update Plan Dialog */}
       {isUpdateDialogOpen && selectedPlanId && (
         <UpdateTreatmentPlanDialog
           open={isUpdateDialogOpen}
           onOpenChange={setIsUpdateDialogOpen}
           treatmentPlanId={selectedPlanId}
+        />
+      )}
+
+      {/* View Plan Dialog */}
+      {isViewDialogOpen && selectedPlanId && (
+        <ViewTreatmentPlanDialog
+          open={isViewDialogOpen}
+          onOpenChange={setIsViewDialogOpen}
+          treatmentPlanId={selectedPlanId}
+          onDownload={handleDownload}
+          onSendToPatient={handleSendToPatient}
         />
       )}
     </Card>
