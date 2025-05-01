@@ -122,17 +122,21 @@ export default function ClinicQuotesSection() {
   }, [mockQuotes]);
   
   // Also try the real API but fallback to mock data
-  useQuery({
+  useQuery<{ quotes: any[] }>({
     queryKey: ['/api/portal/quotes'],
     retry: 1,
-    onSuccess: (data) => {
-      if (data && data.quotes) setQuotesData(data);
-    },
-    onError: (err: Error) => {
-      console.log("Using demo quote data due to API error:", err.message);
-      // We don't set error state because we're using mock data
-    }
+    // Use callbacks outside of the query options
   });
+  
+  // Set up handlers separately
+  const onSuccess = (data: { quotes: any[] }) => {
+    if (data && data.quotes) setQuotesData(data);
+  };
+  
+  const onError = (err: Error) => {
+    console.log("Using demo quote data due to API error:", err.message);
+    // We don't set error state because we're using mock data
+  };
 
   // Update quote status mutation
   const updateQuoteMutation = useMutation({

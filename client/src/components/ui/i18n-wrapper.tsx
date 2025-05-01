@@ -1,11 +1,11 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, ComponentType, JSXElementConstructor } from 'react';
 import { useTranslation } from 'react-i18next';
 
-type I18nWrapperProps = {
+interface I18nWrapperProps {
   children: ReactNode;
   component: React.ElementType;
   namespace?: string;
-};
+}
 
 /**
  * I18nWrapper - Automatically wraps a component and its children with translation capabilities
@@ -33,7 +33,7 @@ export function I18nWrapper({
   const { t } = useTranslation();
 
   // Function to recursively process children
-  const processChildren = (children: ReactNode, pathPrefix = '') => {
+  const processChildren = (children: ReactNode, pathPrefix = ''): ReactNode => {
     // If children is a string, translate it
     if (typeof children === 'string') {
       const text = children.trim();
@@ -58,16 +58,20 @@ export function I18nWrapper({
     // If children is a React element, process its props and children
     if (React.isValidElement(children)) {
       // Get the display name of the component
-      const displayName = children.type.displayName || 
-                         (typeof children.type === 'string' ? children.type : 'unknown');
+      const childType = children.type as JSXElementConstructor<any> | string;
+      const displayName = typeof childType !== 'string' && 'displayName' in childType
+        ? childType.displayName
+        : (typeof childType === 'string' ? childType : 'unknown');
       
       // Create a new namespace path for this component
       const newPathPrefix = pathPrefix ? 
-        `${pathPrefix}.${displayName.toLowerCase()}` : 
-        `${namespace}.${displayName.toLowerCase()}`;
+        `${pathPrefix}.${String(displayName).toLowerCase()}` : 
+        `${namespace}.${String(displayName).toLowerCase()}`;
       
       // Process the children of this element
-      const newChildren = processChildren(children.props.children, newPathPrefix);
+      const childProps = children.props || {};
+      const childChildren = 'children' in childProps ? childProps.children : null;
+      const newChildren = processChildren(childChildren, newPathPrefix);
       
       // Clone the element with the processed children
       return React.cloneElement(children, { ...children.props, children: newChildren });
@@ -97,11 +101,11 @@ export function I18nWrapper({
  *   </CardHeader>
  * </I18nCard>
  */
-export function withI18n<P>(
-  Component: React.ComponentType<P>, 
+export function withI18n<P extends { children?: ReactNode }>(
+  Component: ComponentType<P>, 
   namespace: string = 'common'
-) {
-  const WithI18n = (props: P) => {
+): ComponentType<P> {
+  const WithI18n = (props: P): JSX.Element => {
     return (
       <I18nWrapper component={Component} namespace={namespace}>
         {props.children}
