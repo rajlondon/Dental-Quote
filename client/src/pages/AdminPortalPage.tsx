@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import AdminPortalTesting from "@/components/portal/AdminPortalTesting";
 import { queryClient } from "@/lib/queryClient";
+import { useDisableRefetch } from "@/lib/adminDisableRefetch";
 
 // Import admin portal components 
 import AdminDashboardSection from "@/components/admin/AdminDashboardSection";
@@ -63,6 +64,9 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
+  // Apply the disable refetch hook to prevent unwanted refreshes
+  useDisableRefetch();
+  
   // Simple initialization for admin portal
   useEffect(() => {
     // Skip if no admin user
@@ -77,6 +81,9 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     // Set flag indicating successful initialization
     initialLoadComplete.current = true;
     (window as any).__adminPortalMounted = true;
+    
+    // Disable all React Query auto-fetching for this admin session
+    console.log("Setting up extra admin portal protections");
     
     // Cleanup function for component unmount
     return () => {
