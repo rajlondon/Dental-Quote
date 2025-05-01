@@ -9,7 +9,14 @@
     "patient_portal": "Patient Portal",
     "clinic_login": "Clinic Login",
     "blog": "Blog",
-    "contact": "Contact"
+    "contact": "Contact",
+    "dental_services": "Dental Services",
+    "interactive_chart": "Interactive Dental Chart",
+    "saved_charts": "My Saved Dental Charts",
+    "ai_advice": "AI Dental Treatment Advice",
+    "admin": "Admin",
+    "book_now": "Book Now",
+    "account": "Account" 
   },
   "language": {
     "changing": "Changing language...",
