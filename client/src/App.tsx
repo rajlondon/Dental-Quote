@@ -153,7 +153,7 @@ function Router() {
         {() => {
           // This is a special route that handles logout and redirect without using AdminPortalGuard
           if (typeof window !== 'undefined') {
-            // Clear admin-specific storage flags
+            // Clear admin-specific storage flags immediately
             localStorage.removeItem('admin_session');
             localStorage.removeItem('auth_guard');
             sessionStorage.removeItem('admin_portal_timestamp');
@@ -161,14 +161,14 @@ function Router() {
             sessionStorage.removeItem('admin_role_verified');
             sessionStorage.setItem('admin_logout_redirect', 'true');
             
-            // Redirect to home page after a brief delay
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 100);
+            // Make a direct server logout call
+            fetch('/api/auth/logout', { method: 'POST' })
+              .catch(() => console.log('Logout request sent'));
+            
+            // Immediate redirect to home page
+            window.location.href = '/';
           }
-          return <div className="flex items-center justify-center min-h-screen">
-            <p className="text-gray-500">Logging out...</p>
-          </div>;
+          return null; // This component won't render as we redirect immediately
         }}
       </Route>
       
