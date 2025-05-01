@@ -121,8 +121,8 @@ export const TreatmentPlansSection = () => {
   const handleDownload = async (plan: any) => {
     try {
       toast({
-        title: "Downloading treatment plan",
-        description: "Preparing the document for download...",
+        title: t("clinic.treatment_plans.download.title", "Downloading treatment plan"),
+        description: t("clinic.treatment_plans.download.preparing", "Preparing the document for download..."),
       });
       
       // Make API call to get the PDF file
@@ -142,8 +142,8 @@ export const TreatmentPlansSection = () => {
         a.remove();
         
         toast({
-          title: "Download complete",
-          description: "Treatment plan has been downloaded successfully.",
+          title: t("clinic.treatment_plans.download.complete_title", "Download complete"),
+          description: t("clinic.treatment_plans.download.complete_description", "Treatment plan has been downloaded successfully."),
         });
       } else {
         throw new Error("Failed to download file");
@@ -151,8 +151,8 @@ export const TreatmentPlansSection = () => {
     } catch (error) {
       console.error("Error downloading treatment plan:", error);
       toast({
-        title: "Download failed",
-        description: "Could not download the treatment plan.",
+        title: t("clinic.treatment_plans.download.failed_title", "Download failed"),
+        description: t("clinic.treatment_plans.download.failed_description", "Could not download the treatment plan."),
         variant: "destructive",
       });
     }
@@ -162,8 +162,8 @@ export const TreatmentPlansSection = () => {
   const handleSendToPatient = async (plan: any) => {
     try {
       toast({
-        title: "Sending to patient",
-        description: `Sending treatment plan to ${plan.patientName}...`,
+        title: t("clinic.treatment_plans.send.title", "Sending to patient"),
+        description: t("clinic.treatment_plans.send.description", "Sending treatment plan to {{name}}...", { name: plan.patientName }),
       });
       
       // Make API call to send the treatment plan to the patient
@@ -181,8 +181,8 @@ export const TreatmentPlansSection = () => {
         }
         
         toast({
-          title: "Success",
-          description: `Treatment plan has been sent to ${plan.patientName}.`,
+          title: t("clinic.treatment_plans.send.success_title", "Success"),
+          description: t("clinic.treatment_plans.send.success_description", "Treatment plan has been sent to {{name}}.", { name: plan.patientName }),
         });
       } else {
         const errorData = await response.json();
@@ -191,8 +191,8 @@ export const TreatmentPlansSection = () => {
     } catch (error) {
       console.error("Error sending treatment plan:", error);
       toast({
-        title: "Send failed",
-        description: "Could not send the treatment plan to the patient.",
+        title: t("clinic.treatment_plans.send.failed_title", "Send failed"),
+        description: t("clinic.treatment_plans.send.failed_description", "Could not send the treatment plan to the patient."),
         variant: "destructive",
       });
     }
@@ -225,14 +225,14 @@ export const TreatmentPlansSection = () => {
     try {
       await deleteMutation.mutateAsync(id);
       toast({
-        title: "Success",
-        description: "Treatment plan has been deleted.",
+        title: t("clinic.treatment_plans.delete.success_title", "Success"),
+        description: t("clinic.treatment_plans.delete.success_description", "Treatment plan has been deleted."),
       });
     } catch (error) {
       console.error("Error deleting treatment plan:", error);
       toast({
-        title: "Delete failed",
-        description: "Could not delete the treatment plan.",
+        title: t("clinic.treatment_plans.delete.failed_title", "Delete failed"),
+        description: t("clinic.treatment_plans.delete.failed_description", "Could not delete the treatment plan."),
         variant: "destructive",
       });
     }
@@ -247,13 +247,13 @@ export const TreatmentPlansSection = () => {
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <CardTitle>Treatment Plans</CardTitle>
+            <CardTitle>{t("clinic.treatment_plans.title", "Treatment Plans")}</CardTitle>
             <CardDescription>
-              Manage treatment plans for your patients
+              {t("clinic.treatment_plans.description", "Manage treatment plans for your patients")}
             </CardDescription>
           </div>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> New Treatment Plan
+            <PlusCircle className="mr-2 h-4 w-4" /> {t("clinic.treatment_plans.new_button", "New Treatment Plan")}
           </Button>
         </div>
 
