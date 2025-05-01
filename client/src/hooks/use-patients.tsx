@@ -1,8 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
-// Patient interface
 export interface Patient {
   id: number;
   name: string;
@@ -11,73 +9,68 @@ export interface Patient {
   treatment: string;
   status: string;
   lastVisit: string | null;
+  clinicId?: number;
 }
 
-// Pagination interface
-export interface Pagination {
+export interface PaginationInfo {
   page: number;
   limit: number;
   total: number;
   pages: number;
 }
 
-// Response interface
 export interface PatientsResponse {
   success: boolean;
   message: string;
   data: {
     patients: Patient[];
-    pagination: Pagination;
+    pagination: PaginationInfo;
   };
 }
 
-export function usePatients(params: {
+export interface UsePatientParams {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
-} = {}) {
-  const { toast } = useToast();
-  const { page = 1, limit = 10, search = '', status = 'all' } = params;
+}
 
-  return useQuery({
+export const usePatients = ({ 
+  page = 1, 
+  limit = 10,
+  search = '',
+  status = 'all'
+}: UsePatientParams = {}) => {
+  return useQuery<PatientsResponse>({ 
     queryKey: ['/api/clinic/patients', page, limit, search, status],
     queryFn: async () => {
-      // Build query parameters
-      const queryParams = new URLSearchParams();
-      queryParams.append('page', page.toString());
-      queryParams.append('limit', limit.toString());
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString()
+      });
       
       if (search) {
-        queryParams.append('search', search);
+        params.append('search', search);
       }
       
-      if (status !== 'all') {
-        queryParams.append('status', status);
+      if (status && status !== 'all') {
+        params.append('status', status);
       }
       
-      try {
-        // Make the API request
-        const response = await apiRequest('GET', `/api/clinic/patients?${queryParams.toString()}`);
-        const data: PatientsResponse = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to fetch patients');
-        }
-        
-        return data.data;
-      } catch (error) {
-        // Show toast notification but don't navigate or redirect
-        toast({
-          title: "Error loading patients",
-          description: error instanceof Error ? error.message : "Failed to load patients data",
-          variant: "destructive",
-        });
-        
-        // Re-throw error for React Query to handle
-        throw error;
+      const res = await apiRequest(
+        'GET', 
+        `/api/clinic/patients?${params.toString()}`
+      );
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to fetch patients');
       }
+      
+      return res.json();
     },
-    retry: false, // Disable retries to prevent redirect loops
+    placeholderData: (previousData) => previousData, // Replacement for keepPreviousData in V5
+    staleTime: 1000 * 60, // 1 minute
+    retry: false
   });
-}
+};
