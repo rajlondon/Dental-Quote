@@ -28,6 +28,7 @@ import MessageManagementSection from "@/components/admin/MessageManagementSectio
 import AdminAnalyticsSection from "@/components/admin/AdminAnalyticsSection";
 import AdminSettingsSection from "@/components/admin/AdminSettingsSection";
 import { OffersApprovalDashboard } from "@/components/admin/OffersApprovalDashboard";
+import AdminPortalGuard from "@/components/AdminPortalGuard";
 
 // Notification type definition
 interface Notification {
@@ -356,6 +357,8 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Add the AdminPortalGuard to handle page security */}
+      <AdminPortalGuard />
       {/* Top Navigation Bar */}
       <header className="bg-white border-b border-gray-200 z-30">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
