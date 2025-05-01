@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import AdminPortalTesting from "@/components/portal/AdminPortalTesting";
 import { queryClient } from "@/lib/queryClient";
 
@@ -432,13 +432,13 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
               {/* Profile Button */}
               <div className="relative inline-block text-left">
                 <div className="flex items-center">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/images/admin-avatar.png" alt="Admin Profile" />
-                    <AvatarFallback>A</AvatarFallback>
-                  </Avatar>
+                  {/* Use a simple div instead of Avatar to prevent infinite rendering */}
+                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                    A
+                  </div>
                   <div className="hidden md:block ml-2 text-sm">
                     <div className="font-medium text-gray-700">Admin</div>
-                    <div className="text-xs text-gray-500">admin@istanbuldentalsmile.co.uk</div>
+                    <div className="text-xs text-gray-500">{user?.email || "admin@mydentalfly.com"}</div>
                   </div>
                 </div>
               </div>
