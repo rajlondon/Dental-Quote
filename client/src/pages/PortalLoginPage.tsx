@@ -279,26 +279,49 @@ const PortalLoginPage: React.FC = () => {
         // Pre-cache user data
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-        setLocation('/admin-portal');
+        
+        // Special handling for admin to prevent refresh issues
+        sessionStorage.setItem('admin_portal_timestamp', Date.now().toString());
+        sessionStorage.setItem('admin_role_verified', 'true');
+        
+        // Set a guard to prevent automatic redirects to login
+        localStorage.setItem('auth_guard', Date.now().toString());
+        
+        // Flag in sessionStorage that we're doing a protected navigation
+        sessionStorage.setItem('admin_protected_navigation', 'true');
+        
+        // Add slight delay to make sure everything is written
+        setTimeout(() => {
+          console.log("Admin portal redirect with all caches prepared");
+          // Set a flag that this is an intentional direct navigation, not a refresh
+          (window as any).__directAdminNavigation = true;
+          setLocation('/admin-portal');
+        }, 100);
+        
       } else if (userData.role === 'clinic_staff') {
         console.log("Clinic staff detected, redirecting to clinic portal");
         
         // Pre-cache the user data to avoid double fetching on redirect
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+        sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
         
         // Add delay to ensure caches are written before redirect
         setTimeout(() => {
           console.log("Redirecting to clinic portal with pre-cached session");
           setLocation('/clinic-portal');
-        }, 50);
+        }, 100);
       } else {
         // Default to patient portal for any other role
         console.log("Patient user detected, redirecting to patient portal");
         // Pre-cache user data
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-        setLocation('/client-portal');
+        
+        setTimeout(() => {
+          console.log("Redirecting to patient portal");
+          setLocation('/client-portal');
+        }, 100);
       }
       
     } catch (error) {

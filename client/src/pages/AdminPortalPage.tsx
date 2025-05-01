@@ -115,9 +115,30 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // Simple effect for initialization
+  // Special one-time setup when first entering admin portal
   useEffect(() => {
-    // Skip if no user
+    // First check if this is a recent protected navigation from login
+    const isProtectedNavigation = sessionStorage.getItem('admin_protected_navigation') === 'true';
+    const directNavigation = (window as any).__directAdminNavigation === true;
+    
+    // Check for initialization needs
+    if (isProtectedNavigation || directNavigation) {
+      console.log("📌 This is a protected direct navigation to admin portal - special handling enabled");
+      
+      // Clear the flag as we've handled it
+      sessionStorage.removeItem('admin_protected_navigation');
+      (window as any).__directAdminNavigation = false;
+      
+      // Apply strong caching to prevent unnecessary API calls
+      if (user) {
+        console.log("📦 Caching admin user data to prevent refresh loops");
+        // Cache the user object in sessionStorage again just to be safe
+        sessionStorage.setItem('admin_user_data', JSON.stringify(user));
+        sessionStorage.setItem('admin_session_start', Date.now().toString());
+      }
+    }
+    
+    // Skip remaining initialization if no user
     if (!user) {
       return;
     }
