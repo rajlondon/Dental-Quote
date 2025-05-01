@@ -11,7 +11,7 @@ import { CommissionTier } from '@shared/specialOffers';
 interface User {
   id: number;
   clinicId?: number;
-  role?: string;
+  role: string; // Make role a required field
 }
 
 // Extend Express namespace
@@ -20,7 +20,7 @@ declare global {
     interface User {
       id: number;
       clinicId?: number;
-      role?: string;
+      role: string; // Make role a required field to match the interface
     }
   }
 }
