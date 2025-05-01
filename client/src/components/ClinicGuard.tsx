@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Redirect } from 'wouter';
 import { Loader2 } from 'lucide-react';
+import { ClinicQueryProvider } from '@/hooks/use-clinic-queries';
 
 // This component guards against unauthorized access to the clinic portal
 // and provides a protected environment that prevents refresh cycles
@@ -86,7 +87,12 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
     );
   }
 
-  return <>{children}</>;
+  // Wrap children in ClinicQueryProvider to prevent redirects in queries
+  return (
+    <ClinicQueryProvider>
+      {children}
+    </ClinicQueryProvider>
+  );
 };
 
 export default ClinicGuard;
