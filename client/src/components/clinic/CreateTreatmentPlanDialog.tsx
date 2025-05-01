@@ -10,13 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Minus } from "lucide-react";
 import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
-import { usePatients } from '@/hooks/use-patients';
 import { useCreateTreatmentPlan } from '@/hooks/use-treatment-plans';
+import { usePatients } from '@/hooks/use-patients';
 import { useToast } from "@/hooks/use-toast";
 
 // Create a schema for our form
 const createTreatmentPlanSchema = z.object({
-  patientId: z.coerce.number().min(1, { message: "Patient is required" }),
+  patientId: z.string().min(1, { message: "Patient is required" }),
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().optional(),
   treatmentItems: z.array(
@@ -29,9 +29,9 @@ const createTreatmentPlanSchema = z.object({
   ).min(1, { message: "At least one treatment item is required" }),
   estimatedDuration: z.string().optional(),
   notes: z.string().optional(),
-  currency: z.string().default("GBP"),
-  status: z.string().default(TreatmentPlanStatus.DRAFT),
-  paymentStatus: z.string().default(PaymentStatus.PENDING),
+  currency: z.string(),
+  status: z.string().optional(),
+  paymentStatus: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof createTreatmentPlanSchema>;
@@ -46,14 +46,14 @@ export const CreateTreatmentPlanDialog = ({
   onOpenChange,
 }: CreateTreatmentPlanDialogProps) => {
   const { toast } = useToast();
-  const { data: patientsData, isLoading: isLoadingPatients } = usePatients();
   const createMutation = useCreateTreatmentPlan();
+  const { data: patientsData, isLoading: isLoadingPatients } = usePatients();
 
   // Setup form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(createTreatmentPlanSchema),
     defaultValues: {
-      patientId: 0,
+      patientId: "",
       title: "",
       description: "",
       treatmentItems: [
@@ -75,12 +75,17 @@ export const CreateTreatmentPlanDialog = ({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      await createMutation.mutateAsync(values);
-      onOpenChange(false);
-      toast({
-        title: "Success",
-        description: "Treatment plan created successfully",
+      await createMutation.mutateAsync({
+        patientId: parseInt(values.patientId),
+        title: values.title,
+        description: values.description,
+        treatmentItems: values.treatmentItems,
+        estimatedDuration: values.estimatedDuration,
+        notes: values.notes,
+        currency: values.currency,
       });
+      form.reset();
+      onOpenChange(false);
     } catch (error) {
       console.error("Error creating treatment plan:", error);
       toast({
@@ -118,7 +123,7 @@ export const CreateTreatmentPlanDialog = ({
         <DialogHeader>
           <DialogTitle>Create Treatment Plan</DialogTitle>
           <DialogDescription>
-            Create a new treatment plan for a patient. Add treatment items, set pricing, and more.
+            Create a new treatment plan for a patient.
           </DialogDescription>
         </DialogHeader>
 
@@ -131,22 +136,22 @@ export const CreateTreatmentPlanDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Patient</FormLabel>
-                  <Select onValueChange={field.onChange} value={String(field.value)}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select patient" />
+                        <SelectValue placeholder="Select a patient" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {isLoadingPatients ? (
-                        <div className="flex items-center justify-center py-2">
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                          <span className="ml-2">Loading patients...</span>
+                        <div className="flex items-center justify-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span>Loading patients...</span>
                         </div>
                       ) : patientsData?.data?.patients && patientsData.data.patients.length > 0 ? (
                         patientsData.data.patients.map((patient) => (
                           <SelectItem key={patient.id} value={String(patient.id)}>
-                            {patient.firstName} {patient.lastName}
+                            {patient.name || `Patient #${patient.id}`}
                           </SelectItem>
                         ))
                       ) : (

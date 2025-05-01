@@ -94,10 +94,15 @@ export const UpdateTreatmentPlanDialog = ({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      await updateMutation.mutateAsync({
-        id: treatmentPlanId,
+      // Convert string status to enum value
+      const formattedValues = {
         ...values,
-      });
+        id: treatmentPlanId,
+        status: values.status as TreatmentPlanStatus,
+        paymentStatus: values.paymentStatus as PaymentStatus,
+      };
+      
+      await updateMutation.mutateAsync(formattedValues);
       onOpenChange(false);
       toast({
         title: "Success",
