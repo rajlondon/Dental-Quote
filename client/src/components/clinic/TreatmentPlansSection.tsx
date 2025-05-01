@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, PlusCircle, FileEdit, Trash2, CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Search, PlusCircle, FileEdit, Trash2, CalendarRange, ChevronLeft, ChevronRight, MoreHorizontal, Eye, Download, Send } from "lucide-react";
 import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
 import { CreateTreatmentPlanDialog } from "./CreateTreatmentPlanDialog";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
@@ -105,12 +106,98 @@ export const TreatmentPlansSection = () => {
     setPage(1); // Reset to first page on search
   };
 
+  // Handle view
+  const handleView = (plan: any) => {
+    setSelectedPlanId(plan.id);
+    toast({
+      title: "Viewing treatment plan",
+      description: `Viewing details for plan: ${plan.title}`,
+    });
+    // In a real implementation, we would navigate to a detailed view page
+    // or open a modal with the full treatment plan details
+  };
+
+  // Handle download
+  const handleDownload = async (plan: any) => {
+    try {
+      toast({
+        title: "Downloading treatment plan",
+        description: "Preparing the document for download...",
+      });
+      
+      // In a real implementation, we would make an API call to generate and download the PDF
+      // Example:
+      // const response = await fetch(`/api/treatment-plans/${plan.id}/download`, {
+      //   method: 'GET',
+      //   headers: { 'Content-Type': 'application/pdf' },
+      // });
+      // 
+      // if (response.ok) {
+      //   const blob = await response.blob();
+      //   const url = window.URL.createObjectURL(blob);
+      //   const a = document.createElement('a');
+      //   a.href = url;
+      //   a.download = `treatment-plan-${plan.id}.pdf`;
+      //   document.body.appendChild(a);
+      //   a.click();
+      //   window.URL.revokeObjectURL(url);
+      //   a.remove();
+      // }
+    } catch (error) {
+      console.error("Error downloading treatment plan:", error);
+      toast({
+        title: "Download failed",
+        description: "Could not download the treatment plan.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle send to patient
+  const handleSendToPatient = async (plan: any) => {
+    try {
+      toast({
+        title: "Sending to patient",
+        description: `Sending treatment plan to ${plan.patientName}...`,
+      });
+      
+      // In a real implementation, we would make an API call to send the treatment plan
+      // Example:
+      // const response = await fetch(`/api/treatment-plans/${plan.id}/send`, {
+      //   method: 'POST',
+      // });
+      // 
+      // if (response.ok) {
+      //   toast({
+      //     title: "Success",
+      //     description: `Treatment plan has been sent to ${plan.patientName}.`,
+      //   });
+      // }
+    } catch (error) {
+      console.error("Error sending treatment plan:", error);
+      toast({
+        title: "Send failed",
+        description: "Could not send the treatment plan to the patient.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle delete
   const handleDelete = async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
+      toast({
+        title: "Success",
+        description: "Treatment plan has been deleted.",
+      });
     } catch (error) {
       console.error("Error deleting treatment plan:", error);
+      toast({
+        title: "Delete failed",
+        description: "Could not delete the treatment plan.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -204,46 +291,69 @@ export const TreatmentPlansSection = () => {
                           }).format(plan.totalPrice)}
                         </td>
                         <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => {
-                                setSelectedPlanId(plan.id);
-                                setIsUpdateDialogOpen(true);
-                              }}
-                            >
-                              <FileEdit className="h-4 w-4" />
-                            </Button>
-                            
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the
-                                    treatment plan and remove it from our servers.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(plan.id)}>
-                                    {deleteMutation.isPending ? (
-                                      <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Deleting...
-                                      </>
-                                    ) : "Delete"}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleView(plan)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedPlanId(plan.id);
+                                  setIsUpdateDialogOpen(true);
+                                }}
+                              >
+                                <FileEdit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownload(plan)}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSendToPatient(plan)}>
+                                <Send className="mr-2 h-4 w-4" />
+                                Send to Patient
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()} // Prevent closing dropdown
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the
+                                      treatment plan and remove it from our servers.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(plan.id)}>
+                                      {deleteMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Deleting...
+                                        </>
+                                      ) : "Delete"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     ))}
