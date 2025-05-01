@@ -406,5 +406,30 @@
         "failed_description": "Tedavi planı silinemedi."
       }
     }
+  },
+  "common": {
+    "name": "Tam İsim",
+    "enter_name": "Tam adınızı girin",
+    "name_placeholder": "Tam adınızı girin",
+    "email": "E-posta Adresi",
+    "enter_email": "E-posta adresinizi girin",
+    "email_placeholder": "E-posta adresinizi girin",
+    "phone": "Telefon Numarası",
+    "phone_number": "Telefon Numarası",
+    "phone_placeholder": "+90 555 123 4567",
+    "phone_help_text": "Fiyat teklifi ve tedavi seçenekleri hakkında sizinle iletişime geçmek için bunu kullanacağız",
+    "actions": "Eylemler",
+    "view": "Görüntüle",
+    "edit": "Düzenle",
+    "download": "İndir",
+    "delete": "Sil",
+    "deleting": "Siliniyor...",
+    "cancel": "İptal",
+    "unknown_error": "Bilinmeyen hata",
+    "not_available": "Mevcut Değil",
+    "confirm_delete": {
+      "title": "Emin misiniz?",
+      "description": "Bu işlem geri alınamaz. Bu, öğeyi kalıcı olarak silecek ve sunucularımızdan kaldıracaktır."
+    }
   }
 }
