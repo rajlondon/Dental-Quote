@@ -105,14 +105,35 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     
     try {
+      // First, clear admin-specific session flags
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('auth_guard');
+        sessionStorage.removeItem('admin_portal_timestamp');
+        sessionStorage.removeItem('admin_protected_navigation');
+        sessionStorage.removeItem('admin_role_verified');
+        
+        // Set a flag indicating intentional logout
+        sessionStorage.setItem('admin_logout_redirect', 'true');
+      }
+      
+      // Clear the admin user state first to prevent interception
+      setAdminUserState(null);
+      
       // Call the server logout API
       await apiRequest("POST", "/api/auth/logout");
+      
+      // Manual redirect to home or login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'; // Force hard redirect to avoid 404
+      }
     } catch (err) {
       console.error("Logout API error:", err);
       // Continue with client-side logout even if API fails
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'; // Force hard redirect to avoid 404
+      }
     } finally {
-      // Clear the admin user from state
-      setAdminUserState(null);
       setIsLoading(false);
     }
   };
