@@ -1,4 +1,72 @@
 {
+  "clinic": {
+    "title": "Klinik Portalı",
+    "back_to_site": "Web Sitesine Dön",
+    "nav": {
+      "dashboard": "Ana Panel",
+      "patients": "Hastalar",
+      "quotes": "Fiyat Teklifleri",
+      "treatment_plans": "Tedavi Planları",
+      "treatment_mapper": "Tedavi Eşleştirici",
+      "appointments": "Randevular",
+      "messages": "Mesajlar",
+      "documents": "Belgeler",
+      "payments": "Ödemeler",
+      "reports": "Raporlar",
+      "analytics": "Analitik",
+      "settings": "Ayarlar",
+      "testing": "Test Modu",
+      "logout": "Çıkış Yap"
+    },
+    "dashboard": {
+      "title": "Klinik Ana Paneli",
+      "description": "Hastalarınızı, randevularınızı ve klinik işlemlerinizi yönetin"
+    },
+    "patients": {
+      "title": "Hasta Yönetimi",
+      "description": "Hasta kayıtlarınızı ve tedavi geçmişini görüntüleyin ve yönetin"
+    },
+    "quotes": {
+      "title": "Fiyat Teklifi Yönetimi",
+      "description": "Hastalar için tedavi teklifleri oluşturun ve yönetin"
+    },
+    "treatment_plans": {
+      "title": "Tedavi Planları",
+      "description": "Hastalarınız için tedavi planları oluşturun ve yönetin"
+    },
+    "treatment_mapper": {
+      "title": "Tedavi Eşleştirici",
+      "description": "Standart tedavileri kliniğinizin özel prosedürlerine eşleştirin"
+    },
+    "appointments": {
+      "title": "Randevu Yönetimi",
+      "description": "Hasta randevularını, programları ve rezervasyonları yönetin"
+    },
+    "messages": {
+      "title": "Mesajlar",
+      "description": "Hastalarla ve MyDentalFly ekibiyle iletişim kurun"
+    },
+    "documents": {
+      "title": "Belge Yönetimi",
+      "description": "Hasta belgelerini ve tıbbi kayıtları yükleyin ve yönetin"
+    },
+    "payments": {
+      "title": "Ödeme İşleme",
+      "description": "Ödemeleri, faturaları ve finansal kayıtları takip edin"
+    },
+    "reports": {
+      "title": "Raporlama",
+      "description": "Klinik performans raporlarını oluşturun ve görüntüleyin"
+    },
+    "analytics": {
+      "title": "Analitik Paneli",
+      "description": "Klinik verilerini ve performans metriklerini analiz edin"
+    },
+    "settings": {
+      "title": "Klinik Ayarları",
+      "description": "Klinik profilinizi, personelinizi ve tercihlerinizi yönetin"
+    }
+  },
   "navbar": {
     "home": "Ana Sayfa",
     "services": "Hizmetler",
