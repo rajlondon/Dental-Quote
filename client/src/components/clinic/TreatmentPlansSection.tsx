@@ -16,6 +16,7 @@ import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-pla
 import { CreateTreatmentPlanDialog } from "./CreateTreatmentPlanDialog";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
 import { ViewTreatmentPlanDialog } from "./ViewTreatmentPlanDialog";
+import { I18nProvider, T, TH, TP, TButton } from "@/components/ui/i18n-components";
 
 // Helper function to format date strings with locale support
 const formatDate = (dateString?: string, locale?: string): string => {
@@ -287,19 +288,22 @@ export const TreatmentPlansSection = () => {
   const showPagination = totalPages > 1;
 
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle>{t("clinic.treatment_plans.title", "Treatment Plans")}</CardTitle>
-            <CardDescription>
-              {t("clinic.treatment_plans.description", "Manage treatment plans for your patients")}
-            </CardDescription>
+    <I18nProvider namespace="clinic.treatment_plans">
+      <Card className="w-full shadow-md">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle>
+                <T keyName="title">Treatment Plans</T>
+              </CardTitle>
+              <CardDescription>
+                <T keyName="description">Manage treatment plans for your patients</T>
+              </CardDescription>
+            </div>
+            <TButton onClick={() => setIsCreateDialogOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" /> <T keyName="new_button">New Treatment Plan</T>
+            </TButton>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> {t("clinic.treatment_plans.new_button", "New Treatment Plan")}
-          </Button>
-        </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4">
           <div className="relative w-full sm:w-72">
@@ -317,12 +321,24 @@ export const TreatmentPlansSection = () => {
 
       <Tabs defaultValue="all" className="mx-6" onValueChange={setCurrentTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="all">{t("clinic.treatment_plans.tabs.all", "All")}</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.DRAFT}>{t("clinic.treatment_plans.tabs.draft", "Draft")}</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.SENT}>{t("clinic.treatment_plans.tabs.sent", "Sent")}</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.ACCEPTED}>{t("clinic.treatment_plans.tabs.accepted", "Accepted")}</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.IN_PROGRESS}>{t("clinic.treatment_plans.tabs.in_progress", "In Progress")}</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.COMPLETED}>{t("clinic.treatment_plans.tabs.completed", "Completed")}</TabsTrigger>
+          <TabsTrigger value="all">
+            <T keyName="tabs.all">All</T>
+          </TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.DRAFT}>
+            <T keyName="tabs.draft">Draft</T>
+          </TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.SENT}>
+            <T keyName="tabs.sent">Sent</T>
+          </TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.ACCEPTED}>
+            <T keyName="tabs.accepted">Accepted</T>
+          </TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.IN_PROGRESS}>
+            <T keyName="tabs.in_progress">In Progress</T>
+          </TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.COMPLETED}>
+            <T keyName="tabs.completed">Completed</T>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={currentTab} className="mt-0">
@@ -514,5 +530,6 @@ export const TreatmentPlansSection = () => {
         />
       )}
     </Card>
+    </I18nProvider>
   );
 };
