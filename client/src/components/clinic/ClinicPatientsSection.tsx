@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { usePatients, Patient } from '@/hooks/use-patients';
 import { format } from 'date-fns';
+import AddPatientDialog from './AddPatientDialog';
 
 const ClinicPatientsSection: React.FC = () => {
   const { t } = useTranslation();
@@ -22,6 +23,7 @@ const ClinicPatientsSection: React.FC = () => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [searchInput, setSearchInput] = useState('');  // For debouncing search
+  const [showAddPatientDialog, setShowAddPatientDialog] = useState(false);
 
   // Fetch patients data using our hook
   const { data, isLoading, isError } = usePatients({
@@ -77,6 +79,12 @@ const ClinicPatientsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Add Patient Dialog */}
+      <AddPatientDialog
+        open={showAddPatientDialog}
+        onOpenChange={setShowAddPatientDialog}
+      />
+      
       <Card>
         <CardHeader>
           <CardTitle>{t("clinic.patients.title", "Patient Management")}</CardTitle>
@@ -112,7 +120,10 @@ const ClinicPatientsSection: React.FC = () => {
               </Select>
             </div>
             
-            <Button className="w-full sm:w-auto gap-2">
+            <Button 
+              onClick={() => setShowAddPatientDialog(true)}
+              className="w-full sm:w-auto gap-2"
+            >
               <Plus className="h-4 w-4" />
               {t("clinic.patients.add_patient", "Add Patient")}
             </Button>

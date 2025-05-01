@@ -429,7 +429,8 @@ router.get("/api/portal/health", ensureAuthenticated, (req, res) => {
   });
 });
 
-// Patients list endpoint for clinics
+// Patients endpoints for clinics
+// Get patients list
 router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) => {
   try {
     const clinicId = req.user?.clinicId || 1;
@@ -671,6 +672,60 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
     res.status(500).json({
       success: false,
       message: "Failed to retrieve patients"
+    });
+  }
+});
+
+// Create a new patient
+router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) => {
+  try {
+    const clinicId = req.user?.clinicId || 1;
+    const { name, email, phone, treatment, status } = req.body;
+    
+    // Basic validation
+    if (!name || !email || !phone || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields"
+      });
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format"
+      });
+    }
+    
+    console.log(`Creating new patient for clinic ${clinicId}: ${name}, ${email}`);
+    
+    // Mock creating a new patient (in a real app, this would save to the database)
+    // For now, we'll just return success with a mocked ID
+    const newPatient = {
+      id: Date.now(), // Using timestamp as a mock ID
+      name,
+      email,
+      phone,
+      treatment: treatment || "",
+      status,
+      lastVisit: null
+    };
+    
+    res.status(201).json({
+      success: true,
+      message: "Patient created successfully",
+      data: {
+        patient: newPatient
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error creating patient:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create patient"
     });
   }
 });
