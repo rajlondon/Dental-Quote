@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Minus } from "lucide-react";
-import { TreatmentPlanStatus, PaymentStatus } from "../../../shared/models/treatment-plan";
+import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
 
 // Create a schema for our form
 const updateTreatmentPlanSchema = z.object({
@@ -117,7 +117,7 @@ export const UpdateTreatmentPlanDialog = ({
   const removeTreatmentItem = (index: number) => {
     const currentItems = form.getValues("treatmentItems");
     if (currentItems.length > 1) {
-      form.setValue("treatmentItems", currentItems.filter((_, i) => i !== index));
+      form.setValue("treatmentItems", currentItems.filter((_: any, i: number) => i !== index));
     }
   };
 
@@ -267,7 +267,7 @@ export const UpdateTreatmentPlanDialog = ({
                   </Button>
                 </div>
 
-                {treatmentItems.map((_, index) => (
+                {treatmentItems.map((_: any, index: number) => (
                   <div key={index} className="grid grid-cols-12 gap-2 p-3 border rounded-md">
                     <div className="col-span-12 sm:col-span-6">
                       <FormField

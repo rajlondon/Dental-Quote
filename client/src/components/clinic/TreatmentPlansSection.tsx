@@ -8,8 +8,8 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, PlusCircle, FileEdit, Trash2, CalendarRange } from "lucide-react";
-import { TreatmentPlanStatus, PaymentStatus } from "../../../shared/models/treatment-plan";
+import { Loader2, Search, PlusCircle, FileEdit, Trash2, CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
+import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
 import { CreateTreatmentPlanDialog } from "./CreateTreatmentPlanDialog";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
 
@@ -257,10 +257,14 @@ export const TreatmentPlansSection = () => {
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
+                      <Button
+                        variant="outline"
+                        size="icon"
                         onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page === 1} 
-                      />
+                        disabled={page === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
                     </PaginationItem>
                     
                     {Array.from({ length: totalPages }).map((_, i) => (
@@ -275,10 +279,14 @@ export const TreatmentPlansSection = () => {
                     ))}
                     
                     <PaginationItem>
-                      <PaginationNext 
+                      <Button
+                        variant="outline"
+                        size="icon"
                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages} 
-                      />
+                        disabled={page >= totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
