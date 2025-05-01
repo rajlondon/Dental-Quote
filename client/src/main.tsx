@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import App from "./App";
 import "./index.css";
 import i18n from "./i18n"; // Import i18n configuration
+import { RTLProvider } from '@/components/ui/rtl-provider'; // Import RTL provider for Arabic support
 
 // Extend global CSS with custom styles
 import { createGlobalStyle } from "styled-components";
@@ -43,7 +44,9 @@ if (rootElement) {
       <QueryClientProvider client={queryClient}>
         <GlobalStyle />
         <Suspense fallback={<Loading />}>
-          <App />
+          <RTLProvider>
+            <App />
+          </RTLProvider>
         </Suspense>
       </QueryClientProvider>
     </React.StrictMode>
