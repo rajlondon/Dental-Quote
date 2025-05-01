@@ -52,98 +52,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
-  // More aggressive refresh prevention for AdminPortalPage
-  useEffect(() => {
-    if (disableAutoRefresh && typeof window !== 'undefined') {
-      console.log("🛡️🔒 Setting up ENHANCED refresh prevention for AdminPortalPage");
-      
-      // Track admin portal loading state in global context
-      if (!(window as any).__adminPortalLoadingState) {
-        (window as any).__adminPortalLoadingState = { 
-          counter: 0,
-          initialLoadComplete: false,
-          lastLoginTime: Date.now()
-        };
-      }
-      
-      // Specific Admin Portal timestamp key
-      const adminTimestampKey = 'admin_portal_timestamp';
-      const existingTimestamp = sessionStorage.getItem(adminTimestampKey);
-      const currentTimestamp = Date.now().toString();
-      
-      // Check if we already have a timestamp (already loaded once)
-      if (existingTimestamp) {
-        const loadState = (window as any).__adminPortalLoadingState;
-        loadState.counter++;
-        
-        // If this is a quick reload after login, block reloads entirely
-        if (loadState.counter > 1 && !loadState.initialLoadComplete) {
-          console.log(`⛔ Detected potential reload loop in admin portal (count: ${loadState.counter})`);
-          
-          // First try - block navigation events
-          const blockNavigation = (e: PopStateEvent) => {
-            e.preventDefault();
-            console.log("⛔ Blocked history navigation event in admin portal");
-          };
-          
-          // Only allow one location history change (first load)
-          window.addEventListener('popstate', blockNavigation);
-          setTimeout(() => window.removeEventListener('popstate', blockNavigation), 5000);
-          
-          // Second level protection - modify window.location methods
-          const originalReplace = window.history.replaceState;
-          window.history.replaceState = function(...args) {
-            console.log("🔒 Intercepted history.replaceState in admin portal");
-            if ((window as any).__adminPortalLoadingState.initialLoadComplete) {
-              return originalReplace.apply(this, args);
-            } else {
-              console.log("⛔ Blocked history.replaceState call in admin portal");
-              return undefined;
-            }
-          };
-          
-          // Set a timeout to restore original function
-          setTimeout(() => {
-            if (window.history.replaceState !== originalReplace) {
-              window.history.replaceState = originalReplace;
-              console.log("🔓 Restored original history.replaceState");
-            }
-          }, 5000);
-          
-          // Mark initial load as complete after a delay
-          setTimeout(() => {
-            if ((window as any).__adminPortalLoadingState) {
-              (window as any).__adminPortalLoadingState.initialLoadComplete = true;
-              console.log("✅ Marked admin portal initial load as complete");
-            }
-          }, 2000);
-        }
-      } else {
-        // First load - store timestamp
-        console.log("📝 First admin portal load - storing timestamp");
-        sessionStorage.setItem(adminTimestampKey, currentTimestamp);
-      }
-      
-      // Block traditional page reloads too
-      const preventReload = (e: BeforeUnloadEvent) => {
-        if (window.location.pathname.includes('admin-portal')) {
-          console.log("🛡️ Blocked page reload on admin portal");
-          e.preventDefault();
-          e.returnValue = '';
-          return '';
-        }
-      };
-      
-      window.addEventListener('beforeunload', preventReload);
-      
-      // Cleanup function
-      return () => {
-        window.removeEventListener('beforeunload', preventReload);
-      };
-    }
-  }, [disableAutoRefresh]);
-  
-  // Safer approach to prevent WebSocket-related refreshes
+  // Use the exact same implementation as ClinicPortalPage which works
   useEffect(() => {
     if (disableAutoRefresh && typeof window !== 'undefined') {
       console.log("🔌 Adding WebSocket protection for admin portal");
@@ -151,8 +60,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       // Set a global flag to indicate we're in the admin portal
       (window as any).__inAdminPortal = true;
       
-      // Add a more targeted WebSocket prevention - watch for specific patterns
-      // This is safer than replacing the WebSocket constructor
+      // Add a fetch interceptor to prevent problematic API calls
       const originalFetch = window.fetch;
       window.fetch = async function preventProblematicFetch(input, init) {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -183,7 +91,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     }
   }, [disableAutoRefresh]);
   
-  // Add page-level refresh prevention
+  // Simple page-level refresh prevention
   useEffect(() => {
     // Function to prevent any programmatic page reload
     const preventUnload = (e: BeforeUnloadEvent) => {
