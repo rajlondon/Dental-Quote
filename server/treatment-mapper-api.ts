@@ -1,8 +1,11 @@
 import express from 'express';
-import { TreatmentMap, ClinicTreatmentVariant, INITIAL_TREATMENT_MAP } from '../shared/treatmentMapper';
+import { TreatmentMap, ClinicTreatmentVariant, CustomTreatment, INITIAL_TREATMENT_MAP } from '../shared/treatmentMapper';
+import { v4 as uuidv4 } from 'uuid';
 
 // Mock database for development - would be replaced with actual DB storage
 let treatmentMap: TreatmentMap = { ...INITIAL_TREATMENT_MAP };
+// Custom treatments storage by clinic ID
+let customTreatments: Map<string, CustomTreatment[]> = new Map();
 
 export function setupTreatmentMapperApi(app: express.Express) {
   // Get full treatment map (admin only)
@@ -123,6 +126,113 @@ export function setupTreatmentMapperApi(app: express.Express) {
     }
     
     delete treatmentMap[name];
+    res.json({ success: true });
+  });
+  
+  // Get custom treatments for a specific clinic
+  app.get('/api/treatment-mapper/clinic/:clinicId/custom', (req, res) => {
+    const { clinicId } = req.params;
+    const clinicCustomTreatments = customTreatments.get(clinicId) || [];
+    
+    // Return only the variant part for easier client-side integration
+    const treatments = clinicCustomTreatments.map(t => t.variant);
+    res.json(treatments);
+  });
+  
+  // Create a new custom treatment for a clinic
+  app.post('/api/treatment-mapper/clinic/:clinicId/custom', (req, res) => {
+    const { clinicId } = req.params;
+    const { name, category, description, variant } = req.body;
+    
+    if (!name || !category || !variant) {
+      return res.status(400).json({ 
+        error: 'Name, category, and variant details are required' 
+      });
+    }
+    
+    // Ensure variant's clinic_id matches URL parameter
+    variant.clinic_id = clinicId;
+    
+    // Create the custom treatment
+    const customTreatment: CustomTreatment = {
+      id: uuidv4(),
+      name,
+      category,
+      description: description || '',
+      clinic_id: clinicId,
+      variant,
+      created_at: new Date().toISOString()
+    };
+    
+    // Get existing custom treatments for this clinic or initialize empty array
+    const clinicCustomTreatments = customTreatments.get(clinicId) || [];
+    
+    // Add the new treatment and update the map
+    clinicCustomTreatments.push(customTreatment);
+    customTreatments.set(clinicId, clinicCustomTreatments);
+    
+    res.status(201).json({ 
+      success: true, 
+      treatment: customTreatment 
+    });
+  });
+  
+  // Update a custom treatment
+  app.put('/api/treatment-mapper/clinic/:clinicId/custom/:treatmentId', (req, res) => {
+    const { clinicId, treatmentId } = req.params;
+    const { name, category, description, variant } = req.body;
+    
+    // Get existing custom treatments for this clinic
+    const clinicCustomTreatments = customTreatments.get(clinicId) || [];
+    
+    // Find the treatment to update
+    const treatmentIndex = clinicCustomTreatments.findIndex(t => t.id === treatmentId);
+    
+    if (treatmentIndex === -1) {
+      return res.status(404).json({ error: 'Custom treatment not found' });
+    }
+    
+    // Ensure variant's clinic_id matches URL parameter
+    variant.clinic_id = clinicId;
+    
+    // Update the treatment
+    clinicCustomTreatments[treatmentIndex] = {
+      ...clinicCustomTreatments[treatmentIndex],
+      name: name || clinicCustomTreatments[treatmentIndex].name,
+      category: category || clinicCustomTreatments[treatmentIndex].category,
+      description: description !== undefined ? description : clinicCustomTreatments[treatmentIndex].description,
+      variant: variant || clinicCustomTreatments[treatmentIndex].variant
+    };
+    
+    // Update the map
+    customTreatments.set(clinicId, clinicCustomTreatments);
+    
+    res.json({ 
+      success: true, 
+      treatment: clinicCustomTreatments[treatmentIndex] 
+    });
+  });
+  
+  // Delete a custom treatment
+  app.delete('/api/treatment-mapper/clinic/:clinicId/custom/:treatmentId', (req, res) => {
+    const { clinicId, treatmentId } = req.params;
+    
+    // Get existing custom treatments for this clinic
+    const clinicCustomTreatments = customTreatments.get(clinicId) || [];
+    
+    // Find the treatment to delete
+    const treatmentIndex = clinicCustomTreatments.findIndex(t => t.id === treatmentId);
+    
+    if (treatmentIndex === -1) {
+      return res.status(404).json({ error: 'Custom treatment not found' });
+    }
+    
+    // Remove the treatment
+    clinicCustomTreatments.splice(treatmentIndex, 1);
+    
+    // Update the map
+    customTreatments.set(clinicId, clinicCustomTreatments);
+    
     res.json({ success: true });
   });
 }
