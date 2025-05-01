@@ -24,26 +24,43 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   
   // Check if a recent valid session exists (less than 30 seconds old)
   const hasRecentSession = useRef(() => {
-    if (requiredRole !== 'clinic_staff') return true;
-    
-    try {
-      const timestamp = sessionStorage.getItem('clinic_portal_timestamp');
-      if (!timestamp) return false;
-      
-      const parsed = parseInt(timestamp, 10);
-      const age = Date.now() - parsed;
-      
-      // Valid session if less than 30 seconds old
-      return !isNaN(parsed) && age < 30000;
-    } catch (err) {
-      return false;
+    // Handle both clinic and admin portal sessions
+    if (requiredRole === 'clinic_staff') {
+      try {
+        const timestamp = sessionStorage.getItem('clinic_portal_timestamp');
+        if (!timestamp) return false;
+        
+        const parsed = parseInt(timestamp, 10);
+        const age = Date.now() - parsed;
+        
+        // Valid session if less than 30 seconds old
+        return !isNaN(parsed) && age < 30000;
+      } catch (err) {
+        return false;
+      }
+    } else if (requiredRole === 'admin') {
+      try {
+        const timestamp = sessionStorage.getItem('admin_portal_timestamp');
+        if (!timestamp) return false;
+        
+        const parsed = parseInt(timestamp, 10);
+        const age = Date.now() - parsed;
+        
+        // Valid session if less than 30 seconds old
+        return !isNaN(parsed) && age < 30000;
+      } catch (err) {
+        return false;
+      }
     }
+    
+    // For other roles, always consider session as valid
+    return true;
   });
   
   // Use session detection for initial state to avoid unnecessary loading states
-  const [readyForClinic, setReadyForClinic] = useState(() => {
-    // If not clinic staff, always ready
-    if (requiredRole !== 'clinic_staff') return true;
+  const [readyForPortal, setReadyForPortal] = useState(() => {
+    // If not a portal that needs special handling, always ready
+    if (requiredRole !== 'clinic_staff' && requiredRole !== 'admin') return true;
     
     // If we have a recent valid session, start as ready
     return hasRecentSession.current();
@@ -51,17 +68,87 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   
   // Update session timestamp when we have a user but only do it once per session
   useEffect(() => {
-    // Only update for clinic staff with the right role
-    if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff') {
-      // Check if we've recently updated this timestamp
-      const currentTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
+    // Handle both clinic and admin portals
+    if (user) {
       const now = Date.now();
       
-      // Only update if no timestamp exists or it's older than 5 seconds
-      if (!currentTimestamp || (now - parseInt(currentTimestamp, 10)) > 5000) {
-        // Save current timestamp to track last successful render
-        sessionStorage.setItem('clinic_portal_timestamp', now.toString());
-        console.log(`Clinic portal session timestamp updated: ${new Date(now).toLocaleTimeString()}`);
+      // For clinic staff sessions
+      if (requiredRole === 'clinic_staff' && user.role === 'clinic_staff') {
+        // Check if we've recently updated this timestamp
+        const currentTimestamp = sessionStorage.getItem('clinic_portal_timestamp');
+        
+        // Only update if no timestamp exists or it's older than 5 seconds
+        if (!currentTimestamp || (now - parseInt(currentTimestamp, 10)) > 5000) {
+          // Save current timestamp to track last successful render
+          sessionStorage.setItem('clinic_portal_timestamp', now.toString());
+          console.log(`✅ Clinic portal session timestamp updated: ${new Date(now).toLocaleTimeString()}`);
+        }
+      }
+      
+      // For admin portal sessions
+      if (requiredRole === 'admin' && user.role === 'admin') {
+        // Check if we've recently updated this timestamp
+        const currentTimestamp = sessionStorage.getItem('admin_portal_timestamp');
+        
+        // Only update if no timestamp exists or it's older than 5 seconds
+        if (!currentTimestamp || (now - parseInt(currentTimestamp, 10)) > 5000) {
+          // Save current timestamp to track last successful render
+          sessionStorage.setItem('admin_portal_timestamp', now.toString());
+          console.log(`✅ Admin portal session timestamp updated: ${new Date(now).toLocaleTimeString()}`);
+          
+          // Special additional handling for admin portal
+          if (path === '/admin-portal' && typeof window !== 'undefined') {
+            console.log('🔒 Setting up admin portal refresh prevention signal');
+            (window as any).__adminPortalFullyLoaded = true;
+            
+            // Create global handler for preventing refreshes
+            if (!(window as any).__adminRefreshPreventionSet) {
+              console.log('🛡️ Installing global admin refresh prevention');
+              
+              // Track in session to prevent double refreshes
+              sessionStorage.setItem('admin_prevent_refresh', 'true');
+              
+              // Set a global flag to prevent double installation
+              (window as any).__adminRefreshPreventionSet = true;
+              
+              // Set a protection flag on the history object
+              try {
+                // Apply special protection to history methods
+                const originalPushState = window.history.pushState;
+                const originalReplaceState = window.history.replaceState;
+                
+                window.history.pushState = function(...args) {
+                  if ((window as any).__adminPortalFullyLoaded) {
+                    console.log("🛡️ Blocking history.pushState in admin portal");
+                    return undefined;
+                  }
+                  return originalPushState.apply(this, args);
+                };
+                
+                window.history.replaceState = function(...args) {
+                  if ((window as any).__adminPortalFullyLoaded) {
+                    console.log("🛡️ Blocking history.replaceState in admin portal");
+                    return undefined;
+                  }
+                  return originalReplaceState.apply(this, args);
+                };
+                
+                // Reset after 10 seconds to avoid permanent breakage
+                setTimeout(() => {
+                  if (window.history.pushState !== originalPushState) {
+                    window.history.pushState = originalPushState;
+                  }
+                  if (window.history.replaceState !== originalReplaceState) {
+                    window.history.replaceState = originalReplaceState;
+                  }
+                  console.log("🔓 Restored original history methods");
+                }, 10000);
+              } catch (err) {
+                console.error("Could not protect history methods:", err);
+              }
+            }
+          }
+        }
       }
     }
     
@@ -70,23 +157,38 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
       console.log("ProtectedRoute unmounting, setting isMounted to false");
       isMountedRef.current = false;
     };
-  }, [user, requiredRole]);
+  }, [user, requiredRole, path]);
   
-  // Make clinic staff ready if not already
+  // Make portal components ready when authentication is complete
   useEffect(() => {
-    // Only execute for clinic staff that's not ready yet
-    if (requiredRole === 'clinic_staff' && user && user.role === 'clinic_staff' && !readyForClinic && !isProcessingRef.current) {
-      console.log("Setting up clinic staff session - marking as ready");
+    // Skip if no user or no special handling needed
+    if (!user || (requiredRole !== 'clinic_staff' && requiredRole !== 'admin')) {
+      return;
+    }
+    
+    // Skip if already processing
+    if (isProcessingRef.current) {
+      return;
+    }
+    
+    // Must match role requirements
+    if (requiredRole !== user.role) {
+      return;
+    }
+    
+    // Only execute if not ready yet
+    if (!readyForPortal) {
+      console.log(`Setting up ${requiredRole} portal session - marking as ready`);
       isProcessingRef.current = true;
       
       // Set ready immediately - no timeout needed
       if (isMountedRef.current) {
-        setReadyForClinic(true);
-        console.log("Clinic staff session fully established");
+        setReadyForPortal(true);
+        console.log(`${requiredRole} portal session fully established`);
       }
       isProcessingRef.current = false;
     }
-  }, [user, requiredRole, readyForClinic]);
+  }, [user, requiredRole, readyForPortal]);
 
   // Generate a stable key for this route to prevent unnecessary remounts
   const stableRouteKey = `protected-route-${path.replace(/\//g, '-')}`;
@@ -96,13 +198,16 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
       path={path}
       key={stableRouteKey}
       component={props => {
-        // Show loading while auth is loading or waiting for clinic session to be fully established
-        if (isLoading || (requiredRole === 'clinic_staff' && !readyForClinic)) {
+        // Show loading while auth is loading or waiting for portal session to be fully established
+        if (isLoading || ((requiredRole === 'clinic_staff' || requiredRole === 'admin') && !readyForPortal)) {
           return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              {requiredRole === 'clinic_staff' && user && !readyForClinic && (
+              {requiredRole === 'clinic_staff' && user && !readyForPortal && (
                 <p className="text-sm text-muted-foreground">Preparing clinic portal...</p>
+              )}
+              {requiredRole === 'admin' && user && !readyForPortal && (
+                <p className="text-sm text-muted-foreground">Preparing admin portal...</p>
               )}
             </div>
           );
