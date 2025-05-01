@@ -232,6 +232,17 @@
       "download": "İndir",
       "delete": "Sil",
       "share": "Paylaş",
+      "description": "Hasta belgelerini ve tıbbi kayıtları yükleyin ve yönetin",
+      "category": "Kategori",
+      "patient": "Hasta",
+      "uploaded": "Yüklenme",
+      "upload_system": "Yükleme Sistemi",
+      "all_categories": "Tüm Kategoriler",
+      "pdf": "PDF",
+      "images": "Görüntüler",
+      "word": "Word",
+      "archives": "Arşivler",
+      "diger": "Diğer",
       "categories": {
         "all": "Tümü",
         "medical": "Tıbbi Belgeler",
@@ -275,7 +286,13 @@
       "view": "Görüntüle",
       "edit": "Düzenle",
       "delete": "Sil",
-      "send": "Gönder"
+      "send": "Gönder",
+      "quote_requests": "Teklif İstekleri",
+      "manage_quotes": "Kliniğinize gönderilen teklifleri yönetin. İnceleyin, onaylayın veya reddedin.",
+      "treatments": "Tedaviler",
+      "converted": "Dönüştürüldü",
+      "declined": "Reddedildi",
+      "more": "daha fazla"
     },
     "analytics": {
       "title": "Analitik",
@@ -293,7 +310,10 @@
       "sources": "Hasta Kaynakları",
       "satisfaction": "Hasta Memnuniyeti",
       "compare": "Karşılaştır",
-      "export": "Dışa Aktar"
+      "export": "Dışa Aktar",
+      "coming_soon": "Analitik Paneli Yakında",
+      "coming_soon_desc": "Analitik paneli geliştirilme aşamasındadır. Yakında, klinik performansınızı, hasta memnuniyet oranlarını ve tedavi sonuçlarını ayrıntılı grafikler ve raporlarla takip edebileceksiniz.",
+      "learn_more": "Daha Fazla Bilgi"
     },
     "reports": {
       "title": "Raporlar",
@@ -309,7 +329,15 @@
       "treatment": "Tedavi",
       "appointment": "Randevu",
       "performance": "Performans",
-      "custom": "Özel Rapor"
+      "custom": "Özel Rapor",
+      "analytics": "Analitik Raporlar",
+      "upload": "Rapor Yükle",
+      "report_id": "Rapor ID",
+      "date": "Oluşturma Tarihi",
+      "created_by": "Oluşturan",
+      "actions": "İşlemler",
+      "view": "Raporu Görüntüle",
+      "more": "Daha Fazla Seçenek"
     },
     "treatment_plans": {
       "title": "Tedavi Planları",
