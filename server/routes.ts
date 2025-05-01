@@ -31,6 +31,8 @@ import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
 import notificationRoutes from "./routes/notification-routes";
+import specialOffersRoutes from "./routes/special-offers-routes";
+import trendingPackagesRoutes from "./routes/trending-packages-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import security middleware
@@ -222,6 +224,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register notification routes
   app.use('/api/notifications', notificationRoutes);
+  
+  // Register special offers routes with commission-based promotion system
+  app.use(specialOffersRoutes);
+  
+  // Register trending packages routes with commission-based promotion system
+  app.use(trendingPackagesRoutes);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {

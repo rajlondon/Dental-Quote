@@ -8,15 +8,6 @@ import {
 } from '@shared/specialOffers';
 import { User } from '@shared/schema';
 
-// Extend Express.User interface to include clinicId
-declare global {
-  namespace Express {
-    interface User {
-      clinicId?: number;
-    }
-  }
-}
-
 const router = express.Router();
 
 // In-memory storage for development (replace with DB in production)
@@ -72,6 +63,12 @@ const commissionTiers: CommissionTier[] = [
   }
 ];
 
+// Sort helper for promotion levels
+const sortByPromotionLevel = (a: SpecialOffer, b: SpecialOffer) => {
+  const levelOrder = { premium: 3, featured: 2, standard: 1 };
+  return levelOrder[b.promotion_level] - levelOrder[a.promotion_level];
+};
+
 // Get all approved & active special offers (public endpoint)
 router.get('/api/special-offers', (req, res) => {
   const allOffers: SpecialOffer[] = [];
@@ -87,10 +84,7 @@ router.get('/api/special-offers', (req, res) => {
   });
   
   // Sort by promotion level (premium first)
-  allOffers.sort((a, b) => {
-    const levelOrder = { premium: 3, featured: 2, standard: 1 };
-    return levelOrder[b.promotion_level] - levelOrder[a.promotion_level];
-  });
+  allOffers.sort(sortByPromotionLevel);
   
   res.json(allOffers);
 });
@@ -111,10 +105,7 @@ router.get('/api/special-offers/homepage', (req, res) => {
   });
   
   // Sort by promotion level (premium first) 
-  homepageOffers.sort((a, b) => {
-    const levelOrder = { premium: 3, featured: 2, standard: 1 };
-    return levelOrder[b.promotion_level] - levelOrder[a.promotion_level];
-  });
+  homepageOffers.sort(sortByPromotionLevel);
   
   // Limit to top offers for homepage
   const topOffers = homepageOffers.slice(0, 6);
@@ -144,7 +135,7 @@ router.get('/api/portal/clinic/special-offers', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId?.toString() || '';
   const clinicOffers = specialOffers.get(clinicId) || [];
   
   res.json(clinicOffers);
@@ -156,7 +147,7 @@ router.post('/api/portal/clinic/special-offers', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId?.toString() || '';
   
   try {
     // Validate the request body
@@ -214,9 +205,9 @@ router.post('/api/portal/clinic/special-offers', (req, res) => {
     specialOffers.set(clinicId, offers);
     
     res.status(201).json(newOffer);
-  } catch (error) {
-    if (error.errors) {
-      return res.status(400).json({ error: error.errors });
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'errors' in error) {
+      return res.status(400).json({ error: (error as any).errors });
     }
     res.status(400).json({ error: 'Invalid offer data' });
   }
@@ -228,7 +219,7 @@ router.put('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId?.toString() || '';
   const { offerId } = req.params;
   
   try {
@@ -305,9 +296,9 @@ router.put('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     specialOffers.set(clinicId, clinicOffers);
     
     res.json(clinicOffers[offerIndex]);
-  } catch (error) {
-    if (error.errors) {
-      return res.status(400).json({ error: error.errors });
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'errors' in error) {
+      return res.status(400).json({ error: (error as any).errors });
     }
     res.status(400).json({ error: 'Invalid offer data' });
   }
@@ -319,7 +310,7 @@ router.delete('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId?.toString() || '';
   const { offerId } = req.params;
   
   // Get the clinic's offers
