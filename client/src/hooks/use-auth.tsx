@@ -56,33 +56,34 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
-  // Global tracking for auth request state
-  const authRequestInFlight = React.useRef<Promise<User | null> | null>(null);
-  const lastInitTime = React.useRef<number>(0);
-  const preventDuplicateQueries = React.useRef<boolean>(false);
+  // Use simpler tracking for component lifecycle
+  const componentInitTime = React.useRef<number>(Date.now());
   
-  // Track if we should use cached auth data from session storage
-  // This helps prevent duplicate requests during rapid navigation
+  // Use flags to prevent multiple state updates
+  const isComponentMounted = React.useRef(true);
+  const userDataRef = React.useRef<User | null>(null);
+  
   React.useEffect(() => {
-    // Check if this is a rapid reinit (< 2s since last init)
-    const now = Date.now();
-    const timeSinceLastInit = now - lastInitTime.current;
-    
-    if (timeSinceLastInit < 2000 && lastInitTime.current > 0) {
-      console.log(`Rapid auth reinit detected (${timeSinceLastInit}ms), will use cache aggressively`);
-      preventDuplicateQueries.current = true;
-      
-      // Reset prevention flag after a short delay
-      setTimeout(() => {
-        preventDuplicateQueries.current = false;
-      }, 5000);
-    }
-    
-    // Update last init time
-    lastInitTime.current = now;
+    isComponentMounted.current = true;
+    return () => {
+      isComponentMounted.current = false;
+    };
   }, []);
   
-  // User data query with deduplication and caching
+  // Read from cache initially to avoid flickering
+  React.useEffect(() => {
+    const cachedUserData = sessionStorage.getItem('cached_user_data');
+    if (cachedUserData) {
+      try {
+        const parsedUser = JSON.parse(cachedUserData);
+        userDataRef.current = parsedUser;
+      } catch (e) {
+        console.error("Failed to parse cached user data", e);
+      }
+    }
+  }, []);
+  
+  // Simplified query that uses our stable userDataRef
   const {
     data: user,
     error,
@@ -90,95 +91,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      // If we already have a request in flight, reuse it to prevent duplicate calls
-      if (authRequestInFlight.current) {
-        console.log("Auth request already in flight, reusing");
-        return authRequestInFlight.current;
+      // If we're in admin mode and already have cached data, return it directly to prevent loops
+      if (window.location.pathname === '/admin-portal' && userDataRef.current) {
+        console.log("Returning cached user data for admin portal to prevent refresh loops");
+        return userDataRef.current;
+      }
+
+      // Check sessionStorage cache
+      const cachedUserData = sessionStorage.getItem('cached_user_data');
+      const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
+            
+      if (cachedUserData && cachedTimestamp) {
+        const timestamp = parseInt(cachedTimestamp, 10);
+        const age = Date.now() - timestamp;
+        
+        if (age < 30000) { // 30 seconds cache for stability
+          const parsedUser = JSON.parse(cachedUserData);
+          userDataRef.current = parsedUser;
+          console.log(`Using cached user data (${age}ms old)`);
+          return parsedUser;
+        }
       }
       
-      // Generate a unique request ID
-      const requestId = `auth-req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      console.log(`Starting new auth request: ${requestId}`);
-      
-      // Otherwise, make a new request
+      // Fetch fresh data
       try {
-        // Create promise and store it as the in-flight request
-        authRequestInFlight.current = (async () => {
-          try {
-            // Try to read from sessionStorage first for clinic staff
-            const cachedUserData = sessionStorage.getItem('cached_user_data');
-            const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
-            
-            // Use cache if it's fresh or if we're in the prevention window
-            // Extend cache time to 10s to avoid double loads more effectively
-            if (cachedUserData && cachedTimestamp) {
-              const timestamp = parseInt(cachedTimestamp, 10);
-              const age = Date.now() - timestamp;
-              
-              // More aggressive caching when needed (10s instead of 5s)
-              // Also extend caching when prevent flag is active
-              // Significantly extend cache lifetime for clinic_staff to prevent refresh issues
-              // This is a key part of fixing the clinic portal refresh problem
-              const isCacheStillValid = preventDuplicateQueries.current ? (age < 60000) : (age < 30000);
-              
-              // Special extended caching for clinic staff
-              // This is critical to prevent the clinic portal refresh issue
-              const parsedUser = JSON.parse(cachedUserData);
-              const isClinicStaff = parsedUser?.role === 'clinic_staff';
-              const shouldUseCache = isClinicStaff ? isCacheStillValid : (age < 10000);
-              
-              if (shouldUseCache) {
-                console.log(`Using cached user data (${age}ms old, role: ${parsedUser?.role}) for request ${requestId}`);
-                return parsedUser;
-              }
-            }
-            
-            // Fetch fresh data with credentials ALWAYS included
-            // NEW: Using our API client instead of fetch for consistent cookie handling
-            console.log("Fetching fresh user data via API client");
-            try {
-              const apiRes = await api.get("/api/auth/user");
-              // If we get here, the request was successful
-              const userData = apiRes.data.user || null;
-              
-              // Cache the user data for future use
-              if (userData) {
-                sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
-                sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-              } else {
-                // Clear cache if user is null
-                sessionStorage.removeItem('cached_user_data');
-                sessionStorage.removeItem('cached_user_timestamp');
-              }
-              
-              return userData;
-            } catch (error: any) { // Type error as any to access properties safely
-              if (error.response?.status === 401) {
-                console.warn("Authentication failed - session may have expired");
-                // Clear cache on authentication failure
-                sessionStorage.removeItem('cached_user_data');
-                sessionStorage.removeItem('cached_user_timestamp');
-                return null;
-              }
-              throw new Error(`Failed to fetch user data: ${error.message || 'Unknown error'}`);
-            }
-          } catch (error: any) {
-            console.error("Error fetching user data:", error);
-            return null;
-          }
-        })();
+        console.log("Fetching fresh user data");
+        const apiRes = await api.get("/api/auth/user");
+        const userData = apiRes.data.user || null;
         
-        // Wait for the request to complete
-        const result = await authRequestInFlight.current;
-        return result;
-      } finally {
-        // Clear the in-flight request after a short delay
-        setTimeout(() => {
-          authRequestInFlight.current = null;
-        }, 50);
+        // Update cache
+        if (userData) {
+          userDataRef.current = userData;
+          sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
+          sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+        } else {
+          userDataRef.current = null;
+          sessionStorage.removeItem('cached_user_data');
+          sessionStorage.removeItem('cached_user_timestamp');
+        }
+        
+        return userData;
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          console.warn("Authentication failed - session may have expired");
+          userDataRef.current = null;
+          sessionStorage.removeItem('cached_user_data');
+          sessionStorage.removeItem('cached_user_timestamp');
+          return null;
+        }
+        throw new Error(`Failed to fetch user data: ${error.message || 'Unknown error'}`);
       }
     },
-    staleTime: 10000, // Consider data fresh for 10 seconds
+    staleTime: 30000, // Increase stale time to 30 seconds for more stability
+    refetchOnWindowFocus: false // Disable refetching on window focus to prevent loops
   });
   
   // Login mutation with enhanced verification handling
