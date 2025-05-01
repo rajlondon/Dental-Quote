@@ -9,13 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Minus } from "lucide-react";
-import { TreatmentPlanStatus, PaymentStatus, CreateTreatmentPlanDto } from "@shared/models/treatment-plan";
+import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
 import { usePatients } from '@/hooks/use-patients';
 import { useCreateTreatmentPlan } from '@/hooks/use-treatment-plans';
+import { useToast } from "@/hooks/use-toast";
 
 // Create a schema for our form
 const createTreatmentPlanSchema = z.object({
-  patientId: z.coerce.number().min(1, { message: "Please select a patient" }),
+  patientId: z.coerce.number().min(1, { message: "Patient is required" }),
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().optional(),
   treatmentItems: z.array(
@@ -29,6 +30,8 @@ const createTreatmentPlanSchema = z.object({
   estimatedDuration: z.string().optional(),
   notes: z.string().optional(),
   currency: z.string().default("GBP"),
+  status: z.string().default(TreatmentPlanStatus.DRAFT),
+  paymentStatus: z.string().default(PaymentStatus.PENDING),
 });
 
 type FormValues = z.infer<typeof createTreatmentPlanSchema>;
@@ -42,8 +45,9 @@ export const CreateTreatmentPlanDialog = ({
   open,
   onOpenChange,
 }: CreateTreatmentPlanDialogProps) => {
+  const { toast } = useToast();
+  const { data: patientsData, isLoading: isLoadingPatients } = usePatients();
   const createMutation = useCreateTreatmentPlan();
-  const patientsQuery = usePatients();
 
   // Setup form with default values
   const form = useForm<FormValues>({
@@ -58,6 +62,8 @@ export const CreateTreatmentPlanDialog = ({
       estimatedDuration: "",
       notes: "",
       currency: "GBP",
+      status: TreatmentPlanStatus.DRAFT,
+      paymentStatus: PaymentStatus.PENDING,
     },
   });
 
@@ -69,11 +75,19 @@ export const CreateTreatmentPlanDialog = ({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      await createMutation.mutateAsync(values as CreateTreatmentPlanDto);
-      form.reset(); // Reset the form after successful submission
+      await createMutation.mutateAsync(values);
       onOpenChange(false);
+      toast({
+        title: "Success",
+        description: "Treatment plan created successfully",
+      });
     } catch (error) {
       console.error("Error creating treatment plan:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create treatment plan",
+        variant: "destructive",
+      });
     }
   };
 
@@ -102,9 +116,9 @@ export const CreateTreatmentPlanDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Treatment Plan</DialogTitle>
+          <DialogTitle>Create Treatment Plan</DialogTitle>
           <DialogDescription>
-            Create a detailed treatment plan for your patient.
+            Create a new treatment plan for a patient. Add treatment items, set pricing, and more.
           </DialogDescription>
         </DialogHeader>
 
@@ -117,27 +131,28 @@ export const CreateTreatmentPlanDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Patient</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value.toString()}>
+                  <Select onValueChange={field.onChange} value={String(field.value)}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a patient" />
+                        <SelectValue placeholder="Select patient" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {patientsQuery.isLoading ? (
-                        <SelectItem value="loading" disabled>
-                          Loading patients...
-                        </SelectItem>
-                      ) : patientsQuery.isError ? (
-                        <SelectItem value="error" disabled>
-                          Error loading patients
-                        </SelectItem>
-                      ) : (
-                        patientsQuery.data?.data?.patients.map((patient: any) => (
-                          <SelectItem key={patient.id} value={patient.id.toString()}>
+                      {isLoadingPatients ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <span className="ml-2">Loading patients...</span>
+                        </div>
+                      ) : patientsData?.data?.patients && patientsData.data.patients.length > 0 ? (
+                        patientsData.data.patients.map((patient) => (
+                          <SelectItem key={patient.id} value={String(patient.id)}>
                             {patient.firstName} {patient.lastName}
                           </SelectItem>
                         ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground">
+                          No patients found
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -176,6 +191,62 @@ export const CreateTreatmentPlanDialog = ({
               )}
             />
 
+            {/* Status and Payment in 2 columns on larger screens */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Status */}
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={TreatmentPlanStatus.DRAFT}>Draft</SelectItem>
+                        <SelectItem value={TreatmentPlanStatus.SENT}>Sent</SelectItem>
+                        <SelectItem value={TreatmentPlanStatus.ACCEPTED}>Accepted</SelectItem>
+                        <SelectItem value={TreatmentPlanStatus.IN_PROGRESS}>In Progress</SelectItem>
+                        <SelectItem value={TreatmentPlanStatus.COMPLETED}>Completed</SelectItem>
+                        <SelectItem value={TreatmentPlanStatus.REJECTED}>Rejected</SelectItem>
+                        <SelectItem value={TreatmentPlanStatus.CANCELLED}>Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Payment Status */}
+              <FormField
+                control={form.control}
+                name="paymentStatus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={PaymentStatus.PENDING}>Pending</SelectItem>
+                        <SelectItem value={PaymentStatus.PARTIAL}>Partial</SelectItem>
+                        <SelectItem value={PaymentStatus.PAID}>Paid</SelectItem>
+                        <SelectItem value={PaymentStatus.REFUNDED}>Refunded</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Currency */}
             <FormField
               control={form.control}
@@ -183,7 +254,7 @@ export const CreateTreatmentPlanDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Currency</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select currency" />

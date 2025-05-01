@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Minus } from "lucide-react";
-import { TreatmentPlanStatus, PaymentStatus, UpdateTreatmentPlanDto } from "@shared/models/treatment-plan";
+import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
 import { useTreatmentPlan, useUpdateTreatmentPlan } from '@/hooks/use-treatment-plans';
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,9 +28,9 @@ const updateTreatmentPlanSchema = z.object({
   ).min(1, { message: "At least one treatment item is required" }),
   estimatedDuration: z.string().optional(),
   notes: z.string().optional(),
-  currency: z.string().default("GBP"),
-  status: z.string().optional(),
-  paymentStatus: z.string().optional(),
+  currency: z.string(),
+  status: z.string(),
+  paymentStatus: z.string(),
 });
 
 type FormValues = z.infer<typeof updateTreatmentPlanSchema>;
@@ -67,21 +67,21 @@ export const UpdateTreatmentPlanDialog = ({
     },
   });
 
-  // Update form values when we get the treatment plan data
+  // Update form when data is loaded
   useEffect(() => {
     if (treatmentPlanData?.data) {
       const plan = treatmentPlanData.data;
       form.reset({
-        title: plan.title || "",
+        title: plan.title,
         description: plan.description || "",
-        treatmentItems: plan.treatmentItems?.length 
-          ? plan.treatmentItems 
-          : [{ name: "", price: 0, quantity: 1, description: "" }],
+        treatmentItems: plan.treatmentItems || [
+          { name: "", price: 0, quantity: 1, description: "" }
+        ],
         estimatedDuration: plan.estimatedDuration || "",
         notes: plan.notes || "",
         currency: plan.currency || "GBP",
-        status: plan.status || TreatmentPlanStatus.DRAFT,
-        paymentStatus: plan.paymentStatus || PaymentStatus.PENDING,
+        status: plan.status,
+        paymentStatus: plan.paymentStatus,
       });
     }
   }, [treatmentPlanData, form]);
@@ -97,7 +97,7 @@ export const UpdateTreatmentPlanDialog = ({
       await updateMutation.mutateAsync({
         id: treatmentPlanId,
         ...values,
-      } as UpdateTreatmentPlanDto);
+      });
       onOpenChange(false);
       toast({
         title: "Success",
@@ -140,7 +140,7 @@ export const UpdateTreatmentPlanDialog = ({
         <DialogHeader>
           <DialogTitle>Update Treatment Plan</DialogTitle>
           <DialogDescription>
-            Update the details for this treatment plan.
+            Update the details of this treatment plan.
           </DialogDescription>
         </DialogHeader>
 
@@ -181,8 +181,9 @@ export const UpdateTreatmentPlanDialog = ({
                 )}
               />
 
-              {/* Status */}
+              {/* Status and Payment in 2 columns on larger screens */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Status */}
                 <FormField
                   control={form.control}
                   name="status"
