@@ -128,7 +128,8 @@ async function translateWithGemini(text, sourceLang, targetLang) {
   console.log(`  Using Gemini for ${Object.keys(text).length} keys...`);
   
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Use gemini-1.5-pro model which is the current stable version
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
     const langName = getLanguageName(targetLang);
     const prompt = `Translate the following JSON keys from ${getLanguageName(sourceLang)} to ${langName}. 
