@@ -17,10 +17,10 @@ import { CreateTreatmentPlanDialog } from "./CreateTreatmentPlanDialog";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
 import { ViewTreatmentPlanDialog } from "./ViewTreatmentPlanDialog";
 
-// Helper function to format date strings
-const formatDate = (dateString?: string): string => {
+// Helper function to format date strings with locale support
+const formatDate = (dateString?: string, locale?: string): string => {
   if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString('en-GB', {
+  return new Date(dateString).toLocaleDateString(locale || 'en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric'
@@ -119,7 +119,7 @@ const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
 
 export const TreatmentPlansSection = () => {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [currentTab, setCurrentTab] = useState<string>("all");
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
@@ -127,6 +127,10 @@ export const TreatmentPlansSection = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState<boolean>(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
+  
+  // Get current locale for formatting
+  const currentLanguage = i18n.language || 'en';
+  const locale = currentLanguage === 'tr' ? 'tr-TR' : 'en-GB';
 
   // Convert tab to filter status
   const getStatusFilter = (): string | undefined => {
@@ -354,7 +358,7 @@ export const TreatmentPlansSection = () => {
                       <tr key={plan.id} className="border-b hover:bg-muted/50">
                         <td className="p-4 text-sm">{plan.patientName}</td>
                         <td className="p-4 text-sm">{plan.title}</td>
-                        <td className="p-4 text-sm">{formatDate(plan.createdAt)}</td>
+                        <td className="p-4 text-sm">{formatDate(plan.createdAt, locale)}</td>
                         <td className="p-4 text-sm">
                           <StatusBadge status={plan.status} />
                         </td>
@@ -362,7 +366,7 @@ export const TreatmentPlansSection = () => {
                           <PaymentBadge status={plan.paymentStatus} />
                         </td>
                         <td className="p-4 text-sm">
-                          {new Intl.NumberFormat('en-GB', {
+                          {new Intl.NumberFormat(locale, {
                             style: 'currency',
                             currency: plan.currency || 'GBP'
                           }).format(plan.totalPrice)}

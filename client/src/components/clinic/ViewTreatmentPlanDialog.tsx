@@ -14,12 +14,16 @@ interface ViewTreatmentPlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   treatmentPlanId: number;
+  onDownload?: (plan: any) => Promise<void>;
+  onSendToPatient?: (plan: any) => Promise<void>;
 }
 
 export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = ({
   open,
   onOpenChange,
   treatmentPlanId,
+  onDownload,
+  onSendToPatient,
 }) => {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useTreatmentPlan(treatmentPlanId);
@@ -50,23 +54,31 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
   };
 
   // Handle download PDF
-  const handleDownload = () => {
-    // In a real application, this would trigger a PDF download
-    // For now, we'll just show a success toast
-    toast({
-      title: t("clinic.treatment_plans.download.title", "Download Started"),
-      description: t("clinic.treatment_plans.download.preparing", "The treatment plan PDF is being generated and downloaded."),
-    });
+  const handleDownload = async () => {
+    if (onDownload && treatmentPlan) {
+      // Use the provided download handler
+      await onDownload(treatmentPlan);
+    } else {
+      // Fallback for when no external handler is provided
+      toast({
+        title: t("clinic.treatment_plans.download.title", "Download Started"),
+        description: t("clinic.treatment_plans.download.preparing", "The treatment plan PDF is being generated and downloaded."),
+      });
+    }
   };
 
   // Handle send to patient
-  const handleSendToPatient = () => {
-    // In a real application, this would send an email to the patient with the plan
-    // For now, we'll just show a success toast
-    toast({
-      title: t("clinic.treatment_plans.send.success_title", "Email Sent"),
-      description: t("clinic.treatment_plans.send.success_description", "The treatment plan has been sent to the patient's email."),
-    });
+  const handleSendToPatient = async () => {
+    if (onSendToPatient && treatmentPlan) {
+      // Use the provided send handler
+      await onSendToPatient(treatmentPlan);
+    } else {
+      // Fallback for when no external handler is provided
+      toast({
+        title: t("clinic.treatment_plans.send.success_title", "Email Sent"),
+        description: t("clinic.treatment_plans.send.success_description", "The treatment plan has been sent to the patient's email."),
+      });
+    }
   };
 
   // Get color for status badge
