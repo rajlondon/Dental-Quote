@@ -32,7 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info, ShieldAlert } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Define form validation schema
 const patientSchema = z.object({
@@ -255,6 +256,14 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
                 {t("clinic.patients.add_patient_submit", "Add Patient")}
               </Button>
             </DialogFooter>
+            <Alert variant="destructive" className="mt-4">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertTitle>Patient Privacy Protection</AlertTitle>
+              <AlertDescription>
+                For business protection, patient contact information will be partially masked until treatment is confirmed. 
+                Attempting to directly contact patients outside the platform is prohibited by our terms of service.
+              </AlertDescription>
+            </Alert>
           </form>
         </Form>
       </DialogContent>
