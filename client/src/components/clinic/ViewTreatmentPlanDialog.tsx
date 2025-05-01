@@ -49,8 +49,8 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
     // In a real application, this would trigger a PDF download
     // For now, we'll just show a success toast
     toast({
-      title: "Download Started",
-      description: "The treatment plan PDF is being generated and downloaded.",
+      title: t("clinic.treatment_plans.download.title", "Download Started"),
+      description: t("clinic.treatment_plans.download.preparing", "The treatment plan PDF is being generated and downloaded."),
     });
   };
 
@@ -59,8 +59,8 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
     // In a real application, this would send an email to the patient with the plan
     // For now, we'll just show a success toast
     toast({
-      title: "Email Sent",
-      description: "The treatment plan has been sent to the patient's email.",
+      title: t("clinic.treatment_plans.send.success_title", "Email Sent"),
+      description: t("clinic.treatment_plans.send.success_description", "The treatment plan has been sent to the patient's email."),
     });
   };
 
@@ -106,9 +106,9 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Treatment Plan Details</DialogTitle>
+          <DialogTitle className="text-xl">{t("clinic.treatment_plans.view.title", "Treatment Plan Details")}</DialogTitle>
           <DialogDescription>
-            View all details of this treatment plan.
+            {t("clinic.treatment_plans.view.description", "View all details of this treatment plan.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +118,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
           </div>
         ) : isError || !treatmentPlan ? (
           <div className="py-8 text-center">
-            <p className="text-red-500">Error loading treatment plan. Please try again.</p>
+            <p className="text-red-500">{t("clinic.treatment_plans.view.error", "Error loading treatment plan. Please try again.")}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -143,34 +143,34 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">Patient</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.patient", "Patient")}</h3>
                     <p>{treatmentPlan.patientName}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">Clinic</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.clinic", "Clinic")}</h3>
                     <p>{treatmentPlan.clinicName}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">Created</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.created", "Created")}</h3>
                     <p>{formatDate(treatmentPlan.createdAt)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">Last Updated</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.updated", "Last Updated")}</h3>
                     <p>{formatDate(treatmentPlan.updatedAt)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">Appointment Date</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.appointment_date", "Appointment Date")}</h3>
                     <p>{formatDate(treatmentPlan.appointmentDate)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">Estimated Duration</h3>
-                    <p>{treatmentPlan.estimatedDuration || "Not specified"}</p>
+                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.duration", "Estimated Duration")}</h3>
+                    <p>{treatmentPlan.estimatedDuration || t("clinic.treatment_plans.view.not_specified", "Not specified")}</p>
                   </div>
                 </div>
 
                 {treatmentPlan.notes && (
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-1">Additional Notes</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-1">{t("clinic.treatment_plans.view.notes", "Additional Notes")}</h3>
                     <p className="text-sm">{treatmentPlan.notes}</p>
                   </div>
                 )}
@@ -179,15 +179,15 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
 
             {/* Treatment items */}
             <div>
-              <h3 className="font-semibold mb-2">Treatment Items</h3>
+              <h3 className="font-semibold mb-2">{t("clinic.treatment_plans.view.treatment_items", "Treatment Items")}</h3>
               <div className="border rounded-md overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <tr>
-                      <th className="px-4 py-3 text-left">Item</th>
-                      <th className="px-4 py-3 text-right">Price</th>
-                      <th className="px-4 py-3 text-right">Qty</th>
-                      <th className="px-4 py-3 text-right">Total</th>
+                      <th className="px-4 py-3 text-left">{t("clinic.treatment_plans.view.item", "Item")}</th>
+                      <th className="px-4 py-3 text-right">{t("clinic.treatment_plans.view.price", "Price")}</th>
+                      <th className="px-4 py-3 text-right">{t("clinic.treatment_plans.view.qty", "Qty")}</th>
+                      <th className="px-4 py-3 text-right">{t("clinic.treatment_plans.view.total", "Total")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -214,7 +214,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
                   <tfoot className="bg-gray-50 font-medium">
                     <tr>
                       <td colSpan={3} className="px-4 py-3 text-right">
-                        Total
+                        {t("clinic.treatment_plans.view.total", "Total")}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {formatCurrency(treatmentPlan.totalPrice, treatmentPlan.currency)}
@@ -228,7 +228,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
             {/* Action buttons */}
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Close
+                {t("common.close", "Close")}
               </Button>
               <Button 
                 variant="outline" 
@@ -236,14 +236,14 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
                 onClick={handleSendToPatient}
               >
                 <Send className="h-4 w-4" />
-                Send to Patient
+                {t("clinic.treatment_plans.actions.send_to_patient", "Send to Patient")}
               </Button>
               <Button 
                 className="gap-1"
                 onClick={handleDownload}
               >
                 <Download className="h-4 w-4" />
-                Download PDF
+                {t("clinic.treatment_plans.download.button", "Download PDF")}
               </Button>
             </div>
           </div>
