@@ -225,10 +225,12 @@ export function NotificationsPopover({
                   {notifications.map((notification) => (
                     <div 
                       key={notification.id}
-                      className={`p-4 cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-blue-50/30' : ''}`}
-                      onClick={() => handleNotificationClick(notification)}
+                      className={`relative p-4 hover:bg-gray-50 group ${!notification.read ? 'bg-blue-50/30' : ''}`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div 
+                        className="flex items-start gap-3 cursor-pointer"
+                        onClick={() => handleNotificationClick(notification)}
+                      >
                         {getNotificationIcon(notification.type)}
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center justify-between">
@@ -246,6 +248,28 @@ export function NotificationsPopover({
                             {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
                           </p>
                         </div>
+                      </div>
+                      
+                      {/* Delete button with tooltip */}
+                      <div className="absolute right-2 top-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notification.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">{t('notifications.delete', 'Delete notification')}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   ))}
