@@ -29,6 +29,8 @@ const formatDate = (dateString?: string): string => {
 
 // Status badge component
 const StatusBadge = ({ status }: { status: TreatmentPlanStatus }) => {
+  const { t } = useTranslation();
+  
   const getVariant = () => {
     switch (status) {
       case TreatmentPlanStatus.DRAFT:
@@ -50,13 +52,36 @@ const StatusBadge = ({ status }: { status: TreatmentPlanStatus }) => {
     }
   };
 
+  const getLabel = () => {
+    switch (status) {
+      case TreatmentPlanStatus.DRAFT:
+        return t("clinic.treatment_plans.status.draft", "Draft");
+      case TreatmentPlanStatus.SENT:
+        return t("clinic.treatment_plans.status.sent", "Sent");
+      case TreatmentPlanStatus.ACCEPTED:
+        return t("clinic.treatment_plans.status.accepted", "Accepted");
+      case TreatmentPlanStatus.IN_PROGRESS:
+        return t("clinic.treatment_plans.status.in_progress", "In Progress");
+      case TreatmentPlanStatus.COMPLETED:
+        return t("clinic.treatment_plans.status.completed", "Completed");
+      case TreatmentPlanStatus.REJECTED:
+        return t("clinic.treatment_plans.status.rejected", "Rejected");
+      case TreatmentPlanStatus.CANCELLED:
+        return t("clinic.treatment_plans.status.cancelled", "Cancelled");
+      default:
+        return status;
+    }
+  };
+
   return (
-    <Badge variant={getVariant()}>{status}</Badge>
+    <Badge variant={getVariant()}>{getLabel()}</Badge>
   );
 };
 
 // Payment status badge component
 const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
+  const { t } = useTranslation();
+
   const getVariant = () => {
     switch (status) {
       case PaymentStatus.PAID:
@@ -72,8 +97,23 @@ const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
     }
   };
 
+  const getLabel = () => {
+    switch (status) {
+      case PaymentStatus.PAID:
+        return t("clinic.treatment_plans.payment.paid", "Paid");
+      case PaymentStatus.PARTIAL:
+        return t("clinic.treatment_plans.payment.partial", "Partial");
+      case PaymentStatus.PENDING:
+        return t("clinic.treatment_plans.payment.pending", "Pending");
+      case PaymentStatus.REFUNDED:
+        return t("clinic.treatment_plans.payment.refunded", "Refunded");
+      default:
+        return status;
+    }
+  };
+
   return (
-    <Badge variant={getVariant()}>{status}</Badge>
+    <Badge variant={getVariant()}>{getLabel()}</Badge>
   );
 };
 
@@ -262,7 +302,7 @@ export const TreatmentPlansSection = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search by name or title..."
+              placeholder={t("clinic.treatment_plans.search_placeholder", "Search by name or title...")}
               className="w-full pl-8"
               value={search}
               onChange={handleSearchChange}
@@ -273,12 +313,12 @@ export const TreatmentPlansSection = () => {
 
       <Tabs defaultValue="all" className="mx-6" onValueChange={setCurrentTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.DRAFT}>Draft</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.SENT}>Sent</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.ACCEPTED}>Accepted</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.IN_PROGRESS}>In Progress</TabsTrigger>
-          <TabsTrigger value={TreatmentPlanStatus.COMPLETED}>Completed</TabsTrigger>
+          <TabsTrigger value="all">{t("clinic.treatment_plans.tabs.all", "All")}</TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.DRAFT}>{t("clinic.treatment_plans.tabs.draft", "Draft")}</TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.SENT}>{t("clinic.treatment_plans.tabs.sent", "Sent")}</TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.ACCEPTED}>{t("clinic.treatment_plans.tabs.accepted", "Accepted")}</TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.IN_PROGRESS}>{t("clinic.treatment_plans.tabs.in_progress", "In Progress")}</TabsTrigger>
+          <TabsTrigger value={TreatmentPlanStatus.COMPLETED}>{t("clinic.treatment_plans.tabs.completed", "Completed")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={currentTab} className="mt-0">
@@ -289,24 +329,24 @@ export const TreatmentPlansSection = () => {
               </div>
             ) : isError ? (
               <div className="text-center py-8 text-destructive">
-                <p>Error loading treatment plans: {error?.message || "Unknown error"}</p>
+                <p>{t("clinic.treatment_plans.error_loading", "Error loading treatment plans:")}{" "}{error?.message || t("common.unknown_error", "Unknown error")}</p>
               </div>
             ) : data?.data?.treatmentPlans?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>No treatment plans found</p>
+                <p>{t("clinic.treatment_plans.no_plans_found", "No treatment plans found")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b text-xs text-muted-foreground">
-                      <th className="p-4 text-left font-medium">Patient</th>
-                      <th className="p-4 text-left font-medium">Title</th>
-                      <th className="p-4 text-left font-medium">Created</th>
-                      <th className="p-4 text-left font-medium">Status</th>
-                      <th className="p-4 text-left font-medium">Payment</th>
-                      <th className="p-4 text-left font-medium">Total</th>
-                      <th className="p-4 text-right font-medium">Actions</th>
+                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.patient", "Patient")}</th>
+                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.title", "Title")}</th>
+                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.created", "Created")}</th>
+                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.status", "Status")}</th>
+                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.payment", "Payment")}</th>
+                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.total", "Total")}</th>
+                      <th className="p-4 text-right font-medium">{t("clinic.treatment_plans.columns.actions", "Actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -335,10 +375,10 @@ export const TreatmentPlansSection = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>{t("common.actions", "Actions")}</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => handleView(plan)}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                View
+                                {t("common.view", "View")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
@@ -347,15 +387,15 @@ export const TreatmentPlansSection = () => {
                                 }}
                               >
                                 <FileEdit className="mr-2 h-4 w-4" />
-                                Edit
+                                {t("common.edit", "Edit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDownload(plan)}>
                                 <Download className="mr-2 h-4 w-4" />
-                                Download
+                                {t("common.download", "Download")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleSendToPatient(plan)}>
                                 <Send className="mr-2 h-4 w-4" />
-                                Send to Patient
+                                {t("clinic.treatment_plans.actions.send_to_patient", "Send to Patient")}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <AlertDialog>
@@ -365,26 +405,25 @@ export const TreatmentPlansSection = () => {
                                     className="text-destructive focus:text-destructive"
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
+                                    {t("common.delete", "Delete")}
                                   </DropdownMenuItem>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t("common.confirm_delete.title", "Are you sure?")}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This action cannot be undone. This will permanently delete the
-                                      treatment plan and remove it from our servers.
+                                      {t("common.confirm_delete.description", "This action cannot be undone. This will permanently delete the treatment plan and remove it from our servers.")}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel>{t("common.cancel", "Cancel")}</AlertDialogCancel>
                                     <AlertDialogAction onClick={() => handleDelete(plan.id)}>
                                       {deleteMutation.isPending ? (
                                         <>
                                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                          Deleting...
+                                          {t("common.deleting", "Deleting...")}
                                         </>
-                                      ) : "Delete"}
+                                      ) : t("common.delete", "Delete")}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
