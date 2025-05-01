@@ -1,169 +1,118 @@
-import React, { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { createContext, ReactNode, useContext, useState, useEffect } from "react";
+import { useLocalStorage } from "@/lib/localstorage-state";
+import { apiRequest } from "@/lib/queryClient";
 
-// Simplified admin user type
+// Admin user type
 interface AdminUser {
   id: number;
   email: string;
-  role: string;
+  username: string;
+  role: 'admin';
+  firstName?: string;
+  lastName?: string;
+  profileImage?: string;
 }
 
-// Context type
-type AdminAuthContextType = {
+// State interface
+interface AdminAuthState {
   adminUser: AdminUser | null;
   isLoading: boolean;
   error: Error | null;
+}
+
+// Context interface
+interface AdminAuthContextType extends AdminAuthState {
   adminLogin: (email: string, password: string) => Promise<void>;
   adminLogout: () => Promise<void>;
-};
+}
 
-// Create context
+// Create the context
 export const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 
-/**
- * Admin-specific authentication provider that bypasses React Query
- * to prevent infinite update loops
- */
+// Provider component
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [adminUserState, setAdminUserState] = useLocalStorage<AdminUser | null>('admin_session', null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const isInitialized = React.useRef(false);
+  const [loadAttempted, setLoadAttempted] = useState<boolean>(false);
 
-  // On mount, check for cached admin user data first
+  // Check admin session on mount
   useEffect(() => {
-    if (isInitialized.current) return;
-    isInitialized.current = true;
-
-    const checkAdminAuth = async () => {
+    async function checkAdminSession() {
+      if (loadAttempted) return;
+      
+      setLoadAttempted(true);
+      
       try {
-        // First check for cached admin session
-        const cachedAdminData = sessionStorage.getItem('admin_user_data');
-        if (cachedAdminData) {
-          try {
-            const parsedUser = JSON.parse(cachedAdminData);
-            if (parsedUser && parsedUser.role === 'admin') {
-              console.log('Using cached admin data to prevent refresh loops');
-              setAdminUser(parsedUser);
-              setIsLoading(false);
-              return;
-            }
-          } catch (e) {
-            console.error('Failed to parse cached admin data', e);
+        setIsLoading(true);
+        
+        // Use the admin auth endpoint to verify the session
+        // Fall back to cached session if API fails
+        const res = await apiRequest("GET", "/api/auth/user");
+        const userData = await res.json();
+        
+        if (userData && userData.role === 'admin') {
+          console.log("Admin session verified from API");
+          setAdminUserState(userData as AdminUser);
+        } else {
+          // if API returns a user but not admin, clear session
+          if (userData && userData.id) {
+            console.log("User session exists but is not admin role");
+            setAdminUserState(null);
           }
-        }
-
-        // Fallback to a fetch request if needed
-        const response = await fetch('/api/auth/user', {
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const userData = data.user || null;
-          
-          if (userData && userData.role === 'admin') {
-            setAdminUser(userData);
-            // Cache for future use
-            sessionStorage.setItem('admin_user_data', JSON.stringify(userData));
-          }
-        } else if (response.status !== 401) {
-          // Only treat non-401 responses as errors
-          throw new Error(`Failed to fetch admin user: ${response.statusText}`);
         }
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error('Unknown error checking admin authentication'));
-        }
-        console.error('Admin auth check error:', err);
+        // API failed, use cached admin session if available
+        console.log("Admin session check failed, using cached session:", adminUserState);
+        // We don't clear the session here - let the cached value persist
       } finally {
         setIsLoading(false);
       }
-    };
+    }
+    
+    checkAdminSession();
+  }, [adminUserState, loadAttempted, setAdminUserState]);
 
-    checkAdminAuth();
-  }, []);
-
-  // Simple admin login function that doesn't use React Query
-  const adminLogin = async (email: string, password: string) => {
+  // Admin login function
+  const adminLogin = async (email: string, password: string): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setIsLoading(true);
-      setError(null);
+      const res = await apiRequest("POST", "/api/auth/login", { email, password });
+      const data = await res.json();
       
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+      if (!data || !data.user || data.user.role !== 'admin') {
+        throw new Error("Admin authentication failed - not an admin account");
       }
       
-      const userData = data.user || data;
+      // Set the admin user in state
+      setAdminUserState(data.user as AdminUser);
       
-      if (userData.role !== 'admin') {
-        throw new Error('Not authorized as admin');
-      }
+      // Save client ID for session tracking
+      console.log(`New admin client registered with ID: ${data.user.id}`);
       
-      // Update state and cache
-      setAdminUser(userData);
-      sessionStorage.setItem('admin_user_data', JSON.stringify(userData));
-      sessionStorage.setItem('admin_login_time', Date.now().toString());
-      
-      toast({
-        title: "Admin Login Successful",
-        description: `Welcome back, ${userData.firstName || userData.email}!`,
-      });
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err);
-        toast({
-          title: "Admin Login Failed",
-          description: err.message,
-          variant: "destructive"
-        });
-      }
+    } catch (err: any) {
+      setError(err);
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Simple admin logout function
-  const adminLogout = async () => {
+  // Admin logout function
+  const adminLogout = async (): Promise<void> => {
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      
-      // Call the logout endpoint
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      // Clear state and cache regardless of response
-      setAdminUser(null);
-      sessionStorage.removeItem('admin_user_data');
-      sessionStorage.removeItem('admin_login_time');
-      
-      toast({
-        title: "Logged Out",
-        description: "You have been logged out of the admin portal",
-      });
+      // Call the server logout API
+      await apiRequest("POST", "/api/auth/logout");
     } catch (err) {
-      console.error('Logout error:', err);
-      // Still clear the user data even if the request fails
-      setAdminUser(null);
-      sessionStorage.removeItem('admin_user_data');
+      console.error("Logout API error:", err);
+      // Continue with client-side logout even if API fails
     } finally {
+      // Clear the admin user from state
+      setAdminUserState(null);
       setIsLoading(false);
     }
   };
@@ -171,11 +120,11 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   return (
     <AdminAuthContext.Provider
       value={{
-        adminUser,
+        adminUser: adminUserState,
         isLoading,
         error,
         adminLogin,
-        adminLogout
+        adminLogout,
       }}
     >
       {children}
