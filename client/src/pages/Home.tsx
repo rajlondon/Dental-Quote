@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import HeroSimple from "@/components/HeroSimple";
 import Footer from "@/components/Footer";
