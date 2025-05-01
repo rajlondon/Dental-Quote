@@ -155,7 +155,7 @@ ${JSON.stringify(text, null, 2)}`;
     }
   } catch (error) {
     console.error(`  Error with Gemini translation: ${error.message}`);
-    return null;
+    throw error; // Rethrow to allow retry mechanism to work
   }
 }
 
@@ -183,16 +183,39 @@ async function processTranslationsInChunks(translations, sourceLang, targetLang)
     console.log(`  Translating chunk ${index + 1}/${chunks.length} (${Object.keys(chunk).length} keys)...`);
     
     // Use Gemini for all languages since OpenAI has quota issues
-    let translatedChunk = await translateWithGemini(chunk, sourceLang, targetLang);
+    let translatedChunk = null;
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (!translatedChunk && retries < maxRetries) {
+      try {
+        translatedChunk = await translateWithGemini(chunk, sourceLang, targetLang);
+      } catch (error) {
+        retries++;
+        console.log(`  Attempt ${retries}/${maxRetries} failed: ${error.message}`);
+        
+        if (error.message.includes("429") || error.message.includes("Too Many Requests")) {
+          const delayTime = Math.pow(2, retries) * 30000; // Exponential backoff: 30s, 60s, 120s
+          console.log(`  Rate limit hit. Waiting ${delayTime/1000} seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delayTime));
+        } else {
+          // For other errors, wait a shorter time
+          console.log(`  Waiting 5 seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+    }
     
     if (translatedChunk) {
       translatedChunks.push(translatedChunk);
     } else {
-      console.error(`  Failed to translate chunk ${index + 1}, skipping...`);
+      console.error(`  Failed to translate chunk ${index + 1} after ${maxRetries} attempts, skipping...`);
     }
     
-    // Add a small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Add a longer delay between chunks to avoid rate limiting
+    const chunkDelay = 15000; // 15 seconds
+    console.log(`  Waiting ${chunkDelay/1000} seconds before next chunk...`);
+    await new Promise(resolve => setTimeout(resolve, chunkDelay));
   }
   
   // Merge all translated chunks
