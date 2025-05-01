@@ -31,8 +31,8 @@ import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
 import notificationRoutes from "./routes/notification-routes";
-import specialOffersRoutes from "./routes/special-offers-routes";
-import trendingPackagesRoutes from "./routes/trending-packages-routes";
+import specialOffersRoutes from "./routes/special-offers-routes-fixed";
+import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import security middleware
