@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useTreatmentPlans, useDeleteTreatmentPlan } from "@/hooks/use-treatment-plans";
 import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +79,7 @@ const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
 
 export const TreatmentPlansSection = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<string>("all");
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
