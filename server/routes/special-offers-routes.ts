@@ -232,7 +232,7 @@ router.put('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId;
   const { offerId } = req.params;
   
   try {
@@ -324,11 +324,12 @@ router.delete('/api/portal/clinic/special-offers/:offerId', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId;
+  const clinicIdStr = String(clinicId);
   const { offerId } = req.params;
   
   // Get the clinic's offers
-  const clinicOffers = specialOffers.get(clinicId) || [];
+  const clinicOffers = specialOffers.get(clinicIdStr) || [];
   const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
   
   if (offerIndex === -1) {
@@ -337,7 +338,7 @@ router.delete('/api/portal/clinic/special-offers/:offerId', (req, res) => {
   
   // Remove the offer
   clinicOffers.splice(offerIndex, 1);
-  specialOffers.set(clinicId, clinicOffers);
+  specialOffers.set(clinicIdStr, clinicOffers);
   
   res.json({ success: true });
 });
