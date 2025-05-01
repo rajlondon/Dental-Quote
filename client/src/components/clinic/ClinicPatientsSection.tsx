@@ -60,7 +60,7 @@ const ClinicPatientsSection: React.FC = () => {
   };
 
   const handleNextPage = () => {
-    if (data && page < data.pagination.pages) {
+    if (data?.data?.pagination && page < data.data.pagination.pages) {
       setPage(page + 1);
     }
   };
@@ -134,7 +134,7 @@ const ClinicPatientsSection: React.FC = () => {
           )}
 
           {/* Patients table */}
-          {!isLoading && !isError && data && (
+          {!isLoading && !isError && data?.data?.patients && (
             <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>
@@ -149,14 +149,14 @@ const ClinicPatientsSection: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.patients.length === 0 ? (
+                  {data.data.patients.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                         {t("clinic.patients.no_patients", "No patients found")}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    data.patients.map((patient: Patient) => (
+                    data.data.patients.map((patient: Patient) => (
                       <TableRow key={patient.id}>
                         <TableCell className="font-medium">{patient.id}</TableCell>
                         <TableCell>
@@ -205,7 +205,7 @@ const ClinicPatientsSection: React.FC = () => {
           )}
 
           {/* Pagination */}
-          {!isLoading && !isError && data && (
+          {!isLoading && !isError && data?.data?.pagination && (
             <div className="flex items-center justify-between mt-4">
               <Button 
                 variant="outline" 
@@ -216,11 +216,11 @@ const ClinicPatientsSection: React.FC = () => {
                 {t("clinic.patients.previous", "Previous")}
               </Button>
               <div className="text-sm text-muted-foreground">
-                {data.pagination.total > 0 ? (
+                {data.data.pagination.total > 0 ? (
                   t("clinic.patients.page_info", "Showing {{start}} to {{end}} of {{total}} patients", { 
                     start: (page - 1) * limit + 1, 
-                    end: Math.min(page * limit, data.pagination.total), 
-                    total: data.pagination.total 
+                    end: Math.min(page * limit, data.data.pagination.total), 
+                    total: data.data.pagination.total 
                   })
                 ) : (
                   t("clinic.patients.no_results", "No results")
@@ -229,7 +229,7 @@ const ClinicPatientsSection: React.FC = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                disabled={!data.pagination || page >= data.pagination.pages}
+                disabled={!data.data.pagination || page >= data.data.pagination.pages}
                 onClick={handleNextPage}
               >
                 {t("clinic.patients.next", "Next")}
