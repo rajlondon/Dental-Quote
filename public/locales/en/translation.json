@@ -72,13 +72,32 @@
       "actions": {
         "send_to_patient": "Send to Patient"
       },
+      "view": {
+        "title": "Treatment Plan Details",
+        "description": "View all details of this treatment plan.",
+        "error": "Error loading treatment plan. Please try again.",
+        "patient": "Patient",
+        "clinic": "Clinic",
+        "created": "Created",
+        "updated": "Last Updated",
+        "appointment_date": "Appointment Date",
+        "duration": "Estimated Duration",
+        "not_specified": "Not specified",
+        "notes": "Additional Notes",
+        "treatment_items": "Treatment Items",
+        "item": "Item",
+        "price": "Price",
+        "qty": "Qty",
+        "total": "Total"
+      },
       "download": {
         "title": "Downloading treatment plan",
         "preparing": "Preparing the document for download...",
         "complete_title": "Download complete",
         "complete_description": "Treatment plan has been downloaded successfully.",
         "failed_title": "Download failed",
-        "failed_description": "Could not download the treatment plan."
+        "failed_description": "Could not download the treatment plan.",
+        "button": "Download PDF"
       },
       "send": {
         "title": "Sending to patient",

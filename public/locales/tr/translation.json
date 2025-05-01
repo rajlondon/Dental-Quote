@@ -363,7 +363,48 @@
       "additional_message": "Ek Mesaj (İsteğe Bağlı)",
       "message_placeholder": "Hastaya kişiselleştirilmiş bir mesaj ekleyin...",
       "file_uploaded": "Dosya Yüklendi",
-      "file_uploaded_desc": "Dosya başarıyla yüklendi."
+      "file_uploaded_desc": "Dosya başarıyla yüklendi.",
+      "view": {
+        "title": "Tedavi Planı Detayları",
+        "description": "Bu tedavi planının tüm detaylarını görüntüleyin.",
+        "error": "Tedavi planı yüklenirken hata oluştu. Lütfen tekrar deneyin.",
+        "patient": "Hasta",
+        "clinic": "Klinik",
+        "created": "Oluşturuldu",
+        "updated": "Son Güncelleme",
+        "appointment_date": "Randevu Tarihi",
+        "duration": "Tahmini Süre",
+        "not_specified": "Belirtilmemiş",
+        "notes": "Ek Notlar",
+        "treatment_items": "Tedavi Kalemleri",
+        "item": "Kalem",
+        "price": "Fiyat",
+        "qty": "Adet", 
+        "total": "Toplam"
+      },
+      "download": {
+        "title": "Tedavi planı indiriliyor",
+        "preparing": "Belge indirmek için hazırlanıyor...",
+        "complete_title": "İndirme tamamlandı",
+        "complete_description": "Tedavi planı başarıyla indirildi.",
+        "failed_title": "İndirme başarısız",
+        "failed_description": "Tedavi planı indirilemedi.",
+        "button": "PDF İndir"
+      },
+      "send": {
+        "title": "Hastaya gönderiliyor",
+        "description": "Tedavi planı {{name}} adlı hastaya gönderiliyor...",
+        "success_title": "Başarılı",
+        "success_description": "Tedavi planı {{name}} adlı hastaya gönderildi.",
+        "failed_title": "Gönderme başarısız",
+        "failed_description": "Tedavi planı hastaya gönderilemedi."
+      },
+      "delete": {
+        "success_title": "Başarılı",
+        "success_description": "Tedavi planı silindi.",
+        "failed_title": "Silme başarısız",
+        "failed_description": "Tedavi planı silinemedi."
+      }
     }
   }
 }
