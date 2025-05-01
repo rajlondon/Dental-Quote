@@ -18,7 +18,7 @@ import {
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
   Menu, LogOut, ChevronRight, Grid3X3, TestTube,
-  Clock, TrendingUp, CalendarDays
+  Clock, TrendingUp, CalendarDays, Tag
 } from 'lucide-react';
 import { 
   Card, 
@@ -46,6 +46,7 @@ import ClinicAnalyticsSection from '@/components/clinic/ClinicAnalyticsSection';
 import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
+import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
@@ -469,6 +470,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
         return <ClinicQuotesSection />;
       case 'treatmentplans':
         return <ClinicTreatmentPlansSection />;
+      case 'special_offers':
+        return <SpecialOffersManager />;
       case 'treatment_mapper':
         return <ClinicTreatmentMapperPage />;
       case 'appointments':
