@@ -47,12 +47,42 @@ const AdminPortalGuard: React.FC = () => {
       };
       
       // 2. Handle programmatic refresh attempts without showing browser dialog
-      // This uses a custom approach that doesn't show the "Leave site?" dialog
-      const originalReload = window.location.reload;
-      window.location.reload = function() {
-        console.log('⛔ AdminPortalGuard: Blocked programmatic page reload');
-        return false;
-      } as any;
+      // We can't directly override location.reload in strict mode
+      // Instead, use a more sophisticated approach to intercept reload calls
+      const originalReload = window.location.reload.bind(window.location);
+      
+      try {
+        // Use Object.defineProperty with a non-writable descriptor to safely override
+        const reloadDescriptor = Object.getOwnPropertyDescriptor(window.location, 'reload');
+        
+        if (reloadDescriptor && reloadDescriptor.configurable) {
+          Object.defineProperty(window.location, 'reload', {
+            configurable: true,
+            enumerable: true,
+            value: function() {
+              console.log('⛔ AdminPortalGuard: Blocked programmatic page reload');
+              return false;
+            }
+          });
+        } else {
+          // Fallback for browsers where location isn't configurable
+          console.log('⚠️ AdminPortalGuard: Unable to override location.reload, using alternative protection');
+          
+          // Set up a mutation observer to detect and prevent page unloads
+          const observer = new MutationObserver(() => {
+            if ((window as any).__inAdminPortal) {
+              console.log('⛔ AdminPortalGuard: Detected potential DOM mutation that might trigger reload');
+            }
+          });
+          
+          observer.observe(document, { 
+            childList: true, 
+            subtree: true 
+          });
+        }
+      } catch (e) {
+        console.warn('⚠️ AdminPortalGuard: Error setting up reload protection:', e);
+      }
       
       // Replacement for history.go(0) which also causes refresh
       const originalHistoryGo = window.history.go;
@@ -118,58 +148,62 @@ const AdminPortalGuard: React.FC = () => {
         return originalWebSocketSend.apply(this, [data]);
       };
       
-      // Block connection attempts to URLs that were previously closed
+      // Block connection attempts to closed WebSockets
+      // Since we can't completely override the WebSocket constructor in strict mode,
+      // we'll create a tracking system to detect and block problematic connections
       const originalWebSocketConstructor = window.WebSocket;
+
+      // Create a map to track active WebSocket connections
+      if (!(window as any).__websocketConnections) {
+        (window as any).__websocketConnections = {};
+      }
       
-      // Create the guarded constructor outside the block to avoid strict mode issues
-      const guardedWebSocketFactory = (originalCtor: typeof WebSocket) => {
-        // Return a function with the same signature as the WebSocket constructor
-        return function(url: string | URL, protocols?: string | string[]) {
-          const urlString = url instanceof URL ? url.toString() : url;
+      // Add a proxy handler to track WebSocket connections
+      (window as any).__webSocketTracker = function(url: string | URL, protocols?: string | string[]) {
+        const urlString = url instanceof URL ? url.toString() : url;
+        console.log('⚙️ AdminPortalGuard: WebSocket connection attempt to:', urlString);
+        
+        // Create an actual WebSocket
+        const socket = new originalWebSocketConstructor(url, protocols);
+        
+        // Generate a unique ID for this connection
+        const connectionId = `ws-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
+        
+        // Store the socket for tracking
+        (window as any).__websocketConnections[connectionId] = socket;
+        
+        // Add custom metadata
+        socket.addEventListener('open', () => {
+          console.log('🔌 AdminPortalGuard: WebSocket connection established:', connectionId);
+        });
+        
+        socket.addEventListener('close', (event) => {
+          console.log('🔌 AdminPortalGuard: WebSocket connection closed:', connectionId, event.code, event.reason);
           
-          // Check if we're in admin portal and this URL was previously closed
+          // Remove from tracking
+          delete (window as any).__websocketConnections[connectionId];
+          
+          // Prevent automatic reconnection for problematic sockets
           if ((window as any).__inAdminPortal && 
-              (window as any).__closedWebSockets && 
-              (window as any).__closedWebSockets.has(urlString)) {
-            console.log('⛔ AdminPortalGuard: Preventing reconnection to closed WebSocket:', urlString);
+              (event.code === 1006 || event.code === 1001) &&
+              urlString.includes('/ws')) {
             
-            // Return fake WebSocket that immediately appears closed
-            const fakeSocket = {
-              addEventListener: () => {},
-              removeEventListener: () => {},
-              dispatchEvent: () => true,
-              send: () => {},
-              close: () => {},
-              onopen: null,
-              onclose: null,
-              onmessage: null,
-              onerror: null,
-              readyState: 3, // CLOSED
-              url: urlString,
-              protocol: "",
-              extensions: "",
-              bufferedAmount: 0,
-              binaryType: "blob" as BinaryType,
-              CONNECTING: 0,
-              OPEN: 1,
-              CLOSING: 2, 
-              CLOSED: 3
-            };
+            console.log('🛑 AdminPortalGuard: Preventing automatic reconnection for:', urlString);
             
-            return fakeSocket as WebSocket;
+            // Add to blocked list
+            if (!(window as any).__closedWebSockets) {
+              (window as any).__closedWebSockets = new Set();
+            }
+            (window as any).__closedWebSockets.add(urlString);
           }
-          
-          // Otherwise create a real WebSocket
-          return new originalCtor(url, protocols);
-        };
+        });
+        
+        // Return the actual socket
+        return socket;
       };
       
-      // Create our guarded WebSocket constructor
-      const GuardedWebSocket = guardedWebSocketFactory(originalWebSocketConstructor);
-      
-      // Copy prototype and static properties
-      GuardedWebSocket.prototype = WebSocket.prototype;
-      window.WebSocket = GuardedWebSocket as any;
+      // Use the tracker instead of completely replacing the constructor
+      window.WebSocket = (window as any).__webSocketTracker;
       
       // Listen for custom WebSocket events and prevent reconnection loops
       const handleManualClose = () => {

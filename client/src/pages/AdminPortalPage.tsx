@@ -69,6 +69,18 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     const isProtectedNavigation = sessionStorage.getItem('admin_protected_navigation') === 'true';
     const directNavigation = (window as any).__directAdminNavigation === true;
     
+    // Force cache our user data
+    if (user && user.id) {
+      console.log('📦 Caching admin user data to prevent refresh loops', user.id);
+      queryClient.setQueryData(['/api/auth/user'], user);
+      
+      // Mark as a direct navigation for AdminPortalGuard
+      if (!isProtectedNavigation && !directNavigation) {
+        console.log('📌 This is a protected direct navigation to admin portal - special handling enabled');
+        (window as any).__directAdminNavigation = true;
+      }
+    }
+    
     // Check for initialization needs
     if (isProtectedNavigation || directNavigation) {
       console.log("📌 This is a protected direct navigation to admin portal - special handling enabled");
