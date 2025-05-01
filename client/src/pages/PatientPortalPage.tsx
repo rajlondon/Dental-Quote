@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
-import { useNotifications } from '@/hooks/use-notifications';
+import { useNotifications, Notification } from '@/hooks/use-notifications';
 
 // Mock data for the dashboard view
 const mockBookingData = {
@@ -239,7 +239,7 @@ const PatientPortalPage: React.FC = () => {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const { t } = useTranslation();
-  const { unreadCount, notifications, markAsRead, markAllAsRead } = useNotifications();
+  const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   // Nav items with icons
   const navItems = [
@@ -484,6 +484,7 @@ const PatientPortalPage: React.FC = () => {
               unreadCount={unreadCount}
               markAsRead={markAsRead}
               markAllAsRead={markAllAsRead}
+              deleteNotification={deleteNotification}
             />
           </div>
         </div>
@@ -505,7 +506,8 @@ const PatientPortalPage: React.FC = () => {
                 notifications={notifications} 
                 unreadCount={unreadCount}
                 markAsRead={markAsRead}
-                markAllAsRead={markAllAsRead} 
+                markAllAsRead={markAllAsRead}
+                deleteNotification={deleteNotification}
               />
               
               <Button 

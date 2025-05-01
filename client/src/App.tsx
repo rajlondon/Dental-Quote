@@ -257,6 +257,22 @@ function App() {
     }
   }, []);
   
+  // Add event listener for testing cross-portal notifications
+  useEffect(() => {
+    // Listen for a special test message that can be triggered from any portal
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'TEST_CROSS_PORTAL_NOTIFICATION') {
+        console.log('Received test notification event:', event.data);
+        // We can handle this in each portal's notification system
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
