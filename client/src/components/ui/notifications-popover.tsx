@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Bell, BellOff, WifiOff, RefreshCw } from 'lucide-react';
+import { 
+  Bell, BellOff, WifiOff, RefreshCw, MessageSquare, CalendarClock, 
+  FileText, CreditCard, AlertCircle, Megaphone, ShieldAlert, Trash2
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -21,12 +24,21 @@ import {
 } from '@/components/ui/card';
 import { Notification } from '@/hooks/use-notifications';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { NotificationCategory } from '@shared/notifications';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface NotificationsPopoverProps {
   notifications: Notification[];
   unreadCount: number;
   markAsRead?: (id: string) => void;
   markAllAsRead?: () => void;
+  deleteNotification?: (id: string) => void;
   connected?: boolean;
   onRetryConnection?: () => void;
 }
@@ -36,6 +48,7 @@ export function NotificationsPopover({
   unreadCount, 
   markAsRead = () => {}, 
   markAllAsRead = () => {},
+  deleteNotification = () => {},
   connected = true,
   onRetryConnection = () => {}
 }: NotificationsPopoverProps) {
@@ -75,15 +88,59 @@ export function NotificationsPopover({
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'message':
-        return <div className="bg-blue-100 text-blue-600 p-2 rounded-full">💬</div>;
+        return (
+          <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
+            <MessageSquare className="h-4 w-4" />
+          </div>
+        );
       case 'appointment':
-        return <div className="bg-green-100 text-green-600 p-2 rounded-full">📅</div>;
+        return (
+          <div className="bg-green-100 text-green-600 p-2 rounded-full">
+            <CalendarClock className="h-4 w-4" />
+          </div>
+        );
+      case 'treatment':
+        return (
+          <div className="bg-teal-100 text-teal-600 p-2 rounded-full">
+            <FileText className="h-4 w-4" />
+          </div>
+        );
+      case 'payment':
+        return (
+          <div className="bg-violet-100 text-violet-600 p-2 rounded-full">
+            <CreditCard className="h-4 w-4" />
+          </div>
+        );
+      case 'document':
+        return (
+          <div className="bg-amber-100 text-amber-600 p-2 rounded-full">
+            <FileText className="h-4 w-4" />
+          </div>
+        );
       case 'system':
-        return <div className="bg-orange-100 text-orange-600 p-2 rounded-full">📋</div>;
+        return (
+          <div className="bg-orange-100 text-orange-600 p-2 rounded-full">
+            <AlertCircle className="h-4 w-4" />
+          </div>
+        );
+      case 'offer':
+        return (
+          <div className="bg-purple-100 text-purple-600 p-2 rounded-full">
+            <Megaphone className="h-4 w-4" />
+          </div>
+        );
       case 'update':
-        return <div className="bg-purple-100 text-purple-600 p-2 rounded-full">✈️</div>;
+        return (
+          <div className="bg-indigo-100 text-indigo-600 p-2 rounded-full">
+            <ShieldAlert className="h-4 w-4" />
+          </div>
+        );
       default:
-        return <div className="bg-gray-100 text-gray-600 p-2 rounded-full">🔔</div>;
+        return (
+          <div className="bg-gray-100 text-gray-600 p-2 rounded-full">
+            <Bell className="h-4 w-4" />
+          </div>
+        );
     }
   };
 
