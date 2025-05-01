@@ -1,23 +1,22 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useUpdateTreatmentPlan, useTreatmentPlan } from "@/hooks/use-treatment-plans";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Minus } from "lucide-react";
-import { TreatmentPlanStatus, PaymentStatus } from "@shared/models/treatment-plan";
+import { TreatmentPlanStatus, PaymentStatus, UpdateTreatmentPlanDto } from "@shared/models/treatment-plan";
+import { useTreatmentPlan, useUpdateTreatmentPlan } from '@/hooks/use-treatment-plans';
+import { useToast } from "@/hooks/use-toast";
 
 // Create a schema for our form
 const updateTreatmentPlanSchema = z.object({
-  id: z.number(),
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().optional(),
-  status: z.nativeEnum(TreatmentPlanStatus),
   treatmentItems: z.array(
     z.object({
       id: z.number().optional(),
@@ -29,9 +28,9 @@ const updateTreatmentPlanSchema = z.object({
   ).min(1, { message: "At least one treatment item is required" }),
   estimatedDuration: z.string().optional(),
   notes: z.string().optional(),
-  appointmentDate: z.string().optional(),
-  completionDate: z.string().optional(),
-  paymentStatus: z.nativeEnum(PaymentStatus),
+  currency: z.string().default("GBP"),
+  status: z.string().optional(),
+  paymentStatus: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof updateTreatmentPlanSchema>;
@@ -47,47 +46,45 @@ export const UpdateTreatmentPlanDialog = ({
   onOpenChange,
   treatmentPlanId,
 }: UpdateTreatmentPlanDialogProps) => {
-  const { data, isLoading, isError } = useTreatmentPlan(treatmentPlanId);
-  const updateMutation = useUpdateTreatmentPlan(treatmentPlanId);
+  const { toast } = useToast();
+  const { data: treatmentPlanData, isLoading: isLoadingPlan } = useTreatmentPlan(treatmentPlanId);
+  const updateMutation = useUpdateTreatmentPlan();
 
-  // Setup form with default empty values
+  // Setup form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(updateTreatmentPlanSchema),
     defaultValues: {
-      id: treatmentPlanId,
       title: "",
       description: "",
-      status: TreatmentPlanStatus.DRAFT,
       treatmentItems: [
         { name: "", price: 0, quantity: 1, description: "" }
       ],
       estimatedDuration: "",
       notes: "",
-      appointmentDate: "",
-      completionDate: "",
+      currency: "GBP",
+      status: TreatmentPlanStatus.DRAFT,
       paymentStatus: PaymentStatus.PENDING,
     },
   });
 
-  // Update form values when data is loaded
+  // Update form values when we get the treatment plan data
   useEffect(() => {
-    if (data?.data?.treatmentPlan) {
-      const plan = data.data.treatmentPlan;
-      
+    if (treatmentPlanData?.data) {
+      const plan = treatmentPlanData.data;
       form.reset({
-        id: plan.id,
-        title: plan.title,
+        title: plan.title || "",
         description: plan.description || "",
-        status: plan.status,
-        treatmentItems: plan.treatmentItems,
+        treatmentItems: plan.treatmentItems?.length 
+          ? plan.treatmentItems 
+          : [{ name: "", price: 0, quantity: 1, description: "" }],
         estimatedDuration: plan.estimatedDuration || "",
         notes: plan.notes || "",
-        appointmentDate: plan.appointmentDate || "",
-        completionDate: plan.completionDate || "",
-        paymentStatus: plan.paymentStatus,
+        currency: plan.currency || "GBP",
+        status: plan.status || TreatmentPlanStatus.DRAFT,
+        paymentStatus: plan.paymentStatus || PaymentStatus.PENDING,
       });
     }
-  }, [data, form]);
+  }, [treatmentPlanData, form]);
 
   // Calculate total price
   const calculateTotal = (items: { price: number; quantity: number }[]) => {
@@ -97,10 +94,22 @@ export const UpdateTreatmentPlanDialog = ({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      await updateMutation.mutateAsync(values);
+      await updateMutation.mutateAsync({
+        id: treatmentPlanId,
+        ...values,
+      } as UpdateTreatmentPlanDto);
       onOpenChange(false);
+      toast({
+        title: "Success",
+        description: "Treatment plan updated successfully",
+      });
     } catch (error) {
       console.error("Error updating treatment plan:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update treatment plan",
+        variant: "destructive",
+      });
     }
   };
 
@@ -125,57 +134,23 @@ export const UpdateTreatmentPlanDialog = ({
   const treatmentItems = form.watch("treatmentItems");
   const total = calculateTotal(treatmentItems);
 
-  // Format date for input fields
-  const formatDateForInput = (dateString?: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    // Format to YYYY-MM-DD for date input
-    return date.toISOString().split('T')[0];
-  };
-
-  if (isError) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Error</DialogTitle>
-            <DialogDescription>
-              Failed to load treatment plan. Please try again later.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => onOpenChange(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Update Treatment Plan</DialogTitle>
           <DialogDescription>
-            Make changes to the treatment plan and update its status.
+            Update the details for this treatment plan.
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {isLoadingPlan ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Patient Information (read-only) */}
-              {data?.data?.treatmentPlan?.patientName && (
-                <div className="p-3 bg-muted rounded-md">
-                  <h4 className="font-medium mb-1">Patient Information</h4>
-                  <p className="text-sm">{data.data.treatmentPlan.patientName}</p>
-                </div>
-              )}
-
               {/* Title */}
               <FormField
                 control={form.control}
@@ -207,50 +182,78 @@ export const UpdateTreatmentPlanDialog = ({
               />
 
               {/* Status */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.values(TreatmentPlanStatus).map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={TreatmentPlanStatus.DRAFT}>Draft</SelectItem>
+                          <SelectItem value={TreatmentPlanStatus.SENT}>Sent</SelectItem>
+                          <SelectItem value={TreatmentPlanStatus.ACCEPTED}>Accepted</SelectItem>
+                          <SelectItem value={TreatmentPlanStatus.IN_PROGRESS}>In Progress</SelectItem>
+                          <SelectItem value={TreatmentPlanStatus.COMPLETED}>Completed</SelectItem>
+                          <SelectItem value={TreatmentPlanStatus.REJECTED}>Rejected</SelectItem>
+                          <SelectItem value={TreatmentPlanStatus.CANCELLED}>Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Payment Status */}
+                {/* Payment Status */}
+                <FormField
+                  control={form.control}
+                  name="paymentStatus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={PaymentStatus.PENDING}>Pending</SelectItem>
+                          <SelectItem value={PaymentStatus.PARTIAL}>Partial</SelectItem>
+                          <SelectItem value={PaymentStatus.PAID}>Paid</SelectItem>
+                          <SelectItem value={PaymentStatus.REFUNDED}>Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Currency */}
               <FormField
                 control={form.control}
-                name="paymentStatus"
+                name="currency"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Currency</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select payment status" />
+                          <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(PaymentStatus).map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="GBP">British Pound (£)</SelectItem>
+                        <SelectItem value="USD">US Dollar ($)</SelectItem>
+                        <SelectItem value="EUR">Euro (€)</SelectItem>
+                        <SelectItem value="TRY">Turkish Lira (₺)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -352,7 +355,7 @@ export const UpdateTreatmentPlanDialog = ({
                 <div className="text-right text-sm">
                   Subtotal: {new Intl.NumberFormat('en-GB', {
                     style: 'currency',
-                    currency: data?.data?.treatmentPlan?.currency || 'GBP'
+                    currency: form.getValues("currency") || 'GBP'
                   }).format(total)}
                 </div>
               </div>
@@ -369,50 +372,6 @@ export const UpdateTreatmentPlanDialog = ({
                     </FormControl>
                     <FormDescription>
                       Provide an estimate of how long the treatment will take
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Appointment Date */}
-              <FormField
-                control={form.control}
-                name="appointmentDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Appointment Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field}
-                        value={formatDateForInput(field.value)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      When is the treatment scheduled to begin?
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Completion Date */}
-              <FormField
-                control={form.control}
-                name="completionDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Completion Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field}
-                        value={formatDateForInput(field.value)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      When was the treatment completed?
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
