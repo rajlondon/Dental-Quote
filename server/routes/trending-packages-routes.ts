@@ -149,8 +149,9 @@ router.get('/api/portal/clinic/packages', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
-  const clinicPackages = trendingPackages.get(clinicId) || [];
+  const clinicId = req.user.clinicId;
+  const clinicIdStr = String(clinicId);
+  const clinicPackages = trendingPackages.get(clinicIdStr) || [];
   
   res.json(clinicPackages);
 });
@@ -161,7 +162,8 @@ router.post('/api/portal/clinic/packages', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const clinicId = req.user.clinic_id;
+  const clinicId = req.user.clinicId;
+  const clinicIdStr = String(clinicId);
   
   try {
     // Validate the request body
@@ -192,7 +194,7 @@ router.post('/api/portal/clinic/packages', (req, res) => {
     }
     
     // Check if clinic has reached max active packages for their tier
-    const clinicPackages = trendingPackages.get(clinicId) || [];
+    const clinicPackages = trendingPackages.get(clinicIdStr) || [];
     const activePackagesCount = clinicPackages.filter(p => p.is_active).length;
     
     if (packageData.is_active && activePackagesCount >= selectedTier.max_active_offers) {
@@ -206,7 +208,7 @@ router.post('/api/portal/clinic/packages', (req, res) => {
     const newPackage: TrendingPackage = {
       ...packageData,
       id: uuidv4(),
-      clinic_id: clinicId,
+      clinic_id: clinicIdStr,
       admin_approved: false,
       homepage_display: packageData.homepage_display && selectedTier.homepage_display_included,
       created_at: now,
@@ -214,12 +216,12 @@ router.post('/api/portal/clinic/packages', (req, res) => {
     };
     
     // Get existing packages or initialize
-    const packages = trendingPackages.get(clinicId) || [];
+    const packages = trendingPackages.get(clinicIdStr) || [];
     packages.push(newPackage);
-    trendingPackages.set(clinicId, packages);
+    trendingPackages.set(clinicIdStr, packages);
     
     res.status(201).json(newPackage);
-  } catch (error) {
+  } catch (error: any) {
     if (error.errors) {
       return res.status(400).json({ error: error.errors });
     }
