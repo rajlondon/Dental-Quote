@@ -78,64 +78,62 @@ const AdminPortalGuard: React.FC = () => {
         realWebSocket = (window as any).__originalWebSocket;
       }
 
-      // Replace WebSocket with a version that can prevent connections from admin portal
-      window.WebSocket = function InterceptedWebSocket(url: string | URL, protocols?: string | string[]) {
-        // Convert URL object to string if needed
-        const urlString = url instanceof URL ? url.toString() : url;
-        
-        // Check if we're in the admin portal and it's a watchdog connection
-        const isInAdminPortal = (window as any).__inAdminPortal === true;
-        const isWatchdogConnection = typeof urlString === 'string' && 
-          (urlString.includes('watchdog') || urlString.includes('vite'));
-        
-        if (isInAdminPortal && isWatchdogConnection) {
-          console.log(`🚧 AdminPortalGuard: Blocking watchdog WebSocket connection: ${urlString}`);
+      // We'll use a different pattern to avoid WebSocket reconnections
+      // Add a global event listener that detects specific WebSocket reconnect patterns
+      const interceptWebsocketReconnects = (event: MessageEvent) => {
+        try {
+          // Only intercept if we're in the admin portal
+          if (!(window as any).__inAdminPortal) {
+            return;
+          }
           
-          // Return a fake WebSocket that does nothing
-          const fakeSocket = {
-            addEventListener: () => {},
-            removeEventListener: () => {},
-            dispatchEvent: () => true,
-            send: () => {},
-            close: () => {},
-            onopen: null,
-            onclose: null,
-            onmessage: null,
-            onerror: null,
-            readyState: 3, // CLOSED
-            url: urlString,
-            protocol: "",
-            extensions: "",
-            bufferedAmount: 0,
-            binaryType: "blob" as BinaryType,
-            CONNECTING: 0,
-            OPEN: 1,
-            CLOSING: 2, 
-            CLOSED: 3
-          };
-          
-          // Execute any onclose handler after a short delay
-          setTimeout(() => {
-            if (fakeSocket.onclose) {
-              // Use unknown type conversion to avoid TypeScript errors
-              const closeEvent = {
-                wasClean: true,
-                code: 1000,
-                reason: "Connection blocked by admin portal protection",
-                target: fakeSocket
-              } as unknown as CloseEvent;
-              
-              fakeSocket.onclose(closeEvent);
+          // Check if this is a WebSocket message that might trigger reconnection
+          const data = typeof event.data === 'string' ? event.data : '';
+          if (data.includes('reconnect') || 
+              data.includes('connection closed') || 
+              data.includes('disconnect')) {
+            
+            console.log('🚫 AdminPortalGuard: Intercepted potential reconnect message:', data);
+            
+            // Stop propagation of the event
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            
+            // For safety, close any WebSocket that might be trying to reconnect
+            if (event.source && typeof (event.source as any).close === 'function') {
+              (event.source as any).close();
             }
-          }, 100);
-          
-          return fakeSocket as WebSocket;
+            
+            return false;
+          }
+        } catch (err) {
+          // Silent fail - don't break normal functionality
+          console.error('Error in WebSocket intercept:', err);
         }
-        
-        // For non-watchdog connections, use the real WebSocket
-        // Ensure realWebSocket is not null (it shouldn't be, but TypeScript needs this check)
-        return realWebSocket ? new realWebSocket(url, protocols) : new WebSocket(url, protocols);
-      } as any;
+      };
+      
+      // Add global listeners for WebSocket events
+      window.addEventListener('message', interceptWebsocketReconnects, true);
+      
+      // Listen for custom WebSocket events and prevent reconnection loops
+      const handleManualClose = () => {
+        console.log('🧹 AdminPortalGuard: Processing manual WebSocket close request');
+        // Find and force-close any active WebSockets
+        if ((window as any).__websocketConnections) {
+          console.log('✂️ AdminPortalGuard: Cleaning up active WebSocket connections');
+          Object.values((window as any).__websocketConnections || {}).forEach((ws: any) => {
+            if (ws && typeof ws.close === 'function') {
+              try {
+                ws.close(1000, 'Manual close initiated by AdminPortalGuard');
+              } catch (err) {
+                console.error('Error closing WebSocket:', err);
+              }
+            }
+          });
+        }
+      };
+      
+      document.addEventListener('manual-websocket-close', handleManualClose);
       
       // Copy static properties if realWebSocket is not null
       if (realWebSocket) {
@@ -155,10 +153,11 @@ const AdminPortalGuard: React.FC = () => {
         // Restore original history.go
         window.history.go = originalHistoryGo;
         
-        // Restore original WebSocket if we've replaced it
-        if (realWebSocket) {
-          window.WebSocket = realWebSocket;
-        }
+        // No need to restore setTimeout as we didn't replace it
+        
+        // Remove event listeners
+        document.removeEventListener('manual-websocket-close', handleManualClose);
+        window.removeEventListener('message', interceptWebsocketReconnects, true);
         
         // Remove global flags
         delete (window as any).__inAdminPortal;
