@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { TreatmentPlan, TreatmentPlanStatus, PaymentStatus, CreateTreatmentPlanDto, UpdateTreatmentPlanDto } from "../../shared/models/treatment-plan";
+import { TreatmentPlan, TreatmentPlanStatus, PaymentStatus, CreateTreatmentPlanDto, UpdateTreatmentPlanDto } from "@shared/models/treatment-plan";
 
 interface TreatmentPlansResponse {
   success: boolean;
