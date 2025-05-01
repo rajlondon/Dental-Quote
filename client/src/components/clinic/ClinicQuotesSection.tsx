@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useTranslation } from 'react-i18next';
 import { 
   Table, 
   TableBody, 
@@ -45,6 +46,7 @@ import { Eye, Download, FileText, Search, CheckCircle, XCircle } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 
 export default function ClinicQuotesSection() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [quoteDetailsOpen, setQuoteDetailsOpen] = useState(false);
