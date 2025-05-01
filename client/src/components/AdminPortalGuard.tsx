@@ -1,12 +1,32 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 /**
- * AdminPortalGuard - Simplified Version
- * This component implements basic protections to prevent
- * admin portal page from auto-refreshing
+ * AdminPortalGuard - Version using dedicated admin auth
+ * This component ensures admin authentication is valid
+ * and implements basic protections to prevent refreshing
  */
 const AdminPortalGuard: React.FC = () => {
+  const [, navigate] = useLocation();
+  const { adminUser, isLoading } = useAdminAuth();
+  
+  // Redirect to admin login if not authenticated
   useEffect(() => {
+    if (!isLoading && !adminUser) {
+      console.log("🔒 AdminPortalGuard: No admin authentication, redirecting to login");
+      navigate('/admin-login');
+      return;
+    }
+  }, [adminUser, isLoading, navigate]);
+
+  // Install protections when we're authenticated and staying on the page
+  useEffect(() => {
+    // Don't install protections if still loading or not authenticated
+    if (isLoading || !adminUser) {
+      return;
+    }
+    
     console.log("🛡️ AdminPortalGuard: Installing simplified protection");
     
     // Set a global flag for admin portal
@@ -33,8 +53,9 @@ const AdminPortalGuard: React.FC = () => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url;
         
         // Basic pattern matching for problematic requests
+        // Ignore auth/user requests because the new admin hook uses its own cached authentication
         if (typeof url === 'string' && 
-            (url.includes('/api/auth/check') || url.includes('/api/auth/status'))) {
+            (url.includes('/api/auth/check') || url.includes('/api/auth/status') || url.includes('/api/auth/user'))) {
           console.log(`🛡️ Blocking problematic request: ${url}`);
           return Promise.resolve(new Response(JSON.stringify({ success: true }), {
             status: 200,
@@ -73,7 +94,7 @@ const AdminPortalGuard: React.FC = () => {
         delete (window as any).__disableReactQueryRetries;
       };
     }
-  }, []);
+  }, [adminUser, isLoading]);
   
   return null;
 };
