@@ -30,7 +30,7 @@ import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
-import notificationRoutes from "./routes/notification-routes";
+import { createNotificationRoutes } from "./routes/notification-routes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
@@ -45,6 +45,7 @@ import {
   uploadRateLimit 
 } from "./middleware/security";
 import { setupWebSocketService } from "./services/websocketService";
+import { createNotificationService } from "./services/notificationService";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -222,8 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register messaging routes for cross-portal communication
   app.use('/api/messages', messagingRoutes);
   
-  // Register notification routes
-  app.use('/api/notifications', notificationRoutes);
+  // We'll register notification routes later after we create the HTTP server
   
   // Register special offers routes with commission-based promotion system
   app.use(specialOffersRoutes);
@@ -872,10 +872,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
   
+  // Create notification service with WebSocket service
+  const notificationService = createNotificationService(wsService);
+  
+  // Register notification routes
+  app.use(createNotificationRoutes(notificationService));
+  
   // Store WebSocket service instance in app.locals for access in other routes if needed
   app.locals.wsService = wsService;
+  app.locals.notificationService = notificationService;
   
-  console.log('WebSocket service initialized for patient-clinic data synchronization');
+  console.log('WebSocket and notification services initialized for cross-portal data synchronization');
   
   return httpServer;
 }
