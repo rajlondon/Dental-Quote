@@ -7,9 +7,14 @@
  * Usage: node scripts/extract-translations.js [component_path]
  */
 
-const fs = require('fs');
-const path = require('path');
-const glob = require('glob');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import glob from 'glob';
+
+// Convert import.meta.url to __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const defaultBasePath = './client/src/components';
