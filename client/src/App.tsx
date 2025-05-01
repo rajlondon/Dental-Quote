@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
+import ClinicGuard from "@/components/ClinicGuard";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -79,7 +80,6 @@ import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
-import ClinicGuard from "@/components/ClinicGuard";
 import { Suspense } from "react";
 
 function Router() {
