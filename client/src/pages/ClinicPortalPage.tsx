@@ -87,6 +87,45 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
   // Get auth context for user info and logout functionality
   const { user, logoutMutation } = useAuth();
   
+  // CRITICAL FIX: When disableAutoRefresh is true, completely disable WebSocket connections
+  useEffect(() => {
+    if (disableAutoRefresh && typeof window !== 'undefined') {
+      console.log("🔌 Disabling WebSocket connections for clinic portal");
+      
+      // Block any WebSocket creation attempts globally when in clinic portal
+      const originalWebSocket = window.WebSocket;
+      
+      // Replace WebSocket constructor with a stub that prevents connections
+      (window as any).WebSocket = function BlockedWebSocket(url: string) {
+        console.log(`⛔ Blocked WebSocket connection attempt to: ${url}`);
+        
+        // Return a dummy object that has the same interface but does nothing
+        return {
+          send: () => console.log("⛔ Blocked WebSocket send"),
+          close: () => console.log("⛔ Blocked WebSocket close"),
+          addEventListener: () => console.log("⛔ Blocked WebSocket addEventListener"),
+          removeEventListener: () => console.log("⛔ Blocked WebSocket removeEventListener"),
+          readyState: 3, // CLOSED
+          CONNECTING: 0,
+          OPEN: 1,
+          CLOSING: 2,
+          CLOSED: 3
+        };
+      };
+      
+      (window as any).WebSocket.CONNECTING = 0;
+      (window as any).WebSocket.OPEN = 1;
+      (window as any).WebSocket.CLOSING = 2;
+      (window as any).WebSocket.CLOSED = 3;
+      
+      // Restore WebSocket when unmounting
+      return () => {
+        (window as any).WebSocket = originalWebSocket;
+        console.log("🔄 Restored original WebSocket in clinic portal");
+      };
+    }
+  }, [disableAutoRefresh]);
+  
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
