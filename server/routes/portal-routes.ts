@@ -429,4 +429,250 @@ router.get("/api/portal/health", ensureAuthenticated, (req, res) => {
   });
 });
 
+// Patients list endpoint for clinics
+router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) => {
+  try {
+    const clinicId = req.user?.clinicId || 1;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || '';
+    const status = (req.query.status as string) || 'all';
+    
+    // Calculate pagination values
+    const skip = (page - 1) * limit;
+    
+    console.log(`Retrieving patients for clinic ${clinicId}, page ${page}, limit ${limit}, search "${search}", status "${status}"`);
+    
+    // Mock data with pagination support
+    const allPatients = [
+      {
+        id: 1,
+        name: "James Wilson",
+        email: "james.wilson@example.com",
+        phone: "+44 7700 900123",
+        treatment: "Dental Implants",
+        status: "Active",
+        lastVisit: "2025-03-10"
+      },
+      {
+        id: 2,
+        name: "Sarah Johnson",
+        email: "sarah.j@example.com",
+        phone: "+44 7700 900456",
+        treatment: "Veneers",
+        status: "Completed",
+        lastVisit: "2025-04-05"
+      },
+      {
+        id: 3,
+        name: "Michael Brown",
+        email: "m.brown@example.com",
+        phone: "+44 7700 900789",
+        treatment: "Crowns",
+        status: "Scheduled",
+        lastVisit: "2025-02-25"
+      },
+      {
+        id: 4,
+        name: "Emma Davis",
+        email: "e.davis@example.com",
+        phone: "+44 7700 900555",
+        treatment: "Root Canal",
+        status: "Active",
+        lastVisit: "2025-03-18"
+      },
+      {
+        id: 5,
+        name: "Robert Taylor",
+        email: "r.taylor@example.com",
+        phone: "+44 7700 900222",
+        treatment: "Full Mouth Restoration",
+        status: "New Patient",
+        lastVisit: null
+      },
+      {
+        id: 6,
+        name: "Jennifer Lewis",
+        email: "j.lewis@example.com",
+        phone: "+44 7700 900333",
+        treatment: "Teeth Whitening",
+        status: "Completed",
+        lastVisit: "2025-04-15"
+      },
+      {
+        id: 7,
+        name: "William Clark",
+        email: "w.clark@example.com",
+        phone: "+44 7700 900444",
+        treatment: "Orthodontics",
+        status: "Active",
+        lastVisit: "2025-03-28"
+      },
+      {
+        id: 8,
+        name: "Olivia Martinez",
+        email: "o.martinez@example.com",
+        phone: "+44 7700 900666",
+        treatment: "Dental Implants",
+        status: "Scheduled",
+        lastVisit: "2025-04-02"
+      },
+      {
+        id: 9,
+        name: "Thomas Anderson",
+        email: "t.anderson@example.com",
+        phone: "+44 7700 900777",
+        treatment: "Crowns",
+        status: "Active",
+        lastVisit: "2025-03-22"
+      },
+      {
+        id: 10,
+        name: "Sophia White",
+        email: "s.white@example.com",
+        phone: "+44 7700 900888",
+        treatment: "Veneers",
+        status: "Completed",
+        lastVisit: "2025-04-11"
+      },
+      {
+        id: 11,
+        name: "Daniel Harris",
+        email: "d.harris@example.com",
+        phone: "+44 7700 900999",
+        treatment: "Root Canal",
+        status: "Scheduled",
+        lastVisit: "2025-04-20"
+      },
+      {
+        id: 12,
+        name: "Ava Thompson",
+        email: "a.thompson@example.com",
+        phone: "+44 7700 901000",
+        treatment: "Teeth Cleaning",
+        status: "New Patient",
+        lastVisit: null
+      },
+      {
+        id: 13,
+        name: "James Garcia",
+        email: "j.garcia@example.com",
+        phone: "+44 7700 901111",
+        treatment: "Dental Bridge",
+        status: "Active",
+        lastVisit: "2025-03-30"
+      },
+      {
+        id: 14,
+        name: "Charlotte Miller",
+        email: "c.miller@example.com",
+        phone: "+44 7700 901222",
+        treatment: "Dental Implants",
+        status: "Scheduled",
+        lastVisit: "2025-04-08"
+      },
+      {
+        id: 15,
+        name: "Matthew Wilson",
+        email: "m.wilson@example.com",
+        phone: "+44 7700 901333",
+        treatment: "Veneers",
+        status: "Active",
+        lastVisit: "2025-03-25"
+      },
+      {
+        id: 16,
+        name: "Amelia Jones",
+        email: "a.jones@example.com",
+        phone: "+44 7700 901444",
+        treatment: "Orthodontics",
+        status: "Completed",
+        lastVisit: "2025-04-12"
+      },
+      {
+        id: 17,
+        name: "Benjamin Moore",
+        email: "b.moore@example.com",
+        phone: "+44 7700 901555",
+        treatment: "Root Canal",
+        status: "Scheduled",
+        lastVisit: "2025-04-22"
+      },
+      {
+        id: 18,
+        name: "Mia Lee",
+        email: "m.lee@example.com",
+        phone: "+44 7700 901666",
+        treatment: "Teeth Whitening",
+        status: "Active",
+        lastVisit: "2025-03-15"
+      },
+      {
+        id: 19,
+        name: "Ethan Allen",
+        email: "e.allen@example.com",
+        phone: "+44 7700 901777",
+        treatment: "Dental Implants",
+        status: "New Patient",
+        lastVisit: null
+      },
+      {
+        id: 20,
+        name: "Isabella Scott",
+        email: "i.scott@example.com",
+        phone: "+44 7700 901888",
+        treatment: "Crowns",
+        status: "Completed",
+        lastVisit: "2025-04-18"
+      }
+    ];
+    
+    // Filter by search term (name, email, or phone)
+    let filteredPatients = allPatients;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredPatients = allPatients.filter(patient => 
+        patient.name.toLowerCase().includes(searchLower) ||
+        patient.email.toLowerCase().includes(searchLower) ||
+        patient.phone.includes(search)
+      );
+    }
+    
+    // Filter by status if not 'all'
+    if (status && status !== 'all') {
+      filteredPatients = filteredPatients.filter(patient => 
+        patient.status.toLowerCase() === status.toLowerCase()
+      );
+    }
+    
+    // Get total count for pagination
+    const total = filteredPatients.length;
+    
+    // Apply pagination
+    const paginatedPatients = filteredPatients.slice(skip, skip + limit);
+    
+    // Return the paginated and filtered results
+    res.json({
+      success: true,
+      message: "Patients retrieved successfully",
+      data: {
+        patients: paginatedPatients,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error retrieving patients:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve patients"
+    });
+  }
+});
+
 export default router;
