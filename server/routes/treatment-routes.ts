@@ -8,6 +8,179 @@ import { TreatmentPlan, TreatmentPlanStatus, PaymentStatus } from '../../shared/
 
 const router = express.Router();
 
+// Define mock treatment plans data to be used across all endpoints
+const MOCK_TREATMENT_PLANS: TreatmentPlan[] = [
+  {
+    id: 1,
+    patientId: 1,
+    patientName: "James Wilson",
+    clinicId: 1,
+    clinicName: "Istanbul Dental Smile",
+    status: TreatmentPlanStatus.ACCEPTED,
+    title: "Full Dental Restoration",
+    description: "Complete smile makeover including veneers and implants",
+    createdAt: "2025-04-01T10:30:00Z",
+    updatedAt: "2025-04-05T14:45:00Z",
+    estimatedDuration: "7-10 days",
+    treatmentItems: [
+      {
+        id: 1,
+        name: "Dental Implant",
+        price: 700,
+        quantity: 2,
+        description: "Titanium implant with abutment"
+      },
+      {
+        id: 2,
+        name: "Porcelain Veneers",
+        price: 350,
+        quantity: 6,
+        description: "Premium porcelain veneers for front teeth"
+      }
+    ],
+    totalPrice: 3500,
+    currency: "GBP",
+    notes: "Patient prefers to complete all treatments in one visit",
+    paymentStatus: PaymentStatus.PARTIAL,
+    appointmentDate: "2025-05-15T09:00:00Z"
+  },
+  {
+    id: 2,
+    patientId: 2,
+    patientName: "Sarah Johnson",
+    clinicId: 1,
+    clinicName: "Istanbul Dental Smile",
+    status: TreatmentPlanStatus.COMPLETED,
+    title: "Smile Makeover",
+    description: "Veneers and whitening treatment",
+    createdAt: "2025-03-15T09:20:00Z",
+    updatedAt: "2025-04-10T16:30:00Z",
+    estimatedDuration: "5-7 days",
+    treatmentItems: [
+      {
+        id: 3,
+        name: "Porcelain Veneers",
+        price: 350,
+        quantity: 8,
+        description: "Premium porcelain veneers"
+      },
+      {
+        id: 4,
+        name: "Teeth Whitening",
+        price: 250,
+        quantity: 1,
+        description: "In-office laser whitening treatment"
+      }
+    ],
+    totalPrice: 3050,
+    currency: "GBP",
+    notes: "Patient requested natural-looking veneers",
+    paymentStatus: PaymentStatus.PAID,
+    appointmentDate: "2025-04-01T10:00:00Z",
+    completionDate: "2025-04-07T15:30:00Z"
+  },
+  {
+    id: 3,
+    patientId: 3,
+    patientName: "Michael Brown",
+    clinicId: 1,
+    clinicName: "Istanbul Dental Smile",
+    status: TreatmentPlanStatus.DRAFT,
+    title: "Dental Implant Treatment",
+    description: "Full mouth restoration with implants",
+    createdAt: "2025-04-10T11:00:00Z",
+    updatedAt: "2025-04-10T11:00:00Z",
+    estimatedDuration: "10-14 days",
+    treatmentItems: [
+      {
+        id: 5,
+        name: "Dental Implant",
+        price: 700,
+        quantity: 4,
+        description: "Premium dental implants"
+      },
+      {
+        id: 6,
+        name: "Bone Grafting",
+        price: 500,
+        quantity: 2,
+        description: "Bone augmentation for implant support"
+      }
+    ],
+    totalPrice: 3800,
+    currency: "GBP",
+    notes: "Initial consultation completed, waiting for confirmation",
+    paymentStatus: PaymentStatus.PENDING
+  },
+  {
+    id: 4,
+    patientId: 4,
+    patientName: "Emma Davis",
+    clinicId: 1,
+    clinicName: "Istanbul Dental Smile",
+    status: TreatmentPlanStatus.SENT,
+    title: "Orthodontic Treatment",
+    description: "Clear aligner treatment for mild crowding",
+    createdAt: "2025-04-05T14:15:00Z",
+    updatedAt: "2025-04-07T09:30:00Z",
+    estimatedDuration: "12 months",
+    treatmentItems: [
+      {
+        id: 7,
+        name: "Clear Aligners",
+        price: 2500,
+        quantity: 1,
+        description: "Full clear aligner treatment including refinements"
+      },
+      {
+        id: 8,
+        name: "3D Treatment Planning",
+        price: 300,
+        quantity: 1,
+        description: "Digital scanning and treatment planning"
+      }
+    ],
+    totalPrice: 2800,
+    currency: "GBP",
+    notes: "Patient would like to minimize treatment time if possible",
+    paymentStatus: PaymentStatus.PENDING
+  },
+  {
+    id: 5,
+    patientId: 5,
+    patientName: "Robert Taylor",
+    clinicId: 1,
+    clinicName: "Istanbul Dental Smile",
+    status: TreatmentPlanStatus.IN_PROGRESS,
+    title: "Complete Smile Reconstruction",
+    description: "Full mouth rehabilitation with crowns and implants",
+    createdAt: "2025-03-10T13:45:00Z",
+    updatedAt: "2025-04-12T10:20:00Z",
+    estimatedDuration: "14-20 days",
+    treatmentItems: [
+      {
+        id: 9,
+        name: "Dental Implant",
+        price: 700,
+        quantity: 6,
+        description: "Premium dental implants with abutments"
+      },
+      {
+        id: 10,
+        name: "Porcelain Crown",
+        price: 450,
+        quantity: 10,
+        description: "Zirconia crowns for remaining teeth"
+      }
+    ],
+    totalPrice: 8700,
+    currency: "GBP",
+    notes: "Initial phase completed, implants healing before final restoration",
+    paymentStatus: PaymentStatus.PARTIAL,
+    appointmentDate: "2025-04-18T09:00:00Z"
+  }
+];
+
 /**
  * Get all treatment plans for a clinic
  * Accessible by clinic staff
@@ -25,178 +198,8 @@ router.get('/api/clinic/treatment-plans', ensureRole('clinic_staff'), async (req
     
     console.log(`Retrieving treatment plans for clinic ${clinicId}, page ${page}, limit ${limit}, status "${status}", search "${search}"`);
     
-    // Mock treatment plans data with pagination support
-    const allTreatmentPlans: TreatmentPlan[] = [
-      {
-        id: 1,
-        patientId: 1,
-        patientName: "James Wilson",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.ACCEPTED,
-        title: "Full Dental Restoration",
-        description: "Complete smile makeover including veneers and implants",
-        createdAt: "2025-04-01T10:30:00Z",
-        updatedAt: "2025-04-05T14:45:00Z",
-        estimatedDuration: "7-10 days",
-        treatmentItems: [
-          {
-            id: 1,
-            name: "Dental Implant",
-            price: 700,
-            quantity: 2,
-            description: "Titanium implant with abutment"
-          },
-          {
-            id: 2,
-            name: "Porcelain Veneers",
-            price: 350,
-            quantity: 6,
-            description: "Premium porcelain veneers for front teeth"
-          }
-        ],
-        totalPrice: 3500,
-        currency: "GBP",
-        notes: "Patient prefers to complete all treatments in one visit",
-        paymentStatus: PaymentStatus.PARTIAL,
-        appointmentDate: "2025-05-15T09:00:00Z"
-      },
-      {
-        id: 2,
-        patientId: 2,
-        patientName: "Sarah Johnson",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.COMPLETED,
-        title: "Smile Makeover",
-        description: "Veneers and whitening treatment",
-        createdAt: "2025-03-15T09:20:00Z",
-        updatedAt: "2025-04-10T16:30:00Z",
-        estimatedDuration: "5-7 days",
-        treatmentItems: [
-          {
-            id: 3,
-            name: "Porcelain Veneers",
-            price: 350,
-            quantity: 8,
-            description: "Premium porcelain veneers"
-          },
-          {
-            id: 4,
-            name: "Teeth Whitening",
-            price: 250,
-            quantity: 1,
-            description: "In-office laser whitening treatment"
-          }
-        ],
-        totalPrice: 3050,
-        currency: "GBP",
-        notes: "Patient requested natural-looking veneers",
-        paymentStatus: PaymentStatus.PAID,
-        appointmentDate: "2025-04-01T10:00:00Z",
-        completionDate: "2025-04-07T15:30:00Z"
-      },
-      {
-        id: 3,
-        patientId: 3,
-        patientName: "Michael Brown",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.DRAFT,
-        title: "Dental Implant Treatment",
-        description: "Full mouth restoration with implants",
-        createdAt: "2025-04-10T11:00:00Z",
-        updatedAt: "2025-04-10T11:00:00Z",
-        estimatedDuration: "10-14 days",
-        treatmentItems: [
-          {
-            id: 5,
-            name: "Dental Implant",
-            price: 700,
-            quantity: 4,
-            description: "Premium dental implants"
-          },
-          {
-            id: 6,
-            name: "Bone Grafting",
-            price: 500,
-            quantity: 2,
-            description: "Bone augmentation for implant support"
-          }
-        ],
-        totalPrice: 3800,
-        currency: "GBP",
-        notes: "Initial consultation completed, waiting for confirmation",
-        paymentStatus: PaymentStatus.PENDING
-      },
-      {
-        id: 4,
-        patientId: 4,
-        patientName: "Emma Davis",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.SENT,
-        title: "Orthodontic Treatment",
-        description: "Clear aligner treatment for mild crowding",
-        createdAt: "2025-04-05T14:15:00Z",
-        updatedAt: "2025-04-07T09:30:00Z",
-        estimatedDuration: "12 months",
-        treatmentItems: [
-          {
-            id: 7,
-            name: "Clear Aligners",
-            price: 2500,
-            quantity: 1,
-            description: "Full clear aligner treatment including refinements"
-          },
-          {
-            id: 8,
-            name: "3D Treatment Planning",
-            price: 300,
-            quantity: 1,
-            description: "Digital scanning and treatment planning"
-          }
-        ],
-        totalPrice: 2800,
-        currency: "GBP",
-        notes: "Patient would like to minimize treatment time if possible",
-        paymentStatus: PaymentStatus.PENDING
-      },
-      {
-        id: 5,
-        patientId: 5,
-        patientName: "Robert Taylor",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.IN_PROGRESS,
-        title: "Complete Smile Reconstruction",
-        description: "Full mouth rehabilitation with crowns and implants",
-        createdAt: "2025-03-10T13:45:00Z",
-        updatedAt: "2025-04-12T10:20:00Z",
-        estimatedDuration: "14-20 days",
-        treatmentItems: [
-          {
-            id: 9,
-            name: "Dental Implant",
-            price: 700,
-            quantity: 6,
-            description: "Premium dental implants with abutments"
-          },
-          {
-            id: 10,
-            name: "Porcelain Crown",
-            price: 450,
-            quantity: 10,
-            description: "Zirconia crowns for remaining teeth"
-          }
-        ],
-        totalPrice: 8700,
-        currency: "GBP",
-        notes: "Initial phase completed, implants healing before final restoration",
-        paymentStatus: PaymentStatus.PARTIAL,
-        appointmentDate: "2025-04-18T09:00:00Z"
-      }
-    ];
+    // Use our shared mock treatment plans data
+    const allTreatmentPlans = [...MOCK_TREATMENT_PLANS];
     
     // Filter by status if provided
     let filteredPlans = [...allTreatmentPlans];
@@ -256,180 +259,8 @@ router.get('/api/clinic/treatment-plans/:id', ensureRole('clinic_staff'), async 
     
     console.log(`Retrieving treatment plan ${treatmentPlanId} for clinic ${clinicId}`);
     
-    // Use the same mock data as the list endpoint to ensure consistency
-    const mockPlans: TreatmentPlan[] = [
-      {
-        id: 1,
-        patientId: 1,
-        patientName: "James Wilson",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.ACCEPTED,
-        title: "Full Dental Restoration",
-        description: "Complete smile makeover including veneers and implants",
-        createdAt: "2025-04-01T10:30:00Z",
-        updatedAt: "2025-04-05T14:45:00Z",
-        estimatedDuration: "7-10 days",
-        treatmentItems: [
-          {
-            id: 1,
-            name: "Dental Implant",
-            price: 700,
-            quantity: 2,
-            description: "Titanium implant with abutment"
-          },
-          {
-            id: 2,
-            name: "Porcelain Veneers",
-            price: 350,
-            quantity: 6,
-            description: "Premium porcelain veneers for front teeth"
-          }
-        ],
-        totalPrice: 3500,
-        currency: "GBP",
-        notes: "Patient prefers to complete all treatments in one visit",
-        paymentStatus: PaymentStatus.PARTIAL,
-        appointmentDate: "2025-05-15T09:00:00Z"
-      },
-      {
-        id: 2,
-        patientId: 2,
-        patientName: "Sarah Johnson",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.COMPLETED,
-        title: "Smile Makeover",
-        description: "Veneers and whitening treatment",
-        createdAt: "2025-03-15T09:20:00Z",
-        updatedAt: "2025-04-10T16:30:00Z",
-        estimatedDuration: "5-7 days",
-        treatmentItems: [
-          {
-            id: 3,
-            name: "Porcelain Veneers",
-            price: 350,
-            quantity: 8,
-            description: "Premium porcelain veneers"
-          },
-          {
-            id: 4,
-            name: "Teeth Whitening",
-            price: 250,
-            quantity: 1,
-            description: "In-office laser whitening treatment"
-          }
-        ],
-        totalPrice: 3050,
-        currency: "GBP",
-        notes: "Patient requested natural-looking veneers",
-        paymentStatus: PaymentStatus.PAID,
-        appointmentDate: "2025-04-01T10:00:00Z",
-        completionDate: "2025-04-07T15:30:00Z"
-      },
-      {
-        id: 3,
-        patientId: 3,
-        patientName: "Michael Brown",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.DRAFT,
-        title: "Dental Implant Treatment",
-        description: "Full mouth restoration with implants",
-        createdAt: "2025-04-10T11:00:00Z",
-        updatedAt: "2025-04-10T11:00:00Z",
-        estimatedDuration: "10-14 days",
-        treatmentItems: [
-          {
-            id: 5,
-            name: "Dental Implant",
-            price: 700,
-            quantity: 4,
-            description: "Premium dental implants"
-          },
-          {
-            id: 6,
-            name: "Bone Grafting",
-            price: 500,
-            quantity: 2,
-            description: "Bone augmentation for implant support"
-          }
-        ],
-        totalPrice: 3800,
-        currency: "GBP",
-        notes: "Initial consultation completed, waiting for confirmation",
-        paymentStatus: PaymentStatus.PENDING
-      },
-      {
-        id: 4,
-        patientId: 4,
-        patientName: "Emma Davis",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.SENT,
-        title: "Orthodontic Treatment",
-        description: "Clear aligner treatment for mild crowding",
-        createdAt: "2025-04-05T14:15:00Z",
-        updatedAt: "2025-04-07T09:30:00Z",
-        estimatedDuration: "12 months",
-        treatmentItems: [
-          {
-            id: 7,
-            name: "Clear Aligners",
-            price: 2500,
-            quantity: 1,
-            description: "Full clear aligner treatment including refinements"
-          },
-          {
-            id: 8,
-            name: "3D Treatment Planning",
-            price: 300,
-            quantity: 1,
-            description: "Digital scanning and treatment planning"
-          }
-        ],
-        totalPrice: 2800,
-        currency: "GBP",
-        notes: "Patient would like to minimize treatment time if possible",
-        paymentStatus: PaymentStatus.PENDING
-      },
-      {
-        id: 5,
-        patientId: 5,
-        patientName: "Robert Taylor",
-        clinicId: 1,
-        clinicName: "Istanbul Dental Smile",
-        status: TreatmentPlanStatus.IN_PROGRESS,
-        title: "Complete Smile Reconstruction",
-        description: "Full mouth rehabilitation with crowns and implants",
-        createdAt: "2025-03-10T13:45:00Z",
-        updatedAt: "2025-04-12T10:20:00Z",
-        estimatedDuration: "14-20 days",
-        treatmentItems: [
-          {
-            id: 9,
-            name: "Dental Implant",
-            price: 700,
-            quantity: 6,
-            description: "Premium dental implants with abutments"
-          },
-          {
-            id: 10,
-            name: "Porcelain Crown",
-            price: 450,
-            quantity: 10,
-            description: "Zirconia crowns for remaining teeth"
-          }
-        ],
-        totalPrice: 8700,
-        currency: "GBP",
-        notes: "Initial phase completed, implants healing before final restoration",
-        paymentStatus: PaymentStatus.PARTIAL,
-        appointmentDate: "2025-04-18T09:00:00Z"
-      }
-    ];
-    
-    const treatmentPlan = mockPlans.find(p => p.id === treatmentPlanId);
+    // Use our shared mock treatment plans data
+    const treatmentPlan = MOCK_TREATMENT_PLANS.find(p => p.id === treatmentPlanId);
     
     if (!treatmentPlan) {
       return res.status(404).json({
