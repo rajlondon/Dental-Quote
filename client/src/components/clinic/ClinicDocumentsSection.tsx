@@ -114,7 +114,8 @@ const ClinicDocumentsSection: React.FC = () => {
     data: fileData, 
     isLoading: isLoadingFiles, 
     isError: isErrorFiles, 
-    error: filesError 
+    error: filesError,
+    refetch: refreshFileList
   } = useQuery({
     queryKey: ['/api/files/list', activeTab, filterCategory],
     queryFn: async () => {
@@ -140,7 +141,11 @@ const ClinicDocumentsSection: React.FC = () => {
         console.error("Error fetching files:", error);
         throw error;
       }
-    }
+    },
+    // Add refetch options to ensure query is refreshed when tabs or filters change
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 10 * 1000 // 10 seconds before data becomes stale
   });
   
   // Transform S3 files into Document format
@@ -359,8 +364,10 @@ const ClinicDocumentsSection: React.FC = () => {
         });
       }
       
-      // Refresh the file list after upload
-      queryClient.invalidateQueries({ queryKey: ['/api/files/list'] });
+      // Refresh the file list after upload - include all query parameters
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/files/list', activeTab, filterCategory] 
+      });
       
       // Dialog no longer closes automatically - users must click "Done" after setting categories
       // setShowUploadDialog(false);
@@ -509,6 +516,28 @@ const ClinicDocumentsSection: React.FC = () => {
               <Button onClick={() => setShowUploadDialog(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 {t("clinic.documents.upload", "Upload")}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  refreshFileList();
+                  toast({
+                    title: "Refreshing Documents",
+                    description: "Document list is being refreshed..."
+                  });
+                }}
+              >
+                <svg 
+                  className={`h-4 w-4 mr-2 ${isLoadingFiles ? 'animate-spin' : ''}`}
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {t("clinic.documents.refresh", "Refresh")}
               </Button>
               
               {selectedDocuments.length > 0 && (
@@ -1070,6 +1099,10 @@ const ClinicDocumentsSection: React.FC = () => {
                   await handleFileUpload(null, selectedFiles);
                   // Explicitly refresh the document list
                   queryClient.invalidateQueries({ queryKey: ['/api/files/list'] });
+                  // Also refresh specific active filters
+                  queryClient.invalidateQueries({ 
+                    queryKey: ['/api/files/list', activeTab, filterCategory] 
+                  });
                 }
                 setShowUploadDialog(false);
                 // Reset states when done
