@@ -30,6 +30,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(data: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
+  getUsersByClinicId(clinicId: number): Promise<User[]>;
   
   // Quote management
   getQuoteRequest(id: number): Promise<QuoteRequest | undefined>;
@@ -144,6 +145,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+  
+  async getUsersByClinicId(clinicId: number): Promise<User[]> {
+    return db
+      .select()
+      .from(users)
+      .where(eq(users.clinicId, clinicId))
+      .orderBy(asc(users.fullName));
   }
 
   // === Quote Management ===
