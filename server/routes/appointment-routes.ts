@@ -196,16 +196,35 @@ router.post(
         });
       }
       
+      // Validate and parse the appointment data
+      console.log('Appointment data before parsing:', {
+        ...req.body,
+        clinicId,
+        startTimeType: typeof req.body.startTime,
+        endTimeType: typeof req.body.endTime,
+        startTime: req.body.startTime,
+        endTime: req.body.endTime
+      });
+      
       const appointmentData = createAppointmentSchema.parse({
         ...req.body,
         clinicId
       });
       
-      // Ensure dates are properly formatted
+      // The schema transformation should have already converted the dates to Date objects
+      console.log('Appointment data after parsing:', {
+        ...appointmentData,
+        startTime: appointmentData.startTime instanceof Date 
+          ? appointmentData.startTime.toISOString() 
+          : 'Not a Date object',
+        endTime: appointmentData.endTime instanceof Date 
+          ? appointmentData.endTime.toISOString() 
+          : 'Not a Date object'
+      });
+      
+      // Add creator ID to the data
       const formattedAppointmentData = {
         ...appointmentData,
-        startTime: new Date(appointmentData.startTime),
-        endTime: new Date(appointmentData.endTime),
         createdById: req.user?.id || 0
       };
       
@@ -281,16 +300,31 @@ router.patch(
         });
       }
       
+      // Log the incoming update data
+      console.log('Appointment update data before parsing:', {
+        ...req.body,
+        startTimeType: typeof req.body.startTime,
+        endTimeType: typeof req.body.endTime,
+        startTime: req.body.startTime,
+        endTime: req.body.endTime
+      });
+      
+      // Parse and validate the update data
       const updateData = updateAppointmentSchema.parse(req.body);
       
-      // Handle date formatting for updates if date fields are present
+      // The Zod schema should have already transformed date strings to Date objects
+      console.log('Appointment update data after parsing:', {
+        ...updateData,
+        startTime: updateData.startTime instanceof Date 
+          ? updateData.startTime.toISOString() 
+          : updateData.startTime,
+        endTime: updateData.endTime instanceof Date 
+          ? updateData.endTime.toISOString() 
+          : updateData.endTime
+      });
+      
+      // No need for additional conversion as the schema transforms will handle it
       const formattedUpdateData = { ...updateData };
-      if (formattedUpdateData.startTime) {
-        formattedUpdateData.startTime = new Date(formattedUpdateData.startTime);
-      }
-      if (formattedUpdateData.endTime) {
-        formattedUpdateData.endTime = new Date(formattedUpdateData.endTime);
-      }
       
       const updatedAppointment = await storage.updateAppointment(appointmentId, formattedUpdateData);
       
