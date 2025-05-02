@@ -578,7 +578,7 @@ const ClinicDocumentsSection: React.FC = () => {
                 <FileText className="h-4 w-4 mr-1 text-red-500" />
                 PDF
               </TabsTrigger>
-              <TabsTrigger value="jpg" className="text-xs">
+              <TabsTrigger value="image" className="text-xs">
                 <Image className="h-4 w-4 mr-1 text-blue-500" />
                 Images
               </TabsTrigger>

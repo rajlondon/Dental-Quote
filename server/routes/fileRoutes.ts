@@ -229,7 +229,10 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
           const filename = key.split('/').pop() || '';
           const extension = filename.split('.').pop()?.toLowerCase() || '';
           
-          console.log(`File: ${filename}, Extension: ${extension}`);
+          // Get the category from the filename (first part before the dash)
+          const fileCategory = filename.split('-')[0] || '';
+          
+          console.log(`File: ${filename}, Extension: ${extension}, Category: ${fileCategory}`);
           
           // Map common file type groups to their extensions
           let matches = false;
@@ -238,9 +241,9 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
             case 'pdf':
               matches = extension === 'pdf';
               break;
-            case 'jpg': // This matches the TabsTrigger value in the client
-            case 'image':
-              matches = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+            case 'image': // Updated to match client TabsTrigger value
+              // Check both by extension and by category
+              matches = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension) || fileCategory === 'image';
               break;
             case 'docx': // This matches the TabsTrigger value in the client
             case 'document':
