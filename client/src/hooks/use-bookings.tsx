@@ -35,7 +35,7 @@ export type BookingContextType = {
     error: Error | null;
     refetch: () => void;
   };
-  useBooking: (id: string) => {
+  useBooking: (id: number) => {
     data: Booking | undefined;
     isLoading: boolean;
     error: Error | null;
