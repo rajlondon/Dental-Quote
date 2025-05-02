@@ -485,4 +485,168 @@ router.post('/create-messaging-test-data', async (req, res) => {
   }
 });
 
+// Test endpoint to generate notification analytics data
+router.post('/generate-notification-analytics-data', async (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  // Require authentication
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: "Authentication required" 
+    });
+  }
+
+  // Only allow admin users
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      success: false, 
+      message: "Admin access required" 
+    });
+  }
+
+  try {
+    // Access the notification service through the app locals
+    const notificationService = req.app.locals.notificationService;
+    
+    if (!notificationService) {
+      return res.status(500).json({
+        success: false,
+        message: "Notification service not available"
+      });
+    }
+
+    // Categories, priorities, and types for test data
+    const categories = ['appointment', 'treatment', 'payment', 'message', 'document', 'system', 'offer'];
+    const priorities = ['low', 'medium', 'high', 'urgent'];
+    const targetTypes = ['admin', 'clinic', 'patient'];
+    
+    // Helper for random selection and integers
+    const randomItem = (array: any[]) => array[Math.floor(Math.random() * array.length)];
+    const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+    
+    // Number of test notifications to create
+    const numNotifications = req.body.count || 30;
+    let successCount = 0;
+    let failCount = 0;
+    
+    // Create and track notification results
+    const results = [];
+    
+    for (let i = 0; i < numNotifications; i++) {
+      const category = randomItem(categories);
+      const priority = randomItem(priorities);
+      const targetType = randomItem(targetTypes);
+      
+      // Generate appropriate titles based on category
+      let title, message, action_url;
+      
+      const baseUrl = 'https://mydentalfly.com';
+      
+      switch (category) {
+        case 'appointment':
+          title = `New appointment request (#${1000 + i})`;
+          message = 'A patient has requested an appointment for dental consultation';
+          action_url = `${baseUrl}/admin/appointments`;
+          break;
+        case 'treatment':
+          title = `Treatment plan update (#${2000 + i})`;
+          message = `A clinic has proposed a new treatment plan #${2000 + i}`;
+          action_url = `${baseUrl}/admin/treatment-plans`;
+          break;
+        case 'payment':
+          title = `Payment confirmation (#${3000 + i})`;
+          message = `Payment of €${randomInt(50, 500)} has been received for treatment plan #${3000 + i}`;
+          action_url = `${baseUrl}/admin/payments`;
+          break;
+        case 'message':
+          title = `New message from clinic`;
+          message = 'You have received a new message regarding patient treatment options';
+          action_url = `${baseUrl}/admin/messages`;
+          break;
+        case 'document':
+          title = `Document uploaded`;
+          message = `A new document has been uploaded to the treatment plan #${4000 + i}`;
+          action_url = `${baseUrl}/admin/documents`;
+          break;
+        case 'system':
+          title = `System notification`;
+          message = 'System maintenance is scheduled for this weekend';
+          action_url = `${baseUrl}/admin/settings`;
+          break;
+        case 'offer':
+          title = `New special offer submitted`;
+          message = 'A clinic has submitted a special offer for approval';
+          action_url = `${baseUrl}/admin/offers-approval`;
+          break;
+      }
+      
+      // Determine if notification should be read or unread (70% chance of being read)
+      const shouldBeRead = Math.random() < 0.7;
+      
+      try {
+        // Create the notification
+        const newNotification = {
+          title,
+          message,
+          target_type: targetType,
+          target_id: targetType === 'admin' ? '41' : randomInt(1, 50).toString(), // Admin ID is 41
+          source_type: 'system' as const,
+          source_id: 'test-script',
+          category: category as any,
+          priority: priority as any,
+          action_url,
+          created_at: new Date(Date.now() - randomInt(60000, 2592000000)), // Between 1 minute and 30 days ago
+        };
+        
+        // Save the notification
+        const notification = await notificationService.createNotification(newNotification);
+        
+        // If it should be read, mark it as read
+        if (shouldBeRead) {
+          // Add a random delay for when it was read (between 30 seconds and 1 hour)
+          const timeToRead = randomInt(30, 3600); // in seconds
+          
+          // Mark as read
+          await notificationService.updateNotification({
+            id: notification.id,
+            status: 'read'
+          });
+        }
+        
+        successCount++;
+        results.push({
+          id: notification.id,
+          status: shouldBeRead ? 'read' : 'unread',
+          category
+        });
+      } catch (error: any) {
+        console.error('Error creating test notification:', error);
+        failCount++;
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: `Generated ${successCount} test notifications (${failCount} failed)`,
+      results,
+      analytics: await notificationService.getNotificationAnalytics()
+    });
+    
+  } catch (error: any) {
+    console.error('Error generating test notifications:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+      error: error
+    });
+  }
+});
+
 export default router;
