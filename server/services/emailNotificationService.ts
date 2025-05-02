@@ -4,9 +4,7 @@ import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { isMailjetConfigured } from '../mailjet-service';
-
-// Import the required email sending functions
-const mailjet = require('node-mailjet');
+import mailjet from 'node-mailjet';
 
 // Configuration with verified domain
 const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'noreply@mydentalfly.com';
@@ -151,13 +149,14 @@ export class EmailNotificationService {
 
       console.log(`Email notification sent to ${user.email} for ${notification.category}`);
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error sending email notification:', error);
-      if (error.response) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const mailjetError = error as { response: { status: number; statusText: string; data: unknown } };
         console.error('Mailjet API error details:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
+          status: mailjetError.response.status,
+          statusText: mailjetError.response.statusText,
+          data: mailjetError.response.data
         });
       }
       return false;
