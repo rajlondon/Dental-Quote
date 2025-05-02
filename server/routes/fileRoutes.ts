@@ -320,8 +320,25 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
           // Generate a signed URL
           const url = await getSignedS3Url(key, 3600);
           
-          // Log what we found for debugging
+          // More detailed logging for debugging
           console.log(`File details: name=${filename}, type=${extension}, category=${fileType}`);
+          console.log(`Generated URL for file: ${url ? url.substring(0, 90) + '...' : 'No URL generated'}`);
+          
+          // Test that the URL is valid (don't actually fetch, as it might cause server issues)
+          if (url) {
+            try {
+              const urlObj = new URL(url);
+              console.log(`URL is valid, protocol: ${urlObj.protocol}, hostname: ${urlObj.hostname}`);
+              
+              // Check if the URL has common CORS headers for troubleshooting
+              if (urlObj.hostname.includes('amazonaws.com')) {
+                console.log('URL is an S3 URL - should be accessible');
+              }
+            } catch (err) {
+              const error = err as Error;
+              console.error(`URL parsing failed: ${error.message}`);
+            }
+          }
           
           return {
             key,
