@@ -230,10 +230,14 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
           switch (fileType) {
             case 'pdf':
               return extension === 'pdf';
+            case 'jpg': // This matches the TabsTrigger value in the client
             case 'image':
               return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+            case 'docx': // This matches the TabsTrigger value in the client
             case 'document':
-              return ['doc', 'docx', 'txt', 'rtf', 'odt', 'pdf'].includes(extension);
+              return ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(extension);
+            case 'zip': // This matches the TabsTrigger value in the client
+              return ['zip', 'rar', 'tar', 'gz', '7z'].includes(extension);
             case 'spreadsheet':
               return ['xls', 'xlsx', 'csv'].includes(extension);
             case 'presentation':
@@ -244,6 +248,14 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
               return ['mp3', 'wav', 'ogg'].includes(extension);
             case 'xray':
               return ['dcm', 'dicom'].includes(extension);
+            case 'shared':
+              // This would need additional logic based on shared status
+              // For now, return all files since we can't filter by shared status on the server
+              return true;
+            case 'patients':
+              // This would need additional logic based on if files are assigned to patients
+              // For now, return all files since we can't filter by patient assignment on the server
+              return true;
             default:
               // For specific extensions like 'jpg', match exactly
               return extension === fileType.toLowerCase();
