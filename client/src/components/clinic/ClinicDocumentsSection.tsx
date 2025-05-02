@@ -173,9 +173,13 @@ const ClinicDocumentsSection: React.FC = () => {
     });
   };
   
-  // Use only real data from AWS S3
+  // Use only real data from AWS S3 and sort by most recent first
   const allDocuments: Document[] = fileData?.files ? 
-    transformS3FilesToDocuments(fileData.files) : 
+    transformS3FilesToDocuments(fileData.files)
+      .sort((a, b) => {
+        // Sort by newest first
+        return new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime();
+      }) : 
     // Empty array when no files are found
     [];
   
@@ -703,7 +707,15 @@ const ClinicDocumentsSection: React.FC = () => {
                     const categoryInfo = getCategoryInfo(document.category);
                     
                     return (
-                      <TableRow key={document.id}>
+                      <TableRow 
+                        key={document.id}
+                        className={
+                          // Highlight newly uploaded documents - anything in the last 60 seconds
+                          new Date().getTime() - new Date(document.uploaded).getTime() < 60000 
+                            ? "bg-green-50" 
+                            : undefined
+                        }
+                      >
                         <TableCell>
                           <Checkbox 
                             checked={selectedDocuments.includes(document.id)}
@@ -723,6 +735,12 @@ const ClinicDocumentsSection: React.FC = () => {
                             </div>
                             <div className="truncate font-medium">
                               {document.name}
+                              {/* Badge for newly uploaded files */}
+                              {new Date().getTime() - new Date(document.uploaded).getTime() < 60000 && (
+                                <span className="ml-2 text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">
+                                  New
+                                </span>
+                              )}
                             </div>
                           </div>
                         </TableCell>
