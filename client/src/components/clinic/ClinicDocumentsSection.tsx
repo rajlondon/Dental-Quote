@@ -107,6 +107,7 @@ const ClinicDocumentsSection: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   
   // Fetch actual files from the server
   const { 
@@ -269,6 +270,12 @@ const ClinicDocumentsSection: React.FC = () => {
       }
       
       formData.append('category', category);
+      
+      // Include patient ID if selected
+      if (selectedPatientId) {
+        formData.append('patientId', selectedPatientId);
+        console.log(`Assigning file to patient: ${selectedPatientId}`);
+      }
       
       // Use the new general upload endpoint
       console.log(`Uploading file ${file.name} with category ${category} in ${process.env.NODE_ENV} mode`);
@@ -842,7 +849,16 @@ const ClinicDocumentsSection: React.FC = () => {
       </Card>
       
       {/* Upload Dialog */}
-      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+      <Dialog 
+        open={showUploadDialog} 
+        onOpenChange={(open) => {
+          setShowUploadDialog(open);
+          if (!open) {
+            // Reset state when dialog is closed
+            setSelectedPatientId('');
+            setSelectedFiles([]);
+          }
+        }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("clinic.documents.upload_files", "Upload Files")}</DialogTitle>
@@ -900,11 +916,14 @@ const ClinicDocumentsSection: React.FC = () => {
               <Label htmlFor="patient_select">
                 {t("clinic.documents.assign_patient", "Assign to Patient (Optional)")}
               </Label>
-              <Select>
+              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("clinic.documents.select_patient", "Select a patient")} />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">
+                    {t("clinic.documents.no_patient", "No patient (general document)")}
+                  </SelectItem>
                   <SelectItem value="pt001">John Smith</SelectItem>
                   <SelectItem value="pt002">Sarah Johnson</SelectItem>
                   <SelectItem value="pt003">Michael Brown</SelectItem>
