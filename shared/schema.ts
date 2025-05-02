@@ -222,6 +222,10 @@ export const clinics = pgTable("clinics", {
   logoUrl: varchar("logo_url", { length: 255 }),
   mainImageUrl: varchar("main_image_url", { length: 255 }),
   galleryImages: json("gallery_images"),
+  // Results media
+  beforeAfterImages: json("before_after_images").default([]),
+  clinicTourVideos: json("clinic_tour_videos").default([]),
+  testimonialVideos: json("testimonial_videos").default([]),
   // Admin notes
   adminNotes: text("admin_notes"),
   active: boolean("active").default(true),

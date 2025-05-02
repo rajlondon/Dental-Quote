@@ -18,7 +18,7 @@ import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 import { upload, handleUploadError, type UploadedFile } from "./file-upload";
 import { createPaymentIntent, createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
 import Stripe from "stripe";
-import { ensureAuthenticated, ensureRole } from "./middleware/auth";
+import { isAuthenticated, ensureRole } from "./middleware/auth";
 // Import authentication and portal routes
 import { setupAuth } from "./auth";
 import portalRoutes from "./routes/portal-routes";
@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 3. Portal routes
   
   // Apply global authentication for all portal routes
-  app.use("/api/portal", ensureAuthenticated);
+  app.use("/api/portal", isAuthenticated);
   
   // Protect admin-specific routes
   app.use("/api/portal/admin", ensureRole("admin"));
