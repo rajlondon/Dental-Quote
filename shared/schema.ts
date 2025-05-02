@@ -698,6 +698,14 @@ export type InsertFile = Omit<typeof files.$inferInsert, "id" | "createdAt" | "u
 export type File = typeof files.$inferSelect;
 
 // Message types
+export const insertMessageSchema = createInsertSchema(messages)
+  .omit({ id: true, createdAt: true, updatedAt: true, readAt: true })
+  .extend({
+    content: z.string().min(1, "Message content cannot be empty"),
+    bookingId: z.number().int().positive("Booking ID is required"),
+    recipientId: z.number().int().positive("Recipient ID is required")
+  });
+
 export type InsertMessage = Omit<typeof messages.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type Message = typeof messages.$inferSelect;
 
