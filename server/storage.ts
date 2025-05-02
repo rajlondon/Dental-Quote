@@ -46,12 +46,14 @@ export interface IStorage {
   createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion>;
   
   // Treatment plans
-  getTreatmentPlan(id: number): Promise<TreatmentPlan | undefined>;
+  getTreatmentPlanById(id: number): Promise<TreatmentPlan | undefined>;
   getTreatmentPlansByPatientId(patientId: number): Promise<TreatmentPlan[]>;
   getTreatmentPlansByClinicId(clinicId: number): Promise<TreatmentPlan[]>;
   getTreatmentPlanByQuoteRequestId(quoteRequestId: number): Promise<TreatmentPlan | undefined>;
+  getAllTreatmentPlans(status?: string, search?: string): Promise<TreatmentPlan[]>;
   createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan>;
   updateTreatmentPlan(id: number, data: Partial<TreatmentPlan>): Promise<TreatmentPlan | undefined>;
+  deleteTreatmentPlan(id: number): Promise<void>;
   getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]>;
   
   // Bookings
@@ -230,7 +232,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // === Treatment Plans ===
-  async getTreatmentPlan(id: number): Promise<TreatmentPlan | undefined> {
+  async getTreatmentPlanById(id: number): Promise<TreatmentPlan | undefined> {
     const [plan] = await db.select().from(treatmentPlans).where(eq(treatmentPlans.id, id));
     return plan;
   }
@@ -259,8 +261,27 @@ export class DatabaseStorage implements IStorage {
     return plan;
   }
   
+  async getAllTreatmentPlans(status?: string, search?: string): Promise<TreatmentPlan[]> {
+    let query = db.select().from(treatmentPlans);
+    
+    // Apply status filter if provided
+    if (status) {
+      query = query.where(eq(treatmentPlans.status, status));
+    }
+    
+    // For search functionality, we would need to join with users table for patient name
+    // or search within the JSON treatmentDetails field
+    // This is a basic implementation
+    
+    return query.orderBy(desc(treatmentPlans.createdAt));
+  }
+  
   async createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan> {
-    const [plan] = await db.insert(treatmentPlans).values(data).returning();
+    const [plan] = await db.insert(treatmentPlans).values({
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
     return plan;
   }
   
@@ -279,6 +300,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(treatmentPlans.id, id))
       .returning();
     return plan;
+  }
+  
+  async deleteTreatmentPlan(id: number): Promise<void> {
+    await db
+      .delete(treatmentPlans)
+      .where(eq(treatmentPlans.id, id));
   }
   
   async getFilesByTreatmentPlanId(treatmentPlanId: number): Promise<File[]> {
