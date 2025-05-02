@@ -124,7 +124,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Booking Created",
           description: "Your booking has been created successfully.",
-          variant: "success",
+          variant: "default",
         });
         // Invalidate bookings queries
         queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
@@ -155,7 +155,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Booking Updated",
           description: "Booking details have been updated successfully.",
-          variant: "success",
+          variant: "default",
         });
         // Invalidate relevant queries
         queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
@@ -188,7 +188,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Status Updated",
           description: `Booking status has been updated to ${variables.status}.`,
-          variant: "success",
+          variant: "default",
         });
         // Invalidate relevant queries
         queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
@@ -221,7 +221,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Stage Updated",
           description: `Booking stage has been updated to ${variables.stage}.`,
-          variant: "success",
+          variant: "default",
         });
         // Invalidate relevant queries
         queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
@@ -253,7 +253,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "Booking Deleted",
           description: "The booking has been deleted successfully.",
-          variant: "success",
+          variant: "default",
         });
         // Invalidate bookings queries
         queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
