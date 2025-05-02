@@ -53,6 +53,7 @@ import {
 } from "./middleware/security";
 import { setupWebSocketService } from "./services/websocketService";
 import { createNotificationService } from "./services/notificationService";
+import { createEmailNotificationService } from "./services/emailNotificationService";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -893,15 +894,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
   
-  // Create notification service with WebSocket service
-  const notificationService = createNotificationService(wsService);
+  // Create email notification service
+  const emailService = createEmailNotificationService();
+  
+  // Create notification service with WebSocket service and email service
+  const notificationService = createNotificationService(wsService, emailService);
   
   // Register notification routes
   app.use(createNotificationRoutes(notificationService));
   
-  // Store WebSocket service instance in app.locals for access in other routes if needed
+  // Store services in app.locals for access in other routes if needed
   app.locals.wsService = wsService;
   app.locals.notificationService = notificationService;
+  app.locals.emailService = emailService;
   
   console.log('WebSocket and notification services initialized for cross-portal data synchronization');
   

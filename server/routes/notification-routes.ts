@@ -200,5 +200,49 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     }
   });
 
+  // Test endpoint for email notifications (only available in development mode)
+  if (process.env.NODE_ENV !== 'production') {
+    router.post('/api/test/email-notification', async (req, res) => {
+      try {
+        if (!req.isAuthenticated()) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Create a test notification for the authenticated user
+        const testNotification = {
+          id: uuidv4(),
+          title: 'Test Email Notification',
+          message: 'This is a test email notification to verify the integration.',
+          target_type: 'patient',
+          target_id: String(req.user.id),
+          source_type: 'system',
+          source_id: 'system',
+          category: 'appointment', // Using appointment category to trigger email
+          subcategory: 'test',
+          priority: 'high', // High priority to trigger email
+          status: 'unread',
+          action_url: '/patient/profile',
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+
+        // Process the notification which should trigger an email
+        const notification = await notificationService.createNotification(testNotification);
+        
+        res.status(201).json({
+          success: true,
+          message: 'Test notification created and email should be sent if configured properly',
+          notification
+        });
+      } catch (error) {
+        console.error('Error creating test email notification:', error);
+        res.status(500).json({ 
+          error: 'Failed to create test email notification',
+          details: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
+  }
+
   return router;
 };
