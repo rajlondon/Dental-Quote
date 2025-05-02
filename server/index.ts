@@ -3,7 +3,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import cors from "cors";
-import { createErrorHandler, logError } from "./services/error-logger";
+import { logError } from "./services/error-logger";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -71,8 +72,10 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Use our enhanced error handler middleware
-  app.use(createErrorHandler());
+  // Only apply our custom error handlers to API routes
+  // This prevents interference with Vite's handling of frontend routes
+  app.use('/api', notFoundHandler);
+  app.use('/api', errorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route

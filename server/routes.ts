@@ -35,6 +35,9 @@ import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
+// Import error handling routes (only for development)
+import errorTestRoutes from "./routes/error-test-routes";
+import { AppError, catchAsync } from "./middleware/error-handler";
 // Import security middleware
 import { 
   csrfProtection, 
@@ -234,6 +237,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
     app.use('/api/test', testRoutes);
+    
+    // Register error testing routes for development only
+    app.use('/api/error-test', errorTestRoutes);
+    
     console.log('✅ Test routes registered (only available in development mode)');
   }
   
