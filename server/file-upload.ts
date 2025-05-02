@@ -220,6 +220,7 @@ export interface UploadedFile {
   category?: string; // xray, document, image
   uploadDate: Date;
   key?: string; // For cloud storage (S3 key or Cloudinary public ID)
+  patientId?: string; // ID of patient this file is associated with, if any
 }
 
 /**
@@ -227,7 +228,7 @@ export interface UploadedFile {
  * @param file The file object from multer
  * @returns Promise with the processed file information
  */
-export async function processUploadedFile(file: Express.Multer.File): Promise<UploadedFile> {
+export async function processUploadedFile(file: Express.Multer.File, patientId?: string): Promise<UploadedFile> {
   const fileType = parseFileType(file.mimetype);
   const uploadDate = new Date();
   
