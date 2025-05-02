@@ -28,7 +28,7 @@ import { useDisableRefetch } from "@/lib/adminDisableRefetch";
 // Import admin portal components 
 import AdminDashboardSection from "@/components/admin/AdminDashboardSection";
 import PatientManagementSection from "@/components/admin/PatientManagementSection";
-import QuoteManagementSection from "@/components/admin/QuoteManagementSection";
+import AdminQuotesSection from "@/components/admin/AdminQuotesSection";
 import BookingManagementSection from "@/components/admin/BookingManagementSection";
 import MessageManagementSection from "@/components/admin/MessageManagementSection";
 import AdminAnalyticsSection from "@/components/admin/AdminAnalyticsSection";
@@ -213,7 +213,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       case "patients":
         return <PatientManagementSection />;
       case "quotes":
-        return <QuoteManagementSection />;
+        return <AdminQuotesSection />;
       case "bookings":
         return <BookingManagementSection />;
       case "messages":
