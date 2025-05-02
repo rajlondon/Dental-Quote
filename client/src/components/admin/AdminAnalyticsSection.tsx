@@ -4,6 +4,7 @@ import { BarChart3, LineChart, ArrowRight, ArrowUp, ArrowDown, DollarSign, Users
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import NotificationAnalyticsSection from './NotificationAnalyticsSection';
 
 const AdminAnalyticsSection: React.FC = () => {
   const { t } = useTranslation();
@@ -40,6 +41,7 @@ const AdminAnalyticsSection: React.FC = () => {
           <TabsTrigger value="bookings">{t("admin.analytics.bookings", "Bookings")}</TabsTrigger>
           <TabsTrigger value="revenue">{t("admin.analytics.revenue", "Revenue")}</TabsTrigger>
           <TabsTrigger value="treatments">{t("admin.analytics.treatments", "Treatments")}</TabsTrigger>
+          <TabsTrigger value="notifications">{t("admin.analytics.notifications", "Notifications")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -228,6 +230,11 @@ const AdminAnalyticsSection: React.FC = () => {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Notification Analytics */}
+        <TabsContent value="notifications">
+          <NotificationAnalyticsSection />
         </TabsContent>
       </Tabs>
     </div>

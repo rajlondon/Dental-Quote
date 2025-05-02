@@ -174,6 +174,26 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     }
   });
 
+  // GET endpoint for notification analytics (admin only)
+  router.get('/api/notifications/analytics', async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Only admins can access analytics
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+    
+    try {
+      const analytics = await notificationService.getNotificationAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching notification analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch notification analytics' });
+    }
+  });
+  
   // POST endpoint to mark all notifications as read
   router.post('/api/notifications/mark-all-read', async (req, res) => {
     if (!req.isAuthenticated()) {
