@@ -104,9 +104,9 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
     return { data, isLoading, error, refetch };
   };
   
-  const useBooking = (id: string) => {
+  const useBooking = (id: number) => {
     const { data, isLoading, error, refetch } = useQuery<Booking, Error>({
-      queryKey: ['/api/bookings', id],
+      queryKey: ['/api/bookings', String(id)],
       retry: 1,
       enabled: !!id,
     });
