@@ -152,7 +152,7 @@ export const getQueryFn: <T>(options: {
     }
   };
 
-// Configure React Query globally with enhanced error handling
+// Configure React Query globally with standard settings
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -164,18 +164,20 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
-      retryOnMount: false,
-      // Add better error logging/handling
-      onError: (error) => {
-        console.error("Query error:", error);
-      }
+      retryOnMount: false
     },
     mutations: {
-      retry: false,
-      // Add better error logging/handling
-      onError: (error) => {
-        console.error("Mutation error:", error);
-      }
+      retry: false
     },
-  },
+  }
 });
+
+// Add a custom error handler function that logs errors
+const logQueryError = (error: unknown) => {
+  console.error("Query error:", error);
+};
+
+// We use this for logging query errors in components
+export const errorHandler = {
+  logQueryError
+};

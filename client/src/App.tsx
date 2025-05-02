@@ -6,7 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
-import NotFound from "@/pages/not-found";
+import { NotFoundPage } from "@/pages/ErrorPage";
+import ErrorBoundary from "@/components/ui/error-boundary";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
@@ -234,7 +235,7 @@ function Router() {
           return null;
         }}
       </Route>
-      <Route component={NotFound} />
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }
@@ -279,25 +280,29 @@ function App() {
   }, []);
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AdminAuthProvider>
-          <NotificationsProvider>
-            <Suspense fallback={<div>Loading...</div>}>
-              <ScrollToTop />
-              {/* Only exclude ReloadTranslations on clinic portal path */}
-              {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                <ReloadTranslations />
-              }
-              <Router />
-              <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-              <EnvironmentBadge />
-              <Toaster />
-            </Suspense>
-          </NotificationsProvider>
-        </AdminAuthProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary componentName="RootApplication">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AdminAuthProvider>
+            <NotificationsProvider>
+              <Suspense fallback={<div>Loading...</div>}>
+                <ScrollToTop />
+                {/* Only exclude ReloadTranslations on clinic portal path */}
+                {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                  <ReloadTranslations />
+                }
+                <ErrorBoundary componentName="Router">
+                  <Router />
+                </ErrorBoundary>
+                <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+                <EnvironmentBadge />
+                <Toaster />
+              </Suspense>
+            </NotificationsProvider>
+          </AdminAuthProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
