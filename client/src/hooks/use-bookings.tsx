@@ -1,417 +1,304 @@
-import { useState, createContext, useContext, ReactNode } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
+import { createContext, ReactNode, useContext } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { Booking, InsertBooking } from "@shared/schema";
 
-// Define booking types
-export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
-export type BookingStage = 'deposit' | 'pre_travel' | 'treatment' | 'post_treatment' | 'completed';
+// Types
+export type BookingStatus = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
+export type BookingStage = "deposit" | "pre_travel" | "treatment" | "post_treatment" | "completed";
 
-export interface Booking {
-  id: number;
-  userId: number;
-  clinicId: number;
-  bookingReference: string;
-  status: BookingStatus;
-  stage: BookingStage;
-  createdAt: string;
-  updatedAt: string;
-  arrivalDate?: string;
-  departureDate?: string;
-  flightNumber?: string;
-  accommodationType?: string;
-  accommodationDetails?: string;
-  specialRequests?: string;
-  depositAmount: number;
-  depositPaid: boolean;
-  totalPaid: number;
-  balanceDue: number;
-  assignedAdminId?: number;
-  assignedClinicStaffId?: number;
-  lastNotificationSentAt?: string;
-}
-
-interface CreateBookingData {
-  userId: number;
-  clinicId: number;
-  arrivalDate?: string;
-  departureDate?: string;
-  flightNumber?: string;
-  accommodationType?: string;
-  accommodationDetails?: string;
-  specialRequests?: string;
-  depositAmount?: number;
-}
-
-interface UpdateBookingData {
+export type BookingQuery = {
+  userId?: number;
+  clinicId?: number;
   status?: BookingStatus;
   stage?: BookingStage;
-  arrivalDate?: string;
-  departureDate?: string;
-  flightNumber?: string;
-  accommodationType?: string;
-  accommodationDetails?: string;
-  specialRequests?: string;
-  depositPaid?: boolean;
-  depositAmount?: number;
-  totalPaid?: number;
-  balanceDue?: number;
-  assignedAdminId?: number | null;
-  assignedClinicStaffId?: number | null;
-}
+};
 
-interface BookingsContextType {
-  useBookings: () => {
-    data: Booking[] | undefined;
-    isLoading: boolean;
-    error: Error | null;
-    refetch: () => void;
-  };
-  useClinicBookings: (clinicId: number) => {
-    data: Booking[] | undefined;
+export type BookingContextType = {
+  // Query hooks
+  useAllBookings: () => {
+    data: Booking[];
     isLoading: boolean;
     error: Error | null;
     refetch: () => void;
   };
   useUserBookings: (userId: number) => {
-    data: Booking[] | undefined;
+    data: Booking[];
     isLoading: boolean;
     error: Error | null;
     refetch: () => void;
   };
-  useBookingDetails: (bookingId: number) => {
+  useClinicBookings: (clinicId: number) => {
+    data: Booking[];
+    isLoading: boolean;
+    error: Error | null;
+    refetch: () => void;
+  };
+  useBooking: (id: string) => {
     data: Booking | undefined;
     isLoading: boolean;
     error: Error | null;
     refetch: () => void;
   };
-  createBooking: (
-    data: CreateBookingData,
-    options?: {
-      onSuccess?: (data: Booking) => void;
-      onError?: (error: Error) => void;
-    }
-  ) => void;
-  updateBooking: (
-    {
-      bookingId,
-      data,
-    }: {
-      bookingId: number;
-      data: UpdateBookingData;
-    },
-    options?: {
-      onSuccess?: (data: Booking) => void;
-      onError?: (error: Error) => void;
-    }
-  ) => void;
-  cancelBooking: (
-    bookingId: number,
-    options?: {
-      onSuccess?: () => void;
-      onError?: (error: Error) => void;
-    }
-  ) => void;
-  isCreating: boolean;
-  isUpdating: boolean;
-  isCancelling: boolean;
-}
+  
+  // Mutation hooks
+  useCreateBooking: () => {
+    createBooking: (data: InsertBooking) => Promise<Booking>;
+    isLoading: boolean;
+    error: Error | null;
+  };
+  useUpdateBooking: () => {
+    updateBooking: (id: number, data: Partial<InsertBooking>) => Promise<Booking>;
+    isLoading: boolean;
+    error: Error | null;
+  };
+  useUpdateBookingStatus: () => {
+    updateStatus: (id: number, status: BookingStatus) => Promise<Booking>;
+    isLoading: boolean;
+    error: Error | null;
+  };
+  useUpdateBookingStage: () => {
+    updateStage: (id: number, stage: BookingStage) => Promise<Booking>;
+    isLoading: boolean;
+    error: Error | null;
+  };
+  useDeleteBooking: () => {
+    deleteBooking: (id: number) => Promise<void>;
+    isLoading: boolean;
+    error: Error | null;
+  };
+};
 
-export const BookingsContext = createContext<BookingsContextType | null>(null);
+// Create context
+export const BookingsContext = createContext<BookingContextType | null>(null);
 
-export const BookingsProvider = ({ children }: { children: ReactNode }) => {
-  const { t } = useTranslation();
+// Provider component
+export function BookingsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
-  // State for mutations
-  const [isCreating, setIsCreating] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  // Get all bookings
-  const useBookings = () => {
-    const {
-      data,
-      isLoading,
-      error,
-      refetch,
-    } = useQuery<Booking[], Error>({
+  // Query hooks
+  const useAllBookings = () => {
+    const { data = [], isLoading, error, refetch } = useQuery<Booking[], Error>({
       queryKey: ['/api/bookings'],
       retry: 1,
     });
-
-    return {
-      data,
-      isLoading,
-      error,
-      refetch,
-    };
+    return { data, isLoading, error, refetch };
   };
-
-  // Get bookings for a specific clinic
-  const useClinicBookings = (clinicId: number) => {
-    const {
-      data,
-      isLoading,
-      error,
-      refetch,
-    } = useQuery<Booking[], Error>({
-      queryKey: ['/api/bookings/clinic', clinicId],
-      retry: 1,
-    });
-
-    return {
-      data,
-      isLoading,
-      error,
-      refetch,
-    };
-  };
-
-  // Get bookings for a specific user
+  
   const useUserBookings = (userId: number) => {
-    const {
-      data,
-      isLoading,
-      error,
-      refetch,
-    } = useQuery<Booking[], Error>({
+    const { data = [], isLoading, error, refetch } = useQuery<Booking[], Error>({
       queryKey: ['/api/bookings/user', userId],
       retry: 1,
+      enabled: !!userId,
     });
-
-    return {
-      data,
-      isLoading,
-      error,
-      refetch,
-    };
+    return { data, isLoading, error, refetch };
   };
-
-  // Get details for a specific booking
-  const useBookingDetails = (bookingId: number) => {
-    const {
-      data,
-      isLoading,
-      error,
-      refetch,
-    } = useQuery<Booking, Error>({
-      queryKey: ['/api/bookings', bookingId],
+  
+  const useClinicBookings = (clinicId: number) => {
+    const { data = [], isLoading, error, refetch } = useQuery<Booking[], Error>({
+      queryKey: ['/api/bookings/clinic', clinicId],
       retry: 1,
+      enabled: !!clinicId,
     });
-
+    return { data, isLoading, error, refetch };
+  };
+  
+  const useBooking = (id: string) => {
+    const { data, isLoading, error, refetch } = useQuery<Booking, Error>({
+      queryKey: ['/api/bookings', id],
+      retry: 1,
+      enabled: !!id,
+    });
+    return { data, isLoading, error, refetch };
+  };
+  
+  // Mutation hooks
+  const useCreateBooking = () => {
+    const mutation = useMutation({
+      mutationFn: async (data: InsertBooking) => {
+        const response = await apiRequest("POST", "/api/bookings", data);
+        return await response.json();
+      },
+      onSuccess: () => {
+        toast({
+          title: "Booking Created",
+          description: "Your booking has been created successfully.",
+          variant: "success",
+        });
+        // Invalidate bookings queries
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Error Creating Booking",
+          description: error.message || "There was an error creating your booking.",
+          variant: "destructive",
+        });
+      },
+    });
+    
     return {
-      data,
-      isLoading,
-      error,
-      refetch,
+      createBooking: mutation.mutateAsync,
+      isLoading: mutation.isPending,
+      error: mutation.error,
     };
   };
-
-  // Create a new booking
-  const createBooking = async (
-    data: CreateBookingData,
-    options?: {
-      onSuccess?: (data: Booking) => void;
-      onError?: (error: Error) => void;
-    }
-  ) => {
-    setIsCreating(true);
-    try {
-      const response = await apiRequest('POST', '/api/bookings', data);
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to create booking');
-      }
-      
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/clinic', data.clinicId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/user', data.userId] });
-      
-      if (options?.onSuccess) {
-        options.onSuccess(responseData);
-      } else {
+  
+  const useUpdateBooking = () => {
+    const mutation = useMutation({
+      mutationFn: async ({ id, data }: { id: number; data: Partial<InsertBooking> }) => {
+        const response = await apiRequest("PATCH", `/api/bookings/${id}`, data);
+        return await response.json();
+      },
+      onSuccess: (_, variables) => {
         toast({
-          title: t('bookings.create_success_title'),
-          description: t('bookings.create_success_message'),
+          title: "Booking Updated",
+          description: "Booking details have been updated successfully.",
+          variant: "success",
         });
-      }
-    } catch (error) {
-      console.error('Error creating booking:', error);
-      if (options?.onError) {
-        options.onError(error as Error);
-      } else {
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings', String(variables.id)] });
+      },
+      onError: (error: Error) => {
         toast({
-          title: t('bookings.create_error_title'),
-          description: (error as Error).message || t('bookings.create_error_message'),
-          variant: 'destructive',
+          title: "Error Updating Booking",
+          description: error.message || "There was an error updating the booking.",
+          variant: "destructive",
         });
-      }
-    } finally {
-      setIsCreating(false);
-    }
+      },
+    });
+    
+    return {
+      updateBooking: (id: number, data: Partial<InsertBooking>) => 
+        mutation.mutateAsync({ id, data }),
+      isLoading: mutation.isPending,
+      error: mutation.error,
+    };
   };
-
-  // Update a booking
-  const updateBooking = async (
-    {
-      bookingId,
-      data,
-    }: {
-      bookingId: number;
-      data: UpdateBookingData;
-    },
-    options?: {
-      onSuccess?: (data: Booking) => void;
-      onError?: (error: Error) => void;
-    }
-  ) => {
-    setIsUpdating(true);
-    try {
-      const response = await apiRequest('PATCH', `/api/bookings/${bookingId}`, data);
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to update booking');
-      }
-      
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/clinic'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
-      
-      if (options?.onSuccess) {
-        options.onSuccess(responseData);
-      } else {
+  
+  const useUpdateBookingStatus = () => {
+    const mutation = useMutation({
+      mutationFn: async ({ id, status }: { id: number; status: BookingStatus }) => {
+        const response = await apiRequest("PATCH", `/api/bookings/${id}/status`, { status });
+        return await response.json();
+      },
+      onSuccess: (_, variables) => {
         toast({
-          title: t('bookings.update_success_title'),
-          description: t('bookings.update_success_message'),
+          title: "Status Updated",
+          description: `Booking status has been updated to ${variables.status}.`,
+          variant: "success",
         });
-      }
-    } catch (error) {
-      console.error('Error updating booking:', error);
-      if (options?.onError) {
-        options.onError(error as Error);
-      } else {
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings', String(variables.id)] });
+      },
+      onError: (error: Error) => {
         toast({
-          title: t('bookings.update_error_title'),
-          description: (error as Error).message || t('bookings.update_error_message'),
-          variant: 'destructive',
+          title: "Error Updating Status",
+          description: error.message || "There was an error updating the booking status.",
+          variant: "destructive",
         });
-      }
-    } finally {
-      setIsUpdating(false);
-    }
+      },
+    });
+    
+    return {
+      updateStatus: (id: number, status: BookingStatus) => 
+        mutation.mutateAsync({ id, status }),
+      isLoading: mutation.isPending,
+      error: mutation.error,
+    };
   };
-
-  // Cancel a booking
-  const cancelBooking = async (
-    bookingId: number,
-    options?: {
-      onSuccess?: () => void;
-      onError?: (error: Error) => void;
-    }
-  ) => {
-    setIsCancelling(true);
-    try {
-      const response = await apiRequest('POST', `/api/bookings/${bookingId}/cancel`, {});
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to cancel booking');
-      }
-      
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/clinic'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
-      
-      if (options?.onSuccess) {
-        options.onSuccess();
-      } else {
+  
+  const useUpdateBookingStage = () => {
+    const mutation = useMutation({
+      mutationFn: async ({ id, stage }: { id: number; stage: BookingStage }) => {
+        const response = await apiRequest("PATCH", `/api/bookings/${id}/stage`, { stage });
+        return await response.json();
+      },
+      onSuccess: (_, variables) => {
         toast({
-          title: t('bookings.cancel_success_title'),
-          description: t('bookings.cancel_success_message'),
+          title: "Stage Updated",
+          description: `Booking stage has been updated to ${variables.stage}.`,
+          variant: "success",
         });
-      }
-    } catch (error) {
-      console.error('Error cancelling booking:', error);
-      if (options?.onError) {
-        options.onError(error as Error);
-      } else {
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings', String(variables.id)] });
+      },
+      onError: (error: Error) => {
         toast({
-          title: t('bookings.cancel_error_title'),
-          description: (error as Error).message || t('bookings.cancel_error_message'),
-          variant: 'destructive',
+          title: "Error Updating Stage",
+          description: error.message || "There was an error updating the booking stage.",
+          variant: "destructive",
         });
-      }
-    } finally {
-      setIsCancelling(false);
-    }
+      },
+    });
+    
+    return {
+      updateStage: (id: number, stage: BookingStage) => 
+        mutation.mutateAsync({ id, stage }),
+      isLoading: mutation.isPending,
+      error: mutation.error,
+    };
   };
-
-  // Create mutations
-  const createBookingMutation = useMutation({
-    mutationFn: async (data: CreateBookingData) => {
-      const res = await apiRequest('POST', '/api/bookings', data);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-    }
-  });
-
-  const updateBookingMutation = useMutation({
-    mutationFn: async ({ bookingId, data }: { bookingId: number; data: UpdateBookingData }) => {
-      const res = await apiRequest('PATCH', `/api/bookings/${bookingId}`, data);
-      return await res.json();
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings', variables.bookingId] });
-    }
-  });
-
-  const cancelBookingMutation = useMutation({
-    mutationFn: async (bookingId: number) => {
-      const res = await apiRequest('POST', `/api/bookings/${bookingId}/cancel`, {});
-      return await res.json();
-    },
-    onSuccess: (_, bookingId) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
-    }
-  });
-
+  
+  const useDeleteBooking = () => {
+    const mutation = useMutation({
+      mutationFn: async (id: number) => {
+        await apiRequest("DELETE", `/api/bookings/${id}`);
+      },
+      onSuccess: () => {
+        toast({
+          title: "Booking Deleted",
+          description: "The booking has been deleted successfully.",
+          variant: "success",
+        });
+        // Invalidate bookings queries
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Error Deleting Booking",
+          description: error.message || "There was an error deleting the booking.",
+          variant: "destructive",
+        });
+      },
+    });
+    
+    return {
+      deleteBooking: mutation.mutateAsync,
+      isLoading: mutation.isPending,
+      error: mutation.error,
+    };
+  };
+  
+  // Construct value object
+  const value: BookingContextType = {
+    useAllBookings,
+    useUserBookings,
+    useClinicBookings,
+    useBooking,
+    useCreateBooking,
+    useUpdateBooking,
+    useUpdateBookingStatus,
+    useUpdateBookingStage,
+    useDeleteBooking,
+  };
+  
   return (
-    <BookingsContext.Provider
-      value={{
-        useBookings,
-        useClinicBookings,
-        useUserBookings,
-        useBookingDetails,
-        createBooking,
-        updateBooking,
-        cancelBooking,
-        isCreating,
-        isUpdating,
-        isCancelling,
-      }}
-    >
+    <BookingsContext.Provider value={value}>
       {children}
     </BookingsContext.Provider>
   );
-};
+}
 
+// Hook for accessing context
 export function useBookings() {
   const context = useContext(BookingsContext);
   if (!context) {
-    throw new Error('useBookings must be used within a BookingsProvider');
+    throw new Error("useBookings must be used within a BookingsProvider");
   }
   return context;
 }
