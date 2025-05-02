@@ -107,7 +107,7 @@ const ClinicDocumentsSection: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('none');
   
   // Fetch actual files from the server
   const { 
@@ -271,8 +271,8 @@ const ClinicDocumentsSection: React.FC = () => {
       
       formData.append('category', category);
       
-      // Include patient ID if selected
-      if (selectedPatientId) {
+      // Include patient ID if selected and not "none"
+      if (selectedPatientId && selectedPatientId !== 'none') {
         formData.append('patientId', selectedPatientId);
         console.log(`Assigning file to patient: ${selectedPatientId}`);
       }
@@ -855,7 +855,7 @@ const ClinicDocumentsSection: React.FC = () => {
           setShowUploadDialog(open);
           if (!open) {
             // Reset state when dialog is closed
-            setSelectedPatientId('');
+            setSelectedPatientId('none');
             setSelectedFiles([]);
           }
         }}>
@@ -921,7 +921,7 @@ const ClinicDocumentsSection: React.FC = () => {
                   <SelectValue placeholder={t("clinic.documents.select_patient", "Select a patient")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value="none">
                     {t("clinic.documents.no_patient", "No patient (general document)")}
                   </SelectItem>
                   <SelectItem value="pt001">John Smith</SelectItem>
@@ -1067,8 +1067,9 @@ const ClinicDocumentsSection: React.FC = () => {
                   await handleFileUpload(null, selectedFiles);
                 }
                 setShowUploadDialog(false);
-                // Reset selected files when done
+                // Reset states when done
                 setSelectedFiles([]);
+                setSelectedPatientId('none');
               }}
             >
               {t("common.done", "Done")}
