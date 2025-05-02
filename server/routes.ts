@@ -256,6 +256,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Register error testing routes for development only
     app.use('/api/error-test', errorTestRoutes);
     
+    // Serve test notification analytics tool
+    app.get('/test-notifications', (req, res) => {
+      res.sendFile(path.join(__dirname, '../public/test-notifications.html'));
+    });
+    
     console.log('✅ Test routes registered (only available in development mode)');
   }
   
