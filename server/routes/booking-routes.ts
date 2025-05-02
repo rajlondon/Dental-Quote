@@ -1,6 +1,12 @@
 import express from "express";
 import { isAuthenticated, isAdmin, isClinic, isPatient, isAdminOrClinic } from "../middleware/auth-middleware";
 import { storage } from "../storage";
+import { NotificationService } from '../services/notificationService';
+import { WebSocketService } from '../services/websocketService';
+import { appointments, bookings } from "@shared/schema";
+import { createInsertSchema } from "drizzle-zod";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 
 // Error classes for better error handling
 class NotFoundError extends Error {
@@ -23,10 +29,6 @@ class BadRequestError extends Error {
     this.name = "BadRequestError";
   }
 }
-import { createInsertSchema } from "drizzle-zod";
-import { appointments, bookings } from "@shared/schema";
-import { v4 as uuidv4 } from "uuid";
-import * as z from "zod";
 
 const router = express.Router();
 
