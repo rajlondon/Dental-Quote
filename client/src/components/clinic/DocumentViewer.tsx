@@ -138,6 +138,15 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setCurrentPage(1);
     setZoom(100);
     setRotation(0);
+    
+    // Add detailed logging when document changes
+    if (document) {
+      console.log('DocumentViewer received document:', document);
+      console.log('Document URL:', document.url);
+      console.log('Document thumbnail:', document.thumbnail);
+      console.log('Document type:', document.type);
+      console.log('Is image type:', ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(document.type.toLowerCase()));
+    }
   }, [document]);
   
   if (!document) return null;
@@ -300,6 +309,12 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                       src={document.url || document.thumbnail} 
                       alt={document.name}
                       className="max-w-full max-h-[60vh] object-contain shadow-lg"
+                      onError={(e) => {
+                        console.error('Image failed to load:', e);
+                        console.error('Image URL that failed:', document.url || document.thumbnail);
+                        e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect fill="%23f1f5f9" width="200" height="150"/><text fill="%2394a3b8" font-family="sans-serif" font-size="14" x="100" y="75" text-anchor="middle">Image failed to load</text></svg>';
+                      }}
+                      onLoad={() => console.log('Image loaded successfully:', document.url || document.thumbnail)}
                     />
                   </div>
                 </div>
