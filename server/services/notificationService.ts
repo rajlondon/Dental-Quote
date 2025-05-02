@@ -186,18 +186,29 @@ export class NotificationService {
   }
   
   /**
-   * Clear all notifications for a user
+   * Mark all notifications as read for a user
    */
   public async clearAllNotifications(
     userType: 'patient' | 'clinic' | 'admin',
     userId: string
   ): Promise<boolean> {
-    const targetKey = `${userType}-${userId}`;
-    
-    // Remove targeted notifications
-    notifications.delete(targetKey);
-    
-    return true;
+    try {
+      // Get all relevant notifications for this user
+      const { notifications: userNotifications } = await this.getNotifications(userType, userId, 'unread');
+      
+      // Mark each notification as read
+      for (const notification of userNotifications) {
+        await this.updateNotification({
+          id: notification.id,
+          status: 'read'
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      return false;
+    }
   }
   
   /**
