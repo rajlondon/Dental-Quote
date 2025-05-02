@@ -219,11 +219,11 @@ export function registerClinicRoutes(app: Express): void {
       const filePath = path.join(uploadsDir, filename);
       fs.writeFileSync(filePath, pdfBuffer);
       
-      // Send success response with PDF URL
+      // Send success response with PDF URL (using updated route)
       res.status(200).json({
         success: true,
         filename,
-        url: `/api/quotes/${filename}`
+        url: `/api/quote-files/${filename}`
       });
     } catch (error) {
       console.error('Error generating quote PDF:', error);
@@ -231,9 +231,28 @@ export function registerClinicRoutes(app: Express): void {
     }
   });
   
-  // Endpoint to serve PDF files
+  // Endpoint to serve PDF files - using a different path pattern to avoid conflicts
+  app.get('/api/quote-files/:filename', (req: Request, res: Response) => {
+    const { filename } = req.params;
+    const filePath = path.join(process.cwd(), 'uploads', filename);
+    
+    if (fs.existsSync(filePath)) {
+      res.contentType('application/pdf');
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: 'PDF not found' });
+    }
+  });
+  
+  // For backward compatibility - ensure this doesn't conflict with /api/quotes/clinic
   app.get('/api/quotes/:filename', (req: Request, res: Response) => {
     const { filename } = req.params;
+    
+    // Skip this handler for special routes like "clinic", "user", etc.
+    if (filename === 'clinic' || filename === 'user' || filename === 'admin') {
+      return res.status(404).json({ error: 'Route not found' });
+    }
+    
     const filePath = path.join(process.cwd(), 'uploads', filename);
     
     if (fs.existsSync(filePath)) {
