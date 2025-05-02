@@ -116,19 +116,46 @@ export class NotificationService {
       const notificationIndex = notificationsList.findIndex((n: Notification) => n.id === data.id);
       
       if (notificationIndex !== -1) {
+        const originalNotification = notificationsList[notificationIndex];
+        
+        // Track engagement metrics if status is changing from unread to read
+        const isMarkingAsRead = data.status === 'read' && originalNotification.status === 'unread';
+        
+        // Calculate time to read if marking as read
+        let timeToRead: number | undefined;
+        if (isMarkingAsRead) {
+          const createdTime = new Date(originalNotification.created_at).getTime();
+          const readTime = new Date().getTime();
+          timeToRead = Math.floor((readTime - createdTime) / 1000); // in seconds
+        }
+        
         // Update the notification
         const updatedNotification = {
-          ...notificationsList[notificationIndex],
+          ...originalNotification,
           ...data,
-          // If we're updating the status, add a read_at timestamp
-          ...(data.status === 'read' && !data.read_at 
-            ? { read_at: new Date().toISOString() } 
-            : {})
+          // If we're updating the status, add read_at timestamp and engagement metrics
+          ...(isMarkingAsRead ? { 
+            read_at: new Date().toISOString(),
+            metadata: {
+              ...originalNotification.metadata,
+              engagement: {
+                time_to_read: timeToRead,
+                read_date: new Date().toISOString(),
+                // Track the number of times the notification has been viewed/marked as read
+                view_count: ((originalNotification.metadata?.engagement?.view_count || 0) + 1)
+              }
+            } 
+          } : {})
         };
         
         // Replace the notification in the collection
         notificationsList[notificationIndex] = updatedNotification;
         notifications.set(key, notificationsList);
+        
+        // Log analytics data for admin reports
+        if (isMarkingAsRead) {
+          console.log(`Notification engagement: ID ${updatedNotification.id}, Time to read: ${timeToRead}s, Target: ${updatedNotification.target_type}-${updatedNotification.target_id || 'all'}`);
+        }
         
         return updatedNotification;
       }
@@ -235,6 +262,76 @@ export class NotificationService {
     
     // For "all" targets within a type
     return `${notification.target_type}-all`;
+  }
+  
+  /**
+   * Get analytics data for notification engagement
+   * This provides metrics on notification read rates, timing, and categories
+   */
+  public async getNotificationAnalytics(): Promise<{
+    total_notifications: number;
+    read_count: number;
+    unread_count: number;
+    engagement_rate: number;
+    average_time_to_read: number | null;
+    notifications_by_category: Record<string, number>;
+    notifications_by_priority: Record<string, number>;
+  }> {
+    // Get all notifications from all collections
+    const allNotifications: Notification[] = [];
+    const entries = Array.from(notifications.entries());
+    for (const [_, notificationsList] of entries) {
+      allNotifications.push(...notificationsList);
+    }
+    
+    // Count notifications by status
+    const readNotifications = allNotifications.filter(n => n.status === 'read');
+    const unreadNotifications = allNotifications.filter(n => n.status === 'unread');
+    
+    // Calculate engagement rate
+    const totalCount = allNotifications.length;
+    const readCount = readNotifications.length;
+    const unreadCount = unreadNotifications.length;
+    const engagementRate = totalCount > 0 ? (readCount / totalCount) * 100 : 0;
+    
+    // Calculate average time to read (for notifications that have been read)
+    let averageTimeToRead: number | null = null;
+    
+    const notificationsWithReadTime = readNotifications.filter(
+      n => n.metadata?.engagement?.time_to_read !== undefined
+    );
+    
+    if (notificationsWithReadTime.length > 0) {
+      const totalTimeToRead = notificationsWithReadTime.reduce(
+        (sum, n) => sum + (n.metadata?.engagement?.time_to_read || 0), 
+        0
+      );
+      averageTimeToRead = totalTimeToRead / notificationsWithReadTime.length;
+    }
+    
+    // Count notifications by category
+    const notificationsByCategory: Record<string, number> = {};
+    allNotifications.forEach(notification => {
+      const category = notification.category;
+      notificationsByCategory[category] = (notificationsByCategory[category] || 0) + 1;
+    });
+    
+    // Count notifications by priority
+    const notificationsByPriority: Record<string, number> = {};
+    allNotifications.forEach(notification => {
+      const priority = notification.priority;
+      notificationsByPriority[priority] = (notificationsByPriority[priority] || 0) + 1;
+    });
+    
+    return {
+      total_notifications: totalCount,
+      read_count: readCount,
+      unread_count: unreadCount,
+      engagement_rate: Number(engagementRate.toFixed(2)),
+      average_time_to_read: averageTimeToRead ? Number(averageTimeToRead.toFixed(2)) : null,
+      notifications_by_category: notificationsByCategory,
+      notifications_by_priority: notificationsByPriority
+    };
   }
 }
 

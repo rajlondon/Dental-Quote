@@ -24,6 +24,17 @@ declare global {
 // Create and export the router
 export const createNotificationRoutes = (notificationService: NotificationService) => {
   const router = express.Router();
+  
+  // Interface for engagement analytics data
+  interface NotificationAnalytics {
+    total_notifications: number;
+    read_count: number;
+    unread_count: number;
+    engagement_rate: number;
+    average_time_to_read: number | null;
+    notifications_by_category: Record<string, number>;
+    notifications_by_priority: Record<string, number>;
+  }
 
   // GET endpoint to fetch notifications (for any portal type)
   router.get('/api/notifications', async (req, res) => {
