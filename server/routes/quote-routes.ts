@@ -30,8 +30,8 @@ router.post("/", async (req, res, next) => {
           title: "New Quote Request",
           message: `New quote request received from ${quoteRequest.name}`,
           type: "quote_request",
-          linkUrl: `/admin/quotes/${quoteRequest.id}`,
-          read: false,
+          action: `/admin/quotes/${quoteRequest.id}`,
+          isRead: false,
         });
       } catch (error) {
         console.error("Failed to create notification:", error);
@@ -253,8 +253,8 @@ router.post("/:id/versions", ensureAuthenticated, ensureRole("admin"), async (re
           title: "New Quote Version",
           message: `Your quote request has been updated with a new quote version`,
           type: "quote_version",
-          linkUrl: `/patient/quotes/${quoteId}`,
-          read: false
+          action: `/patient/quotes/${quoteId}`,
+          isRead: false
         });
       } catch (error) {
         console.error("Failed to create notification:", error);
@@ -312,8 +312,8 @@ router.post("/:id/assign-clinic", ensureAuthenticated, ensureRole("admin"), asyn
           title: "New Quote Assignment",
           message: `A new quote request has been assigned to your clinic`,
           type: "quote_assignment",
-          linkUrl: `/clinic/quotes/${quoteId}`,
-          read: false
+          action: `/clinic/quotes/${quoteId}`,
+          isRead: false
         });
       } catch (error) {
         console.error(`Failed to create notification for user ${staffMember.id}:`, error);
