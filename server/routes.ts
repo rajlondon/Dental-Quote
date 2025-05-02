@@ -235,6 +235,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register trending packages routes with commission-based promotion system
   app.use(trendingPackagesRoutes);
   
+  // Register quote management routes
+  app.use('/api/quotes', quoteRoutes);
+  
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
     app.use('/api/test', testRoutes);
