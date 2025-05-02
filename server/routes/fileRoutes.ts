@@ -222,44 +222,66 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
       
       // Apply file type filtering if specified
       if (fileType && fileType !== 'all') {
+        // Add debugging to see file names, extensions and matching logic
+        console.log(`Filtering by file type: ${fileType}`);
+        
         filteredKeys = s3Keys.filter(key => {
           const filename = key.split('/').pop() || '';
           const extension = filename.split('.').pop()?.toLowerCase() || '';
           
+          console.log(`File: ${filename}, Extension: ${extension}`);
+          
           // Map common file type groups to their extensions
+          let matches = false;
+          
           switch (fileType) {
             case 'pdf':
-              return extension === 'pdf';
+              matches = extension === 'pdf';
+              break;
             case 'jpg': // This matches the TabsTrigger value in the client
             case 'image':
-              return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+              matches = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+              break;
             case 'docx': // This matches the TabsTrigger value in the client
             case 'document':
-              return ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(extension);
+              matches = ['doc', 'docx', 'txt', 'rtf', 'odt'].includes(extension);
+              break;
             case 'zip': // This matches the TabsTrigger value in the client
-              return ['zip', 'rar', 'tar', 'gz', '7z'].includes(extension);
+              matches = ['zip', 'rar', 'tar', 'gz', '7z'].includes(extension);
+              break;
             case 'spreadsheet':
-              return ['xls', 'xlsx', 'csv'].includes(extension);
+              matches = ['xls', 'xlsx', 'csv'].includes(extension);
+              break;
             case 'presentation':
-              return ['ppt', 'pptx'].includes(extension);
+              matches = ['ppt', 'pptx'].includes(extension);
+              break;
             case 'video':
-              return ['mp4', 'mov', 'avi', 'webm'].includes(extension);
+              matches = ['mp4', 'mov', 'avi', 'webm'].includes(extension);
+              break;
             case 'audio':
-              return ['mp3', 'wav', 'ogg'].includes(extension);
+              matches = ['mp3', 'wav', 'ogg'].includes(extension);
+              break;
             case 'xray':
-              return ['dcm', 'dicom'].includes(extension);
+              matches = ['dcm', 'dicom'].includes(extension);
+              break;
             case 'shared':
               // This would need additional logic based on shared status
               // For now, return all files since we can't filter by shared status on the server
-              return true;
+              matches = true;
+              break;
             case 'patients':
               // This would need additional logic based on if files are assigned to patients
               // For now, return all files since we can't filter by patient assignment on the server
-              return true;
+              matches = true;
+              break;
             default:
               // For specific extensions like 'jpg', match exactly
-              return extension === fileType.toLowerCase();
+              matches = extension === fileType.toLowerCase();
+              break;
           }
+          
+          console.log(`  Matches ${fileType}? ${matches}`);
+          return matches;
         });
       }
       
@@ -267,21 +289,35 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
         // Process the filtered S3 files
         s3Files = await Promise.all(filteredKeys.map(async (key) => {
           // Parse important information from the key
-          // Format: [type]-[timestamp]-[randomhash].[extension]
           const filename = key.split('/').pop() || '';
+          
+          // Extract extension more reliably
+          const lastDotIndex = filename.lastIndexOf('.');
+          const extension = lastDotIndex !== -1 ? filename.slice(lastDotIndex + 1).toLowerCase() : '';
+          
+          // Parse the parts of the filename to extract metadata
           const parts = filename.split('-');
           
-          // Skip files that don't match our naming pattern
-          if (parts.length < 3) return null;
+          // Try to get category from filename patterns
+          let fileType = 'document';
+          if (parts.length >= 1) {
+            fileType = parts[0];
+          }
           
-          const fileType = parts[0];
-          // The remaining might include the timestamp and random hash
-          const fileTimeParts = parts.slice(1).join('-').split('.');
-          const extension = fileTimeParts.pop() || '';
-          const fileTime = fileTimeParts.join('.');
+          // More reliable date extraction
+          let uploadDate = new Date();
+          if (parts.length >= 2) {
+            const possibleTimestamp = parseInt(parts[1]);
+            if (!isNaN(possibleTimestamp) && possibleTimestamp > 1000000000) {
+              uploadDate = new Date(possibleTimestamp);
+            }
+          }
           
           // Generate a signed URL
           const url = await getSignedS3Url(key, 3600);
+          
+          // Log what we found for debugging
+          console.log(`File details: name=${filename}, type=${extension}, category=${fileType}`);
           
           return {
             key,
@@ -290,7 +326,7 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
             type: extension,
             category: fileType,
             url,
-            uploaded: new Date(parseInt(parts[1]) || Date.now()).toISOString(),
+            uploaded: uploadDate.toISOString(),
             storageType: 'aws-s3'
           };
         }));
