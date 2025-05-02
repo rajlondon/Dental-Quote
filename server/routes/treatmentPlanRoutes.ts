@@ -169,9 +169,7 @@ router.post("/", ensureRole('clinic_staff'), catchAsync(async (req: Request, res
     estimatedTotalCost: estimatedTotalCost?.toString(),
     currency: currency || "GBP",
     notes,
-    quoteRequestId,
-    createdAt: new Date(),
-    updatedAt: new Date()
+    quoteRequestId
   });
   
   // Send notification to the patient
@@ -246,8 +244,7 @@ router.patch("/:id", ensureRole('clinic_staff'), catchAsync(async (req: Request,
   
   // Update the treatment plan
   const updatedPlan = await storage.updateTreatmentPlan(treatmentPlanId, {
-    ...updateData,
-    updatedAt: new Date()
+    ...updateData
   });
   
   // Send notification to the patient if status changed to 'finalized'
