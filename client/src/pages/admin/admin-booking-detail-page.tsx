@@ -1,18 +1,32 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'wouter';
-import { useBookings } from '@/hooks/use-bookings';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Loader2, Calendar, Info, MapPin, FileText, 
-  ArrowLeft, Plane, CreditCard, User, PencilIcon, TrashIcon
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useParams, Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { useBookings, BookingStatus, BookingStage } from "@/hooks/use-bookings";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -20,574 +34,796 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Calendar,
+  ClipboardList,
+  FileText,
+  Loader2,
+  MessageSquare,
+  Pencil,
+  RefreshCw,
+  AlertTriangle,
+  ArrowLeft,
+  User,
+  Building,
+  Calendar as CalendarIcon,
+  Smartphone,
+  Mail,
+  MapPin,
+  Check,
+  X,
+} from "lucide-react";
 
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  confirmed: 'bg-green-100 text-green-800 border-green-300',
-  in_progress: 'bg-blue-100 text-blue-800 border-blue-300',
-  completed: 'bg-purple-100 text-purple-800 border-purple-300',
-  cancelled: 'bg-red-100 text-red-800 border-red-300',
+// Status and stage colors for badges
+const statusColors: Record<BookingStatus, string> = {
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  confirmed: "bg-green-100 text-green-800 border-green-300",
+  in_progress: "bg-blue-100 text-blue-800 border-blue-300",
+  completed: "bg-purple-100 text-purple-800 border-purple-300",
+  cancelled: "bg-red-100 text-red-800 border-red-300",
 };
 
-const stageColors = {
-  deposit: 'bg-cyan-100 text-cyan-800 border-cyan-300',
-  pre_travel: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-  treatment: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
-  post_treatment: 'bg-amber-100 text-amber-800 border-amber-300',
-  completed: 'bg-teal-100 text-teal-800 border-teal-300',
+const stageColors: Record<BookingStage, string> = {
+  deposit: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  pre_travel: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  treatment: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300",
+  post_treatment: "bg-amber-100 text-amber-800 border-amber-300",
+  completed: "bg-teal-100 text-teal-800 border-teal-300",
 };
 
 export default function AdminBookingDetailPage() {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const bookingId = parseInt(id);
-  const [activeTab, setActiveTab] = useState('details');
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
   
-  const {
-    useBookingDetails,
-    updateBooking,
-    cancelBooking,
-    isUpdating,
-    isCancelling
-  } = useBookings();
+  const { useBooking, useUpdateBooking, useUpdateBookingStatus, useUpdateBookingStage } = useBookings();
   
   const {
     data: booking,
     isLoading,
     error,
-    refetch
-  } = useBookingDetails(bookingId);
-
+    refetch,
+  } = useBooking(bookingId);
+  
+  const { updateBooking, isLoading: isUpdatingBooking } = useUpdateBooking();
+  const { updateStatus, isLoading: isUpdatingStatus } = useUpdateBookingStatus();
+  const { updateStage, isLoading: isUpdatingStage } = useUpdateBookingStage();
+  
+  const [activeTab, setActiveTab] = useState("overview");
+  const [notes, setNotes] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [adminNotes, setAdminNotes] = useState("");
+  
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [statusChangeOpen, setStatusChangeOpen] = useState(false);
+  const [stageChangeOpen, setStageChangeOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState<BookingStatus>("pending");
+  const [newStage, setNewStage] = useState<BookingStage>("deposit");
+  
+  // Load current notes when booking data is available
   useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">{t('common.loading')}</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-red-500 mb-4">{t('common.error')}: {error.message}</p>
-        <Button onClick={() => refetch()}>{t('common.retry')}</Button>
-      </div>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-lg mb-4">{t('bookings.not_found')}</p>
-        <Link href="/admin/bookings">
-          <Button>{t('bookings.back_to_bookings')}</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const handleUpdateStatus = (status: string) => {
-    updateBooking({ 
-      bookingId, 
-      data: { status } 
-    }, {
-      onSuccess: () => {
-        toast({
-          title: t('bookings.update_success_title'),
-          description: t('bookings.update_success_message'),
-        });
-        refetch();
-      }
-    });
-  };
-
-  const handleUpdateStage = (stage: string) => {
-    updateBooking({ 
-      bookingId, 
-      data: { stage } 
-    }, {
-      onSuccess: () => {
-        toast({
-          title: t('bookings.update_success_title'),
-          description: t('bookings.update_success_message'),
-        });
-        refetch();
-      }
-    });
-  };
-
-  const handleAssignToAdmin = (adminId: number | null) => {
-    updateBooking({
-      bookingId,
-      data: { assignedAdminId: adminId }
-    }, {
-      onSuccess: () => {
-        toast({
-          title: t('bookings.assigned_success_title'),
-          description: t('bookings.assigned_success_message'),
-        });
-        refetch();
-      }
-    });
-  };
-
-  const handleCancel = async () => {
-    if (window.confirm(t('bookings.confirm_cancel'))) {
-      cancelBooking(bookingId, {
-        onSuccess: () => {
-          toast({
-            title: t('bookings.cancel_success_title'),
-            description: t('bookings.cancel_success_message'),
-          });
-          refetch();
-        }
+    if (booking) {
+      setNotes(booking.patientNotes || "");
+      setAdminNotes(booking.adminNotes || "");
+      
+      // Set page title
+      document.title = `${t("bookings.booking")} #${booking.id} | ${t("admin.portal")}`;
+    }
+  }, [booking, t]);
+  
+  // Handle saving patient notes
+  const handleSaveNotes = async () => {
+    if (!booking) return;
+    
+    try {
+      await updateBooking(booking.id, { patientNotes: notes });
+      toast({
+        title: t("bookings.notes_saved"),
+        description: t("bookings.notes_saved_description"),
+      });
+    } catch (error) {
+      console.error("Error saving notes:", error);
+      toast({
+        title: t("bookings.notes_save_failed"),
+        description: t("common.please_try_again"),
+        variant: "destructive",
       });
     }
   };
-
+  
+  // Handle saving admin notes
+  const handleSaveAdminNotes = async () => {
+    if (!booking) return;
+    
+    try {
+      await updateBooking(booking.id, { adminNotes });
+      toast({
+        title: t("bookings.admin_notes_saved"),
+        description: t("bookings.admin_notes_saved_description"),
+      });
+    } catch (error) {
+      console.error("Error saving admin notes:", error);
+      toast({
+        title: t("bookings.admin_notes_save_failed"),
+        description: t("common.please_try_again"),
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle changing booking status
+  const handleChangeStatus = async () => {
+    if (!booking) return;
+    
+    try {
+      await updateStatus(booking.id, newStatus);
+      setStatusChangeOpen(false);
+      refetch();
+      toast({
+        title: t("bookings.status_updated"),
+        description: t("bookings.status_updated_description"),
+      });
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast({
+        title: t("bookings.status_update_failed"),
+        description: t("common.please_try_again"),
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle changing booking stage
+  const handleChangeStage = async () => {
+    if (!booking) return;
+    
+    try {
+      await updateStage(booking.id, newStage);
+      setStageChangeOpen(false);
+      refetch();
+      toast({
+        title: t("bookings.stage_updated"),
+        description: t("bookings.stage_updated_description"),
+      });
+    } catch (error) {
+      console.error("Error updating stage:", error);
+      toast({
+        title: t("bookings.stage_update_failed"),
+        description: t("common.please_try_again"),
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle booking cancellation
+  const handleCancelBooking = async () => {
+    if (!booking) return;
+    
+    try {
+      await updateStatus(booking.id, "cancelled");
+      setCancelConfirmOpen(false);
+      refetch();
+      toast({
+        title: t("bookings.booking_cancelled"),
+        description: t("bookings.booking_cancelled_description"),
+      });
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      toast({
+        title: t("bookings.booking_cancellation_failed"),
+        description: t("common.please_try_again"),
+        variant: "destructive",
+      });
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="container max-w-6xl py-8 flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">{t("common.loading")}</span>
+      </div>
+    );
+  }
+  
+  if (error || !booking) {
+    return (
+      <div className="container max-w-6xl py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-bold mb-2">
+          {t("bookings.booking_not_found")}
+        </h2>
+        <p className="text-muted-foreground mb-4">
+          {error instanceof Error
+            ? error.message
+            : t("bookings.booking_load_error")}
+        </p>
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t("common.retry")}
+          </Button>
+          <Button onClick={() => setLocation("/admin/bookings")}>
+            {t("common.back_to_bookings")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container max-w-6xl py-8">
+      {/* Header with Back Button */}
       <div className="flex items-center mb-6">
-        <Link href="/admin/bookings">
-          <Button variant="ghost" className="flex items-center gap-1 p-0 mr-4">
-            <ArrowLeft className="h-4 w-4" />
-            {t('bookings.back_to_bookings')}
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold flex items-center">
-          {t('bookings.booking_details')}
-          <Badge className="ml-3">Admin View</Badge>
-        </h1>
-      </div>
-      
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {booking.bookingReference}
-                <Badge className={statusColors[booking.status] || 'bg-gray-100'}>
-                  {t(`bookings.status.${booking.status}`)}
-                </Badge>
-              </CardTitle>
-              <CardDescription>
-                {t('bookings.created')}: {format(new Date(booking.createdAt), 'PPP')}
-                • Clinic ID: {booking.clinicId} • User ID: {booking.userId}
-              </CardDescription>
-            </div>
-            <Badge className={stageColors[booking.stage] || 'bg-gray-100'}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setLocation("/admin/bookings")}
+          className="mr-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold flex items-center">
+            {t("bookings.booking")} #{booking.id}
+            <Badge
+              variant="outline"
+              className={`ml-4 ${statusColors[booking.status]}`}
+            >
+              {t(`bookings.status.${booking.status}`)}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={`ml-2 ${stageColors[booking.stage]}`}
+            >
               {t(`bookings.stage.${booking.stage}`)}
             </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div>
-              <h4 className="text-sm font-medium mb-2">{t('bookings.update_status')}:</h4>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  variant={booking.status === 'pending' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStatus('pending')}
-                  disabled={isUpdating || booking.status === 'pending'}
-                >
-                  {t('bookings.status.pending')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.status === 'confirmed' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStatus('confirmed')}
-                  disabled={isUpdating || booking.status === 'confirmed'}
-                >
-                  {t('bookings.status.confirmed')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.status === 'in_progress' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStatus('in_progress')}
-                  disabled={isUpdating || booking.status === 'in_progress'}
-                >
-                  {t('bookings.status.in_progress')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.status === 'completed' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStatus('completed')}
-                  disabled={isUpdating || booking.status === 'completed'}
-                >
-                  {t('bookings.status.completed')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.status === 'cancelled' ? 'destructive' : 'outline'}
-                  onClick={() => handleUpdateStatus('cancelled')}
-                  disabled={isUpdating || booking.status === 'cancelled'}
-                >
-                  {t('bookings.status.cancelled')}
-                </Button>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium mb-2">{t('bookings.update_stage')}:</h4>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  variant={booking.stage === 'deposit' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStage('deposit')}
-                  disabled={isUpdating || booking.stage === 'deposit'}
-                >
-                  {t('bookings.stage.deposit')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.stage === 'pre_travel' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStage('pre_travel')}
-                  disabled={isUpdating || booking.stage === 'pre_travel'}
-                >
-                  {t('bookings.stage.pre_travel')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.stage === 'treatment' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStage('treatment')}
-                  disabled={isUpdating || booking.stage === 'treatment'}
-                >
-                  {t('bookings.stage.treatment')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.stage === 'post_treatment' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStage('post_treatment')}
-                  disabled={isUpdating || booking.stage === 'post_treatment'}
-                >
-                  {t('bookings.stage.post_treatment')}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={booking.stage === 'completed' ? 'default' : 'outline'}
-                  onClick={() => handleUpdateStage('completed')}
-                  disabled={isUpdating || booking.stage === 'completed'}
-                >
-                  {t('bookings.stage.completed')}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin Assignment */}
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">{t('bookings.assign_admin')}:</h4>
-            <div className="flex items-center gap-2">
-              <Select 
-                value={booking.assignedAdminId?.toString() || ''}
-                onValueChange={(value) => {
-                  if (value === '') {
-                    handleAssignToAdmin(null);
-                  } else {
-                    handleAssignToAdmin(parseInt(value, 10));
-                  }
-                }}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("bookings.booking_reference")}:{" "}
+            <span className="font-medium">
+              {booking.bookingReference || `#${booking.id}`}
+            </span>
+          </p>
+        </div>
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Dialog open={statusChangeOpen} onOpenChange={setStatusChangeOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              {t("bookings.change_status")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("bookings.change_status")}</DialogTitle>
+              <DialogDescription>
+                {t("bookings.change_status_description")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Select
+                value={newStatus}
+                onValueChange={(value) => setNewStatus(value as BookingStatus)}
               >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder={t('bookings.select_admin')} />
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={t("bookings.select_status")}
+                    defaultValue={booking.status}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('common.none')}</SelectItem>
-                  {/* This would be populated with actual admin data */}
-                  <SelectItem value="1">Admin User 1</SelectItem>
-                  <SelectItem value="2">Admin User 2</SelectItem>
-                  {user?.id && <SelectItem value={user.id.toString()}>Me</SelectItem>}
+                  <SelectItem value="pending">
+                    {t("bookings.status.pending")}
+                  </SelectItem>
+                  <SelectItem value="confirmed">
+                    {t("bookings.status.confirmed")}
+                  </SelectItem>
+                  <SelectItem value="in_progress">
+                    {t("bookings.status.in_progress")}
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    {t("bookings.status.completed")}
+                  </SelectItem>
+                  <SelectItem value="cancelled" className="text-destructive">
+                    {t("bookings.status.cancelled")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              {booking.assignedAdminId && (
-                <Badge variant="outline">
-                  {t('bookings.currently_assigned')}: {booking.assignedAdminId}
-                </Badge>
-              )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setStatusChangeOpen(false)}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                onClick={handleChangeStatus}
+                disabled={isUpdatingStatus || newStatus === booking.status}
+              >
+                {isUpdatingStatus && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {t("common.save")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={stageChangeOpen} onOpenChange={setStageChangeOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              {t("bookings.change_stage")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("bookings.change_stage")}</DialogTitle>
+              <DialogDescription>
+                {t("bookings.change_stage_description")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Select
+                value={newStage}
+                onValueChange={(value) => setNewStage(value as BookingStage)}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={t("bookings.select_stage")}
+                    defaultValue={booking.stage}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deposit">
+                    {t("bookings.stage.deposit")}
+                  </SelectItem>
+                  <SelectItem value="pre_travel">
+                    {t("bookings.stage.pre_travel")}
+                  </SelectItem>
+                  <SelectItem value="treatment">
+                    {t("bookings.stage.treatment")}
+                  </SelectItem>
+                  <SelectItem value="post_treatment">
+                    {t("bookings.stage.post_treatment")}
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    {t("bookings.stage.completed")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setStageChangeOpen(false)}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                onClick={handleChangeStage}
+                disabled={isUpdatingStage || newStage === booking.stage}
+              >
+                {isUpdatingStage && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {t("common.save")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          {t("common.refresh")}
+        </Button>
+        
+        {booking.status !== "cancelled" && (
+          <Dialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                {t("bookings.cancel_booking")}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t("bookings.confirm_cancellation")}</DialogTitle>
+                <DialogDescription>
+                  {t("bookings.confirm_cancellation_description")}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setCancelConfirmOpen(false)}
+                >
+                  {t("common.back")}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleCancelBooking}
+                  disabled={isUpdatingStatus}
+                >
+                  {isUpdatingStatus && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {t("bookings.confirm_cancel")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
       
-      <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="details">{t('bookings.details')}</TabsTrigger>
-          <TabsTrigger value="user">{t('bookings.user')}</TabsTrigger>
-          <TabsTrigger value="clinic">{t('bookings.clinic')}</TabsTrigger>
-          <TabsTrigger value="appointments">{t('bookings.appointments')}</TabsTrigger>
-          <TabsTrigger value="documents">{t('bookings.documents')}</TabsTrigger>
-          <TabsTrigger value="payments">{t('bookings.payments')}</TabsTrigger>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <TabsList className="grid grid-cols-4">
+          <TabsTrigger value="overview">{t("bookings.overview")}</TabsTrigger>
+          <TabsTrigger value="treatment">{t("bookings.treatment")}</TabsTrigger>
+          <TabsTrigger value="documents">{t("bookings.documents")}</TabsTrigger>
+          <TabsTrigger value="messages">{t("bookings.messages")}</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="details" className="mt-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Patient Information */}
             <Card>
-              <CardHeader>
-                <CardTitle>{t('bookings.travel_details')}</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center">
+                  <User className="h-5 w-5 mr-2 text-muted-foreground" />
+                  {t("bookings.patient_information")}
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {booking.arrivalDate && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.arrival_date')}</p>
-                      <p className="text-sm text-muted-foreground">{format(new Date(booking.arrivalDate), 'PPP')}</p>
-                    </div>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <span className="font-medium mr-2">{t("common.id")}:</span>
+                    <span>{booking.userId || t("common.not_available")}</span>
                   </div>
-                )}
-                {booking.departureDate && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.departure_date')}</p>
-                      <p className="text-sm text-muted-foreground">{format(new Date(booking.departureDate), 'PPP')}</p>
-                    </div>
+                  <div className="flex items-center text-sm">
+                    <span className="font-medium mr-2">{t("common.name")}:</span>
+                    <span>
+                      {t("common.not_available")} {/* Will need to fetch user details */}
+                    </span>
                   </div>
-                )}
-                {booking.flightNumber && (
-                  <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.flight_number')}</p>
-                      <p className="text-sm text-muted-foreground">{booking.flightNumber}</p>
-                    </div>
+                  <div className="flex items-center text-sm">
+                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>
+                      {t("common.not_available")} {/* Will need to fetch user details */}
+                    </span>
                   </div>
-                )}
-                {booking.accommodationType && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.accommodation')}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {t(`bookings.accommodation.${booking.accommodationType}`)}
-                        {booking.accommodationDetails && `: ${booking.accommodationDetails}`}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('bookings.payment_details')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{t('bookings.deposit_status')}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {booking.depositPaid ? t('bookings.deposit_paid') : t('bookings.deposit_not_paid')}
-                    </p>
+                  <div className="flex items-center text-sm">
+                    <Smartphone className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>
+                      {t("common.not_available")} {/* Will need to fetch user details */}
+                    </span>
                   </div>
                 </div>
-                {booking.depositAmount > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.deposit_amount')}</p>
-                      <p className="text-sm text-muted-foreground">£{booking.depositAmount}</p>
-                    </div>
-                  </div>
-                )}
-                {booking.totalPaid > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.total_paid')}</p>
-                      <p className="text-sm text-muted-foreground">£{booking.totalPaid}</p>
-                    </div>
-                  </div>
-                )}
-                {booking.balanceDue && booking.balanceDue > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{t('bookings.balance_due')}</p>
-                      <p className="text-sm text-muted-foreground">£{booking.balanceDue}</p>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
             
-            {booking.specialRequests && (
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>{t('bookings.special_requests')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{booking.specialRequests}</p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Clinic Information */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center">
+                  <Building className="h-5 w-5 mr-2 text-muted-foreground" />
+                  {t("bookings.clinic_information")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <span className="font-medium mr-2">{t("common.id")}:</span>
+                    <span>{booking.clinicId || t("common.not_available")}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <span className="font-medium mr-2">{t("common.name")}:</span>
+                    <span>
+                      {t("common.not_available")} {/* Will need to fetch clinic details */}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>
+                      {t("common.not_available")} {/* Will need to fetch clinic details */}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>
+                      {t("common.not_available")} {/* Will need to fetch clinic details */}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="user" className="mt-0">
+          
+          {/* Booking Details */}
           <Card>
             <CardHeader>
-              <CardTitle>{t('bookings.user_info')}</CardTitle>
-              <CardDescription>
-                {t('bookings.user_id')}: {booking.userId}
-              </CardDescription>
+              <CardTitle>{t("bookings.booking_details")}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-center text-muted-foreground my-12">
-                <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>{t('bookings.user_details_loading')}</p>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.status")}
+                  </h3>
+                  <Badge
+                    variant="outline"
+                    className={statusColors[booking.status]}
+                  >
+                    {t(`bookings.status.${booking.status}`)}
+                  </Badge>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.stage")}
+                  </h3>
+                  <Badge
+                    variant="outline"
+                    className={stageColors[booking.stage]}
+                  >
+                    {t(`bookings.stage.${booking.stage}`)}
+                  </Badge>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.created_at")}
+                  </h3>
+                  <div className="flex items-center">
+                    <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                    {format(new Date(booking.createdAt), "PPP p")}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.updated_at")}
+                  </h3>
+                  <div className="flex items-center">
+                    <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                    {format(new Date(booking.updatedAt), "PPP p")}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.deposit_status")}
+                  </h3>
+                  <Badge className={booking.depositPaid ? "bg-green-100 text-green-800 border-green-300" : "bg-red-100 text-red-800 border-red-300"}>
+                    {booking.depositPaid
+                      ? t("bookings.deposit_paid")
+                      : t("bookings.deposit_not_paid")}
+                  </Badge>
+                  {booking.depositPaid && (
+                    <p className="text-sm mt-1">
+                      {t("bookings.deposit_amount")}: £{booking.depositAmount}
+                    </p>
+                  )}
+                </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Link href={`/admin/users/${booking.userId}`}>
-                <Button variant="outline">{t('bookings.view_user_profile')}</Button>
-              </Link>
-            </CardFooter>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="clinic" className="mt-0">
+          
+          {/* Travel Details Card */}
           <Card>
             <CardHeader>
-              <CardTitle>{t('bookings.clinic_info')}</CardTitle>
-              <CardDescription>
-                {t('bookings.clinic_id')}: {booking.clinicId}
-              </CardDescription>
+              <CardTitle>{t("bookings.travel_details")}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-center text-muted-foreground my-12">
-                <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>{t('bookings.clinic_details_loading')}</p>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.arrival_date")}
+                  </h3>
+                  <p>
+                    {booking.arrivalDate
+                      ? format(new Date(booking.arrivalDate), "PPP")
+                      : t("common.not_available")}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.departure_date")}
+                  </h3>
+                  <p>
+                    {booking.departureDate
+                      ? format(new Date(booking.departureDate), "PPP")
+                      : t("common.not_available")}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.flight_number")}
+                  </h3>
+                  <p>{booking.flightNumber || t("common.not_available")}</p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">
+                    {t("bookings.accommodation")}
+                  </h3>
+                  <p>{booking.accommodationType || t("common.not_available")}</p>
+                  {booking.accommodationDetails && (
+                    <p className="text-sm mt-1">{booking.accommodationDetails}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Link href={`/admin/clinics/${booking.clinicId}`}>
-                <Button variant="outline">{t('bookings.view_clinic_details')}</Button>
-              </Link>
-            </CardFooter>
+          </Card>
+          
+          {/* Patient Notes Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("bookings.patient_notes")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t("bookings.patient_notes_placeholder")}
+                className="min-h-[150px]"
+              />
+              <Button
+                className="mt-4"
+                onClick={handleSaveNotes}
+                disabled={isUpdatingBooking}
+              >
+                {isUpdatingBooking && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {t("common.save")}
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Admin Notes Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>{t("bookings.admin_notes")}</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {t("bookings.admin_notes_description")}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                placeholder={t("bookings.admin_notes_placeholder")}
+                className="min-h-[150px]"
+              />
+              <Button
+                className="mt-4"
+                onClick={handleSaveAdminNotes}
+                disabled={isUpdatingBooking}
+              >
+                {isUpdatingBooking && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {t("common.save")}
+              </Button>
+            </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="appointments" className="mt-0">
+        {/* Treatment Tab */}
+        <TabsContent value="treatment" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('bookings.appointments')}</CardTitle>
-              <CardDescription>
-                {t('bookings.appointments_description')}
-              </CardDescription>
+              <CardTitle>{t("bookings.treatment_information")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-muted-foreground my-12">
-                {t('bookings.no_appointments')}
-              </p>
+              {booking.treatmentPlanId ? (
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <ClipboardList className="h-5 w-5 mr-2 text-muted-foreground" />
+                    <span className="font-medium">
+                      {t("bookings.treatment_plan_id")}: {booking.treatmentPlanId}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                      {t("bookings.treatment_notes")}
+                    </h3>
+                    <p>{booking.treatmentNotes || t("common.no_notes_available")}</p>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <Button variant="secondary">
+                      {t("bookings.view_treatment_plan")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t("bookings.no_treatment_plan")}</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {t("bookings.no_treatment_plan_description")}
+                  </p>
+                  <Button variant="outline">
+                    {t("bookings.create_treatment_plan")}
+                  </Button>
+                </div>
+              )}
             </CardContent>
-            <CardFooter>
-              <Link href={`/admin/bookings/${booking.id}/appointments/create`}>
-                <Button variant="outline">{t('bookings.create_appointment')}</Button>
-              </Link>
-            </CardFooter>
           </Card>
         </TabsContent>
         
-        <TabsContent value="documents" className="mt-0">
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('bookings.documents')}</CardTitle>
-              <CardDescription>
-                {t('bookings.documents_description')}
-              </CardDescription>
+              <CardTitle>{t("bookings.documents")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-muted-foreground my-12">
-                {t('bookings.no_documents')}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-2">
-                <Link href={`/admin/bookings/${booking.id}/documents`}>
-                  <Button variant="outline">{t('bookings.view_all_documents')}</Button>
-                </Link>
-                <Link href={`/admin/bookings/${booking.id}/upload-document`}>
-                  <Button>{t('bookings.upload_document')}</Button>
-                </Link>
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">{t("bookings.no_documents")}</h3>
+                <p className="text-muted-foreground mb-6">
+                  {t("bookings.no_documents_description")}
+                </p>
+                <Button variant="outline">{t("bookings.upload_document")}</Button>
               </div>
-            </CardFooter>
+            </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="payments" className="mt-0">
+        {/* Messages Tab */}
+        <TabsContent value="messages" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('bookings.payments')}</CardTitle>
-              <CardDescription>
-                {t('bookings.payments_description')}
-              </CardDescription>
+              <CardTitle>{t("bookings.messages")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-muted-foreground my-12">
-                {t('bookings.no_payments')}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-2">
-                <Button variant="outline"
-                  onClick={() => {
-                    updateBooking({
-                      bookingId,
-                      data: { depositPaid: true }
-                    }, {
-                      onSuccess: () => {
-                        toast({
-                          title: t('bookings.deposit_marked_as_paid'),
-                          description: t('bookings.deposit_marked_as_paid_description')
-                        });
-                        refetch();
-                      }
-                    });
-                  }}
-                  disabled={booking.depositPaid}
-                >
-                  {t('bookings.mark_deposit_as_paid')}
-                </Button>
-                <Link href={`/admin/bookings/${booking.id}/payment/create`}>
-                  <Button>{t('bookings.record_payment')}</Button>
-                </Link>
+              <div className="text-center py-8">
+                <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">{t("bookings.no_messages")}</h3>
+                <p className="text-muted-foreground mb-6">
+                  {t("bookings.no_messages_admin_description")}
+                </p>
+                <Button variant="outline">{t("bookings.send_message")}</Button>
               </div>
-            </CardFooter>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      {/* Bottom actions */}
-      <div className="mt-8 flex justify-between">
-        <Link href={`/admin/bookings/${booking.id}/edit`}>
-          <Button variant="outline" className="flex items-center gap-2">
-            <PencilIcon className="h-4 w-4" />
-            {t('bookings.edit_booking')}
-          </Button>
-        </Link>
-        
-        {booking.status !== 'cancelled' && booking.status !== 'completed' && (
-          <Button 
-            variant="destructive" 
-            disabled={isCancelling}
-            onClick={handleCancel}
-            className="flex items-center gap-2"
-          >
-            {isCancelling && <Loader2 className="h-4 w-4 animate-spin" />}
-            <TrashIcon className="h-4 w-4" />
-            {t('bookings.cancel_booking')}
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
