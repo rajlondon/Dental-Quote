@@ -1,13 +1,14 @@
 import express from "express";
 import { storage } from "../storage";
 import { z } from "zod";
-import { ensureAuthenticated as authenticateUser, ensureRole } from "../middleware/security";
+import { ensureAuthenticated, ensureRole } from "../middleware/auth";
 import { insertMessageSchema } from "@shared/schema";
+import { NotFoundError } from "../models/custom-errors";
 
 const router = express.Router();
 
 // Create a new message
-router.post("/messages", authenticateUser, async (req, res, next) => {
+router.post("/messages", ensureAuthenticated, async (req, res, next) => {
   try {
     const messageData = insertMessageSchema.parse(req.body);
     
@@ -22,10 +23,8 @@ router.post("/messages", authenticateUser, async (req, res, next) => {
 
     // Notify the recipient via WebSocket if they're connected
     if (message.recipientId) {
-      broadcastToUser(message.recipientId, {
-        type: "NEW_MESSAGE",
-        payload: message
-      });
+      // For now, the notification will be handled when the user fetches their messages
+      // We'll implement WebSocket notifications in a separate PR
     }
 
     res.status(201).json({
@@ -39,7 +38,7 @@ router.post("/messages", authenticateUser, async (req, res, next) => {
 });
 
 // Get messages for a specific booking
-router.get("/messages/booking/:bookingId", authenticateUser, async (req, res, next) => {
+router.get("/messages/booking/:bookingId", ensureAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     
@@ -91,7 +90,7 @@ router.get("/messages/booking/:bookingId", authenticateUser, async (req, res, ne
 });
 
 // Get all message threads for the authenticated user
-router.get("/messages/threads", authenticateUser, async (req, res, next) => {
+router.get("/messages/threads", ensureAuthenticated, async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const threads = await storage.getMessageThreads(userId);
@@ -106,7 +105,7 @@ router.get("/messages/threads", authenticateUser, async (req, res, next) => {
 });
 
 // Mark a message as read
-router.patch("/messages/:id/read", authenticateUser, async (req, res, next) => {
+router.patch("/messages/:id/read", ensureAuthenticated, async (req, res, next) => {
   try {
     const messageId = parseInt(req.params.id);
     
