@@ -265,13 +265,13 @@ export default function BookingsSection() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={statusColors[booking.status]}>
-                          {t(`bookings.status.${booking.status}`)}
+                        <Badge className={statusColors[booking.status || ''] || statusColors['pending']}>
+                          {t(`bookings.status.${booking.status || 'pending'}`)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={stageColors[booking.stage]}>
-                          {t(`bookings.stage.${booking.stage}`)}
+                        <Badge className={stageColors[booking.stage || ''] || stageColors['deposit']}>
+                          {t(`bookings.stage.${booking.stage || 'deposit'}`)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

@@ -251,7 +251,7 @@ export default function ClinicBookingsSection() {
                   {sortedBookings.map((booking) => (
                     <TableRow key={booking.id}>
                       <TableCell className="font-medium">
-                        {booking.bookingReference}
+                        {booking.bookingReference || '-'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -269,13 +269,13 @@ export default function ClinicBookingsSection() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={statusColors[booking.status]}>
-                          {t(`bookings.status.${booking.status}`)}
+                        <Badge className={statusColors[booking.status || ''] || statusColors['pending']}>
+                          {t(`bookings.status.${booking.status || 'pending'}`)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={stageColors[booking.stage]}>
-                          {t(`bookings.stage.${booking.stage}`)}
+                        <Badge className={stageColors[booking.stage || ''] || stageColors['deposit']}>
+                          {t(`bookings.stage.${booking.stage || 'deposit'}`)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
