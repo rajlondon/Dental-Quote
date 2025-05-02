@@ -186,6 +186,120 @@ export function useQuotes() {
     }
   });
 
+  // Setup WebSocket listeners for real-time quote updates
+  useEffect(() => {
+    // Handler for quote status changes
+    const handleQuoteUpdate = (message: WebSocketMessage) => {
+      if (message.type === 'quote_update' && message.payload) {
+        const { quoteId, status, action } = message.payload;
+        
+        // Refresh quote data across all portals
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes", quoteId] });
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/admin/all"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/clinic"] });
+        
+        // Create a local notification for the update
+        createNotification({
+          title: "Quote Update",
+          message: getStatusUpdateMessage(status, action),
+          type: "quote",
+          actionUrl: `/quotes/${quoteId}`,
+          priority: "medium"
+        });
+        
+        // Show toast notification for important updates
+        if (["accepted", "rejected", "completed"].includes(status)) {
+          toast({
+            title: "Quote Status Updated",
+            description: getStatusUpdateMessage(status, action),
+            variant: status === "rejected" ? "destructive" : "default"
+          });
+        }
+      }
+    };
+    
+    // Handler for new quote assignments
+    const handleQuoteAssignment = (message: WebSocketMessage) => {
+      if (message.type === 'quote_assignment' && message.payload) {
+        const { quoteId, clinicId, clinicName } = message.payload;
+        
+        // Refresh relevant data
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/clinic"] });
+        
+        // Create notification for clinic assignment
+        createNotification({
+          title: "New Quote Assignment",
+          message: `Quote #${quoteId} has been assigned to ${clinicName || 'your clinic'}`,
+          type: "quote",
+          actionUrl: `/clinic/quotes/${quoteId}`,
+          priority: "high"
+        });
+        
+        // Show toast for immediate attention
+        toast({
+          title: "New Quote Assignment",
+          description: `You have a new quote request to review`,
+          variant: "default"
+        });
+      }
+    };
+    
+    // Register WebSocket handlers
+    registerMessageHandler('quote_update', handleQuoteUpdate);
+    registerMessageHandler('quote_assignment', handleQuoteAssignment);
+    
+    // Cleanup on unmount
+    return () => {
+      unregisterMessageHandler('quote_update');
+      unregisterMessageHandler('quote_assignment');
+    };
+  }, [registerMessageHandler, unregisterMessageHandler, toast, createNotification]);
+  
+  // Helper function to generate human-readable status messages
+  const getStatusUpdateMessage = (status: QuoteStatus, action?: string): string => {
+    switch (status) {
+      case "pending":
+        return "Your quote request has been received and is pending review";
+      case "assigned":
+        return "Your quote request has been assigned to a clinic";
+      case "in_progress":
+        return "A clinic is currently preparing your quote";
+      case "sent":
+        return action === "new_version" 
+          ? "A new version of your quote is available for review" 
+          : "Your quote is ready for review";
+      case "accepted":
+        return "Your quote has been accepted! Next steps will be provided soon";
+      case "rejected":
+        return "Your quote was declined. Please contact support for more information";
+      case "completed":
+        return "Your quote process has been completed successfully";
+      case "cancelled":
+        return "Your quote request has been cancelled";
+      case "expired":
+        return "Your quote has expired. Contact us if you're still interested";
+      default:
+        return "Your quote status has been updated";
+    }
+  };
+
+  // Function to manually broadcast quote updates (for admin and clinic use)
+  const broadcastQuoteUpdate = (quoteId: number, status: QuoteStatus, action?: string) => {
+    sendMessage({
+      type: 'quote_update',
+      payload: {
+        quoteId,
+        status,
+        action
+      },
+      sender: {
+        id: 'system',
+        type: 'admin'
+      }
+    });
+  };
+  
   return {
     // Queries
     userQuotesQuery,
@@ -197,6 +311,9 @@ export function useQuotes() {
     updateQuoteMutation,
     createQuoteVersionMutation,
     assignClinicMutation,
-    uploadXraysMutation
+    uploadXraysMutation,
+    
+    // WebSocket helpers
+    broadcastQuoteUpdate
   };
 }
