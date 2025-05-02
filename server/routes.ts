@@ -30,6 +30,7 @@ import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
+import bookingRoutes from "./routes/booking-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
@@ -241,6 +242,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register clinic media routes for before/after images and videos
   app.use('/api/clinic-media', clinicMediaRoutes);
+  
+  // Register booking and appointment routes
+  app.use('/api/booking', bookingRoutes);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
