@@ -72,7 +72,7 @@ interface TestDefinition {
   category: 'messaging' | 'notifications' | 'quotes' | 'treatments' | 'bookings' | 'websocket';
   description: string;
   source: 'patient' | 'clinic' | 'admin';
-  destination: 'patient' | 'clinic' | 'admin';
+  destination: 'patient' | 'clinic' | 'admin' | 'system';
   requires: string[];
   run: () => Promise<TestResult>;
 }
