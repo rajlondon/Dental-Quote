@@ -1,66 +1,91 @@
-// Define interface for quote items
-export interface QuoteItem {
+import { User } from "./user";
+import { Clinic } from "./clinic";
+
+export type QuoteStatus = 
+  | "pending" 
+  | "assigned" 
+  | "in_progress" 
+  | "sent" 
+  | "accepted" 
+  | "rejected" 
+  | "completed" 
+  | "cancelled"
+  | "expired";
+
+export interface QuoteRequest {
+  id: number;
+  userId?: number;
+  name: string;
+  email: string;
+  phone?: string;
   treatment: string;
-  priceGBP: number;
-  priceUSD: number;
-  quantity: number;
-  subtotalGBP: number;
-  subtotalUSD: number;
-  guarantee: string;
-}
-
-// Define clinic information interface
-export interface ClinicInfo {
-  id: string;
-  name: string;
-  tier: 'affordable' | 'mid' | 'premium';
-  priceGBP: number;
-  priceUSD: number;
-  location: string;
-  rating: number;
-  guarantee: string;
-  materials: string[];
-  conciergeType: 'ids' | 'clinic';
-  features: string[];
-  description: string;
-}
-
-// Interface for clinic comparison in quotes
-export interface ClinicComparison {
-  name: string;
-  priceGBP: number;
-  extras?: string;
-  location?: string;
-  guarantee?: string;
-  rating?: string;
-}
-
-// Interface for uploaded X-ray files
-export interface UploadedFile {
-  filename: string;
-  originalname: string;
-  path: string;
-  size: number;
-  mimetype: string;
-}
-
-// Main interface for quote data
-export interface QuoteData {
-  items: QuoteItem[];
-  totalGBP: number;
-  totalUSD: number;
-  patientName?: string;
-  patientEmail?: string;
-  patientPhone?: string;
-  travelMonth?: string;
-  departureCity?: string;
-  clinics?: ClinicComparison[];
-  hasXrays?: boolean;
+  specificTreatment?: string;
+  consent: boolean;
+  status: QuoteStatus;
+  createdAt: string;
+  updatedAt: string;
+  selectedClinicId?: number;
+  notes?: string;
+  adminNotes?: string;
+  clinicNotes?: string;
+  budget?: number;
+  travelDateRange?: string;
+  hasXrays: boolean;
   xrayCount?: number;
-  selectedClinicIndex?: number;
-  xrayFiles?: UploadedFile[];
-  hasLondonConsult?: boolean;
-  londonConsult?: 'yes' | 'no';
-  londonConsultCostGBP?: number;
-  londonConsultCostUSD?: number;
+  viewedByAdmin: boolean;
+  viewedByClinic: boolean;
+  assignedAt?: string;
+  completedAt?: string;
+  patientCountry?: string;
+  patientCity?: string;
+  patientLanguage?: string;
+  
+  // Relations (populated on demand)
+  user?: User;
+  selectedClinic?: Clinic;
+}
+
+export interface QuoteVersion {
+  id: number;
+  quoteRequestId: number;
+  versionNumber: number;
+  createdById: number;
+  createdAt: string;
+  status: "draft" | "sent" | "accepted" | "rejected";
+  quoteData: QuoteData;
+  
+  // Relations (populated on demand)
+  createdBy?: User;
+}
+
+export interface QuoteData {
+  treatments: QuoteTreatment[];
+  subtotal: number;
+  discount?: number;
+  discountReason?: string;
+  total: number;
+  currency: string;
+  validUntil?: string;
+  notes?: string;
+  paymentTerms?: string;
+  accommodationIncluded?: boolean;
+  transportIncluded?: boolean;
+  additionalOffers?: {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    selected?: boolean;
+  }[];
+}
+
+export interface QuoteTreatment {
+  id: number;
+  treatmentName: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  teethNumbers?: number[]; // For dental treatments
+  category?: string;
 }
