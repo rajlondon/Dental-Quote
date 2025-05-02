@@ -1,12 +1,119 @@
 import express from 'express';
-import { isAuthenticated, hasRole } from '../middleware/auth';
+import { isAuthenticated, ensureRole } from '../middleware/auth';
 import { z } from 'zod';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { clinics } from '@shared/schema';
-import { processFileUpload, deleteFile, getFileUrl } from '../file-upload';
-import { StorageType } from '../file-upload';
+import multer from 'multer';
+import { upload, handleUploadError, StorageType } from '../file-upload';
 import { logError, ErrorSeverity } from '../services/error-logger';
+import path from 'path';
+import fs from 'fs';
+import { promisify } from 'util';
+import crypto from 'crypto';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+// Create S3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'eu-north-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  },
+});
+
+// S3 bucket name
+const S3_BUCKET = process.env.AWS_S3_BUCKET || 'mydentalfly-documents-prod';
+
+// Setup multer file upload middleware
+const uploadMiddleware = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB limit
+});
+
+// Helper functions for file operations
+// Upload file to S3
+async function uploadToS3(
+  file: Express.Multer.File, 
+  key: string, 
+  contentType: string
+): Promise<string> {
+  try {
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: file.buffer,
+      ContentType: contentType,
+      ACL: 'public-read',
+    });
+    
+    await s3Client.send(command);
+    
+    // Generate URL for the uploaded file
+    return `https://${S3_BUCKET}.s3.amazonaws.com/${key}`;
+  } catch (error) {
+    console.error('Error uploading to S3:', error);
+    throw new Error(`Failed to upload to S3: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+// Delete file from S3
+async function deleteFromS3(key: string): Promise<void> {
+  try {
+    const command = new DeleteObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+    });
+    
+    await s3Client.send(command);
+  } catch (error) {
+    console.error('Error deleting from S3:', error);
+    throw new Error(`Failed to delete from S3: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+// Process file upload
+async function processFileUpload(
+  file: Express.Multer.File,
+  options: {
+    userId: number;
+    fileType: string;
+    visibility: 'public' | 'private';
+  }
+): Promise<{
+  filename: string;
+  fileUrl: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
+}> {
+  // Generate unique filename
+  const randomString = crypto.randomBytes(8).toString('hex');
+  const extension = path.extname(file.originalname).toLowerCase();
+  const filename = `${options.fileType}_${options.userId}_${randomString}${extension}`;
+  
+  // Upload to S3
+  const fileUrl = await uploadToS3(file, filename, file.mimetype);
+  
+  return {
+    filename,
+    fileUrl,
+    originalName: file.originalname,
+    size: file.size,
+    mimeType: file.mimetype
+  };
+}
+
+// Delete file
+async function deleteFile(filename: string): Promise<void> {
+  await deleteFromS3(filename);
+}
+
+// Get file URL
+function getFileUrl(file: { filename: string }): string {
+  return `https://${S3_BUCKET}.s3.amazonaws.com/${file.filename}`;
+}
 
 /**
  * Clinic media routes for handling before/after images, clinic tours, and testimonial videos
@@ -116,8 +223,9 @@ router.get('/:clinicId/media/:mediaType',
 // Upload media for a clinic
 router.post('/:clinicId/media/:mediaType',
   isAuthenticated,
-  hasRole(['admin', 'clinic_staff']),
+  ensureRole(['admin', 'clinic_staff']),
   isClinicAuthorized,
+  upload.single('file'),
   async (req, res) => {
     try {
       const clinicId = parseInt(req.params.clinicId);
@@ -132,16 +240,13 @@ router.post('/:clinicId/media/:mediaType',
         });
       }
 
-      // Check if we have files
-      if (!req.files || Object.keys(req.files).length === 0) {
+      // Check if we have a file
+      if (!req.file) {
         return res.status(400).json({
           success: false,
-          message: 'No files uploaded'
+          message: 'No file uploaded'
         });
       }
-      
-      // Process file upload
-      const file = Array.isArray(req.files.file) ? req.files.file[0] : req.files.file;
       
       // Determine file category based on media type
       let fileCategory;
@@ -159,11 +264,10 @@ router.post('/:clinicId/media/:mediaType',
           fileCategory = 'clinicMedia';
       }
       
-      const uploadResult = await processFileUpload(file, {
-        userId: req.user.id,
+      const uploadResult = await processFileUpload(req.file, {
+        userId: req.user?.id || 0,
         fileType: fileCategory,
-        visibility: 'public',
-        storageType: StorageType.AWS_S3
+        visibility: 'public'
       });
       
       if (!uploadResult) {
@@ -193,14 +297,14 @@ router.post('/:clinicId/media/:mediaType',
         id: uploadResult.filename,
         title: title || 'Untitled',
         description: description || '',
-        fileUrl: uploadResult.fileUrl || getFileUrl(uploadResult),
+        fileUrl: uploadResult.fileUrl,
         uploadDate: new Date().toISOString(),
         type: mediaType,
         displayOrder: 0,
         isActive: true,
         metadata: {
-          mimeType: file.mimetype,
-          size: file.size
+          mimeType: req.file.mimetype,
+          size: req.file.size
         }
       };
       
@@ -247,7 +351,7 @@ router.post('/:clinicId/media/:mediaType',
 // Delete media item
 router.delete('/:clinicId/media/:mediaType/:mediaId',
   isAuthenticated,
-  hasRole(['admin', 'clinic_staff']),
+  ensureRole(['admin', 'clinic_staff']),
   isClinicAuthorized,
   async (req, res) => {
     try {
@@ -335,7 +439,7 @@ router.delete('/:clinicId/media/:mediaType/:mediaId',
 // Update media item details
 router.patch('/:clinicId/media/:mediaType/:mediaId',
   isAuthenticated,
-  hasRole(['admin', 'clinic_staff']),
+  ensureRole(['admin', 'clinic_staff']),
   isClinicAuthorized,
   async (req, res) => {
     try {
