@@ -485,7 +485,56 @@ router.post('/create-messaging-test-data', async (req, res) => {
   }
 });
 
-// Test endpoint to generate notification analytics data
+// Test endpoint to create a patient notification
+router.post('/create-patient-notification', async (req: Request, res: Response) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ 
+      success: false, 
+      message: "This endpoint is not available in production mode" 
+    });
+  }
+
+  try {
+    // Access the notification service through the app locals
+    const notificationService = req.app.locals.notificationService;
+    
+    if (!notificationService) {
+      return res.status(500).json({
+        success: false,
+        message: "Notification service not available"
+      });
+    }
+
+    // Create a test notification for the patient
+    const notification = await notificationService.createNotification({
+      title: "Test Notification",
+      message: "This is a test notification to verify the unread count and marking as read functionality",
+      target_type: "patient",
+      target_id: "45", // Patient ID from login
+      source_type: "system",
+      source_id: "test-script",
+      category: "message",
+      priority: "medium",
+      action_url: "/patient-portal?section=messages",
+      created_at: new Date(),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Test patient notification created",
+      notification
+    });
+  } catch (error: any) {
+    console.error('Error creating test patient notification:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Server error: ${error.message}`,
+      error: error
+    });
+  }
+});
+
 router.post('/generate-notification-analytics-data', async (req: Request, res: Response) => {
   // Only allow in development mode
   if (process.env.NODE_ENV === 'production') {
