@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { format, addDays, startOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { format, addDays, startOfWeek, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { 
   Card, 
   CardContent, 
@@ -55,8 +55,13 @@ import {
   AlertTriangle,
   X,
   MoreVertical,
-  Clock3
+  Clock3,
+  Loader2
 } from 'lucide-react';
+import { useAppointments, AppointmentData, CreateAppointmentData } from '@/hooks/use-appointments';
+import { useAuth } from '@/hooks/use-auth';
+import { useBookings } from '@/hooks/use-bookings';
+import { useToast } from '@/hooks/use-toast';
 
 // Types for appointments
 interface Appointment {
@@ -81,6 +86,8 @@ interface Appointment {
 
 const ClinicAppointmentsSection: React.FC = () => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [activeView, setActiveView] = useState('day');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showAddAppointment, setShowAddAppointment] = useState(false);
@@ -88,9 +95,80 @@ const ClinicAppointmentsSection: React.FC = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<string>('');
+  const [appointmentTitle, setAppointmentTitle] = useState<string>('');
+  const [appointmentTime, setAppointmentTime] = useState<string>('09:00');
+  const [appointmentDuration, setAppointmentDuration] = useState<string>('60');
+  const [appointmentType, setAppointmentType] = useState<string>('');
+  const [appointmentDoctor, setAppointmentDoctor] = useState<string>('');
+  const [appointmentNotes, setAppointmentNotes] = useState<string>('');
+  const [isVirtualAppointment, setIsVirtualAppointment] = useState<boolean>(false);
   
-  // Sample appointment data (in a real app, this would come from an API)
-  const appointments: Appointment[] = [
+  // Use the real API data
+  const { 
+    appointments: realAppointments, 
+    isLoading: isLoadingAppointments,
+    selectedDate: apiSelectedDate,
+    setSelectedDate: setApiSelectedDate,
+    createAppointment,
+    updateAppointment,
+    cancelAppointment,
+    isCreating
+  } = useAppointments();
+  
+  // Use bookings data to get patient information
+  const bookingsHook = useBookings();
+  const bookings = bookingsHook.data;
+  const isLoadingBookings = bookingsHook.isLoading;
+  
+  // Sync the selectedDate in the UI with the API hook
+  useEffect(() => {
+    setApiSelectedDate(currentDate);
+  }, [currentDate, setApiSelectedDate]);
+  
+  // Convert real appointments to the format expected by the UI
+  const convertedAppointments: Appointment[] = (realAppointments || []).map((app: AppointmentData) => {
+    // Find the booking for this appointment to get patient info
+    const booking = bookings?.find((b: any) => b.id === app.bookingId);
+    const patientName = booking?.patientName || 'Unknown Patient';
+    const patientEmail = booking?.patientEmail || '';
+    const patientPhone = booking?.patientPhone || '';
+    
+    // Get initials from patient name
+    const patientInitials = patientName
+      .split(' ')
+      .map((n: string) => n[0])
+      .join('')
+      .toUpperCase();
+    
+    // Parse dates
+    const startDate = app.startTime instanceof Date ? app.startTime : new Date(app.startTime);
+    const endDate = app.endTime instanceof Date ? app.endTime : new Date(app.endTime);
+    
+    return {
+      id: app.id.toString(),
+      patientName,
+      patientEmail,
+      patientPhone,
+      patientInitials,
+      date: startDate,
+      time: format(startDate, 'HH:mm'),
+      endTime: format(endDate, 'HH:mm'),
+      duration: `${Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60))} min`,
+      type: app.type,
+      status: app.status as any,
+      notes: app.clinicNotes || '',
+      virtualOption: false, // API doesn't have virtual option yet
+      doctorName: 'Dr. Example', // API doesn't have doctor info yet
+      doctorId: 'n/a'
+    };
+  });
+  
+  // Use converted appointments or fallback to sample data if needed
+  const appointments: Appointment[] = isLoadingAppointments || !realAppointments || realAppointments.length === 0 
+    ? [
     {
       id: "1",
       patientName: "James Wilson",
@@ -272,9 +350,89 @@ const ClinicAppointmentsSection: React.FC = () => {
   };
 
   const handleAddAppointment = () => {
-    // In a real app, this would submit the new appointment to an API
-    console.log('Adding new appointment');
-    setShowAddAppointment(false);
+    if (!user?.clinicId) {
+      toast({
+        title: "Error creating appointment",
+        description: "Clinic information not available. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!appointmentTitle || !appointmentType || !appointmentTime || !appointmentDate) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Calculate end time based on duration
+    const startTime = new Date(appointmentDate);
+    const [hours, minutes] = appointmentTime.split(':').map(Number);
+    startTime.setHours(hours, minutes, 0, 0);
+    
+    const endTime = new Date(startTime);
+    endTime.setMinutes(endTime.getMinutes() + parseInt(appointmentDuration, 10));
+    
+    // Format dates as ISO strings for API
+    const startTimeISO = startTime.toISOString();
+    const endTimeISO = endTime.toISOString();
+    
+    // Create the appointment data
+    const appointmentData: CreateAppointmentData = {
+      bookingId: selectedBookingId || 0, // If 0, it's a standalone clinic appointment
+      clinicId: user.clinicId,
+      title: appointmentTitle,
+      description: appointmentNotes,
+      type: appointmentType,
+      startTime: startTimeISO,
+      endTime: endTimeISO,
+      status: 'scheduled',
+      reminderSent: false,
+      followUpRequired: false
+    };
+    
+    try {
+      // Call the API to create the appointment
+      if (selectedBookingId) {
+        // If booking ID exists, use the booking appointment endpoint
+        createAppointment(appointmentData);
+      } else {
+        // Otherwise use the clinic appointment endpoint (this will be handled in the hook)
+        createAppointment({
+          ...appointmentData,
+          bookingId: 0 // Indicate this is a standalone clinic appointment
+        });
+      }
+      
+      // Reset form fields
+      setAppointmentTitle('');
+      setAppointmentType('');
+      setAppointmentTime('09:00');
+      setAppointmentDuration('60');
+      setAppointmentNotes('');
+      setIsVirtualAppointment(false);
+      setSelectedBookingId(null);
+      setSelectedPatient('');
+      
+      // Close the dialog
+      setShowAddAppointment(false);
+      
+      // Show success message
+      toast({
+        title: "Appointment created",
+        description: "The appointment has been successfully scheduled",
+      });
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      toast({
+        title: "Error creating appointment",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -777,24 +935,50 @@ const ClinicAppointmentsSection: React.FC = () => {
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="patient" className="text-sm font-medium">Patient</label>
-              <Select>
+              <label htmlFor="patient" className="text-sm font-medium">Booking/Patient</label>
+              <Select value={selectedBookingId?.toString() || ''} onValueChange={(value) => {
+                setSelectedBookingId(value ? Number(value) : null);
+                // Find the booking to get patient name
+                if (value) {
+                  const booking = bookings?.find(b => b.id === Number(value));
+                  if (booking) {
+                    setSelectedPatient(booking.patientName || '');
+                  }
+                } else {
+                  setSelectedPatient('');
+                }
+              }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a patient" />
+                  <SelectValue placeholder="Optional - Select a booking" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="james-wilson">James Wilson</SelectItem>
-                  <SelectItem value="sarah-johnson">Sarah Johnson</SelectItem>
-                  <SelectItem value="michael-brown">Michael Brown</SelectItem>
-                  <SelectItem value="emma-davis">Emma Davis</SelectItem>
-                  <SelectItem value="robert-taylor">Robert Taylor</SelectItem>
+                  <SelectItem value="">No specific booking (general appointment)</SelectItem>
+                  {bookings && bookings.length > 0 ? (
+                    bookings.map((booking) => (
+                      <SelectItem key={booking.id} value={booking.id.toString()}>
+                        {booking.patientName || 'Unnamed'} - ID: {booking.id}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-bookings" disabled>No bookings available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
             
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium">Appointment Title*</label>
+              <Input 
+                id="title" 
+                value={appointmentTitle}
+                onChange={(e) => setAppointmentTitle(e.target.value)}
+                placeholder="E.g., Initial Consultation, Follow-up"
+              />
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label htmlFor="date" className="text-sm font-medium">Date</label>
+                <label htmlFor="date" className="text-sm font-medium">Date*</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -817,8 +1001,8 @@ const ClinicAppointmentsSection: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="time" className="text-sm font-medium">Time</label>
-                <Select>
+                <label htmlFor="time" className="text-sm font-medium">Time*</label>
+                <Select value={appointmentTime} onValueChange={setAppointmentTime}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
@@ -842,8 +1026,8 @@ const ClinicAppointmentsSection: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="duration" className="text-sm font-medium">Duration</label>
-              <Select defaultValue="60">
+              <label htmlFor="duration" className="text-sm font-medium">Duration*</label>
+              <Select value={appointmentDuration} onValueChange={setAppointmentDuration}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
@@ -859,14 +1043,14 @@ const ClinicAppointmentsSection: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="type" className="text-sm font-medium">Appointment Type</label>
-              <Select>
+              <label htmlFor="type" className="text-sm font-medium">Appointment Type*</label>
+              <Select value={appointmentType} onValueChange={setAppointmentType}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
                   {appointmentTypes.map((type, index) => (
-                    <SelectItem key={index} value={type.toLowerCase().replace(/\s+/g, '-')}>
+                    <SelectItem key={index} value={type}>
                       {type}
                     </SelectItem>
                   ))}
@@ -876,7 +1060,7 @@ const ClinicAppointmentsSection: React.FC = () => {
             
             <div className="space-y-2">
               <label htmlFor="doctor" className="text-sm font-medium">Doctor</label>
-              <Select>
+              <Select value={appointmentDoctor} onValueChange={setAppointmentDoctor}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select doctor" />
                 </SelectTrigger>
@@ -892,11 +1076,24 @@ const ClinicAppointmentsSection: React.FC = () => {
             
             <div className="space-y-2">
               <label htmlFor="notes" className="text-sm font-medium">Notes</label>
-              <Input />
+              <Input 
+                id="notes" 
+                value={appointmentNotes}
+                onChange={(e) => setAppointmentNotes(e.target.value)}
+                placeholder="Additional information about the appointment"
+              />
             </div>
             
             <div className="flex items-center space-x-2">
-              <Checkbox id="virtual" />
+              <Checkbox 
+                id="virtual" 
+                checked={isVirtualAppointment}
+                onCheckedChange={(checked) => {
+                  if (typeof checked === 'boolean') {
+                    setIsVirtualAppointment(checked);
+                  }
+                }}
+              />
               <label
                 htmlFor="virtual"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -910,8 +1107,15 @@ const ClinicAppointmentsSection: React.FC = () => {
             <Button variant="outline" onClick={() => setShowAddAppointment(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddAppointment}>
-              Schedule Appointment
+            <Button 
+              onClick={handleAddAppointment} 
+              disabled={isCreating}
+              className="relative"
+            >
+              {isCreating && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              {isCreating ? 'Creating...' : 'Schedule Appointment'}
             </Button>
           </DialogFooter>
         </DialogContent>
