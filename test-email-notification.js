@@ -8,13 +8,13 @@ async function runTest() {
     
     // Step 1: Login as patient
     console.log('Logging in as patient...');
-    const loginResponse = await fetch('http://localhost:5000/api/login', {
+    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: 'patient@mydentalfly.com',
+        email: 'patient@mydentalfly.com',
         password: 'Patient123!'
       }),
       credentials: 'include'
