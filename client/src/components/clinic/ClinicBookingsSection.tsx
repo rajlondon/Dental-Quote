@@ -67,7 +67,7 @@ export default function ClinicBookingsSection() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       if (
-        !booking.bookingReference.toLowerCase().includes(query) &&
+        !(booking.bookingReference?.toLowerCase() || '').includes(query) &&
         !String(booking.id).includes(query) &&
         !String(booking.userId).includes(query)
       ) {
