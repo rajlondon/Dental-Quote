@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
+import { BookingsProvider } from "@/hooks/use-bookings";
 import { NotFoundPage } from "@/pages/ErrorPage";
 import ErrorTestPage from "@/pages/ErrorTestPage";
 import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
@@ -81,6 +82,11 @@ import VerificationSentPage from "@/pages/VerificationSentPage";
 import EmailVerifiedPage from "@/pages/EmailVerifiedPage";
 import VerificationFailedPage from "@/pages/VerificationFailedPage";
 import PackageDetailPage from "@/pages/PackageDetailPage";
+import BookingsPage from "@/pages/bookings-page";
+import BookingDetailPage from "@/pages/booking-detail-page";
+import CreateBookingPage from "@/pages/create-booking-page";
+import AdminBookingsPage from "@/pages/admin/admin-bookings-page";
+import AdminBookingDetailPage from "@/pages/admin/admin-booking-detail-page";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -149,6 +155,12 @@ function Router() {
       <Route path="/email-verified" component={EmailVerifiedPage} />
       <Route path="/verification-failed" component={VerificationFailedPage} />
       
+      {/* Booking Routes */}
+      <ProtectedRoute path="/bookings" component={BookingsPage} />
+      <ProtectedRoute path="/bookings/:id" component={BookingDetailPage} />
+      <ProtectedRoute path="/create-booking" component={CreateBookingPage} />
+      <ProtectedRoute path="/create-booking/:clinicId" component={CreateBookingPage} />
+      
       {/* Admin login is now handled through the main portal login page */}
       
       {/* Special route for handling admin logout properly */}
@@ -187,6 +199,11 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
+      {/* Admin Booking Routes */}
+      <ProtectedRoute path="/admin/bookings" component={AdminBookingsPage} requiredRole="admin" />
+      <ProtectedRoute path="/admin/bookings/:id" component={AdminBookingDetailPage} requiredRole="admin" />
+      <ProtectedRoute path="/admin/create-booking" component={CreateBookingPage} requiredRole="admin" />
+      
       {/* Clinic Staff Protected Routes */}
       {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
       <Route path="/simple-clinic">
@@ -203,6 +220,11 @@ function Router() {
       </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
+      
+      {/* Clinic Booking Routes */}
+      <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic/bookings/:id" component={BookingDetailPage} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic/create-booking" component={CreateBookingPage} requiredRole="clinic_staff" />
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>
@@ -298,19 +320,21 @@ function App() {
         <AuthProvider>
           <AdminAuthProvider>
             <NotificationsProvider>
-              <Suspense fallback={<div>Loading...</div>}>
-                <ScrollToTop />
-                {/* Only exclude ReloadTranslations on clinic portal path */}
-                {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                  <ReloadTranslations />
-                }
-                <ErrorBoundary componentName="Router">
-                  <Router />
-                </ErrorBoundary>
-                <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-                <EnvironmentBadge />
-                <Toaster />
-              </Suspense>
+              <BookingsProvider>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <ScrollToTop />
+                  {/* Only exclude ReloadTranslations on clinic portal path */}
+                  {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                    <ReloadTranslations />
+                  }
+                  <ErrorBoundary componentName="Router">
+                    <Router />
+                  </ErrorBoundary>
+                  <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+                  <EnvironmentBadge />
+                  <Toaster />
+                </Suspense>
+              </BookingsProvider>
             </NotificationsProvider>
           </AdminAuthProvider>
         </AuthProvider>
