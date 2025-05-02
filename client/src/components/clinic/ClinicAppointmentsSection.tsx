@@ -853,23 +853,25 @@ const ClinicAppointmentsSection: React.FC = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="patient" className="text-sm font-medium">Booking/Patient</label>
-              <Select value={selectedBookingId?.toString() || ''} onValueChange={(value) => {
-                setSelectedBookingId(value ? Number(value) : null);
-                // Find the booking to get patient name
-                if (value) {
+              <Select value={selectedBookingId?.toString() || '0'} onValueChange={(value) => {
+                // Use 0 to indicate "no specific booking"
+                if (value === '0') {
+                  setSelectedBookingId(0);
+                  setSelectedPatient('');
+                } else {
+                  setSelectedBookingId(Number(value));
+                  // Find the booking to get patient name
                   const booking = bookings?.find((b: any) => b.id === Number(value));
                   if (booking) {
                     setSelectedPatient(booking.patientName || '');
                   }
-                } else {
-                  setSelectedPatient('');
                 }
               }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Optional - Select a booking" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No specific booking (general appointment)</SelectItem>
+                  <SelectItem value="0">No specific booking (general appointment)</SelectItem>
                   {bookings && bookings.length > 0 ? (
                     bookings.map((booking: any) => (
                       <SelectItem key={booking.id} value={booking.id.toString()}>
