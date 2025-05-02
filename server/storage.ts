@@ -65,10 +65,13 @@ export interface IStorage {
   updateBooking(id: number, data: Partial<Booking>): Promise<Booking | undefined>;
   
   // Appointments
+  getBookingAppointments(bookingId: number): Promise<Appointment[]>;
   getAppointmentsByBookingId(bookingId: number): Promise<Appointment[]>;
+  getClinicAppointments(clinicId: number, dateStr?: string): Promise<Appointment[]>;
   getAppointmentsByClinicId(clinicId: number, date?: Date): Promise<Appointment[]>;
   createAppointment(data: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: number, data: Partial<Appointment>): Promise<Appointment | undefined>;
+  deleteAppointment(id: number): Promise<void>;
   
   // Payments
   getPaymentsByBookingId(bookingId: number): Promise<Payment[]>;
@@ -408,14 +411,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   // === Appointments ===
-  async getAppointmentsByBookingId(bookingId: number): Promise<Appointment[]> {
+  async getBookingAppointments(bookingId: number): Promise<Appointment[]> {
     return db
       .select()
       .from(appointments)
       .where(eq(appointments.bookingId, bookingId))
       .orderBy(asc(appointments.startTime));
   }
+  
+  async getAppointmentsByBookingId(bookingId: number): Promise<Appointment[]> {
+    return this.getBookingAppointments(bookingId);
+  }
 
+  async getClinicAppointments(clinicId: number, dateStr?: string): Promise<Appointment[]> {
+    if (dateStr) {
+      // Parse the date string in YYYY-MM-DD format
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        throw new Error("Invalid date format. Expected YYYY-MM-DD");
+      }
+      
+      // Convert the date to start and end of the specified day
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      return db
+        .select()
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.clinicId, clinicId),
+            sql`${appointments.startTime} >= ${startDate}`,
+            sql`${appointments.startTime} <= ${endDate}`
+          )
+        )
+        .orderBy(asc(appointments.startTime));
+    }
+    
+    return db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.clinicId, clinicId))
+      .orderBy(asc(appointments.startTime));
+  }
+  
   async getAppointmentsByClinicId(clinicId: number, date?: Date): Promise<Appointment[]> {
     if (date) {
       // Convert the date to start and end of the specified day
@@ -431,8 +473,8 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(appointments.clinicId, clinicId),
-            appointments.startTime >= startDate,
-            appointments.startTime <= endDate
+            sql`${appointments.startTime} >= ${startDate}`,
+            sql`${appointments.startTime} <= ${endDate}`
           )
         )
         .orderBy(asc(appointments.startTime));
@@ -457,6 +499,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appointments.id, id))
       .returning();
     return appointment;
+  }
+  
+  async deleteAppointment(id: number): Promise<void> {
+    await db.delete(appointments).where(eq(appointments.id, id));
   }
 
   // === Payments ===
