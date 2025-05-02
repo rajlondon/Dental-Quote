@@ -525,7 +525,7 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
     // Categories, priorities, and types for test data
     const categories = ['appointment', 'treatment', 'payment', 'message', 'document', 'system', 'offer'];
     const priorities = ['low', 'medium', 'high', 'urgent'];
-    const targetTypes = ['admin', 'clinic', 'patient'];
+    const targetTypes = ['admin', 'clinic', 'patient', 'all']; // Add 'all' for system-wide notifications
     
     // Helper for random selection and integers
     const randomItem = (array: any[]) => array[Math.floor(Math.random() * array.length)];
@@ -596,7 +596,11 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
           title,
           message,
           target_type: targetType,
-          target_id: targetType === 'admin' ? '41' : randomInt(1, 50).toString(), // Admin ID is 41
+          // Use proper IDs for different portals
+          target_id: targetType === 'admin' ? '41' : 
+                     targetType === 'patient' ? '45' : // Patient ID is 45
+                     targetType === 'clinic' ? '40' : // Clinic ID is 40
+                     randomInt(1, 50).toString(),
           source_type: 'system' as const,
           source_id: 'test-script',
           category: category as any,
