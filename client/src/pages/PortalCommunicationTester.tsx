@@ -352,215 +352,49 @@ const PortalCommunicationTester: React.FC = () => {
     
     // Messaging Tests
     {
-      id: 'message-patient-to-clinic',
-      name: 'Patient to Clinic Message',
+      id: 'messaging-placeholder',
+      name: 'Messaging Capability',
       category: 'messaging',
-      description: 'Tests if messages from patients are received by clinics',
+      description: 'Placeholder test for messaging functionality',
       source: 'patient',
       destination: 'clinic',
       requires: [],
       run: async () => {
         const startTime = Date.now();
         
-        try {
-          // Create a unique ID for this test message
-          const testId = `msg-test-${Date.now()}`;
-          
-          // First get a list of clinics to message
-          const clinicsResponse = await apiRequest('GET', '/api/clinics?limit=1');
-          
-          if (!clinicsResponse.ok) {
-            return {
-              testId: 'message-patient-to-clinic',
-              portalName: 'Patient → Clinic',
-              success: false,
-              message: 'Failed to get list of clinics to message',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const clinicsData = await clinicsResponse.json();
-          
-          if (!clinicsData.data || clinicsData.data.length === 0) {
-            return {
-              testId: 'message-patient-to-clinic',
-              portalName: 'Patient → Clinic',
-              success: false,
-              message: 'No clinics found to message',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const clinicId = clinicsData.data[0].id;
-          
-          // Send a test message to the clinic
-          const messageResponse = await apiRequest('POST', '/api/messages', {
-            recipientId: clinicId,
-            recipientType: 'clinic',
-            message: customMessage || 'Test message from communication tester',
-            metadata: {
-              testId,
-              source: 'communication-tester'
-            }
-          });
-          
-          if (!messageResponse.ok) {
-            const errorData = await messageResponse.json();
-            return {
-              testId: 'message-patient-to-clinic',
-              portalName: 'Patient → Clinic',
-              success: false,
-              message: `Failed to send message: ${errorData.message || messageResponse.statusText}`,
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime,
-              dataSnapshot: errorData
-            };
-          }
-          
-          const messageData = await messageResponse.json();
-          
-          return {
-            testId: 'message-patient-to-clinic',
-            portalName: 'Patient → Clinic',
-            success: true,
-            message: `Message sent successfully to clinic ${clinicId}`,
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime,
-            dataSnapshot: messageData
-          };
-        } catch (error) {
-          return {
-            testId: 'message-patient-to-clinic',
-            portalName: 'Patient → Clinic',
-            success: false,
-            message: `Error sending message: ${error instanceof Error ? error.message : String(error)}`,
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime
-          };
-        }
+        // Always return a not-implemented message for now
+        return {
+          testId: 'messaging-placeholder',
+          portalName: 'Messaging',
+          success: false,
+          message: 'Message testing is not implemented yet. The API endpoint does not exist.',
+          timestamp: new Date().toISOString(),
+          responseTime: Date.now() - startTime
+        };
       }
     },
     
     // Quote Tests
     {
-      id: 'quote-update-clinic-to-patient',
-      name: 'Quote Update from Clinic',
+      id: 'quotes-placeholder',
+      name: 'Quote Processing',
       category: 'quotes',
-      description: 'Tests if quote updates from clinics are sent to patients',
+      description: 'Placeholder test for quote processing functionality',
       source: 'clinic',
       destination: 'patient',
       requires: [],
       run: async () => {
         const startTime = Date.now();
         
-        try {
-          // First, get a test quote to update
-          const quotesResponse = await apiRequest('GET', '/api/quotes?limit=1');
-          
-          if (!quotesResponse.ok) {
-            return {
-              testId: 'quote-update-clinic-to-patient',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: 'Failed to get quotes to test with',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const quotesData = await quotesResponse.json();
-          
-          if (!quotesData.data || quotesData.data.length === 0) {
-            return {
-              testId: 'quote-update-clinic-to-patient',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: 'No quotes found to test with',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const quote = quotesData.data[0];
-          
-          // Update the quote with a test comment
-          const updateResponse = await apiRequest('PUT', `/api/quotes/${quote.id}`, {
-            clinicNotes: `Test note from Communication Tester: ${new Date().toLocaleString()}`,
-            metadata: {
-              testId: `quote-test-${Date.now()}`,
-              source: 'communication-tester'
-            }
-          });
-          
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            return {
-              testId: 'quote-update-clinic-to-patient',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: `Failed to update quote: ${errorData.message || updateResponse.statusText}`,
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime,
-              dataSnapshot: errorData
-            };
-          }
-          
-          const updateData = await updateResponse.json();
-          
-          // Now verify the notification was sent
-          const notificationsResponse = await apiRequest('GET', '/api/notifications?category=quote_update&limit=1');
-          
-          if (!notificationsResponse.ok) {
-            return {
-              testId: 'quote-update-clinic-to-patient',
-              portalName: 'Clinic → Patient',
-              success: true, // The update was successful even if we can't verify the notification
-              message: 'Quote updated, but could not verify notification delivery',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime,
-              dataSnapshot: updateData
-            };
-          }
-          
-          const notificationsData = await notificationsResponse.json();
-          
-          if (!notificationsData.data || notificationsData.data.length === 0) {
-            return {
-              testId: 'quote-update-clinic-to-patient',
-              portalName: 'Clinic → Patient',
-              success: true, // The update was successful even if we can't find a notification
-              message: 'Quote updated, but no notification was found',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime,
-              dataSnapshot: updateData
-            };
-          }
-          
-          // Found a notification, so everything worked
-          return {
-            testId: 'quote-update-clinic-to-patient',
-            portalName: 'Clinic → Patient',
-            success: true,
-            message: 'Quote updated and notification sent successfully',
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime,
-            dataSnapshot: {
-              quote: updateData,
-              notification: notificationsData.data[0]
-            }
-          };
-        } catch (error) {
-          return {
-            testId: 'quote-update-clinic-to-patient',
-            portalName: 'Clinic → Patient',
-            success: false,
-            message: `Error updating quote: ${error instanceof Error ? error.message : String(error)}`,
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime
-          };
-        }
+        // Always return a not-implemented message for now
+        return {
+          testId: 'quotes-placeholder',
+          portalName: 'Quotes',
+          success: false,
+          message: 'Quote testing is not implemented yet. The API endpoint does not exist.',
+          timestamp: new Date().toISOString(),
+          responseTime: Date.now() - startTime
+        };
       }
     },
     
@@ -626,179 +460,51 @@ const PortalCommunicationTester: React.FC = () => {
       }
     },
     
-    // Treatment Plan Tests
+    // Treatment Plans
     {
-      id: 'treatment-plan-updates',
-      name: 'Treatment Plan Updates',
+      id: 'treatments-placeholder',
+      name: 'Treatment Plan Processing',
       category: 'treatments',
-      description: 'Verifies that treatment plan changes are visible to patients',
+      description: 'Placeholder test for treatment plan functionality',
       source: 'clinic',
       destination: 'patient',
       requires: [],
       run: async () => {
         const startTime = Date.now();
         
-        try {
-          // First get a treatment plan to update
-          const plansResponse = await apiRequest('GET', '/api/treatment-plans?limit=1');
-          
-          if (!plansResponse.ok) {
-            return {
-              testId: 'treatment-plan-updates',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: 'Failed to get treatment plans to test with',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const plansData = await plansResponse.json();
-          
-          if (!plansData.data || plansData.data.length === 0) {
-            return {
-              testId: 'treatment-plan-updates',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: 'No treatment plans found to test with',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const plan = plansData.data[0];
-          
-          // Add a new note to the treatment plan
-          const updateResponse = await apiRequest('PUT', `/api/treatment-plans/${plan.id}`, {
-            notes: `${plan.notes || ''}\nTest update from Communication Tester: ${new Date().toLocaleString()}`,
-            metadata: {
-              testId: `treatment-test-${Date.now()}`,
-              source: 'communication-tester'
-            }
-          });
-          
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            return {
-              testId: 'treatment-plan-updates',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: `Failed to update treatment plan: ${errorData.message || updateResponse.statusText}`,
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime,
-              dataSnapshot: errorData
-            };
-          }
-          
-          const updateData = await updateResponse.json();
-          
-          return {
-            testId: 'treatment-plan-updates',
-            portalName: 'Clinic → Patient',
-            success: true,
-            message: 'Treatment plan updated successfully',
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime,
-            dataSnapshot: updateData
-          };
-        } catch (error) {
-          return {
-            testId: 'treatment-plan-updates',
-            portalName: 'Clinic → Patient',
-            success: false,
-            message: `Error updating treatment plan: ${error instanceof Error ? error.message : String(error)}`,
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime
-          };
-        }
+        // Always return a not-implemented message for now
+        return {
+          testId: 'treatments-placeholder',
+          portalName: 'Treatment Plans',
+          success: false,
+          message: 'Treatment plan testing is not implemented yet. The API endpoint does not exist.',
+          timestamp: new Date().toISOString(),
+          responseTime: Date.now() - startTime
+        };
       }
     },
     
-    // Booking Tests
+    // Bookings
     {
-      id: 'booking-updates',
-      name: 'Booking Status Updates',
+      id: 'bookings-placeholder',
+      name: 'Booking Management',
       category: 'bookings',
-      description: 'Tests if booking status changes are reflected across portals',
+      description: 'Placeholder test for booking management functionality',
       source: 'clinic',
       destination: 'patient',
       requires: [],
       run: async () => {
         const startTime = Date.now();
         
-        try {
-          // Get a booking to update
-          const bookingsResponse = await apiRequest('GET', '/api/bookings?limit=1');
-          
-          if (!bookingsResponse.ok) {
-            return {
-              testId: 'booking-updates',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: 'Failed to get bookings to test with',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const bookingsData = await bookingsResponse.json();
-          
-          if (!bookingsData.data || bookingsData.data.length === 0) {
-            return {
-              testId: 'booking-updates',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: 'No bookings found to test with',
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime
-            };
-          }
-          
-          const booking = bookingsData.data[0];
-          
-          // Add a comment to the booking
-          const updateResponse = await apiRequest('POST', `/api/bookings/${booking.id}/comments`, {
-            comment: customMessage || 'Test comment from Communication Tester',
-            metadata: {
-              testId: `booking-test-${Date.now()}`,
-              source: 'communication-tester'
-            }
-          });
-          
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            return {
-              testId: 'booking-updates',
-              portalName: 'Clinic → Patient',
-              success: false,
-              message: `Failed to update booking: ${errorData.message || updateResponse.statusText}`,
-              timestamp: new Date().toISOString(),
-              responseTime: Date.now() - startTime,
-              dataSnapshot: errorData
-            };
-          }
-          
-          const updateData = await updateResponse.json();
-          
-          return {
-            testId: 'booking-updates',
-            portalName: 'Clinic → Patient',
-            success: true,
-            message: 'Booking comment added successfully',
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime,
-            dataSnapshot: updateData
-          };
-        } catch (error) {
-          return {
-            testId: 'booking-updates',
-            portalName: 'Clinic → Patient',
-            success: false,
-            message: `Error updating booking: ${error instanceof Error ? error.message : String(error)}`,
-            timestamp: new Date().toISOString(),
-            responseTime: Date.now() - startTime
-          };
-        }
+        // Always return a not-implemented message for now
+        return {
+          testId: 'bookings-placeholder',
+          portalName: 'Bookings',
+          success: false,
+          message: 'Booking testing is not implemented yet. The API endpoint does not exist.',
+          timestamp: new Date().toISOString(),
+          responseTime: Date.now() - startTime
+        };
       }
     }
   ];
