@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { csrfProtection } from "../middleware/security";
-import { ensureAuthenticated, ensureRole } from "../middleware/auth";
+import { isAuthenticated, ensureRole } from "../middleware/auth";
 import { storage } from "../storage";
 import { catchAsync } from "../middleware/error-handler";
 import { NotificationService } from "../services/notificationService";
@@ -11,7 +11,7 @@ const router = express.Router();
  * Get all treatment plans
  * This route is accessible to admins and returns all treatment plans
  */
-router.get("/", ensureAuthenticated, catchAsync(async (req: Request, res: Response) => {
+router.get("/", isAuthenticated, catchAsync(async (req: Request, res: Response) => {
   const userRole = req.user?.role;
   const userId = req.user?.id;
   const clinicId = req.user?.clinicId;
@@ -98,7 +98,7 @@ router.get("/", ensureAuthenticated, catchAsync(async (req: Request, res: Respon
 /**
  * Get a specific treatment plan by ID
  */
-router.get("/:id", ensureAuthenticated, catchAsync(async (req: Request, res: Response) => {
+router.get("/:id", isAuthenticated, catchAsync(async (req: Request, res: Response) => {
   const treatmentPlanId = parseInt(req.params.id);
   const userRole = req.user?.role;
   const userId = req.user?.id;
@@ -331,7 +331,7 @@ router.delete("/:id", ensureRole('clinic_staff'), catchAsync(async (req: Request
  * List treatment plans for a specific clinic
  * This route is accessible to admin and clinic staff
  */
-router.get("/clinic/:clinicId", ensureAuthenticated, catchAsync(async (req: Request, res: Response) => {
+router.get("/clinic/:clinicId", isAuthenticated, catchAsync(async (req: Request, res: Response) => {
   const clinicId = parseInt(req.params.clinicId);
   const userRole = req.user?.role;
   const userClinicId = req.user?.clinicId;
@@ -359,7 +359,7 @@ router.get("/clinic/:clinicId", ensureAuthenticated, catchAsync(async (req: Requ
  * List treatment plans for a specific patient
  * This route is accessible to admin, the patient themselves, and the patient's clinics
  */
-router.get("/patient/:patientId", ensureAuthenticated, catchAsync(async (req: Request, res: Response) => {
+router.get("/patient/:patientId", isAuthenticated, catchAsync(async (req: Request, res: Response) => {
   const patientId = parseInt(req.params.patientId);
   const userRole = req.user?.role;
   const userId = req.user?.id;
@@ -393,7 +393,7 @@ router.get("/patient/:patientId", ensureAuthenticated, catchAsync(async (req: Re
 /**
  * Get treatment plan associated with a specific quote request
  */
-router.get("/quote/:quoteRequestId", ensureAuthenticated, catchAsync(async (req: Request, res: Response) => {
+router.get("/quote/:quoteRequestId", isAuthenticated, catchAsync(async (req: Request, res: Response) => {
   const quoteRequestId = parseInt(req.params.quoteRequestId);
   const userRole = req.user?.role;
   const userId = req.user?.id;

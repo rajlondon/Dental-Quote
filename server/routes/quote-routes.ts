@@ -4,7 +4,7 @@ import { insertQuoteRequestSchema, InsertFile, InsertNotification } from "@share
 import multer from "multer";
 import { BadRequestError, NotFoundError } from "../models/custom-errors";
 import { DatabaseError } from "pg";
-import { ensureAuthenticated, ensureRole } from "../middleware/auth";
+import { isAuthenticated, ensureRole } from "../middleware/auth";
 // We need to import these in routes.ts and make them available
 
 const router = express.Router();
@@ -55,7 +55,7 @@ router.post("/", async (req, res, next) => {
 });
 
 // Get all quote requests (admin only)
-router.get("/admin/all", ensureAuthenticated, ensureRole("admin"), async (req, res, next) => {
+router.get("/admin/all", isAuthenticated, ensureRole("admin"), async (req, res, next) => {
   try {
     const status = req.query.status as string | undefined;
     
@@ -73,7 +73,7 @@ router.get("/admin/all", ensureAuthenticated, ensureRole("admin"), async (req, r
 });
 
 // Get all quote requests for a clinic
-router.get("/clinic", ensureAuthenticated, ensureRole("clinic_staff"), async (req, res, next) => {
+router.get("/clinic", isAuthenticated, ensureRole("clinic_staff"), async (req, res, next) => {
   try {
     const user = req.user!;
     
@@ -96,7 +96,7 @@ router.get("/clinic", ensureAuthenticated, ensureRole("clinic_staff"), async (re
 });
 
 // Get quote requests for the authenticated user
-router.get("/user", ensureAuthenticated, async (req, res, next) => {
+router.get("/user", isAuthenticated, async (req, res, next) => {
   try {
     const quotes = await storage.getQuoteRequestsByUserId(req.user!.id);
     
@@ -110,7 +110,7 @@ router.get("/user", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Get a specific quote request by ID
-router.get("/:id", ensureAuthenticated, async (req, res, next) => {
+router.get("/:id", isAuthenticated, async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
     
@@ -159,7 +159,7 @@ router.get("/:id", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Update a quote request
-router.patch("/:id", ensureAuthenticated, async (req, res, next) => {
+router.patch("/:id", isAuthenticated, async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
     
@@ -251,7 +251,7 @@ router.patch("/:id", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Create a new quote version (admin only)
-router.post("/:id/versions", ensureAuthenticated, ensureRole("admin"), async (req, res, next) => {
+router.post("/:id/versions", isAuthenticated, ensureRole("admin"), async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
     
@@ -341,7 +341,7 @@ router.post("/:id/versions", ensureAuthenticated, ensureRole("admin"), async (re
 });
 
 // Assign a quote to a clinic (admin only)
-router.post("/:id/assign-clinic", ensureAuthenticated, ensureRole("admin"), async (req, res, next) => {
+router.post("/:id/assign-clinic", isAuthenticated, ensureRole("admin"), async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
     const { clinicId } = req.body;
@@ -427,7 +427,7 @@ router.post("/:id/assign-clinic", ensureAuthenticated, ensureRole("admin"), asyn
 });
 
 // Upload X-ray files for a quote request
-router.post("/:id/xrays", ensureAuthenticated, upload.array("xrays", 10), async (req, res, next) => {
+router.post("/:id/xrays", isAuthenticated, upload.array("xrays", 10), async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
     
@@ -517,7 +517,7 @@ router.post("/:id/xrays", ensureAuthenticated, upload.array("xrays", 10), async 
 });
 
 // Get x-ray files for a quote
-router.get("/:id/xrays", ensureAuthenticated, async (req, res, next) => {
+router.get("/:id/xrays", isAuthenticated, async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
     

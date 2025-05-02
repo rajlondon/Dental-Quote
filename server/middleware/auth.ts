@@ -21,6 +21,12 @@ export function ensureAuthenticated(req: Request, res: Response, next: NextFunct
 }
 
 /**
+ * Standard middleware to check authentication
+ * This is an alias of ensureAuthenticated for consistency
+ */
+export const isAuthenticated = ensureAuthenticated;
+
+/**
  * Middleware to check if user has required role
  * @param roles - Single role or array of roles that are allowed
  */

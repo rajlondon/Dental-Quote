@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { csrfProtection } from "../middleware/security";
-import { ensureAuthenticated, ensureRole } from "../middleware/auth";
+import { ensureRole } from "../middleware/auth";
+import { isAuthenticated } from "../middleware/auth-middleware";
 import { storage } from "../storage";
 import { stripeClient, createPaymentIntent, createTreatmentPaymentIntent, getPaymentIntent } from "../stripe-service";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { z } from "zod";
 const router = express.Router();
 
 // Get payments by user or booking
-router.get("/", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const { userId, bookingId, limit } = req.query;
     
@@ -95,7 +96,7 @@ router.get("/", ensureAuthenticated, async (req: Request, res: Response) => {
 });
 
 // Create a treatment payment intent
-router.post("/create-treatment-payment-intent", csrfProtection, ensureAuthenticated, async (req: Request, res: Response) => {
+router.post("/create-treatment-payment-intent", csrfProtection, isAuthenticated, async (req: Request, res: Response) => {
   try {
     // Validate request body
     const schema = z.object({
@@ -161,7 +162,7 @@ router.post("/create-treatment-payment-intent", csrfProtection, ensureAuthentica
 });
 
 // Get payment by ID 
-router.get("/:id", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/:id", isAuthenticated, async (req: Request, res: Response) => {
   try {
     // TODO: Implement getPaymentById in storage.ts
     res.status(501).json({

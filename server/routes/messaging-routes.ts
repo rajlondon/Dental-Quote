@@ -1,14 +1,14 @@
 import express from "express";
 import { storage } from "../storage";
 import { z } from "zod";
-import { ensureAuthenticated, ensureRole } from "../middleware/auth";
+import { isAuthenticated, ensureRole } from "../middleware/auth";
 import { insertMessageSchema } from "@shared/schema";
 import { NotFoundError } from "../models/custom-errors";
 
 const router = express.Router();
 
 // Create a new message
-router.post("/", ensureAuthenticated, async (req, res, next) => {
+router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const messageData = insertMessageSchema.parse(req.body);
     
@@ -38,7 +38,7 @@ router.post("/", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Get messages for a specific booking
-router.get("/booking/:bookingId", ensureAuthenticated, async (req, res, next) => {
+router.get("/booking/:bookingId", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     
@@ -90,7 +90,7 @@ router.get("/booking/:bookingId", ensureAuthenticated, async (req, res, next) =>
 });
 
 // Get all message threads for the authenticated user
-router.get("/threads", ensureAuthenticated, async (req, res, next) => {
+router.get("/threads", isAuthenticated, async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const threads = await storage.getMessageThreads(userId);
@@ -105,7 +105,7 @@ router.get("/threads", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Mark a message as read
-router.patch("/:id/read", ensureAuthenticated, async (req, res, next) => {
+router.patch("/:id/read", isAuthenticated, async (req, res, next) => {
   try {
     const messageId = parseInt(req.params.id);
     

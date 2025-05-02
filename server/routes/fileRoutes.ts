@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { csrfProtection, uploadRateLimit } from "../middleware/security";
-import { ensureAuthenticated, checkRole } from "../middleware/auth";
+import { checkRole } from "../middleware/auth";
+import { isAuthenticated } from "../middleware/auth-middleware";
 import { upload, handleUploadError, processUploadedFile, type UploadedFile, StorageType, ACTIVE_STORAGE_TYPE } from "../file-upload";
 import { logError, ErrorSeverity } from "../services/error-logger";
 import { listS3Files, getSignedS3Url, cloudStorageConfig, isCloudStorageConfigured } from "../services/cloud-storage";
@@ -88,7 +89,7 @@ router.get("/debug-storage", async (req: Request, res: Response) => {
 });
 
 // General file upload endpoint
-router.post("/upload", uploadRateLimit, ensureAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
+router.post("/upload", uploadRateLimit, isAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
   try {
     const file = req.file;
     const category = req.body.category || 'document';
@@ -142,7 +143,7 @@ router.post("/upload", uploadRateLimit, ensureAuthenticated, upload.single('file
 });
 
 // Endpoint to upload message attachments
-router.post("/upload-message-attachment", uploadRateLimit, ensureAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
+router.post("/upload-message-attachment", uploadRateLimit, isAuthenticated, upload.single('file'), handleUploadError, async (req: Request, res: Response) => {
   try {
     const file = req.file;
     
@@ -191,7 +192,7 @@ router.post("/upload-message-attachment", uploadRateLimit, ensureAuthenticated, 
 });
 
 // List uploaded files for the current user or all files for admin/clinic
-router.get("/list", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const fileType = req.query.type as string || 'all';
     const patientId = req.query.patientId as string;
@@ -289,7 +290,7 @@ router.get("/list", ensureAuthenticated, async (req: Request, res: Response) => 
 });
 
 // Get a specific file by key (for S3) or path (for local)
-router.get("/get/:fileKey", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/get/:fileKey", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const fileKey = req.params.fileKey;
     
@@ -333,7 +334,7 @@ router.get("/get/:fileKey", ensureAuthenticated, async (req: Request, res: Respo
 });
 
 // List patient files (clinic access only)
-router.get("/patient/:patientId", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/patient/:patientId", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const patientId = req.params.patientId;
     const isClinic = req.user?.role === 'clinic';
