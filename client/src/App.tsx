@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import { NotFoundPage } from "@/pages/ErrorPage";
+import ErrorTestPage from "@/pages/ErrorTestPage";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
@@ -235,6 +236,12 @@ function Router() {
           return null;
         }}
       </Route>
+      
+      {/* Development-only routes */}
+      {process.env.NODE_ENV !== 'production' && (
+        <Route path="/error-test" component={ErrorTestPage} />
+      )}
+      
       <Route component={NotFoundPage} />
     </Switch>
   );
