@@ -143,10 +143,15 @@ router.post(
         bookingId
       });
       
-      const appointment = await storage.createAppointment({
+      // Ensure dates are properly formatted
+      const formattedAppointmentData = {
         ...appointmentData,
+        startTime: new Date(appointmentData.startTime),
+        endTime: new Date(appointmentData.endTime),
         createdById: req.user?.id || 0
-      });
+      };
+      
+      const appointment = await storage.createAppointment(formattedAppointmentData);
       
       return res.status(201).json({
         success: true,
@@ -196,10 +201,15 @@ router.post(
         clinicId
       });
       
-      const appointment = await storage.createAppointment({
+      // Ensure dates are properly formatted
+      const formattedAppointmentData = {
         ...appointmentData,
+        startTime: new Date(appointmentData.startTime),
+        endTime: new Date(appointmentData.endTime),
         createdById: req.user?.id || 0
-      });
+      };
+      
+      const appointment = await storage.createAppointment(formattedAppointmentData);
       
       return res.status(201).json({
         success: true,
@@ -273,7 +283,16 @@ router.patch(
       
       const updateData = updateAppointmentSchema.parse(req.body);
       
-      const updatedAppointment = await storage.updateAppointment(appointmentId, updateData);
+      // Handle date formatting for updates if date fields are present
+      const formattedUpdateData = { ...updateData };
+      if (formattedUpdateData.startTime) {
+        formattedUpdateData.startTime = new Date(formattedUpdateData.startTime);
+      }
+      if (formattedUpdateData.endTime) {
+        formattedUpdateData.endTime = new Date(formattedUpdateData.endTime);
+      }
+      
+      const updatedAppointment = await storage.updateAppointment(appointmentId, formattedUpdateData);
       
       return res.json({
         success: true,
