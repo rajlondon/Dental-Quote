@@ -488,12 +488,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(data: InsertAppointment): Promise<Appointment> {
-    // Ensure dates are properly converted to Date objects
+    // Ensure dates are properly converted to Date objects and are valid
+    let startTime: Date;
+    let endTime: Date;
+    
+    // Handle startTime conversion
+    if (data.startTime instanceof Date) {
+      startTime = data.startTime;
+    } else if (typeof data.startTime === 'string') {
+      startTime = new Date(data.startTime);
+      if (isNaN(startTime.getTime())) {
+        throw new Error(`Invalid startTime date format: ${data.startTime}`);
+      }
+    } else {
+      throw new Error('startTime must be a Date object or ISO date string');
+    }
+    
+    // Handle endTime conversion
+    if (data.endTime instanceof Date) {
+      endTime = data.endTime;
+    } else if (typeof data.endTime === 'string') {
+      endTime = new Date(data.endTime);
+      if (isNaN(endTime.getTime())) {
+        throw new Error(`Invalid endTime date format: ${data.endTime}`);
+      }
+    } else {
+      throw new Error('endTime must be a Date object or ISO date string');
+    }
+    
+    // Construct the formatted data with valid Date objects
     const formattedData = {
       ...data,
-      startTime: data.startTime instanceof Date ? data.startTime : new Date(data.startTime),
-      endTime: data.endTime instanceof Date ? data.endTime : new Date(data.endTime)
+      startTime,
+      endTime
     };
+    
+    console.log('Creating appointment with data:', {
+      ...formattedData,
+      startTime: formattedData.startTime.toISOString(),
+      endTime: formattedData.endTime.toISOString()
+    });
     
     const [appointment] = await db.insert(appointments).values(formattedData).returning();
     return appointment;
@@ -503,17 +537,41 @@ export class DatabaseStorage implements IStorage {
     // Format dates properly if they exist in the data
     const formattedData = { ...data };
     
+    // Handle startTime conversion if present
     if ('startTime' in formattedData && formattedData.startTime) {
-      formattedData.startTime = formattedData.startTime instanceof Date 
-        ? formattedData.startTime 
-        : new Date(formattedData.startTime);
+      if (formattedData.startTime instanceof Date) {
+        // Already a Date object, no conversion needed
+      } else if (typeof formattedData.startTime === 'string') {
+        const startTime = new Date(formattedData.startTime);
+        if (isNaN(startTime.getTime())) {
+          throw new Error(`Invalid startTime date format: ${formattedData.startTime}`);
+        }
+        formattedData.startTime = startTime;
+      } else {
+        throw new Error('startTime must be a Date object or ISO date string');
+      }
     }
     
+    // Handle endTime conversion if present
     if ('endTime' in formattedData && formattedData.endTime) {
-      formattedData.endTime = formattedData.endTime instanceof Date 
-        ? formattedData.endTime 
-        : new Date(formattedData.endTime);
+      if (formattedData.endTime instanceof Date) {
+        // Already a Date object, no conversion needed
+      } else if (typeof formattedData.endTime === 'string') {
+        const endTime = new Date(formattedData.endTime);
+        if (isNaN(endTime.getTime())) {
+          throw new Error(`Invalid endTime date format: ${formattedData.endTime}`);
+        }
+        formattedData.endTime = endTime;
+      } else {
+        throw new Error('endTime must be a Date object or ISO date string');
+      }
     }
+    
+    console.log('Updating appointment with data:', {
+      ...formattedData,
+      startTime: formattedData.startTime instanceof Date ? formattedData.startTime.toISOString() : formattedData.startTime,
+      endTime: formattedData.endTime instanceof Date ? formattedData.endTime.toISOString() : formattedData.endTime
+    });
     
     const [appointment] = await db
       .update(appointments)
