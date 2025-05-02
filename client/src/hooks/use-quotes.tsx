@@ -189,9 +189,9 @@ export function useQuotes() {
   // Setup WebSocket listeners for real-time quote updates
   useEffect(() => {
     // Handler for quote status changes
-    const handleQuoteUpdate = (message: WebSocketMessage) => {
-      if (message.type === 'quote_update' && message.payload) {
-        const { quoteId, status, action } = message.payload;
+    const handleQuoteStatusUpdate = (message: WebSocketMessage) => {
+      if (message.type === 'quote_status_update' && message.payload) {
+        const { quoteId, newStatus, previousStatus, updatedBy, updaterRole } = message.payload;
         
         // Refresh quote data across all portals
         queryClient.invalidateQueries({ queryKey: ["/api/quotes", quoteId] });
@@ -201,19 +201,20 @@ export function useQuotes() {
         
         // Create a local notification for the update
         createNotification({
-          title: "Quote Update",
-          message: getStatusUpdateMessage(status, action),
+          title: "Quote Status Changed",
+          message: getStatusUpdateMessage(newStatus),
           type: "quote",
-          actionUrl: `/quotes/${quoteId}`,
+          actionUrl: `/${updaterRole === 'admin' ? 'admin' : (updaterRole === 'clinic_staff' ? 'clinic' : 'patient')}/quotes/${quoteId}`,
           priority: "medium"
         });
         
         // Show toast notification for important updates
-        if (["accepted", "rejected", "completed"].includes(status)) {
+        if (["accepted", "rejected", "completed"].includes(newStatus)) {
           toast({
             title: "Quote Status Updated",
-            description: getStatusUpdateMessage(status, action),
-            variant: status === "rejected" ? "destructive" : "default"
+            description: getStatusUpdateMessage(newStatus),
+            variant: newStatus === "rejected" ? "destructive" : 
+                    newStatus === "accepted" ? "success" : "default"
           });
         }
       }
@@ -226,6 +227,7 @@ export function useQuotes() {
         
         // Refresh relevant data
         queryClient.invalidateQueries({ queryKey: ["/api/quotes/clinic"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/admin/all"] });
         
         // Create notification for clinic assignment
         createNotification({
@@ -245,14 +247,65 @@ export function useQuotes() {
       }
     };
     
+    // Handler for new quote versions
+    const handleQuoteVersionCreated = (message: WebSocketMessage) => {
+      if (message.type === 'quote_version_created' && message.payload) {
+        const { quoteId, versionId, versionNumber, status } = message.payload;
+        
+        // Refresh quote data
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes", quoteId] });
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/user"] });
+        
+        // Create notification
+        createNotification({
+          title: "New Quote Version Available",
+          message: `A new quote version (#${versionNumber}) is available for your review`,
+          type: "quote",
+          actionUrl: `/patient/quotes/${quoteId}`,
+          priority: "high"
+        });
+        
+        // Show toast
+        toast({
+          title: "New Quote Available",
+          description: `A new quote version has been created for your request`,
+          variant: "success"
+        });
+      }
+    };
+    
+    // Handler for file uploads
+    const handleQuoteFilesUploaded = (message: WebSocketMessage) => {
+      if (message.type === 'quote_files_uploaded' && message.payload) {
+        const { quoteId, fileCount, fileType, uploadedBy } = message.payload;
+        
+        // Refresh files data
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes", quoteId] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quotes/${quoteId}/xrays`] });
+        
+        // Create subtle notification (no toast for this one)
+        createNotification({
+          title: "Files Uploaded",
+          message: `${fileCount} ${fileType} file${fileCount > 1 ? 's' : ''} uploaded for quote #${quoteId}`,
+          type: "quote",
+          actionUrl: `/admin/quotes/${quoteId}`,
+          priority: "low"
+        });
+      }
+    };
+    
     // Register WebSocket handlers
-    registerMessageHandler('quote_update', handleQuoteUpdate);
+    registerMessageHandler('quote_status_update', handleQuoteStatusUpdate);
     registerMessageHandler('quote_assignment', handleQuoteAssignment);
+    registerMessageHandler('quote_version_created', handleQuoteVersionCreated);
+    registerMessageHandler('quote_files_uploaded', handleQuoteFilesUploaded);
     
     // Cleanup on unmount
     return () => {
-      unregisterMessageHandler('quote_update');
+      unregisterMessageHandler('quote_status_update');
       unregisterMessageHandler('quote_assignment');
+      unregisterMessageHandler('quote_version_created');
+      unregisterMessageHandler('quote_files_uploaded');
     };
   }, [registerMessageHandler, unregisterMessageHandler, toast, createNotification]);
   

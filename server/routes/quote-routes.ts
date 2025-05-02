@@ -209,7 +209,36 @@ router.patch("/:id", ensureAuthenticated, async (req, res, next) => {
       updateData.viewedByAdmin = true;
     }
     
+    // Check if this update changes the quote status
+    const statusChanged = updateData.status && updateData.status !== quote.status;
     const updatedQuote = await storage.updateQuoteRequest(quoteId, updateData);
+    
+    // Send WebSocket notification if status was changed or if explicitly requested
+    if (statusChanged || req.body.notifyUpdate) {
+      try {
+        // Broadcast quote status update to all relevant parties
+        req.app.locals.wsService.broadcast({
+          type: 'quote_status_update',
+          payload: {
+            quoteId,
+            previousStatus: quote.status,
+            newStatus: updatedQuote.status,
+            updatedBy: user.id,
+            updatedAt: new Date().toISOString(),
+            updaterRole: user.role
+          },
+          sender: {
+            id: String(user.id),
+            type: user.role
+          }
+        });
+        
+        console.log(`WebSocket broadcast: Quote #${quoteId} status updated from ${quote.status} to ${updatedQuote.status}`);
+      } catch (error) {
+        console.error('Failed to send WebSocket notification:', error);
+        // Continue despite WebSocket error
+      }
+    }
     
     res.json({
       success: true,
@@ -272,8 +301,33 @@ router.post("/:id/versions", ensureAuthenticated, ensureRole("admin"), async (re
     }
     
     // Update quote request status to "sent"
+    let updatedQuote = quote;
     if (req.body.updateQuoteStatus) {
-      await storage.updateQuoteRequest(quoteId, { status: "sent" });
+      updatedQuote = await storage.updateQuoteRequest(quoteId, { status: "sent" });
+      
+      // Send WebSocket notification about the status change
+      try {
+        req.app.locals.wsService.broadcast({
+          type: 'quote_version_created',
+          payload: {
+            quoteId,
+            versionId: quoteVersion.id,
+            versionNumber: quoteVersion.versionNumber,
+            status: updatedQuote?.status || "sent",
+            createdBy: req.user!.id,
+            createdAt: new Date().toISOString()
+          },
+          sender: {
+            id: String(req.user!.id),
+            type: 'admin'
+          }
+        });
+        
+        console.log(`WebSocket broadcast: New quote version #${quoteVersion.versionNumber} created for quote #${quoteId} with status ${updatedQuote?.status || "sent"}`);
+      } catch (error) {
+        console.error('Failed to send WebSocket notification:', error);
+        // Continue despite WebSocket error
+      }
     }
     
     res.status(201).json({
@@ -423,10 +477,34 @@ router.post("/:id/xrays", ensureAuthenticated, upload.array("xrays", 10), async 
     const savedFiles = await Promise.all(filePromises);
     
     // Update quote request with xray count and flag
-    await storage.updateQuoteRequest(quoteId, {
+    const updatedQuote = await storage.updateQuoteRequest(quoteId, {
       hasXrays: true,
       xrayCount: (quote.xrayCount || 0) + files.length
     });
+    
+    // Send WebSocket notification about file uploads
+    try {
+      req.app.locals.wsService.broadcast({
+        type: 'quote_files_uploaded',
+        payload: {
+          quoteId,
+          fileCount: files.length,
+          totalFiles: updatedQuote?.xrayCount || files.length,
+          fileType: 'xray',
+          uploadedBy: user.id,
+          uploadedAt: new Date().toISOString()
+        },
+        sender: {
+          id: String(user.id),
+          type: user.role
+        }
+      });
+      
+      console.log(`WebSocket broadcast: ${files.length} x-ray files uploaded for quote #${quoteId}`);
+    } catch (error) {
+      console.error('Failed to send WebSocket notification:', error);
+      // Continue despite WebSocket error
+    }
     
     res.status(201).json({
       success: true,
