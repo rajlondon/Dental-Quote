@@ -352,25 +352,112 @@ const PortalCommunicationTester: React.FC = () => {
     
     // Messaging Tests
     {
-      id: 'messaging-placeholder',
-      name: 'Messaging Capability',
+      id: 'messaging-threads',
+      name: 'Message Threads',
       category: 'messaging',
-      description: 'Placeholder test for messaging functionality',
+      description: 'Verifies that message threads API is working',
+      source: 'patient',
+      destination: 'system',
+      requires: [],
+      run: async () => {
+        const startTime = Date.now();
+        
+        try {
+          // Get message threads for the current user
+          const response = await apiRequest('GET', '/api/messages/threads');
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            return {
+              testId: 'messaging-threads',
+              portalName: 'Messaging',
+              success: false,
+              message: `Failed to get message threads: ${errorData.message || response.statusText}`,
+              timestamp: new Date().toISOString(),
+              responseTime: Date.now() - startTime,
+              dataSnapshot: errorData
+            };
+          }
+          
+          const data = await response.json();
+          const threadCount = data.data ? data.data.length : 0;
+          
+          return {
+            testId: 'messaging-threads',
+            portalName: 'Messaging',
+            success: true,
+            message: `Successfully retrieved ${threadCount} message threads`,
+            timestamp: new Date().toISOString(),
+            responseTime: Date.now() - startTime,
+            dataSnapshot: data
+          };
+        } catch (error) {
+          return {
+            testId: 'messaging-threads',
+            portalName: 'Messaging',
+            success: false,
+            message: `Error getting message threads: ${error instanceof Error ? error.message : String(error)}`,
+            timestamp: new Date().toISOString(),
+            responseTime: Date.now() - startTime
+          };
+        }
+      }
+    },
+    {
+      id: 'send-test-message',
+      name: 'Send Test Message',
+      category: 'messaging',
+      description: 'Tests sending a message to a recipient',
       source: 'patient',
       destination: 'clinic',
       requires: [],
       run: async () => {
         const startTime = Date.now();
         
-        // Always return a not-implemented message for now
-        return {
-          testId: 'messaging-placeholder',
-          portalName: 'Messaging',
-          success: false,
-          message: 'Message testing is not implemented yet. The API endpoint does not exist.',
-          timestamp: new Date().toISOString(),
-          responseTime: Date.now() - startTime
-        };
+        try {
+          // For test purposes, we'll send a message to the admin (ID 1)
+          const messageData = {
+            recipientId: 1, // Admin user ID
+            content: customMessage || 'Test message from Communication Tester',
+            bookingId: null // No specific booking for this test
+          };
+          
+          const response = await apiRequest('POST', '/api/messages', messageData);
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            return {
+              testId: 'send-test-message',
+              portalName: 'Messaging',
+              success: false,
+              message: `Failed to send message: ${errorData.message || response.statusText}`,
+              timestamp: new Date().toISOString(),
+              responseTime: Date.now() - startTime,
+              dataSnapshot: { error: errorData, sentData: messageData }
+            };
+          }
+          
+          const data = await response.json();
+          
+          return {
+            testId: 'send-test-message',
+            portalName: 'Messaging',
+            success: true,
+            message: `Successfully sent message to recipient ID ${messageData.recipientId}`,
+            timestamp: new Date().toISOString(),
+            responseTime: Date.now() - startTime,
+            dataSnapshot: { response: data, sentData: messageData }
+          };
+        } catch (error) {
+          return {
+            testId: 'send-test-message',
+            portalName: 'Messaging',
+            success: false,
+            message: `Error sending message: ${error instanceof Error ? error.message : String(error)}`,
+            timestamp: new Date().toISOString(),
+            responseTime: Date.now() - startTime
+          };
+        }
       }
     },
     
