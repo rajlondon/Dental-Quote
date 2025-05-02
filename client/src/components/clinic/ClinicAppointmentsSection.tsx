@@ -940,7 +940,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 setSelectedBookingId(value ? Number(value) : null);
                 // Find the booking to get patient name
                 if (value) {
-                  const booking = bookings?.find(b => b.id === Number(value));
+                  const booking = bookings?.find((b: any) => b.id === Number(value));
                   if (booking) {
                     setSelectedPatient(booking.patientName || '');
                   }
@@ -954,7 +954,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="">No specific booking (general appointment)</SelectItem>
                   {bookings && bookings.length > 0 ? (
-                    bookings.map((booking) => (
+                    bookings.map((booking: any) => (
                       <SelectItem key={booking.id} value={booking.id.toString()}>
                         {booking.patientName || 'Unnamed'} - ID: {booking.id}
                       </SelectItem>
