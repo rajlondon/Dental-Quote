@@ -13,8 +13,8 @@ const createAppointmentSchema = z.object({
   clinicId: z.number(),
   title: z.string().min(1),
   description: z.string().optional(),
-  startTime: z.string(), // ISO date string
-  endTime: z.string(), // ISO date string
+  startTime: z.string().transform(val => new Date(val)), // Convert ISO string to Date
+  endTime: z.string().transform(val => new Date(val)), // Convert ISO string to Date
   type: z.string(),
   status: z.enum(["scheduled", "in_progress", "completed", "cancelled", "missed"]),
   clinicNotes: z.string().optional(),
