@@ -150,6 +150,8 @@ const ClinicDocumentsSection: React.FC = () => {
   
   // Transform S3 files into Document format
   const transformS3FilesToDocuments = (files: S3File[]): Document[] => {
+    console.log("Raw S3 files data:", files);
+    
     return files.map((file, index) => {
       // Extract file extension from filename
       const fileExt = file.filename.split('.').pop()?.toLowerCase() || '';
@@ -158,7 +160,7 @@ const ClinicDocumentsSection: React.FC = () => {
       const type = fileExt;
       const category = (file.category || 'other') as Document['category'];
       
-      return {
+      const transformedDoc = {
         id: file.key || `file-${index}`,
         name: file.originalname || file.filename,
         type,
@@ -170,6 +172,11 @@ const ClinicDocumentsSection: React.FC = () => {
         url: file.url,
         key: file.key
       };
+      
+      // Log each transformed document for debugging
+      console.log(`Transformed document ${index}:`, transformedDoc);
+      
+      return transformedDoc;
     });
   };
   
@@ -732,6 +739,7 @@ const ClinicDocumentsSection: React.FC = () => {
                           <div 
                             className="flex items-center cursor-pointer hover:underline"
                             onClick={() => {
+                              console.log("Document clicked for viewing:", document);
                               setSelectedDocument(document);
                               setShowViewerDialog(true);
                             }}
