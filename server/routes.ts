@@ -31,6 +31,7 @@ import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
 import bookingRoutes from "./routes/booking-routes";
+import appointmentRoutes from "./routes/appointment-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
@@ -245,6 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register booking and appointment routes
   app.use('/api/bookings', bookingRoutes);
+  app.use('/api', appointmentRoutes);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
