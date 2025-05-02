@@ -47,6 +47,9 @@ const mockBookingData = {
 // Import components 
 import MessagesSection from '@/components/portal/MessagesSection';
 import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
+import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
+import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
+import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
@@ -251,6 +254,12 @@ const PatientPortalPage: React.FC = () => {
       notificationCount: notifications.filter(n => n.type === 'message' && !n.read).length 
     },
     { 
+      id: 'quotes', 
+      label: 'My Quotes', 
+      icon: <FileText className="h-5 w-5" />,
+      notificationCount: notifications.filter(n => n.type === 'quote' && !n.read).length
+    },
+    { 
       id: 'appointments', 
       label: 'Appointments', 
       icon: <Calendar className="h-5 w-5" />, 
@@ -307,6 +316,12 @@ const PatientPortalPage: React.FC = () => {
         return <DashboardSection setActiveSection={setActiveSection} />;
       case 'messages':
         return <MessagesSection />;
+      case 'quotes':
+        return <PatientQuotesPage />;
+      case 'quote_upload_xrays':
+        return <PatientQuoteXrayUploadPage />;
+      case 'quote_review':
+        return <PatientQuoteReviewPage />;
       case 'appointments':
         return <AppointmentsSection />;
       case 'documents':
