@@ -18,7 +18,7 @@ import {
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
   Menu, LogOut, ChevronRight, Grid3X3, TestTube,
-  Clock, TrendingUp, CalendarDays, Tag
+  Clock, TrendingUp, CalendarDays, Tag, Image
 } from 'lucide-react';
 import { 
   Card, 
