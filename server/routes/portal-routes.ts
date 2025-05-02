@@ -1,12 +1,13 @@
 import express, { Router, Request, Response } from "express";
 import { storage } from "../storage";
-import { ensureAuthenticated, ensureRole, ensureOwnResources } from "../middleware/auth";
+import { ensureRole, ensureOwnResources } from "../middleware/auth";
+import { isAuthenticated } from "../middleware/auth-middleware";
 import { apiRateLimit, csrfProtection } from "../middleware/security";
 
 const router = express.Router();
 
 // Common routes - accessible to any authenticated user
-router.get("/api/portal/user-profile", ensureAuthenticated, async (req, res) => {
+router.get("/api/portal/user-profile", isAuthenticated, async (req, res) => {
   try {
     // User is already authenticated, so req.user should be available
     // We return user data without the password
@@ -25,7 +26,7 @@ router.get("/api/portal/user-profile", ensureAuthenticated, async (req, res) => 
 });
 
 // Update user profile - ensure users can only update their own profile
-router.post("/api/portal/update-profile", ensureAuthenticated, csrfProtection, async (req, res) => {
+router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async (req, res) => {
   try {
     const userId = req.user?.id;
     const updateData = req.body;
@@ -264,7 +265,7 @@ router.get("/api/portal/clinic/profile", ensureRole("clinic_staff"), async (req,
 });
 
 // DEBUGGING helper endpoint
-router.get("/api/portal/debug", ensureAuthenticated, (req, res) => {
+router.get("/api/portal/debug", isAuthenticated, (req, res) => {
   res.json({
     user: {
       id: req.user?.id,
@@ -278,7 +279,7 @@ router.get("/api/portal/debug", ensureAuthenticated, (req, res) => {
 });
 
 // Generic dashboard endpoint for all user types - NO REDIRECTS
-router.get("/api/portal/dashboard", ensureAuthenticated, async (req, res) => {
+router.get("/api/portal/dashboard", isAuthenticated, async (req, res) => {
   try {
     console.log("Dashboard endpoint called for user:", req.user?.id, "with role:", req.user?.role);
     
@@ -359,7 +360,7 @@ router.get("/api/portal/dashboard", ensureAuthenticated, async (req, res) => {
 });
 
 // Get additional profile information - medical info and emergency contacts
-router.get("/api/portal/extended-profile", ensureAuthenticated, async (req, res) => {
+router.get("/api/portal/extended-profile", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
     
@@ -417,7 +418,7 @@ router.get("/api/portal/extended-profile", ensureAuthenticated, async (req, res)
 });
 
 // Portal route health check
-router.get("/api/portal/health", ensureAuthenticated, (req, res) => {
+router.get("/api/portal/health", isAuthenticated, (req, res) => {
   res.json({
     success: true,
     message: "Portal API is running",
