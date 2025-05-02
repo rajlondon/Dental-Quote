@@ -488,14 +488,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(data: InsertAppointment): Promise<Appointment> {
-    const [appointment] = await db.insert(appointments).values(data).returning();
+    // Ensure dates are properly converted to Date objects
+    const formattedData = {
+      ...data,
+      startTime: data.startTime instanceof Date ? data.startTime : new Date(data.startTime),
+      endTime: data.endTime instanceof Date ? data.endTime : new Date(data.endTime)
+    };
+    
+    const [appointment] = await db.insert(appointments).values(formattedData).returning();
     return appointment;
   }
 
   async updateAppointment(id: number, data: Partial<Appointment>): Promise<Appointment | undefined> {
+    // Format dates properly if they exist in the data
+    const formattedData = { ...data };
+    
+    if ('startTime' in formattedData && formattedData.startTime) {
+      formattedData.startTime = formattedData.startTime instanceof Date 
+        ? formattedData.startTime 
+        : new Date(formattedData.startTime);
+    }
+    
+    if ('endTime' in formattedData && formattedData.endTime) {
+      formattedData.endTime = formattedData.endTime instanceof Date 
+        ? formattedData.endTime 
+        : new Date(formattedData.endTime);
+    }
+    
     const [appointment] = await db
       .update(appointments)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...formattedData, updatedAt: new Date() })
       .where(eq(appointments.id, id))
       .returning();
     return appointment;
