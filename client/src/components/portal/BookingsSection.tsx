@@ -67,7 +67,7 @@ export default function BookingsSection() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       if (
-        !booking.bookingReference.toLowerCase().includes(query) &&
+        !(booking.bookingReference?.toLowerCase() || '').includes(query) &&
         !String(booking.id).includes(query)
       ) {
         return false;
@@ -250,7 +250,7 @@ export default function BookingsSection() {
                   {sortedBookings.map((booking) => (
                     <TableRow key={booking.id}>
                       <TableCell className="font-medium">
-                        {booking.bookingReference}
+                        {booking.bookingReference || '-'}
                       </TableCell>
                       <TableCell>
                         {/* Would normally display clinic name, using ID for now */}
