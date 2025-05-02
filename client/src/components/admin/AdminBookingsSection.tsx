@@ -60,7 +60,7 @@ import {
 } from "lucide-react";
 
 // Status and stage styling
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
   confirmed: "bg-green-100 text-green-800 border-green-300",
   in_progress: "bg-blue-100 text-blue-800 border-blue-300",
@@ -68,7 +68,7 @@ const statusColors = {
   cancelled: "bg-red-100 text-red-800 border-red-300",
 };
 
-const stageColors = {
+const stageColors: Record<string, string> = {
   deposit: "bg-cyan-100 text-cyan-800 border-cyan-300",
   pre_travel: "bg-indigo-100 text-indigo-800 border-indigo-300",
   treatment: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300",
@@ -414,17 +414,17 @@ export default function AdminBookingsSection() {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={statusColors[booking.status]}
+                        className={statusColors[booking.status || ''] || statusColors['pending']}
                       >
-                        {t(`bookings.status.${booking.status}`)}
+                        {t(`bookings.status.${booking.status || 'pending'}`)}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={stageColors[booking.stage]}
+                        className={stageColors[booking.stage || ''] || stageColors['deposit']}
                       >
-                        {t(`bookings.stage.${booking.stage}`)}
+                        {t(`bookings.stage.${booking.stage || 'deposit'}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
