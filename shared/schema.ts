@@ -696,8 +696,19 @@ export type QuoteVersion = typeof quoteVersions.$inferSelect;
 // Treatment plan types defined earlier in the file
 
 // Booking types
-export type InsertBooking = Omit<typeof bookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type Booking = typeof bookings.$inferSelect;
+
+export const insertBookingSchema = createInsertSchema(bookings)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    lastPatientMessageAt: true,
+    lastClinicMessageAt: true,
+    lastAdminMessageAt: true,
+  });
+  
+export type InsertBooking = z.infer<typeof insertBookingSchema>;
 
 export type InsertAppointment = Omit<typeof appointments.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type Appointment = typeof appointments.$inferSelect;
