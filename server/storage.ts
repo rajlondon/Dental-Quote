@@ -627,6 +627,38 @@ export class DatabaseStorage implements IStorage {
     return query.orderBy(desc(bookings.createdAt));
   }
   
+  async getUserBookings(userId: number): Promise<Booking[]> {
+    return this.getBookingsByUserId(userId);
+  }
+  
+  async getClinicBookings(clinicId: number): Promise<Booking[]> {
+    return this.getBookingsByClinicId(clinicId);
+  }
+  
+  async updateBooking(id: number, data: Partial<InsertBooking>): Promise<Booking> {
+    const [booking] = await db
+      .update(bookings)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(bookings.id, id))
+      .returning();
+    return booking;
+  }
+  
+  async updateBookingStatus(id: number, status: string): Promise<Booking> {
+    return this.updateBooking(id, { status, updatedAt: new Date() });
+  }
+  
+  async updateBookingStage(id: number, stage: string): Promise<Booking> {
+    return this.updateBooking(id, { stage, updatedAt: new Date() });
+  }
+  
+  async deleteBooking(id: number): Promise<void> {
+    await db.delete(bookings).where(eq(bookings.id, id));
+  }
+  
   async getAppointment(id: number): Promise<Appointment | undefined> {
     const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
     return appointment;
