@@ -1,7 +1,7 @@
 import express from "express";
 import { storage } from "../storage";
 import { insertQuoteRequestSchema } from "@shared/schema";
-import { ensureAuthenticated, ensureRole } from "../middleware/auth-middleware";
+import { ensureAuthenticated, ensureRole } from "../middleware/auth";
 import multer from "multer";
 import { BadRequestError, NotFoundError } from "../models/custom-errors";
 import { DatabaseError } from "pg";
