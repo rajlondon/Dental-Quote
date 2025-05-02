@@ -359,6 +359,9 @@ const ClinicDocumentsSection: React.FC = () => {
         });
       }
       
+      // Refresh the file list after upload
+      queryClient.invalidateQueries({ queryKey: ['/api/files/list'] });
+      
       // Dialog no longer closes automatically - users must click "Done" after setting categories
       // setShowUploadDialog(false);
       
@@ -1065,6 +1068,8 @@ const ClinicDocumentsSection: React.FC = () => {
                 if (selectedFiles.length > 0) {
                   // Upload all selected files
                   await handleFileUpload(null, selectedFiles);
+                  // Explicitly refresh the document list
+                  queryClient.invalidateQueries({ queryKey: ['/api/files/list'] });
                 }
                 setShowUploadDialog(false);
                 // Reset states when done
