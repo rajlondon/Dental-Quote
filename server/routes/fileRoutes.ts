@@ -214,17 +214,46 @@ router.get("/list", isAuthenticated, async (req: Request, res: Response) => {
       const prefix = patientId ? `patient-${patientId}/` : '';
       let s3Files: any[] = [];
       
-      // Add type filtering if needed
-      let s3Prefix = prefix;
+      // Get all files for the current context first
+      const s3Keys = await listS3Files(prefix);
+      
+      // We'll filter the keys on the server side based on file extension
+      let filteredKeys = s3Keys;
+      
+      // Apply file type filtering if specified
       if (fileType && fileType !== 'all') {
-        s3Prefix = fileType + '-';
+        filteredKeys = s3Keys.filter(key => {
+          const filename = key.split('/').pop() || '';
+          const extension = filename.split('.').pop()?.toLowerCase() || '';
+          
+          // Map common file type groups to their extensions
+          switch (fileType) {
+            case 'pdf':
+              return extension === 'pdf';
+            case 'image':
+              return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+            case 'document':
+              return ['doc', 'docx', 'txt', 'rtf', 'odt', 'pdf'].includes(extension);
+            case 'spreadsheet':
+              return ['xls', 'xlsx', 'csv'].includes(extension);
+            case 'presentation':
+              return ['ppt', 'pptx'].includes(extension);
+            case 'video':
+              return ['mp4', 'mov', 'avi', 'webm'].includes(extension);
+            case 'audio':
+              return ['mp3', 'wav', 'ogg'].includes(extension);
+            case 'xray':
+              return ['dcm', 'dicom'].includes(extension);
+            default:
+              // For specific extensions like 'jpg', match exactly
+              return extension === fileType.toLowerCase();
+          }
+        });
       }
       
-      const s3Keys = await listS3Files(s3Prefix);
-      
-      if (s3Keys.length > 0) {
-        // Process the S3 files
-        s3Files = await Promise.all(s3Keys.map(async (key) => {
+      if (filteredKeys.length > 0) {
+        // Process the filtered S3 files
+        s3Files = await Promise.all(filteredKeys.map(async (key) => {
           // Parse important information from the key
           // Format: [type]-[timestamp]-[randomhash].[extension]
           const filename = key.split('/').pop() || '';
