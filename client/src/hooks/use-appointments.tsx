@@ -75,7 +75,17 @@ export function useAppointments(bookingId?: number) {
   // Mutation for creating a new appointment
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: CreateAppointmentData) => {
-      const url = `/api/booking/${data.bookingId}/appointments`;
+      let url = '';
+      
+      // Use different endpoint based on if it's a standalone clinic appointment or booking-related
+      if (data.bookingId && data.bookingId > 0) {
+        // Booking-related appointment
+        url = `/api/booking/${data.bookingId}/appointments`;
+      } else {
+        // Standalone clinic appointment
+        url = `/api/appointments/clinic/${data.clinicId}`;
+      }
+      
       const res = await apiRequest('POST', url, data);
       const responseData = await res.json();
       
