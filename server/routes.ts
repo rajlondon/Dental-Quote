@@ -207,10 +207,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register new treatment management routes for clinics
   app.use(treatmentRoutes);
   
+  // Register quote management routes FIRST to avoid route conflicts
+  app.use('/api/quotes', quoteRoutes);
+  
   // Setup treatment mapper API routes
   setupTreatmentMapperApi(app);
   
   // Register clinic API routes for quote generation and consultation booking
+  // IMPORTANT: registerClinicRoutes must come AFTER /api/quotes setup to avoid route conflicts
   registerClinicRoutes(app);
   
   // Register Gemini AI routes for dental advice
@@ -238,9 +242,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register trending packages routes with commission-based promotion system
   app.use(trendingPackagesRoutes);
-  
-  // Register quote management routes
-  app.use('/api/quotes', quoteRoutes);
   
   // Register clinic media routes for before/after images and videos
   app.use('/api/clinic-media', clinicMediaRoutes);
