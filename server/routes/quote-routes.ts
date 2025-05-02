@@ -5,6 +5,7 @@ import multer from "multer";
 import { BadRequestError, NotFoundError } from "../models/custom-errors";
 import { DatabaseError } from "pg";
 import { ensureAuthenticated, ensureRole } from "../middleware/auth";
+// We need to import these in routes.ts and make them available
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -331,6 +332,34 @@ router.post("/:id/assign-clinic", ensureAuthenticated, ensureRole("admin"), asyn
         console.error(`Failed to create notification for user ${staffMember.id}:`, error);
         // Continue despite notification error
       }
+    }
+    
+    // Send real-time WebSocket notification to clinic staff
+    try {
+      // Get clinic details for notification
+      const clinicDetails = await storage.getClinic(parseInt(clinicId));
+      const clinicName = clinicDetails?.name || 'assigned clinic';
+      
+      // Broadcast assignment to all WebSocket clients using app.locals
+      req.app.locals.wsService.broadcast({
+        type: 'quote_assignment',
+        payload: {
+          quoteId,
+          clinicId: parseInt(clinicId),
+          clinicName,
+          assignedBy: req.user!.id,
+          assignedAt: new Date().toISOString()
+        },
+        sender: {
+          id: String(req.user!.id),
+          type: 'admin'
+        }
+      });
+      
+      console.log(`WebSocket broadcast: Quote #${quoteId} assigned to clinic #${clinicId}`);
+    } catch (error) {
+      console.error('Failed to send WebSocket notification:', error);
+      // Continue despite WebSocket error
     }
     
     res.json({
