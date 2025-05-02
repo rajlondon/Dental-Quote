@@ -305,6 +305,41 @@ router.post("/:id/cancel", isAuthenticated, async (req, res, next) => {
 
 // === APPOINTMENTS ROUTES ===
 
+// Get appointments for a clinic by date
+router.get("/appointments/clinic/:clinicId", isAuthenticated, async (req, res, next) => {
+  try {
+    const clinicId = parseInt(req.params.clinicId);
+    const dateParam = req.query.date as string | undefined;
+    
+    if (isNaN(clinicId)) {
+      throw new BadRequestError("Invalid clinic ID");
+    }
+    
+    // Authorization check - clinic staff can only view their own clinic's appointments
+    if (req.user!.role === "clinic_staff" && req.user!.clinicId !== clinicId) {
+      throw new ForbiddenError("You can only view appointments for your clinic");
+    }
+    
+    // Parse the date if provided
+    let date: Date | undefined;
+    if (dateParam) {
+      date = new Date(dateParam);
+      if (isNaN(date.getTime())) {
+        throw new BadRequestError("Invalid date format");
+      }
+    }
+    
+    const appointments = await storage.getAppointmentsByClinicId(clinicId, date);
+    
+    res.json({
+      success: true,
+      data: { appointments }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Create an appointment for a booking
 const insertAppointmentSchema = createInsertSchema(appointments)
   .omit({ id: true, createdAt: true, updatedAt: true })
