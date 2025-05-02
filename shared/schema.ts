@@ -402,7 +402,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
 // === APPOINTMENTS ===
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
-  bookingId: integer("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+  bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
   clinicId: integer("clinic_id").references(() => clinics.id),
   title: varchar("title", { length: 100 }).notNull(),
   description: text("description"),
