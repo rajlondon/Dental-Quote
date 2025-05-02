@@ -688,9 +688,7 @@ export type QuoteRequest = typeof quoteRequests.$inferSelect;
 export type InsertQuoteVersion = Omit<typeof quoteVersions.$inferInsert, "id" | "createdAt">;
 export type QuoteVersion = typeof quoteVersions.$inferSelect;
 
-// Treatment plan types
-export type InsertTreatmentPlan = Omit<typeof treatmentPlans.$inferInsert, "id" | "createdAt" | "updatedAt">;
-export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
+// Treatment plan types defined earlier in the file
 
 // Booking types
 export type InsertBooking = Omit<typeof bookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
