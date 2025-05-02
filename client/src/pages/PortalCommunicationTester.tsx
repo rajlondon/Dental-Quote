@@ -37,6 +37,7 @@ import { Loader2, CheckCircle2, AlertCircle, Info, LogIn, User, Building2, Shiel
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useWebSocket } from '@/hooks/use-websocket';
+import { useAuth } from '@/hooks/use-auth';
 import { Link } from 'wouter';
 
 // Extended WebSocket hook result type to include connectionStatus
@@ -170,19 +171,14 @@ const PortalCommunicationTester: React.FC = () => {
     lastMessage ? 'connected' : 'connecting'
   );
   
-  // Check authentication status
+  // Check authentication status using useAuth hook directly
+  // This solves the double /api/api/auth/user issue
+  const { user } = useAuth();
+  
+  // Update authentication status when user changes
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await apiRequest('GET', '/api/auth/user');
-        setIsAuthenticated(response.ok);
-      } catch (error) {
-        setIsAuthenticated(false);
-      }
-    };
-    
-    checkAuth();
-  }, []);
+    setIsAuthenticated(!!user);
+  }, [user]);
   
   // Set connection status to 'connected' after component mount
   useEffect(() => {
