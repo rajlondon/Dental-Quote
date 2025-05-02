@@ -289,6 +289,16 @@ export const treatmentPlans = pgTable("treatment_plans", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const insertTreatmentPlanSchema = createInsertSchema(treatmentPlans)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+  
+export type InsertTreatmentPlan = z.infer<typeof insertTreatmentPlanSchema>;
+export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
+
 export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many }) => ({
   patient: one(users, {
     fields: [treatmentPlans.patientId],
