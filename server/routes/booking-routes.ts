@@ -166,25 +166,20 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       bookingData.bookingReference = generateBookingReference();
     }
     
-    // Handle date conversions
-    let arrivalDateObj: Date | undefined;
-    let departureDateObj: Date | undefined;
-    
+    // Format dates as ISO strings for database storage
     if (bookingData.arrivalDate) {
-      arrivalDateObj = new Date(bookingData.arrivalDate);
+      // Convert to ISO string if date is provided
+      const arrivalDate = new Date(bookingData.arrivalDate);
+      bookingData.arrivalDate = arrivalDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     }
+    
     if (bookingData.departureDate) {
-      departureDateObj = new Date(bookingData.departureDate);
+      // Convert to ISO string if date is provided
+      const departureDate = new Date(bookingData.departureDate);
+      bookingData.departureDate = departureDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     }
     
-    // Create a new booking data object with proper date handling
-    const bookingDataToCreate = {
-      ...bookingData,
-      arrivalDate: arrivalDateObj,
-      departureDate: departureDateObj
-    };
-    
-    const newBooking = await storage.createBooking(bookingDataToCreate);
+    const newBooking = await storage.createBooking(bookingData);
     
     res.status(201).json({
       success: true,
@@ -221,14 +216,19 @@ router.patch("/:id", isAuthenticated, async (req, res, next) => {
       }
     }
     
-    // Handle date conversions
+    // Format dates as ISO strings for database storage
     let modifiedData = { ...req.body };
     
     if (modifiedData.arrivalDate) {
-      modifiedData.arrivalDate = new Date(modifiedData.arrivalDate);
+      // Convert to ISO string if date is provided
+      const arrivalDate = new Date(modifiedData.arrivalDate);
+      modifiedData.arrivalDate = arrivalDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     }
+    
     if (modifiedData.departureDate) {
-      modifiedData.departureDate = new Date(modifiedData.departureDate);
+      // Convert to ISO string if date is provided
+      const departureDate = new Date(modifiedData.departureDate);
+      modifiedData.departureDate = departureDate.toISOString().split('T')[0]; // YYYY-MM-DD format
     }
     
     const updatedBooking = await storage.updateBooking(bookingId, modifiedData);
