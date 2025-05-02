@@ -255,12 +255,17 @@ export class NotificationService {
    * Determine storage key for a notification
    */
   private getStorageKey(notification: Notification): string {
+    // Handle system-wide notifications that target all users across all portals
+    if (notification.target_type === 'all') {
+      return 'all-all';
+    }
+    
     // If target is specific, use target type + id
     if (notification.target_id) {
       return `${notification.target_type}-${notification.target_id}`;
     }
     
-    // For "all" targets within a type
+    // For "all" targets within a type (e.g., all patients, all clinics)
     return `${notification.target_type}-all`;
   }
   
