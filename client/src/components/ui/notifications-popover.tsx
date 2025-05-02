@@ -76,12 +76,22 @@ export function NotificationsPopover({
     };
   }, [connected]);
 
-  const handleNotificationClick = (notification: Notification) => {
-    markAsRead(notification.id);
-    if (notification.actionUrl) {
-      setLocation(notification.actionUrl);
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      // Only mark as read if notification is not already read
+      if (!notification.read) {
+        await markAsRead(notification.id);
+      }
+      
+      // Navigate after marking as read
+      if (notification.actionUrl) {
+        setLocation(notification.actionUrl);
+      }
+      
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error handling notification click:', error);
     }
-    setIsOpen(false);
   };
 
   // Get notification icon based on type
@@ -209,7 +219,13 @@ export function NotificationsPopover({
                 variant="ghost" 
                 size="sm" 
                 className="text-xs text-blue-600 hover:text-blue-800"
-                onClick={markAllAsRead}
+                onClick={async () => {
+                  try {
+                    await markAllAsRead();
+                  } catch (error) {
+                    console.error('Error marking all notifications as read:', error);
+                  }
+                }}
               >
                 {t('notifications.mark_all_read', 'Mark all as read')}
               </Button>
