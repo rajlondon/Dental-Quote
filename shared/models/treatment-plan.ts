@@ -15,22 +15,22 @@ export interface TreatmentItem {
 export interface TreatmentPlan {
   id: number;
   patientId: number;
-  patientName: string;
-  clinicId: number;
-  clinicName?: string;
-  status: TreatmentPlanStatus;
-  title: string;
-  description?: string;
+  patientName?: string; // Derived from patient relationship
+  clinicId?: number;
+  clinicName?: string; // Derived from clinic relationship
+  createdById?: number;
+  creatorName?: string; // Derived from createdBy relationship
+  status: string;  // draft, finalized, in_treatment, completed
+  portalStatus?: string; // active, in_progress, completed
+  treatmentDetails: any; // JSON array of selected treatments
+  estimatedTotalCost?: string;
+  currency: string;
+  includesHotel?: boolean;
+  hotelDetails?: any; // JSON object with hotel info
+  notes?: string;
+  quoteRequestId?: number;
   createdAt: string;
   updatedAt: string;
-  estimatedDuration?: string; // e.g., "3-5 days"
-  treatmentItems: TreatmentItem[];
-  totalPrice: number;
-  currency: string;
-  notes?: string;
-  paymentStatus: PaymentStatus;
-  appointmentDate?: string;
-  completionDate?: string;
 }
 
 export enum TreatmentPlanStatus {
@@ -52,34 +52,30 @@ export enum PaymentStatus {
 
 export interface CreateTreatmentPlanDto {
   patientId: number;
-  title: string;
-  description?: string;
-  treatmentItems: {
-    name: string;
-    price: number;
-    quantity: number;
-    description?: string;
-  }[];
-  estimatedDuration?: string;
+  clinicId?: number;
+  createdById?: number;
+  status?: string;
+  treatmentDetails: any; // JSON array of selected treatments
+  estimatedTotalCost?: string;
+  currency?: string;
+  includesHotel?: boolean;
+  hotelDetails?: any; // JSON object with hotel info
   notes?: string;
-  currency: string;
+  quoteRequestId?: number;
+  portalStatus?: string;
 }
 
 export interface UpdateTreatmentPlanDto {
-  id: number;
-  title?: string;
-  description?: string;
-  status?: TreatmentPlanStatus;
-  treatmentItems?: {
-    id?: number;
-    name: string;
-    price: number;
-    quantity: number;
-    description?: string;
-  }[];
-  estimatedDuration?: string;
+  id?: number;
+  patientId?: number;
+  clinicId?: number;
+  status?: string;
+  treatmentDetails?: any; // JSON array of selected treatments
+  estimatedTotalCost?: string;
+  currency?: string;
+  includesHotel?: boolean;
+  hotelDetails?: any; // JSON object with hotel info
   notes?: string;
-  appointmentDate?: string;
-  completionDate?: string;
-  paymentStatus?: PaymentStatus;
+  quoteRequestId?: number;
+  portalStatus?: string;
 }
