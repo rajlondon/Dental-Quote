@@ -112,6 +112,10 @@ export interface IStorage {
   
   // Stats and aggregations
   getDashboardStats(userRole: string, id: number): Promise<any>;
+  
+  // Additional booking methods
+  getAllBookings(filters?: { status?: string, stage?: string }): Promise<Booking[]>;
+  getAppointment(id: number): Promise<Appointment | undefined>;
 }
 
 // Database implementation of IStorage
@@ -606,6 +610,28 @@ export class DatabaseStorage implements IStorage {
     await db.delete(files).where(eq(files.id, id));
   }
 
+  // === Additional Booking Methods ===
+  async getAllBookings(filters?: { status?: string, stage?: string }): Promise<Booking[]> {
+    let query = db.select().from(bookings);
+    
+    if (filters) {
+      const conditions = [];
+      if (filters.status) conditions.push(eq(bookings.status, filters.status));
+      if (filters.stage) conditions.push(eq(bookings.stage, filters.stage));
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+    }
+    
+    return query.orderBy(desc(bookings.createdAt));
+  }
+  
+  async getAppointment(id: number): Promise<Appointment | undefined> {
+    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
+    return appointment;
+  }
+  
   // === Messages ===
   async getMessagesByBookingId(bookingId: number): Promise<Message[]> {
     return db
