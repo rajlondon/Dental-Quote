@@ -729,7 +729,13 @@ const ClinicDocumentsSection: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center">
+                          <div 
+                            className="flex items-center cursor-pointer hover:underline"
+                            onClick={() => {
+                              setSelectedDocument(document);
+                              setShowViewerDialog(true);
+                            }}
+                          >
                             <div className="mr-2 flex-shrink-0">
                               {getDocumentIcon(document.type)}
                             </div>
