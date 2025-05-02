@@ -339,11 +339,7 @@ const ClinicAppointmentsSection: React.FC = () => {
       // Close the dialog
       setShowAddAppointment(false);
       
-      // Show success message
-      toast({
-        title: "Appointment created",
-        description: "The appointment has been successfully scheduled",
-      });
+      // No need for success toast here as it's already shown in the mutation's onSuccess handler
     } catch (error) {
       console.error('Error creating appointment:', error);
       toast({
