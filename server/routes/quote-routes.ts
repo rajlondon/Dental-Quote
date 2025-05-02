@@ -29,9 +29,13 @@ router.post("/", async (req, res, next) => {
           userId: 1, // Admin user (ID 1)
           title: "New Quote Request",
           message: `New quote request received from ${quoteRequest.name}`,
-          type: "quote_request",
-          action: `/admin/quotes/${quoteRequest.id}`,
-          isRead: false,
+          category: "treatment", // Use a valid category from NotificationCategory
+          priority: "medium",
+          target_type: "admin",
+          target_id: "1", // Admin ID as string
+          source_type: "system",
+          action_url: `/admin/quotes/${quoteRequest.id}`,
+          status: "unread",
         });
       } catch (error) {
         console.error("Failed to create notification:", error);
@@ -249,12 +253,16 @@ router.post("/:id/versions", ensureAuthenticated, ensureRole("admin"), async (re
     if (quote.userId) {
       try {
         await storage.createNotification({
-          userId: quote.userId,
           title: "New Quote Version",
           message: `Your quote request has been updated with a new quote version`,
-          type: "quote_version",
-          action: `/patient/quotes/${quoteId}`,
-          isRead: false
+          category: "treatment",
+          priority: "medium",
+          target_type: "patient",
+          target_id: String(quote.userId),
+          source_type: "admin",
+          source_id: String(req.user!.id),
+          action_url: `/patient/quotes/${quoteId}`,
+          status: "unread"
         });
       } catch (error) {
         console.error("Failed to create notification:", error);
@@ -308,12 +316,16 @@ router.post("/:id/assign-clinic", ensureAuthenticated, ensureRole("admin"), asyn
     for (const staffMember of clinicStaff) {
       try {
         await storage.createNotification({
-          userId: staffMember.id,
           title: "New Quote Assignment",
           message: `A new quote request has been assigned to your clinic`,
-          type: "quote_assignment",
-          action: `/clinic/quotes/${quoteId}`,
-          isRead: false
+          category: "treatment",
+          priority: "medium",
+          target_type: "clinic",
+          target_id: String(staffMember.id),
+          source_type: "admin",
+          source_id: String(req.user!.id),
+          action_url: `/clinic/quotes/${quoteId}`,
+          status: "unread"
         });
       } catch (error) {
         console.error(`Failed to create notification for user ${staffMember.id}:`, error);
@@ -367,14 +379,15 @@ router.post("/:id/xrays", ensureAuthenticated, upload.array("xrays", 10), async 
     const filePromises = files.map(async (file) => {
       return storage.createFile({
         originalName: file.originalname,
-        mimeType: file.mimetype,
-        size: file.size,
-        path: file.path,
-        storageKey: file.filename,
+        mimetype: file.mimetype,
+        fileSize: file.size,
+        filename: file.filename,
+        fileType: "xray",
+        fileCategory: "xray",
         userId: user.id,
         quoteRequestId: quoteId,
-        fileType: "xray",
-        isPublic: false
+        visibility: "private",
+        uploadedById: user.id
       });
     });
     
@@ -430,7 +443,7 @@ router.get("/:id/xrays", ensureAuthenticated, async (req, res, next) => {
       }
     }
     
-    const files = await storage.getFilesByQuoteRequestId(quoteId, "xray");
+    const files = await storage.getFilesByQuoteRequestId(quoteId);
     
     res.json({
       success: true,
