@@ -256,8 +256,8 @@ router.patch(
       
       // Check clinic staff permissions
       if (
-        req.user.role === "clinic_staff" && 
-        req.user.clinicId !== booking.clinicId
+        req.user?.role === "clinic_staff" && 
+        req.user?.clinicId !== booking.clinicId
       ) {
         return res.status(403).json({
           message: "You don't have permission to update this booking",
@@ -300,8 +300,8 @@ router.patch(
       
       // Check clinic staff permissions
       if (
-        req.user.role === "clinic_staff" && 
-        req.user.clinicId !== booking.clinicId
+        req.user?.role === "clinic_staff" && 
+        req.user?.clinicId !== booking.clinicId
       ) {
         return res.status(403).json({
           message: "You don't have permission to update this booking",
