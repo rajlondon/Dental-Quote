@@ -129,19 +129,19 @@ const LoginSection: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-3">
-          <Link href="/patient/login">
+          <Link href="/portal-login">
             <Button className="flex items-center gap-2" variant="outline">
               <User className="h-4 w-4" />
               Patient Portal Login
             </Button>
           </Link>
-          <Link href="/clinic/login">
+          <Link href="/portal-login?portal=clinic">
             <Button className="flex items-center gap-2" variant="outline">
               <Building2 className="h-4 w-4" />
               Clinic Portal Login
             </Button>
           </Link>
-          <Link href="/admin/login">
+          <Link href="/portal-login?portal=admin">
             <Button className="flex items-center gap-2" variant="outline">
               <ShieldCheck className="h-4 w-4" />
               Admin Portal Login
