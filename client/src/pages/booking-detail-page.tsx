@@ -74,7 +74,7 @@ export default function BookingDetailPage() {
     toast({
       title: t("bookings.notes_saved"),
       description: t("bookings.notes_saved_description"),
-      variant: "success",
+      variant: "default",
     });
   };
   
@@ -246,7 +246,7 @@ export default function BookingDetailPage() {
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">
                     {t("bookings.deposit_status")}
                   </h3>
-                  <Badge variant={booking.depositPaid ? "success" : "destructive"}>
+                  <Badge className={booking.depositPaid ? "bg-green-100 text-green-800 border-green-300" : "bg-red-100 text-red-800 border-red-300"}>
                     {booking.depositPaid
                       ? t("bookings.deposit_paid")
                       : t("bookings.deposit_not_paid")}

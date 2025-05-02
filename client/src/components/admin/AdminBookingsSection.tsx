@@ -1,19 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useBookings } from '@/hooks/use-bookings';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { Link } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from "react";
+import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
+import { useBookings } from "@/hooks/use-bookings";
+import { format } from "date-fns";
 import {
-  Loader2, Calendar, Info, MapPin, FileText,
-  PlusCircle, User, Plane, RefreshCw
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,437 +28,586 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  ArrowUpDown,
+  Calendar,
+  Check,
+  ChevronDown,
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  Search,
+  X,
+} from "lucide-react";
 
+// Status and stage styling
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  confirmed: 'bg-green-100 text-green-800 border-green-300',
-  in_progress: 'bg-blue-100 text-blue-800 border-blue-300',
-  completed: 'bg-purple-100 text-purple-800 border-purple-300',
-  cancelled: 'bg-red-100 text-red-800 border-red-300',
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  confirmed: "bg-green-100 text-green-800 border-green-300",
+  in_progress: "bg-blue-100 text-blue-800 border-blue-300",
+  completed: "bg-purple-100 text-purple-800 border-purple-300",
+  cancelled: "bg-red-100 text-red-800 border-red-300",
 };
 
 const stageColors = {
-  deposit: 'bg-cyan-100 text-cyan-800 border-cyan-300',
-  pre_travel: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-  treatment: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
-  post_treatment: 'bg-amber-100 text-amber-800 border-amber-300',
-  completed: 'bg-teal-100 text-teal-800 border-teal-300',
+  deposit: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  pre_travel: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  treatment: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300",
+  post_treatment: "bg-amber-100 text-amber-800 border-amber-300",
+  completed: "bg-teal-100 text-teal-800 border-teal-300",
 };
 
 export default function AdminBookingsSection() {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterClinicId, setFilterClinicId] = useState<string>('');
+  const { useAllBookings, useUpdateBookingStatus } = useBookings();
   
-  // Admin view gets all bookings
   const {
-    bookings,
+    data: bookings = [],
     isLoading,
     error,
     refetch,
-    updateBooking,
-    isUpdating
-  } = useBookings();
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
+  } = useAllBookings();
+  
+  const { updateStatus, isLoading: isUpdating } = useUpdateBookingStatus();
+  
+  // Search and filtering
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [stageFilter, setStageFilter] = useState("all");
+  const [sortField, setSortField] = useState<string>("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  // Handle sorting
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+  
+  // Update booking status
+  const handleUpdateStatus = async (bookingId: number, newStatus: string) => {
+    try {
+      await updateStatus(bookingId, newStatus as any);
+      refetch();
+    } catch (error) {
+      console.error("Failed to update booking status:", error);
+    }
+  };
+  
+  // Filter bookings
+  const filteredBookings = bookings.filter((booking) => {
+    const matchesSearch =
+      !searchQuery ||
+      (booking.bookingReference &&
+        booking.bookingReference.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      booking.id.toString().includes(searchQuery) ||
+      (booking.flightNumber &&
+        booking.flightNumber.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
+    const matchesStage = stageFilter === "all" || booking.stage === stageFilter;
+    
+    return matchesSearch && matchesStatus && matchesStage;
+  });
+  
+  // Sort bookings
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    let aValue = a[sortField as keyof typeof a];
+    let bValue = b[sortField as keyof typeof b];
+    
+    // Handle dates
+    if (sortField === "createdAt" || sortField === "updatedAt") {
+      aValue = new Date(aValue as string).getTime();
+      bValue = new Date(bValue as string).getTime();
+    }
+    
+    // Handle strings
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      if (sortDirection === "asc") {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    }
+    
+    // Handle numbers and dates
+    if (sortDirection === "asc") {
+      return (aValue as number) - (bValue as number);
+    } else {
+      return (bValue as number) - (aValue as number);
+    }
+  });
+  
+  // Paginate bookings
+  const paginatedBookings = sortedBookings.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  const totalPages = Math.ceil(sortedBookings.length / itemsPerPage);
+  
+  // Generate pagination items
+  const getPaginationItems = () => {
+    const items = [];
+    
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      items.push(1);
+      
+      if (currentPage > 3) {
+        items.push("ellipsis1");
+      }
+      
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(i);
+      }
+      
+      if (currentPage < totalPages - 2) {
+        items.push("ellipsis2");
+      }
+      
+      items.push(totalPages);
+    }
+    
+    return items;
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">{t('common.loading')}</span>
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <span className="ml-2 text-lg font-medium">
+          {t("bookings.loading_bookings")}
+        </span>
       </div>
     );
   }
-
+  
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-red-500 mb-4">{t('common.error')}: {error.message}</p>
-        <Button onClick={() => refetch()}>{t('common.retry')}</Button>
+      <div className="text-center py-10">
+        <X className="w-12 h-12 mx-auto text-destructive" />
+        <h3 className="mt-2 text-xl font-bold">
+          {t("bookings.error_loading_bookings")}
+        </h3>
+        <p className="mt-1 text-muted-foreground">
+          {error instanceof Error ? error.message : t("common.unknown_error")}
+        </p>
+        <Button onClick={() => refetch()} className="mt-4">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          {t("common.retry")}
+        </Button>
       </div>
     );
   }
-
-  // Filter bookings based on status
-  let filteredBookings = activeTab === 'all' 
-    ? bookings 
-    : bookings?.filter(booking => booking.status === activeTab);
-
-  // Apply search filter if search term exists
-  if (searchTerm) {
-    const search = searchTerm.toLowerCase();
-    filteredBookings = filteredBookings?.filter(booking => 
-      booking.bookingReference.toLowerCase().includes(search) ||
-      (booking.specialRequests && booking.specialRequests.toLowerCase().includes(search))
-    );
-  }
-
-  // Apply clinic filter if selected
-  if (filterClinicId) {
-    const clinicIdNum = parseInt(filterClinicId, 10);
-    if (!isNaN(clinicIdNum)) {
-      filteredBookings = filteredBookings?.filter(booking => 
-        booking.clinicId === clinicIdNum
-      );
-    }
-  }
-
-  const handleUpdateStatus = (bookingId: number, status: string) => {
-    updateBooking({ 
-      bookingId, 
-      data: { status } 
-    }, {
-      onSuccess: () => {
-        toast({
-          title: t('bookings.update_success_title'),
-          description: t('bookings.update_success_message'),
-        });
-      }
-    });
-  };
-
-  const handleUpdateStage = (bookingId: number, stage: string) => {
-    updateBooking({ 
-      bookingId, 
-      data: { stage } 
-    }, {
-      onSuccess: () => {
-        toast({
-          title: t('bookings.update_success_title'),
-          description: t('bookings.update_success_message'),
-        });
-      }
-    });
-  };
-
-  const handleAssignToAdmin = (bookingId: number, adminId: number) => {
-    updateBooking({
-      bookingId,
-      data: { assignedAdminId: adminId }
-    }, {
-      onSuccess: () => {
-        toast({
-          title: t('bookings.assigned_success_title'),
-          description: t('bookings.assigned_success_message'),
-        });
-      }
-    });
-  };
-
+  
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('bookings.admin_bookings')}</h2>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{t("bookings.admin_bookings")}</h1>
+          <p className="text-muted-foreground">
+            {t("bookings.manage_all_bookings")}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => refetch()}
-            className="flex items-center gap-1"
+            disabled={isLoading}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {t('common.refresh')}
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            {t("common.refresh")}
           </Button>
+          
           <Link href="/admin/create-booking">
-            <Button className="flex items-center gap-1">
-              <PlusCircle className="h-4 w-4" />
-              {t('bookings.new_booking')}
+            <Button size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              {t("bookings.create_booking")}
             </Button>
           </Link>
         </div>
       </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <div className="flex-1">
+      
+      {/* Search and filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('common.search')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
+            className="pl-8"
+            placeholder={t("bookings.search_bookings")}
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
-        <div className="w-full sm:w-64">
-          <Select 
-            value={filterClinicId} 
-            onValueChange={setFilterClinicId}
+        
+        <div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value);
+              setCurrentPage(1);
+            }}
           >
             <SelectTrigger>
-              <SelectValue placeholder={t('bookings.filter_by_clinic')} />
+              <SelectValue placeholder={t("bookings.filter_by_status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t('common.all')}</SelectItem>
-              {/* This would be populated with actual clinic data */}
-              <SelectItem value="1">Istanbul Dental Clinic</SelectItem>
-              <SelectItem value="2">Antalya Smile Center</SelectItem>
-              <SelectItem value="3">Izmir Dental Solutions</SelectItem>
+              <SelectItem value="all">{t("common.all_statuses")}</SelectItem>
+              <SelectItem value="pending">{t("bookings.status.pending")}</SelectItem>
+              <SelectItem value="confirmed">{t("bookings.status.confirmed")}</SelectItem>
+              <SelectItem value="in_progress">{t("bookings.status.in_progress")}</SelectItem>
+              <SelectItem value="completed">{t("bookings.status.completed")}</SelectItem>
+              <SelectItem value="cancelled">{t("bookings.status.cancelled")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        
+        <div>
+          <Select
+            value={stageFilter}
+            onValueChange={(value) => {
+              setStageFilter(value);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t("bookings.filter_by_stage")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all_stages")}</SelectItem>
+              <SelectItem value="deposit">{t("bookings.stage.deposit")}</SelectItem>
+              <SelectItem value="pre_travel">{t("bookings.stage.pre_travel")}</SelectItem>
+              <SelectItem value="treatment">{t("bookings.stage.treatment")}</SelectItem>
+              <SelectItem value="post_treatment">{t("bookings.stage.post_treatment")}</SelectItem>
+              <SelectItem value="completed">{t("bookings.stage.completed")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="text-sm text-muted-foreground flex items-center justify-end">
+          {filteredBookings.length}{" "}
+          {filteredBookings.length === 1
+            ? t("bookings.booking_found")
+            : t("bookings.bookings_found")}
+        </div>
       </div>
       
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full max-w-md mb-4">
-          <TabsTrigger value="all">{t('bookings.all')}</TabsTrigger>
-          <TabsTrigger value="pending">{t('bookings.pending')}</TabsTrigger>
-          <TabsTrigger value="confirmed">{t('bookings.confirmed')}</TabsTrigger>
-          <TabsTrigger value="in_progress">{t('bookings.in_progress')}</TabsTrigger>
-          <TabsTrigger value="completed">{t('bookings.completed')}</TabsTrigger>
-          <TabsTrigger value="cancelled">{t('bookings.cancelled')}</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={activeTab} className="mt-0">
-          {filteredBookings?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 border rounded-lg p-6 bg-muted/20">
-              <p className="text-lg mb-2 text-center">{t('bookings.no_bookings_found')}</p>
-              <p className="text-sm text-gray-500 text-center mb-4">{t('bookings.try_adjusting_filters')}</p>
-              <Button variant="outline" onClick={() => {
-                setSearchTerm('');
-                setFilterClinicId('');
-                setActiveTab('all');
-              }}>
-                {t('common.clear_filters')}
-              </Button>
-            </div>
-          ) : (
-            <ScrollArea className="h-[600px] pr-4">
-              <div className="space-y-4">
-                {filteredBookings?.map((booking) => (
-                  <Card key={booking.id} className="overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            {booking.bookingReference}
-                            <Badge className={statusColors[booking.status] || 'bg-gray-100'}>
-                              {t(`bookings.status.${booking.status}`)}
-                            </Badge>
-                          </CardTitle>
-                          <CardDescription>
-                            {t('bookings.created')}: {format(new Date(booking.createdAt), 'PPP')}
-                            {/* In the admin view, we also show which clinic this booking is for */}
-                            {booking.clinicId && (
-                              <span className="ml-2">
-                                • Clinic ID: {booking.clinicId}
-                              </span>
-                            )}
-                          </CardDescription>
-                        </div>
-                        <Badge className={stageColors[booking.stage] || 'bg-gray-100'}>
-                          {t(`bookings.stage.${booking.stage}`)}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{t('bookings.user_id')}: {booking.userId}</span>
-                          </div>
-                          {booking.arrivalDate && (
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{t('bookings.arrival')}: {format(new Date(booking.arrivalDate), 'PP')}</span>
-                            </div>
-                          )}
-                          {booking.departureDate && (
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{t('bookings.departure')}: {format(new Date(booking.departureDate), 'PP')}</span>
-                            </div>
-                          )}
-                          {booking.flightNumber && (
-                            <div className="flex items-center gap-2">
-                              <Plane className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{t('bookings.flight')}: {booking.flightNumber}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{t('bookings.deposit')}: {booking.depositPaid ? t('common.paid') : t('common.unpaid')}</span>
-                          </div>
-                          {booking.depositAmount > 0 && (
-                            <div className="flex items-center gap-2">
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{t('bookings.deposit_amount')}: £{booking.depositAmount}</span>
-                            </div>
-                          )}
-                          {booking.balanceDue && booking.balanceDue > 0 && (
-                            <div className="flex items-center gap-2">
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{t('bookings.balance_due')}: £{booking.balanceDue}</span>
-                            </div>
-                          )}
-                          {booking.totalPaid > 0 && (
-                            <div className="flex items-center gap-2">
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{t('bookings.total_paid')}: £{booking.totalPaid}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {booking.specialRequests && (
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium mb-1">{t('bookings.special_requests')}:</h4>
-                          <p className="text-sm text-muted-foreground">{booking.specialRequests}</p>
-                        </div>
+      {paginatedBookings.length > 0 ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => handleSort("id")}
+                  >
+                    <div className="flex items-center">
+                      {t("bookings.id")}
+                      {sortField === "id" && (
+                        <ArrowUpDown
+                          className={`ml-1 h-4 w-4 ${
+                            sortDirection === "asc" ? "transform rotate-180" : ""
+                          }`}
+                        />
                       )}
-
-                      {/* Admin Assignment */}
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium mb-2">{t('bookings.assign_admin')}:</h4>
-                        <div className="flex items-center gap-2">
-                          <Select 
-                            value={booking.assignedAdminId?.toString() || ''}
-                            onValueChange={(value) => {
-                              if (value) {
-                                handleAssignToAdmin(booking.id, parseInt(value, 10));
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => handleSort("bookingReference")}
+                  >
+                    <div className="flex items-center">
+                      {t("bookings.reference")}
+                      {sortField === "bookingReference" && (
+                        <ArrowUpDown
+                          className={`ml-1 h-4 w-4 ${
+                            sortDirection === "asc" ? "transform rotate-180" : ""
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>{t("bookings.patient")}</TableHead>
+                  <TableHead>{t("bookings.clinic")}</TableHead>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center">
+                      {t("bookings.created_at")}
+                      {sortField === "createdAt" && (
+                        <ArrowUpDown
+                          className={`ml-1 h-4 w-4 ${
+                            sortDirection === "asc" ? "transform rotate-180" : ""
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>{t("bookings.status")}</TableHead>
+                  <TableHead>{t("bookings.stage")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("common.actions")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedBookings.map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell className="font-medium">{booking.id}</TableCell>
+                    <TableCell>
+                      {booking.bookingReference || `#${booking.id}`}
+                    </TableCell>
+                    <TableCell>
+                      {booking.userId ? `User #${booking.userId}` : t("common.not_available")}
+                    </TableCell>
+                    <TableCell>
+                      {booking.clinicId ? `Clinic #${booking.clinicId}` : t("common.not_available")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                        {format(new Date(booking.createdAt), "PPP")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={statusColors[booking.status]}
+                      >
+                        {t(`bookings.status.${booking.status}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={stageColors[booking.stage]}
+                      >
+                        {t(`bookings.stage.${booking.stage}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">{t("common.open_menu")}</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>
+                            {t("common.actions")}
+                          </DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/bookings/${booking.id}`}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              {t("common.view_details")}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          
+                          {/* Status update options */}
+                          <DropdownMenuLabel>
+                            {t("bookings.change_status")}
+                          </DropdownMenuLabel>
+                          
+                          {booking.status !== "pending" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleUpdateStatus(booking.id, "pending")
                               }
-                            }}
-                          >
-                            <SelectTrigger className="w-[200px]">
-                              <SelectValue placeholder={t('bookings.select_admin')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">{t('common.none')}</SelectItem>
-                              {/* This would be populated with actual admin data */}
-                              <SelectItem value="1">Admin User 1</SelectItem>
-                              <SelectItem value="2">Admin User 2</SelectItem>
-                              {user?.id && <SelectItem value={user.id.toString()}>Me</SelectItem>}
-                            </SelectContent>
-                          </Select>
-                          {booking.assignedAdminId && (
-                            <Badge variant="outline">
-                              {t('bookings.currently_assigned')}: {booking.assignedAdminId}
-                            </Badge>
+                              disabled={isUpdating}
+                            >
+                              {booking.status === "pending" && (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              {t("bookings.status.pending")}
+                            </DropdownMenuItem>
                           )}
-                        </div>
-                      </div>
-
-                      {/* Status and Stage Update Controls */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">{t('bookings.update_status')}:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            <Button 
-                              size="sm" 
-                              variant={booking.status === 'pending' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStatus(booking.id, 'pending')}
-                              disabled={isUpdating || booking.status === 'pending'}
+                          
+                          {booking.status !== "confirmed" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleUpdateStatus(booking.id, "confirmed")
+                              }
+                              disabled={isUpdating}
                             >
-                              {t('bookings.status.pending')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.status === 'confirmed' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                              disabled={isUpdating || booking.status === 'confirmed'}
+                              {booking.status === "confirmed" && (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              {t("bookings.status.confirmed")}
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {booking.status !== "in_progress" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleUpdateStatus(booking.id, "in_progress")
+                              }
+                              disabled={isUpdating}
                             >
-                              {t('bookings.status.confirmed')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.status === 'in_progress' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStatus(booking.id, 'in_progress')}
-                              disabled={isUpdating || booking.status === 'in_progress'}
+                              {booking.status === "in_progress" && (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              {t("bookings.status.in_progress")}
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {booking.status !== "completed" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleUpdateStatus(booking.id, "completed")
+                              }
+                              disabled={isUpdating}
                             >
-                              {t('bookings.status.in_progress')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.status === 'completed' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStatus(booking.id, 'completed')}
-                              disabled={isUpdating || booking.status === 'completed'}
+                              {booking.status === "completed" && (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              {t("bookings.status.completed")}
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {booking.status !== "cancelled" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleUpdateStatus(booking.id, "cancelled")
+                              }
+                              disabled={isUpdating}
+                              className="text-destructive"
                             >
-                              {t('bookings.status.completed')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.status === 'cancelled' ? 'destructive' : 'outline'}
-                              onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                              disabled={isUpdating || booking.status === 'cancelled'}
-                            >
-                              {t('bookings.status.cancelled')}
-                            </Button>
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">{t('bookings.update_stage')}:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            <Button 
-                              size="sm" 
-                              variant={booking.stage === 'deposit' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStage(booking.id, 'deposit')}
-                              disabled={isUpdating || booking.stage === 'deposit'}
-                            >
-                              {t('bookings.stage.deposit')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.stage === 'pre_travel' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStage(booking.id, 'pre_travel')}
-                              disabled={isUpdating || booking.stage === 'pre_travel'}
-                            >
-                              {t('bookings.stage.pre_travel')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.stage === 'treatment' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStage(booking.id, 'treatment')}
-                              disabled={isUpdating || booking.stage === 'treatment'}
-                            >
-                              {t('bookings.stage.treatment')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.stage === 'post_treatment' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStage(booking.id, 'post_treatment')}
-                              disabled={isUpdating || booking.stage === 'post_treatment'}
-                            >
-                              {t('bookings.stage.post_treatment')}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant={booking.stage === 'completed' ? 'default' : 'outline'}
-                              onClick={() => handleUpdateStage(booking.id, 'completed')}
-                              disabled={isUpdating || booking.stage === 'completed'}
-                            >
-                              {t('bookings.stage.completed')}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex flex-wrap justify-between gap-2 pt-2">
-                      <Link href={`/admin/bookings/${booking.id}`}>
-                        <Button variant="outline">{t('bookings.view_details')}</Button>
-                      </Link>
-                      <div className="flex gap-2">
-                        <Link href={`/admin/bookings/${booking.id}/edit`}>
-                          <Button variant="outline">{t('common.edit')}</Button>
-                        </Link>
-                        <Link href={`/admin/bookings/${booking.id}/appointments`}>
-                          <Button>{t('bookings.manage_appointments')}</Button>
-                        </Link>
-                      </div>
-                    </CardFooter>
-                  </Card>
+                              {booking.status === "cancelled" && (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              {t("bookings.status.cancelled")}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </ScrollArea>
-          )}
-        </TabsContent>
-      </Tabs>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("bookings.no_bookings_found")}</CardTitle>
+            <CardDescription>
+              {searchQuery || statusFilter !== "all" || stageFilter !== "all"
+                ? t("bookings.no_bookings_with_filters")
+                : t("bookings.no_bookings_yet")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {searchQuery || statusFilter !== "all" || stageFilter !== "all" ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                  setStageFilter("all");
+                }}
+              >
+                {t("common.clear_filters")}
+              </Button>
+            ) : (
+              <Link href="/admin/create-booking">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("bookings.create_first_booking")}
+                </Button>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                aria-disabled={currentPage === 1}
+              />
+            </PaginationItem>
+            
+            {getPaginationItems().map((item, index) => {
+              if (item === "ellipsis1" || item === "ellipsis2") {
+                return (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+              
+              return (
+                <PaginationItem key={item}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(item as number)}
+                    isActive={currentPage === item}
+                  >
+                    {item}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                aria-disabled={currentPage === totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }
