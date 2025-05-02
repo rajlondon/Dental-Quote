@@ -198,6 +198,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     { id: "documents", label: t("admin.sidebar.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
     { id: "offers_approval", label: t("admin.sidebar.offers_approval", "Content Approval"), icon: <CheckCircle className="h-5 w-5" /> },
     { id: "treatment_mapper", label: t("admin.sidebar.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
+    { id: "portal_communication", label: t("admin.sidebar.portal_communication", "Portal Communication Tester"), icon: <TestTube className="h-5 w-5" /> },
     { id: "data_architecture", label: t("admin.sidebar.data_architecture", "Data Architecture"), icon: <Network className="h-5 w-5" /> },
     { id: "analytics", label: t("admin.sidebar.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
     { id: "testing", label: t("admin.sidebar.testing", "Testing"), icon: <TestTube className="h-5 w-5" /> },
@@ -227,6 +228,12 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
         return <DataArchitecturePage />;
       case "offers_approval":
         return <OffersApprovalDashboard />;
+      case "portal_communication":
+        // Redirect to the portal communication tester page
+        if (typeof window !== 'undefined') {
+          window.location.href = '/portal-communication-test';
+        }
+        return <div className="p-8 text-center">Redirecting to Portal Communication Tester...</div>;
       case "testing":
         return <AdminPortalTesting setActiveSection={setActiveSection} />;
       default:

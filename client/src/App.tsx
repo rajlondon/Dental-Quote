@@ -238,11 +238,13 @@ function Router() {
         }}
       </Route>
       
+      {/* Testing and development routes - Portal Communication Tester available in all environments */}
+      <Route path="/portal-communication-test" component={PortalCommunicationTester} />
+      
       {/* Development-only routes */}
       {process.env.NODE_ENV !== 'production' && (
         <>
           <Route path="/error-test" component={ErrorTestPage} />
-          <Route path="/portal-communication-test" component={PortalCommunicationTester} />
         </>
       )}
       
