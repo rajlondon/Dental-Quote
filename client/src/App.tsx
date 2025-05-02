@@ -8,6 +8,7 @@ import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import { NotFoundPage } from "@/pages/ErrorPage";
 import ErrorTestPage from "@/pages/ErrorTestPage";
+import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
@@ -239,7 +240,10 @@ function Router() {
       
       {/* Development-only routes */}
       {process.env.NODE_ENV !== 'production' && (
-        <Route path="/error-test" component={ErrorTestPage} />
+        <>
+          <Route path="/error-test" component={ErrorTestPage} />
+          <Route path="/portal-communication-test" component={PortalCommunicationTester} />
+        </>
       )}
       
       <Route component={NotFoundPage} />
