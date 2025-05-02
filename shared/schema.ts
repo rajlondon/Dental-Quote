@@ -574,6 +574,7 @@ export const notifications = pgTable("notifications", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 100 }).notNull(),
   message: text("message").notNull(),
+  content: text("content"), // Added for backward compatibility with existing code
   isRead: boolean("is_read").default(false),
   type: varchar("type", { length: 20 }).default("info"), // info, success, warning, error
   action: varchar("action", { length: 255 }),
