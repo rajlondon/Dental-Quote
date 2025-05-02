@@ -249,9 +249,17 @@ export async function processUploadedFile(file: Express.Multer.File, patientId?:
   // For S3 storage
   if (ACTIVE_STORAGE_TYPE === StorageType.AWS_S3) {
     try {
-      // Generate a filename with the file type as prefix
-      // This uses root-level storage which we've verified works with the current IAM policy
-      const key = `${fileType}-${generateSecureFilename(file.originalname)}`;
+      // Generate a key with patient ID prefix if provided
+      let key;
+      if (patientId && patientId !== 'none') {
+        // Include patient ID in the key for organization
+        key = `patient-${patientId}/${fileType}-${generateSecureFilename(file.originalname)}`;
+        console.log(`Creating file with patient ID: ${patientId}, key: ${key}`);
+      } else {
+        // Standard key without patient association
+        key = `${fileType}-${generateSecureFilename(file.originalname)}`;
+        console.log(`Creating general file without patient ID, key: ${key}`);
+      }
       
       // Upload to S3
       const result = await uploadToS3(file.buffer, key, file.mimetype);
@@ -270,6 +278,7 @@ export async function processUploadedFile(file: Express.Multer.File, patientId?:
         key: key,
         storageType: StorageType.AWS_S3,
         category: fileType,
+        patientId: patientId !== 'none' ? patientId : undefined,
         uploadDate
       };
     } catch (error) {
@@ -301,6 +310,7 @@ export async function processUploadedFile(file: Express.Multer.File, patientId?:
         mimetype: file.mimetype,
         storageType: StorageType.LOCAL, // Fallback to local
         category: fileType,
+        patientId: patientId !== 'none' ? patientId : undefined,
         uploadDate
       };
     }

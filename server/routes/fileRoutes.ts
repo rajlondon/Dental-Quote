@@ -72,7 +72,7 @@ router.get("/debug-storage", async (req: Request, res: Response) => {
     success: true,
     environment: process.env.NODE_ENV || 'development',
     storageConfig: {
-      activeStorageType: StorageType[ACTIVE_STORAGE_TYPE],
+      activeStorageType: StorageType[ACTIVE_STORAGE_TYPE].toString(),
       configuredProvider: cloudStorageConfig.provider,
       isCloudStorageConfigured: isCloudStorageConfigured(),
       region
@@ -103,10 +103,11 @@ router.post("/upload", uploadRateLimit, isAuthenticated, upload.single('file'), 
     }
 
     console.log(`Processing file upload: ${file.originalname}, Category: ${category}`);
-    console.log(`Storage active type: ${StorageType[ACTIVE_STORAGE_TYPE]} in ${process.env.NODE_ENV} environment`);
+    console.log(`Storage active type: ${StorageType[ACTIVE_STORAGE_TYPE].toString()} in ${process.env.NODE_ENV} environment`);
+    console.log(`Processing upload with patientId: ${patientId || 'none'}`);
     
-    // Process the file (handles S3 upload if configured)
-    const processedFile = await processUploadedFile(file);
+    // Process the file (handles S3 upload if configured) with patient ID if provided
+    const processedFile = await processUploadedFile(file, patientId);
     
     console.log(`File processed successfully. Storage type: ${processedFile.storageType}`);
     console.log(`File URL: ${processedFile.url || 'local file'}`);
@@ -156,8 +157,8 @@ router.post("/upload-message-attachment", uploadRateLimit, isAuthenticated, uplo
 
     console.log(`Processing message attachment upload: ${file.originalname}`);
     
-    // Process the file (handles S3 upload if configured)
-    const processedFile = await processUploadedFile(file);
+    // Process the file (handles S3 upload if configured) - no patient ID for message attachments
+    const processedFile = await processUploadedFile(file, undefined);
     
     console.log(`File processed successfully. Storage type: ${processedFile.storageType}`);
     console.log(`File URL: ${processedFile.url || 'local file'}`);
