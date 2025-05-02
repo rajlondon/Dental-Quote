@@ -33,10 +33,11 @@ const CustomBadge = ({ variant, className, children }: {
   );
 };
 import { Separator } from '@/components/ui/separator';
-import { Loader2, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, Info, LogIn, User, Building2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useWebSocket } from '@/hooks/use-websocket';
+import { Link } from 'wouter';
 
 // Extended WebSocket hook result type to include connectionStatus
 interface ExtendedWebSocketHookResult {
@@ -116,11 +117,51 @@ const TestResultDisplay: React.FC<{ result: TestResult }> = ({ result }) => {
   );
 };
 
+// Login card component for easy authentication
+const LoginSection: React.FC = () => {
+  return (
+    <Card className="mb-6 border-amber-200 bg-amber-50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-medium">⚠️ Authentication Required</CardTitle>
+        <CardDescription>
+          You must be logged in to run communication tests. Please log in to one of the portals:
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex flex-wrap gap-3">
+          <Link href="/patient/login">
+            <Button className="flex items-center gap-2" variant="outline">
+              <User className="h-4 w-4" />
+              Patient Portal Login
+            </Button>
+          </Link>
+          <Link href="/clinic/login">
+            <Button className="flex items-center gap-2" variant="outline">
+              <Building2 className="h-4 w-4" />
+              Clinic Portal Login
+            </Button>
+          </Link>
+          <Link href="/admin/login">
+            <Button className="flex items-center gap-2" variant="outline">
+              <ShieldCheck className="h-4 w-4" />
+              Admin Portal Login
+            </Button>
+          </Link>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Note: Different portals have different permissions and will pass/fail different tests.
+        </p>
+      </CardContent>
+    </Card>
+  );
+};
+
 const PortalCommunicationTester: React.FC = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [runningTests, setRunningTests] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [customMessage, setCustomMessage] = useState<string>('Test message from Communication Tester');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const { toast } = useToast();
   // Cast the WebSocket hook to our extended interface
   const { sendMessage, lastMessage } = useWebSocket();
@@ -128,6 +169,20 @@ const PortalCommunicationTester: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>(
     lastMessage ? 'connected' : 'connecting'
   );
+  
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/auth/user');
+        setIsAuthenticated(response.ok);
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   // Set connection status to 'connected' after component mount
   useEffect(() => {
@@ -808,6 +863,8 @@ const PortalCommunicationTester: React.FC = () => {
         Run tests to verify that messages, notifications, quotes, and other data are correctly
         transmitted between patient, clinic, and admin portals.
       </p>
+      
+      {!isAuthenticated && <LoginSection />}
       
       <Card className="mb-8">
         <CardHeader>
