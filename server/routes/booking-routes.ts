@@ -136,20 +136,20 @@ router.post(
       const bookingReference = `BK-${randomUUID().substring(0, 8)}`.toUpperCase();
       
       // Set the userId to the current user if not specified (and not admin)
-      if (!bookingData.userId && req.user.role !== "admin") {
+      if (!bookingData.userId && req.user?.role !== "admin" && req.user?.id) {
         bookingData.userId = req.user.id;
       }
       
       // If clinic staff, set clinicId to their clinic if not specified
-      if (!bookingData.clinicId && req.user.role === "clinic_staff" && req.user.clinicId) {
+      if (!bookingData.clinicId && req.user?.role === "clinic_staff" && req.user?.clinicId) {
         bookingData.clinicId = req.user.clinicId;
       }
       
       // Check permissions for creating bookings for other users
       if (
         bookingData.userId &&
-        bookingData.userId !== req.user.id &&
-        req.user.role !== "admin"
+        bookingData.userId !== req.user?.id &&
+        req.user?.role !== "admin"
       ) {
         return res.status(403).json({
           message: "You don't have permission to create bookings for other users",
@@ -158,9 +158,9 @@ router.post(
       
       // Check permissions for creating bookings for other clinics
       if (
-        req.user.role === "clinic_staff" &&
+        req.user?.role === "clinic_staff" &&
         bookingData.clinicId && 
-        bookingData.clinicId !== req.user.clinicId
+        bookingData.clinicId !== req.user?.clinicId
       ) {
         return res.status(403).json({
           message: "You can only create bookings for your own clinic",
@@ -201,9 +201,9 @@ router.patch(
       
       // Check permissions
       if (
-        req.user.role !== "admin" &&
-        (req.user.role === "clinic_staff" && req.user.clinicId !== booking.clinicId) &&
-        req.user.id !== booking.userId
+        req.user?.role !== "admin" &&
+        (req.user?.role === "clinic_staff" && req.user?.clinicId !== booking.clinicId) &&
+        req.user?.id !== booking.userId
       ) {
         return res.status(403).json({
           message: "You don't have permission to update this booking",
@@ -211,13 +211,13 @@ router.patch(
       }
       
       // Don't allow changing certain fields unless admin
-      if (req.user.role !== "admin") {
+      if (req.user?.role !== "admin") {
         // Remove protected fields
         delete req.body.userId;
         delete req.body.clinicId;
         
         // Only admins and clinic staff can change status/stage
-        if (req.user.role !== "clinic_staff") {
+        if (req.user?.role !== "clinic_staff") {
           delete req.body.status;
           delete req.body.stage;
         }
