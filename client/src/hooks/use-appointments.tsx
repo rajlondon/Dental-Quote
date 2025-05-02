@@ -26,7 +26,7 @@ export interface AppointmentData {
 }
 
 export interface CreateAppointmentData {
-  bookingId: number;
+  bookingId?: number;
   clinicId: number;
   title: string;
   description?: string;
@@ -84,6 +84,13 @@ export function useAppointments(bookingId?: number) {
       } else {
         // Standalone clinic appointment
         url = `/api/appointments/clinic/${data.clinicId}`;
+        
+        // Make sure bookingId is undefined for standalone appointments
+        // to avoid SQL constraint errors (as we modified the schema to make it optional)
+        if ('bookingId' in data) {
+          const { bookingId, ...dataWithoutBookingId } = data;
+          data = dataWithoutBookingId;
+        }
       }
       
       const res = await apiRequest('POST', url, data);

@@ -315,13 +315,15 @@ const ClinicAppointmentsSection: React.FC = () => {
       // Call the API to create the appointment
       if (selectedBookingId) {
         // If booking ID exists, use the booking appointment endpoint
-        createAppointment(appointmentData);
-      } else {
-        // Otherwise use the clinic appointment endpoint (this will be handled in the hook)
         createAppointment({
           ...appointmentData,
-          bookingId: 0 // Indicate this is a standalone clinic appointment
+          bookingId: selectedBookingId
         });
+      } else {
+        // Otherwise use the clinic appointment endpoint (this will be handled in the hook)
+        // Don't include bookingId for standalone appointments
+        const { bookingId, ...standaloneAppointmentData } = appointmentData;
+        createAppointment(standaloneAppointmentData);
       }
       
       // Reset form fields
