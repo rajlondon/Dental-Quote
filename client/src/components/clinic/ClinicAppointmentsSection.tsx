@@ -166,93 +166,10 @@ const ClinicAppointmentsSection: React.FC = () => {
     };
   });
   
-  // Use converted appointments or fallback to sample data if needed
+  // Use converted appointments if available, otherwise show empty state
   const appointments: Appointment[] = isLoadingAppointments || !realAppointments || realAppointments.length === 0 
-    ? [
-    {
-      id: "1",
-      patientName: "James Wilson",
-      patientEmail: "james.wilson@example.com",
-      patientPhone: "+44 7700 900123",
-      patientInitials: "JW",
-      date: new Date(),
-      time: "09:00",
-      endTime: "10:00",
-      duration: "60 min",
-      type: "Dental Implant Consultation",
-      status: 'confirmed',
-      virtualOption: false,
-      doctorName: "Dr. Mehmet Yilmaz",
-      doctorId: "d1"
-    },
-    {
-      id: "2",
-      patientName: "Sarah Johnson",
-      patientEmail: "sarah.j@example.com",
-      patientPhone: "+44 7700 900456",
-      patientInitials: "SJ",
-      date: new Date(),
-      time: "11:30",
-      endTime: "12:15",
-      duration: "45 min",
-      type: "Veneer Preparation",
-      status: 'confirmed',
-      virtualOption: false,
-      doctorName: "Dr. Ayşe Demir",
-      doctorId: "d2"
-    },
-    {
-      id: "3",
-      patientName: "Michael Brown",
-      patientEmail: "m.brown@example.com",
-      patientPhone: "+44 7700 900789",
-      patientInitials: "MB",
-      date: addDays(new Date(), 1),
-      time: "14:00",
-      endTime: "15:00",
-      duration: "60 min",
-      type: "Crown Fitting",
-      status: 'pending',
-      virtualOption: true,
-      meetLink: "https://meet.google.com/abc-defg-hij",
-      doctorName: "Dr. Mehmet Yilmaz",
-      doctorId: "d1"
-    },
-    {
-      id: "4",
-      patientName: "Emma Davis",
-      patientEmail: "e.davis@example.com",
-      patientPhone: "+44 7700 900555",
-      patientInitials: "ED",
-      date: addDays(new Date(), 1),
-      time: "10:30",
-      endTime: "12:00",
-      duration: "90 min",
-      type: "Root Canal Treatment",
-      status: 'confirmed',
-      notes: "Patient has anxiety, please allow extra time for preparation",
-      virtualOption: false,
-      doctorName: "Dr. Ali Yildirim",
-      doctorId: "d3"
-    },
-    {
-      id: "5",
-      patientName: "Robert Taylor",
-      patientEmail: "r.taylor@example.com",
-      patientPhone: "+44 7700 900222",
-      patientInitials: "RT",
-      date: addDays(new Date(), 2),
-      time: "09:30",
-      endTime: "11:30",
-      duration: "120 min",
-      type: "Full Mouth Restoration Assessment",
-      status: 'pending',
-      virtualOption: true,
-      meetLink: "https://meet.google.com/xyz-abcd-efg",
-      doctorName: "Dr. Ayşe Demir",
-      doctorId: "d2"
-    }
-  ];
+    ? [] 
+    : convertedAppointments;
 
   // Sample doctors data
   const doctors = [
