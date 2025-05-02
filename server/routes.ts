@@ -214,7 +214,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup treatment mapper API routes
   setupTreatmentMapperApi(app);
   
-  // Register quote management routes to avoid route conflicts
+  // Register direct route for /api/quotes/clinic to avoid conflicts
+  app.get('/api/quotes/clinic', isAuthenticated, ensureRole("clinic_staff"), async (req, res, next) => {
+    try {
+      const user = req.user!;
+      
+      if (!user.clinicId) {
+        return res.status(400).json({
+          success: false,
+          message: "User is not associated with a clinic"
+        });
+      }
+      
+      const quotes = await storage.getQuoteRequestsByClinicId(user.clinicId);
+      
+      res.json({
+        success: true,
+        data: quotes
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Register the rest of the quote routes 
   app.use('/api/quotes', quoteRoutes);
   
   // Register Gemini AI routes for dental advice

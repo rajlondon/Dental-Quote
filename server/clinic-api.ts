@@ -244,24 +244,8 @@ export function registerClinicRoutes(app: Express): void {
     }
   });
   
-  // For backward compatibility - ensure this doesn't conflict with /api/quotes/clinic
-  app.get('/api/quotes/:filename', (req: Request, res: Response) => {
-    const { filename } = req.params;
-    
-    // Skip this handler for special routes like "clinic", "user", etc.
-    if (filename === 'clinic' || filename === 'user' || filename === 'admin') {
-      return res.status(404).json({ error: 'Route not found' });
-    }
-    
-    const filePath = path.join(process.cwd(), 'uploads', filename);
-    
-    if (fs.existsSync(filePath)) {
-      res.contentType('application/pdf');
-      res.sendFile(filePath);
-    } else {
-      res.status(404).json({ error: 'PDF not found' });
-    }
-  });
+  // REMOVED: We've removed the /api/quotes/:filename route
+  // Moving all PDF files to use /api/quote-files/:filename instead
   
   // Select a clinic and establish a patient-clinic connection
   app.post('/api/select-clinic', (req: Request, res: Response) => {
