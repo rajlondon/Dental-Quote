@@ -412,7 +412,7 @@ router.get("/:id/appointments", isAuthenticated, async (req, res, next) => {
 });
 
 // Update an appointment
-router.patch("/:bookingId/appointments/:appointmentId", ensureAuthenticated, async (req, res, next) => {
+router.patch("/:bookingId/appointments/:appointmentId", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const appointmentId = parseInt(req.params.appointmentId);
