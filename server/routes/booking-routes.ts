@@ -1,7 +1,28 @@
 import express from "express";
-import { ensureAuthenticated, ensureRole } from "../middleware/auth-middleware";
+import { isAuthenticated, isAdmin, isClinic, isPatient, isAdminOrClinic } from "../middleware/auth-middleware";
 import { storage } from "../storage";
-import { NotFoundError, ForbiddenError, BadRequestError } from "../utils/errors";
+
+// Error classes for better error handling
+class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
+class ForbiddenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
+class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BadRequestError";
+  }
+}
 import { createInsertSchema } from "drizzle-zod";
 import { appointments, bookings } from "@shared/schema";
 import { v4 as uuidv4 } from "uuid";
@@ -16,7 +37,7 @@ function generateBookingReference() {
 }
 
 // Get all bookings (admin only)
-router.get("/", ensureAuthenticated, ensureRole(["admin"]), async (req, res, next) => {
+router.get("/", isAdmin, async (req, res, next) => {
   try {
     const allBookings = await storage.getAllBookings();
     res.json({
@@ -29,7 +50,7 @@ router.get("/", ensureAuthenticated, ensureRole(["admin"]), async (req, res, nex
 });
 
 // Get bookings for a user
-router.get("/user/:userId", ensureAuthenticated, async (req, res, next) => {
+router.get("/user/:userId", isAuthenticated, async (req, res, next) => {
   try {
     const userId = parseInt(req.params.userId);
     
@@ -54,7 +75,7 @@ router.get("/user/:userId", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Get bookings for a clinic
-router.get("/clinic/:clinicId", ensureAuthenticated, async (req, res, next) => {
+router.get("/clinic/:clinicId", isAuthenticated, async (req, res, next) => {
   try {
     const clinicId = parseInt(req.params.clinicId);
     
@@ -84,7 +105,7 @@ router.get("/clinic/:clinicId", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Get a single booking by ID
-router.get("/:id", ensureAuthenticated, async (req, res, next) => {
+router.get("/:id", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.id);
     
@@ -125,7 +146,7 @@ const insertBookingSchema = createInsertSchema(bookings)
     departureDate: z.string().optional()
   });
 
-router.post("/", ensureAuthenticated, async (req, res, next) => {
+router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     // Validate request body
     const bookingData = insertBookingSchema.parse(req.body);
@@ -166,7 +187,7 @@ router.post("/", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Update a booking
-router.patch("/:id", ensureAuthenticated, async (req, res, next) => {
+router.patch("/:id", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.id);
     
@@ -211,7 +232,7 @@ router.patch("/:id", ensureAuthenticated, async (req, res, next) => {
 });
 
 // Cancel a booking
-router.post("/:id/cancel", ensureAuthenticated, async (req, res, next) => {
+router.post("/:id/cancel", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.id);
     
@@ -292,7 +313,7 @@ const insertAppointmentSchema = createInsertSchema(appointments)
     endTime: z.string()
   });
 
-router.post("/:id/appointments", ensureAuthenticated, async (req, res, next) => {
+router.post("/:id/appointments", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.id);
     
@@ -355,7 +376,7 @@ router.post("/:id/appointments", ensureAuthenticated, async (req, res, next) => 
 });
 
 // Get all appointments for a booking
-router.get("/:id/appointments", ensureAuthenticated, async (req, res, next) => {
+router.get("/:id/appointments", isAuthenticated, async (req, res, next) => {
   try {
     const bookingId = parseInt(req.params.id);
     
