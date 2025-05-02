@@ -47,6 +47,7 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
+import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
@@ -296,6 +297,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
     { id: 'documents', label: t("clinic.nav.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
+    { id: 'media', label: t("clinic.nav.media", "Media Gallery"), icon: <Image className="h-5 w-5" /> },
     { id: 'payments', label: t("clinic.nav.payments", "Payments"), icon: <FileBarChart className="h-5 w-5" /> },
     { id: 'reports', label: t("clinic.nav.reports", "Reports"), icon: <FileBarChart className="h-5 w-5" /> },
     { id: 'analytics', label: t("clinic.nav.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
@@ -480,6 +482,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh 
         return <ClinicMessagesSection />;
       case 'documents':
         return <ClinicDocumentsSection />;
+      case 'media':
+        return <ClinicMediaSection />;
       case 'payments':
         // Show loading spinner while redirecting to payment page
         return (
