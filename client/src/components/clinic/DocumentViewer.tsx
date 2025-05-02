@@ -39,7 +39,9 @@ interface Document {
   patientName?: string;
   shared: boolean;
   thumbnail?: string;
+  url?: string; // URL from cloud storage (AWS S3, etc.)
   description?: string;
+  key?: string; // Cloud storage key
 }
 
 interface DocumentViewerProps {
@@ -224,7 +226,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
         {/* Document Viewer Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Controls Bar */}
-          {document.type === 'pdf' && (
+          {(document.type === 'pdf' || document.type === 'jpg' || document.type === 'png' || document.type === 'jpeg') && (
             <div className="bg-gray-100 p-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Button 
@@ -249,30 +251,33 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 </Button>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={prevPage}
-                  disabled={currentPage <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm">
-                  {t("clinic.documents.page_number", "Page {{current}} of {{total}}", {
-                    current: currentPage,
-                    total: 3 // In a real app, this would be from document metadata
-                  })}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={nextPage}
-                  disabled={currentPage >= 3} // In a real app, this would be from document metadata
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Only show page navigation for PDFs */}
+              {document.type === 'pdf' && (
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={prevPage}
+                    disabled={currentPage <= 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm">
+                    {t("clinic.documents.page_number", "Page {{current}} of {{total}}", {
+                      current: currentPage,
+                      total: 3 // In a real app, this would be from document metadata
+                    })}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={nextPage}
+                    disabled={currentPage >= 3} // In a real app, this would be from document metadata
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           
@@ -280,22 +285,26 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <div className="flex-1 bg-gray-50 flex items-center justify-center overflow-auto p-4">
             {document.type === 'jpg' || document.type === 'png' || document.type === 'jpeg' ? (
               // Image Preview
-              document.thumbnail ? (
-                <div 
-                  className="relative" 
-                  style={{
-                    transform: `scale(${zoom/100}) rotate(${rotation}deg)`,
-                    transition: 'transform 0.2s ease'
-                  }}
-                >
-                  <img 
-                    src={document.thumbnail} 
-                    alt={document.name}
-                    className="max-w-full max-h-full shadow-lg"
-                  />
+              document.url || document.thumbnail ? (
+                <div className="flex items-center justify-center w-full h-full">
+                  {/* Container for image with transform */}
+                  <div 
+                    className="relative" 
+                    style={{
+                      transform: `scale(${zoom/100}) rotate(${rotation}deg)`,
+                      transition: 'transform 0.2s ease',
+                      transformOrigin: 'center center'
+                    }}
+                  >
+                    <img 
+                      src={document.url || document.thumbnail} 
+                      alt={document.name}
+                      className="max-w-full max-h-[60vh] object-contain shadow-lg"
+                    />
+                  </div>
                 </div>
               ) : (
-                // Fallback for when no thumbnail is available
+                // Fallback for when no image URL is available
                 <div className="text-center p-6">
                   <div className="p-4 bg-blue-50 rounded-full inline-block mb-4">
                     <Image className="h-16 w-16 text-blue-500" />
