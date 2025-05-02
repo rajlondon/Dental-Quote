@@ -1,10 +1,15 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { QuoteRequest, QuoteVersion } from "@/types/quote";
+import { QuoteRequest, QuoteVersion, QuoteStatus } from "@/types/quote";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket, WebSocketMessage } from "./use-websocket";
+import { useEffect } from "react";
+import { useNotifications } from "./use-notifications";
 
 export function useQuotes() {
   const { toast } = useToast();
+  const { sendMessage, registerMessageHandler, unregisterMessageHandler } = useWebSocket();
+  const { createNotification } = useNotifications();
 
   // Query for user's quotes (for patient portal)
   const userQuotesQuery = useQuery<QuoteRequest[]>({
