@@ -23,7 +23,7 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Notification } from '@/hooks/use-notifications';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { NotificationCategory } from '@shared/notifications';
 import { 
   DropdownMenu,
@@ -174,17 +174,19 @@ export function NotificationsPopover({
             {connected ? (
               <Bell className="h-5 w-5" />
             ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="relative">
-                    <BellOff className="h-5 w-5 text-amber-500" />
-                    <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p className="text-xs">Notification service disconnected</p>
-                </TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="relative">
+                      <BellOff className="h-5 w-5 text-amber-500" />
+                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p className="text-xs">Notification service disconnected</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {unreadCount > 0 && (
               <Badge 
@@ -252,24 +254,26 @@ export function NotificationsPopover({
                       
                       {/* Delete button with tooltip */}
                       <div className="absolute right-2 top-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
-                              }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">{t('notifications.delete', 'Delete notification')}</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotification(notification.id);
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{t('notifications.delete', 'Delete notification')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   ))}
