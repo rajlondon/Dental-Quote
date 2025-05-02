@@ -166,15 +166,25 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       bookingData.bookingReference = generateBookingReference();
     }
     
-    // Convert date strings to Date objects
+    // Handle date conversions
+    let arrivalDateObj: Date | undefined;
+    let departureDateObj: Date | undefined;
+    
     if (bookingData.arrivalDate) {
-      bookingData.arrivalDate = new Date(bookingData.arrivalDate);
+      arrivalDateObj = new Date(bookingData.arrivalDate);
     }
     if (bookingData.departureDate) {
-      bookingData.departureDate = new Date(bookingData.departureDate);
+      departureDateObj = new Date(bookingData.departureDate);
     }
     
-    const newBooking = await storage.createBooking(bookingData);
+    // Create a new booking data object with proper date handling
+    const bookingDataToCreate = {
+      ...bookingData,
+      arrivalDate: arrivalDateObj,
+      departureDate: departureDateObj
+    };
+    
+    const newBooking = await storage.createBooking(bookingDataToCreate);
     
     res.status(201).json({
       success: true,
@@ -268,10 +278,12 @@ router.post("/:id/cancel", isAuthenticated, async (req, res, next) => {
     }
     
     // Create notification for patient and clinic
+    const patientNotificationText = `Your booking ${existingBooking.bookingReference} has been cancelled.`;
     await storage.createNotification({
       userId: existingBooking.userId,
       title: "Booking Cancelled",
-      content: `Your booking ${existingBooking.bookingReference} has been cancelled.`,
+      message: patientNotificationText,
+      content: patientNotificationText, // For backward compatibility
       type: "booking_update",
       action: `/bookings/${bookingId}`,
       entityType: "booking",
@@ -281,10 +293,12 @@ router.post("/:id/cancel", isAuthenticated, async (req, res, next) => {
     
     // Notify clinic if there's an assigned clinic staff
     if (existingBooking.assignedClinicStaffId) {
+      const clinicNotificationText = `Booking ${existingBooking.bookingReference} has been cancelled.`;
       await storage.createNotification({
         userId: existingBooking.assignedClinicStaffId,
         title: "Booking Cancelled",
-        content: `Booking ${existingBooking.bookingReference} has been cancelled.`,
+        message: clinicNotificationText,
+        content: clinicNotificationText, // For backward compatibility
         type: "booking_update",
         action: `/bookings/${bookingId}`,
         entityType: "booking",
@@ -382,17 +396,26 @@ router.post("/:id/appointments", isAuthenticated, async (req, res, next) => {
     // Set the creator of the appointment
     appointmentData.createdById = req.user!.id;
     
-    // Convert date strings to Date objects
-    appointmentData.startTime = new Date(appointmentData.startTime);
-    appointmentData.endTime = new Date(appointmentData.endTime);
+    // Store start and end times as Date objects
+    const startTimeDate = new Date(appointmentData.startTime as string);
+    const endTimeDate = new Date(appointmentData.endTime as string);
     
-    const newAppointment = await storage.createAppointment(appointmentData);
+    // Create the appointment with proper date handling
+    const appointmentToCreate = {
+      ...appointmentData,
+      startTime: startTimeDate,
+      endTime: endTimeDate
+    };
+    
+    const newAppointment = await storage.createAppointment(appointmentToCreate);
     
     // Create notification for the patient
+    const notificationText = `An appointment has been scheduled for your dental treatment on ${new Date(appointmentData.startTime as string).toLocaleDateString()}.`;
     await storage.createNotification({
       userId: booking.userId,
       title: "New Appointment Scheduled",
-      content: `An appointment has been scheduled for your dental treatment on ${new Date(appointmentData.startTime).toLocaleDateString()}.`,
+      message: notificationText,
+      content: notificationText, // For backward compatibility 
       type: "appointment",
       action: `/bookings/${bookingId}/appointments/${newAppointment.id}`,
       entityType: "appointment",
@@ -500,7 +523,8 @@ router.patch("/:bookingId/appointments/:appointmentId", isAuthenticated, async (
       await storage.createNotification({
         userId: booking.userId,
         title: "Appointment Updated",
-        content: notificationContent,
+        message: notificationContent,
+        content: notificationContent, // For backward compatibility
         type: "appointment_update",
         action: `/bookings/${bookingId}/appointments/${appointmentId}`,
         entityType: "appointment",
