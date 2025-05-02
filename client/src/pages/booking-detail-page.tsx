@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'wouter';
-import { useBookings } from '@/hooks/use-bookings';
+import { useBookings, type BookingStatus, type BookingStage } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Loader2, Calendar, Info, MapPin, FileText, 
-  ArrowLeft, Plane, CreditCard
-} from 'lucide-react';
+import { Loader2, Calendar, Info, MapPin, FileText, ArrowLeft, Plane, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 
-const statusColors = {
+const statusColors: Record<BookingStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   confirmed: 'bg-green-100 text-green-800 border-green-300',
   in_progress: 'bg-blue-100 text-blue-800 border-blue-300',
@@ -22,7 +19,7 @@ const statusColors = {
   cancelled: 'bg-red-100 text-red-800 border-red-300',
 };
 
-const stageColors = {
+const stageColors: Record<BookingStage, string> = {
   deposit: 'bg-cyan-100 text-cyan-800 border-cyan-300',
   pre_travel: 'bg-indigo-100 text-indigo-800 border-indigo-300',
   treatment: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
@@ -35,14 +32,12 @@ export default function BookingDetailPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { id } = useParams();
-  const bookingId = parseInt(id);
+  const bookingId = parseInt(id as string);
   const [activeTab, setActiveTab] = useState('details');
   
   const {
     useBookingDetails,
-    updateBooking,
     cancelBooking,
-    isUpdating,
     isCancelling
   } = useBookings();
   
@@ -54,8 +49,12 @@ export default function BookingDetailPage() {
   } = useBookingDetails(bookingId);
 
   useEffect(() => {
+    // Set page title
+    document.title = `${t('bookings.booking_details')} | MyDentalFly`;
+    
+    // Refetch data when the component mounts
     refetch();
-  }, [refetch]);
+  }, [refetch, t]);
 
   if (isLoading) {
     return (
@@ -116,19 +115,19 @@ export default function BookingDetailPage() {
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                {booking.bookingReference}
-                <Badge className={statusColors[booking.status] || 'bg-gray-100'}>
-                  {t(`bookings.status.${booking.status}`)}
-                </Badge>
-              </CardTitle>
+              <CardTitle>{booking.bookingReference}</CardTitle>
               <CardDescription>
                 {t('bookings.created')}: {format(new Date(booking.createdAt), 'PPP')}
               </CardDescription>
             </div>
-            <Badge className={stageColors[booking.stage] || 'bg-gray-100'}>
-              {t(`bookings.stage.${booking.stage}`)}
-            </Badge>
+            <div className="flex flex-col gap-2 items-end">
+              <Badge className={statusColors[booking.status]}>
+                {t(`bookings.status.${booking.status}`)}
+              </Badge>
+              <Badge className={stageColors[booking.stage]}>
+                {t(`bookings.stage.${booking.stage}`)}
+              </Badge>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -139,7 +138,6 @@ export default function BookingDetailPage() {
           <TabsTrigger value="appointments">{t('bookings.appointments')}</TabsTrigger>
           <TabsTrigger value="documents">{t('bookings.documents')}</TabsTrigger>
           <TabsTrigger value="payments">{t('bookings.payments')}</TabsTrigger>
-          <TabsTrigger value="messages">{t('bookings.messages')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="details" className="mt-0">
@@ -232,17 +230,6 @@ export default function BookingDetailPage() {
                     </div>
                   </div>
                 )}
-                
-                {/* Conditionally show payment button if deposit is required but not paid */}
-                {booking.depositAmount > 0 && !booking.depositPaid && (
-                  <div className="mt-4">
-                    <Link href={`/bookings/${booking.id}/pay-deposit`}>
-                      <Button className="w-full">
-                        {t('bookings.pay_deposit')}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
               </CardContent>
             </Card>
             
@@ -272,11 +259,6 @@ export default function BookingDetailPage() {
                 {t('bookings.no_appointments')}
               </p>
             </CardContent>
-            <CardFooter>
-              <p className="text-sm text-muted-foreground">
-                {t('bookings.appointments_scheduled_by_clinic')}
-              </p>
-            </CardFooter>
           </Card>
         </TabsContent>
         
@@ -314,51 +296,31 @@ export default function BookingDetailPage() {
                 {t('bookings.no_payments')}
               </p>
             </CardContent>
-            <CardFooter>
-              {booking.depositAmount > 0 && !booking.depositPaid && (
-                <Link href={`/bookings/${booking.id}/pay-deposit`}>
+            {!booking.depositPaid && booking.depositAmount > 0 && (
+              <CardFooter>
+                <Link href={`/deposit-payment?bookingId=${booking.id}`}>
                   <Button>{t('bookings.pay_deposit')}</Button>
                 </Link>
-              )}
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="messages" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('bookings.messages')}</CardTitle>
-              <CardDescription>
-                {t('bookings.messages_description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground my-12">
-                {t('bookings.no_messages')}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Link href={`/bookings/${booking.id}/messages`}>
-                <Button>{t('bookings.send_message')}</Button>
-              </Link>
-            </CardFooter>
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
       
       {/* Bottom actions */}
-      <div className="mt-8 flex justify-end">
-        {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+      {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+        <div className="mt-8 flex justify-end">
           <Button 
             variant="destructive" 
             disabled={isCancelling}
             onClick={handleCancel}
+            className="flex items-center gap-2"
           >
-            {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isCancelling && <Loader2 className="h-4 w-4 animate-spin" />}
             {t('bookings.cancel_booking')}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

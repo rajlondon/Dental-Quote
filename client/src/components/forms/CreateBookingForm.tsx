@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter'; 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useBookings, CreateBookingData } from '@/hooks/use-bookings';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -16,6 +15,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { 
   Select,
   SelectContent,
   SelectItem,
@@ -24,140 +28,136 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'wouter';
+import { useBookings } from '@/hooks/use-bookings';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
-// Create the form schema
-const createBookingSchema = z.object({
-  userId: z.number().optional(),
-  clinicId: z.number().positive({ message: "Please select a clinic" }),
-  quoteRequestId: z.number().optional(),
-  treatmentPlanId: z.number().optional(),
-  stage: z.string().default('deposit'),
-  status: z.string().default('pending'),
-  depositAmount: z.number().nonnegative().default(0),
-  arrivalDate: z.date().optional(),
-  departureDate: z.date().optional(),
+// Define the form schema using zod
+const FormSchema = z.object({
+  clinicId: z.number({
+    required_error: 'Please select a clinic',
+  }),
+  arrivalDate: z.date({
+    required_error: 'Arrival date is required',
+  }),
+  departureDate: z.date({
+    required_error: 'Departure date is required',
+  }).optional(),
   flightNumber: z.string().optional(),
-  accommodationType: z.string().optional(),
+  accommodationType: z.enum(['hotel', 'airbnb', 'hostel', 'friends_family', 'not_arranged'], {
+    required_error: 'Please select an accommodation type',
+  }).optional(),
   accommodationDetails: z.string().optional(),
   specialRequests: z.string().optional(),
+  depositAmount: z.coerce.number().min(0).optional(),
 });
 
-type FormValues = z.infer<typeof createBookingSchema>;
+type FormValues = z.infer<typeof FormSchema>;
 
 interface CreateBookingFormProps {
-  userId?: number;
-  clinicId?: number;
-  quoteRequestId?: number;
-  treatmentPlanId?: number;
-  isAdmin?: boolean;
+  predefinedClinicId?: number;
 }
 
-export default function CreateBookingForm({
-  userId,
-  clinicId,
-  quoteRequestId,
-  treatmentPlanId,
-  isAdmin = false,
-}: CreateBookingFormProps) {
+export default function CreateBookingForm({ predefinedClinicId }: CreateBookingFormProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [, navigate] = useNavigate();
+  const [location, navigate] = useLocation();
   const { createBooking, isCreating } = useBookings();
-  const [selectedClinic, setSelectedClinic] = useState<number | undefined>(clinicId);
   
-  // Default values for the form
-  const defaultValues: Partial<FormValues> = {
-    userId: userId || user?.id,
-    clinicId: clinicId,
-    quoteRequestId: quoteRequestId,
-    treatmentPlanId: treatmentPlanId,
-    stage: 'deposit',
-    status: 'pending',
-    depositAmount: 0
-  };
-  
+  // Mock clinic data - in a real app this would come from an API
+  const [clinics, setClinics] = useState([
+    { id: 1, name: 'Istanbul Dental Clinic' },
+    { id: 2, name: 'AntalyaSmile Dental Center' },
+    { id: 3, name: 'Izmir Dental Hospital' },
+    { id: 4, name: 'Bodrum Dental Care' },
+  ]);
+  const [isLoadingClinics, setIsLoadingClinics] = useState(false);
+
+  // Initialize the form
   const form = useForm<FormValues>({
-    resolver: zodResolver(createBookingSchema),
-    defaultValues,
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      clinicId: predefinedClinicId || undefined,
+      flightNumber: '',
+      accommodationDetails: '',
+      specialRequests: '',
+      depositAmount: 0,
+    },
   });
 
-  const onSubmit = (values: FormValues) => {
-    // Format the dates as strings
-    const bookingData: CreateBookingData = {
-      ...values,
-      userId: values.userId || user?.id || 0,
+  // Submit handler
+  const onSubmit = async (data: FormValues) => {
+    if (!user) {
+      toast({
+        title: t('auth.not_logged_in'),
+        description: t('auth.please_login'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Format dates to ISO strings before sending
+    const formattedData = {
+      ...data,
+      userId: user.id,
+      arrivalDate: data.arrivalDate?.toISOString(),
+      departureDate: data.departureDate?.toISOString(),
     };
-    
-    createBooking(bookingData, {
+
+    createBooking(formattedData, {
       onSuccess: (booking) => {
         toast({
           title: t('bookings.create_success_title'),
           description: t('bookings.create_success_message'),
         });
-        
-        // Redirect to the booking details page based on user role
-        if (isAdmin) {
-          navigate(`/admin/bookings/${booking.id}`);
-        } else if (user?.role === 'clinic_staff') {
-          navigate(`/clinic/bookings/${booking.id}`);
-        } else {
-          navigate(`/bookings/${booking.id}`);
-        }
+        // Navigate to the booking detail page
+        navigate(`/bookings/${booking.id}`);
       },
       onError: (error) => {
         toast({
           title: t('bookings.create_error_title'),
-          description: error.message,
+          description: error.message || t('bookings.create_error_message'),
           variant: 'destructive',
         });
       }
     });
   };
 
+  // Load clinics on component mount
+  useEffect(() => {
+    if (predefinedClinicId) {
+      form.setValue('clinicId', predefinedClinicId);
+    }
+
+    // In a real app, fetch clinics from API here
+    const fetchClinics = async () => {
+      setIsLoadingClinics(true);
+      try {
+        // const response = await apiRequest('GET', '/api/clinics');
+        // const data = await response.json();
+        // setClinics(data);
+        
+        // Using mock data for now
+        setTimeout(() => {
+          setIsLoadingClinics(false);
+        }, 500);
+      } catch (error) {
+        console.error('Error fetching clinics:', error);
+        setIsLoadingClinics(false);
+      }
+    };
+
+    fetchClinics();
+  }, [predefinedClinicId, form]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* User Selection - Only for admin */}
-        {isAdmin && (
-          <FormField
-            control={form.control}
-            name="userId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('bookings.user')}</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                  defaultValue={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('bookings.select_user')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {/* This would be populated with real user data */}
-                    <SelectItem value="1">Patient 1</SelectItem>
-                    <SelectItem value="2">Patient 2</SelectItem>
-                    <SelectItem value="3">Patient 3</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  {t('bookings.user_description')}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
         {/* Clinic Selection */}
         <FormField
           control={form.control}
@@ -166,13 +166,9 @@ export default function CreateBookingForm({
             <FormItem>
               <FormLabel>{t('bookings.clinic')}</FormLabel>
               <Select
-                onValueChange={(value) => {
-                  const clinicId = parseInt(value, 10);
-                  field.onChange(clinicId);
-                  setSelectedClinic(clinicId);
-                }}
-                defaultValue={field.value?.toString()}
-                disabled={!!clinicId || user?.role === 'clinic_staff'}
+                disabled={isLoadingClinics || !!predefinedClinicId}
+                onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                value={field.value?.toString()}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -180,10 +176,20 @@ export default function CreateBookingForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {/* This would be populated with real clinic data */}
-                  <SelectItem value="1">Istanbul Dental Clinic</SelectItem>
-                  <SelectItem value="2">Antalya Smile Center</SelectItem>
-                  <SelectItem value="3">Izmir Dental Solutions</SelectItem>
+                  {isLoadingClinics ? (
+                    <div className="flex justify-center items-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        {t('common.loading')}...
+                      </span>
+                    </div>
+                  ) : (
+                    clinics.map((clinic) => (
+                      <SelectItem key={clinic.id} value={clinic.id.toString()}>
+                        {clinic.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <FormDescription>
@@ -194,198 +200,97 @@ export default function CreateBookingForm({
           )}
         />
 
-        {/* Treatment Plan Selection */}
-        {treatmentPlanId ? (
+        {/* Travel Dates */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="treatmentPlanId"
+            name="arrivalDate"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('bookings.treatment_plan')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    value={`Treatment Plan #${treatmentPlanId}`}
-                    disabled
-                  />
-                </FormControl>
+              <FormItem className="flex flex-col">
+                <FormLabel>{t('bookings.arrival_date')}</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>{t('bookings.pick_date')}</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormDescription>
-                  {t('bookings.treatment_plan_linked')}
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-        ) : (
-          <FormField
-            control={form.control}
-            name="treatmentPlanId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('bookings.treatment_plan')}</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                  defaultValue={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('bookings.select_treatment_plan')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="">{t('common.none')}</SelectItem>
-                    {/* This would be populated with real treatment plan data */}
-                    <SelectItem value="1">Treatment Plan #1</SelectItem>
-                    <SelectItem value="2">Treatment Plan #2</SelectItem>
-                    <SelectItem value="3">Treatment Plan #3</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  {t('bookings.treatment_plan_description')}
+                  {t('bookings.arrival_date_description')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-        )}
 
-        {/* Quote Request Selection */}
-        {quoteRequestId ? (
           <FormField
             control={form.control}
-            name="quoteRequestId"
+            name="departureDate"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('bookings.quote_request')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    value={`Quote Request #${quoteRequestId}`}
-                    disabled
-                  />
-                </FormControl>
+              <FormItem className="flex flex-col">
+                <FormLabel>{t('bookings.departure_date')}</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>{t('bookings.pick_date')}</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value || undefined}
+                      onSelect={field.onChange}
+                      disabled={(date) => 
+                        date < new Date() || 
+                        (form.getValues().arrivalDate && date < form.getValues().arrivalDate)
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormDescription>
-                  {t('bookings.quote_request_linked')}
+                  {t('bookings.departure_date_description')}
                 </FormDescription>
+                <FormMessage />
               </FormItem>
             )}
           />
-        ) : null}
-
-        {/* Deposit Amount */}
-        <FormField
-          control={form.control}
-          name="depositAmount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('bookings.deposit_amount')}</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                  value={field.value?.toString() || '0'}
-                />
-              </FormControl>
-              <FormDescription>
-                {t('bookings.deposit_description')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Arrival Date */}
-        <FormField
-          control={form.control}
-          name="arrivalDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t('bookings.arrival_date')}</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>{t('bookings.select_date')}</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date() || (form.watch("departureDate") ? date > form.watch("departureDate")! : false)
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                {t('bookings.arrival_date_description')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Departure Date */}
-        <FormField
-          control={form.control}
-          name="departureDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t('bookings.departure_date')}</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>{t('bookings.select_date')}</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date() || (form.watch("arrivalDate") ? date < form.watch("arrivalDate")! : false)
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                {t('bookings.departure_date_description')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        </div>
 
         {/* Flight Number */}
         <FormField
@@ -395,7 +300,7 @@ export default function CreateBookingForm({
             <FormItem>
               <FormLabel>{t('bookings.flight_number')}</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder="TK1234" {...field} />
               </FormControl>
               <FormDescription>
                 {t('bookings.flight_number_description')}
@@ -405,7 +310,7 @@ export default function CreateBookingForm({
           )}
         />
 
-        {/* Accommodation Type */}
+        {/* Accommodation */}
         <FormField
           control={form.control}
           name="accommodationType"
@@ -414,7 +319,7 @@ export default function CreateBookingForm({
               <FormLabel>{t('bookings.accommodation_type')}</FormLabel>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -423,9 +328,10 @@ export default function CreateBookingForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="hotel">{t('bookings.accommodation.hotel')}</SelectItem>
-                  <SelectItem value="clinic_provided">{t('bookings.accommodation.clinic_provided')}</SelectItem>
-                  <SelectItem value="self_arranged">{t('bookings.accommodation.self_arranged')}</SelectItem>
-                  <SelectItem value="none">{t('bookings.accommodation.none')}</SelectItem>
+                  <SelectItem value="airbnb">{t('bookings.accommodation.airbnb')}</SelectItem>
+                  <SelectItem value="hostel">{t('bookings.accommodation.hostel')}</SelectItem>
+                  <SelectItem value="friends_family">{t('bookings.accommodation.friends_family')}</SelectItem>
+                  <SelectItem value="not_arranged">{t('bookings.accommodation.not_arranged')}</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>
@@ -436,23 +342,32 @@ export default function CreateBookingForm({
           )}
         />
 
-        {/* Accommodation Details */}
-        <FormField
-          control={form.control}
-          name="accommodationDetails"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('bookings.accommodation_details')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormDescription>
-                {t('bookings.accommodation_details_description')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Accommodation Details - show only if accommodation type is selected */}
+        {form.watch('accommodationType') && form.watch('accommodationType') !== 'not_arranged' && (
+          <FormField
+            control={form.control}
+            name="accommodationDetails"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('bookings.accommodation_details')}</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder={
+                      form.watch('accommodationType') === 'hotel' 
+                        ? t('bookings.hotel_placeholder') 
+                        : t('bookings.accommodation_details_placeholder')
+                    } 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t('bookings.accommodation_details_description')}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Special Requests */}
         <FormField
@@ -463,9 +378,9 @@ export default function CreateBookingForm({
               <FormLabel>{t('bookings.special_requests')}</FormLabel>
               <FormControl>
                 <Textarea 
+                  placeholder={t('bookings.special_requests_placeholder')} 
+                  className="resize-none min-h-[100px]" 
                   {...field} 
-                  placeholder={t('bookings.special_requests_placeholder')}
-                  className="min-h-[100px]"
                 />
               </FormControl>
               <FormDescription>
@@ -476,23 +391,11 @@ export default function CreateBookingForm({
           )}
         />
 
-        <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="outline" onClick={() => {
-            if (isAdmin) {
-              navigate('/admin/bookings');
-            } else if (user?.role === 'clinic_staff') {
-              navigate('/clinic/bookings');
-            } else {
-              navigate('/bookings');
-            }
-          }}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit" disabled={isCreating}>
-            {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('bookings.create_booking')}
-          </Button>
-        </div>
+        {/* Submit Button */}
+        <Button type="submit" className="w-full md:w-auto" disabled={isCreating}>
+          {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {t('bookings.create_booking_button')}
+        </Button>
       </form>
     </Form>
   );
