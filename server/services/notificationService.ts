@@ -6,6 +6,7 @@ import {
   NotificationResponse 
 } from '@shared/notifications';
 import { WebSocketService } from './websocketService';
+import { EmailNotificationService } from './emailNotificationService';
 
 // In-memory storage for notifications (replace with database in production)
 const notifications = new Map<string, Notification[]>();
@@ -16,9 +17,11 @@ const notifications = new Map<string, Notification[]>();
  */
 export class NotificationService {
   private wsService: WebSocketService;
+  private emailService: EmailNotificationService;
   
-  constructor(wsService: WebSocketService) {
+  constructor(wsService: WebSocketService, emailService: EmailNotificationService) {
     this.wsService = wsService;
+    this.emailService = emailService;
   }
   
   /**
@@ -44,6 +47,14 @@ export class NotificationService {
     
     // Send real-time notification using WebSocket
     this.sendRealTimeNotification(newNotification);
+    
+    // Send email notification if appropriate
+    try {
+      await this.emailService.processNotification(newNotification);
+    } catch (error) {
+      console.error('Failed to send email notification:', error);
+      // Don't fail the entire notification process if email fails
+    }
     
     return newNotification;
   }
@@ -228,6 +239,9 @@ export class NotificationService {
 }
 
 // Export factory function to create the service
-export const createNotificationService = (wsService: WebSocketService): NotificationService => {
-  return new NotificationService(wsService);
+export const createNotificationService = (
+  wsService: WebSocketService, 
+  emailService: EmailNotificationService
+): NotificationService => {
+  return new NotificationService(wsService, emailService);
 };
