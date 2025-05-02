@@ -244,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/clinic-media', clinicMediaRoutes);
   
   // Register booking and appointment routes
-  app.use('/api/booking', bookingRoutes);
+  app.use('/api/bookings', bookingRoutes);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
