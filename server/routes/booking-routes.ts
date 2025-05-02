@@ -221,15 +221,17 @@ router.patch("/:id", isAuthenticated, async (req, res, next) => {
       }
     }
     
-    // Convert date strings to Date objects if provided
-    if (req.body.arrivalDate) {
-      req.body.arrivalDate = new Date(req.body.arrivalDate);
+    // Handle date conversions
+    let modifiedData = { ...req.body };
+    
+    if (modifiedData.arrivalDate) {
+      modifiedData.arrivalDate = new Date(modifiedData.arrivalDate);
     }
-    if (req.body.departureDate) {
-      req.body.departureDate = new Date(req.body.departureDate);
+    if (modifiedData.departureDate) {
+      modifiedData.departureDate = new Date(modifiedData.departureDate);
     }
     
-    const updatedBooking = await storage.updateBooking(bookingId, req.body);
+    const updatedBooking = await storage.updateBooking(bookingId, modifiedData);
     
     res.json({
       success: true,
@@ -504,21 +506,23 @@ router.patch("/:bookingId/appointments/:appointmentId", isAuthenticated, async (
       throw new ForbiddenError("You don't have permission to update appointments");
     }
     
-    // Convert date strings to Date objects if provided
-    if (req.body.startTime) {
-      req.body.startTime = new Date(req.body.startTime);
+    // Handle date conversions for appointment updates
+    let appointmentData = { ...req.body };
+    
+    if (appointmentData.startTime) {
+      appointmentData.startTime = new Date(appointmentData.startTime);
     }
-    if (req.body.endTime) {
-      req.body.endTime = new Date(req.body.endTime);
+    if (appointmentData.endTime) {
+      appointmentData.endTime = new Date(appointmentData.endTime);
     }
     
-    const updatedAppointment = await storage.updateAppointment(appointmentId, req.body);
+    const updatedAppointment = await storage.updateAppointment(appointmentId, appointmentData);
     
     // Create notification if appointment is rescheduled
-    if (req.body.startTime || req.body.status) {
-      const notificationContent = req.body.startTime
-        ? `Your appointment on ${new Date(req.body.startTime).toLocaleDateString()} has been updated.`
-        : `Your appointment status has been updated to ${req.body.status}.`;
+    if (appointmentData.startTime || appointmentData.status) {
+      const notificationContent = appointmentData.startTime
+        ? `Your appointment on ${new Date(appointmentData.startTime).toLocaleDateString()} has been updated.`
+        : `Your appointment status has been updated to ${appointmentData.status}.`;
       
       await storage.createNotification({
         userId: booking.userId,
