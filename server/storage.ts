@@ -175,7 +175,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuoteRequestsByClinicId(clinicId: number): Promise<QuoteRequest[]> {
-    return db.select().from(quoteRequests).where(eq(quoteRequests.selectedClinicId, clinicId));
+    console.log(`[DEBUG] Getting quotes for clinic ID: ${clinicId}`);
+    const results = await db.select().from(quoteRequests).where(eq(quoteRequests.selectedClinicId, clinicId));
+    console.log(`[DEBUG] Found ${results.length} quotes for clinic ID: ${clinicId}`);
+    if (results.length === 0) {
+      // Query to check if there are any quotes with this clinic ID in the database
+      const allQuotes = await db.select().from(quoteRequests);
+      console.log(`[DEBUG] Total quotes in database: ${allQuotes.length}`);
+      console.log(`[DEBUG] Quotes with clinic assignments:`);
+      allQuotes.forEach(quote => {
+        if (quote.selectedClinicId) {
+          console.log(`  - Quote #${quote.id}: selectedClinicId = ${quote.selectedClinicId}`);
+        }
+      });
+    }
+    return results;
   }
 
   async getAllQuoteRequests(filters?: Partial<QuoteRequest>): Promise<QuoteRequest[]> {

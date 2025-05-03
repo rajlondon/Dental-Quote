@@ -219,20 +219,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       
+      console.log(`[DEBUG] Clinic portal quote request: User ID=${user.id}, Role=${user.role}`);
+      
       if (!user.clinicId) {
+        console.log(`[ERROR] User ${user.id} is not associated with a clinic`);
         return res.status(400).json({
           success: false,
           message: "User is not associated with a clinic"
         });
       }
       
+      console.log(`[DEBUG] Clinic portal user ${user.id} is associated with clinic ID=${user.clinicId}`);
+      
       const quotes = await storage.getQuoteRequestsByClinicId(user.clinicId);
+      
+      console.log(`[DEBUG] Returning ${quotes.length} quotes to the clinic portal`);
       
       res.json({
         success: true,
         data: quotes
       });
     } catch (error) {
+      console.error('[ERROR] Error in /api/quotes/clinic endpoint:', error);
       next(error);
     }
   });

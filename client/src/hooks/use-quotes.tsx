@@ -37,8 +37,10 @@ export function useQuotes() {
   const clinicQuotesQuery = useQuery<QuoteRequest[]>({
     queryKey: ["/api/quotes/clinic"],
     queryFn: async () => {
+      console.log("[DEBUG] Fetching clinic quotes from API");
       const response = await apiRequest("GET", "/api/quotes/clinic");
       const data = await response.json();
+      console.log("[DEBUG] Clinic quotes API response:", data);
       return data.data;
     },
     enabled: false // Manually enable when needed
@@ -123,10 +125,14 @@ export function useQuotes() {
   // Assign a quote to a clinic
   const assignClinicMutation = useMutation({
     mutationFn: async ({ quoteId, clinicId }: { quoteId: number, clinicId: number }) => {
+      console.log(`[DEBUG] Assigning quote #${quoteId} to clinic #${clinicId}`);
       const response = await apiRequest("POST", `/api/quotes/${quoteId}/assign-clinic`, { clinicId });
-      return response.json();
+      const responseData = await response.json();
+      console.log(`[DEBUG] Assign clinic response:`, responseData);
+      return responseData;
     },
     onSuccess: (data, variables) => {
+      console.log(`[DEBUG] Successfully assigned quote #${variables.quoteId} to clinic #${variables.clinicId}`);
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/quotes", variables.quoteId] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotes/admin/all"] });
@@ -138,6 +144,7 @@ export function useQuotes() {
       });
     },
     onError: (error: Error) => {
+      console.error(`[ERROR] Failed to assign quote:`, error);
       toast({
         title: "Error assigning quote",
         description: error.message,
