@@ -71,46 +71,11 @@ const NewBlogPage: React.FC = () => {
       <Navbar />
       
       {/* Hero Section with Blue Background */}
-      <section className="bg-[#003b95] py-8">
+      <section className="bg-[#003b95] py-10">
         <div className="container mx-auto px-4">
-          {/* Navigation Tabs */}
-          <div className="flex items-center space-x-6 mb-6 overflow-x-auto pb-2 -mx-4 px-4 md:pb-0 md:mx-0 md:px-0">
-            <Link href="/" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-              <Home className="h-5 w-5 mr-2" />
-              Home
-            </Link>
-            <Link href="/how-it-works" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              How It Works
-            </Link>
-            <Link href="/clinics" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Clinics
-            </Link>
-            <Link href="/dental-chart" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M7 12.5l1.5 2.5l1.5-2.5M7 20c0-4 4-4 4-8a4 4 0 10-8 0c0 4 4 4 4 8z" />
-                <path d="M17 12.5l1.5 2.5l1.5-2.5M17 20c0-4 4-4 4-8a4 4 0 10-8 0c0 4 4 4 4 8z" />
-              </svg>
-              Dental Chart
-            </Link>
-            <Link href="/blog" className="flex items-center text-white opacity-90 hover:opacity-100 whitespace-nowrap border-b-2 border-white pb-2 px-1 text-sm font-medium">
-              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z" />
-                <path d="M16 2v4M8 2v4M3 10h18" />
-                <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
-              </svg>
-              Blog
-            </Link>
-          </div>
-          
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-white text-3xl md:text-4xl font-bold mb-2">
+          {/* Simplified header */}
+          <div className="space-y-4">
+            <h1 className="text-white text-3xl md:text-4xl font-bold">
               Dental Tourism Blog
             </h1>
             <p className="text-white text-sm md:text-base">
