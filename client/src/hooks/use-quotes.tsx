@@ -1,10 +1,10 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { QuoteRequest, QuoteVersion, QuoteStatus } from "@/types/quote";
+import { QuoteRequest, QuoteVersion, QuoteStatus, CreateQuoteRequest } from "@/types/quote";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket, WebSocketMessage } from "./use-websocket";
 import { useEffect } from "react";
-import { useNotifications } from "./use-notifications";
+import { useNotifications, NotificationCategory } from "./use-notifications";
 
 export function useQuotes() {
   const { toast } = useToast();
@@ -140,6 +140,32 @@ export function useQuotes() {
     onError: (error: Error) => {
       toast({
         title: "Error assigning quote",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Create a new quote (for admin portal)
+  const createQuoteMutation = useMutation({
+    mutationFn: async (quoteData: CreateQuoteRequest) => {
+      const response = await apiRequest("POST", "/api/quotes", quoteData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["/api/quotes/admin/all"] });
+      
+      toast({
+        title: "Quote created",
+        description: "The quote has been created successfully.",
+      });
+      
+      return data.data; // Return the created quote
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error creating quote",
         description: error.message,
         variant: "destructive",
       });
@@ -361,6 +387,7 @@ export function useQuotes() {
     getQuoteQuery,
     
     // Mutations
+    createQuoteMutation,
     updateQuoteMutation,
     createQuoteVersionMutation,
     assignClinicMutation,
