@@ -267,6 +267,16 @@ function Router() {
       {process.env.NODE_ENV !== 'production' && (
         <>
           <Route path="/error-test" component={ErrorTestPage} />
+          <Route path="/testing/xray-component">
+            {() => {
+              const TestComponent = React.lazy(() => import("@/pages/testing/XrayComponentTest"));
+              return (
+                <Suspense fallback={<div className="p-12 text-center">Loading test component...</div>}>
+                  <TestComponent />
+                </Suspense>
+              );
+            }}
+          </Route>
         </>
       )}
       
