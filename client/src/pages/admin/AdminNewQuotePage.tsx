@@ -126,7 +126,7 @@ export default function AdminNewQuotePage() {
       }
       
       // Redirect to quotes page
-      setLocation("/admin-portal");
+      window.location.href = "/admin-portal";
     } catch (error: any) {
       console.error("Error creating quote:", error);
       toast({
@@ -200,7 +200,7 @@ export default function AdminNewQuotePage() {
         actions={
           <Button 
             variant="outline" 
-            onClick={() => setLocation("/admin-portal")}
+            onClick={() => window.location.href = "/admin-portal"}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Quotes
@@ -508,7 +508,7 @@ export default function AdminNewQuotePage() {
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline" 
-                      onClick={() => setLocation("/admin-portal")}
+                      onClick={() => window.location.href = "/admin-portal"}
                     >
                       Cancel
                     </Button>
