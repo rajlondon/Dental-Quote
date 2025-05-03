@@ -405,15 +405,21 @@ router.post("/:id/assign-clinic", isAuthenticated, ensureRole("admin"), async (r
     const quoteId = parseInt(req.params.id);
     const { clinicId } = req.body;
     
+    console.log(`[DEBUG] Assign clinic request - quoteId: ${quoteId}, clinicId: ${clinicId}`);
+    
     if (isNaN(quoteId) || !clinicId || isNaN(parseInt(clinicId))) {
+      console.log(`[ERROR] Invalid quote ID or clinic ID - quoteId: ${quoteId}, clinicId: ${clinicId}`);
       throw new BadRequestError("Invalid quote ID or clinic ID");
     }
     
     const clinic = await storage.getClinic(parseInt(clinicId));
     
     if (!clinic) {
+      console.log(`[ERROR] Clinic not found for ID: ${clinicId}`);
       throw new NotFoundError("Clinic not found");
     }
+    
+    console.log(`[DEBUG] Found clinic: ${clinic.name} (ID: ${clinic.id})`);
     
     const updatedQuote = await storage.updateQuoteRequest(quoteId, {
       selectedClinicId: parseInt(clinicId),
