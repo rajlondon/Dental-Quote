@@ -206,7 +206,13 @@ function Router() {
       <ProtectedRoute path="/admin/create-booking" component={CreateBookingPage} requiredRole="admin" />
       
       {/* Admin Quote Routes */}
-      <ProtectedRoute path="/admin/new-quote" component={AdminNewQuotePage} requiredRole="admin" />
+      <Route path="/admin/new-quote">
+        {() => (
+          <AdminPortalGuard>
+            <AdminNewQuotePage />
+          </AdminPortalGuard>
+        )}
+      </Route>
       
       {/* Clinic Staff Protected Routes */}
       {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
