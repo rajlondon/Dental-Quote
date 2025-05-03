@@ -104,10 +104,10 @@ function Router() {
       <Route path="/index">
         {() => <Redirect to="/" />}
       </Route>
-      <Route path="/blog">
-        {() => <Redirect to="/blog-react" />}
+      <Route path="/blog" component={NewBlogPage} />
+      <Route path="/blog-react">
+        {() => <Redirect to="/blog" />}
       </Route>
-      <Route path="/blog-react" component={NewBlogPage} />
       <Route path="/blog/how-it-works" component={HowItWorksBlogPost} />
       <Route path="/dental-implants" component={DentalImplantsPage} />
       <Route path="/veneers" component={VeneersPage} />

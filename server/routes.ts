@@ -89,8 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
   });
   
-  // Special route for blog page - completely new file to bypass caching
-  app.get('/blog', (req, res) => {
+  // Special route for legacy static blog page - renamed to blog-static to avoid conflicts with React route
+  app.get('/blog-static', (req, res) => {
     // Set strong cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
