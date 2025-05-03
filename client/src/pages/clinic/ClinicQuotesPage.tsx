@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { QuoteStatus } from "@/types/quote";
 
 export default function ClinicQuotesPage() {
   const [, setLocation] = useLocation();
@@ -58,7 +59,7 @@ export default function ClinicQuotesPage() {
   // If showing a specific quote
   if (quoteId && quoteQuery?.data) {
     // Define status update handler for clinic actions
-    const handleStatusUpdate = async (newStatus: string) => {
+    const handleStatusUpdate = async (newStatus: QuoteStatus) => {
       try {
         await updateQuoteMutation.mutateAsync({
           id: quoteId,
@@ -75,19 +76,23 @@ export default function ClinicQuotesPage() {
     // Determine available actions based on current status
     const getAvailableActions = () => {
       const quote = quoteQuery.data.quoteRequest;
-      const actions = [];
+      const actions: {
+        label: string; 
+        status: QuoteStatus; 
+        variant: "default" | "destructive" | "outline" | "secondary" | "primary" | "accent" | "success" | "warning";
+      }[] = [];
       
       if (quote.status === "assigned") {
         actions.push({
           label: "Begin Processing",
           status: "in_progress",
-          variant: "default" as const
+          variant: "default"
         });
       } else if (quote.status === "in_progress") {
         actions.push({
           label: "Send Quote to Patient",
           status: "sent",
-          variant: "primary" as const
+          variant: "primary"
         });
       }
       
@@ -107,7 +112,7 @@ export default function ClinicQuotesPage() {
           actions={actions.map(action => ({
             label: action.label,
             variant: action.variant,
-            onClick: () => handleStatusUpdate(action.status)
+            onClick: () => handleStatusUpdate(action.status as QuoteStatus)
           }))}
         />
       </div>
