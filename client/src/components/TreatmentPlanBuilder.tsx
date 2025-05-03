@@ -1599,14 +1599,37 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </TableCell>
                     <TableCell className="text-right">
                       <div>
-                        <span className="font-medium">£{treatment.priceGBP}</span>
-                        <span className="block text-xs text-gray-500">
-                          ${treatment.priceUSD}
-                        </span>
-                        {treatment.ukPriceGBP && (
-                          <span className="block text-xs text-green-600">
-                            (UK: £{treatment.ukPriceGBP})
-                          </span>
+                        {treatment.specialOffer ? (
+                          <>
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="line-through text-sm text-gray-500">
+                                £{Math.round(treatment.priceGBP * (100 / (100 - (treatment.specialOffer.discountType === 'percentage' ? treatment.specialOffer.discountValue : 0))))}
+                              </span>
+                              <span className="font-bold text-blue-700">£{treatment.priceGBP}</span>
+                            </div>
+                            <span className="block text-xs text-gray-500">
+                              ${treatment.priceUSD}
+                            </span>
+                            <div className="flex justify-end items-center mt-1">
+                              <Badge className="text-xs h-5 bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">
+                                {treatment.specialOffer.discountType === 'percentage' 
+                                  ? `Save ${treatment.specialOffer.discountValue}%` 
+                                  : `Save £${treatment.specialOffer.discountValue}`}
+                              </Badge>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-medium">£{treatment.priceGBP}</span>
+                            <span className="block text-xs text-gray-500">
+                              ${treatment.priceUSD}
+                            </span>
+                            {treatment.ukPriceGBP && (
+                              <span className="block text-xs text-green-600">
+                                (UK: £{treatment.ukPriceGBP})
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>
