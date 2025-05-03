@@ -114,8 +114,8 @@ const NewBlogPage: React.FC = () => {
           </div>
           
           {/* CTA Button */}
-          <Link href="/your-quote" className="inline-flex items-center bg-white text-[#0071c2] hover:bg-gray-100 font-bold py-2 px-4 rounded-lg shadow mb-4">
-            Get Your Free Quote <ArrowRight className="ml-2 h-4 w-4" />
+          <Link href="/your-quote" className="inline-flex items-center bg-red-500 text-white hover:bg-red-600 font-bold py-3 px-6 rounded-lg shadow mb-4">
+            !! GET YOUR QUOTE NOW !! <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </div>
       </section>
