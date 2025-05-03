@@ -1015,8 +1015,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNotification(data: InsertNotification): Promise<Notification> {
-    const [notification] = await db.insert(notifications).values(data).returning();
-    return notification;
+    try {
+      // If data contains a 'content' property that doesn't exist in the database,
+      // move it to 'message' field which does exist
+      const notificationData = { ...data };
+      
+      // @ts-ignore - Handle potential content field from old code
+      if (notificationData.content && !notificationData.message) {
+        // @ts-ignore - Copy content to message if message is not set
+        notificationData.message = notificationData.content;
+        // @ts-ignore - Remove the non-existent content field
+        delete notificationData.content;
+      }
+      
+      const [notification] = await db.insert(notifications).values(notificationData).returning();
+      return notification;
+    } catch (error) {
+      console.error('Failed to create notification:', error);
+      throw error;
+    }
   }
 
   async markNotificationAsRead(id: number): Promise<void> {
