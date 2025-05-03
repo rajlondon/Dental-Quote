@@ -14,7 +14,7 @@ export function useClinics() {
       const data = await response.json();
       return data.data;
     },
-    enabled: false // Manually enable when needed
+    enabled: true // Automatically enable so clinics are loaded
   });
 
   // Get a specific clinic by ID
@@ -53,9 +53,34 @@ export function useClinics() {
     }
   });
 
+  // Create a new clinic
+  const createClinicMutation = useMutation({
+    mutationFn: async (clinicData: Partial<Clinic>) => {
+      const response = await apiRequest("POST", "/api/clinics", clinicData);
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate the clinics list query
+      queryClient.invalidateQueries({ queryKey: ["/api/clinics"] });
+      
+      toast({
+        title: "Clinic created",
+        description: "The clinic has been created successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error creating clinic",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   return {
     allClinicsQuery,
     getClinicQuery,
-    updateClinicMutation
+    updateClinicMutation,
+    createClinicMutation
   };
 }
