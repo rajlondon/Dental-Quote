@@ -11,21 +11,95 @@ import {
 } from "lucide-react";
 import { format, isAfter, parseISO, differenceInDays } from "date-fns";
 import { SpecialOffer } from "@shared/specialOffers";
+import { v4 as uuidv4 } from 'uuid';
 
 interface PremiumOffersCarouselProps {
   className?: string;
 }
+
+// Sample offers data for demonstration
+const sampleOffers: SpecialOffer[] = [
+  {
+    id: "1",
+    clinic_id: "1",
+    title: "Free Consultation Package",
+    description: "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
+    discount_type: "percentage",
+    discount_value: 100, // 100% off on consultation
+    applicable_treatments: ["Dental Implants", "Veneers", "Full Mouth Reconstruction"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    promo_code: "FREECONSULT",
+    terms_conditions: "Applicable for new patients only. One consultation per patient.",
+    banner_image: "/images/clinics/dentgroup.jpg",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 20,
+    promotion_level: "premium",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  },
+  {
+    id: "2",
+    clinic_id: "2",
+    title: "Premium Hotel Deal",
+    description: "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
+    discount_type: "percentage",
+    discount_value: 20,
+    applicable_treatments: ["All Treatments"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    promo_code: "LUXHOTEL20",
+    terms_conditions: "Minimum treatment value of $1000 required. Subject to hotel availability.",
+    banner_image: "/images/offers/premium-hotel-new.png",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 20,
+    promotion_level: "premium",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  },
+  {
+    id: "3",
+    clinic_id: "3",
+    title: "Dental Implant + Crown Bundle",
+    description: "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
+    discount_type: "percentage",
+    discount_value: 30,
+    applicable_treatments: ["Dental Implants", "Crowns"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(),
+    promo_code: "IMPLANTCROWN30",
+    terms_conditions: "Valid for single tooth implant and crown combinations only.",
+    banner_image: "/images/treatments/illustrations/dental-implants1.png",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 18,
+    promotion_level: "featured",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  }
+];
 
 const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  // Fetch special offers data
-  const { data: offers = [], isLoading } = useQuery<SpecialOffer[]>({
+  // Fetch special offers data - fallback to sample data for now
+  const { data: apiOffers = [], isLoading } = useQuery<SpecialOffer[]>({
     queryKey: ["/api/special-offers/homepage"],
     // Default queryFn is already set up in the app to use the backend
   });
+  
+  // Use sample offers for demonstration if the API returns empty
+  const offers = apiOffers.length > 0 ? apiOffers : sampleOffers;
 
   // Auto-advance carousel every 5 seconds
   useEffect(() => {
