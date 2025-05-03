@@ -1,354 +1,279 @@
-import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { 
-  ArrowRight, 
-  ArrowLeft, 
-  Tag as TagIcon, 
-  BadgePercent, 
-  Clock,
-  Star,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
-import { format, isAfter, parseISO, differenceInDays } from "date-fns";
-import { SpecialOffer } from "@shared/specialOffers";
-import { cn } from "@/lib/utils";
-import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { Sparkles, Clock, ChevronRight, ChevronLeft, Tag } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'wouter';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { SpecialOffer, Tier } from '@shared/specialOffers';
+import { useToast } from '@/hooks/use-toast';
 
 interface EnhancedOffersCarouselProps {
   className?: string;
 }
 
-// Sample offers data for demonstration
-const sampleOffers: SpecialOffer[] = [
-  {
-    id: "free-consultation",
-    clinic_id: "1",
-    title: "Free Consultation Package",
-    description: "Experience personalized dental care with our complimentary consultation package, featuring comprehensive evaluations by internationally-trained specialists in our state-of-the-art facility.",
-    discount_type: "percentage",
-    discount_value: 100,
-    applicable_treatments: ["Dental Implants", "Veneers", "Full Mouth Reconstruction"],
-    start_date: new Date().toISOString(),
-    end_date: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(),
-    promo_code: "FREE-CONSULTATION100",
-    terms_conditions: "Terms and conditions apply. Please contact our team for details.",
-    banner_image: "/images/offers/free-consultation.jpg",
-    is_active: true,
-    admin_approved: true,
-    commission_percentage: 20,
-    promotion_level: "premium",
-    homepage_display: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
-  },
-  {
-    id: "dental-implant-crown-bundle",
-    clinic_id: "2",
-    title: "Dental Implant + Crown Bundle",
-    description: "Transform your smile with our exclusive dental implant and crown bundle, designed specifically for international patients seeking top-tier dental restoration.",
-    discount_type: "fixed_amount",
-    discount_value: 40,
-    applicable_treatments: ["All Treatments"],
-    start_date: new Date().toISOString(),
-    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
-    promo_code: "DENTAL-IMPLANT-CROWN-BUNDLE101",
-    terms_conditions: "Terms and conditions apply. Please contact our team for details.",
-    banner_image: "/images/offers/dental-implant-crown-bundle.jpg",
-    is_active: true,
-    admin_approved: true,
-    commission_percentage: 18,
-    promotion_level: "featured",
-    homepage_display: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
-  },
-  {
-    id: "luxury-airport-transfer",
-    clinic_id: "3",
-    title: "Luxury Airport Transfer",
-    description: "Begin your dental tourism experience with our complimentary luxury airport transfer service, designed for the ultimate comfort and convenience.",
-    discount_type: "fixed_amount",
-    discount_value: 60,
-    applicable_treatments: ["All Treatments"],
-    start_date: new Date().toISOString(),
-    end_date: new Date(new Date().setMonth(new Date().getMonth() + 4)).toISOString(),
-    promo_code: "LUXURY-AIRPORT-TRANSFER102",
-    terms_conditions: "Terms and conditions apply. Please contact our team for details.",
-    banner_image: "/images/offers/luxury-airport-transfer.jpg",
-    is_active: true,
-    admin_approved: true,
-    commission_percentage: 16,
-    promotion_level: "standard",
-    homepage_display: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
-  },
-  {
-    id: "premium-hotel-deal",
-    clinic_id: "4",
-    title: "Premium Hotel Deal",
-    description: "Enjoy luxury accommodation with our premium hotel package when booking selected dental treatments.",
-    discount_type: "percentage",
-    discount_value: 25,
-    applicable_treatments: ["All Treatments"],
-    start_date: new Date().toISOString(),
-    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
-    promo_code: "PREMIUM-HOTEL-25",
-    terms_conditions: "Terms and conditions apply. Please contact our team for details.",
-    banner_image: "/images/offers/premium-hotel-deal.jpg",
-    is_active: true,
-    admin_approved: true,
-    commission_percentage: 22,
-    promotion_level: "premium",
-    homepage_display: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
-  }
-];
-
-const EnhancedOffersCarousel: React.FC<EnhancedOffersCarouselProps> = ({ className }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [timestamp, setTimestamp] = useState(Date.now()); // Add timestamp for forced refresh
-
-  // Fetch special offers data
-  const { data: apiOffers = [], isLoading } = useQuery<SpecialOffer[]>({
-    queryKey: ["/api/special-offers/homepage"],
+export default function EnhancedOffersCarousel({ className }: EnhancedOffersCarouselProps) {
+  const { data: offers, isLoading, error } = useQuery<SpecialOffer[]>({
+    queryKey: ['/api/special-offers/homepage'],
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
-  // Use sample offers for demonstration if the API returns empty
-  const offers = apiOffers.length > 0 ? apiOffers : sampleOffers;
-
-  // Force re-render every 30 seconds to refresh images
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const { toast } = useToast();
+  
+  // Auto-advance slides
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimestamp(Date.now());
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-advance carousel every 5 seconds
-  useEffect(() => {
-    if (!isAutoPlaying || offers.length === 0 || isHovering) return;
+    if (!isAutoPlaying || !offers || offers.length <= 1) return;
     
     const interval = setInterval(() => {
-      setActiveIndex((prevIndex) => (prevIndex + 1) % offers.length);
+      setCurrentIndex((prevIndex) => 
+        prevIndex === (offers.length - 1) ? 0 : prevIndex + 1
+      );
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [offers.length, isAutoPlaying, isHovering]);
-
-  // Handle pause on hover
-  const handleMouseEnter = () => setIsHovering(true);
-  const handleMouseLeave = () => setIsHovering(false);
-
-  // Navigation functions
-  const prevSlide = () => {
-    setActiveIndex((prevIndex) => (prevIndex - 1 + offers.length) % offers.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+  }, [offers, isAutoPlaying]);
+  
+  // Pause auto-play when hovering
+  const handleMouseEnter = () => setIsAutoPlaying(false);
+  const handleMouseLeave = () => setIsAutoPlaying(true);
+  
+  // Handle navigation
+  const goToPrevious = () => {
+    if (!offers) return;
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? offers.length - 1 : prevIndex - 1
+    );
   };
-
-  const nextSlide = () => {
-    setActiveIndex((prevIndex) => (prevIndex + 1) % offers.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+  
+  const goToNext = () => {
+    if (!offers) return;
+    setCurrentIndex((prevIndex) => 
+      prevIndex === (offers.length - 1) ? 0 : prevIndex + 1
+    );
   };
-
-  // Get promotion level styling
-  const getPromotionBadgeStyle = (level: string) => {
-    switch (level) {
-      case "premium":
-        return "bg-gradient-to-r from-amber-500 to-yellow-400 text-black";
-      case "featured":
-        return "bg-gradient-to-r from-blue-500 to-cyan-400 text-white";
+  
+  // Generate dots for navigation
+  const renderDots = () => {
+    if (!offers) return null;
+    
+    return (
+      <div className="flex justify-center mt-4 space-x-2">
+        {offers.map((_, index) => (
+          <button
+            key={index}
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+              index === currentIndex 
+                ? 'bg-primary' 
+                : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+            onClick={() => setCurrentIndex(index)}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    );
+  };
+  
+  // Function to get image URL based on offer ID
+  const getImageUrl = (offer: SpecialOffer) => {
+    // Add version parameter to force refresh and prevent caching
+    const version = new Date().getTime();
+    
+    switch(offer.id) {
+      case 'free-consultation':
+        return `/images/offers/free-consultation.jpg?v=${version}`;
+      case 'dental-implant-crown-bundle':
+        return `/images/offers/dental-implant-crown-bundle.jpg?v=${version}`;
+      case 'luxury-airport-transfer':
+        return `/images/offers/luxury-airport-transfer.jpg?v=${version}`;
+      case 'premium-hotel-deal':
+        return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
       default:
-        return "bg-gray-200 text-gray-700";
+        // Use a fallback image if needed
+        return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
     }
   };
-
-  // Format discount text based on type and value
-  const formatDiscount = (type: string, value: number) => {
-    return type === "percentage" ? `${value}% off` : `$${value} off`;
+  
+  // Get badge style based on offer tier
+  const getBadgeStyle = (tier: Tier) => {
+    switch(tier) {
+      case 'premium':
+        return 'bg-gradient-to-r from-amber-500 to-yellow-300 text-amber-950 hover:from-amber-400 hover:to-yellow-200';
+      case 'featured':
+        return 'bg-gradient-to-r from-blue-500 to-blue-400 text-white hover:from-blue-400 hover:to-blue-300';
+      default:
+        return 'bg-gradient-to-r from-slate-500 to-slate-400 text-white hover:from-slate-400 hover:to-slate-300';
+    }
   };
-
-  // Calculate days left until offer expires
-  const getDaysRemaining = (endDate: string) => {
-    const end = parseISO(endDate);
-    return differenceInDays(end, new Date());
+  
+  // Handle booking or quote request
+  const handleRequestQuote = (offer: SpecialOffer) => {
+    toast({
+      title: "Special Offer Selected",
+      description: `Your quote will include: ${offer.title}`,
+      variant: "default",
+    });
+    
+    // Navigate to quote form
+    window.location.href = '/your-quote?specialOffer=' + offer.id;
   };
-
-  // Generate image URL with timestamp to force refresh
-  const getImageUrl = (offer: SpecialOffer) => {
-    const baseUrl = offer.banner_image || `/images/offers/${offer.id.toLowerCase().replace(/\s+/g, '-')}.jpg`;
-    return `${baseUrl}?v=${timestamp}`;
-  };
-
+  
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto mt-8 p-4">
-        <div className="flex items-center justify-center h-40 bg-gray-100 rounded-lg animate-pulse">
-          <div className="text-gray-400">Loading special offers...</div>
+      <div className={cn("my-12 py-8 px-4", className)}>
+        <div className="container mx-auto">
+          <div className="flex justify-center items-center h-72">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
         </div>
       </div>
     );
   }
-
-  if (offers.length === 0) {
-    return null; // Hide section if no offers available
-  }
-
-  return (
-    <div className={cn("w-full py-10 overflow-hidden bg-gradient-to-br from-blue-100 via-indigo-50 to-sky-50 shadow-inner", className)}>
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-6 px-4">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 text-transparent bg-clip-text">Special Offers</h2>
-            <p className="text-gray-600">Exclusive deals from our partner clinics</p>
-          </div>
-          
-          <div className="flex space-x-2">
-            <button
-              onClick={prevSlide}
-              className="p-2 rounded-full bg-white/50 hover:bg-white shadow-sm transition-colors"
-              aria-label="Previous offer"
-            >
-              <ChevronLeft size={22} className="text-blue-600" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="p-2 rounded-full bg-white/50 hover:bg-white shadow-sm transition-colors"
-              aria-label="Next offer"
-            >
-              <ChevronRight size={22} className="text-blue-600" />
-            </button>
-          </div>
-        </div>
-
-        <div
-          className="relative overflow-hidden rounded-xl shadow-xl bg-gradient-to-r from-blue-50 to-indigo-50 mx-4"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          {/* Carousel Track */}
-          <div
-            className="flex transition-transform duration-500 ease-in-out"
-            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
-          >
-            {offers.map((offer) => (
-              <div key={offer.id + "-" + timestamp} className="w-full flex-shrink-0">
-                <div className="flex flex-col md:flex-row h-full">
-                  {/* Image Section */}
-                  <div className="md:w-1/2 h-40 md:h-auto relative">
-                    <img
-                      src={getImageUrl(offer)}
-                      alt={offer.title}
-                      className="w-full h-full object-cover"
-                      loading="eager"
-                      onError={(e) => {
-                        // Fallback to original image path without timestamp if error
-                        const target = e.target as HTMLImageElement;
-                        target.src = `/images/offers/${offer.id.toLowerCase().replace(/\s+/g, '-')}.jpg`;
-                      }}
-                    />
-                    
-                    {/* Promotion Badge */}
-                    <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center ${getPromotionBadgeStyle(offer.promotion_level)}`}>
-                      <Star size={14} className="mr-1" />
-                      {offer.promotion_level.charAt(0).toUpperCase() + offer.promotion_level.slice(1)}
-                    </div>
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="md:w-1/2 p-4 md:p-6 bg-white bg-opacity-95 backdrop-blur-sm flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-bold text-xl md:text-2xl text-gray-800 mb-2">{offer.title}</h3>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-3 md:line-clamp-5">{offer.description}</p>
-                      
-                      {/* Offer Details */}
-                      <div className="space-y-2">
-                        {offer.discount_type && (
-                          <div className="flex items-center text-sm">
-                            <BadgePercent size={16} className="mr-2 text-green-600" />
-                            <span className="font-medium text-green-600">
-                              {formatDiscount(offer.discount_type, offer.discount_value)}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {offer.applicable_treatments && offer.applicable_treatments.length > 0 && (
-                          <div className="flex items-center text-sm">
-                            <TagIcon size={16} className="mr-2 text-gray-500" />
-                            <span>
-                              {offer.applicable_treatments.length === 1 && offer.applicable_treatments[0] === "All Treatments"
-                                ? "All treatments"
-                                : offer.applicable_treatments.join(", ")}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {offer.end_date && (
-                          <div className="flex items-center text-sm">
-                            <Clock size={16} className="mr-2 text-gray-500" />
-                            <span>
-                              {getDaysRemaining(offer.end_date) > 0
-                                ? `${getDaysRemaining(offer.end_date)} days left`
-                                : "Expires today"}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* CTA Button */}
-                    <div className="mt-4">
-                      <a
-                        href={`/offers/${offer.id}`}
-                        className="inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-md hover:from-blue-700 hover:to-indigo-700 transition-all"
-                      >
-                        View details
-                        <ArrowUpRight size={16} className="ml-1" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination Indicators */}
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-            <div className="flex space-x-2 bg-black/20 px-3 py-1.5 rounded-full">
-              {offers.map((_, index) => (
-                <button
-                  key={index + "-" + timestamp}
-                  onClick={() => {
-                    setActiveIndex(index);
-                    setIsAutoPlaying(false);
-                    setTimeout(() => setIsAutoPlaying(true), 10000);
-                  }}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${
-                    index === activeIndex
-                      ? "bg-primary shadow-sm w-5"
-                      : "bg-white/70 hover:bg-white"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
+  
+  if (error || !offers || offers.length === 0) {
+    return (
+      <div className={cn("my-12 py-8", className)}>
+        <div className="container mx-auto">
+          <div className="text-center p-8 bg-slate-50 rounded-lg">
+            <h3 className="text-2xl font-bold mb-2">Special Offers</h3>
+            <p className="text-gray-600">
+              Check back soon for exclusive special offers from our partner clinics!
+            </p>
           </div>
         </div>
       </div>
-    </div>
+    );
+  }
+  
+  return (
+    <section 
+      className={cn("py-12 bg-gradient-to-br from-slate-100 via-white to-blue-50", className)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex flex-wrap items-center justify-between mb-8">
+          <div className="mb-4 md:mb-0">
+            <h2 className="text-3xl font-bold bg-gradient-to-br from-primary to-blue-700 bg-clip-text text-transparent">
+              Special Offers
+            </h2>
+            <p className="text-gray-600 mt-2 max-w-2xl">
+              Exclusive deals from our premium partner clinics to make your dental journey more affordable.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full" 
+              onClick={goToPrevious}
+              aria-label="Previous offer"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full" 
+              onClick={goToNext}
+              aria-label="Next offer"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="relative overflow-hidden rounded-xl bg-white shadow-lg">
+          {offers.map((offer, index) => (
+            <motion.div
+              key={offer.id}
+              className={`flex flex-col md:flex-row ${
+                index === currentIndex ? 'block' : 'hidden'
+              }`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="md:w-1/2 h-64 md:h-auto relative">
+                <img 
+                  src={getImageUrl(offer)}
+                  alt={offer.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-4 left-4">
+                  <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.tier || 'standard'))}>
+                    {offer.tier === 'premium' && <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+                    {(offer.tier || 'standard').charAt(0).toUpperCase() + (offer.tier || 'standard').slice(1)}
+                  </Badge>
+                </div>
+                
+                {offer.expiresAt && (
+                  <div className="absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1.5 rounded-full flex items-center">
+                    <Clock className="w-3.5 h-3.5 mr-1.5" />
+                    <span>
+                      {new Date(offer.expiresAt) > new Date() 
+                        ? `Expires in ${Math.ceil((new Date(offer.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days`
+                        : 'Limited time offer'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="md:w-1/2 p-6 md:p-8 flex flex-col">
+                <div className="mb-2">
+                  {offer.discount && (
+                    <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 mb-2">
+                      <Tag className="w-3.5 h-3.5 mr-1" />
+                      {typeof offer.discount === 'number'
+                        ? `${offer.discount}% OFF`
+                        : offer.discount}
+                    </div>
+                  )}
+                </div>
+                
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{offer.title}</h3>
+                <p className="text-gray-600 mb-4">{offer.description}</p>
+                
+                <div className="mt-auto space-y-4">
+                  {offer.clinic && (
+                    <div className="flex items-center">
+                      <img 
+                        src={offer.clinic.logo || '/images/generic-clinic-logo.svg'} 
+                        alt={offer.clinic.name}
+                        className="w-8 h-8 rounded-full mr-3 object-cover" 
+                      />
+                      <div>
+                        <span className="text-sm text-gray-500">Offered by</span>
+                        <p className="font-medium">{offer.clinic.name}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex space-x-3">
+                    <Button 
+                      className="px-6" 
+                      onClick={() => handleRequestQuote(offer)}
+                    >
+                      Request Quote
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/clinics/${offer.clinic?.id || 1}`}>
+                        View Clinic
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        
+        {renderDots()}
+      </div>
+    </section>
   );
-};
-
-export default EnhancedOffersCarousel;
+}
