@@ -7,7 +7,7 @@ const HowItWorksBlogPost: React.FC = () => {
       hero={{
         title: "How MyDentalFly.com Works",
         subtitle: "Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.",
-        coverImage: "/images/clinics/dentgroup.jpg",
+        coverImage: "/images/treatments/illustrations/mydentalfly-works.png",
         authorName: "MyDentalFly Team",
         publishDate: "April 24, 2025"
       }}
@@ -15,19 +15,19 @@ const HowItWorksBlogPost: React.FC = () => {
         {
           title: "The Complete Guide to Dental Implants",
           slug: "dental-implants",
-          image: "/images/treatments/implants.jpg",
+          image: "/images/treatments/illustrations/dental-implants1.png",
           excerpt: "Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery."
         },
         {
           title: "Comparing Veneers and Crowns: Which is Right for You?",
           slug: "veneers",
-          image: "/images/treatments/veneers.jpg",
+          image: "/images/treatments/illustrations/veneers-and-crowns.png",
           excerpt: "A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option."
         },
         {
           title: "The Hollywood Smile: Transform Your Appearance",
           slug: "hollywood-smile",
-          image: "/images/treatments/hollywood.jpg",
+          image: "/images/treatments/illustrations/hollywood-smile.png",
           excerpt: "Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile."
         }
       ]}
