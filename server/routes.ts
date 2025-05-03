@@ -300,6 +300,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CSRF Token endpoint for frontend usage
   app.get('/api/csrf-token', csrfProtection, csrfTokenHandler);
   
+  // API endpoint to get all clinics
+  app.get('/api/clinics', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
+    try {
+      // Get clinic data from storage
+      const clinics = await storage.getAllClinics();
+      
+      // Return clinic data
+      res.json({
+        success: true,
+        data: clinics.map(clinic => ({
+          id: clinic.id,
+          name: clinic.name,
+          email: clinic.email,
+          city: clinic.city,
+          country: clinic.country,
+          specialties: clinic.specialties || [],
+          rating: clinic.rating,
+          reviewCount: clinic.reviewCount || 0
+        }))
+      });
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      throw new AppError('Failed to fetch clinics', 500);
+    }
+  }));
+  
   // WebSocket connection status endpoint with domain info
   app.get('/api/ws-status', (req, res) => {
     res.json({
