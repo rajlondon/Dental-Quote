@@ -12,6 +12,22 @@ export type QuoteStatus =
   | "cancelled"
   | "expired";
 
+export interface CreateQuoteRequest {
+  name: string;
+  email: string;
+  phone?: string;
+  treatment: string;
+  specificTreatment?: string;
+  consent: boolean;
+  notes?: string;
+  adminNotes?: string;
+  budget?: number;
+  travelDateRange?: string;
+  patientCountry?: string;
+  patientCity?: string;
+  patientLanguage?: string;
+}
+
 export interface QuoteRequest {
   id: number;
   userId?: number;
