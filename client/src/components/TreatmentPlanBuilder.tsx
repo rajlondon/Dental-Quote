@@ -25,6 +25,13 @@ export interface TreatmentItem {
   guarantee?: string;
   ukPriceGBP?: number;
   ukPriceUSD?: number;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
 }
 
 export interface TreatmentCategory {
@@ -1534,10 +1541,21 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
                 
                 return (
-                  <TableRow key={treatment.id}>
+                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-blue-50 border-blue-100' : ''}>
                     <TableCell>
                       <div>
+                        {treatment.specialOffer && (
+                          <Badge className="mb-2 bg-blue-100 text-blue-800 hover:bg-blue-100 flex items-center w-fit">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Special Offer
+                          </Badge>
+                        )}
                         <span className="font-medium">{treatment.name}</span>
+                        {treatment.specialOffer && (
+                          <span className="block text-xs text-blue-700 font-medium mt-1">
+                            {treatment.specialOffer.title}
+                          </span>
+                        )}
                         {treatment.guarantee && (
                           <span className="block text-xs text-gray-500">
                             {treatment.guarantee} guarantee

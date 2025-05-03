@@ -883,6 +883,16 @@ import {
 import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
 import TreatmentGuide from '@/components/TreatmentGuide';
 
+// Interface for special offer from URL parameters
+interface SpecialOfferParams {
+  id: string;
+  title: string;
+  clinicId: string;
+  discountValue: number;
+  discountType: 'percentage' | 'fixed_amount';
+  applicableTreatment: string;
+}
+
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
@@ -893,6 +903,25 @@ const YourQuotePage: React.FC = () => {
     treatment: searchParams.get('treatment') || 'Dental Implants',
     travelMonth: searchParams.get('travelMonth') || 'Flexible',
     budget: searchParams.get('budget') || '£1,500 - £2,500'
+  });
+  
+  // Special offer data (if passed from homepage)
+  const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
+    const offerId = searchParams.get('specialOffer');
+    
+    // If there's a special offer ID in the URL parameters, create a special offer object
+    if (offerId) {
+      return {
+        id: offerId,
+        title: searchParams.get('offerTitle') || 'Special Offer',
+        clinicId: searchParams.get('offerClinic') || '',
+        discountValue: parseInt(searchParams.get('offerDiscount') || '0'),
+        discountType: (searchParams.get('offerDiscountType') || 'percentage') as 'percentage' | 'fixed_amount',
+        applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
+      };
+    }
+    
+    return null;
   });
   
   // Treatment Plan Builder State
@@ -963,14 +992,59 @@ const YourQuotePage: React.FC = () => {
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
     
-    // Show welcome toast when the page loads
-    toast({
-      title: "Let's Build Your Quote",
-      description: "Start by creating your custom treatment plan below.",
-    });
+    // Show welcome toast - adjusting based on whether this came from special offer
+    if (specialOffer) {
+      toast({
+        title: "Special Offer Selected",
+        description: `Your quote includes: ${specialOffer.title}`,
+      });
+    } else {
+      toast({
+        title: "Let's Build Your Quote",
+        description: "Start by creating your custom treatment plan below.",
+      });
+    }
     
+    // Initialize treatments based on whether we have a special offer
+    if (specialOffer) {
+      // Create a treatment item from the special offer
+      const specialOfferTreatment: PlanTreatmentItem = {
+        id: `special_offer_${Date.now()}`,
+        category: 'special_offer',
+        name: specialOffer.applicableTreatment,
+        quantity: 1,
+        priceGBP: 450, // Base price, will be discounted later
+        priceUSD: 580, // Base price, will be discounted later
+        subtotalGBP: 450,
+        subtotalUSD: 580,
+        guarantee: '5-year',
+        specialOffer: {
+          id: specialOffer.id,
+          title: specialOffer.title,
+          discountType: specialOffer.discountType,
+          discountValue: specialOffer.discountValue,
+          clinicId: specialOffer.clinicId
+        }
+      };
+      
+      // Apply the discount based on type
+      if (specialOffer.discountType === 'percentage') {
+        const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+        specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
+        specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
+        specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
+        specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
+      } else if (specialOffer.discountType === 'fixed_amount') {
+        specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOffer.discountValue);
+        specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert GBP to USD
+        specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
+        specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
+      }
+      
+      setTreatmentItems([specialOfferTreatment]);
+    }
     // Initialize with a default treatment if the user came from selecting a specific treatment
-    if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
+    else if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
       const initialTreatment: PlanTreatmentItem = {
         id: `default_${Date.now()}`,
         category: 'implants', // Default category, would be determined by mapping in real app
