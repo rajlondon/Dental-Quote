@@ -16,6 +16,8 @@ dotenv.config();
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000, // 60 second timeout
+  maxRetries: 2,
 });
 
 // Handle ES module __dirname equivalent
