@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Home,
   Star,
-  Tooth,
   Users,
   Search
 } from "lucide-react";
@@ -95,7 +94,10 @@ const BlogPage: React.FC = () => {
                 Clinics
               </Link>
               <Link href="/dental-chart" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <Tooth className="h-5 w-5 mr-2" />
+                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 12.5l1.5 2.5l1.5-2.5M7 20c0-4 4-4 4-8a4 4 0 10-8 0c0 4 4 4 4 8z" />
+                  <path d="M17 12.5l1.5 2.5l1.5-2.5M17 20c0-4 4-4 4-8a4 4 0 10-8 0c0 4 4 4 4 8z" />
+                </svg>
                 Dental Chart
               </Link>
               <Link href="/blog" className="flex items-center text-white opacity-90 hover:opacity-100 whitespace-nowrap border-b-2 border-white pb-2 px-1 text-sm font-medium">
