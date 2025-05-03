@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useQuotes } from "@/hooks/use-quotes";
 import { useClinics } from "@/hooks/use-clinics";
 import { useToast } from "@/hooks/use-toast";
+import { Clinic } from "@/types/clinic";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -126,7 +127,7 @@ export default function AdminNewQuotePage() {
       
       // Redirect to quotes page
       setLocation("/admin-portal");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating quote:", error);
       toast({
         title: "Error creating quote",
@@ -467,7 +468,7 @@ export default function AdminNewQuotePage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {allClinicsQuery.data?.map((clinic) => (
+                            {allClinicsQuery.data?.map((clinic: Clinic) => (
                               <SelectItem key={clinic.id} value={clinic.id.toString()}>
                                 {clinic.name}
                               </SelectItem>
