@@ -1,12 +1,15 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   Plane as PlaneIcon, 
-  Search,
-  BookOpen,
-  ArrowRight
+  ArrowRight,
+  Home,
+  Star,
+  Tooth,
+  Users,
+  Search
 } from "lucide-react";
 
 interface BlogPostProps {
@@ -19,6 +22,8 @@ interface BlogPostProps {
 }
 
 const BlogPage: React.FC = () => {
+  const [location, setLocation] = useLocation();
+  
   const blogPosts: BlogPostProps[] = [
     {
       title: "How MyDentalFly.com Works",
@@ -67,39 +72,38 @@ const BlogPage: React.FC = () => {
       <Navbar />
       
       {/* Hero Section - Styled like HeroSimple */}
-      <section className="relative pb-12 overflow-hidden">
+      <section className="relative pb-6 overflow-hidden">
         {/* Booking.com style dark blue background */}
         <div className="bg-[#003b95] pb-8 pt-8">
           <div className="container mx-auto px-4">
             {/* Service navigation tabs - Booking.com style */}
             <div className="flex items-center space-x-6 mb-6 overflow-x-auto pb-2 -mx-4 px-4 md:pb-0 md:mx-0 md:px-0">
-              <Link href="/dental-implants" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 20.668v-6.667M17 20.668v-6.667M7 14.001h10M12 7.334v6.667M9.5 3.334C9.5 2.597 10.12 2 10.888 2h2.224c.768 0 1.388.597 1.388 1.334 0 .736-.62 1.333-1.388 1.333h-2.224c-.768 0-1.388-.597-1.388-1.333z" />
-                </svg>
-                Dental Implants
+              <Link href="/" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
+                <Home className="h-5 w-5 mr-2" />
+                Home
               </Link>
-              <Link href="/veneers" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
+              <Link href="/how-it-works" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M2 12c0-3.771 0-5.657 1.172-6.828C4.343 4 6.229 4 10 4h4c3.771 0 5.657 0 6.828 1.172C22 6.343 22 8.229 22 12c0 3.771 0 5.657-1.172 6.828C19.657 20 17.771 20 14 20h-4c-3.771 0-5.657 0-6.828-1.172C2 17.657 2 15.771 2 12z" />
-                  <path d="M12 4v16" />
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                Veneers & Crowns
+                How It Works
               </Link>
-              <Link href="/hollywood-smile" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
+              <Link href="/clinics" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7.5 12c0 1-1.795 2-4 2-1 0-1.5-.5-1.5-1.5S2 9.962 2 8.5C2 4.962 4.5 3 7.5 3s4.5 2 4.5 4.5M16.5 12c0 1 1.795 2 4 2 1 0 1.5-.5 1.5-1.5s0-2.538 0-4C22 4.962 19.5 3 16.5 3s-4.5 2-4.5 4.5M21 16c-.5 1.5-2.477 3-5.5 3-2.5 0-4.5-1.105-5.5-3-1 1.895-3 3-5.5 3-3.023 0-5-1.5-5.5-3" />
+                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                Hollywood Smile
+                Clinics
               </Link>
-              <Link href="/full-mouth" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 19v-1a4 4 0 00-4-4h-1M2 19v-1a4 4 0 014-4h1M13 5a4 4 0 11-8 0 4 4 0 018 0zm9 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                Full Mouth Reconstruction
+              <Link href="/dental-chart" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
+                <Tooth className="h-5 w-5 mr-2" />
+                Dental Chart
               </Link>
               <Link href="/blog" className="flex items-center text-white opacity-90 hover:opacity-100 whitespace-nowrap border-b-2 border-white pb-2 px-1 text-sm font-medium">
-                <BookOpen className="h-5 w-5 mr-2" />
+                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                  <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+                </svg>
                 Blog
               </Link>
             </div>
@@ -121,12 +125,15 @@ const BlogPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Trust bar (optional) */}
+        {/* Trust bar */}
         <div className="container mx-auto px-4 mt-3">
           <div className="max-w-5xl mx-auto text-center text-[11px] text-gray-500 flex flex-wrap items-center justify-center">
             <span className="flex items-center">35+ informative articles</span>
             <span className="mx-2">•</span>
-            <span className="flex items-center">Expert dental information</span>
+            <span className="flex items-center">
+              <Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-500 mr-0.5" />
+              Expert dental information
+            </span>
             <span className="mx-2">•</span>
             <span>Updated monthly</span>
           </div>
@@ -140,25 +147,25 @@ const BlogPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogPosts.map((post, index) => (
                 <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md transition-transform hover:shadow-lg hover:-translate-y-1">
-                  <a href={`/${post.slug}`}>
+                  <Link href={`/${post.slug}`}>
                     <img
                       src={post.image}
                       alt={post.title}
                       className="w-full h-56 object-cover"
                     />
-                  </a>
+                  </Link>
                   <div className="p-6">
-                    <a href={`/${post.slug}`}>
+                    <Link href={`/${post.slug}`}>
                       <h2 className="font-bold text-xl mb-3 text-primary hover:text-primary/80">{post.title}</h2>
-                    </a>
+                    </Link>
                     <p className="text-neutral-600 mb-4">{post.excerpt}</p>
                     <div className="flex items-center justify-between text-sm text-neutral-500">
                       <span>{post.author}</span>
                       <span>{post.publishDate}</span>
                     </div>
-                    <a href={`/${post.slug}`} className="mt-4 inline-block text-[#0071c2] font-medium hover:underline">
+                    <Link href={`/${post.slug}`} className="mt-4 inline-block text-[#0071c2] font-medium hover:underline">
                       Read more →
-                    </a>
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -174,9 +181,9 @@ const BlogPage: React.FC = () => {
               <p className="text-lg text-neutral-700 mb-6">
                 Get your personalized quote today and save up to 70% on high-quality dental treatment in Istanbul.
               </p>
-              <a href="/your-quote" className="inline-block bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 px-6 rounded-lg">
+              <Link href="/your-quote" className="inline-block bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 px-6 rounded-lg">
                 Get Your Free Quote
-              </a>
+              </Link>
             </div>
           </div>
         </section>
