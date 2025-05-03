@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,7 @@ const quoteRequests = [
 
 const QuoteManagementSection: React.FC = () => {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
 
   return (
     <div className="space-y-6">
@@ -87,7 +89,7 @@ const QuoteManagementSection: React.FC = () => {
             </TabsTrigger>
           </TabsList>
           
-          <Button onClick={() => window.location.href = "/admin/new-quote"}>
+          <Button onClick={() => setLocation("/admin/new-quote")}>
             {t("admin.quotes.create_quote", "Create New Quote")}
           </Button>
         </div>

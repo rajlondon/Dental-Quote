@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'wouter';
 import { 
   ChevronUp, ChevronDown, Users, Calendar, 
   ClipboardList, CreditCard, Activity, 
@@ -72,6 +73,7 @@ const pendingQuotes = [
 
 const AdminDashboardSection: React.FC = () => {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
 
   return (
     <div className="space-y-6">
@@ -322,7 +324,7 @@ const AdminDashboardSection: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Button 
           className="py-6 flex justify-center gap-2"
-          onClick={() => window.location.href = "/admin/new-quote"}
+          onClick={() => setLocation("/admin/new-quote")}
         >
           <ClipboardList className="h-5 w-5" />
           {t("admin.dashboard.create_quote", "Create New Quote")}
