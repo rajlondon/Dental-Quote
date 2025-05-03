@@ -204,7 +204,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                 {/* Image Section */}
                 <div className="md:w-1/2 h-40 md:h-auto relative">
                   <img
-                    src={offer.banner_image || `/images/offers/${offer.id.toLowerCase().replace(/\s+/g, '-')}.png`}
+                    src={offer.banner_image || `/images/offers/${offer.id.toLowerCase().replace(/\s+/g, '-')}.jpg`}
                     alt={offer.title}
                     className="w-full h-full object-cover"
                   />
