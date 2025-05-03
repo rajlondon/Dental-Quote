@@ -58,7 +58,7 @@ type FormValues = z.infer<typeof createQuoteSchema>;
 export default function AdminNewQuotePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { createQuoteMutation } = useQuotes();
+  const { createQuoteMutation, assignClinicMutation } = useQuotes();
   const { allClinicsQuery } = useClinics();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -113,11 +113,25 @@ export default function AdminNewQuotePage() {
       
       // If a clinic is selected, assign the quote to the clinic
       if (data.clinicId && response?.id) {
-        // You could add the assignClinicMutation here if needed
-        toast({
-          title: "Quote created and assigned",
-          description: "The quote has been created and assigned to the clinic successfully.",
-        });
+        try {
+          // Call the assignClinicMutation to actually assign the clinic
+          await assignClinicMutation.mutateAsync({
+            quoteId: response.id,
+            clinicId: parseInt(data.clinicId)
+          });
+          
+          toast({
+            title: "Quote created and assigned",
+            description: "The quote has been created and assigned to the clinic successfully.",
+          });
+        } catch (error) {
+          console.error("Error assigning clinic:", error);
+          toast({
+            title: "Quote created but clinic assignment failed",
+            description: "The quote was created but couldn't be assigned to the clinic.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Quote created",
