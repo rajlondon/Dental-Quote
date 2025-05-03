@@ -105,6 +105,7 @@ function Router() {
         {() => <Redirect to="/" />}
       </Route>
       <Route path="/blog" component={NewBlogPage} />
+      <Route path="/blog-react" component={NewBlogPage} />
       <Route path="/blog/how-it-works" component={HowItWorksBlogPost} />
       <Route path="/dental-implants" component={DentalImplantsPage} />
       <Route path="/veneers" component={VeneersPage} />
