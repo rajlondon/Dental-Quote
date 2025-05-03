@@ -47,3 +47,17 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
     maximumFractionDigits: 2
   }).format(amount);
 }
+
+/**
+ * Format a file size from bytes to human-readable format
+ * e.g. 1024 -> "1.0 KB", 2048000 -> "2.0 MB"
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}

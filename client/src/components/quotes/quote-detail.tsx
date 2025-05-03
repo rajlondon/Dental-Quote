@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { getStatusBadgeColor, getStatusLabel } from "./quote-list-table";
 import { ArrowLeft, Clipboard, Download, File, Phone, Mail, Calendar, MapPin, FileCheck } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import QuoteXrayFiles from "./quote-xray-files";
 
 type PortalType = "patient" | "clinic" | "admin";
 
