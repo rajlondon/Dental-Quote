@@ -87,7 +87,7 @@ const QuoteManagementSection: React.FC = () => {
             </TabsTrigger>
           </TabsList>
           
-          <Button>
+          <Button onClick={() => window.location.href = "/admin/new-quote"}>
             {t("admin.quotes.create_quote", "Create New Quote")}
           </Button>
         </div>
