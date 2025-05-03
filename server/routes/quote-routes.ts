@@ -77,20 +77,37 @@ router.get("/clinic", isAuthenticated, ensureRole("clinic_staff"), async (req, r
   try {
     const user = req.user!;
     
+    console.log(`[DEBUG] Clinic staff (${user.id}: ${user.username}) requesting quotes for clinic ID: ${user.clinicId}`);
+    
     if (!user.clinicId) {
+      console.log(`[ERROR] User ${user.id} doesn't have an associated clinic`);
       return res.status(400).json({
         success: false,
         message: "User is not associated with a clinic"
       });
     }
     
+    console.log(`[DEBUG] Fetching quotes for clinic ID: ${user.clinicId}`);
     const quotes = await storage.getQuoteRequestsByClinicId(user.clinicId);
+    console.log(`[DEBUG] Found ${quotes.length} quotes for clinic ${user.clinicId}`);
+    
+    // Let's check directly in the database if there are any quotes assigned to this clinic
+    try {
+      const { db } = await import("../db");
+      const sql = `SELECT id, status, name, selected_clinic_id FROM quote_requests WHERE selected_clinic_id = ${user.clinicId}`;
+      console.log(`[DEBUG] Running raw SQL: ${sql}`);
+      const sqlResults = await db.execute(sql);
+      console.log(`[DEBUG] Raw SQL results:`, sqlResults.rows);
+    } catch (dbError) {
+      console.error(`[ERROR] Failed to run raw SQL query:`, dbError);
+    }
     
     res.json({
       success: true,
       data: quotes
     });
   } catch (error) {
+    console.error(`[ERROR] Error in /quotes/clinic route:`, error);
     next(error);
   }
 });
@@ -421,10 +438,14 @@ router.post("/:id/assign-clinic", isAuthenticated, ensureRole("admin"), async (r
     
     console.log(`[DEBUG] Found clinic: ${clinic.name} (ID: ${clinic.id})`);
     
+    console.log(`[DEBUG] Updating quote #${quoteId} with clinicId: ${clinicId} (type: ${typeof parseInt(clinicId)})`);
+    
     const updatedQuote = await storage.updateQuoteRequest(quoteId, {
       selectedClinicId: parseInt(clinicId),
       status: "assigned"
     });
+    
+    console.log(`[DEBUG] Updated quote result:`, updatedQuote);
     
     if (!updatedQuote) {
       throw new NotFoundError("Quote request not found");
