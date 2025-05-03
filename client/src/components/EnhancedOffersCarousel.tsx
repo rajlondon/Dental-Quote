@@ -147,8 +147,20 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       variant: "default",
     });
     
-    // Navigate to quote form
-    window.location.href = '/your-quote?specialOffer=' + offer.id;
+    // Create searchParams with special offer information
+    const offerParams = new URLSearchParams({
+      specialOffer: offer.id,
+      offerTitle: offer.title,
+      offerClinic: offer.clinic_id || '',
+      offerDiscount: offer.discount_value ? offer.discount_value.toString() : '0',
+      offerDiscountType: offer.discount_type || 'percentage',
+      treatment: offer.applicable_treatments && offer.applicable_treatments.length > 0 
+        ? offer.applicable_treatments[0] 
+        : 'Dental Implants'
+    });
+    
+    // Navigate to quote form with offer details
+    window.location.href = `/your-quote?${offerParams.toString()}`;
   };
   
   if (isLoading) {
