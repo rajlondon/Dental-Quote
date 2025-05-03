@@ -63,12 +63,12 @@ const Navbar: React.FC = () => {
             {t('navbar.clinic_login', 'Clinic Login')}
           </Link>
           
-          <a 
-            href="/blog" 
+          <Link 
+            href="/blog-react" 
             className="text-neutral-600 hover:text-primary transition-colors text-xs"
           >
             {t('navbar.blog', 'Blog')}
-          </a>
+          </Link>
           
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.contact', 'Contact')}
@@ -138,12 +138,12 @@ const Navbar: React.FC = () => {
             {t('navbar.clinic_login', 'Clinic Login')}
           </Link>
           
-          <a 
-            href="/blog" 
+          <Link 
+            href="/blog-react" 
             className="block text-neutral-600 hover:text-primary transition-colors text-xs"
           >
             {t('navbar.blog', 'Blog')}
-          </a>
+          </Link>
           
           <Link href="/about" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             {t('navbar.about', 'About Us')}
