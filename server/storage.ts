@@ -176,19 +176,48 @@ export class DatabaseStorage implements IStorage {
 
   async getQuoteRequestsByClinicId(clinicId: number): Promise<QuoteRequest[]> {
     console.log(`[DEBUG] Getting quotes for clinic ID: ${clinicId}`);
-    const results = await db.select().from(quoteRequests).where(eq(quoteRequests.selectedClinicId, clinicId));
+    
+    // Log the actual SQL that would be generated
+    const query = db.select().from(quoteRequests).where(eq(quoteRequests.selectedClinicId, clinicId));
+    const queryString = query.toSQL();
+    console.log(`[DEBUG] Generated SQL: ${queryString.sql} with params: ${JSON.stringify(queryString.params)}`);
+    
+    const results = await query;
     console.log(`[DEBUG] Found ${results.length} quotes for clinic ID: ${clinicId}`);
+    
     if (results.length === 0) {
-      // Query to check if there are any quotes with this clinic ID in the database
+      // Query to check if there are any quotes with this clinic ID in the database directly
+      const rawSql = `SELECT id, name, status, selected_clinic_id FROM quote_requests WHERE selected_clinic_id = ${clinicId}`;
+      console.log(`[DEBUG] Executing raw SQL: ${rawSql}`);
+      try {
+        const rawResults = await db.execute(rawSql);
+        console.log(`[DEBUG] Raw SQL results: ${JSON.stringify(rawResults.rows)}`);
+      } catch (error) {
+        console.error(`[ERROR] Raw SQL query failed: ${error}`);
+      }
+      
+      // Check all quotes in the database
       const allQuotes = await db.select().from(quoteRequests);
       console.log(`[DEBUG] Total quotes in database: ${allQuotes.length}`);
       console.log(`[DEBUG] Quotes with clinic assignments:`);
       allQuotes.forEach(quote => {
         if (quote.selectedClinicId) {
-          console.log(`  - Quote #${quote.id}: selectedClinicId = ${quote.selectedClinicId}`);
+          console.log(`  - Quote #${quote.id}: selectedClinicId = ${quote.selectedClinicId} (typeof: ${typeof quote.selectedClinicId})`);
         }
       });
+      
+      // Let's check if clinic exists
+      try {
+        const clinic = await db.select().from(clinics).where(eq(clinics.id, clinicId));
+        console.log(`[DEBUG] Clinic check: found ${clinic.length} clinics with ID ${clinicId}`);
+        if (clinic.length > 0) {
+          console.log(`[DEBUG] Clinic details: ${JSON.stringify(clinic[0])}`);
+        }
+      } catch (error) {
+        console.error(`[ERROR] Clinic check failed: ${error}`);
+      }
     }
+    
     return results;
   }
 

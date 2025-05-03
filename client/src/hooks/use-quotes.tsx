@@ -38,10 +38,37 @@ export function useQuotes() {
     queryKey: ["/api/quotes/clinic"],
     queryFn: async () => {
       console.log("[DEBUG] Fetching clinic quotes from API");
-      const response = await apiRequest("GET", "/api/quotes/clinic");
-      const data = await response.json();
-      console.log("[DEBUG] Clinic quotes API response:", data);
-      return data.data;
+      try {
+        const response = await apiRequest("GET", "/api/quotes/clinic");
+        const data = await response.json();
+        console.log("[DEBUG] Clinic quotes API response:", data);
+        
+        if (data.success === false) {
+          console.error("[ERROR] Failed to fetch clinic quotes:", data.message);
+          throw new Error(data.message || "Failed to fetch clinic quotes");
+        }
+        
+        // Print detailed information about each quote
+        if (data.data && Array.isArray(data.data)) {
+          console.log(`[DEBUG] Received ${data.data.length} quotes from API`);
+          data.data.forEach((quote: any, index: number) => {
+            console.log(`[DEBUG] Quote #${index + 1}:`, {
+              id: quote.id,
+              status: quote.status,
+              name: quote.name,
+              selectedClinicId: quote.selectedClinicId,
+              createdAt: quote.createdAt
+            });
+          });
+        } else {
+          console.log("[DEBUG] No quotes data or not in expected format:", data);
+        }
+        
+        return data.data;
+      } catch (error) {
+        console.error("[ERROR] Error fetching clinic quotes:", error);
+        throw error;
+      }
     },
     enabled: false // Manually enable when needed
   });
