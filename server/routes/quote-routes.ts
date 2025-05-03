@@ -250,10 +250,11 @@ router.patch("/:id", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// Create a new quote version (admin only)
-router.post("/:id/versions", isAuthenticated, ensureRole("admin"), async (req, res, next) => {
+// Create a new quote version (admin and clinic staff can create)
+router.post("/:id/versions", isAuthenticated, async (req, res, next) => {
   try {
     const quoteId = parseInt(req.params.id);
+    const user = req.user!;
     
     if (isNaN(quoteId)) {
       throw new BadRequestError("Invalid quote ID");
@@ -265,16 +266,43 @@ router.post("/:id/versions", isAuthenticated, ensureRole("admin"), async (req, r
       throw new NotFoundError("Quote request not found");
     }
     
+    // Check permissions
+    if (user.role === "patient") {
+      return res.status(403).json({
+        success: false,
+        message: "Patients cannot create quote versions"
+      });
+    }
+    
+    // For clinic staff, verify they're assigned to this quote
+    if (user.role === "clinic_staff") {
+      if (!user.clinicId || quote.selectedClinicId !== user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: "This quote is not assigned to your clinic"
+        });
+      }
+      
+      // Verify the quote is in a state where clinic can create a quote version
+      if (!["assigned", "in_progress"].includes(quote.status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot create quote versions when quote is in '${quote.status}' status. Quote must be 'assigned' or 'in_progress'.`
+        });
+      }
+    }
+    
     // Get all existing versions to determine next version number
     const existingVersions = await storage.getQuoteVersions(quoteId);
     const versionNumber = existingVersions.length > 0 
       ? Math.max(...existingVersions.map(v => v.versionNumber)) + 1 
       : 1;
     
+    // Create the quote version
     const quoteVersion = await storage.createQuoteVersion({
       quoteRequestId: quoteId,
       versionNumber,
-      createdById: req.user!.id,
+      createdById: user.id,
       status: "draft",
       quoteData: req.body.quoteData
     });
@@ -286,11 +314,11 @@ router.post("/:id/versions", isAuthenticated, ensureRole("admin"), async (req, r
           title: "New Quote Version",
           message: `Your quote request has been updated with a new quote version`,
           category: "treatment",
-          priority: "medium",
+          priority: "high", // Increased priority to high since this is important
           target_type: "patient",
           target_id: String(quote.userId),
-          source_type: "admin",
-          source_id: String(req.user!.id),
+          source_type: user.role,  // 'admin' or 'clinic_staff'
+          source_id: String(user.id),
           action_url: `/patient/quotes/${quoteId}`,
           status: "unread"
         });
@@ -300,10 +328,40 @@ router.post("/:id/versions", isAuthenticated, ensureRole("admin"), async (req, r
       }
     }
     
-    // Update quote request status to "sent"
+    // Update quote request status if requested
     let updatedQuote = quote;
     if (req.body.updateQuoteStatus) {
-      updatedQuote = await storage.updateQuoteRequest(quoteId, { status: "sent" });
+      // For clinics, set status to in_progress if it's assigned
+      let newStatus = "sent";
+      if (user.role === "clinic_staff" && quote.status === "assigned") {
+        newStatus = "in_progress";
+      }
+      
+      updatedQuote = await storage.updateQuoteRequest(quoteId, { 
+        status: newStatus,
+        lastUpdatedBy: user.id
+      });
+      
+      // Also notify admin when clinic creates a quote version
+      if (user.role === "clinic_staff") {
+        try {
+          await storage.createNotification({
+            title: "Clinic Created Quote Version",
+            message: `Clinic has created a new quote version for request #${quoteId}`,
+            category: "treatment",
+            priority: "medium",
+            target_type: "admin",
+            target_id: "1", // Admin ID as string
+            source_type: "clinic",
+            source_id: String(user.id),
+            action_url: `/admin/quotes/${quoteId}`,
+            status: "unread"
+          });
+        } catch (error) {
+          console.error("Failed to create admin notification:", error);
+          // Continue despite notification error
+        }
+      }
       
       // Send WebSocket notification about the status change
       try {
@@ -313,17 +371,18 @@ router.post("/:id/versions", isAuthenticated, ensureRole("admin"), async (req, r
             quoteId,
             versionId: quoteVersion.id,
             versionNumber: quoteVersion.versionNumber,
-            status: updatedQuote?.status || "sent",
-            createdBy: req.user!.id,
-            createdAt: new Date().toISOString()
+            status: updatedQuote?.status || newStatus,
+            createdBy: user.id,
+            createdAt: new Date().toISOString(),
+            creatorRole: user.role
           },
           sender: {
-            id: String(req.user!.id),
-            type: 'admin'
+            id: String(user.id),
+            type: user.role
           }
         });
         
-        console.log(`WebSocket broadcast: New quote version #${quoteVersion.versionNumber} created for quote #${quoteId} with status ${updatedQuote?.status || "sent"}`);
+        console.log(`WebSocket broadcast: New quote version #${quoteVersion.versionNumber} created for quote #${quoteId} with status ${updatedQuote?.status || newStatus}`);
       } catch (error) {
         console.error('Failed to send WebSocket notification:', error);
         // Continue despite WebSocket error

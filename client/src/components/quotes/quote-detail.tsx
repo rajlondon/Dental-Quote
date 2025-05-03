@@ -259,19 +259,7 @@ export default function QuoteDetail({
                       )}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {/* Placeholder for X-ray files - would be populated from API */}
-                      <Card className="bg-muted/30">
-                        <CardContent className="flex flex-col items-center justify-center py-6">
-                          <File className="h-12 w-12 text-muted-foreground mb-2" />
-                          <p className="font-medium text-center">X-Ray Image</p>
-                          <p className="text-sm text-muted-foreground">
-                            Click to view
-                          </p>
-                        </CardContent>
-                      </Card>
-                      {/* Add actual X-ray files here in a production environment */}
-                    </div>
+                    <QuoteXrayFiles quoteId={quoteRequest.id} portalType={portalType} />
                   )}
                 </TabsContent>
 
