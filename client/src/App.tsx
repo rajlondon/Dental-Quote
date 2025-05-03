@@ -113,6 +113,10 @@ function Router() {
         {() => <Redirect to="/blog" />}
       </Route>
       <Route path="/blog/how-it-works" component={HowItWorksBlogPost} />
+      <Route path="/blog/dental-implants" component={DentalImplantsBlogPost} />
+      <Route path="/blog/veneers" component={VeneersBlogPost} />
+      <Route path="/blog/hollywood-smile" component={HollywoodSmileBlogPost} />
+      <Route path="/blog/full-mouth" component={FullMouthBlogPost} />
       <Route path="/dental-implants" component={DentalImplantsPage} />
       <Route path="/veneers" component={VeneersPage} />
       <Route path="/hollywood-smile" component={HollywoodSmilePage} />
