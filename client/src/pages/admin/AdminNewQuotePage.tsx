@@ -125,8 +125,12 @@ export default function AdminNewQuotePage() {
         });
       }
       
+      // Mark as intentional navigation
+      if (typeof window.markAdminPortalNavigation === 'function') {
+        window.markAdminPortalNavigation();
+      }
       // Redirect to quotes page
-      window.location.href = "/admin-portal";
+      setLocation('/admin-portal?section=quotes');
     } catch (error: any) {
       console.error("Error creating quote:", error);
       toast({
@@ -200,7 +204,13 @@ export default function AdminNewQuotePage() {
         actions={
           <Button 
             variant="outline" 
-            onClick={() => window.location.href = "/admin-portal"}
+            onClick={() => {
+              // Mark as intentional navigation
+              if (typeof window.markAdminPortalNavigation === 'function') {
+                window.markAdminPortalNavigation();
+              }
+              setLocation('/admin-portal?section=quotes');
+            }}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Quotes
@@ -508,7 +518,13 @@ export default function AdminNewQuotePage() {
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline" 
-                      onClick={() => window.location.href = "/admin-portal"}
+                      onClick={() => {
+                        // Mark as intentional navigation
+                        if (typeof window.markAdminPortalNavigation === 'function') {
+                          window.markAdminPortalNavigation();
+                        }
+                        setLocation('/admin-portal?section=quotes');
+                      }}
                     >
                       Cancel
                     </Button>
