@@ -89,7 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
   });
   
-  // Special route for legacy static blog page - renamed to blog-static to avoid conflicts with React route
+  // All /blog routes are now handled by React components in the frontend
+  // Blog static HTML file can still be accessed at /blog-static
   app.get('/blog-static', (req, res) => {
     // Set strong cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -101,25 +102,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.join(__dirname, '../public/blog-new.html'));
   });
   
-  // Special route for blog.html direct access
-  app.get('/blog.html', (req, res) => {
-    // Set strong cache control headers to prevent caching
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    // Add random query parameter to URL to force reloading from server
-    res.setHeader('Content-Type', 'text/html');
-    // Serve the new file with the updated design
-    res.sendFile(path.join(__dirname, '../public/blog-new.html'));
-  });
-  
-  // Keep original v2 route for comparison
+  // Legacy blog routes are moved to blog-v2 and blog-static
   app.get('/blog-v2', (req, res) => {
     // Set cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, '../public/blog-v2.html'));
+  });
+  
+  // This handler redirects old blog.html links to the new React blog page
+  app.get('/blog.html', (req, res) => {
+    res.redirect('/blog');
   });
   
   // Add explicit route for new blog design
