@@ -14,11 +14,18 @@ import QuoteXrayFiles from "./quote-xray-files";
 
 type PortalType = "patient" | "clinic" | "admin";
 
+interface ActionButton {
+  label: string;
+  variant: "default" | "destructive" | "outline" | "secondary" | "primary" | "accent" | "success" | "warning";
+  onClick: () => void;
+}
+
 interface QuoteDetailProps {
   quoteRequest: QuoteRequest;
   versions: QuoteVersion[];
   portalType: PortalType;
   onBack?: () => void;
+  actions?: ActionButton[];
 }
 
 export default function QuoteDetail({
@@ -26,6 +33,7 @@ export default function QuoteDetail({
   versions,
   portalType,
   onBack,
+  actions = [],
 }: QuoteDetailProps) {
   const getActionText = () => {
     if (portalType === "admin") {
@@ -79,11 +87,23 @@ export default function QuoteDetail({
           Back to Quotes
         </Button>
 
-        {actionText && (
-          <Button asChild>
-            <Link to={actionPath}>{actionText}</Link>
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {actions.map((action, index) => (
+            <Button 
+              key={index} 
+              variant={action.variant} 
+              onClick={action.onClick}
+            >
+              {action.label}
+            </Button>
+          ))}
+          
+          {actionText && (
+            <Button asChild>
+              <Link to={actionPath}>{actionText}</Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">

@@ -16,7 +16,8 @@ export default function ClinicQuotesPage() {
   
   const {
     clinicQuotesQuery,
-    getQuoteQuery
+    getQuoteQuery,
+    updateQuoteMutation
   } = useQuotes();
   
   const [activeTab, setActiveTab] = useState<"all" | "new" | "in_progress" | "completed">("all");
