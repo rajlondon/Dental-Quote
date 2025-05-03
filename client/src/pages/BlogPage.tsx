@@ -27,7 +27,7 @@ const BlogPage: React.FC = () => {
     {
       title: "How MyDentalFly.com Works",
       slug: "blog/how-it-works",
-      image: "/images/clinics/dentgroup.jpg",
+      image: "/images/treatments/illustrations/mydentalfly-works.png",
       excerpt: "Your complete guide to affordable, high-quality dental treatment in Istanbul with our full-service concierge experience.",
       author: "MyDentalFly Team",
       publishDate: "April 24, 2025"
@@ -35,7 +35,7 @@ const BlogPage: React.FC = () => {
     {
       title: "The Complete Guide to Dental Implants",
       slug: "dental-implants",
-      image: "/images/treatments/implants.jpg",
+      image: "/images/treatments/illustrations/dental-implants1.png",
       excerpt: "Everything you need to know about dental implants, including types, procedures, costs, and what to expect during recovery.",
       author: "Dr. Sarah Johnson",
       publishDate: "April 20, 2025"
@@ -43,7 +43,7 @@ const BlogPage: React.FC = () => {
     {
       title: "Comparing Veneers and Crowns: Which is Right for You?",
       slug: "veneers",
-      image: "/images/treatments/veneers.jpg",
+      image: "/images/treatments/illustrations/veneers-and-crowns.png",
       excerpt: "A comprehensive comparison of dental veneers and crowns to help you understand the benefits, limitations, and costs of each option.",
       author: "Dr. Michael Chen",
       publishDate: "April 18, 2025"
@@ -51,7 +51,7 @@ const BlogPage: React.FC = () => {
     {
       title: "The Hollywood Smile: Transform Your Appearance",
       slug: "hollywood-smile",
-      image: "/images/treatments/hollywood.jpg",
+      image: "/images/treatments/illustrations/hollywood-smile.png",
       excerpt: "Learn about the Hollywood Smile procedure and how it combines multiple treatments to create that perfect celebrity smile.",
       author: "Dr. Emily Taylor",
       publishDate: "April 15, 2025"
@@ -59,7 +59,7 @@ const BlogPage: React.FC = () => {
     {
       title: "Full Mouth Reconstruction: A New Beginning",
       slug: "full-mouth",
-      image: "/images/treatments/fullmouth.jpg",
+      image: "/images/treatments/illustrations/full-mouth-reconstruction.png",
       excerpt: "Discover how full mouth reconstruction can address multiple dental issues and completely restore your oral health and appearance.",
       author: "Dr. James Wilson",
       publishDate: "April 10, 2025"
@@ -153,7 +153,7 @@ const BlogPage: React.FC = () => {
                     <img
                       src={post.image}
                       alt={post.title}
-                      className="w-full h-56 object-cover"
+                      className="w-full h-56 object-cover bg-[#f8f9fa]"
                     />
                   </Link>
                   <div className="p-6">
