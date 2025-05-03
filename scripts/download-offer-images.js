@@ -36,13 +36,13 @@ const specialOffers = [
   {
     id: 'dental-implant-crown-bundle',
     title: 'Dental Implant + Crown Bundle',
-    imageUrl: 'https://images.unsplash.com/photo-1606265752439-1f0acc2a7b11?q=80&w=1024&auto=format&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1024&auto=format&fit=crop',
     filename: 'dental-implant-crown-bundle.jpg'
   },
   {
     id: 'luxury-airport-transfer',
     title: 'Luxury Airport Transfer',
-    imageUrl: 'https://images.unsplash.com/photo-1627055496898-024d43098e10?q=80&w=1024&auto=format&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1627726277388-81b3083f861a?q=80&w=1024&auto=format&fit=crop',
     filename: 'luxury-airport-transfer.jpg'
   }
 ];
