@@ -204,6 +204,16 @@ function Router() {
       <ProtectedRoute path="/admin/bookings/:id" component={AdminBookingDetailPage} requiredRole="admin" />
       <ProtectedRoute path="/admin/create-booking" component={CreateBookingPage} requiredRole="admin" />
       
+      {/* Admin Quote Routes */}
+      <ProtectedRoute path="/admin/new-quote" component={() => {
+        const AdminNewQuotePage = React.lazy(() => import("@/pages/admin/AdminNewQuotePage"));
+        return (
+          <Suspense fallback={<div className="p-12 text-center">Loading...</div>}>
+            <AdminNewQuotePage />
+          </Suspense>
+        );
+      }} requiredRole="admin" />
+      
       {/* Clinic Staff Protected Routes */}
       {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
       <Route path="/simple-clinic">
