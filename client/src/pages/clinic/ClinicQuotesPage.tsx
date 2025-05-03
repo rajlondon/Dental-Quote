@@ -56,6 +56,46 @@ export default function ClinicQuotesPage() {
 
   // If showing a specific quote
   if (quoteId && quoteQuery?.data) {
+    // Define status update handler for clinic actions
+    const handleStatusUpdate = async (newStatus: string) => {
+      try {
+        await updateQuoteMutation.mutateAsync({
+          id: quoteId,
+          data: { status: newStatus }
+        });
+        
+        // Force refresh the quote data
+        quoteQuery.refetch();
+      } catch (error) {
+        console.error("Failed to update quote status:", error);
+      }
+    };
+    
+    // Determine available actions based on current status
+    const getAvailableActions = () => {
+      const quote = quoteQuery.data.quoteRequest;
+      const actions = [];
+      
+      if (quote.status === "assigned") {
+        actions.push({
+          label: "Begin Processing",
+          status: "in_progress",
+          variant: "default" as const
+        });
+      } else if (quote.status === "in_progress") {
+        actions.push({
+          label: "Send Quote to Patient",
+          status: "sent",
+          variant: "primary" as const
+        });
+      }
+      
+      return actions;
+    };
+    
+    // Get available actions for this quote
+    const actions = getAvailableActions();
+    
     return (
       <div className="container mx-auto py-6 px-4">
         <QuoteDetail
@@ -63,6 +103,11 @@ export default function ClinicQuotesPage() {
           versions={quoteQuery.data.versions}
           portalType="clinic"
           onBack={() => setLocation("/clinic/quotes")}
+          actions={actions.map(action => ({
+            label: action.label,
+            variant: action.variant,
+            onClick: () => handleStatusUpdate(action.status)
+          }))}
         />
       </div>
     );
