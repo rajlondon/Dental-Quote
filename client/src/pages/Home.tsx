@@ -10,7 +10,7 @@ import { Link } from "wouter";
 import clinicsData from "@/data/clinics.json";
 import TrendingPackageCard from "@/components/TrendingPackageCard";
 import { trendingPackages } from "@/data/packages";
-import PremiumOffersCarousel from "@/components/PremiumOffersCarousel";
+import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
 
 // Clinic Card Component
 const ClinicCard = ({ 
@@ -294,7 +294,7 @@ const HomePage: React.FC = () => {
       <HeroSimple />
       
       {/* Premium Offers Carousel */}
-      <PremiumOffersCarousel className="px-4" />
+      <EnhancedOffersCarousel className="px-4" />
       
       {/* Popular Clinics Section */}
       <section className="py-16">
