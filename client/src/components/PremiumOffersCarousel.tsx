@@ -169,7 +169,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
   return (
     <div className={`max-w-5xl mx-auto mt-8 ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Special Offers</h2>
+        <h2 className="text-xl font-bold text-primary">Special Offers</h2>
         <div className="flex space-x-2">
           <button
             onClick={handlePrevious}
@@ -189,7 +189,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
       </div>
 
       <div
-        className="relative overflow-hidden rounded-lg shadow-lg"
+        className="relative overflow-hidden rounded-lg shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -217,7 +217,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                 </div>
 
                 {/* Content Section */}
-                <div className="md:w-1/2 p-4 md:p-6 bg-white flex flex-col justify-between">
+                <div className="md:w-1/2 p-4 md:p-6 bg-white bg-opacity-90 flex flex-col justify-between">
                   <div>
                     <h3 className="font-bold text-xl text-gray-800 mb-2">{offer.title}</h3>
                     <p className="text-sm text-gray-600 mb-4">{offer.description}</p>
@@ -275,7 +275,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
 
         {/* Pagination Indicators */}
         <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-          <div className="flex space-x-1">
+          <div className="flex space-x-2 bg-black/20 px-3 py-1.5 rounded-full">
             {offers.map((_, index) => (
               <button
                 key={index}
@@ -284,10 +284,10 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                   setIsAutoPlaying(false);
                   setTimeout(() => setIsAutoPlaying(true), 10000);
                 }}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
                   index === activeIndex
-                    ? "bg-white w-4"
-                    : "bg-white/50 hover:bg-white/80"
+                    ? "bg-primary shadow-sm w-5"
+                    : "bg-white/70 hover:bg-white"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
