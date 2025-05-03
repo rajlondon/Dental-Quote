@@ -117,11 +117,6 @@ const NewBlogPage: React.FC = () => {
               Expert advice, guides, and information about dental treatments abroad. Discover everything you need to know about dental procedures, costs, and what to expect.
             </p>
           </div>
-          
-          {/* CTA Button */}
-          <Link href="/your-quote" className="inline-flex items-center bg-red-500 text-white hover:bg-red-600 font-bold py-3 px-6 rounded-lg shadow mb-4">
-            !! GET YOUR QUOTE NOW !! <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
         </div>
       </section>
       
