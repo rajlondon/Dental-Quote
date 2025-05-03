@@ -100,24 +100,29 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     );
   };
   
-  // Function to get image URL based on offer ID
+  // Function to get image URL from the API response
   const getImageUrl = (offer: SpecialOffer) => {
     // Add version parameter to force refresh and prevent caching
     const version = new Date().getTime();
     
-    switch(offer.id) {
-      case 'free-consultation':
-        return `/images/offers/free-consultation.jpg?v=${version}`;
-      case 'dental-implant-crown-bundle':
-        return `/images/offers/dental-implant-crown-bundle.jpg?v=${version}`;
-      case 'luxury-airport-transfer':
-        return `/images/offers/luxury-airport-transfer.jpg?v=${version}`;
-      case 'premium-hotel-deal':
-        return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
-      default:
-        // Use a fallback image if needed
-        return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
+    // Use the banner_image from the API if available
+    if (offer.banner_image) {
+      return `${offer.banner_image}?v=${version}`;
     }
+    
+    // Fallback image mapping based on offer title
+    if (offer.title.toLowerCase().includes('consultation')) {
+      return `/images/offers/free-consultation.jpg?v=${version}`;
+    } else if (offer.title.toLowerCase().includes('implant')) {
+      return `/images/offers/dental-implant-crown-bundle.jpg?v=${version}`;
+    } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
+      return `/images/offers/luxury-airport-transfer.jpg?v=${version}`;
+    } else if (offer.title.toLowerCase().includes('hotel')) {
+      return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
+    }
+    
+    // Default fallback
+    return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
   };
   
   // Get badge style based on offer promotion level
