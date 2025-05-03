@@ -1,104 +1,94 @@
 /**
- * Download Free Special Offer Images
+ * Force Download Special Offer Images Script
  * 
- * This script downloads free high-resolution images from Unsplash
- * for use in the special offers carousel.
+ * This script downloads high-quality images for the special offers carousel
+ * from public URLs to ensure they're available locally for the application.
  */
 import fs from 'fs';
 import path from 'path';
+import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 
-// Handle ES module __dirname equivalent
+// Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const outputDir = path.join(__dirname, '..', 'public', 'images', 'offers');
 
-// Ensure the output directory exists
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir, { recursive: true });
-  console.log(`Created directory: ${outputDir}`);
+// Define the target directory for downloaded images
+const targetDir = path.join(__dirname, '..', 'public', 'images', 'offers');
+
+// Ensure the target directory exists
+if (!fs.existsSync(targetDir)) {
+  fs.mkdirSync(targetDir, { recursive: true });
+  console.log(`Created directory: ${targetDir}`);
 }
 
-// Define the special offers and their image sources
-const specialOffers = [
+// Define image sources (high-quality stock images)
+const imageSources = [
   {
-    id: 'free-consultation-package',
-    title: 'Free Consultation Package',
-    imageUrl: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=1024&auto=format&fit=crop',
-    filename: 'free-consultation-package.jpg'
-  },
-  {
-    id: 'premium-hotel-deal',
-    title: 'Premium Hotel Deal',
-    imageUrl: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=1024&auto=format&fit=crop',
-    filename: 'premium-hotel-deal.jpg'
+    id: 'free-consultation',
+    url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=1200',
+    filename: 'free-consultation.jpg'
   },
   {
     id: 'dental-implant-crown-bundle',
-    title: 'Dental Implant + Crown Bundle',
-    imageUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1024&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=1200',
     filename: 'dental-implant-crown-bundle.jpg'
   },
   {
     id: 'luxury-airport-transfer',
-    title: 'Luxury Airport Transfer',
-    imageUrl: 'https://images.unsplash.com/photo-1627726277388-81b3083f861a?q=80&w=1024&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1513618827672-0d7f5cd7f40a?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=1200',
     filename: 'luxury-airport-transfer.jpg'
+  },
+  {
+    id: 'premium-hotel-deal',
+    url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=1200',
+    filename: 'premium-hotel-deal.jpg'
   }
 ];
 
-/**
- * Download and save an image from a URL
- * @param {Object} offer - The offer object containing image URL and filename
- */
-async function downloadImage(offer) {
+// Function to download an image
+async function downloadImage(url, filepath) {
   try {
-    console.log(`Downloading image for: ${offer.title}...`);
+    console.log(`Downloading image from ${url}...`);
+    const response = await fetch(url);
     
-    // Download the image
-    const imageResponse = await fetch(offer.imageUrl);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to download the image: ${imageResponse.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
     
-    // Convert the image to a buffer
-    const imageBuffer = await imageResponse.arrayBuffer();
+    const buffer = await response.buffer();
+    fs.writeFileSync(filepath, buffer);
     
-    // Save the image to the output directory
-    const outputPath = path.join(outputDir, offer.filename);
-    fs.writeFileSync(outputPath, Buffer.from(imageBuffer));
-    
-    console.log(`Image saved to: ${outputPath}`);
-    return outputPath;
+    console.log(`Image saved successfully to ${filepath}`);
+    return true;
   } catch (error) {
-    console.error(`Error downloading image for ${offer.title}:`, error);
-    return null;
+    console.error(`Error downloading image: ${error.message}`);
+    return false;
   }
 }
 
-/**
- * Download all offer images
- */
-async function downloadAllImages() {
-  console.log('Starting image downloads...');
+// Main execution
+async function main() {
+  console.log('Starting download of special offer images...');
   
-  for (const offer of specialOffers) {
-    try {
-      const imagePath = await downloadImage(offer);
-      if (imagePath) {
-        console.log(`Successfully downloaded image for: ${offer.title}`);
-      } else {
-        console.log(`Failed to download image for: ${offer.title}`);
-      }
-    } catch (error) {
-      console.error(`Error processing ${offer.title}:`, error);
-    }
+  const results = [];
+  
+  for (const source of imageSources) {
+    const filepath = path.join(targetDir, source.filename);
+    const success = await downloadImage(source.url, filepath);
+    
+    results.push({
+      id: source.id,
+      filename: source.filename,
+      success
+    });
   }
   
-  console.log('Image downloads complete.');
+  console.log('\nDownload Summary:');
+  console.table(results);
+  
+  const successCount = results.filter(r => r.success).length;
+  console.log(`\nDownloaded ${successCount} of ${imageSources.length} images successfully.`);
 }
 
-// Run the main function
-downloadAllImages().catch(error => {
-  console.error('An error occurred during image downloads:', error);
-});
+main().catch(console.error);
