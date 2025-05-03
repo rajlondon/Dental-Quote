@@ -516,7 +516,16 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                   </Button>
                 )}
                 {activeSection === "quotes" && (
-                  <Button size="sm">
+                  <Button 
+                    size="sm"
+                    onClick={() => {
+                      // Mark as intentional navigation
+                      if (typeof window.markAdminPortalNavigation === 'function') {
+                        window.markAdminPortalNavigation();
+                      }
+                      navigate('/admin/new-quote');
+                    }}
+                  >
                     {t("admin.create_quote", "Create Quote")}
                   </Button>
                 )}
