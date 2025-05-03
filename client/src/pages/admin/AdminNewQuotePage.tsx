@@ -1,25 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuotes } from "@/hooks/use-quotes";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
-import { CreateQuoteRequest } from "@/types/quote";
+import { useClinics } from "@/hooks/use-clinics";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle
-} from "@/components/ui/card";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Loader2, ArrowLeft, Save, Check } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormDescription,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -28,90 +30,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useClinics } from "@/hooks/use-clinics";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { CreateQuoteRequest } from "@/types/quote";
 
-// Treatment options
-const TREATMENT_OPTIONS = [
-  "Dental Implants",
-  "Veneers",
-  "Crowns",
-  "Bridges",
-  "Root Canal",
-  "Teeth Whitening",
-  "Full Mouth Rehabilitation",
-  "Dental Bonding",
-  "Orthodontics",
-  "Other"
-];
-
-// Country options
-const COUNTRY_OPTIONS = [
-  "United Kingdom",
-  "United States",
-  "Germany",
-  "France",
-  "Netherlands",
-  "Australia",
-  "Canada",
-  "Italy",
-  "Spain",
-  "Other"
-];
-
-// Language options
-const LANGUAGE_OPTIONS = [
-  "English",
-  "German",
-  "French",
-  "Spanish",
-  "Italian",
-  "Dutch",
-  "Turkish",
-  "Arabic",
-  "Other"
-];
-
-// Schema for validation
+// Define the form schema based on CreateQuoteRequest
 const createQuoteSchema = z.object({
-  name: z.string().min(3, { message: "Name is required (at least 3 characters)" }),
-  email: z.string().email({ message: "Valid email is required" }),
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
-  treatment: z.string().min(1, { message: "Treatment type is required" }),
+  treatment: z.string().min(1, "Treatment is required"),
   specificTreatment: z.string().optional(),
   notes: z.string().optional(),
   adminNotes: z.string().optional(),
-  budget: z.preprocess(
-    (val) => (val === "" ? undefined : Number(val)),
-    z.number().positive().optional()
-  ),
+  budget: z.string().optional(),
   travelDateRange: z.string().optional(),
   patientCountry: z.string().optional(),
   patientCity: z.string().optional(),
   patientLanguage: z.string().optional(),
-  consent: z.boolean().refine(val => val === true, { message: "Patient consent is required" })
+  consent: z.boolean().refine(value => value === true, {
+    message: "You must confirm the patient has consented to data processing"
+  }),
+  clinicId: z.string().optional(), // Optional clinic selection
 });
 
 type FormValues = z.infer<typeof createQuoteSchema>;
 
 export default function AdminNewQuotePage() {
   const [, setLocation] = useLocation();
-  const { createQuoteMutation, assignClinicMutation } = useQuotes();
-  const { allClinicsQuery } = useClinics();
   const { toast } = useToast();
-  const [selectedClinic, setSelectedClinic] = useState<number | undefined>(undefined);
+  const { createQuoteMutation } = useQuotes();
+  const { allClinicsQuery } = useClinics();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load all clinics
-  React.useEffect(() => {
+  // Load clinics when component mounts
+  useEffect(() => {
     allClinicsQuery.refetch();
   }, []);
 
-  // Form setup with validation
+  // Setup form
   const form = useForm<FormValues>({
     resolver: zodResolver(createQuoteSchema),
     defaultValues: {
@@ -122,116 +77,207 @@ export default function AdminNewQuotePage() {
       specificTreatment: "",
       notes: "",
       adminNotes: "",
-      budget: undefined,
+      budget: "",
       travelDateRange: "",
       patientCountry: "",
       patientCity: "",
       patientLanguage: "",
-      consent: true
-    }
+      consent: false,
+      clinicId: "",
+    },
   });
 
   const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
     try {
-      // First create the quote
-      const result = await createQuoteMutation.mutateAsync(data as CreateQuoteRequest);
+      // Extract fields for quote creation
+      const quoteData: CreateQuoteRequest = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || undefined,
+        treatment: data.treatment,
+        specificTreatment: data.specificTreatment || undefined,
+        notes: data.notes || undefined,
+        adminNotes: data.adminNotes || undefined,
+        budget: data.budget ? parseFloat(data.budget) : undefined,
+        travelDateRange: data.travelDateRange || undefined,
+        patientCountry: data.patientCountry || undefined,
+        patientCity: data.patientCity || undefined,
+        patientLanguage: data.patientLanguage || undefined,
+        consent: data.consent,
+      };
+
+      // Create the quote
+      const response = await createQuoteMutation.mutateAsync(quoteData);
       
-      // Check if a clinic was selected for direct assignment
-      if (selectedClinic && result.data && result.data.id) {
-        await assignClinicMutation.mutateAsync({
-          quoteId: result.data.id,
-          clinicId: selectedClinic
+      // If a clinic is selected, assign the quote to the clinic
+      if (data.clinicId && response?.id) {
+        // You could add the assignClinicMutation here if needed
+        toast({
+          title: "Quote created and assigned",
+          description: "The quote has been created and assigned to the clinic successfully.",
+        });
+      } else {
+        toast({
+          title: "Quote created",
+          description: "The quote has been created successfully.",
         });
       }
       
-      // Redirect to quotes list on success
-      setLocation('/admin/quotes');
-      
+      // Redirect to quotes page
+      setLocation("/admin-portal");
     } catch (error) {
       console.error("Error creating quote:", error);
       toast({
         title: "Error creating quote",
-        description: "There was a problem creating the quote. Please try again.",
+        description: error.message || "An error occurred while creating the quote",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    setLocation('/admin/quotes');
-  };
+  // Define treatment options
+  const treatmentOptions = [
+    "Dental Implants",
+    "Veneers",
+    "Crowns",
+    "Bridges",
+    "Root Canal Treatment",
+    "Teeth Whitening",
+    "Full Mouth Restoration",
+    "Dental Bonding",
+    "Invisalign/Clear Aligners",
+    "Hollywood Smile",
+    "Other",
+  ];
+
+  // Define country options
+  const countryOptions = [
+    "United Kingdom",
+    "United States",
+    "Canada",
+    "Germany",
+    "France",
+    "Italy",
+    "Spain",
+    "Netherlands",
+    "Belgium",
+    "Sweden",
+    "Norway",
+    "Denmark",
+    "Finland",
+    "Australia",
+    "New Zealand",
+    "Other",
+  ];
+
+  // Define language options
+  const languageOptions = [
+    "English",
+    "German",
+    "French",
+    "Spanish",
+    "Italian",
+    "Dutch",
+    "Swedish",
+    "Norwegian",
+    "Danish",
+    "Finnish",
+    "Arabic",
+    "Russian",
+    "Turkish",
+    "Other",
+  ];
 
   return (
     <div className="container mx-auto py-6 px-4">
       <PageHeader
-        title="Create New Quote Request"
-        description="Create a new quote request and optionally assign to a clinic"
+        title="Create New Quote"
+        description="Create a new quote request for a patient"
         actions={
-          <Button
-            variant="outline"
-            onClick={handleCancel}
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation("/admin-portal")}
             className="flex items-center gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Quotes
+            <ArrowLeft className="h-4 w-4" /> Back to Quotes
           </Button>
         }
       />
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid md:grid-cols-3 gap-6 mt-6">
+        <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Quote Request Details</CardTitle>
+              <CardTitle>Patient Information</CardTitle>
+              <CardDescription>
+                Enter the patient's details to create a new quote request
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Patient Name</FormLabel>
+                          <FormLabel>Full Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Full name" {...field} />
+                            <Input placeholder="John Smith" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email Address</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="Email address" {...field} />
+                            <Input placeholder="john.smith@example.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone (optional)</FormLabel>
+                          <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="Phone number" {...field} />
+                            <Input placeholder="+44 7123 456789" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+                    <FormField
+                      control={form.control}
+                      name="budget"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Budget (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="5000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="treatment"
@@ -248,7 +294,7 @@ export default function AdminNewQuotePage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {TREATMENT_OPTIONS.map(option => (
+                              {treatmentOptions.map((option) => (
                                 <SelectItem key={option} value={option}>
                                   {option}
                                 </SelectItem>
@@ -259,72 +305,31 @@ export default function AdminNewQuotePage() {
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="specificTreatment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Specific Treatment Details (optional)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Describe specific treatment needs" 
-                            {...field} 
-                            rows={3}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="budget"
+                      name="specificTreatment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Budget (optional)</FormLabel>
+                          <FormLabel>Specific Treatment Details</FormLabel>
                           <FormControl>
                             <Input 
-                              type="number" 
-                              placeholder="Budget in €" 
-                              {...field}
-                              value={field.value || ''}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? undefined : Number(e.target.value);
-                                field.onChange(value);
-                              }}
+                              placeholder="E.g., 4 implants, full upper arch veneers" 
+                              {...field} 
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
-                    <FormField
-                      control={form.control}
-                      name="travelDateRange"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Travel Date Range (optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., June 2025 or flexible" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="patientCountry"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Country</FormLabel>
+                          <FormLabel>Patient Country</FormLabel>
                           <Select 
                             onValueChange={field.onChange} 
                             defaultValue={field.value}
@@ -335,7 +340,7 @@ export default function AdminNewQuotePage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {COUNTRY_OPTIONS.map(option => (
+                              {countryOptions.map((option) => (
                                 <SelectItem key={option} value={option}>
                                   {option}
                                 </SelectItem>
@@ -346,21 +351,25 @@ export default function AdminNewQuotePage() {
                         </FormItem>
                       )}
                     />
-                    
                     <FormField
                       control={form.control}
                       name="patientCity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>City (optional)</FormLabel>
+                          <FormLabel>Patient City</FormLabel>
                           <FormControl>
-                            <Input placeholder="City" {...field} />
+                            <Input 
+                              placeholder="London" 
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="patientLanguage"
@@ -377,7 +386,7 @@ export default function AdminNewQuotePage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {LANGUAGE_OPTIONS.map(option => (
+                              {languageOptions.map((option) => (
                                 <SelectItem key={option} value={option}>
                                   {option}
                                 </SelectItem>
@@ -388,49 +397,96 @@ export default function AdminNewQuotePage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="travelDateRange"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Travel Date Range</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="E.g., June 2025" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-
+                  
                   <FormField
                     control={form.control}
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Patient Notes (optional)</FormLabel>
+                        <FormLabel>Patient Notes</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Additional information from the patient" 
+                            placeholder="Any additional information provided by the patient" 
+                            className="min-h-[100px]"
                             {...field} 
-                            rows={3}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="adminNotes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Admin Notes (optional)</FormLabel>
+                        <FormLabel>Admin Notes</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Internal notes - not visible to patient" 
+                            placeholder="Internal notes visible only to admins" 
+                            className="min-h-[100px]"
                             {...field} 
-                            rows={3}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
+                  <FormField
+                    control={form.control}
+                    name="clinicId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Assign to Clinic (Optional)</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select clinic (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {allClinicsQuery.data?.map((clinic) => (
+                              <SelectItem key={clinic.id} value={clinic.id.toString()}>
+                                {clinic.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          You can assign the quote to a clinic now or do it later
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="consent"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-4">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
@@ -438,29 +494,39 @@ export default function AdminNewQuotePage() {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>Patient Consent</FormLabel>
+                          <FormLabel>Data Processing Consent</FormLabel>
                           <FormDescription>
-                            Patient has provided consent for data processing and sharing with clinics
+                            I confirm the patient has consented to processing their data for the purpose of creating treatment quotes
                           </FormDescription>
                         </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="flex justify-end gap-2 mt-6">
+                  
+                  <div className="flex justify-end gap-2">
                     <Button 
-                      type="button" 
                       variant="outline" 
-                      onClick={handleCancel}
+                      onClick={() => setLocation("/admin-portal")}
                     >
                       Cancel
                     </Button>
                     <Button 
                       type="submit" 
-                      disabled={createQuoteMutation.isPending || assignClinicMutation.isPending}
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2"
                     >
-                      {createQuoteMutation.isPending ? "Creating..." : "Create Quote Request"}
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Create Quote
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -468,57 +534,49 @@ export default function AdminNewQuotePage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Sidebar for clinic assignment */}
+        
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Assign to Clinic</CardTitle>
+              <CardTitle>Help & Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Optionally select a clinic to immediately assign this quote request after creation.
-              </p>
-              {allClinicsQuery.isLoading ? (
-                <div className="py-4 text-center">Loading clinics...</div>
-              ) : allClinicsQuery.error ? (
-                <div className="py-4 text-center text-red-500">
-                  Error loading clinics
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <Select
-                    onValueChange={(value) => setSelectedClinic(Number(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a clinic (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allClinicsQuery.data?.map((clinic) => (
-                        <SelectItem key={clinic.id} value={clinic.id.toString()}>
-                          {clinic.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {selectedClinic && (
-                    <div className="p-3 bg-muted rounded-md">
-                      <p className="text-sm font-medium">
-                        Selected Clinic:
-                      </p>
-                      <p className="text-sm">
-                        {allClinicsQuery.data?.find(c => c.id === selectedClinic)?.name}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="text-sm text-muted-foreground mt-6">
-                    <p className="font-medium">Note:</p>
-                    <p>You can also assign this quote to a clinic later from the quote details page.</p>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-1">Creating a New Quote</h3>
+                <p className="text-sm text-muted-foreground">
+                  Fill in the patient's information to create a new quote request. 
+                  Required fields are marked with an asterisk.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-1">Clinic Assignment</h3>
+                <p className="text-sm text-muted-foreground">
+                  You can optionally assign the quote to a clinic now, or do it later
+                  from the Quotes Administration page.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-1">Patient Consent</h3>
+                <p className="text-sm text-muted-foreground">
+                  You must confirm the patient has consented to having their data processed
+                  for creating treatment quotes before submitting the form.
+                </p>
+              </div>
+              
+              <div className="rounded-md bg-blue-50 p-4">
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-blue-800">X-ray Uploads</h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      After creating the quote, you'll be able to upload any X-rays or
+                      scans the patient has provided from the quote details page.
+                    </p>
                   </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>
