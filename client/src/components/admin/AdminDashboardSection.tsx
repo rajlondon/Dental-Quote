@@ -320,7 +320,10 @@ const AdminDashboardSection: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Button className="py-6 flex justify-center gap-2">
+        <Button 
+          className="py-6 flex justify-center gap-2"
+          onClick={() => window.location.href = "/admin/new-quote"}
+        >
           <ClipboardList className="h-5 w-5" />
           {t("admin.dashboard.create_quote", "Create New Quote")}
         </Button>
