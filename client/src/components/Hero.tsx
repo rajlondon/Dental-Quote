@@ -592,37 +592,8 @@ const Hero: React.FC = () => {
           <span>Data fully encrypted</span>
         </div>
         
-        {/* Special Offers Section - Booking.com style */}
-        <div className="max-w-5xl mx-auto mt-8">
-          <h2 className="text-xl font-bold mb-4">Special Offers</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col md:flex-row">
-              <div className="md:w-2/5 bg-blue-50 p-4 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-bold text-lg text-gray-800">Free Consultation Package</h3>
-                  <p className="text-sm text-gray-600 mt-1">Book a dental treatment and get free pre-consultation and aftercare support</p>
-                </div>
-                <a href="/offers/free-consultation" className="mt-4 text-[#0071c2] font-medium text-sm hover:underline">Learn more</a>
-              </div>
-              <div className="md:w-3/5 p-0">
-                <img src="/images/clinics/dentgroup.jpg" alt="Free consultation" className="w-full h-full object-cover" style={{ minHeight: "160px" }} />
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col md:flex-row">
-              <div className="md:w-2/5 bg-blue-50 p-4 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-bold text-lg text-gray-800">Premium Hotel Deal</h3>
-                  <p className="text-sm text-gray-600 mt-1">Save up to 20% on premium hotels with your dental treatment booking</p>
-                </div>
-                <a href="/offers/hotel-deal" className="mt-4 text-[#0071c2] font-medium text-sm hover:underline">See details</a>
-              </div>
-              <div className="md:w-3/5 p-0">
-                <img src="/images/offers/premium-hotel-new.png" alt="Hotel deals" className="w-full h-full object-cover" style={{ minHeight: "160px" }} />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Premium Special Offers Carousel */}
+        <PremiumOffersCarousel />
         
 
       </div>
