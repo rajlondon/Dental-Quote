@@ -6,8 +6,31 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { SpecialOffer, Tier } from '@shared/specialOffers';
 import { useToast } from '@/hooks/use-toast';
+
+// API response type matching the actual data structure
+interface SpecialOffer {
+  id: string;
+  clinic_id: string;
+  title: string;
+  description: string;
+  discount_type?: 'percentage' | 'fixed_amount';
+  discount_value?: number;
+  applicable_treatments?: string[];
+  start_date?: string;
+  end_date?: string;
+  promo_code?: string;
+  terms_conditions?: string;
+  banner_image?: string;
+  is_active?: boolean;
+  admin_approved?: boolean;
+  commission_percentage?: number;
+  promotion_level?: string;
+  homepage_display?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  admin_reviewed_at?: string;
+}
 
 interface EnhancedOffersCarouselProps {
   className?: string;
@@ -97,9 +120,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     }
   };
   
-  // Get badge style based on offer tier
-  const getBadgeStyle = (tier: Tier) => {
-    switch(tier) {
+  // Get badge style based on offer promotion level
+  const getBadgeStyle = (promotionLevel: string | undefined) => {
+    if (!promotionLevel) return 'bg-gradient-to-r from-slate-500 to-slate-400 text-white hover:from-slate-400 hover:to-slate-300';
+    
+    switch(promotionLevel) {
       case 'premium':
         return 'bg-gradient-to-r from-amber-500 to-yellow-300 text-amber-950 hover:from-amber-400 hover:to-yellow-200';
       case 'featured':
@@ -205,18 +230,18 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-4 left-4">
-                  <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.tier || 'standard'))}>
-                    {offer.tier === 'premium' && <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
-                    {(offer.tier || 'standard').charAt(0).toUpperCase() + (offer.tier || 'standard').slice(1)}
+                  <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.promotion_level))}>
+                    {offer.promotion_level === 'premium' && <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+                    {(offer.promotion_level || 'standard').charAt(0).toUpperCase() + (offer.promotion_level || 'standard').slice(1)}
                   </Badge>
                 </div>
                 
-                {offer.expiresAt && (
+                {offer.end_date && (
                   <div className="absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1.5 rounded-full flex items-center">
                     <Clock className="w-3.5 h-3.5 mr-1.5" />
                     <span>
-                      {new Date(offer.expiresAt) > new Date() 
-                        ? `Expires in ${Math.ceil((new Date(offer.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days`
+                      {new Date(offer.end_date) > new Date() 
+                        ? `Expires in ${Math.ceil((new Date(offer.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days`
                         : 'Limited time offer'}
                     </span>
                   </div>
@@ -225,12 +250,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               
               <div className="md:w-1/2 p-6 md:p-8 flex flex-col">
                 <div className="mb-2">
-                  {offer.discount && (
+                  {offer.discount_value && (
                     <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 mb-2">
                       <Tag className="w-3.5 h-3.5 mr-1" />
-                      {typeof offer.discount === 'number'
-                        ? `${offer.discount}% OFF`
-                        : offer.discount}
+                      {offer.discount_type === 'percentage'
+                        ? `${offer.discount_value}% OFF`
+                        : `$${offer.discount_value} OFF`}
                     </div>
                   )}
                 </div>
@@ -239,16 +264,20 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                 <p className="text-gray-600 mb-4">{offer.description}</p>
                 
                 <div className="mt-auto space-y-4">
-                  {offer.clinic && (
+                  {offer.clinic_id && (
                     <div className="flex items-center">
                       <img 
-                        src={offer.clinic.logo || '/images/generic-clinic-logo.svg'} 
-                        alt={offer.clinic.name}
+                        src={`/images/clinics/clinic-${offer.clinic_id}.jpg`} 
+                        alt="Partner Clinic"
                         className="w-8 h-8 rounded-full mr-3 object-cover" 
+                        onError={(e) => {
+                          // Fallback image on error
+                          e.currentTarget.src = '/images/generic-clinic-logo.svg';
+                        }}
                       />
                       <div>
                         <span className="text-sm text-gray-500">Offered by</span>
-                        <p className="font-medium">{offer.clinic.name}</p>
+                        <p className="font-medium">Partner Clinic #{offer.clinic_id}</p>
                       </div>
                     </div>
                   )}
@@ -261,7 +290,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                       Request Quote
                     </Button>
                     <Button variant="outline" asChild>
-                      <Link href={`/clinics/${offer.clinic?.id || 1}`}>
+                      <Link href={`/clinics/${offer.clinic_id || 1}`}>
                         View Clinic
                       </Link>
                     </Button>
