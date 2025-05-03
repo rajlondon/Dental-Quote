@@ -35,7 +35,7 @@ const BlogLayout: React.FC<BlogLayoutProps> = ({ children, hero, relatedPosts = 
           <img
             src={hero.coverImage}
             alt={hero.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-[#f8f9fa]"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 opacity-90"></div>
         </div>
@@ -113,7 +113,7 @@ const BlogLayout: React.FC<BlogLayoutProps> = ({ children, hero, relatedPosts = 
                   <img
                     src={post.image}
                     alt={post.title}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-contain bg-[#f8f9fa]"
                   />
                   <div className="p-4">
                     <h4 className="font-bold text-lg mb-2">{post.title}</h4>
