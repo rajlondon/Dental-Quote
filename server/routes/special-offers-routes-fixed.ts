@@ -212,9 +212,15 @@ router.get('/api/special-offers', (req, res) => {
 
 // Get homepage featured offers (public endpoint)
 router.get('/api/special-offers/homepage', (req, res) => {
+  console.log('GET /api/special-offers/homepage called');
   const homepageOffers: SpecialOffer[] = [];
   
-  specialOffers.forEach((clinicOffers) => {
+  // Log the size of specialOffers map for debugging
+  console.log(`Special Offers map size: ${specialOffers.size}`);
+  
+  specialOffers.forEach((clinicOffers, clinicId) => {
+    console.log(`Processing clinic ${clinicId} with ${clinicOffers.length} offers`);
+    
     clinicOffers
       .filter(offer => 
         offer.is_active && 
@@ -222,14 +228,32 @@ router.get('/api/special-offers/homepage', (req, res) => {
         offer.homepage_display &&
         new Date(offer.end_date) >= new Date()
       )
-      .forEach(offer => homepageOffers.push(offer));
+      .forEach(offer => {
+        console.log(`Adding offer to homepage: ${offer.title}`);
+        homepageOffers.push(offer);
+      });
   });
+  
+  console.log(`Total homepage offers after filtering: ${homepageOffers.length}`);
   
   // Sort by promotion level (premium first) 
   homepageOffers.sort(sortByPromotionLevel);
   
   // Limit to top offers for homepage
   const topOffers = homepageOffers.slice(0, 6);
+  
+  console.log(`Returning ${topOffers.length} top offers for homepage`);
+  
+  // If no offers are available, return sample offers directly for demonstration
+  if (topOffers.length === 0) {
+    console.log('No offers found in storage, returning sample offers directly');
+    const sampleHomepageOffers = sampleOffers
+      .filter(offer => offer.homepage_display)
+      .sort(sortByPromotionLevel)
+      .slice(0, 6);
+    
+    return res.json(sampleHomepageOffers);
+  }
   
   res.json(topOffers);
 });
