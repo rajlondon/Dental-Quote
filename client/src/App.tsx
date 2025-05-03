@@ -87,6 +87,7 @@ import BookingDetailPage from "@/pages/booking-detail-page";
 import CreateBookingPage from "@/pages/create-booking-page";
 import AdminBookingsPage from "@/pages/admin/admin-bookings-page";
 import AdminBookingDetailPage from "@/pages/admin/admin-booking-detail-page";
+import AdminNewQuotePage from "@/pages/admin/AdminNewQuotePage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -205,14 +206,7 @@ function Router() {
       <ProtectedRoute path="/admin/create-booking" component={CreateBookingPage} requiredRole="admin" />
       
       {/* Admin Quote Routes */}
-      <ProtectedRoute path="/admin/new-quote" component={() => {
-        const AdminNewQuotePage = React.lazy(() => import("@/pages/admin/AdminNewQuotePage"));
-        return (
-          <Suspense fallback={<div className="p-12 text-center">Loading...</div>}>
-            <AdminNewQuotePage />
-          </Suspense>
-        );
-      }} requiredRole="admin" />
+      <ProtectedRoute path="/admin/new-quote" component={AdminNewQuotePage} requiredRole="admin" />
       
       {/* Clinic Staff Protected Routes */}
       {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
