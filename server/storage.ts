@@ -160,8 +160,7 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(users)
-      .where(eq(users.clinicId, clinicId))
-      .orderBy(asc(users.fullName));
+      .where(eq(users.clinicId, clinicId));
   }
 
   // === Quote Management ===
