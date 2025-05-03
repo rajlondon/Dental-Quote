@@ -10,6 +10,7 @@ import {
   Home,
   Stethoscope
 } from "lucide-react";
+import PremiumOffersCarousel from "./PremiumOffersCarousel";
 import { format, addDays } from "date-fns";
 
 const Hero: React.FC = () => {

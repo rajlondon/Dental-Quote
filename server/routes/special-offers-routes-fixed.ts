@@ -13,6 +13,127 @@ const router = express.Router();
 // In-memory storage for development (replace with DB in production)
 const specialOffers = new Map<string, SpecialOffer[]>();
 
+// Sample offers for development - demonstrating premium special offers
+const sampleOffers: SpecialOffer[] = [
+  {
+    id: uuidv4(),
+    clinic_id: "1",  // Clinic 1
+    title: "Free Consultation Package",
+    description: "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
+    discount_type: "percentage",
+    discount_value: 100, // 100% off on consultation
+    applicable_treatments: ["Dental Implants", "Veneers", "Full Mouth Reconstruction"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    promo_code: "FREECONSULT",
+    terms_conditions: "Applicable for new patients only. One consultation per patient.",
+    banner_image: "/images/clinics/dentgroup.jpg",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 20,
+    promotion_level: "premium",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    clinic_id: "2", // Clinic 2
+    title: "Premium Hotel Deal",
+    description: "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
+    discount_type: "percentage",
+    discount_value: 20,
+    applicable_treatments: ["All Treatments"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    promo_code: "LUXHOTEL20",
+    terms_conditions: "Minimum treatment value of $1000 required. Subject to hotel availability.",
+    banner_image: "/images/offers/premium-hotel-new.png",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 20,
+    promotion_level: "premium",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    clinic_id: "3", // Clinic 3
+    title: "Dental Implant + Crown Bundle",
+    description: "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
+    discount_type: "percentage",
+    discount_value: 30,
+    applicable_treatments: ["Dental Implants", "Crowns"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(),
+    promo_code: "IMPLANTCROWN30",
+    terms_conditions: "Valid for single tooth implant and crown combinations only.",
+    banner_image: "/images/treatments/illustrations/dental-implants1.png",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 18,
+    promotion_level: "featured",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    clinic_id: "4", // Clinic 4
+    title: "Luxury Airport Transfer",
+    description: "Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.",
+    discount_type: "fixed_amount",
+    discount_value: 80,
+    applicable_treatments: ["Full Mouth Reconstruction", "Hollywood Smile", "All-on-4 Implants"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 4)).toISOString(),
+    promo_code: "LUXTRAVEL",
+    terms_conditions: "Minimum treatment value of $2000 required. 48-hour advance booking required for transfers.",
+    banner_image: "/images/accommodations/premium-hotel.jpg",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 15,
+    promotion_level: "featured",
+    homepage_display: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    clinic_id: "5", // Clinic 5
+    title: "Free Teeth Whitening",
+    description: "Receive a complimentary professional teeth whitening session with any veneer or crown treatment package.",
+    discount_type: "fixed_amount",
+    discount_value: 150,
+    applicable_treatments: ["Veneers", "Crowns", "Hollywood Smile"],
+    start_date: new Date().toISOString(),
+    end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    promo_code: "FREEWHITE",
+    terms_conditions: "Minimum of 4 veneers or crowns required. Not combinable with other offers.",
+    banner_image: "/images/treatments/illustrations/veneers-and-crowns.png",
+    is_active: true,
+    admin_approved: true,
+    commission_percentage: 12,
+    promotion_level: "standard",
+    homepage_display: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    admin_reviewed_at: new Date().toISOString()
+  }
+];
+
+// Add sample offers to the map
+specialOffers.set("1", [sampleOffers[0]]);
+specialOffers.set("2", [sampleOffers[1]]);
+specialOffers.set("3", [sampleOffers[2]]);
+specialOffers.set("4", [sampleOffers[3]]);
+specialOffers.set("5", [sampleOffers[4]]);
+
 // Commission tier definitions
 const commissionTiers: CommissionTier[] = [
   {

@@ -1,8 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
-import { ChevronLeft, ChevronRight, Tag } from "lucide-react";
+import { 
+  ArrowRight, 
+  ArrowLeft, 
+  Tag as TagIcon, 
+  BadgePercent, 
+  Clock,
+  Star,
+  ArrowUpRight
+} from "lucide-react";
+import { format, isAfter, parseISO, differenceInDays } from "date-fns";
 import { SpecialOffer } from "@shared/specialOffers";
 
 interface PremiumOffersCarouselProps {
@@ -10,196 +17,209 @@ interface PremiumOffersCarouselProps {
 }
 
 const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className }) => {
-  // Fetch special offers from API
-  const { data: specialOffers, isLoading } = useQuery<SpecialOffer[]>({
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Fetch special offers data
+  const { data: offers = [], isLoading } = useQuery<SpecialOffer[]>({
     queryKey: ["/api/special-offers/homepage"],
+    // Default queryFn is already set up in the app to use the backend
   });
 
-  const autoplayOptions = {
-    delay: 6000,
-    rootNode: (emblaRoot: any) => emblaRoot.parentElement,
+  // Auto-advance carousel every 5 seconds
+  useEffect(() => {
+    if (!isAutoPlaying || offers.length === 0 || isHovering) return;
+    
+    const interval = setInterval(() => {
+      setActiveIndex((prevIndex) => (prevIndex + 1) % offers.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [offers.length, isAutoPlaying, isHovering]);
+
+  // Handle pause on hover
+  const handleMouseEnter = () => setIsHovering(true);
+  const handleMouseLeave = () => setIsHovering(false);
+
+  // Navigation functions
+  const handlePrevious = () => {
+    setActiveIndex((prevIndex) => (prevIndex - 1 + offers.length) % offers.length);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: true,
-    align: "start",
-    skipSnaps: false
-  }, [Autoplay(autoplayOptions)]);
+  const handleNext = () => {
+    setActiveIndex((prevIndex) => (prevIndex + 1) % offers.length);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
 
-  const [prevBtnEnabled, setPrevBtnEnabled] = useState(false);
-  const [nextBtnEnabled, setNextBtnEnabled] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  // Get promotion level styling
+  const getPromotionBadgeStyle = (level: string) => {
+    switch (level) {
+      case "premium":
+        return "bg-gradient-to-r from-amber-500 to-yellow-400 text-black";
+      case "featured":
+        return "bg-gradient-to-r from-blue-500 to-cyan-400 text-white";
+      default:
+        return "bg-gray-200 text-gray-700";
+    }
+  };
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+  // Format discount text based on type and value
+  const formatDiscount = (type: string, value: number) => {
+    return type === "percentage" ? `${value}% off` : `$${value} off`;
+  };
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setPrevBtnEnabled(emblaApi.canScrollPrev());
-    setNextBtnEnabled(emblaApi.canScrollNext());
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
+  // Calculate days left until offer expires
+  const getDaysRemaining = (endDate: string) => {
+    const end = parseISO(endDate);
+    return differenceInDays(end, new Date());
+  };
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on("select", onSelect);
-    onSelect();
-    return () => { emblaApi.off("select", onSelect); };
-  }, [emblaApi, onSelect]);
-
-  // Return a loading state if offers are still loading
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-5xl mt-12 mb-8">
-        <h2 className="text-2xl font-bold mb-4 flex items-center">
-          <Tag className="mr-2 h-5 w-5" />
-          Special Offers
-        </h2>
-        <div className="flex justify-center items-center h-64 bg-gray-100 rounded-lg">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="max-w-5xl mx-auto mt-8 p-4">
+        <div className="flex items-center justify-center h-40 bg-gray-100 rounded-lg animate-pulse">
+          <div className="text-gray-400">Loading special offers...</div>
         </div>
       </div>
     );
   }
 
-  // If there are no offers, don't show the section
-  if (!specialOffers || specialOffers.length === 0) {
-    return null;
+  if (offers.length === 0) {
+    return null; // Hide section if no offers available
   }
 
-  // Custom styling for promotion levels
-  const getPromotionStyles = (level: string) => {
-    switch (level) {
-      case 'premium':
-        return {
-          badge: "bg-gradient-to-r from-amber-600 to-yellow-500 text-white",
-          text: "text-amber-700"
-        };
-      case 'featured':
-        return {
-          badge: "bg-gradient-to-r from-blue-600 to-blue-500 text-white",
-          text: "text-blue-700"
-        };
-      default:
-        return {
-          badge: "bg-gradient-to-r from-slate-600 to-slate-500 text-white",
-          text: "text-slate-700"
-        };
-    }
-  };
-
   return (
-    <div className={`mx-auto max-w-5xl mt-12 mb-8 ${className}`}>
-      <h2 className="text-2xl font-bold mb-4 flex items-center">
-        <Tag className="mr-2 h-5 w-5" />
-        Special Offers
-      </h2>
-      
-      <div className="relative">
-        {/* Carousel Container */}
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex">
-            {specialOffers.map((offer, index) => {
-              const styles = getPromotionStyles(offer.promotion_level);
-              
-              return (
-                <div className="flex-[0_0_100%] min-w-0 pl-4 first:pl-0 md:flex-[0_0_50%]" key={offer.id}>
-                  <div className="h-full rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                    <div className="relative">
-                      {/* Offer Image */}
-                      <div className="h-48 md:h-56 lg:h-64 w-full overflow-hidden bg-gray-50">
-                        <img 
-                          src={offer.banner_image || "/images/clinics/offers-placeholder.jpg"} 
-                          alt={offer.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      {/* Promotion Level Badge */}
-                      <div className={`absolute top-4 left-4 ${styles.badge} px-3 py-1.5 rounded-full text-xs font-semibold`}>
-                        {offer.promotion_level.charAt(0).toUpperCase() + offer.promotion_level.slice(1)}
-                      </div>
-                      
-                      {/* Discount Badge */}
-                      <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1.5 rounded-full text-xs font-bold">
-                        {offer.discount_type === 'percentage' 
-                          ? `${offer.discount_value}% OFF` 
-                          : `$${offer.discount_value} OFF`}
-                      </div>
-                    </div>
+    <div className={`max-w-5xl mx-auto mt-8 ${className}`}>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Special Offers</h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={handlePrevious}
+            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Previous offer"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <button
+            onClick={handleNext}
+            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Next offer"
+          >
+            <ArrowRight size={20} />
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="relative overflow-hidden rounded-lg shadow-lg"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Carousel Track */}
+        <div
+          className="flex transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        >
+          {offers.map((offer, index) => (
+            <div key={offer.id} className="w-full flex-shrink-0">
+              <div className="flex flex-col md:flex-row h-full">
+                {/* Image Section */}
+                <div className="md:w-1/2 h-40 md:h-auto relative">
+                  <img
+                    src={offer.banner_image || "/images/placeholder-offer.jpg"}
+                    alt={offer.title}
+                    className="w-full h-full object-cover"
+                  />
+                  
+                  {/* Promotion Badge */}
+                  <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center ${getPromotionBadgeStyle(offer.promotion_level)}`}>
+                    <Star size={14} className="mr-1" />
+                    {offer.promotion_level.charAt(0).toUpperCase() + offer.promotion_level.slice(1)}
+                  </div>
+                </div>
+
+                {/* Content Section */}
+                <div className="md:w-1/2 p-4 md:p-6 bg-white flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-xl text-gray-800 mb-2">{offer.title}</h3>
+                    <p className="text-sm text-gray-600 mb-4">{offer.description}</p>
                     
-                    {/* Offer Content */}
-                    <div className="p-6">
-                      <h3 className={`text-xl font-bold mb-2 ${styles.text}`}>{offer.title}</h3>
-                      <p className="text-gray-600 text-sm mb-4">{offer.description}</p>
-                      
-                      {/* Applicable Treatments */}
-                      {offer.applicable_treatments && offer.applicable_treatments.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-700 mb-1">Applicable for:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {offer.applicable_treatments.map((treatment, i) => (
-                              <span key={i} className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-                                {treatment}
-                              </span>
-                            ))}
-                          </div>
+                    {/* Offer Details */}
+                    <div className="space-y-2">
+                      {offer.discount_type && (
+                        <div className="flex items-center text-sm">
+                          <BadgePercent size={16} className="mr-2 text-green-600" />
+                          <span className="font-medium text-green-600">
+                            {formatDiscount(offer.discount_type, offer.discount_value)}
+                          </span>
                         </div>
                       )}
                       
-                      {/* Date Range & CTA */}
-                      <div className="flex items-center justify-between text-sm mt-4 pt-4 border-t border-gray-100">
-                        <div className="text-gray-500">
-                          {new Date(offer.end_date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
+                      {offer.applicable_treatments && offer.applicable_treatments.length > 0 && (
+                        <div className="flex items-center text-sm">
+                          <TagIcon size={16} className="mr-2 text-gray-500" />
+                          <span>
+                            {offer.applicable_treatments.length === 1 && offer.applicable_treatments[0] === "All Treatments"
+                              ? "All treatments"
+                              : offer.applicable_treatments.join(", ")}
+                          </span>
                         </div>
-                        <a 
-                          href={`/offers/${offer.id}`} 
-                          className="inline-block bg-gradient-to-r from-blue-800 to-blue-600 hover:from-blue-700 hover:to-blue-500 text-white font-medium rounded-full px-4 py-1.5 text-sm transition-all duration-200"
-                        >
-                          View Details
-                        </a>
-                      </div>
+                      )}
+                      
+                      {offer.end_date && (
+                        <div className="flex items-center text-sm">
+                          <Clock size={16} className="mr-2 text-gray-500" />
+                          <span>
+                            {getDaysRemaining(offer.end_date) > 0
+                              ? `${getDaysRemaining(offer.end_date)} days left`
+                              : "Expires today"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
+                  
+                  {/* CTA Button */}
+                  <div className="mt-4">
+                    <a
+                      href={`/offers/${offer.id}`}
+                      className="inline-flex items-center text-[#0071c2] font-medium hover:underline"
+                    >
+                      View details
+                      <ArrowUpRight size={16} className="ml-1" />
+                    </a>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          ))}
         </div>
-        
-        {/* Navigation Buttons */}
-        <button 
-          onClick={scrollPrev} 
-          className={`absolute top-1/2 left-3 z-10 transform -translate-y-1/2 bg-white/90 hover:bg-white text-blue-800 p-2 rounded-full shadow-md transition-all ${!prevBtnEnabled ? 'opacity-50 cursor-not-allowed' : 'opacity-100'}`}
-          disabled={!prevBtnEnabled}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        
-        <button 
-          onClick={scrollNext} 
-          className={`absolute top-1/2 right-3 z-10 transform -translate-y-1/2 bg-white/90 hover:bg-white text-blue-800 p-2 rounded-full shadow-md transition-all ${!nextBtnEnabled ? 'opacity-50 cursor-not-allowed' : 'opacity-100'}`}
-          disabled={!nextBtnEnabled}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-        
-        {/* Dots Indicator */}
-        {specialOffers.length > 1 && (
-          <div className="flex justify-center mt-4">
-            {specialOffers.map((_, index) => (
+
+        {/* Pagination Indicators */}
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+          <div className="flex space-x-1">
+            {offers.map((_, index) => (
               <button
                 key={index}
-                onClick={() => emblaApi?.scrollTo(index)}
-                className={`w-2 h-2 mx-1 rounded-full transition-all ${selectedIndex === index ? 'bg-blue-600 w-4' : 'bg-gray-300'}`}
+                onClick={() => {
+                  setActiveIndex(index);
+                  setIsAutoPlaying(false);
+                  setTimeout(() => setIsAutoPlaying(true), 10000);
+                }}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === activeIndex
+                    ? "bg-white w-4"
+                    : "bg-white/50 hover:bg-white/80"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
