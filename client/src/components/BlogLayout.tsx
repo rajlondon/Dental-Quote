@@ -30,54 +30,45 @@ const BlogLayout: React.FC<BlogLayoutProps> = ({ children, hero, relatedPosts = 
       <Navbar />
       
       {/* Hero Section */}
-      <div className="relative pb-20 pt-20 bg-gray-900 text-white">
-        <div className="absolute inset-0 z-0 opacity-50">
-          <img
-            src={hero.coverImage}
-            alt={hero.title}
-            className="w-full h-full object-contain bg-[#f8f9fa]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 opacity-90"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10 max-w-4xl">
-          <Link href="/blog" className="inline-flex items-center text-white/80 hover:text-white mb-4">
+      <div className="w-full bg-white pt-8">
+        <div className="container mx-auto max-w-5xl">
+          <Link href="/blog" className="inline-flex items-center text-[#0071c2] hover:text-[#003b95] mb-4 ml-4 md:ml-0">
             <ArrowLeft className="h-4 w-4 mr-1" />
             <span>Back to Blog</span>
           </Link>
           
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">{hero.title}</h1>
-          
-          {hero.subtitle && (
-            <p className="text-lg md:text-xl text-white/80 max-w-3xl mb-6">
-              {hero.subtitle}
-            </p>
-          )}
-          
-          <div className="flex items-center mt-6">
-            {hero.authorImage && (
-              <img
-                src={hero.authorImage}
-                alt={hero.authorName || "Author"}
-                className="h-10 w-10 rounded-full mr-3 border-2 border-white/20"
-              />
-            )}
+          <div className="mt-6 mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 px-4 md:px-0">{hero.title}</h1>
             
-            <div>
+            {hero.subtitle && (
+              <p className="text-lg text-gray-600 max-w-3xl mb-5 px-4 md:px-0">
+                {hero.subtitle}
+              </p>
+            )}
+
+            <div className="flex items-center mb-6 px-4 md:px-0">
               {hero.authorName && (
-                <div className="flex items-center text-white/90 text-sm">
+                <div className="flex items-center text-gray-600 text-sm mr-6">
                   <User className="h-3.5 w-3.5 mr-1.5" />
                   <span>{hero.authorName}</span>
                 </div>
               )}
               
               {hero.publishDate && (
-                <div className="flex items-center text-white/70 text-sm">
+                <div className="flex items-center text-gray-500 text-sm">
                   <Calendar className="h-3.5 w-3.5 mr-1.5" />
                   <span>{hero.publishDate}</span>
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="w-full mb-10 px-4 md:px-0">
+            <img
+              src={hero.coverImage}
+              alt={hero.title}
+              className="w-full max-h-[500px] object-cover rounded-lg shadow-md"
+            />
           </div>
         </div>
       </div>
@@ -113,7 +104,7 @@ const BlogLayout: React.FC<BlogLayoutProps> = ({ children, hero, relatedPosts = 
                   <img
                     src={post.image}
                     alt={post.title}
-                    className="w-full h-48 object-contain bg-[#f8f9fa]"
+                    className="w-full h-48 object-cover rounded-t-lg"
                   />
                   <div className="p-4">
                     <h4 className="font-bold text-lg mb-2">{post.title}</h4>
