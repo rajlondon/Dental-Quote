@@ -97,9 +97,17 @@ export default function AdminQuotesPage() {
         title="Quotes Administration"
         description="Manage patient quote requests and clinic assignments"
         actions={
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" /> Export Quotes
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setLocation("/admin/new-quote")}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" /> Create New Quote
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" /> Export Quotes
+            </Button>
+          </div>
         }
       />
 
