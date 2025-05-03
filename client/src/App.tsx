@@ -43,6 +43,7 @@ const EnvironmentBadge = () => {
 };
 import BlogPage from "./pages/BlogPage";
 import SimpleBlogPage from "./pages/SimpleBlogPage";
+import NewBlogPage from "./pages/NewBlogPage";
 import HowItWorksBlogPost from "./pages/HowItWorksBlogPost";
 import PricingPage from "./pages/PricingPage";
 import TeamPage from "@/pages/TeamPage";
@@ -103,7 +104,7 @@ function Router() {
       <Route path="/index">
         {() => <Redirect to="/" />}
       </Route>
-      <Route path="/blog" component={BlogPage} />
+      <Route path="/blog" component={NewBlogPage} />
       <Route path="/blog/how-it-works" component={HowItWorksBlogPost} />
       <Route path="/dental-implants" component={DentalImplantsPage} />
       <Route path="/veneers" component={VeneersPage} />
