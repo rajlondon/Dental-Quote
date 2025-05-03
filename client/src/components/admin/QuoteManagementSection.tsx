@@ -89,7 +89,10 @@ const QuoteManagementSection: React.FC = () => {
             </TabsTrigger>
           </TabsList>
           
-          <Button onClick={() => setLocation("/admin/new-quote")}>
+          <Button onClick={() => {
+            // Directly navigate using window.location for now
+            window.location.href = "/admin/new-quote";
+          }}>
             {t("admin.quotes.create_quote", "Create New Quote")}
           </Button>
         </div>
