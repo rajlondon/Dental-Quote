@@ -65,26 +65,50 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       if (message.type === 'special_offer_updated') {
         console.log('🔄 Received special offer update via WebSocket:', message);
         
-        // Clear image cache and force refresh
-        setImageCache({});
-        setImageRefreshKey(Date.now());
+        // Extract important info if available
+        const offerId = message.offerId || '';
+        const timestamp = message.timestamp || Date.now();
+        
+        // Clear image cache immediately and force refresh
+        setImageCache({}); // Clear all cached image URLs
+        setImageRefreshKey(timestamp); // Use server timestamp for better synchronization
         
         // Refetch data from server
         queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
         
-        // Schedule a second refresh after a delay
-        setTimeout(() => {
-          setImageRefreshKey(Date.now());
-          
-          toast({
-            title: 'Special Offer Updated',
-            description: 'New promotional images are now available',
-            variant: 'default',
-          });
-        }, 1500);
+        // Add a toast notification that also helps user know something happened
+        toast({
+          title: 'Special Offer Updating',
+          description: 'Loading new promotional images...',
+          variant: 'default',
+        });
+        
+        // Schedule multiple refreshes with staggered timing
+        // This helps overcome browser cache issues by trying multiple times
+        const refreshTimes = [500, 1500, 3000]; // Milliseconds
+        
+        refreshTimes.forEach(delay => {
+          setTimeout(() => {
+            // Generate a unique refresh key each time
+            const newRefreshKey = Date.now() + Math.random();
+            setImageRefreshKey(newRefreshKey);
+            setImageCache({}); // Clear cache again to be extra sure
+            
+            // Only show toast on final refresh
+            if (delay === refreshTimes[refreshTimes.length - 1]) {
+              toast({
+                title: 'Special Offer Updated',
+                description: 'New promotional images are now available',
+                variant: 'default',
+              });
+            }
+          }, delay);
+        });
       }
     };
     
+    // Register our enhanced handler
+    console.log('🔌 Registering enhanced WebSocket handler for special offer updates');
     registerMessageHandler('special_offer_updated', handleOfferUpdate);
     
     // No cleanup needed as useWebSocket handles it
@@ -123,23 +147,43 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
   // Generate image URL with aggressive cache busting
   const getImageUrl = (offer: SpecialOffer) => {
-    // Return cached URL if available
-    if (imageCache[offer.id]) return imageCache[offer.id];
+    // Cache lifetime in milliseconds (5 seconds)
+    // Short URL cache to ensure regular updates even without WebSocket events
+    const CACHE_TTL = 5000;
     
-    // Generate cache busting parameters
+    // Return cached URL if available and not expired
+    const cachedUrl = imageCache[offer.id];
+    const cacheTimestampMatch = cachedUrl?.match(/t=(\d+)/);
+    
+    if (
+      cachedUrl && 
+      cacheTimestampMatch && 
+      Date.now() - parseInt(cacheTimestampMatch[1], 10) < CACHE_TTL
+    ) {
+      return cachedUrl;
+    }
+    
+    // Ultra-aggressive cache busting parameters with high entropy
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const cacheKey = `v=${imageRefreshKey}_${timestamp}_${randomString}`;
+    const uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+    const cacheKey = `t=${timestamp}&r=${randomString}&v=${imageRefreshKey}&u=${uuid}&nocache=true`;
     
     let finalUrl = '';
     
     // Process the banner image URL
     if (offer.banner_image) {
-      // Strip existing query parameters if any
-      const baseUrl = offer.banner_image.split('?')[0];
-      finalUrl = `${baseUrl}?${cacheKey}&nocache=true`;
+      // Check if this is an OpenAI URL (they don't need cache busting)
+      if (offer.banner_image.includes('openai.com')) {
+        // Add minimal cache busting for OpenAI URLs
+        finalUrl = `${offer.banner_image.split('?')[0]}?t=${timestamp}`; 
+      } else {
+        // Strip existing query parameters for all other URLs and apply aggressive cache busting
+        const baseUrl = offer.banner_image.split('?')[0];
+        finalUrl = `${baseUrl}?${cacheKey}`;
+      }
     } else {
-      // Fallback images based on title
+      // Fallback images based on title with cache busting
       let basePath = '/images/offers/premium-hotel-deal.jpg';
       
       if (offer.title.toLowerCase().includes('consultation')) {
@@ -150,10 +194,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         basePath = '/images/offers/luxury-airport-transfer.jpg';
       }
       
-      finalUrl = `${basePath}?${cacheKey}&nocache=true`;
+      finalUrl = `${basePath}?${cacheKey}`;
     }
     
-    // Cache the URL
+    console.log(`Generated fresh URL for offer ${offer.id}: ${finalUrl.substring(0, 100)}...`);
+    
+    // Cache the URL with current timestamp
     setImageCache(prev => ({...prev, [offer.id]: finalUrl}));
     
     return finalUrl;

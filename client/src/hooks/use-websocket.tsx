@@ -598,6 +598,11 @@ export const useWebSocket = (): WebSocketHookResult => {
   // Register a message handler for a specific message type
   const registerMessageHandler = useCallback((type: string, handler: MessageHandler) => {
     messageHandlersRef.current[type] = handler;
+    
+    // Log registration for debugging
+    if (type === 'special_offer_updated') {
+      console.log('Registered enhanced handler for special offer updates');
+    }
   }, []);
   
   // Unregister a message handler
