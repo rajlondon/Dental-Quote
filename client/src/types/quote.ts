@@ -56,6 +56,18 @@ export interface QuoteRequest {
   patientCity?: string;
   patientLanguage?: string;
   
+  // Special offer information
+  specialOffer?: {
+    id: string;
+    title: string;
+    clinicId: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    applicableTreatment: string;
+    expiryDate?: string;
+    terms?: string;
+  };
+  
   // Relations (populated on demand)
   user?: User;
   selectedClinic?: Clinic;
@@ -93,6 +105,15 @@ export interface QuoteData {
     price: number;
     selected?: boolean;
   }[];
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    applicableTreatment: string;
+    expiryDate?: string;
+    terms?: string;
+  };
 }
 
 export interface QuoteTreatment {
