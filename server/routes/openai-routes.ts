@@ -60,7 +60,35 @@ router.post('/generate-image', isAuthenticated, catchAsync(async (req: Request, 
  * Generate a special offer image and save it to S3
  * POST /api/openai/special-offer-image
  */
-router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
+// Helper function to check API key auth for script access
+const checkApiKeyAuth = (req: Request): boolean => {
+  const authHeader = req.headers.authorization;
+  const apiKey = req.headers['x-api-key'];
+  
+  // Check for API key in header
+  if (apiKey && apiKey === process.env.SCRIPT_API_KEY) {
+    return true;
+  }
+  
+  // Check for Bearer token
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    if (token === process.env.SCRIPT_API_KEY) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
+router.post('/special-offer-image', catchAsync(async (req: Request, res: Response) => {
+  // Allow both cookie-based auth and API key auth
+  const isApiKeyAuth = checkApiKeyAuth(req);
+  const isUserAuth = req.isAuthenticated();
+  
+  if (!isUserAuth && !isApiKeyAuth) {
+    throw new AppError('Authentication required', 401);
+  }
   const { offerId, offerTitle, offerType, customPrompt, naturalStyle } = req.body;
   
   if (!offerId || !offerTitle) {

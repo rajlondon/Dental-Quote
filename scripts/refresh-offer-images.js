@@ -24,13 +24,13 @@ const offers = [
     id: 'ba3ab5d6-98ad-41e0-8828-4613e090e4db', // Make sure this matches your actual offer ID
     title: 'Free Consultation Package',
     promotion_level: 'featured',
-    prompt: 'Create a completely natural-looking, photorealistic image of a modern dental consultation at a premium clinic. Show a dentist in professional attire discussing treatment options with a patient in a clean, well-designed consultation room with current dental technology visible. Natural lighting, soft colors, professional but warm atmosphere. No text overlays, watermarks, or artificial elements. The image should appear as a high-quality professional photograph, not AI-generated.'
+    prompt: 'Create a completely natural-looking, photorealistic image of a modern dental consultation at a premium clinic. Show a dentist in professional attire discussing treatment options with a smiling patient using a tablet and dental models. Natural lighting through large windows, warm beige and blue color palette, with subtle dental equipment visible in background. The image should look like an editorial photograph for a luxury dental magazine, not AI-generated. 4K quality with realistic textures and accurate lighting.'
   },
   {
     id: '1e339878-78da-4f1f-b6c7-39c24f595d0c',
     title: 'Premium Hotel Deal',
     promotion_level: 'premium',
-    prompt: 'Create a completely natural-looking, photorealistic image of a luxury hotel room in Istanbul with a beautiful view of the Bosphorus. Show a spacious, elegantly decorated room with a king-size bed, modern amenities, and floor-to-ceiling windows revealing the iconic Istanbul skyline. Natural lighting, warm inviting tones, and attention to realistic details. No text overlays, watermarks, or artificial elements. The image should appear as a high-quality professional hotel photograph, not AI-generated.'
+    prompt: 'Create a completely natural-looking, photorealistic image of a luxury hotel room in Istanbul with a stunning view of the Bosphorus. Show a spacious suite with a king-size bed draped in premium white linens, designer furniture in gold and blue tones, and floor-to-ceiling windows framing the iconic Istanbul skyline at golden hour. Include subtle details like a fruit basket, marble bathroom glimpse, and mood lighting. The image should look like a professional hotel marketing photograph shot with a 50mm lens, 4K quality with perfect exposure and depth of field, not AI-generated.'
   },
   {
     id: '00d74238-40b3-4514-8214-7360a113d1ce',
@@ -61,12 +61,19 @@ async function generateImage(offer) {
       timestamp: Date.now()
     };
     
-    // Make request to our API
-    const response = await fetch('http://localhost:5000/api/openai/special-offer-image', {
+    // Make request to our API - use the actual server URL from environment or default to localhost
+    const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
+    console.log(`Making request to: ${serverUrl}/api/openai/special-offer-image`);
+    
+    // Get API key from environment or use our configured default
+    const apiKey = process.env.API_KEY || 'mydentalfly-api-token-12345';
+    
+    const response = await fetch(`${serverUrl}/api/openai/special-offer-image`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'is_authenticated=true; user_role=admin; user_id=1' // Admin authentication
+        'Authorization': `Bearer ${apiKey}`,
+        'X-API-Key': apiKey // Alternate auth method
       },
       body: JSON.stringify(requestBody)
     });
