@@ -166,11 +166,71 @@ export class DatabaseStorage implements IStorage {
   // === Quote Management ===
   async getQuoteRequest(id: number): Promise<QuoteRequest | undefined> {
     const [quoteRequest] = await db.select().from(quoteRequests).where(eq(quoteRequests.id, id));
+    
+    if (!quoteRequest) {
+      return undefined;
+    }
+    
+    // Process special offer data if it exists (similar to getQuoteRequestsByClinicId)
+    if (quoteRequest.specialOffer && typeof quoteRequest.specialOffer === 'object') {
+      // Parse it if it's a string (shouldn't happen, but just in case)
+      const offerData = typeof quoteRequest.specialOffer === 'string' 
+        ? JSON.parse(quoteRequest.specialOffer) 
+        : quoteRequest.specialOffer;
+        
+      const specialOffer = {
+        id: offerData.id || '',
+        title: offerData.title || 'Special Offer',
+        clinicId: offerData.clinicId || '1',
+        discountType: offerData.discountType || 'percentage',
+        discountValue: offerData.discountValue || 0,
+        applicableTreatment: offerData.applicableTreatment || '',
+        expiryDate: offerData.expiryDate,
+        terms: offerData.terms
+      };
+      
+      // Return a new object with processed special offer
+      return {
+        ...quoteRequest,
+        specialOffer
+      };
+    }
+    
     return quoteRequest;
   }
 
   async getQuoteRequestsByUserId(userId: number): Promise<QuoteRequest[]> {
-    return db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
+    const results = await db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
+    
+    // Transform the data to match the expected client format, just like in getQuoteRequestsByClinicId
+    return results.map(quote => {
+      // Process special offer data if it exists
+      let specialOffer;
+      
+      // Check if specialOffer exists and is not null
+      if (quote.specialOffer && typeof quote.specialOffer === 'object') {
+        // Parse it if it's a string (shouldn't happen, but just in case)
+        const offerData = typeof quote.specialOffer === 'string' 
+          ? JSON.parse(quote.specialOffer) 
+          : quote.specialOffer;
+          
+        specialOffer = {
+          id: offerData.id || '',
+          title: offerData.title || 'Special Offer',
+          clinicId: offerData.clinicId || '1',
+          discountType: offerData.discountType || 'percentage',
+          discountValue: offerData.discountValue || 0,
+          applicableTreatment: offerData.applicableTreatment || '',
+          expiryDate: offerData.expiryDate,
+          terms: offerData.terms
+        };
+      }
+      
+      return {
+        ...quote,
+        specialOffer
+      };
+    });
   }
 
   async getQuoteRequestsByClinicId(clinicId: number): Promise<QuoteRequest[]> {
@@ -251,25 +311,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllQuoteRequests(filters?: Partial<QuoteRequest>): Promise<QuoteRequest[]> {
-    if (!filters) {
-      return db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
-    }
-
-    // Build the filter conditions
-    const conditions = [];
-    if (filters.status) conditions.push(eq(quoteRequests.status, filters.status));
-    if (filters.selectedClinicId) conditions.push(eq(quoteRequests.selectedClinicId, filters.selectedClinicId));
-    if (filters.hasXrays !== undefined) conditions.push(eq(quoteRequests.hasXrays, filters.hasXrays));
+    let results;
     
-    if (conditions.length === 0) {
-      return db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
+    if (!filters) {
+      results = await db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
+    } else {
+      // Build the filter conditions
+      const conditions = [];
+      if (filters.status) conditions.push(eq(quoteRequests.status, filters.status));
+      if (filters.selectedClinicId) conditions.push(eq(quoteRequests.selectedClinicId, filters.selectedClinicId));
+      if (filters.hasXrays !== undefined) conditions.push(eq(quoteRequests.hasXrays, filters.hasXrays));
+      
+      if (conditions.length === 0) {
+        results = await db.select().from(quoteRequests).orderBy(desc(quoteRequests.createdAt));
+      } else {
+        results = await db
+          .select()
+          .from(quoteRequests)
+          .where(and(...conditions))
+          .orderBy(desc(quoteRequests.createdAt));
+      }
     }
-
-    return db
-      .select()
-      .from(quoteRequests)
-      .where(and(...conditions))
-      .orderBy(desc(quoteRequests.createdAt));
+    
+    // Transform the data to match the expected client format, just like in other methods
+    return results.map(quote => {
+      // Process special offer data if it exists
+      let specialOffer;
+      
+      // Check if specialOffer exists and is not null
+      if (quote.specialOffer && typeof quote.specialOffer === 'object') {
+        // Parse it if it's a string (shouldn't happen, but just in case)
+        const offerData = typeof quote.specialOffer === 'string' 
+          ? JSON.parse(quote.specialOffer) 
+          : quote.specialOffer;
+          
+        specialOffer = {
+          id: offerData.id || '',
+          title: offerData.title || 'Special Offer',
+          clinicId: offerData.clinicId || '1',
+          discountType: offerData.discountType || 'percentage',
+          discountValue: offerData.discountValue || 0,
+          applicableTreatment: offerData.applicableTreatment || '',
+          expiryDate: offerData.expiryDate,
+          terms: offerData.terms
+        };
+      }
+      
+      return {
+        ...quote,
+        specialOffer
+      };
+    });
   }
 
   async createQuoteRequest(data: InsertQuoteRequest): Promise<QuoteRequest> {
