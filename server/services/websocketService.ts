@@ -212,6 +212,14 @@ export class WebSocketService {
   }
 }
 
+// Singleton instance of WebSocketService
+let webSocketServiceInstance: WebSocketService | null = null;
+
 export const setupWebSocketService = (server: Server): WebSocketService => {
-  return new WebSocketService(server);
+  webSocketServiceInstance = new WebSocketService(server);
+  return webSocketServiceInstance;
+};
+
+export const getWebSocketService = (): WebSocketService | null => {
+  return webSocketServiceInstance;
 };
