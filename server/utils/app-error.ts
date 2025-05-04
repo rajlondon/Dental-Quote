@@ -11,9 +11,9 @@ export class AppError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-    this.isOperational = true;
+    this.isOperational = true; // This is a known operational error, not a programming error
 
-    // Capture the stack trace
+    // Capture stack trace (exclude this constructor from stack trace)
     Error.captureStackTrace(this, this.constructor);
   }
 }
