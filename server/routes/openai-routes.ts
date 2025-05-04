@@ -74,19 +74,45 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
   try {
     // Generate image using OpenAI
     console.log(`Generating special offer image for: ${offerTitle} (type: ${offerType || 'premium'})`);
-    const result = await generateSpecialOfferImage(offerTitle, offerType);
     
-    if (!result.url) {
-      throw new AppError('Failed to generate image URL', 500);
+    let imageUrl = '';
+    
+    try {
+      // First try to generate with OpenAI
+      const result = await generateSpecialOfferImage(offerTitle, offerType);
+      
+      if (!result.url) {
+        throw new Error('No image URL returned from OpenAI');
+      }
+      
+      imageUrl = result.url;
+      console.log('Successfully generated image with OpenAI');
+    } catch (aiError) {
+      // If OpenAI fails (due to rate limits or any other reason), use static fallbacks
+      console.warn(`OpenAI image generation failed, using fallback image: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
+      
+      // Identify fallback image based on offer type/title
+      let fallbackPath = '/images/offers/premium-hotel-deal.jpg';
+      
+      if (offerTitle.toLowerCase().includes('consultation')) {
+        fallbackPath = '/images/offers/free-consultation.jpg';
+      } else if (offerTitle.toLowerCase().includes('implant')) {
+        fallbackPath = '/images/offers/dental-implant-crown-bundle.jpg';
+      } else if (offerTitle.toLowerCase().includes('airport') || offerTitle.toLowerCase().includes('transfer')) {
+        fallbackPath = '/images/offers/luxury-airport-transfer.jpg';
+      }
+      
+      // Add a timestamp to bust the cache
+      imageUrl = `${fallbackPath}?t=${Date.now()}`;
+      
+      console.log(`Using fallback image: ${fallbackPath}`);
     }
     
-    // Update the special offer image directly using our helper
-    // Note: We're bypassing the storage interface to directly use the helper
-    // which has access to the in-memory map
+    // Update the special offer image in memory
     const { updateSpecialOfferImageInMemory } = await import('./special-offers-update-helper');
     console.log('Updating special offer image for offer ID:', offerId);
     
-    const updateResult = await updateSpecialOfferImageInMemory(offerId, result.url);
+    const updateResult = await updateSpecialOfferImageInMemory(offerId, imageUrl);
     
     if (!updateResult) {
       throw new AppError('Failed to update special offer image in database', 500);
@@ -94,26 +120,41 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
     
     console.log('Image updated successfully for offer ID:', offerId);
     
-    // Notify clients via WebSocket that the special offer has been updated
+    // Send multiple WebSocket notifications to ensure clients refresh properly
     const wss = getWebSocketService();
     if (wss) {
+      // First notification
       wss.broadcast(JSON.stringify({
         type: 'special_offer_updated',
         offerId,
-        imageUrl: result.url
+        imageUrl,
+        timestamp: Date.now()
       }));
+      
+      // Second notification after a delay to ensure refresh
+      setTimeout(() => {
+        wss.broadcast(JSON.stringify({
+          type: 'special_offer_updated',
+          offerId,
+          imageUrl,
+          timestamp: Date.now() + 1000 // Ensure unique timestamp
+        }));
+        
+        console.log('Sent second WebSocket notification to ensure client refresh');
+      }, 2000);
     }
     
     res.json({
       success: true,
       data: {
-        url: result.url,
-        offerId
+        url: imageUrl,
+        offerId,
+        fromFallback: !imageUrl.includes('openai.com')
       }
     });
   } catch (error) {
-    console.error('Error generating special offer image:', error);
-    throw new AppError(`Failed to generate special offer image: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
+    console.error('Error handling special offer image update:', error);
+    throw new AppError(`Failed to update special offer image: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
   }
 }));
 
