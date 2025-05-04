@@ -148,49 +148,87 @@ export async function generateSpecialOfferImage(
   offerTitle: string,
   offerType: string = "premium"
 ): Promise<{ url: string }> {
-  let prompt = "";
+  // Generate a unique timestamp and randomizer to ensure we get different images each time
+  const timestamp = new Date().toISOString();
+  const uniqueId = Math.random().toString(36).substring(2, 10);
+  
+  // Base prompt structure with built-in uniqueness
+  let basePrompt = `Create a completely unique and original marketing image for a dental tourism special offer titled "${offerTitle}".`;
+  
+  // Additional unique identifier to force the model to generate a different image each time
+  let uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
+  
+  let specificDetails = "";
   
   if (offerType.toLowerCase().includes("hotel") || offerTitle.toLowerCase().includes("hotel")) {
-    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+    specificDetails = `
 The image should showcase a luxury hotel experience with a view of Istanbul. Include elements that suggest comfort, relaxation, and premium accommodation.
-Use soft lighting and warm, inviting colors. The image should convey exclusivity and premium service - key values for dental tourists.
-Do not include any text or captions within the image.
-Make it sophisticated and aspirational, like a high-end travel magazine photograph.`;
+Use soft lighting and warm, inviting colors. The image should convey exclusivity and premium service - key values for dental tourists.`;
   } 
   else if (offerType.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("airport")) {
-    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+    specificDetails = `
 The image should showcase a luxury vehicle transfer service in Istanbul. Include elements that suggest comfort, convenience, and VIP treatment.
 Use clean, professional lighting and colors that convey reliability and premium service.
-The image should feature a premium black car (like a Mercedes) with a professional driver, suggesting airport pickup service.
-Do not include any text or captions within the image.
-Make it sophisticated and aspirational, like a high-end travel service photograph.`;
+The image should feature a premium black car (like a Mercedes) with a professional driver, suggesting airport pickup service.`;
   }
   else if (offerType.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consult")) {
-    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+    specificDetails = `
 The image should showcase a dental consultation with a professional dentist and patient in a modern dental clinic.
 Use clean, medical lighting with a professional atmosphere. Include dental technology elements in the background.
-The dentist should be wearing professional attire and appear knowledgeable and trustworthy.
-Do not include any text or captions within the image.
-Make it professional and reassuring, conveying dental expertise and patient care.`;
+The dentist should be wearing professional attire and appear knowledgeable and trustworthy.`;
   }
   else if (offerType.toLowerCase().includes("implant") || offerTitle.toLowerCase().includes("implant")) {
-    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+    specificDetails = `
 The image should showcase dental implant treatment results with a beautiful smile transformation.
 Use clean, bright lighting that highlights the perfect teeth. Include subtle elements suggesting advanced dental technology.
-The image should convey quality, precision, and long-lasting results - key benefits of dental implants.
-Do not include any text or captions within the image.
-Make it aspirational and impressive, like a premium dental clinic advertisement.`;
+The image should convey quality, precision, and long-lasting results - key benefits of dental implants.`;
   }
   else {
-    // Generic special offer prompt
-    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+    // Generic special offer prompt with randomized elements to ensure variation
+    const randomElements = [
+      "a glimpse of Istanbul's iconic skyline with sophisticated dental imagery",
+      "a modern dental clinic with luxury elements and Istanbul visible through windows",
+      "a beautiful smile makeover with luxury travel elements subtly incorporated",
+      "a high-end dental office reception area with Turkish design elements",
+      "an elegant blend of dental care aesthetics with Turkish hospitality elements"
+    ];
+    
+    // Select a random element to ensure variation
+    const randomElement = randomElements[Math.floor(Math.random() * randomElements.length)];
+    
+    specificDetails = `
 The image should have a luxurious, premium aesthetic with subtle elements suggesting dental care combined with travel experience.
-Use a scene that combines a glimpse of Istanbul's iconic skyline with sophisticated dental imagery.
+Use a scene that combines ${randomElement}.
 Use clean, bright, professional lighting and a color palette that feels premium and trustworthy.
-The image should convey quality, exclusivity, and premium service - key values in dental tourism.
-Do not include any text or captions within the image.
-Make it sophisticated and aspirational, like a high-end travel or medical service advertisement.`;
+The image should convey quality, exclusivity, and premium service - key values in dental tourism.`;
   }
+  
+  // Common ending for all prompts
+  const commonEnding = `
+Do not include any text or captions within the image.
+Make it sophisticated and aspirational, like a high-end professional advertisement.
+The image must be completely different from previous generations, with unique composition and elements.
+${uniqueModifier}`;
+  
+  // Combine all parts
+  const prompt = `${basePrompt}${specificDetails}${commonEnding}`;
 
-  return generateImage(prompt, "1792x1024"); // Wider format for banner images
+  console.log(`Generating special offer image with unique prompt (ID: ${uniqueId})`);
+  
+  // Generate the image with wider format for banner images
+  const result = await generateImage(prompt, "1792x1024");
+  
+  // If successful, ensure the URL has a cache-busting parameter
+  if (result && result.url) {
+    const url = result.url;
+    // Only add query parameter if it doesn't already have one
+    if (!url.includes('?')) {
+      result.url = `${url}?t=${Date.now()}&u=${uniqueId}`;
+      console.log(`Added cache busting parameters to URL: ${result.url}`);
+    } else {
+      console.log(`URL already contains query parameters: ${url}`);
+    }
+  }
+  
+  return result;
 }
