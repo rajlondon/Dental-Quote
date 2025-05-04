@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sparkles, Clock, ChevronRight, ChevronLeft, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useWebSocket } from '@/hooks/use-websocket';
 
 // API response type matching the actual data structure
 interface SpecialOffer {
@@ -37,14 +38,45 @@ interface EnhancedOffersCarouselProps {
 }
 
 export default function EnhancedOffersCarousel({ className }: EnhancedOffersCarouselProps) {
+  const queryClient = useQueryClient();
   const { data: offers, isLoading, error } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/special-offers/homepage'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
+  // Setup WebSocket connection for real-time updates
+  const { registerMessageHandler } = useWebSocket();
+  const { toast } = useToast();
+  
+  // Register handler for special offer image updates
+  useEffect(() => {
+    const handleSpecialOfferUpdated = (message: any) => {
+      if (message.type === 'special_offer_updated' && message.offerId && message.imageUrl) {
+        console.log('Received special offer update via WebSocket:', message);
+        
+        // Invalidate the homepage offers cache
+        queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
+        
+        // Show toast notification
+        toast({
+          title: 'Special Offer Updated',
+          description: 'An offer has been updated with a new image',
+          variant: 'default',
+        });
+      }
+    };
+    
+    // Register handler
+    registerMessageHandler('special_offer_updated', handleSpecialOfferUpdated);
+    
+    // Cleanup on unmount
+    return () => {
+      // The handler will be automatically removed by the useWebSocket hook
+    };
+  }, [queryClient, registerMessageHandler, toast]);
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const { toast } = useToast();
   
   // Auto-advance slides
   useEffect(() => {
