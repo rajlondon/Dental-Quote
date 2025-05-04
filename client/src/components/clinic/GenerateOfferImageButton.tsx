@@ -25,13 +25,17 @@ export function GenerateOfferImageButton({
   // Mutation for generating a completely new image via OpenAI
   const generateImageMutation = useMutation({
     mutationFn: async () => {
+      console.log(`Generating new AI image for offer: ${offer.id} - ${offer.title}`);
+      
       // Generate the new image with OpenAI DALL-E
       const response = await apiRequest('POST', '/api/openai/special-offer-image', {
         offerId: offer.id,
         offerTitle: offer.title,
         offerType: offer.promotion_level || 'premium',
         // Request that the generated image be automatically cached server-side
-        enableImageCache: true
+        enableImageCache: true,
+        // Add timestamp to ensure we're not getting cached response
+        timestamp: Date.now()
       });
       
       if (!response.ok) {
@@ -40,6 +44,7 @@ export function GenerateOfferImageButton({
       }
       
       const responseData = await response.json();
+      console.log('AI image generation response:', responseData);
       
       // If we got a new image URL but it's not already cached, try to cache it client-side
       if (responseData.success && 
@@ -50,8 +55,10 @@ export function GenerateOfferImageButton({
         
         try {
           // Additional client-side cache attempt as a backup
+          console.log('Attempting client-side cache for image URL:', responseData.data.url);
           const cacheResponse = await apiRequest('POST', '/api/images/cache', {
-            url: responseData.data.url
+            url: responseData.data.url,
+            timestamp: Date.now() // Add timestamp to prevent cached responses
           });
           
           if (cacheResponse.ok) {
@@ -60,6 +67,7 @@ export function GenerateOfferImageButton({
             
             // If the cache was successful, update the response with the cached URL
             if (cacheData.cached && cacheData.cachedUrl) {
+              console.log('Successfully cached image URL:', cacheData.cachedUrl);
               return {
                 ...responseData,
                 data: {
@@ -99,34 +107,91 @@ export function GenerateOfferImageButton({
       }
       
       if (onSuccess && data.data && data.data.url) {
+        console.log('Calling onSuccess with new image URL:', data.data.url);
         onSuccess(data.data.url);
       }
       
-      // Attempt direct DOM updates first (for faster visual feedback)
+      // Aggressive image update approach:
+      
+      // 1. Attempt direct DOM updates first (for faster visual feedback)
       try {
         // Find and update all matching images in DOM immediately
         const offerImages = document.querySelectorAll(`img[data-offer-id="${offer.id}"]`);
         if (offerImages.length > 0) {
           console.log(`🖼️ Found ${offerImages.length} images to update with fresh AI image`);
+          
+          // Add aggressive cache busting for the image URL
           const timestamp = Date.now();
-          const forcedUrl = `${data.data.url}${data.data.url.includes('?') ? '&' : '?'}ai_generated=true&t=${timestamp}`;
+          const randomStr = Math.random().toString(36).substring(2, 10);
+          const forcedUrl = `${data.data.url}${data.data.url.includes('?') ? '&' : '?'}ai_generated=true&t=${timestamp}&r=${randomStr}&_=${Date.now()}`;
           
           offerImages.forEach((element) => {
             const imgElement = element as HTMLImageElement;
+            // Save original src for reference
+            const originalSrc = imgElement.src;
+            
+            // Set new source with cache busting
             imgElement.src = forcedUrl;
+            
+            // Set onload/onerror handlers
+            imgElement.onload = () => {
+              console.log('✅ Successfully loaded new AI image in DOM');
+            };
+            
+            imgElement.onerror = () => {
+              console.log('❌ Failed to load new AI image, reverting to:', originalSrc);
+              // Try to load with proxy if direct failed
+              const proxyUrl = `/api/images/proxy?url=${encodeURIComponent(data.data.url)}&t=${Date.now()}`;
+              imgElement.src = proxyUrl;
+            };
+            
             console.log('✅ Updated image element directly in DOM with AI image');
+            
+            // Also force image reload by briefly removing and re-adding
+            const parent = imgElement.parentNode;
+            if (parent) {
+              const clone = imgElement.cloneNode(true) as HTMLImageElement;
+              clone.src = forcedUrl; // Ensure clone has the new URL
+              parent.replaceChild(clone, imgElement);
+            }
           });
         }
       } catch (err) {
         console.error('Error updating DOM with new AI image:', err);
       }
       
-      // Schedule a page reload after a brief delay to ensure the server has processed the change
-      // and all WebSocket notifications have been sent
+      // 2. Invalidate any cached data in React Query
+      try {
+        console.log('Invalidating cache for offers data');
+        queryClient.invalidateQueries({ queryKey: ['/api/special-offers'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/portal/clinic/special-offers'] });
+      } catch (err) {
+        console.error('Error invalidating cache:', err);
+      }
+      
+      // 3. Schedule first page reload attempt
       setTimeout(() => {
-        console.log('🔄 Reloading page to show new AI-generated image');
+        // First remove all cached images from browser cache if possible
+        try {
+          if ('caches' in window) {
+            caches.delete('images').then(() => {
+              console.log('Cleared image cache before reload');
+            });
+          }
+        } catch (err) {
+          console.error('Error clearing cache:', err);
+        }
+        
+        console.log('🔄 First reload attempt to show new AI-generated image');
         window.location.reload();
-      }, 3000);
+      }, 1500);
+      
+      // 4. Schedule a second reload as backup (in case the first one happens before server is ready)
+      setTimeout(() => {
+        console.log('🔄 Second reload attempt to show new AI-generated image');
+        window.location.reload();
+      }, 5000);
     },
     onError: (error: Error) => {
       // Check if error is related to API limits
@@ -149,12 +214,17 @@ export function GenerateOfferImageButton({
   // Mutation for refreshing image cache without generating a new image
   const refreshImageMutation = useMutation({
     mutationFn: async () => {
+      console.log(`Refreshing image for offer: ${offer.id} - ${offer.title}`);
+      
       // First try the specialized image cache API
       if (offer.banner_image) {
         try {
+          console.log('Attempting to cache image URL:', offer.banner_image);
+          
           // Call our new image caching API to permanently store the image
           const cacheResponse = await apiRequest('POST', '/api/images/cache', {
-            url: offer.banner_image
+            url: offer.banner_image,
+            timestamp: Date.now() // Add timestamp to prevent cached responses
           });
           
           if (cacheResponse.ok) {
@@ -163,13 +233,18 @@ export function GenerateOfferImageButton({
             
             // If the image was cached successfully, use the permanent URL
             if (cacheData.cached && cacheData.cachedUrl) {
+              console.log('Successfully cached image URL:', cacheData.cachedUrl);
+              
               // Also call the regular offer refresh API
               const offerResponse = await apiRequest('POST', `/api/special-offers/refresh-image/${offer.id}`, {
-                cachedImageUrl: cacheData.cachedUrl
+                cachedImageUrl: cacheData.cachedUrl,
+                timestamp: Date.now() // Add timestamp to prevent cached responses
               });
               
               if (offerResponse.ok) {
                 const offerData = await offerResponse.json();
+                console.log('Special offer refresh response:', offerData);
+                
                 return {
                   ...offerData,
                   cachedUrl: cacheData.cachedUrl,
@@ -184,7 +259,10 @@ export function GenerateOfferImageButton({
       }
       
       // Fallback to the original refresh method
-      const response = await apiRequest('POST', `/api/special-offers/refresh-image/${offer.id}`);
+      console.log('Using fallback refresh method');
+      const response = await apiRequest('POST', `/api/special-offers/refresh-image/${offer.id}`, {
+        timestamp: Date.now() // Add timestamp to prevent cached responses
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -209,44 +287,103 @@ export function GenerateOfferImageButton({
       
       // Use the cached URL if available, otherwise fall back to imageUrl
       const imageUrlToUse = data.cachedUrl || data.imageUrl;
+      console.log('Using image URL for refresh:', imageUrlToUse);
       
       if (onSuccess && imageUrlToUse) {
+        console.log('Calling onSuccess with refreshed image URL:', imageUrlToUse);
         onSuccess(imageUrlToUse);
       }
       
       // Aggressive approach to force image refresh
       try {
-        // 1. Create a new image element with unique cache-busting URL
+        // 1. Generate aggressive cache-busting URL
         const randomStr = Math.random().toString(36).substring(2, 15);
         const timestamp = Date.now();
-        const forcedUrl = `${imageUrlToUse}${imageUrlToUse.includes('?') ? '&' : '?'}forced=true&t=${timestamp}&r=${randomStr}`;
-        const img = createFreshImage(forcedUrl);
+        const forcedUrl = `${imageUrlToUse}${imageUrlToUse.includes('?') ? '&' : '?'}forced=true&t=${timestamp}&r=${randomStr}&_=${Date.now()}`;
         
         // 2. Find and update all matching images in DOM immediately
         const offerImages = document.querySelectorAll(`img[data-offer-id="${offer.id}"]`);
         if (offerImages.length > 0) {
           console.log(`🖼️ Found ${offerImages.length} images to update with force refresh`);
+          
           offerImages.forEach((element) => {
             const imgElement = element as HTMLImageElement;
+            // Save original src for reference
+            const originalSrc = imgElement.src;
+            
+            // Set new source with cache busting
             imgElement.src = forcedUrl;
-            console.log('✅ Updated image element directly in DOM');
+            
+            // Set onload/onerror handlers
+            imgElement.onload = () => {
+              console.log('✅ Successfully loaded refreshed image in DOM');
+            };
+            
+            imgElement.onerror = () => {
+              console.log('❌ Failed to load refreshed image, reverting to:', originalSrc);
+              // Try to load with proxy if direct failed
+              const proxyUrl = `/api/images/proxy?url=${encodeURIComponent(imageUrlToUse)}&t=${Date.now()}`;
+              imgElement.src = proxyUrl;
+            };
+            
+            console.log('✅ Updated image element directly in DOM with refreshed image');
+            
+            // Also force image reload by briefly removing and re-adding
+            const parent = imgElement.parentNode;
+            if (parent) {
+              const clone = imgElement.cloneNode(true) as HTMLImageElement;
+              clone.src = forcedUrl; // Ensure clone has the new URL
+              parent.replaceChild(clone, imgElement);
+            }
           });
         }
+        
+        // 3. Create a fresh image object to preload the image
+        const preloadImage = document.createElement('img');
+        preloadImage.src = forcedUrl;
+        document.body.appendChild(preloadImage);
+        setTimeout(() => {
+          if (preloadImage.parentNode) {
+            preloadImage.parentNode.removeChild(preloadImage);
+          }
+        }, 2000);
+        
       } catch (err) {
         console.error('Error during direct DOM update:', err);
       }
       
-      // 3. Force invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/special-offers'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/portal/clinic/special-offers'] });
+      // 4. Force invalidate relevant queries
+      try {
+        console.log('Invalidating cache for offers data');
+        queryClient.invalidateQueries({ queryKey: ['/api/special-offers'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/portal/clinic/special-offers'] });
+      } catch (err) {
+        console.error('Error invalidating cache:', err);
+      }
       
-      // 4. Reload page as final fallback, but with a longer delay
-      // to allow WebSocket notifications to arrive first
+      // 5. Schedule first page reload attempt
       setTimeout(() => {
-        console.log('🔄 Reloading page to show refreshed image');
+        // First remove all cached images from browser cache if possible
+        try {
+          if ('caches' in window) {
+            caches.delete('images').then(() => {
+              console.log('Cleared image cache before reload');
+            });
+          }
+        } catch (err) {
+          console.error('Error clearing cache:', err);
+        }
+        
+        console.log('🔄 First reload attempt to show refreshed image');
         window.location.reload();
-      }, 3000);
+      }, 1500);
+      
+      // 6. Schedule a second reload as backup (in case the first one happens before server is ready)
+      setTimeout(() => {
+        console.log('🔄 Second reload attempt to show refreshed image');
+        window.location.reload();
+      }, 5000);
     },
     onError: (error: Error) => {
       toast({
@@ -261,35 +398,87 @@ export function GenerateOfferImageButton({
   useEffect(() => {
     // Handler function for special offer image refresh notifications via WebSocket
     const handleOfferImageRefresh = (message: any) => {
-      if (message.type === 'special_offer_image_refresh' && 
-          message.payload && 
-          message.payload.offerId === offer.id) {
+      console.log(`📡 WebSocket message received, type: ${message.type}`);
+      console.log('Message data:', message);
+      
+      // Handle different types of image refresh messages
+      if ((message.type === 'special_offer_image_refresh' && 
+           message.payload && 
+           message.payload.offerId === offer.id) || 
+          (message.type === 'special_offer_image_refreshed' && 
+           message.offerId === offer.id)) {
         
         console.log(`📡 WebSocket notification received for image refresh: ${offer.id}`);
         
-        // Extract the updated image URL from the message
-        const refreshedImageUrl = message.payload.imageUrl;
+        // Extract the updated image URL from the message (handle different formats)
+        const refreshedImageUrl = message.payload?.imageUrl || message.imageUrl;
         
         if (refreshedImageUrl) {
+          console.log('Received refreshed image URL via WebSocket:', refreshedImageUrl);
+          
           // Notify parent component if callback provided
           if (onSuccess) {
             onSuccess(refreshedImageUrl);
           }
           
-          // Update all the matching image elements on the page
+          // Update all the matching image elements on the page with super aggressive approach
           setTimeout(() => {
             try {
               // Target all images with data-offer-id attribute matching this offer
               const offerImages = document.querySelectorAll(`img[data-offer-id="${offer.id}"]`);
               
               if (offerImages.length > 0) {
-                console.log(`🖼️ Found ${offerImages.length} image elements to update`);
+                console.log(`🖼️ Found ${offerImages.length} image elements to update via WebSocket`);
+                
+                // Generate highly unique cache-busting parameters
+                const timestamp = Date.now();
+                const randomStr = Math.random().toString(36).substring(2, 15);
+                const forcedUrl = `${refreshedImageUrl}${refreshedImageUrl.includes('?') ? '&' : '?'}ws_update=true&t=${timestamp}&r=${randomStr}&_=${Date.now()}`;
                 
                 offerImages.forEach((element) => {
                   const imgElement = element as HTMLImageElement;
-                  // Force browser to reload the image by appending a timestamp
-                  imgElement.src = `${refreshedImageUrl}&dom_update=true&t=${Date.now()}`;
+                  // Save original src for potential fallback
+                  const originalSrc = imgElement.src;
+                  
+                  // Force browser to reload the image with aggressive cache busting
+                  imgElement.src = forcedUrl;
+                  
+                  // Handle load/error events
+                  imgElement.onload = () => {
+                    console.log('✅ Successfully loaded WebSocket-refreshed image in DOM');
+                  };
+                  
+                  imgElement.onerror = () => {
+                    console.log('❌ Failed to load WebSocket-refreshed image, trying proxy:', refreshedImageUrl);
+                    // Try to load with proxy if direct failed
+                    const proxyUrl = `/api/images/proxy?url=${encodeURIComponent(refreshedImageUrl)}&t=${Date.now()}`;
+                    imgElement.src = proxyUrl;
+                    
+                    // If proxy also fails, revert to original
+                    imgElement.onerror = () => {
+                      console.log('❌ Proxy load also failed, reverting to original');
+                      imgElement.src = originalSrc;
+                    };
+                  };
+                  
+                  // DOM replacement trick for stubborn browsers
+                  const parent = imgElement.parentNode;
+                  if (parent) {
+                    const clone = imgElement.cloneNode(true) as HTMLImageElement;
+                    clone.src = forcedUrl;
+                    parent.replaceChild(clone, imgElement);
+                  }
                 });
+                
+                // Create and preload a fresh image
+                const preloadImage = document.createElement('img');
+                preloadImage.src = forcedUrl;
+                document.body.appendChild(preloadImage);
+                setTimeout(() => {
+                  if (preloadImage.parentNode) {
+                    preloadImage.parentNode.removeChild(preloadImage);
+                  }
+                }, 2000);
                 
                 // Invalidate queries to refresh any react components
                 queryClient.invalidateQueries({ queryKey: ['/api/special-offers'] });
@@ -300,23 +489,33 @@ export function GenerateOfferImageButton({
                   title: 'Image Updated',
                   description: 'The special offer image has been refreshed automatically.',
                 });
+                
+                // Check if force reload is required
+                if (message.command === 'force_reload' || message.forceReload) {
+                  console.log('Force reload command received, scheduling page reload');
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1000);
+                }
               } else {
-                console.log('⚠️ No matching image elements found on page for direct DOM update');
+                console.log('⚠️ No matching image elements found on page for WebSocket update');
               }
             } catch (err) {
-              console.error('Error updating image elements:', err);
+              console.error('Error during WebSocket image update:', err);
             }
-          }, 500); // Small delay to ensure DOM is ready
+          }, 300); // Small delay to ensure DOM is ready
         }
       }
     };
     
-    // Register the message handler with the correct message type
+    // Register the message handler with both possible message types
     registerMessageHandler('special_offer_image_refresh', handleOfferImageRefresh);
+    registerMessageHandler('special_offer_image_refreshed', handleOfferImageRefresh);
     
     // Cleanup on unmount
     return () => {
       unregisterMessageHandler('special_offer_image_refresh');
+      unregisterMessageHandler('special_offer_image_refreshed');
     };
   }, [offer.id, onSuccess, queryClient, registerMessageHandler, unregisterMessageHandler, toast]);
 
