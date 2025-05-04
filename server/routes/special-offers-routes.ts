@@ -439,4 +439,131 @@ router.get('/api/commission-tiers', (req, res) => {
   res.json(commissionTiers);
 });
 
+// Special endpoint for image refresh with WebSocket notification
+// No authentication required for easier testing
+router.post('/api/special-offers/refresh-image/:offerId', catchAsync(async (req, res) => {
+  const { offerId } = req.params;
+  
+  if (!offerId) {
+    throw new AppError('Offer ID is required', 400);
+  }
+  
+  console.log(`🔄 Image refresh requested for offer: ${offerId}`);
+  
+  // Find the offer in the in-memory store
+  const specialOffersMap = getSpecialOffersMap();
+  let found = false;
+  let offerImageUrl = '';
+  
+  // Search for the offer in all clinics
+  specialOffersMap.forEach((clinicOffers, clinicId) => {
+    const offer = clinicOffers.find(o => o.id === offerId);
+    if (offer) {
+      console.log(`Found offer ${offerId} in clinic ${clinicId}`);
+      found = true;
+      offerImageUrl = offer.banner_image || '';
+      
+      // Add cache-busting parameters
+      if (offerImageUrl) {
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(2, 15);
+        
+        // Check if the URL already has query parameters
+        const separator = offerImageUrl.includes('?') ? '&' : '?';
+        offerImageUrl = `${offerImageUrl}${separator}t=${timestamp}&r=${randomString}&cb=true`;
+      }
+    }
+  });
+  
+  if (!found) {
+    throw new AppError(`Special offer with ID ${offerId} not found`, 404);
+  }
+  
+  if (!offerImageUrl) {
+    throw new AppError(`No image URL found for offer ${offerId}`, 404);
+  }
+  
+  // Update the offer image in memory with the cache-busting URL
+  const updateSuccess = updateSpecialOfferImageInMemory(offerId, offerImageUrl);
+  
+  if (!updateSuccess) {
+    throw new AppError('Failed to update offer image in memory', 500);
+  }
+  
+  // Broadcast to all connected clients via WebSocket
+  const wsService = getWebSocketService();
+  let wsClientCount = 0;
+  
+  if (wsService) {
+    wsClientCount = wsService.broadcastSpecialOfferImageRefresh(offerId, offerImageUrl);
+    console.log(`📡 WebSocket notification sent to ${wsClientCount} clients`);
+  } else {
+    console.warn('⚠️ WebSocket service not available for notification');
+  }
+  
+  // Return success response with metadata
+  res.json({
+    success: true,
+    message: 'Image refresh initiated',
+    offerId, 
+    imageUrl: offerImageUrl,
+    wsNotification: wsClientCount > 0,
+    clientCount: wsClientCount,
+    timestamp: Date.now()
+  });
+}));
+
+// Test endpoint for simulating an offer image update (development only)
+if (process.env.NODE_ENV !== 'production') {
+  router.get('/api/special-offers/test-refresh/:offerId', (req, res) => {
+    const { offerId } = req.params;
+    
+    if (!offerId) {
+      return res.status(400).json({ error: 'Offer ID is required' });
+    }
+    
+    // Find the offer
+    const specialOffersMap = getSpecialOffersMap();
+    let found = false;
+    let offerImageUrl = '';
+    
+    // Search for the offer in all clinics
+    specialOffersMap.forEach((clinicOffers, clinicId) => {
+      const offer = clinicOffers.find(o => o.id === offerId);
+      if (offer) {
+        found = true;
+        offerImageUrl = offer.banner_image || '';
+      }
+    });
+    
+    if (!found) {
+      return res.status(404).json({ error: `Special offer with ID ${offerId} not found` });
+    }
+    
+    // Construct the POST URL for easy testing
+    const refreshUrl = `/api/special-offers/refresh-image/${offerId}`;
+    
+    res.json({
+      success: true,
+      offerId,
+      currentImageUrl: offerImageUrl,
+      refreshUrl,
+      testHtml: `
+        <html>
+          <body>
+            <h3>Test Image Refresh</h3>
+            <img src="${offerImageUrl}" style="max-width: 300px" />
+            <br /><br />
+            <button onclick="fetch('${refreshUrl}', {method: 'POST'}).then(r => r.json()).then(console.log)">
+              Refresh Image
+            </button>
+            <br /><br />
+            <small>Check console for response</small>
+          </body>
+        </html>
+      `
+    });
+  });
+}
+
 export default router;

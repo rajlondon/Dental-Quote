@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SpecialOffer } from '@shared/specialOffers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useWebSocket } from '@/hooks/use-websocket';
 
 interface GenerateOfferImageButtonProps {
   offer: SpecialOffer;
@@ -18,6 +19,8 @@ export function GenerateOfferImageButton({
 }: GenerateOfferImageButtonProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { registerMessageHandler } = useWebSocket();
 
   // Mutation for generating a completely new image via OpenAI
   const generateImageMutation = useMutation({
@@ -103,8 +106,7 @@ export function GenerateOfferImageButton({
       // Force clear browser cache for this image
       if (offer.banner_image) {
         // Create a new image element to force the browser to reload the image
-        const img = new Image();
-        img.src = data.imageUrl + '&forced=true';
+        const img = createFreshImage(data.imageUrl + '&forced=true');
       }
       
       // Force reload the page after a short delay
@@ -121,6 +123,76 @@ export function GenerateOfferImageButton({
       });
     },
   });
+
+  // Register WebSocket handler for image updates
+  useEffect(() => {
+    // Handler function for special offer image refresh notifications via WebSocket
+    const handleOfferImageRefresh = (message: any) => {
+      if (message.type === 'special_offer_image_refresh' && 
+          message.payload && 
+          message.payload.offerId === offer.id) {
+        
+        console.log(`📡 WebSocket notification received for image refresh: ${offer.id}`);
+        
+        // Extract the updated image URL from the message
+        const refreshedImageUrl = message.payload.imageUrl;
+        
+        if (refreshedImageUrl) {
+          // Notify parent component if callback provided
+          if (onSuccess) {
+            onSuccess(refreshedImageUrl);
+          }
+          
+          // Update all the matching image elements on the page
+          setTimeout(() => {
+            try {
+              // Target all images with data-offer-id attribute matching this offer
+              const offerImages = document.querySelectorAll(`img[data-offer-id="${offer.id}"]`);
+              
+              if (offerImages.length > 0) {
+                console.log(`🖼️ Found ${offerImages.length} image elements to update`);
+                
+                offerImages.forEach((element) => {
+                  const imgElement = element as HTMLImageElement;
+                  // Force browser to reload the image by appending a timestamp
+                  imgElement.src = `${refreshedImageUrl}&dom_update=true&t=${Date.now()}`;
+                });
+                
+                // Invalidate queries to refresh any react components
+                queryClient.invalidateQueries({ queryKey: ['/api/special-offers'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/portal/clinic/special-offers'] });
+                
+                toast({
+                  title: 'Image Updated',
+                  description: 'The special offer image has been refreshed automatically.',
+                });
+              } else {
+                console.log('⚠️ No matching image elements found on page for direct DOM update');
+              }
+            } catch (err) {
+              console.error('Error updating image elements:', err);
+            }
+          }, 500); // Small delay to ensure DOM is ready
+        }
+      }
+    };
+    
+    // Register the message handler
+    const unregister = registerMessageHandler(handleOfferImageRefresh);
+    
+    // Cleanup on unmount
+    return () => {
+      if (unregister) unregister();
+    };
+  }, [offer.id, onSuccess, queryClient, registerMessageHandler, toast]);
+
+  // Fix for Image constructor
+  const createFreshImage = (url: string) => {
+    const img = document.createElement('img');
+    img.src = url;
+    return img;
+  };
 
   // Combined mutation status
   const isPending = generateImageMutation.isPending || refreshImageMutation.isPending;
