@@ -19,7 +19,7 @@ import { setSpecialOffersMap, getSpecialOffersMap } from './special-offers-updat
 // Sample offers for development - demonstrating premium special offers
 const sampleOffers: SpecialOffer[] = [
   {
-    id: uuidv4(),
+    id: "ac36590b-b0dc-434e-ba74-d42ab2485e81", // Use fixed ID for testing with refresh script
     clinic_id: "1",  // Clinic 1
     title: "Free Consultation Package",
     description: "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
