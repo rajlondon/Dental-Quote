@@ -247,6 +247,17 @@ function Router() {
       <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic/bookings/:id" component={BookingDetailPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic/create-booking" component={CreateBookingPage} requiredRole="clinic_staff" />
+      
+      {/* Clinic Quote Routes */}
+      <ProtectedRoute path="/clinic/quotes/:id" component={() => {
+        // This is a wrapper to ensure the quotes section is displayed properly
+        return (
+          <ClinicGuard>
+            <ClinicPortalPage disableAutoRefresh={true} initialSection="quotes" />
+          </ClinicGuard>
+        );
+      }} requiredRole="clinic_staff" />
+      
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>
