@@ -481,9 +481,9 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Updating special offer image for offer ID: ${offerId}`);
       
-      // Import the specialOffers map directly from the routes file
-      // This is needed because we're using in-memory storage
-      const { updateSpecialOfferImageInMemory } = require('./routes/special-offers-update-helper');
+      // Import the module using dynamic import for ES modules
+      const helperModule = await import('./routes/special-offers-update-helper');
+      const { updateSpecialOfferImageInMemory } = helperModule;
       
       if (!updateSpecialOfferImageInMemory) {
         throw new Error('Failed to import updateSpecialOfferImageInMemory function');
