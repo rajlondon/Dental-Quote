@@ -1,8 +1,21 @@
 import OpenAI from "openai";
+import { getLogoAsBase64 } from "../utils/logo-utils";
+import { isProduction } from "../utils/environment";
+import { logError, ErrorSeverity } from "./error-logger";
 
-// Initialize OpenAI with API key
-const apiKey = process.env.OPENAI_API_KEY;
-const openai = new OpenAI({ apiKey });
+// The newest OpenAI model is "gpt-4o" which was released May 13, 2024. 
+// Do not change this unless explicitly requested by the user
+const GPT_MODEL = "gpt-4o";
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Verify that the OpenAI API key is properly configured
+export function isOpenAIConfigured(): boolean {
+  return !!process.env.OPENAI_API_KEY;
+}
 
 /**
  * Generate an image using OpenAI's DALL-E model
@@ -15,26 +28,33 @@ export async function generateImage(
   size: "1024x1024" | "1792x1024" | "1024x1792" = "1024x1024"
 ): Promise<{ url: string }> {
   try {
-    if (!apiKey) {
-      throw new Error("OpenAI API key is not configured");
+    if (!isOpenAIConfigured()) {
+      throw new Error("OpenAI API key not configured");
     }
 
-    console.log(`Generating image with DALL-E for prompt: "${prompt}"`);
+    console.log(`Generating image for prompt: ${prompt.substring(0, 100)}...`);
     
     const response = await openai.images.generate({
-      model: "dall-e-3", // The newest DALL-E model
+      model: "dall-e-3",
       prompt,
-      n: 1, // Number of images to generate
+      n: 1,
       size,
       quality: "standard",
-      style: "vivid", // More photorealistic and vibrant
     });
 
-    console.log("Image generation successful");
-    return { url: response.data[0].url };
+    // Log success
+    console.log("Image generated successfully");
+    
+    return { url: response.data[0].url ?? "" };
   } catch (error) {
-    console.error("Error generating image with DALL-E:", error);
-    throw error;
+    console.error("OpenAI image generation error:", error);
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      component: "OpenAI",
+      operation: "generateImage",
+      prompt: prompt.substring(0, 100) + "..."
+    }, ErrorSeverity.ERROR);
+    
+    throw new Error(`Failed to generate image: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -46,15 +66,14 @@ export async function generateImage(
 export async function generateDentalTreatmentImage(
   treatmentType: string
 ): Promise<{ url: string }> {
-  // Create a detailed prompt that will generate high-quality, professional dental images
-  const prompt = `Create a professional, high-quality image for a dental clinic featuring ${treatmentType}. 
-  The image should look like a premium stock photo suitable for a dental tourism website. 
-  It should be warm, inviting, and showcase modern dental facilities. 
-  Include subtle elements that suggest Turkey's blend of advanced healthcare and hospitality.
-  The image should be clean, bright, and inspire confidence in potential patients.
-  Do not include any text, watermarks, or borders in the image.`;
+  const basePrompt = `Create a high-quality, professional dental marketing image for ${treatmentType}. 
+The image should look realistic and medical, suitable for a premium dental clinic website.
+It should showcase the treatment result with clean, bright teeth and a natural-looking smile.
+Use soft lighting and a clean, sterile aesthetic with a subtle blue dental theme.
+The image should convey professionalism, expertise, and trust - key values in dental tourism.
+Do not include any text in the image.`;
 
-  return generateImage(prompt);
+  return generateImage(basePrompt, "1024x1024");
 }
 
 /**
@@ -65,16 +84,51 @@ export async function generateDentalTreatmentImage(
  */
 export async function generateSpecialOfferImage(
   offerTitle: string,
-  offerType: string
+  offerType: string = "premium"
 ): Promise<{ url: string }> {
-  // Create a detailed prompt for the special offer
-  const prompt = `Create a professional marketing image for dental tourism special offer titled "${offerTitle}" of type "${offerType}".
-  The image should look like a premium advertisement suitable for a high-end dental tourism website.
-  It should be elegant, attractive, and visually communicate value and quality.
-  Include subtle visual elements related to both dental care and travel/tourism in Turkey.
-  The image should be bright, modern, and inspire trust and excitement.
-  Do not include any text, watermarks, or borders in the image.`;
+  let prompt = "";
+  
+  if (offerType.toLowerCase().includes("hotel") || offerTitle.toLowerCase().includes("hotel")) {
+    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+The image should showcase a luxury hotel experience with a view of Istanbul. Include elements that suggest comfort, relaxation, and premium accommodation.
+Use soft lighting and warm, inviting colors. The image should convey exclusivity and premium service - key values for dental tourists.
+Do not include any text or captions within the image.
+Make it sophisticated and aspirational, like a high-end travel magazine photograph.`;
+  } 
+  else if (offerType.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("airport")) {
+    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+The image should showcase a luxury vehicle transfer service in Istanbul. Include elements that suggest comfort, convenience, and VIP treatment.
+Use clean, professional lighting and colors that convey reliability and premium service.
+The image should feature a premium black car (like a Mercedes) with a professional driver, suggesting airport pickup service.
+Do not include any text or captions within the image.
+Make it sophisticated and aspirational, like a high-end travel service photograph.`;
+  }
+  else if (offerType.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consult")) {
+    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+The image should showcase a dental consultation with a professional dentist and patient in a modern dental clinic.
+Use clean, medical lighting with a professional atmosphere. Include dental technology elements in the background.
+The dentist should be wearing professional attire and appear knowledgeable and trustworthy.
+Do not include any text or captions within the image.
+Make it professional and reassuring, conveying dental expertise and patient care.`;
+  }
+  else if (offerType.toLowerCase().includes("implant") || offerTitle.toLowerCase().includes("implant")) {
+    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+The image should showcase dental implant treatment results with a beautiful smile transformation.
+Use clean, bright lighting that highlights the perfect teeth. Include subtle elements suggesting advanced dental technology.
+The image should convey quality, precision, and long-lasting results - key benefits of dental implants.
+Do not include any text or captions within the image.
+Make it aspirational and impressive, like a premium dental clinic advertisement.`;
+  }
+  else {
+    // Generic special offer prompt
+    prompt = `Create a realistic, professional marketing image for a dental tourism special offer titled "${offerTitle}".
+The image should have a luxurious, premium aesthetic with subtle elements suggesting dental care combined with travel experience.
+Use a scene that combines a glimpse of Istanbul's iconic skyline with sophisticated dental imagery.
+Use clean, bright, professional lighting and a color palette that feels premium and trustworthy.
+The image should convey quality, exclusivity, and premium service - key values in dental tourism.
+Do not include any text or captions within the image.
+Make it sophisticated and aspirational, like a high-end travel or medical service advertisement.`;
+  }
 
-  // Use a landscape format for special offers to better fit in the carousel
-  return generateImage(prompt, "1792x1024");
+  return generateImage(prompt, "1792x1024"); // Wider format for banner images
 }
