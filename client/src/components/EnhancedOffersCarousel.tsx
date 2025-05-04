@@ -393,27 +393,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               transition={{ duration: 0.5 }}
             >
               <div className="md:w-1/2 h-64 md:h-auto relative">
-                {/* Debug information about the OpenAI URL */}
-                {offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net') && (
-                  <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs p-1 z-50 flex flex-col">
-                    <span>OpenAI URL detected!</span>
-                    <a 
-                      href={offer.banner_image}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white underline hover:text-blue-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("Opening URL directly:", offer.banner_image);
-                      }}
-                    >
-                      Open URL Directly
-                    </a>
-                  </div>
-                )}
-                
+                {/* Use direct OpenAI URL for OpenAI-generated images */}
                 <img 
-                  src={getImageUrl(offer)}
+                  src={offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net') 
+                    ? offer.banner_image // Use the actual OpenAI URL directly without modifications
+                    : getImageUrl(offer)} // Use normal URL handling for other images
                   alt={offer.title}
                   className="w-full h-full object-cover"
                   onLoad={(e) => {
@@ -427,15 +411,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     console.error(`❌ Error loading image for offer ${offer.id}:`, e);
                     console.log('🔍 Image URL that failed:', e.currentTarget.src);
                     
-                    // Additional debugging information for OpenAI URLs
-                    if (offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net')) {
-                      console.error('❌ Failed to load OpenAI DALL-E image from Azure Blob Storage');
-                    }
-                    
                     // Fallback to a default image if loading fails
                     e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
                   }}
-                  crossOrigin="anonymous" // Try with CrossOrigin attribute for CORS issues
+                  crossOrigin="anonymous" // CrossOrigin attribute for CORS issues
                 />
                 <div className="absolute top-4 left-4">
                   <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.promotion_level))}>
