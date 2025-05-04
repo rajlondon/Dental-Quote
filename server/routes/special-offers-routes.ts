@@ -7,6 +7,10 @@ import {
   createSpecialOfferSchema 
 } from '@shared/specialOffers';
 import { User } from '@shared/schema';
+import { getWebSocketService } from '../services/websocketService';
+import { updateSpecialOfferImageInMemory } from './special-offers-update-helper';
+import { AppError } from '../utils/app-error';
+import { catchAsync } from '../utils/catch-async';
 
 // Extend Express.User interface to include clinicId
 declare global {
