@@ -22,6 +22,10 @@ const router = express.Router();
 // In-memory storage for development (replace with DB in production)
 const specialOffers = new Map<string, SpecialOffer[]>();
 
+// Export the specialOffers map reference to the update helper
+import { setSpecialOffersMap } from './special-offers-update-helper';
+setSpecialOffersMap(specialOffers);
+
 // Commission tier definitions
 const commissionTiers: CommissionTier[] = [
   {
