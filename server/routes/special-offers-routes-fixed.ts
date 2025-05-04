@@ -568,6 +568,7 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
     }
     
     const { offerId } = req.params;
+    const { cachedImageUrl } = req.body; // This will contain a cached URL if provided by client
     
     if (!offerId) {
       return res.status(400).json({
@@ -592,18 +593,98 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
         foundOffer = offer;
         
         if (offer.banner_image) {
-          // Generate a completely new cache busting URL
-          const timestamp = Date.now();
-          const randomId = Math.random().toString(36).substring(2, 10);
-          const originalUrl = offer.banner_image.split('?')[0]; // Get base URL without params
+          // Check if we have a cached URL provided by the client
+          if (cachedImageUrl) {
+            // Use the permanently cached URL from our image cache service
+            updatedImageUrl = cachedImageUrl;
+            console.log(`Using permanently cached image URL: ${cachedImageUrl}`);
+          } else {
+            // If no cached URL, try to use our image cache service
+            try {
+              // Import the image caching service dynamically to avoid circular dependencies
+              import('../utils/image-cache-service').then(async ({ ImageCacheService }) => {
+                // Check if the image is already cached
+                if (ImageCacheService.isImageCached(offer.banner_image)) {
+                  // Get the cached version
+                  const cachedUrl = ImageCacheService.getCachedUrl(offer.banner_image);
+                  
+                  if (cachedUrl) {
+                    // Update with the cached URL
+                    clinicOffers[offerIndex].banner_image = cachedUrl;
+                    specialOffers.set(clinicId, clinicOffers);
+                    console.log(`Using existing cached image: ${cachedUrl}`);
+                    
+                    // Send WebSocket notification with the cached URL
+                    try {
+                      const { getWebSocketService } = await import('../services/websocketService');
+                      const wss = getWebSocketService();
+                      
+                      if (wss) {
+                        wss.broadcast(JSON.stringify({
+                          type: 'special_offer_image_refresh',
+                          payload: {
+                            offerId,
+                            imageUrl: cachedUrl,
+                            timestamp: Date.now()
+                          }
+                        }));
+                      }
+                    } catch (wsError) {
+                      console.error('WebSocket notification error:', wsError);
+                    }
+                  }
+                } else {
+                  // If not cached, try to cache it
+                  try {
+                    const newCachedUrl = await ImageCacheService.cacheImage(offer.banner_image);
+                    
+                    // Update with the newly cached URL
+                    clinicOffers[offerIndex].banner_image = newCachedUrl;
+                    specialOffers.set(clinicId, clinicOffers);
+                    console.log(`Newly cached image URL: ${newCachedUrl}`);
+                    
+                    // Send WebSocket notification with the new cached URL
+                    try {
+                      const { getWebSocketService } = await import('../services/websocketService');
+                      const wss = getWebSocketService();
+                      
+                      if (wss) {
+                        wss.broadcast(JSON.stringify({
+                          type: 'special_offer_image_refresh',
+                          payload: {
+                            offerId,
+                            imageUrl: newCachedUrl,
+                            timestamp: Date.now()
+                          }
+                        }));
+                      }
+                    } catch (wsError) {
+                      console.error('WebSocket notification error:', wsError);
+                    }
+                  } catch (cacheError) {
+                    console.error('Error caching image:', cacheError);
+                  }
+                }
+              }).catch(err => {
+                console.error('Error importing ImageCacheService:', err);
+              });
+            } catch (cacheError) {
+              console.error('Failed to use image cache service:', cacheError);
+            }
+            
+            // Generate a cache busting URL as a fallback
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 10);
+            const originalUrl = offer.banner_image.split('?')[0]; // Get base URL without params
+            
+            // Create a new URL with robust cache busting parameters
+            updatedImageUrl = `${originalUrl}?t=${timestamp}&r=${randomId}&nocache=true`;
+          }
           
-          // Create a new URL with robust cache busting parameters
-          updatedImageUrl = `${originalUrl}?t=${timestamp}&r=${randomId}&nocache=true`;
-          
-          // Update the offer in memory
+          // Update the offer in memory with either cached URL or fallback
           clinicOffers[offerIndex] = {
             ...offer,
-            banner_image: updatedImageUrl,
+            banner_image: updatedImageUrl || offer.banner_image,
             updated_at: new Date().toISOString()
           };
           
@@ -612,7 +693,7 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
           offerFound = true;
           
           console.log(`Successfully refreshed image URL for offer "${offer.title}"`);
-          console.log(`New image URL: ${updatedImageUrl}`);
+          console.log(`Updated image URL: ${updatedImageUrl || offer.banner_image}`);
         }
       }
     });
