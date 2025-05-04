@@ -155,12 +155,14 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
     // Send multiple WebSocket notifications to ensure clients refresh properly
     const wss = getWebSocketService();
     if (wss) {
-      // First notification
+      // First notification with cache invalidation command
       wss.broadcast(JSON.stringify({
         type: 'special_offer_updated',
         offerId,
         imageUrl,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        command: 'invalidate_cache',
+        forceReload: true
       }));
       
       // Second notification after a delay to ensure refresh
@@ -169,11 +171,27 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
           type: 'special_offer_updated',
           offerId,
           imageUrl,
-          timestamp: Date.now() + 1000 // Ensure unique timestamp
+          timestamp: Date.now() + 1000, // Ensure unique timestamp
+          command: 'invalidate_cache',
+          forceReload: true
         }));
         
         console.log('Sent second WebSocket notification to ensure client refresh');
       }, 2000);
+      
+      // Third notification with longer delay for clients that might have missed earlier ones
+      setTimeout(() => {
+        wss.broadcast(JSON.stringify({
+          type: 'special_offer_updated',
+          offerId,
+          imageUrl,
+          timestamp: Date.now() + 2000, // Another unique timestamp
+          command: 'force_reload',
+          forceReload: true
+        }));
+        
+        console.log('Sent third WebSocket notification with force_reload command');
+      }, 4000);
     }
     
     // Check if the image URL is from OpenAI (starts with https:// and contains openai)
@@ -181,6 +199,13 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
     const isOpenAIUrl = imageUrl.startsWith('https://') && 
                         (imageUrl.includes('openai') || 
                          imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net'));
+    
+    // Add cache-busting timestamp to OpenAI URLs to ensure browsers reload the image
+    if (isOpenAIUrl && !imageUrl.includes('?')) {
+      const timestamp = Date.now();
+      imageUrl = `${imageUrl}?t=${timestamp}`;
+      console.log(`Added cache-busting to OpenAI URL: ${imageUrl}`);
+    }
     
     console.log(`Image URL analysis for offer ${offerId}:`);
     console.log(` - Is recognized as OpenAI URL: ${isOpenAIUrl}`);
