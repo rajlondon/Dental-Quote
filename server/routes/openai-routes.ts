@@ -215,34 +215,89 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
     console.log(` - FULL URL for verification: ${imageUrl}`);
     
     try {
+      // Enhanced image caching approach
       // Import the image caching service
       const { ImageCacheService } = await import('../utils/image-cache-service');
       
-      // Check if we need to permanently cache this image (OpenAI/Azure images expire)
+      // Timestamp to force unique cache identifier
+      const uniqueTimestamp = Date.now();
+      
+      // For OpenAI generated images that would expire, use our aggressive caching system
       if (isOpenAIUrl) {
-        console.log(`🔄 Caching OpenAI generated image for offer ${offerId}`);
-        const cachedUrl = await ImageCacheService.cacheImage(imageUrl);
+        console.log(`🔄 Aggressive caching for OpenAI image (offer ${offerId})`);
         
-        console.log(`✅ Image successfully cached, serving permanent URL: ${cachedUrl}`);
-        
-        // Return the cached URL instead of the original Azure Blob URL
-        res.json({
-          success: true,
-          data: {
-            url: cachedUrl,
-            originalUrl: imageUrl,
-            offerId,
-            cached: true,
-            fromFallback: false
+        try {
+          // First, cache the image using our service
+          await ImageCacheService.cacheImage(imageUrl);
+          
+          // Then get the versioned URL which will completely bypass browser cache
+          const versionedUrl = ImageCacheService.getVersionedUrl(imageUrl);
+          
+          if (!versionedUrl) {
+            throw new Error('Failed to get versioned URL after caching');
           }
-        });
+          
+          console.log(`✅ Image successfully cached, versioned URL: ${versionedUrl}`);
+          
+          // Update the special offer with the versioned URL to ensure cache busting
+          await updateSpecialOfferImageInMemory(offerId, versionedUrl);
+          
+          // Return the versioned URL which completely bypasses browser cache
+          res.json({
+            success: true,
+            data: {
+              url: versionedUrl,
+              originalUrl: imageUrl,
+              offerId,
+              cached: true,
+              timestamp: Date.now(),
+              fromVersioned: true
+            }
+          });
+          
+          // Send an additional WebSocket notification with the versioned URL
+          const wss = getWebSocketService();
+          if (wss) {
+            setTimeout(() => {
+              wss.broadcast(JSON.stringify({
+                type: 'special_offer_image_refresh',
+                payload: {
+                  offerId,
+                  imageUrl: versionedUrl,
+                  timestamp: Date.now() + 3000,
+                  versioned: true
+                }
+              }));
+              console.log('Sent additional WebSocket notification with versioned URL');
+            }, 5000);
+          }
+          
+        } catch (innerCacheError) {
+          console.error('Image caching failed:', innerCacheError);
+          
+          // If caching fails, fallback to the original URL
+          res.json({
+            success: true,
+            data: {
+              url: `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${uniqueTimestamp}&nocache=true`,
+              offerId,
+              cached: false,
+              cacheError: true,
+              errorMessage: innerCacheError instanceof Error ? innerCacheError.message : 'Unknown caching error',
+              fromFallback: false
+            }
+          });
+        }
       } else {
-        // For non-OpenAI URLs, return as before
+        // For non-OpenAI URLs, return as before with cache busting parameters
+        const forcedUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${uniqueTimestamp}&nocache=true&version=${Math.random().toString(36).substring(2,10)}`;
+        
         res.json({
           success: true,
           data: {
-            url: imageUrl,
+            url: forcedUrl,
             offerId,
+            timestamp: uniqueTimestamp,
             fromFallback: !isOpenAIUrl
           }
         });
