@@ -1,5 +1,6 @@
 /**
- * Custom error class for handling application errors
+ * Custom application error class that extends the built-in Error class
+ * Used for creating consistent error objects with status codes
  */
 export class AppError extends Error {
   statusCode: number;
@@ -12,6 +13,7 @@ export class AppError extends Error {
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
     this.isOperational = true;
 
+    // Capture the stack trace
     Error.captureStackTrace(this, this.constructor);
   }
 }
