@@ -19,8 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, FileText, PencilIcon, ClipboardCheck, ArrowRight } from "lucide-react";
+import { 
+  Eye, 
+  FileText, 
+  PencilIcon, 
+  ClipboardCheck, 
+  ArrowRight,
+  Sparkles,
+  Tag
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type PortalType = "patient" | "clinic" | "admin";
 
@@ -63,6 +72,7 @@ export function getStatusLabel(status: QuoteStatus): string {
 export default function QuoteListTable({ quotes, portalType, isLoading = false }: QuoteListTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [specialOfferFilter, setSpecialOfferFilter] = useState<string>("all");
 
   if (isLoading) {
     return <div className="flex justify-center my-8">Loading quotes...</div>;
@@ -83,7 +93,7 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
     );
   }
 
-  // Filter quotes based on search term and status
+  // Filter quotes based on search term, status, and special offers
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch = 
       quote.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,7 +102,12 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
     
     const matchesStatus = statusFilter === "all" || quote.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    const matchesSpecialOffer = 
+      specialOfferFilter === "all" || 
+      (specialOfferFilter === "with-offers" && quote.specialOffer) || 
+      (specialOfferFilter === "without-offers" && !quote.specialOffer);
+    
+    return matchesSearch && matchesStatus && matchesSpecialOffer;
   });
 
   // Generate the appropriate route prefix based on portal type
@@ -118,26 +133,49 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-xs"
         />
-        <Select 
-          value={statusFilter} 
-          onValueChange={setStatusFilter}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="assigned">Assigned</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="sent">Sent</SelectItem>
-            <SelectItem value="accepted">Accepted</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="expired">Expired</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          {(portalType === 'clinic' || portalType === 'admin') && (
+            <Select 
+              value={specialOfferFilter} 
+              onValueChange={setSpecialOfferFilter}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Special offers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Quotes</SelectItem>
+                <SelectItem value="with-offers">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-blue-500" />
+                    <span>With Special Offers</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="without-offers">Without Special Offers</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          
+          <Select 
+            value={statusFilter} 
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="assigned">Assigned</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="border rounded-md">
@@ -155,13 +193,46 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
           </TableHeader>
           <TableBody>
             {filteredQuotes.map((quote) => (
-              <TableRow key={quote.id}>
-                <TableCell>#{quote.id}</TableCell>
+              <TableRow 
+                key={quote.id}
+                className={quote.specialOffer ? 'bg-blue-50/50 hover:bg-blue-50/70' : ''}
+              >
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    #{quote.id}
+                    {quote.specialOffer && (portalType === 'clinic' || portalType === 'admin') && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <Sparkles className="h-4 w-4 text-blue-500 ml-1" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Special Offer: {quote.specialOffer.title}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="font-medium">{quote.name}</div>
                   <div className="text-sm text-muted-foreground">{quote.email}</div>
                 </TableCell>
-                <TableCell>{quote.treatment}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span>{quote.treatment}</span>
+                    {quote.specialOffer && (portalType === 'clinic' || portalType === 'admin') && (
+                      <div className="flex items-center mt-1 text-xs text-blue-600">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {quote.specialOffer.discountType === 'percentage' 
+                          ? `${quote.specialOffer.discountValue}% off` 
+                          : `£${quote.specialOffer.discountValue} off`}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <Badge variant={getStatusBadgeColor(quote.status)}>
                     {getStatusLabel(quote.status)}
