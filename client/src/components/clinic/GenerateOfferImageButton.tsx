@@ -36,7 +36,7 @@ export function GenerateOfferImageButton({
       if (data.data.fromFallback) {
         toast({
           title: 'Using Fallback Image',
-          description: 'OpenAI API quota reached (2 images per hour). Using a quality fallback image instead.',
+          description: 'OpenAI API rate limit reached (15 images per minute). Using a quality fallback image instead.',
           variant: 'default',
         });
       } else {
@@ -54,8 +54,8 @@ export function GenerateOfferImageButton({
       // Check if error is related to API limits
       if (error.message && error.message.includes('quota')) {
         toast({
-          title: 'API Quota Limit Reached',
-          description: 'OpenAI limits AI image generation to 2 images per hour. Using quality fallback images instead.',
+          title: 'API Rate Limit Reached',
+          description: 'OpenAI limits AI image generation to 15 images per minute. Using quality fallback images instead.',
           variant: 'default',
         });
       } else {
@@ -75,7 +75,7 @@ export function GenerateOfferImageButton({
       onClick={() => generateImageMutation.mutate()}
       disabled={generateImageMutation.isPending}
       className="flex items-center gap-1 text-xs"
-      title="OpenAI has a quota limit of 2 images per hour. Fallback images will be used if the quota is reached."
+      title="OpenAI has a rate limit of 15 images per minute. Fallback images will be used if the limit is reached."
     >
       <Sparkles className="h-3 w-3 mr-1" />
       {generateImageMutation.isPending ? 'Generating...' : 'Generate Image'}
