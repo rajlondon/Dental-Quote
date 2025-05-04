@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Refresh Special Offer Banner Images using OpenAI's DALL-E 3 model
  * 
@@ -8,6 +9,11 @@ import fetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+
+// Get the current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config();
