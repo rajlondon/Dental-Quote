@@ -86,6 +86,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/images', express.static(path.join(__dirname, '../public/images')));
   app.use('/favicon.ico', express.static(path.join(__dirname, '../public/favicon.ico')));
   
+  // Serve cached images for OpenAI DALL-E image caching system
+  app.use('/cached-images', express.static(path.join(__dirname, '../public/cached-images')));
+  
   // Special test page for domain diagnosis
   app.get('/domaintest.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/domaintest.html'));
