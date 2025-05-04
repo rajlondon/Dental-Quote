@@ -40,6 +40,12 @@ export interface IStorage {
   createQuoteRequest(data: InsertQuoteRequest): Promise<QuoteRequest>;
   updateQuoteRequest(id: number, data: Partial<QuoteRequest>): Promise<QuoteRequest | undefined>;
   
+  // File upload
+  uploadFile(file: Express.Multer.File): Promise<{ url: string, filename: string }>;
+  
+  // Special offers
+  updateSpecialOfferImage(offerId: string, imageUrl: string): Promise<boolean>;
+  
   // Quote versions
   getQuoteVersions(quoteRequestId: number): Promise<QuoteVersion[]>;
   getLatestQuoteVersion(quoteRequestId: number): Promise<QuoteVersion | undefined>;
