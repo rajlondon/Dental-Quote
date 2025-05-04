@@ -184,9 +184,39 @@ export class DatabaseStorage implements IStorage {
     const results = await query;
     console.log(`[DEBUG] Found ${results.length} quotes for clinic ID: ${clinicId}`);
     
+    // Transform the data to match the expected client format
+    const transformedResults = results.map(quote => {
+      // Process special offer data if it exists
+      let specialOffer;
+      
+      // Check if specialOffer exists and is not null
+      if (quote.specialOffer && typeof quote.specialOffer === 'object') {
+        // Parse it if it's a string (shouldn't happen, but just in case)
+        const offerData = typeof quote.specialOffer === 'string' 
+          ? JSON.parse(quote.specialOffer) 
+          : quote.specialOffer;
+          
+        specialOffer = {
+          id: offerData.id || '',
+          title: offerData.title || 'Special Offer',
+          clinicId: offerData.clinicId || '1',
+          discountType: offerData.discountType || 'percentage',
+          discountValue: offerData.discountValue || 0,
+          applicableTreatment: offerData.applicableTreatment || '',
+          expiryDate: offerData.expiryDate,
+          terms: offerData.terms
+        };
+      }
+      
+      return {
+        ...quote,
+        specialOffer
+      };
+    });
+    
     if (results.length === 0) {
       // Query to check if there are any quotes with this clinic ID in the database directly
-      const rawSql = `SELECT id, name, status, selected_clinic_id FROM quote_requests WHERE selected_clinic_id = ${clinicId}`;
+      const rawSql = `SELECT id, name, status, selected_clinic_id, special_offer FROM quote_requests WHERE selected_clinic_id = ${clinicId}`;
       console.log(`[DEBUG] Executing raw SQL: ${rawSql}`);
       try {
         const rawResults = await db.execute(rawSql);
@@ -217,7 +247,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    return results;
+    return transformedResults;
   }
 
   async getAllQuoteRequests(filters?: Partial<QuoteRequest>): Promise<QuoteRequest[]> {
