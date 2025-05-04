@@ -128,7 +128,7 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
       }
       
       // Select a fallback image based on a deterministic hash of the offer ID to ensure consistent images
-      const hash = offerTitle.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const hash = offerTitle.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
       const fallbackPath = fallbackOptions[hash % fallbackOptions.length];
       
       // Add timestamp and random value to bust cache
@@ -243,6 +243,7 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
           await updateSpecialOfferImageInMemory(offerId, versionedUrl);
           
           // Return the versioned URL which completely bypasses browser cache
+          const uniqueTimestamp = Date.now();
           res.json({
             success: true,
             data: {
@@ -250,7 +251,7 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
               originalUrl: imageUrl,
               offerId,
               cached: true,
-              timestamp: Date.now(),
+              timestamp: uniqueTimestamp,
               fromVersioned: true
             }
           });
