@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from "wouter";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sparkles, Clock, ChevronRight, ChevronLeft, Tag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { Sparkles, ChevronLeft, ChevronRight, Clock, Tag, RefreshCw } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useWebSocket } from '@/hooks/use-websocket';
 
-// API response type matching the actual data structure
+// Define the shape of our special offer data
 interface SpecialOffer {
   id: string;
   clinic_id: string;
@@ -38,130 +38,130 @@ interface EnhancedOffersCarouselProps {
 }
 
 export default function EnhancedOffersCarousel({ className }: EnhancedOffersCarouselProps) {
+  // Core state
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [imageRefreshKey, setImageRefreshKey] = useState<number>(Date.now());
+  const [imageCache, setImageCache] = useState<Record<string, string>>({});
+  
+  // Hooks
   const queryClient = useQueryClient();
-  const { data: offers, isLoading, error } = useQuery<SpecialOffer[]>({
+  const { toast } = useToast();
+  const { registerMessageHandler } = useWebSocket();
+  
+  // Fetch special offers data
+  const { 
+    data: offers, 
+    isLoading, 
+    error 
+  } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/special-offers/homepage'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-  
-  // Setup WebSocket connection for real-time updates
-  const { registerMessageHandler } = useWebSocket();
-  const { toast } = useToast();
-  
-  // Register handler for special offer image updates
+
+  // Register WebSocket handler for special offer updates
   useEffect(() => {
-    const handleSpecialOfferUpdated = (message: any) => {
-      if (message.type === 'special_offer_updated' && message.offerId && message.imageUrl) {
-        console.log('Received special offer update via WebSocket:', message);
+    const handleOfferUpdate = (message: any) => {
+      if (message.type === 'special_offer_updated') {
+        console.log('🔄 Received special offer update via WebSocket:', message);
         
-        // Invalidate the homepage offers cache
+        // Clear image cache and force refresh
+        setImageCache({});
+        setImageRefreshKey(Date.now());
+        
+        // Refetch data from server
         queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
         
-        // Show toast notification
-        toast({
-          title: 'Special Offer Updated',
-          description: 'An offer has been updated with a new image',
-          variant: 'default',
-        });
+        // Schedule a second refresh after a delay
+        setTimeout(() => {
+          setImageRefreshKey(Date.now());
+          
+          toast({
+            title: 'Special Offer Updated',
+            description: 'New promotional images are now available',
+            variant: 'default',
+          });
+        }, 1500);
       }
     };
     
-    // Register handler
-    registerMessageHandler('special_offer_updated', handleSpecialOfferUpdated);
+    registerMessageHandler('special_offer_updated', handleOfferUpdate);
     
-    // Cleanup on unmount
-    return () => {
-      // The handler will be automatically removed by the useWebSocket hook
-    };
+    // No cleanup needed as useWebSocket handles it
   }, [queryClient, registerMessageHandler, toast]);
-  
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  
-  // Auto-advance slides
+
+  // Auto-advance carousel
   useEffect(() => {
     if (!isAutoPlaying || !offers || offers.length <= 1) return;
     
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => 
-        prevIndex === (offers.length - 1) ? 0 : prevIndex + 1
-      );
+      setCurrentIndex(prev => (prev + 1) % offers.length);
     }, 5000);
     
     return () => clearInterval(interval);
   }, [offers, isAutoPlaying]);
-  
-  // Pause auto-play when hovering
+
+  // Update refresh key when offers data changes
+  useEffect(() => {
+    if (offers) {
+      setImageRefreshKey(Date.now());
+      setImageCache({});
+    }
+  }, [offers]);
+
+  // Event handlers
   const handleMouseEnter = () => setIsAutoPlaying(false);
   const handleMouseLeave = () => setIsAutoPlaying(true);
-  
-  // Handle navigation
   const goToPrevious = () => {
-    if (!offers) return;
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? offers.length - 1 : prevIndex - 1
-    );
+    if (!offers?.length) return;
+    setCurrentIndex(prev => (prev - 1 + offers.length) % offers.length);
   };
-  
   const goToNext = () => {
-    if (!offers) return;
-    setCurrentIndex((prevIndex) => 
-      prevIndex === (offers.length - 1) ? 0 : prevIndex + 1
-    );
+    if (!offers?.length) return;
+    setCurrentIndex(prev => (prev + 1) % offers.length);
   };
-  
-  // Generate dots for navigation
-  const renderDots = () => {
-    if (!offers) return null;
-    
-    return (
-      <div className="flex justify-center mt-4 space-x-2">
-        {offers.map((_, index) => (
-          <button
-            key={index}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-              index === currentIndex 
-                ? 'bg-primary' 
-                : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-            onClick={() => setCurrentIndex(index)}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
-    );
-  };
-  
-  // Function to get image URL from the API response
+
+  // Generate image URL with aggressive cache busting
   const getImageUrl = (offer: SpecialOffer) => {
-    // Add version parameter to force refresh and prevent caching
-    const version = new Date().getTime();
+    // Return cached URL if available
+    if (imageCache[offer.id]) return imageCache[offer.id];
     
-    // Use the banner_image from the API if available
+    // Generate cache busting parameters
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const cacheKey = `v=${imageRefreshKey}_${timestamp}_${randomString}`;
+    
+    let finalUrl = '';
+    
+    // Process the banner image URL
     if (offer.banner_image) {
-      return `${offer.banner_image}?v=${version}`;
+      // Strip existing query parameters if any
+      const baseUrl = offer.banner_image.split('?')[0];
+      finalUrl = `${baseUrl}?${cacheKey}&nocache=true`;
+    } else {
+      // Fallback images based on title
+      let basePath = '/images/offers/premium-hotel-deal.jpg';
+      
+      if (offer.title.toLowerCase().includes('consultation')) {
+        basePath = '/images/offers/free-consultation.jpg';
+      } else if (offer.title.toLowerCase().includes('implant')) {
+        basePath = '/images/offers/dental-implant-crown-bundle.jpg';
+      } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
+        basePath = '/images/offers/luxury-airport-transfer.jpg';
+      }
+      
+      finalUrl = `${basePath}?${cacheKey}&nocache=true`;
     }
     
-    // Fallback image mapping based on offer title
-    if (offer.title.toLowerCase().includes('consultation')) {
-      return `/images/offers/free-consultation.jpg?v=${version}`;
-    } else if (offer.title.toLowerCase().includes('implant')) {
-      return `/images/offers/dental-implant-crown-bundle.jpg?v=${version}`;
-    } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
-      return `/images/offers/luxury-airport-transfer.jpg?v=${version}`;
-    } else if (offer.title.toLowerCase().includes('hotel')) {
-      return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
-    }
+    // Cache the URL
+    setImageCache(prev => ({...prev, [offer.id]: finalUrl}));
     
-    // Default fallback
-    return `/images/offers/premium-hotel-deal.jpg?v=${version}`;
+    return finalUrl;
   };
-  
-  // Get badge style based on offer promotion level
-  const getBadgeStyle = (promotionLevel: string | undefined) => {
-    if (!promotionLevel) return 'bg-gradient-to-r from-slate-500 to-slate-400 text-white hover:from-slate-400 hover:to-slate-300';
-    
-    switch(promotionLevel) {
+
+  // Get styling for promotion level badges
+  const getBadgeStyle = (level?: string) => {
+    switch(level) {
       case 'premium':
         return 'bg-gradient-to-r from-amber-500 to-yellow-300 text-amber-950 hover:from-amber-400 hover:to-yellow-200';
       case 'featured':
@@ -170,8 +170,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         return 'bg-gradient-to-r from-slate-500 to-slate-400 text-white hover:from-slate-400 hover:to-slate-300';
     }
   };
-  
-  // Handle booking or quote request
+
+  // Handle quote request
   const handleRequestQuote = (offer: SpecialOffer) => {
     toast({
       title: "Special Offer Selected",
@@ -179,22 +179,41 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       variant: "default",
     });
     
-    // Create searchParams with special offer information
-    const offerParams = new URLSearchParams({
+    // Build query parameters
+    const params = new URLSearchParams({
       specialOffer: offer.id,
       offerTitle: offer.title,
       offerClinic: offer.clinic_id || '',
-      offerDiscount: offer.discount_value ? offer.discount_value.toString() : '0',
+      offerDiscount: offer.discount_value?.toString() || '0',
       offerDiscountType: offer.discount_type || 'percentage',
-      treatment: offer.applicable_treatments && offer.applicable_treatments.length > 0 
-        ? offer.applicable_treatments[0] 
-        : 'Dental Implants'
+      treatment: offer.applicable_treatments?.[0] || 'Dental Implants'
     });
     
-    // Navigate to quote form with offer details
-    window.location.href = `/your-quote?${offerParams.toString()}`;
+    // Navigate to quote page
+    window.location.href = `/your-quote?${params.toString()}`;
   };
-  
+
+  // Generate navigation dots
+  const renderDots = () => {
+    if (!offers?.length) return null;
+    
+    return (
+      <div className="flex justify-center mt-4 space-x-2">
+        {offers.map((_, index) => (
+          <button
+            key={index}
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+              index === currentIndex ? 'bg-primary' : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+            onClick={() => setCurrentIndex(index)}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // Loading state
   if (isLoading) {
     return (
       <div className={cn("my-12 py-8 px-4", className)}>
@@ -206,7 +225,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       </div>
     );
   }
-  
+
+  // Error or empty state
   if (error || !offers || offers.length === 0) {
     return (
       <div className={cn("my-12 py-8", className)}>
@@ -221,7 +241,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       </div>
     );
   }
-  
+
+  // Main carousel view
   return (
     <section 
       className={cn("py-12 bg-gradient-to-br from-slate-100 via-white to-blue-50", className)}
@@ -239,6 +260,26 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full" 
+              onClick={() => {
+                // Manual refresh button
+                setImageRefreshKey(Date.now());
+                setImageCache({});
+                queryClient.refetchQueries({ queryKey: ['/api/special-offers/homepage'] });
+                
+                toast({
+                  title: 'Refreshing Offers',
+                  description: 'Loading the latest special offers...',
+                  variant: 'default',
+                });
+              }}
+              aria-label="Refresh offers"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </Button>
             <Button 
               variant="outline" 
               size="icon" 
@@ -316,11 +357,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                   {offer.clinic_id && (
                     <div className="flex items-center">
                       <img 
-                        src={`/images/clinics/clinic-${offer.clinic_id}.jpg`} 
+                        src={`/images/clinics/clinic-${offer.clinic_id}.jpg?v=${imageRefreshKey}`} 
                         alt="Partner Clinic"
                         className="w-8 h-8 rounded-full mr-3 object-cover" 
                         onError={(e) => {
-                          // Fallback image on error
                           e.currentTarget.src = '/images/generic-clinic-logo.svg';
                         }}
                       />
