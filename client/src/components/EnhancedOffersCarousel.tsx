@@ -68,8 +68,9 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Register WebSocket handler for special offer updates
+  // Register WebSocket handlers for special offer updates
   useEffect(() => {
+    // Handler for general special offer updates
     const handleOfferUpdate = (message: any) => {
       if (message.type === 'special_offer_updated') {
         console.log('🔄 Received special offer update via WebSocket:', message);
@@ -209,9 +210,90 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       }
     };
     
-    // Register our enhanced handler
-    console.log('🔌 Registering enhanced WebSocket handler for special offer updates');
+    // Dedicated handler for image refresh commands from our new endpoint
+    const handleImageRefresh = (message: any) => {
+      if (message.type === 'special_offer_image_refreshed') {
+        console.log('🖼️ Received specialized image refresh command via WebSocket:', message);
+        
+        // Extract important info
+        const offerId = message.offerId || '';
+        const imageUrl = message.imageUrl || '';
+        const timestamp = message.timestamp || Date.now();
+        
+        if (!offerId || !imageUrl) {
+          console.error('❌ Missing required offerId or imageUrl in refresh message');
+          return;
+        }
+        
+        console.log(`🖼️ Refreshing image for offer ID: ${offerId}`);
+        console.log(`🔗 New image URL with cache busting: ${imageUrl}`);
+        
+        // First approach: Update the React Query cache directly
+        queryClient.setQueryData(
+          ['/api/special-offers/homepage'],
+          (oldData: SpecialOffer[] | undefined) => {
+            if (!oldData) return oldData;
+            
+            // Find and update the specific offer's image URL
+            return oldData.map(offer => 
+              offer.id === offerId 
+                ? { 
+                    ...offer, 
+                    banner_image: `${imageUrl}&forced=${timestamp}`,
+                    updated_at: new Date().toISOString()
+                  } 
+                : offer
+            );
+          }
+        );
+        
+        // Second approach: Update our image cache directly
+        setImageCache(prev => ({
+          ...prev,
+          [offerId]: `${imageUrl}&timestamp=${timestamp}&forced=true`
+        }));
+        
+        // Third approach: Create a new image element to force preloading
+        const preloadImg = new Image();
+        preloadImg.onload = () => console.log('✅ Successfully preloaded refreshed image');
+        preloadImg.onerror = (err) => console.error('❌ Failed to preload refreshed image:', err);
+        preloadImg.src = `${imageUrl}&preload=true&t=${timestamp}`;
+        
+        // Fourth approach: Try direct DOM manipulation as a last resort
+        setTimeout(() => {
+          try {
+            // Find all images with this offer ID in data attributes or alt text
+            const offerImages = document.querySelectorAll(`img[data-offer-id="${offerId}"], img[alt="${offerId}"]`);
+            if (offerImages.length > 0) {
+              console.log(`🔍 Found ${offerImages.length} images in DOM to update directly`);
+              
+              offerImages.forEach((img: HTMLImageElement) => {
+                // Replace the src with our new URL plus cache busting
+                img.src = `${imageUrl}&direct_update=true&t=${Date.now()}`;
+                console.log('✏️ Updated image src directly in DOM');
+              });
+            }
+          } catch (err) {
+            console.error('❌ Error during direct DOM update:', err);
+          }
+        }, 500);
+        
+        // Finally: Force a refresh key update to trigger component re-render
+        setImageRefreshKey(timestamp);
+        
+        // Add a subtle notification to inform the user
+        toast({
+          title: 'Image Updated',
+          description: 'Special offer image has been refreshed',
+          variant: 'default',
+        });
+      }
+    };
+    
+    // Register both handlers
+    console.log('🔌 Registering enhanced WebSocket handlers for special offers');
     registerMessageHandler('special_offer_updated', handleOfferUpdate);
+    registerMessageHandler('special_offer_image_refreshed', handleImageRefresh);
     
     // No cleanup needed as useWebSocket handles it
   }, [queryClient, registerMessageHandler, toast]);
@@ -493,6 +575,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     : getImageUrl(offer)} // Use normal URL handling for other images
                   alt={offer.title}
                   className="w-full h-full object-cover"
+                  data-offer-id={offer.id}
+                  data-refresh-key={imageRefreshKey}
                   onLoad={(e) => {
                     console.log(`✅ Successfully loaded image for offer ${offer.id}`);
                     // Check if this is an OpenAI image
