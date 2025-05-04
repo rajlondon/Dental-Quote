@@ -41,7 +41,7 @@ const sampleOffers: SpecialOffer[] = [
     admin_reviewed_at: new Date().toISOString()
   },
   {
-    id: uuidv4(),
+    id: "134cdb0f-e783-47f5-a502-70e3960f7246", // Use fixed ID for testing with refresh script
     clinic_id: "2", // Clinic 2
     title: "Premium Hotel Deal",
     description: "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
@@ -63,7 +63,7 @@ const sampleOffers: SpecialOffer[] = [
     admin_reviewed_at: new Date().toISOString()
   },
   {
-    id: uuidv4(),
+    id: "3e6a315d-9d9f-4b56-97da-4b3d4b4b5367", // Use fixed ID for testing with refresh script
     clinic_id: "3", // Clinic 3
     title: "Dental Implant + Crown Bundle",
     description: "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
@@ -85,7 +85,7 @@ const sampleOffers: SpecialOffer[] = [
     admin_reviewed_at: new Date().toISOString()
   },
   {
-    id: uuidv4(),
+    id: "72e65d76-4cd5-4fd2-9323-8c35f3a9b9f0", // Use fixed ID for testing with refresh script
     clinic_id: "4", // Clinic 4
     title: "Luxury Airport Transfer",
     description: "Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.",
@@ -107,7 +107,7 @@ const sampleOffers: SpecialOffer[] = [
     admin_reviewed_at: new Date().toISOString()
   },
   {
-    id: uuidv4(),
+    id: "a9f87e54-3c21-4f89-bc6d-1c2a1dfb76e9", // Use fixed ID for testing with refresh script
     clinic_id: "5", // Clinic 5
     title: "Free Teeth Whitening",
     description: "Receive a complimentary professional teeth whitening session with any veneer or crown treatment package.",

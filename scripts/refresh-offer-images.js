@@ -1,130 +1,123 @@
-#!/usr/bin/env node
 /**
- * Refresh Special Offer Banner Images using OpenAI's DALL-E 3 model
+ * Refresh Special Offer Images Script
  * 
- * This script generates 4 new natural-looking marketing images for the special offers
- * section of the homepage. It uses the existing OpenAI integration and image cache.
+ * This script triggers image regeneration for special offers using OpenAI's DALL-E
+ * It helps to create more professional and eye-catching images for the special offers
+ * with consistent styling and quality.
  */
-import fetch from 'node-fetch';
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 
-// Get the current file's directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const axios = require('axios');
+const readline = require('readline');
 
-// Load environment variables
-dotenv.config();
+// The base URL for the API (use the actual deployed URL when running in production)
+const BASE_URL = process.env.API_BASE_URL || 'http://localhost:5000';
 
-// Define the special offers that need new images - updated with the correct IDs from the system
-const offers = [
-  {
-    id: 'ac36590b-b0dc-434e-ba74-d42ab2485e81',
-    title: 'Free Consultation Package',
-    promotion_level: 'premium',
-    prompt: 'Create a completely natural-looking, photorealistic image of a modern dental consultation at a premium clinic. Show a dentist in professional attire discussing treatment options with a smiling patient using a tablet and dental models. Natural lighting through large windows, warm beige and blue color palette, with subtle dental equipment visible in background. The image should look like an editorial photograph for a luxury dental magazine, not AI-generated. 4K quality with realistic textures and accurate lighting.'
-  },
-  {
-    id: '134cdb0f-e783-47f5-a502-70e3960f7246',
-    title: 'Premium Hotel Deal',
-    promotion_level: 'premium',
-    prompt: 'Create a completely natural-looking, photorealistic image of a luxury hotel room in Istanbul with a stunning view of the Bosphorus. Show a spacious suite with a king-size bed draped in premium white linens, designer furniture in gold and blue tones, and floor-to-ceiling windows framing the iconic Istanbul skyline at golden hour. Include subtle details like a fruit basket, marble bathroom glimpse, and mood lighting. The image should look like a professional hotel marketing photograph shot with a 50mm lens, 4K quality with perfect exposure and depth of field, not AI-generated.'
-  },
-  {
-    id: 'bd8fa86a-96e9-47fd-b838-9dc78ecf77ef',
-    title: 'Dental Implant + Crown Bundle',
-    promotion_level: 'featured',
-    prompt: 'Create a completely natural-looking, photorealistic image showing a modern dental clinic treatment room specialized for implant procedures. Show a pristine treatment chair with overhead lights, sterilized implant components arranged on a stainless steel tray, and a digital display showing a 3D implant model. Include subtle details like dental tools, a glass wall with natural light, and soft blue/white color scheme. The image should look like a professional marketing photograph shot with a Canon 5D, 4K quality with perfect lighting, not AI-generated.'
-  },
-  {
-    id: '0a88512f-0c68-47c8-b597-9f06e5b0eaad',
-    title: 'Luxury Airport Transfer',
-    promotion_level: 'featured',
-    prompt: 'Create a completely natural-looking, photorealistic image of a premium black Mercedes S-Class sedan parked outside Istanbul Airport\'s international terminal. Show a professional uniformed chauffeur in suit and tie holding a passenger door open with the modern glass/steel terminal architecture visible in the background. Early evening golden hour lighting with slight reflections on the polished black car. Include subtle details like a "VIP Transfer" sign and blurred travelers in background. The image should look like professional marketing content shot with a full frame camera for a luxury transportation service, not AI-generated.'
-  }
-];
+// Fixed offer IDs for testing (corresponds to the IDs in special-offers-routes-fixed.ts)
+const OFFER_IDS = {
+  'free_consultation': 'ac36590b-b0dc-434e-ba74-d42ab2485e81',
+  'premium_hotel': '134cdb0f-e783-47f5-a502-70e3960f7246',
+  'dental_implant': '3e6a315d-9d9f-4b56-97da-4b3d4b4b5367',
+  'luxury_transfer': '72e65d76-4cd5-4fd2-9323-8c35f3a9b9f0',
+  'teeth_whitening': 'a9f87e54-3c21-4f89-bc6d-1c2a1dfb76e9'
+};
 
-async function generateImage(offer) {
-  console.log(`Generating image for: ${offer.title}...`);
-  
+// Create readline interface for user input
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// Function to refresh an image for a specific offer
+async function refreshOfferImage(offerId, naturalStyle = true, customPrompt = '') {
   try {
-    // Prepare request body
-    const requestBody = {
-      offerId: offer.id,
-      offerTitle: offer.title,
-      offerType: offer.promotion_level,
-      enableImageCache: true,
-      customPrompt: offer.prompt, // Add custom prompt
-      naturalStyle: true, // Signal that we want a natural-looking image
-      timestamp: Date.now(),
-      useFallback: true // Force fallback mode for testing
-    };
+    console.log(`Refreshing image for offer ID: ${offerId}`);
     
-    // Make request to our API - use the actual server URL from environment or default to localhost
-    const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
-    console.log(`Making request to: ${serverUrl}/api/openai/special-offer-image`);
+    // First, get the current offer details to use in the prompt
+    const testResponse = await axios.get(`${BASE_URL}/api/special-offers/test-refresh/${offerId}`);
+    console.log(`Current offer image: ${testResponse.data.currentImageUrl}`);
     
-    // Get API key from environment or use our configured default
-    const apiKey = process.env.API_KEY || 'mydentalfly-api-token-12345';
-    
-    const response = await fetch(`${serverUrl}/api/openai/special-offer-image`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'X-API-Key': apiKey // Alternate auth method
-      },
-      body: JSON.stringify(requestBody)
+    // Then, trigger the image refresh
+    const response = await axios.post(`${BASE_URL}/api/special-offers/refresh-image/${offerId}`, {
+      naturalStyle,
+      customPrompt
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to generate image: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-    
-    const data = await response.json();
-    console.log(`✅ Successfully generated image for "${offer.title}"`);
-    console.log(`Image URL: ${data.data.url}`);
-    
-    if (data.data.cached) {
-      console.log(`✅ Image is cached at: ${data.data.url}`);
+    if (response.data.success) {
+      console.log(`✅ Success! New image URL: ${response.data.imageUrl}`);
+      console.log(`View the updated offer on the homepage or special offers section.`);
+      return true;
     } else {
-      console.log(`⚠️ Image is not cached, only available temporarily`);
+      console.error(`❌ Failed to refresh image: ${response.data.error || 'Unknown error'}`);
+      return false;
     }
-    
-    return data;
   } catch (error) {
-    console.error(`Error generating image for ${offer.title}:`, error);
-    return null;
-  }
-}
-
-async function main() {
-  console.log('Starting image generation for 4 special offers...');
-  
-  // Generate images sequentially to avoid rate limits
-  for (const offer of offers) {
-    console.log(`\nProcessing offer: ${offer.title}`);
-    const result = await generateImage(offer);
-    
-    if (result) {
-      console.log(`✅ Successfully processed "${offer.title}"`);
+    console.error('❌ Error refreshing offer image:');
+    if (error.response) {
+      console.error(`Status: ${error.response.status}`);
+      console.error('Data:', error.response.data);
     } else {
-      console.log(`❌ Failed to process "${offer.title}"`);
+      console.error(error.message);
     }
-    
-    // Wait 15 seconds between image generations to avoid rate limits
-    console.log('Waiting 15 seconds before next image generation...');
-    await new Promise(resolve => setTimeout(resolve, 15000));
+    return false;
   }
-  
-  console.log('\n✅ All special offer images have been processed');
 }
 
-// Run the script
-main().catch(error => {
-  console.error('Unhandled error:', error);
-  process.exit(1);
-});
+// Function to refresh all offer images
+async function refreshAllOfferImages(naturalStyle = true) {
+  console.log('Refreshing all special offer images:');
+  let successCount = 0;
+  
+  for (const [name, id] of Object.entries(OFFER_IDS)) {
+    console.log(`\n🔄 Processing "${name}" offer (ID: ${id})...`);
+    const success = await refreshOfferImage(id, naturalStyle);
+    if (success) successCount++;
+    
+    // Add a small delay between requests to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+  
+  console.log(`\n✅ Completed! Successfully refreshed ${successCount}/${Object.keys(OFFER_IDS).length} offer images.`);
+}
+
+// Function to refresh a specific offer image
+async function refreshSpecificOfferImage() {
+  console.log('Available offers:');
+  Object.entries(OFFER_IDS).forEach(([name, id], index) => {
+    console.log(`${index + 1}. ${name} (ID: ${id})`);
+  });
+  
+  rl.question('\nEnter the number of the offer to refresh (or "all" for all offers): ', async (answer) => {
+    if (answer.toLowerCase() === 'all') {
+      rl.question('Use natural style images? (y/n, default: y): ', async (styleAnswer) => {
+        const naturalStyle = styleAnswer.toLowerCase() !== 'n';
+        await refreshAllOfferImages(naturalStyle);
+        rl.close();
+      });
+    } else {
+      const index = parseInt(answer) - 1;
+      const offerEntries = Object.entries(OFFER_IDS);
+      
+      if (index >= 0 && index < offerEntries.length) {
+        const [name, id] = offerEntries[index];
+        
+        rl.question('Use natural style images? (y/n, default: y): ', async (styleAnswer) => {
+          const naturalStyle = styleAnswer.toLowerCase() !== 'n';
+          
+          rl.question('Enter custom prompt (optional): ', async (promptAnswer) => {
+            console.log(`\n🔄 Processing "${name}" offer (ID: ${id})...`);
+            await refreshOfferImage(id, naturalStyle, promptAnswer);
+            rl.close();
+          });
+        });
+      } else {
+        console.error('❌ Invalid offer number. Please try again.');
+        rl.close();
+      }
+    }
+  });
+}
+
+// Start the script
+console.log('🖼️ Special Offer Image Refresh Utility');
+console.log('=======================================');
+refreshSpecificOfferImage();

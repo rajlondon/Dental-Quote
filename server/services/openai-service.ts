@@ -204,26 +204,58 @@ export async function generateSpecialOfferImage(
   
   if (offerType.toLowerCase().includes("hotel") || offerTitle.toLowerCase().includes("hotel")) {
     specificDetails = `
-The image should showcase a luxury hotel experience with a view of Istanbul. Include elements that suggest comfort, relaxation, and premium accommodation.
-Use soft lighting and warm, inviting colors. The image should convey exclusivity and premium service - key values for dental tourists.`;
+Create a professional photograph of a luxury hotel room in Istanbul with a stunning Bosphorus view. The room should have:
+- Premium king-size bed with crisp white linens and decorative pillows
+- Floor-to-ceiling windows showing Istanbul landmarks and blue water
+- Elegant modern furnishings in neutral colors with subtle Turkish design elements
+- Soft, golden hour lighting casting warm tones across the room
+- A small seating area with comfortable armchairs
+- Subtle luxury touches like fresh flowers or a welcome fruit basket
+- The composition should be from a corner of the room, showing depth and spaciousness
+- Use photorealistic lighting and natural colors that a professional hotel photographer would use
+
+The image must look like it was taken by a professional hotel photographer with a high-end DSLR camera.`;
   } 
   else if (offerType.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("airport")) {
     specificDetails = `
-The image should showcase a luxury vehicle transfer service in Istanbul. Include elements that suggest comfort, convenience, and VIP treatment.
-Use clean, professional lighting and colors that convey reliability and premium service.
-The image should feature a premium black car (like a Mercedes) with a professional driver, suggesting airport pickup service.`;
+Create a professional photograph of a luxury airport transfer service in Istanbul. The image should show:
+- A black Mercedes S-Class or similar premium vehicle with polished finish parked in front of a modern terminal
+- A professional chauffeur in a dark suit standing by the open rear passenger door
+- Early evening lighting with the sky still blue but city lights coming on
+- Airport architecture visible but softly blurred in the background
+- Clean, uncluttered composition focusing on the vehicle and driver
+- The angle should be slightly from the front quarter of the vehicle to show its prestigious profile
+- Use photorealistic lighting and colors that a professional automotive photographer would use
+
+The image must look like it was taken by a professional transportation service photographer with high-end equipment.`;
   }
   else if (offerType.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consult")) {
     specificDetails = `
-The image should showcase a dental consultation with a professional dentist and patient in a modern dental clinic.
-Use clean, medical lighting with a professional atmosphere. Include dental technology elements in the background.
-The dentist should be wearing professional attire and appear knowledgeable and trustworthy.`;
+Create a professional photograph of a dental consultation in a modern Istanbul clinic. The image should show:
+- A dentist in a white coat and professional attire explaining something to a patient
+- The dentist using a tablet or dental model to explain a procedure
+- A modern, clean dental office with contemporary furniture and subtle Turkish design elements
+- State-of-the-art dental equipment visible but not dominating the scene
+- Natural, professional lighting with soft shadows typical of medical photography
+- The patient looking engaged and comfortable (not showing dental work in progress)
+- The composition should be at eye level, capturing genuine interaction
+- Use photorealistic lighting and colors that a professional medical photographer would use
+
+The image must look like it was taken by a professional healthcare photographer with high-end equipment.`;
   }
   else if (offerType.toLowerCase().includes("implant") || offerTitle.toLowerCase().includes("implant")) {
     specificDetails = `
-The image should showcase dental implant treatment results with a beautiful smile transformation.
-Use clean, bright lighting that highlights the perfect teeth. Include subtle elements suggesting advanced dental technology.
-The image should convey quality, precision, and long-lasting results - key benefits of dental implants.`;
+Create a professional photograph showcasing the results of dental implant treatment. The image should feature:
+- A natural, attractive smile of a middle-aged person showing perfect teeth (result, not procedure)
+- The subject should have a genuine, confident expression (not exaggerated)
+- Clean, professional studio lighting with soft catch lights in the eyes
+- A simple, neutral background with subtle gradient
+- The composition should be a close-up focusing on the smile but showing enough face for context
+- Natural skin tones and texture without excessive retouching
+- The teeth should look realistic and not artificially white
+- Use photorealistic lighting and colors that a professional dental photographer would use
+
+The image must look like it was taken by a professional dental photographer with specialized equipment for clinical photography.`;
   }
   else {
     // Generic special offer prompt with randomized elements to ensure variation
