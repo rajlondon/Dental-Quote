@@ -601,7 +601,7 @@ export const useWebSocket = (): WebSocketHookResult => {
     
     // Log registration for debugging
     if (type === 'special_offer_updated') {
-      console.log('Registered enhanced handler for special offer updates');
+      console.log('🔄 Registered enhanced handler for special offer updates with forced browser cache clearing');
     }
   }, []);
   
