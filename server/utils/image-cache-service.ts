@@ -14,30 +14,39 @@ const readFile = promisify(fs.readFile);
 // Constants
 const IMAGE_CACHE_DIR = path.join(process.cwd(), 'public', 'cached-images');
 const IMAGE_PUBLIC_PATH = '/cached-images';
-// Create a secondary versioned directory to force cache refresh
-const VERSIONED_CACHE_DIR = path.join(process.cwd(), 'public', 'cached-images-v2');
-const VERSIONED_PUBLIC_PATH = '/cached-images-v2';
+
+// Create rotating versioned directories to force cache refresh
+// Use a daily rotation for the version number to ensure absolute cache freshness
+const today = new Date();
+const dailyVersion = `v${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
+const VERSIONED_CACHE_DIR = path.join(process.cwd(), 'public', `cached-images-${dailyVersion}`);
+const VERSIONED_PUBLIC_PATH = `/cached-images-${dailyVersion}`;
 
 // Ensure the cache directories exist
 async function ensureCacheDirectoryExists(): Promise<void> {
   try {
+    console.log('🔄 Daily versioned cache directory initialized:', VERSIONED_CACHE_DIR);
+    console.log(`🔄 Using daily version: ${dailyVersion} for absolute cache freshness`);
+    
     // Check and create the main cache directory
     try {
       await access(IMAGE_CACHE_DIR);
+      console.log(`✅ Regular image cache directory exists: ${IMAGE_CACHE_DIR}`);
     } catch {
       await mkdir(IMAGE_CACHE_DIR, { recursive: true });
-      console.log(`Created image cache directory: ${IMAGE_CACHE_DIR}`);
+      console.log(`✨ Created regular image cache directory: ${IMAGE_CACHE_DIR}`);
     }
     
     // Check and create the versioned cache directory
     try {
       await access(VERSIONED_CACHE_DIR);
+      console.log(`✅ Daily versioned cache directory exists: ${VERSIONED_CACHE_DIR}`);
     } catch {
       await mkdir(VERSIONED_CACHE_DIR, { recursive: true });
-      console.log(`Created versioned image cache directory: ${VERSIONED_CACHE_DIR}`);
+      console.log(`✨ Created daily versioned cache directory: ${VERSIONED_CACHE_DIR}`);
     }
   } catch (error) {
-    console.error('Failed to create image cache directories:', error);
+    console.error('❌ Failed to create image cache directories:', error);
     throw new AppError('Failed to create image cache directories', 500);
   }
 }
@@ -152,13 +161,23 @@ export class ImageCacheService {
    * @returns A versioned URL that will bypass browser cache
    */
   static getVersionedUrl(url: string): string | null {
+    console.log(`🔄 Getting versioned URL for: ${url}`);
     const cachedUrl = ImageCacheService.getCachedUrl(url, true);
-    if (!cachedUrl) return null;
+    
+    if (!cachedUrl) {
+      console.log(`❌ No cached URL found for: ${url}`);
+      return null;
+    }
+    
+    console.log(`✅ Found cached URL: ${cachedUrl}`);
     
     // Add timestamp and random value to force browsers to reload
     const timestamp = Date.now();
     const randomValue = Math.random().toString(36).substring(2, 10);
-    return `${cachedUrl}?t=${timestamp}&r=${randomValue}&nocache=true`;
+    const versionedUrl = `${cachedUrl}?t=${timestamp}&r=${randomValue}&nocache=true&daily=${dailyVersion}`;
+    
+    console.log(`🌟 Created daily versioned URL: ${versionedUrl}`);
+    return versionedUrl;
   }
 
   /**
@@ -168,13 +187,17 @@ export class ImageCacheService {
    * @returns The cached URL
    */
   static async cacheImage(url: string, forceRefresh = false): Promise<string> {
+    console.log(`📥 Attempting to cache image from URL: ${url}`);
+    console.log(`📥 Force refresh requested: ${forceRefresh}`);
+    
     // Check if already cached first (unless force refresh is true)
     if (!forceRefresh && ImageCacheService.isImageCached(url)) {
       const cachedUrl = ImageCacheService.getCachedUrl(url);
       if (cachedUrl) {
-        console.log(`Image already cached: ${url} => ${cachedUrl}`);
+        console.log(`📥 Image already cached and found: ${url} => ${cachedUrl}`);
         return cachedUrl;
       }
+      console.log(`📥 Image marked as cached but URL not found, will re-download`);
     }
 
     try {
@@ -182,7 +205,9 @@ export class ImageCacheService {
       await ensureCacheDirectoryExists();
 
       // Download the image
-      console.log(`Downloading image from: ${url}`);
+      console.log(`📥 Downloading image from: ${url}`);
+      console.log(`📥 Using daily versioned directory: ${VERSIONED_CACHE_DIR}`);
+      
       const response = await axios.get(url, {
         responseType: 'arraybuffer',
         headers: {
@@ -192,6 +217,10 @@ export class ImageCacheService {
         // Set a small timeout to avoid hanging
         timeout: 10000
       });
+      
+      console.log(`📥 Download successful, content type: ${response.headers['content-type']}`);
+      console.log(`📥 Response status: ${response.status}`);
+      console.log(`📥 Image data length: ${response.data.length} bytes`);
 
       // Determine file extension based on content type
       let extension = '.jpg'; // Default
@@ -224,28 +253,35 @@ export class ImageCacheService {
       // Define the image buffer once
       const imageBuffer = Buffer.from(response.data);
       
-      // Write the image to both locations
-      await writeFile(regularFilePath, imageBuffer);
-      await writeFile(versionedFilePath, imageBuffer);
-      
-      console.log(`Image cached successfully in both locations:`);
-      console.log(`  - Regular:  ${regularFilePath}`);
-      console.log(`  - Versioned: ${versionedFilePath}`);
-      
-      // Save in memory cache with both paths
-      urlToFileMap.set(url, {
-        originalUrl: url,
-        regularPath: regularPublicUrl,
-        versionedPath: versionedPublicUrl,
-        timestamp: Date.now()
-      });
-      
-      // By default, return the regular URL as it's more compatible
-      return regularPublicUrl;
+      try {
+        // Write the image to both locations
+        await writeFile(regularFilePath, imageBuffer);
+        console.log(`📥 Successfully wrote file to regular path: ${regularFilePath}`);
+        
+        await writeFile(versionedFilePath, imageBuffer);
+        console.log(`📥 Successfully wrote file to versioned path: ${versionedFilePath}`);
+        
+        // Save in memory cache with both paths
+        urlToFileMap.set(url, {
+          originalUrl: url,
+          regularPath: regularPublicUrl,
+          versionedPath: versionedPublicUrl,
+          timestamp: Date.now()
+        });
+        
+        console.log(`📥 Image successfully cached in both locations and added to memory map`);
+        
+        // By default, return the regular URL as it's more compatible
+        return regularPublicUrl;
+      } catch (error) {
+        const writeError = error as Error;
+        console.error(`❌ Error writing image files:`, writeError);
+        throw new AppError(`Failed to write image files: ${writeError.message}`, 500);
+      }
     } catch (error) {
-      console.error('Failed to cache image:', error);
+      console.error('❌ Failed to cache image:', error);
       if (axios.isAxiosError(error) && error.response) {
-        console.error(`Status: ${error.response?.status}, Data:`, error.response?.data);
+        console.error(`❌ Status: ${error.response?.status}, Data:`, error.response?.data);
       }
       throw new AppError(`Failed to cache image: ${error instanceof Error ? error.message : String(error)}`, 500);
     }
