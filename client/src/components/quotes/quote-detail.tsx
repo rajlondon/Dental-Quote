@@ -53,7 +53,24 @@ export default function QuoteDetail({
   onBack,
   actions = [],
 }: QuoteDetailProps) {
+  // Check if a custom action already exists for the same functionality
+  const hasEquivalentCustomAction = () => {
+    // If no actions provided, we definitely don't have an equivalent
+    if (!actions || actions.length === 0) return false;
+    
+    // Check for clinic status actions that would conflict with our standard ones
+    if (portalType === "clinic" && quoteRequest.status === "assigned") {
+      return actions.some(action => action.label === "Begin Processing");
+    }
+    
+    // Add other portal checks if needed in the future
+    return false;
+  };
+
   const getActionText = () => {
+    // If we already have a custom action button that does the same thing, don't show the standard one
+    if (hasEquivalentCustomAction()) return null;
+    
     if (portalType === "admin") {
       if (quoteRequest.status === "pending") {
         return "Assign to Clinic";
