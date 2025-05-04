@@ -29,12 +29,15 @@ router.post('/api/images/cache', catchAsync(async (req: Request, res: Response) 
     
     if (isCached) {
       console.log(`Cache hit for ${url}`);
+      // Get both regular and versioned URLs
       const cachedUrl = ImageCacheService.getCachedUrl(url);
+      const versionedUrl = ImageCacheService.getVersionedUrl(url);
       
       return res.json({
         success: true,
         cached: true,
         cachedUrl,
+        versionedUrl,
         originalUrl: url,
         fromCache: true
       });
@@ -43,11 +46,14 @@ router.post('/api/images/cache', catchAsync(async (req: Request, res: Response) 
     // Cache the image
     console.log(`Caching new image from ${url}`);
     const cachedUrl = await ImageCacheService.cacheImage(url);
+    // Also get a versioned URL for better cache busting
+    const versionedUrl = ImageCacheService.getVersionedUrl(url);
     
     return res.json({
       success: true, 
       cached: true,
       cachedUrl,
+      versionedUrl,
       originalUrl: url
     });
   } catch (error) {
@@ -79,15 +85,24 @@ router.get('/api/images/proxy', catchAsync(async (req: Request, res: Response) =
   try {
     // Try to get the cached version
     if (ImageCacheService.isImageCached(url)) {
-      const cachedUrl = ImageCacheService.getCachedUrl(url);
-      return res.redirect(cachedUrl);
+      // Get versioned URL if available (better for cache busting)
+      const versionedUrl = ImageCacheService.getVersionedUrl(url);
+      const standardCachedUrl = ImageCacheService.getCachedUrl(url);
+      const cachedUrl = versionedUrl || standardCachedUrl;
+      
+      if (cachedUrl && typeof cachedUrl === 'string') {
+        return res.redirect(cachedUrl);
+      }
     }
     
     // Cache the image first
     const cachedUrl = await ImageCacheService.cacheImage(url);
     
-    // Redirect to the cached version
-    return res.redirect(cachedUrl);
+    // Try to get a versioned URL for better cache control
+    const versionedUrl = ImageCacheService.getVersionedUrl(url);
+    
+    // Redirect to the versioned cached URL if available, otherwise use the standard cached URL
+    return res.redirect(versionedUrl || cachedUrl);
   } catch (error) {
     console.error('Error proxying image:', error);
     
