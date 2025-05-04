@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   SpecialOffer, 
@@ -8,7 +8,7 @@ import {
 } from '@shared/specialOffers';
 import { User } from '@shared/schema';
 import { getWebSocketService } from '../services/websocketService';
-import { updateSpecialOfferImageInMemory } from './special-offers-update-helper';
+import { updateSpecialOfferImageInMemory, getSpecialOffersMap } from './special-offers-update-helper';
 import { AppError } from '../utils/app-error';
 import { catchAsync } from '../utils/catch-async';
 
@@ -26,8 +26,8 @@ const router = express.Router();
 // In-memory storage for development (replace with DB in production)
 const specialOffers = new Map<string, SpecialOffer[]>();
 
-// Export the specialOffers map reference to the update helper
-import { setSpecialOffersMap, getSpecialOffersMap } from './special-offers-update-helper';
+// Set the map reference in the update helper
+import { setSpecialOffersMap } from './special-offers-update-helper';
 // Set the map in our singleton store
 setSpecialOffersMap(specialOffers);
 
@@ -441,7 +441,7 @@ router.get('/api/commission-tiers', (req, res) => {
 
 // Special endpoint for image refresh with WebSocket notification
 // No authentication required for easier testing
-router.post('/api/special-offers/refresh-image/:offerId', catchAsync(async (req, res) => {
+router.post('/api/special-offers/refresh-image/:offerId', catchAsync(async (req: Request, res: Response) => {
   const { offerId } = req.params;
   
   if (!offerId) {
