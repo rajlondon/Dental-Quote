@@ -96,24 +96,46 @@ export function GenerateOfferImageButton({
     onSuccess: (data) => {
       toast({
         title: 'Image Refreshed',
-        description: 'The image cache has been refreshed. The page will update to show the current image.',
+        description: 'The image cache has been refreshed. The page will update shortly.',
       });
       
       if (onSuccess && data.imageUrl) {
         onSuccess(data.imageUrl);
       }
       
-      // Force clear browser cache for this image
-      if (offer.banner_image) {
-        // Create a new image element to force the browser to reload the image
-        const img = createFreshImage(data.imageUrl + '&forced=true');
+      // Aggressive approach to force image refresh
+      try {
+        // 1. Create a new image element with unique cache-busting URL
+        const randomStr = Math.random().toString(36).substring(2, 15);
+        const timestamp = Date.now();
+        const forcedUrl = `${data.imageUrl}&forced=true&t=${timestamp}&r=${randomStr}`;
+        const img = createFreshImage(forcedUrl);
+        
+        // 2. Find and update all matching images in DOM immediately
+        const offerImages = document.querySelectorAll(`img[data-offer-id="${offer.id}"]`);
+        if (offerImages.length > 0) {
+          console.log(`🖼️ Found ${offerImages.length} images to update with force refresh`);
+          offerImages.forEach((element) => {
+            const imgElement = element as HTMLImageElement;
+            imgElement.src = forcedUrl;
+            console.log('✅ Updated image element directly in DOM');
+          });
+        }
+      } catch (err) {
+        console.error('Error during direct DOM update:', err);
       }
       
-      // Force reload the page after a short delay
+      // 3. Force invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['/api/special-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/portal/clinic/special-offers'] });
+      
+      // 4. Reload page as final fallback, but with a longer delay
+      // to allow WebSocket notifications to arrive first
       setTimeout(() => {
         console.log('🔄 Reloading page to show refreshed image');
         window.location.reload();
-      }, 2000);
+      }, 3000);
     },
     onError: (error: Error) => {
       toast({
