@@ -60,7 +60,7 @@ export async function generateImage(
     
     // Check rate limits
     if (!checkRateLimits()) {
-      throw new Error("Rate limit reached. Please try again in a minute.");
+      throw new Error("OpenAI API quota limit reached (2 images per hour). Using fallback images instead.");
     }
 
     console.log(`Generating image for prompt: ${prompt.substring(0, 100)}...`);

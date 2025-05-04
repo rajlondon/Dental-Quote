@@ -92,20 +92,52 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
       console.warn(`OpenAI image generation failed, using fallback image: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
       
       // Identify fallback image based on offer type/title
-      let fallbackPath = '/images/offers/premium-hotel-deal.jpg';
+      let fallbackOptions = [];
       
       if (offerTitle.toLowerCase().includes('consultation')) {
-        fallbackPath = '/images/offers/free-consultation.jpg';
+        fallbackOptions = [
+          '/images/offers/free-consultation.jpg',
+          '/images/offers/consultation-clinic.jpg',
+          '/images/offers/dental-consultation.jpg'
+        ];
       } else if (offerTitle.toLowerCase().includes('implant')) {
-        fallbackPath = '/images/offers/dental-implant-crown-bundle.jpg';
+        fallbackOptions = [
+          '/images/offers/dental-implant-crown-bundle.jpg',
+          '/images/offers/implant-treatment.jpg',
+          '/images/treatments/illustrations/dental-implants1.png'
+        ];
       } else if (offerTitle.toLowerCase().includes('airport') || offerTitle.toLowerCase().includes('transfer')) {
-        fallbackPath = '/images/offers/luxury-airport-transfer.jpg';
+        fallbackOptions = [
+          '/images/offers/luxury-airport-transfer.jpg',
+          '/images/offers/vip-transfer.jpg',
+          '/images/transportation/luxury-car.jpg'
+        ];
+      } else if (offerTitle.toLowerCase().includes('hotel')) {
+        fallbackOptions = [
+          '/images/offers/premium-hotel-deal.jpg',
+          '/images/offers/premium-hotel-new.png',
+          '/images/accommodations/premium-hotel.jpg'
+        ];
+      } else {
+        // Generic special offer fallbacks
+        fallbackOptions = [
+          '/images/offers/premium-hotel-deal.jpg',
+          '/images/offers/dental-special.jpg',
+          '/images/clinics/modern-clinic.jpg'
+        ];
       }
       
-      // Add a timestamp to bust the cache
-      imageUrl = `${fallbackPath}?t=${Date.now()}`;
+      // Select a fallback image based on a deterministic hash of the offer ID to ensure consistent images
+      const hash = offerTitle.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const fallbackPath = fallbackOptions[hash % fallbackOptions.length];
       
-      console.log(`Using fallback image: ${fallbackPath}`);
+      // Add timestamp and random value to bust cache
+      const timestamp = Date.now();
+      const randomValue = Math.random().toString(36).substring(2, 10);
+      imageUrl = `${fallbackPath}?t=${timestamp}&r=${randomValue}`;
+      
+      console.log(`Using fallback image: ${fallbackPath} for offer "${offerTitle}"`);
+      console.log(`Cache-busting parameters added: ${imageUrl}`);
     }
     
     // Update the special offer image in memory
