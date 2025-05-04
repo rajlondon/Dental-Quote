@@ -109,6 +109,8 @@ export const quoteRequests = pgTable("quote_requests", {
   // Quote tracking
   status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, sent, approved, declined, converted
   quoteData: json("quote_data"),
+  // Special offer data
+  specialOffer: json("special_offer"),
   // Selected clinic
   selectedClinicId: integer("selected_clinic_id").references(() => clinics.id),
   // Notes visible to different users
@@ -144,6 +146,7 @@ export const insertQuoteRequestSchema = createInsertSchema(quoteRequests)
     updatedAt: true, 
     userId: true, 
     quoteData: true,
+    specialOffer: true,
     viewedByAdmin: true,
     viewedByClinic: true
   })
