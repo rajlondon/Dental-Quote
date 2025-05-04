@@ -4,11 +4,29 @@ import { QuoteRequest, QuoteVersion } from "@/types/quote";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { getStatusBadgeColor, getStatusLabel } from "./quote-list-table";
-import { ArrowLeft, Clipboard, Download, File, Phone, Mail, Calendar, MapPin, FileCheck } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Clipboard, 
+  Download, 
+  File, 
+  Phone, 
+  Mail, 
+  Calendar, 
+  MapPin, 
+  FileCheck,
+  Sparkles,
+  Tag,
+  Clock
+} from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import QuoteXrayFiles from "./quote-xray-files";
 
@@ -108,6 +126,49 @@ export default function QuoteDetail({
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
+          {/* Special Offer Alert - Only show for clinics and if a special offer exists */}
+          {(portalType === 'clinic' || portalType === 'admin') && quoteRequest.specialOffer && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-blue-800 gap-2 text-lg">
+                  <Sparkles className="h-5 w-5 text-blue-600" />
+                  Special Offer Selected
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-blue-800 text-lg">{quoteRequest.specialOffer.title}</span>
+                    <div className="flex items-center mt-1 text-blue-700">
+                      <Tag className="h-4 w-4 mr-2" />
+                      {quoteRequest.specialOffer.discountType === 'percentage' 
+                        ? `${quoteRequest.specialOffer.discountValue}% discount` 
+                        : `£${quoteRequest.specialOffer.discountValue} discount`}
+                      {quoteRequest.specialOffer.applicableTreatment && (
+                        <span className="ml-1">on {quoteRequest.specialOffer.applicableTreatment}</span>
+                      )}
+                    </div>
+                    {quoteRequest.specialOffer.expiryDate && (
+                      <div className="flex items-center mt-1 text-gray-600">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Valid until {formatDate(quoteRequest.specialOffer.expiryDate)}
+                      </div>
+                    )}
+                    {quoteRequest.specialOffer.terms && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        <strong>Terms:</strong> {quoteRequest.specialOffer.terms}
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-white p-3 rounded-md text-sm text-gray-700 border border-blue-100">
+                    <strong>Note for clinic:</strong> This patient selected this special offer from your promotions.
+                    Please ensure the discount is applied to their quote as per the terms of the offer.
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
