@@ -10,8 +10,8 @@ const GPT_MODEL = "gpt-4o";
 // Track API usage to handle rate limits
 let lastImageGenerationTime = 0;
 let imageGenerationCount = 0;
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_IMAGES_PER_WINDOW = 5; // Conservative limit to avoid hitting OpenAI quotas
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour (more realistic for OpenAI API limits)
+const MAX_IMAGES_PER_WINDOW = 2; // Set to 2 to match the number of working images you're seeing
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -36,7 +36,7 @@ function checkRateLimits(): boolean {
   
   // Check if we're over the limit
   if (imageGenerationCount >= MAX_IMAGES_PER_WINDOW) {
-    console.warn(`Rate limit approached: Generated ${imageGenerationCount} images in the last minute. Waiting until next window.`);
+    console.warn(`OpenAI rate limit reached: Generated ${imageGenerationCount} images in the current window. API quota limit reached - using fallback images.`);
     return false; // Not OK to proceed
   }
   
