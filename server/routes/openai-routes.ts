@@ -214,14 +214,53 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
     console.log(` - Contains 'oaidalleapiprodscus.blob.core.windows.net': ${imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net')}`);
     console.log(` - FULL URL for verification: ${imageUrl}`);
     
-    res.json({
-      success: true,
-      data: {
-        url: imageUrl,
-        offerId,
-        fromFallback: !isOpenAIUrl
+    try {
+      // Import the image caching service
+      const { ImageCacheService } = await import('../utils/image-cache-service');
+      
+      // Check if we need to permanently cache this image (OpenAI/Azure images expire)
+      if (isOpenAIUrl) {
+        console.log(`🔄 Caching OpenAI generated image for offer ${offerId}`);
+        const cachedUrl = await ImageCacheService.cacheImage(imageUrl);
+        
+        console.log(`✅ Image successfully cached, serving permanent URL: ${cachedUrl}`);
+        
+        // Return the cached URL instead of the original Azure Blob URL
+        res.json({
+          success: true,
+          data: {
+            url: cachedUrl,
+            originalUrl: imageUrl,
+            offerId,
+            cached: true,
+            fromFallback: false
+          }
+        });
+      } else {
+        // For non-OpenAI URLs, return as before
+        res.json({
+          success: true,
+          data: {
+            url: imageUrl,
+            offerId,
+            fromFallback: !isOpenAIUrl
+          }
+        });
       }
-    });
+    } catch (cacheError) {
+      console.error('Error caching image:', cacheError);
+      
+      // If caching fails, return the original URL
+      res.json({
+        success: true,
+        data: {
+          url: imageUrl,
+          offerId,
+          fromFallback: !isOpenAIUrl,
+          cacheError: true
+        }
+      });
+    }
   } catch (error) {
     console.error('Error handling special offer image update:', error);
     throw new AppError(`Failed to update special offer image: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);

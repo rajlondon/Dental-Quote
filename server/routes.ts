@@ -38,6 +38,7 @@ import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
 import openaiRoutes from "./routes/openai-routes";
+import imageCacheRoutes from "./routes/image-cache-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import error handling routes (only for development)
@@ -274,6 +275,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register OpenAI routes for image generation
   app.use('/api/openai', openaiRoutes);
+  
+  // Register image caching routes for handling Azure Blob Storage DALL-E images
+  app.use(imageCacheRoutes);
+  
+  // Create image-cache directory for storing cached images
+  const imageCacheDir = path.join(process.cwd(), 'public', 'image-cache');
+  if (!fs.existsSync(imageCacheDir)) {
+    fs.mkdirSync(imageCacheDir, { recursive: true });
+    console.log(`Created image cache directory at ${imageCacheDir}`);
+  }
+  
+  // Serve cached images statically
+  app.use('/image-cache', express.static(imageCacheDir));
   
   // Register booking and appointment routes
   app.use('/api/bookings', bookingRoutes);
