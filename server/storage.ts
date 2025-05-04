@@ -481,23 +481,24 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Updating special offer image for offer ID: ${offerId}`);
       
-      // First, check if this offer exists in the database 
-      // Since special offers are stored in memory, we need to access the special offers map from routes
-      // For simplicity, we're using a direct SQL execution approach
-      const sql = `
-        UPDATE special_offers
-        SET banner_image = $1, updated_at = NOW()
-        WHERE id = $2
-      `;
+      // Import the specialOffers map directly from the routes file
+      // This is needed because we're using in-memory storage
+      const { updateSpecialOfferImageInMemory } = require('./routes/special-offers-update-helper');
       
-      await db.execute(sql, [imageUrl, offerId]);
+      if (!updateSpecialOfferImageInMemory) {
+        throw new Error('Failed to import updateSpecialOfferImageInMemory function');
+      }
       
-      // For in-memory storage, we'd also need to update the map
-      // This is handled in the special-offers-routes.ts file
-      // We'll emit a WebSocket event to notify clients about the change
+      // Update the image in the in-memory map
+      const updated = await updateSpecialOfferImageInMemory(offerId, imageUrl);
       
-      console.log(`Special offer image updated successfully for offer ID: ${offerId}`);
-      return true;
+      if (updated) {
+        console.log(`Special offer image updated successfully for offer ID: ${offerId}`);
+        return true;
+      } else {
+        console.error(`Special offer with ID ${offerId} not found`);
+        return false;
+      }
     } catch (error) {
       console.error('Error updating special offer image:', error);
       return false;
