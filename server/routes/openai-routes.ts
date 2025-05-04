@@ -61,7 +61,7 @@ router.post('/generate-image', isAuthenticated, catchAsync(async (req: Request, 
  * POST /api/openai/special-offer-image
  */
 router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
-  const { offerId, offerTitle, offerType } = req.body;
+  const { offerId, offerTitle, offerType, customPrompt, naturalStyle } = req.body;
   
   if (!offerId || !offerTitle) {
     throw new AppError('Offer ID and title are required', 400);
@@ -75,11 +75,19 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
     // Generate image using OpenAI
     console.log(`Generating special offer image for: ${offerTitle} (type: ${offerType || 'premium'})`);
     
+    if (customPrompt) {
+      console.log(`Using custom prompt: ${customPrompt.substring(0, 100)}...`);
+    }
+    
+    if (naturalStyle) {
+      console.log('Using natural style flag for more photorealistic images');
+    }
+    
     let imageUrl = '';
     
     try {
       // First try to generate with OpenAI
-      const result = await generateSpecialOfferImage(offerTitle, offerType);
+      const result = await generateSpecialOfferImage(offerTitle, offerType, customPrompt, !!naturalStyle);
       
       if (!result.url) {
         throw new Error('No image URL returned from OpenAI');
