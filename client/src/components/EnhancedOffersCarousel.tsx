@@ -267,7 +267,9 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             if (offerImages.length > 0) {
               console.log(`🔍 Found ${offerImages.length} images in DOM to update directly`);
               
-              offerImages.forEach((img: HTMLImageElement) => {
+              offerImages.forEach((element) => {
+                // Cast the element to HTMLImageElement
+                const img = element as HTMLImageElement;
                 // Replace the src with our new URL plus cache busting
                 img.src = `${imageUrl}&direct_update=true&t=${Date.now()}`;
                 console.log('✏️ Updated image src directly in DOM');
