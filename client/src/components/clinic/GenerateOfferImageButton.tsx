@@ -22,7 +22,7 @@ export function GenerateOfferImageButton({
       const response = await apiRequest('POST', '/api/openai/special-offer-image', {
         offerId: offer.id,
         offerTitle: offer.title,
-        offerType: offer.offerType || 'premium'
+        offerType: offer.promotion_level || 'premium'
       });
       
       if (!response.ok) {

@@ -448,21 +448,45 @@ export function SpecialOffersManager() {
                       </div>
                     )}
                   </CardContent>
-                  <CardFooter className="border-t bg-gray-50 gap-2 flex justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditOffer(offer)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleDeleteOffer(offer)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
+                  <CardFooter className="border-t bg-gray-50 gap-2 flex justify-between">
+                    <div>
+                      <GenerateOfferImageButton 
+                        offer={offer}
+                        onSuccess={(imageUrl) => {
+                          // Update the cache with the new image URL
+                          queryClient.setQueryData(
+                            ['/api/portal/clinic/special-offers'],
+                            (oldData: SpecialOffer[] | undefined) => {
+                              if (!oldData) return oldData;
+                              return oldData.map(o => 
+                                o.id === offer.id ? { ...o, banner_image: imageUrl } : o
+                              );
+                            }
+                          );
+                          
+                          toast({
+                            title: 'Image Updated',
+                            description: 'The special offer image has been updated',
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditOffer(offer)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteOffer(offer)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               ))}
@@ -506,21 +530,45 @@ export function SpecialOffersManager() {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter className="border-t bg-gray-50 gap-2 flex justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditOffer(offer)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleDeleteOffer(offer)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
+                  <CardFooter className="border-t bg-gray-50 gap-2 flex justify-between">
+                    <div>
+                      <GenerateOfferImageButton 
+                        offer={offer}
+                        onSuccess={(imageUrl) => {
+                          // Update the cache with the new image URL
+                          queryClient.setQueryData(
+                            ['/api/portal/clinic/special-offers'],
+                            (oldData: SpecialOffer[] | undefined) => {
+                              if (!oldData) return oldData;
+                              return oldData.map(o => 
+                                o.id === offer.id ? { ...o, banner_image: imageUrl } : o
+                              );
+                            }
+                          );
+                          
+                          toast({
+                            title: 'Image Updated',
+                            description: 'The special offer image has been updated',
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditOffer(offer)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteOffer(offer)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               ))}
