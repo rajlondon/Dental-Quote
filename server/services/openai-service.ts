@@ -7,6 +7,12 @@ import { logError, ErrorSeverity } from "./error-logger";
 // Do not change this unless explicitly requested by the user
 const GPT_MODEL = "gpt-4o";
 
+// Track API usage to handle rate limits
+let lastImageGenerationTime = 0;
+let imageGenerationCount = 0;
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_IMAGES_PER_WINDOW = 5; // Conservative limit to avoid hitting OpenAI quotas
+
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,6 +21,26 @@ const openai = new OpenAI({
 // Verify that the OpenAI API key is properly configured
 export function isOpenAIConfigured(): boolean {
   return !!process.env.OPENAI_API_KEY;
+}
+
+// Check if we might be approaching rate limits
+function checkRateLimits(): boolean {
+  const now = Date.now();
+  
+  // Reset counter if we're in a new window
+  if (now - lastImageGenerationTime > RATE_LIMIT_WINDOW) {
+    imageGenerationCount = 0;
+    lastImageGenerationTime = now;
+    return true; // OK to proceed
+  }
+  
+  // Check if we're over the limit
+  if (imageGenerationCount >= MAX_IMAGES_PER_WINDOW) {
+    console.warn(`Rate limit approached: Generated ${imageGenerationCount} images in the last minute. Waiting until next window.`);
+    return false; // Not OK to proceed
+  }
+  
+  return true; // OK to proceed
 }
 
 /**
@@ -31,6 +57,11 @@ export async function generateImage(
     if (!isOpenAIConfigured()) {
       throw new Error("OpenAI API key not configured");
     }
+    
+    // Check rate limits
+    if (!checkRateLimits()) {
+      throw new Error("Rate limit reached. Please try again in a minute.");
+    }
 
     console.log(`Generating image for prompt: ${prompt.substring(0, 100)}...`);
     
@@ -42,19 +73,38 @@ export async function generateImage(
       quality: "standard",
     });
 
+    // Update rate limit tracking
+    imageGenerationCount++;
+    lastImageGenerationTime = Date.now();
+    
     // Log success
     console.log("Image generated successfully");
+    
+    if (!response.data || !response.data[0] || !response.data[0].url) {
+      throw new Error("OpenAI returned empty response");
+    }
     
     return { url: response.data[0].url ?? "" };
   } catch (error) {
     console.error("OpenAI image generation error:", error);
-    logError(error instanceof Error ? error : new Error(String(error)), {
+    
+    // Log detailed error for debugging
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      errorMessage = JSON.stringify(error);
+    } else {
+      errorMessage = String(error);
+    }
+    
+    logError(error instanceof Error ? error : new Error(errorMessage), {
       component: "OpenAI",
       operation: "generateImage",
       prompt: prompt.substring(0, 100) + "..."
     }, ErrorSeverity.ERROR);
     
-    throw new Error(`Failed to generate image: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Failed to generate image: ${errorMessage}`);
   }
 }
 
