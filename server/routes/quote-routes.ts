@@ -135,16 +135,22 @@ router.get("/:id", isAuthenticated, async (req, res, next) => {
       throw new BadRequestError("Invalid quote ID");
     }
     
+    console.log(`[DEBUG] Fetching quote request with ID: ${quoteId}`);
     const quote = await storage.getQuoteRequest(quoteId);
     
     if (!quote) {
+      console.log(`[ERROR] Quote request with ID ${quoteId} not found`);
       throw new NotFoundError("Quote request not found");
     }
     
+    console.log(`[DEBUG] Found quote: ${quote.id}, UserId: ${quote.userId}, Status: ${quote.status}`);
+    
     // Check permissions based on role
     const user = req.user!;
+    console.log(`[DEBUG] User role: ${user.role}, User ID: ${user.id}, ClinicId: ${user.clinicId}`);
     
     if (user.role === "patient" && quote.userId !== user.id) {
+      console.log(`[ERROR] Permission denied - patient ${user.id} trying to access quote ${quoteId} belonging to user ${quote.userId}`);
       return res.status(403).json({
         success: false,
         message: "You don't have permission to access this quote"
@@ -152,7 +158,9 @@ router.get("/:id", isAuthenticated, async (req, res, next) => {
     }
     
     if (user.role === "clinic_staff") {
+      console.log(`[DEBUG] Clinic staff permissions check - User clinic: ${user.clinicId}, Quote clinic: ${quote.selectedClinicId}`);
       if (!user.clinicId || quote.selectedClinicId !== user.clinicId) {
+        console.log(`[ERROR] Permission denied - clinic staff ${user.id} from clinic ${user.clinicId} trying to access quote ${quoteId} assigned to clinic ${quote.selectedClinicId}`);
         return res.status(403).json({
           success: false,
           message: "This quote is not assigned to your clinic"
@@ -161,8 +169,17 @@ router.get("/:id", isAuthenticated, async (req, res, next) => {
     }
     
     // Get quote versions if available
+    console.log(`[DEBUG] Fetching quote versions for quote ID: ${quoteId}`);
     const versions = await storage.getQuoteVersions(quoteId);
+    console.log(`[DEBUG] Found ${versions.length} versions for quote ID: ${quoteId}`);
     
+    console.log(`[DEBUG] Quote has specialOffer? ${quote.specialOffer ? 'YES' : 'NO'}`);
+    if (quote.specialOffer) {
+      console.log(`[DEBUG] Special offer data type: ${typeof quote.specialOffer}`);
+      console.log(`[DEBUG] Special offer data: ${JSON.stringify(quote.specialOffer).substring(0, 100)}...`);
+    }
+    
+    console.log(`[DEBUG] Successfully responding with quote data for ID: ${quoteId}`);
     res.json({
       success: true,
       data: {
@@ -171,6 +188,7 @@ router.get("/:id", isAuthenticated, async (req, res, next) => {
       }
     });
   } catch (error) {
+    console.error(`[ERROR] Error in quote/:id endpoint:`, error);
     next(error);
   }
 });
