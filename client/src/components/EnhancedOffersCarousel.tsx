@@ -173,15 +173,35 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     
     // Process the banner image URL
     if (offer.banner_image) {
-      // Check if this is an OpenAI URL (they don't need aggressive cache busting)
-      // Need to handle both direct openai.com URLs and Azure blob storage URLs
-      const isOpenAIUrl = offer.banner_image.startsWith('https://') && 
-                         (offer.banner_image.includes('openai') || 
-                          offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net'));
+      // We need to properly handle Azure Blob Storage URLs from OpenAI
+      const isAzureBlobUrl = offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net');
+      const isOpenAIUrl = offer.banner_image.includes('openai.com');
       
-      if (isOpenAIUrl) {
+      // Debug information about the blob URL
+      if (isAzureBlobUrl) {
+        console.error(`🔵 DEBUGGING AZURE BLOB URL: ${offer.banner_image}`);
+        console.error(`🔵 Azure Blob URL characteristics:`);
+        console.error(`   - Starts with https://:`, offer.banner_image.startsWith('https://'));
+        console.error(`   - Includes 'oaidalleapiprodscus.blob.core.windows.net':`, true);
+        console.error(`   - Contains query parameters:`, offer.banner_image.includes('?'));
+        console.error(`   - URL length:`, offer.banner_image.length);
+        console.error(`   - First 50 chars:`, offer.banner_image.substring(0, 50));
+        console.error(`   - Last 50 chars:`, offer.banner_image.substring(offer.banner_image.length - 50));
+      }
+      
+      // Check if this is an OpenAI URL (they don't need aggressive cache busting)
+      if (isOpenAIUrl || isAzureBlobUrl) {
         // Add minimal cache busting for OpenAI URLs
-        finalUrl = `${offer.banner_image.split('?')[0]}?t=${timestamp}`; 
+        // We need to ensure we're using the raw URL without cutting it off or modifying it
+        finalUrl = offer.banner_image;
+        
+        // Only add timestamp if there isn't already a query parameter
+        if (!finalUrl.includes('?')) {
+          finalUrl = `${finalUrl}?t=${timestamp}`;
+        }
+        
+        // Log for debugging to confirm we're handling OpenAI URLs correctly
+        console.log(`OpenAI URL detected for offer ${offer.id}: FULL URL: ${finalUrl}`);
       } else {
         // Strip existing query parameters for all other URLs and apply aggressive cache busting
         const baseUrl = offer.banner_image.split('?')[0];
@@ -365,16 +385,49 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               transition={{ duration: 0.5 }}
             >
               <div className="md:w-1/2 h-64 md:h-auto relative">
+                {/* Debug information about the OpenAI URL */}
+                {offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net') && (
+                  <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs p-1 z-50 flex flex-col">
+                    <span>OpenAI URL detected!</span>
+                    <a 
+                      href={offer.banner_image}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white underline hover:text-blue-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("Opening URL directly:", offer.banner_image);
+                      }}
+                    >
+                      Open URL Directly
+                    </a>
+                  </div>
+                )}
+                
                 <img 
                   src={getImageUrl(offer)}
                   alt={offer.title}
                   className="w-full h-full object-cover"
+                  onLoad={(e) => {
+                    console.log(`✅ Successfully loaded image for offer ${offer.id}`);
+                    // Check if this is an OpenAI image
+                    if (offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                      console.log('👍 Successfully loaded OpenAI DALL-E image from Azure Blob Storage');
+                    }
+                  }}
                   onError={(e) => {
-                    console.error(`Error loading image for offer ${offer.id}:`, e);
-                    console.log('Image URL that failed:', e.currentTarget.src);
+                    console.error(`❌ Error loading image for offer ${offer.id}:`, e);
+                    console.log('🔍 Image URL that failed:', e.currentTarget.src);
+                    
+                    // Additional debugging information for OpenAI URLs
+                    if (offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                      console.error('❌ Failed to load OpenAI DALL-E image from Azure Blob Storage');
+                    }
+                    
                     // Fallback to a default image if loading fails
                     e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
                   }}
+                  crossOrigin="anonymous" // Try with CrossOrigin attribute for CORS issues
                 />
                 <div className="absolute top-4 left-4">
                   <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.promotion_level))}>

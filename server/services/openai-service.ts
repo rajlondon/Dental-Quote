@@ -78,13 +78,25 @@ export async function generateImage(
     lastImageGenerationTime = Date.now();
     
     // Log success
-    console.log("Image generated successfully");
+    console.log("Image generated successfully via DALL-E API");
     
     if (!response.data || !response.data[0] || !response.data[0].url) {
       throw new Error("OpenAI returned empty response");
     }
     
-    return { url: response.data[0].url ?? "" };
+    const imageUrl = response.data[0].url ?? "";
+    console.log(`Raw OpenAI response URL: ${imageUrl}`);
+    
+    // Verify the URL format for debugging
+    const isValidUrl = imageUrl.startsWith('https://');
+    const isAzureBlobUrl = imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net');
+    
+    console.log(`URL validation checks: 
+    - Is valid HTTPS URL: ${isValidUrl}
+    - Is Azure Blob Storage URL: ${isAzureBlobUrl}
+    - Full URL for reference: ${imageUrl}`);
+    
+    return { url: imageUrl };
   } catch (error) {
     console.error("OpenAI image generation error:", error);
     

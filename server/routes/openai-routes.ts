@@ -182,6 +182,13 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
                         (imageUrl.includes('openai') || 
                          imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net'));
     
+    console.log(`Image URL analysis for offer ${offerId}:`);
+    console.log(` - Is recognized as OpenAI URL: ${isOpenAIUrl}`);
+    console.log(` - Full URL starts with https://: ${imageUrl.startsWith('https://')}`);
+    console.log(` - Contains 'openai': ${imageUrl.includes('openai')}`);
+    console.log(` - Contains 'oaidalleapiprodscus.blob.core.windows.net': ${imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net')}`);
+    console.log(` - FULL URL for verification: ${imageUrl}`);
+    
     res.json({
       success: true,
       data: {
