@@ -129,15 +129,21 @@ router.post('/special-offer-image', catchAsync(async (req: Request, res: Respons
     let imageUrl = '';
     
     try {
-      // First try to generate with OpenAI
-      const result = await generateSpecialOfferImage(offerTitle, offerType, customPrompt, !!naturalStyle);
-      
-      if (!result.url) {
-        throw new Error('No image URL returned from OpenAI');
+      // Use fallback mode if specified or try OpenAI
+      if (useFallback) {
+        console.log('FALLBACK MODE: Skipping actual OpenAI API call as requested');
+        throw new Error('Forced fallback mode activated');
+      } else {
+        // Try to generate with OpenAI
+        const result = await generateSpecialOfferImage(offerTitle, offerType, customPrompt, !!naturalStyle);
+        
+        if (!result.url) {
+          throw new Error('No image URL returned from OpenAI');
+        }
+        
+        imageUrl = result.url;
+        console.log('Successfully generated image with OpenAI');
       }
-      
-      imageUrl = result.url;
-      console.log('Successfully generated image with OpenAI');
     } catch (aiError) {
       // If OpenAI fails (due to rate limits or any other reason), use static fallbacks
       console.warn(`OpenAI image generation failed, using fallback image: ${aiError instanceof Error ? aiError.message : String(aiError)}`);

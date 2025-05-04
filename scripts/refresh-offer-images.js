@@ -18,30 +18,30 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config();
 
-// Define the special offers that need new images
+// Define the special offers that need new images - updated with the correct IDs from the system
 const offers = [
   {
-    id: 'ba3ab5d6-98ad-41e0-8828-4613e090e4db', // Make sure this matches your actual offer ID
+    id: 'ac36590b-b0dc-434e-ba74-d42ab2485e81',
     title: 'Free Consultation Package',
-    promotion_level: 'featured',
+    promotion_level: 'premium',
     prompt: 'Create a completely natural-looking, photorealistic image of a modern dental consultation at a premium clinic. Show a dentist in professional attire discussing treatment options with a smiling patient using a tablet and dental models. Natural lighting through large windows, warm beige and blue color palette, with subtle dental equipment visible in background. The image should look like an editorial photograph for a luxury dental magazine, not AI-generated. 4K quality with realistic textures and accurate lighting.'
   },
   {
-    id: '1e339878-78da-4f1f-b6c7-39c24f595d0c',
+    id: '134cdb0f-e783-47f5-a502-70e3960f7246',
     title: 'Premium Hotel Deal',
     promotion_level: 'premium',
     prompt: 'Create a completely natural-looking, photorealistic image of a luxury hotel room in Istanbul with a stunning view of the Bosphorus. Show a spacious suite with a king-size bed draped in premium white linens, designer furniture in gold and blue tones, and floor-to-ceiling windows framing the iconic Istanbul skyline at golden hour. Include subtle details like a fruit basket, marble bathroom glimpse, and mood lighting. The image should look like a professional hotel marketing photograph shot with a 50mm lens, 4K quality with perfect exposure and depth of field, not AI-generated.'
   },
   {
-    id: '00d74238-40b3-4514-8214-7360a113d1ce',
+    id: 'bd8fa86a-96e9-47fd-b838-9dc78ecf77ef',
     title: 'Dental Implant + Crown Bundle',
     promotion_level: 'featured',
     prompt: 'Create a completely natural-looking, photorealistic image showing a modern dental clinic treatment room specialized for implant procedures. Show a pristine treatment chair with overhead lights, sterilized implant components arranged on a stainless steel tray, and a digital display showing a 3D implant model. Include subtle details like dental tools, a glass wall with natural light, and soft blue/white color scheme. The image should look like a professional marketing photograph shot with a Canon 5D, 4K quality with perfect lighting, not AI-generated.'
   },
   {
-    id: '2caaa0b3-4af0-4c68-8768-18ef46e0717c',
+    id: '0a88512f-0c68-47c8-b597-9f06e5b0eaad',
     title: 'Luxury Airport Transfer',
-    promotion_level: 'premium',
+    promotion_level: 'featured',
     prompt: 'Create a completely natural-looking, photorealistic image of a premium black Mercedes S-Class sedan parked outside Istanbul Airport\'s international terminal. Show a professional uniformed chauffeur in suit and tie holding a passenger door open with the modern glass/steel terminal architecture visible in the background. Early evening golden hour lighting with slight reflections on the polished black car. Include subtle details like a "VIP Transfer" sign and blurred travelers in background. The image should look like professional marketing content shot with a full frame camera for a luxury transportation service, not AI-generated.'
   }
 ];
