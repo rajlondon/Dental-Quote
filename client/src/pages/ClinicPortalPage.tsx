@@ -51,13 +51,17 @@ import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
+  initialSection?: string;
 }
 
-const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ disableAutoRefresh = true }) => {
+const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ 
+  disableAutoRefresh = true,
+  initialSection = 'dashboard'
+}) => {
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<string>('dashboard');
+  const [activeSection, setActiveSection] = useState<string>(initialSection);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
