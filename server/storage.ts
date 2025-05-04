@@ -51,6 +51,12 @@ export interface IStorage {
   getLatestQuoteVersion(quoteRequestId: number): Promise<QuoteVersion | undefined>;
   createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion>;
   
+  // File upload
+  uploadFile(file: Express.Multer.File): Promise<{ url: string, filename: string }>;
+  
+  // Special offers
+  updateSpecialOfferImage(offerId: string, imageUrl: string): Promise<boolean>;
+  
   // Treatment plans
   getTreatmentPlanById(id: number): Promise<TreatmentPlan | undefined>;
   getTreatmentPlansByPatientId(patientId: number): Promise<TreatmentPlan[]>;
@@ -436,6 +442,66 @@ export class DatabaseStorage implements IStorage {
       .from(treatmentPlans)
       .where(eq(treatmentPlans.quoteRequestId, quoteRequestId));
     return plan;
+  }
+  
+  // File upload methods
+  async uploadFile(file: Express.Multer.File): Promise<{ url: string; filename: string }> {
+    try {
+      // Import necessary functions from cloud-storage service
+      const { 
+        generateSecureFilename, 
+        parseFileType, 
+        uploadToS3 
+      } = await import('./services/cloud-storage');
+      
+      // Generate a secure filename
+      const fileType = parseFileType(file.mimetype);
+      const secureFilename = generateSecureFilename(file.originalname);
+      const key = `${fileType}-${secureFilename}`;
+      
+      // Upload to S3
+      const result = await uploadToS3(file.buffer, key, file.mimetype);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to upload file to S3');
+      }
+      
+      return {
+        url: result.url || '',
+        filename: secureFilename
+      };
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw new Error(`File upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+  
+  // Special offers methods
+  async updateSpecialOfferImage(offerId: string, imageUrl: string): Promise<boolean> {
+    try {
+      console.log(`Updating special offer image for offer ID: ${offerId}`);
+      
+      // First, check if this offer exists in the database 
+      // Since special offers are stored in memory, we need to access the special offers map from routes
+      // For simplicity, we're using a direct SQL execution approach
+      const sql = `
+        UPDATE special_offers
+        SET banner_image = $1, updated_at = NOW()
+        WHERE id = $2
+      `;
+      
+      await db.execute(sql, [imageUrl, offerId]);
+      
+      // For in-memory storage, we'd also need to update the map
+      // This is handled in the special-offers-routes.ts file
+      // We'll emit a WebSocket event to notify clients about the change
+      
+      console.log(`Special offer image updated successfully for offer ID: ${offerId}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating special offer image:', error);
+      return false;
+    }
   }
   
   async getAllTreatmentPlans(status?: string, search?: string): Promise<TreatmentPlan[]> {

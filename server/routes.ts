@@ -37,6 +37,7 @@ import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
+import openaiRoutes from "./routes/openai-routes";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import error handling routes (only for development)
@@ -270,6 +271,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register clinic media routes for before/after images and videos
   app.use('/api/clinic-media', clinicMediaRoutes);
+  
+  // Register OpenAI routes for image generation
+  app.use('/api/openai', openaiRoutes);
   
   // Register booking and appointment routes
   app.use('/api/bookings', bookingRoutes);
