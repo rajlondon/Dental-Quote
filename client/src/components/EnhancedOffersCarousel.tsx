@@ -76,14 +76,100 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         
         // Extract important info if available
         const offerId = message.offerId || '';
+        const imageUrl = message.imageUrl || '';
         const timestamp = message.timestamp || Date.now();
+        const command = message.command || '';
+        const forceReload = message.forceReload === true;
+        
+        // Check if server is requesting a complete page reload
+        if (command === 'force_reload' || forceReload) {
+          console.log('🔄🔄 Force reload command received from server');
+          
+          // Show toast notification
+          toast({
+            title: 'New Image Generated',
+            description: 'Page will reload to display updated offers',
+            variant: 'default',
+          });
+          
+          // Reload the entire page for a fresh start
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
+        
+        // Force reload the entire window if we're on the special offers management page
+        // This is the most reliable way to get a clean slate with the new image
+        if (window.location.pathname.includes('/clinic/special-offers')) {
+          console.log('📱 On special offers management page, applying force reload strategy');
+          // Wait 2 seconds to ensure server has processed the change
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+          return;
+        }
+        
+        // Handle cache invalidation command
+        if (command === 'invalidate_cache') {
+          console.log('🧹 Received explicit cache invalidation command from server');
+          
+          // Clear HTML5 Cache API if available
+          if ('caches' in window) {
+            try {
+              caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => {
+                  console.log(`Attempting to delete cache: ${cacheName}`);
+                  caches.delete(cacheName);
+                });
+              });
+              console.log('✅ Cleared all available caches');
+            } catch (err) {
+              console.error('Error clearing caches:', err);
+            }
+          }
+          
+          // Try to remove items from browser's internal image cache using trick
+          // This creates a dummy image element with each offending URL and explicitly
+          // forces cache removal
+          if (imageUrl) {
+            try {
+              const dummyImage = new Image();
+              dummyImage.src = `${imageUrl}?forcereload=${Date.now()}`;
+              console.log('Created dummy image to force cache invalidation:', dummyImage.src);
+            } catch (err) {
+              console.error('Error with cache invalidation trick:', err);
+            }
+          }
+        }
         
         // Clear image cache immediately and force refresh
+        console.log('🧹 Clearing image cache completely');
         setImageCache({}); // Clear all cached image URLs
-        setImageRefreshKey(timestamp); // Use server timestamp for better synchronization
         
-        // Refetch data from server
-        queryClient.invalidateQueries({ queryKey: ['/api/special-offers/homepage'] });
+        // Use server timestamp for better synchronization
+        console.log(`⏰ Setting new refresh key: ${timestamp}`);
+        setImageRefreshKey(timestamp); 
+        
+        // If we received a specific image URL, manually update our cache 
+        // to force immediate display of the new image
+        if (imageUrl && offerId) {
+          console.log(`🔐 Manually updating cached image URL for offer ${offerId}`);
+          // Add multiple random parameters to prevent any caching
+          const randomVal1 = Math.random().toString(36).substring(2, 10);
+          const randomVal2 = Math.random().toString(36).substring(2, 10);
+          setImageCache(prev => ({
+            ...prev,
+            [offerId]: `${imageUrl}?t=${Date.now()}&r1=${randomVal1}&r2=${randomVal2}&nocache=true`
+          }));
+        }
+        
+        // Refetch data from server with cache busting
+        console.log('🔄 Invalidating special offers query cache');
+        queryClient.invalidateQueries({ 
+          queryKey: ['/api/special-offers/homepage'],
+          refetchType: 'all'
+        });
         
         // Add a toast notification that also helps user know something happened
         toast({
@@ -94,14 +180,21 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         
         // Schedule multiple refreshes with staggered timing
         // This helps overcome browser cache issues by trying multiple times
-        const refreshTimes = [500, 1500, 3000]; // Milliseconds
+        const refreshTimes = [500, 1500, 3000, 5000]; // Milliseconds
         
         refreshTimes.forEach(delay => {
           setTimeout(() => {
             // Generate a unique refresh key each time
             const newRefreshKey = Date.now() + Math.random();
+            console.log(`⏱️ Scheduled refresh #${delay/500}: new key ${newRefreshKey}`);
             setImageRefreshKey(newRefreshKey);
             setImageCache({}); // Clear cache again to be extra sure
+            
+            // Force re-query on each refresh attempt
+            queryClient.invalidateQueries({ 
+              queryKey: ['/api/special-offers/homepage'],
+              refetchType: 'all'
+            });
             
             // Only show toast on final refresh
             if (delay === refreshTimes[refreshTimes.length - 1]) {

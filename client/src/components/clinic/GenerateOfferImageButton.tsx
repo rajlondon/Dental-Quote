@@ -42,13 +42,20 @@ export function GenerateOfferImageButton({
       } else {
         toast({
           title: 'AI Image Generated',
-          description: 'The AI has created a new image for your special offer',
+          description: 'The AI has created a new image for your special offer. The page will refresh to show your new image.',
         });
       }
       
       if (onSuccess && data.data && data.data.url) {
         onSuccess(data.data.url);
       }
+      
+      // Schedule a page reload after a brief delay to ensure the server has processed the change
+      // and all WebSocket notifications have been sent
+      setTimeout(() => {
+        console.log('🔄 Reloading page to show new AI-generated image');
+        window.location.reload();
+      }, 3000);
     },
     onError: (error: Error) => {
       // Check if error is related to API limits
