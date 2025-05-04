@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useWebSocket } from '@/hooks/use-websocket';
+
+// Add window interface extension
+declare global {
+  interface Window {
+    blobUrlsLogged?: {
+      [key: string]: boolean;
+    };
+  }
+}
 
 // Define the shape of our special offer data
 interface SpecialOffer {
@@ -145,90 +154,89 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     setCurrentIndex(prev => (prev + 1) % offers.length);
   };
 
-  // Generate image URL with aggressive cache busting
-  const getImageUrl = (offer: SpecialOffer) => {
-    // Cache lifetime in milliseconds (5 seconds)
-    // Short URL cache to ensure regular updates even without WebSocket events
-    const CACHE_TTL = 5000;
+  // Memoize the image URLs to prevent rendering loops
+  const getImageUrlsMemo = useMemo(() => {
+    const urls: Record<string, string> = {};
+  
+    if (!offers) return urls;
     
-    // Return cached URL if available and not expired
-    const cachedUrl = imageCache[offer.id];
-    const cacheTimestampMatch = cachedUrl?.match(/t=(\d+)/);
-    
-    if (
-      cachedUrl && 
-      cacheTimestampMatch && 
-      Date.now() - parseInt(cacheTimestampMatch[1], 10) < CACHE_TTL
-    ) {
-      return cachedUrl;
-    }
-    
-    // Ultra-aggressive cache busting parameters with high entropy
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 15);
-    const uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-    const cacheKey = `t=${timestamp}&r=${randomString}&v=${imageRefreshKey}&u=${uuid}&nocache=true`;
-    
-    let finalUrl = '';
-    
-    // Process the banner image URL
-    if (offer.banner_image) {
-      // We need to properly handle Azure Blob Storage URLs from OpenAI
-      const isAzureBlobUrl = offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net');
-      const isOpenAIUrl = offer.banner_image.includes('openai.com');
+    // Process all offers at once in a single batch
+    offers.forEach(offer => {
+      // Ultra-aggressive cache busting parameters with high entropy
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      const cacheKey = `t=${timestamp}&r=${randomString}&v=${imageRefreshKey}&u=${uuid}&nocache=true`;
       
-      // Debug information about the blob URL
-      if (isAzureBlobUrl) {
-        console.error(`🔵 DEBUGGING AZURE BLOB URL: ${offer.banner_image}`);
-        console.error(`🔵 Azure Blob URL characteristics:`);
-        console.error(`   - Starts with https://:`, offer.banner_image.startsWith('https://'));
-        console.error(`   - Includes 'oaidalleapiprodscus.blob.core.windows.net':`, true);
-        console.error(`   - Contains query parameters:`, offer.banner_image.includes('?'));
-        console.error(`   - URL length:`, offer.banner_image.length);
-        console.error(`   - First 50 chars:`, offer.banner_image.substring(0, 50));
-        console.error(`   - Last 50 chars:`, offer.banner_image.substring(offer.banner_image.length - 50));
-      }
+      let finalUrl = '';
       
-      // Check if this is an OpenAI URL (they don't need aggressive cache busting)
-      if (isOpenAIUrl || isAzureBlobUrl) {
-        // Add minimal cache busting for OpenAI URLs
-        // We need to ensure we're using the raw URL without cutting it off or modifying it
-        finalUrl = offer.banner_image;
+      // Process the banner image URL
+      if (offer.banner_image) {
+        // We need to properly handle Azure Blob Storage URLs from OpenAI
+        const isAzureBlobUrl = offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net');
+        const isOpenAIUrl = offer.banner_image.includes('openai.com');
         
-        // Only add timestamp if there isn't already a query parameter
-        if (!finalUrl.includes('?')) {
-          finalUrl = `${finalUrl}?t=${timestamp}`;
+        // Debug information about the blob URL - only log once when detected
+        if (isAzureBlobUrl && typeof window !== 'undefined' && !window.blobUrlsLogged) {
+          // Initialize the tracking object if it doesn't exist
+          if (!window.blobUrlsLogged) {
+            window.blobUrlsLogged = {};
+          }
+          
+          if (!window.blobUrlsLogged[offer.id]) {
+            window.blobUrlsLogged[offer.id] = true;
+            
+            // Log debugging info but only once per offer
+            console.error(`🔵 DEBUGGING AZURE BLOB URL: ${offer.banner_image}`);
+            console.error(`🔵 Azure Blob URL characteristics:`);
+            console.error(`   - Starts with https://:`, offer.banner_image.startsWith('https://'));
+            console.error(`   - Contains query parameters:`, offer.banner_image.includes('?'));
+            console.error(`   - URL length:`, offer.banner_image.length);
+          }
         }
         
-        // Log for debugging to confirm we're handling OpenAI URLs correctly
-        console.log(`OpenAI URL detected for offer ${offer.id}: FULL URL: ${finalUrl}`);
+        // Check if this is an OpenAI URL (they don't need aggressive cache busting)
+        if (isOpenAIUrl || isAzureBlobUrl) {
+          // Add minimal cache busting for OpenAI URLs
+          // We need to ensure we're using the raw URL without cutting it off or modifying it
+          finalUrl = offer.banner_image;
+          
+          // Only add timestamp if there isn't already a query parameter
+          if (!finalUrl.includes('?')) {
+            finalUrl = `${finalUrl}?t=${timestamp}`;
+          }
+        } else {
+          // Strip existing query parameters for all other URLs and apply aggressive cache busting
+          const baseUrl = offer.banner_image.split('?')[0];
+          finalUrl = `${baseUrl}?${cacheKey}`;
+        }
       } else {
-        // Strip existing query parameters for all other URLs and apply aggressive cache busting
-        const baseUrl = offer.banner_image.split('?')[0];
-        finalUrl = `${baseUrl}?${cacheKey}`;
-      }
-    } else {
-      // Fallback images based on title with cache busting
-      let basePath = '/images/offers/premium-hotel-deal.jpg';
-      
-      if (offer.title.toLowerCase().includes('consultation')) {
-        basePath = '/images/offers/free-consultation.jpg';
-      } else if (offer.title.toLowerCase().includes('implant')) {
-        basePath = '/images/offers/dental-implant-crown-bundle.jpg';
-      } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
-        basePath = '/images/offers/luxury-airport-transfer.jpg';
+        // Fallback images based on title with cache busting
+        let basePath = '/images/offers/premium-hotel-deal.jpg';
+        
+        if (offer.title.toLowerCase().includes('consultation')) {
+          basePath = '/images/offers/free-consultation.jpg';
+        } else if (offer.title.toLowerCase().includes('implant')) {
+          basePath = '/images/offers/dental-implant-crown-bundle.jpg';
+        } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
+          basePath = '/images/offers/luxury-airport-transfer.jpg';
+        }
+        
+        finalUrl = `${basePath}?${cacheKey}`;
       }
       
-      finalUrl = `${basePath}?${cacheKey}`;
-    }
+      urls[offer.id] = finalUrl;
+    });
     
-    console.log(`Generated fresh URL for offer ${offer.id}: ${finalUrl.substring(0, 100)}...`);
-    
-    // Cache the URL with current timestamp
-    setImageCache(prev => ({...prev, [offer.id]: finalUrl}));
-    
-    return finalUrl;
-  };
+    return urls;
+  }, [offers, imageRefreshKey]);
+  
+  // Get image URL for a specific offer (using the memoized map)
+  const getImageUrl = useCallback((offer: SpecialOffer) => {
+    const url = getImageUrlsMemo[offer.id];
+    // If URL is missing from memo somehow, don't try to update state during render
+    return url || (offer.banner_image || '/images/offers/default.jpg');
+  }, [getImageUrlsMemo]);
 
   // Get styling for promotion level badges
   const getBadgeStyle = (level?: string) => {
