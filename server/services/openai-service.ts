@@ -142,18 +142,60 @@ Do not include any text in the image.`;
  * Generate a special offer image for dental tourism
  * @param offerTitle The title of the special offer
  * @param offerType The type of special offer (e.g., discount, package, etc.)
+ * @param customPrompt Optional custom prompt to generate a more specific image
+ * @param naturalStyle Set to true to generate more natural-looking images
  * @returns Object containing the URL of the generated image
  */
 export async function generateSpecialOfferImage(
   offerTitle: string,
-  offerType: string = "premium"
+  offerType: string = "premium",
+  customPrompt?: string,
+  naturalStyle: boolean = false
 ): Promise<{ url: string }> {
   // Generate a unique timestamp and randomizer to ensure we get different images each time
   const timestamp = new Date().toISOString();
   const uniqueId = Math.random().toString(36).substring(2, 10);
   
+  // If a custom prompt is provided, use it directly
+  if (customPrompt) {
+    console.log(`Using custom prompt for "${offerTitle}"`);
+    // Still add the unique modifier to ensure different images
+    const uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
+    
+    // Use the custom prompt as is, just append the unique ID
+    const prompt = `${customPrompt} ${uniqueModifier}`;
+    
+    console.log(`Generating special offer image with custom prompt (ID: ${uniqueId})`);
+    
+    // Generate the image with wider format for banner images
+    const result = await generateImage(prompt, "1792x1024");
+    
+    // If successful, ensure the URL has a cache-busting parameter
+    if (result && result.url) {
+      const url = result.url;
+      // Only add query parameter if it doesn't already have one
+      if (!url.includes('?')) {
+        result.url = `${url}?t=${Date.now()}&u=${uniqueId}`;
+        console.log(`Added cache busting parameters to URL: ${result.url}`);
+      } else {
+        console.log(`URL already contains query parameters: ${url}`);
+      }
+    }
+    
+    return result;
+  }
+  
+  // If no custom prompt, proceed with the standard prompt generation approach
   // Base prompt structure with built-in uniqueness
-  let basePrompt = `Create a completely unique and original marketing image for a dental tourism special offer titled "${offerTitle}".`;
+  let basePrompt = "";
+  
+  if (naturalStyle) {
+    // More photorealistic, less AI-looking prompt style
+    basePrompt = `Create a professional, photorealistic marketing image for a dental tourism special offer titled "${offerTitle}". Make it look like a high-quality stock photograph, not AI-generated.`;
+  } else {
+    // Standard prompt style
+    basePrompt = `Create a completely unique and original marketing image for a dental tourism special offer titled "${offerTitle}".`;
+  }
   
   // Additional unique identifier to force the model to generate a different image each time
   let uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
@@ -204,16 +246,26 @@ The image should convey quality, exclusivity, and premium service - key values i
   }
   
   // Common ending for all prompts
-  const commonEnding = `
+  let commonEnding = `
 Do not include any text or captions within the image.
 Make it sophisticated and aspirational, like a high-end professional advertisement.
-The image must be completely different from previous generations, with unique composition and elements.
-${uniqueModifier}`;
+The image must be completely different from previous generations, with unique composition and elements.`;
+
+  // For natural style, add additional directives
+  if (naturalStyle) {
+    commonEnding += `
+Make the image appear completely natural and photorealistic.
+Avoid any stylistic elements that make it look AI-generated.
+It should be indistinguishable from a professional stock photograph.`;
+  }
+  
+  // Add the unique modifier
+  commonEnding += `\n${uniqueModifier}`;
   
   // Combine all parts
   const prompt = `${basePrompt}${specificDetails}${commonEnding}`;
 
-  console.log(`Generating special offer image with unique prompt (ID: ${uniqueId})`);
+  console.log(`Generating special offer image with ${naturalStyle ? 'natural' : 'standard'} prompt (ID: ${uniqueId})`);
   
   // Generate the image with wider format for banner images
   const result = await generateImage(prompt, "1792x1024");
