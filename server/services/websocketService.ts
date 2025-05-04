@@ -210,6 +210,31 @@ export class WebSocketService {
       }
     });
   }
+  
+  // Broadcast special offer image updates to all connected clients
+  public broadcastSpecialOfferImageRefresh(offerId: string, imageUrl: string) {
+    console.log(`📢 Broadcasting special offer image refresh for offer ${offerId}`);
+    
+    const message = {
+      type: 'special_offer_image_refreshed',
+      offerId,
+      imageUrl,
+      timestamp: Date.now(),
+    };
+    
+    const payload = JSON.stringify(message);
+    let clientCount = 0;
+    
+    this.clients.forEach((client) => {
+      if (client.ws.readyState === WebSocket.OPEN) {
+        client.ws.send(payload);
+        clientCount++;
+      }
+    });
+    
+    console.log(`📊 Sent image refresh notification to ${clientCount} connected clients`);
+    return clientCount;
+  }
 }
 
 // Singleton instance of WebSocketService
