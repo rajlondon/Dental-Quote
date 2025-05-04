@@ -20,7 +20,7 @@ export function GenerateOfferImageButton({
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { registerMessageHandler } = useWebSocket();
+  const { registerMessageHandler, unregisterMessageHandler } = useWebSocket();
 
   // Mutation for generating a completely new image via OpenAI
   const generateImageMutation = useMutation({
@@ -178,14 +178,14 @@ export function GenerateOfferImageButton({
       }
     };
     
-    // Register the message handler
-    const unregister = registerMessageHandler(handleOfferImageRefresh);
+    // Register the message handler with the correct message type
+    registerMessageHandler('special_offer_image_refresh', handleOfferImageRefresh);
     
     // Cleanup on unmount
     return () => {
-      if (unregister) unregister();
+      unregisterMessageHandler('special_offer_image_refresh');
     };
-  }, [offer.id, onSuccess, queryClient, registerMessageHandler, toast]);
+  }, [offer.id, onSuccess, queryClient, registerMessageHandler, unregisterMessageHandler, toast]);
 
   // Fix for Image constructor
   const createFreshImage = (url: string) => {
