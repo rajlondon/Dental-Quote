@@ -176,12 +176,18 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
       }, 2000);
     }
     
+    // Check if the image URL is from OpenAI (starts with https:// and contains openai)
+    // Need to handle both blob.core.windows.net URLs and any future URL formats from OpenAI
+    const isOpenAIUrl = imageUrl.startsWith('https://') && 
+                        (imageUrl.includes('openai') || 
+                         imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net'));
+    
     res.json({
       success: true,
       data: {
         url: imageUrl,
         offerId,
-        fromFallback: !imageUrl.includes('openai.com')
+        fromFallback: !isOpenAIUrl
       }
     });
   } catch (error) {
