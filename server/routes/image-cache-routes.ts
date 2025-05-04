@@ -83,30 +83,52 @@ router.get('/api/images/proxy', catchAsync(async (req: Request, res: Response) =
   }
   
   try {
+    console.log(`🔄 Image proxy requested for URL: ${url}`);
+    
     // Try to get the cached version
     if (ImageCacheService.isImageCached(url)) {
-      // Get versioned URL if available (better for cache busting)
-      const versionedUrl = ImageCacheService.getVersionedUrl(url);
-      const standardCachedUrl = ImageCacheService.getCachedUrl(url);
-      const cachedUrl = versionedUrl || standardCachedUrl;
+      console.log(`✅ Image is already cached for URL: ${url}`);
       
-      if (cachedUrl && typeof cachedUrl === 'string') {
-        return res.redirect(cachedUrl);
+      // Always get versioned URL for cache busting (daily rotation + query params)
+      const versionedUrl = ImageCacheService.getVersionedUrl(url);
+      
+      if (versionedUrl && typeof versionedUrl === 'string') {
+        console.log(`🌟 Redirecting to daily versioned URL: ${versionedUrl}`);
+        return res.redirect(versionedUrl);
       }
+      
+      // Fallback to standard URL if versioned not available
+      const standardCachedUrl = ImageCacheService.getCachedUrl(url);
+      if (standardCachedUrl && typeof standardCachedUrl === 'string') {
+        console.log(`⚠️ Falling back to standard cached URL: ${standardCachedUrl}`);
+        return res.redirect(standardCachedUrl);
+      }
+      
+      console.log(`❌ Image marked as cached but no URL found, will download`);
+    } else {
+      console.log(`ℹ️ Image not cached, will download: ${url}`);
     }
     
     // Cache the image first
+    console.log(`📥 Caching image from URL: ${url}`);
     const cachedUrl = await ImageCacheService.cacheImage(url);
+    console.log(`📥 Image cached at URL: ${cachedUrl}`);
     
-    // Try to get a versioned URL for better cache control
+    // Always try to get a versioned URL for better cache control
     const versionedUrl = ImageCacheService.getVersionedUrl(url);
     
-    // Redirect to the versioned cached URL if available, otherwise use the standard cached URL
-    return res.redirect(versionedUrl || cachedUrl);
+    if (versionedUrl) {
+      console.log(`🌟 Redirecting to fresh daily versioned URL: ${versionedUrl}`);
+      return res.redirect(versionedUrl);
+    } else {
+      console.log(`⚠️ No versioned URL available, using standard: ${cachedUrl}`);
+      return res.redirect(cachedUrl);
+    }
   } catch (error) {
-    console.error('Error proxying image:', error);
+    console.error('❌ Error proxying image:', error);
     
     // If caching fails, redirect to the original URL
+    console.log(`⚠️ Cache failed, redirecting to original URL: ${url}`);
     return res.redirect(url);
   }
 }));
