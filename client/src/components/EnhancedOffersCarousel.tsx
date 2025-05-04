@@ -369,6 +369,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                   src={getImageUrl(offer)}
                   alt={offer.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error(`Error loading image for offer ${offer.id}:`, e);
+                    console.log('Image URL that failed:', e.currentTarget.src);
+                    // Fallback to a default image if loading fails
+                    e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
+                  }}
                 />
                 <div className="absolute top-4 left-4">
                   <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.promotion_level))}>
