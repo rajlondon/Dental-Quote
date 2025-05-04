@@ -1,20 +1,13 @@
-/**
- * Helper module for updating special offers in memory
- * This is required because we're using an in-memory Map for special offers,
- * but we need to access it from different modules.
- */
-
+// This file exists to provide helper methods for updating special offers image URLs
+// Direct implementation to avoid circular dependencies
 import { SpecialOffer } from '@shared/specialOffers';
-import { getWebSocketService } from '../services/websocketService';
 
-// Singleton pattern for global access to special offers map
+// Create a singleton to store the map reference
 class SpecialOffersStore {
   private static instance: SpecialOffersStore;
-  private offersMap: Map<string, SpecialOffer[]>;
+  private offersMap: Map<string, SpecialOffer[]> | null = null;
 
-  private constructor() {
-    this.offersMap = new Map<string, SpecialOffer[]>();
-  }
+  private constructor() {}
 
   public static getInstance(): SpecialOffersStore {
     if (!SpecialOffersStore.instance) {
@@ -23,104 +16,65 @@ class SpecialOffersStore {
     return SpecialOffersStore.instance;
   }
 
-  public getMap(): Map<string, SpecialOffer[]> {
-    return this.offersMap;
-  }
-
   public setMap(map: Map<string, SpecialOffer[]>): void {
     this.offersMap = map;
-    console.log('Special offers map has been set in the store');
-  }
-}
-
-// Get the singleton instance
-const specialOffersStore = SpecialOffersStore.getInstance();
-
-/**
- * Set the reference to the specialOffers Map
- * This should be called from special-offers-routes.ts when the module is initialized
- */
-export function setSpecialOffersMap(map: Map<string, SpecialOffer[]>) {
-  specialOffersStore.setMap(map);
-  console.log('Special offers map has been set in update-helper');
-}
-
-/**
- * Get the special offers map
- */
-export function getSpecialOffersMap(): Map<string, SpecialOffer[]> {
-  return specialOffersStore.getMap();
-}
-
-/**
- * Update an offer's image URL in memory
- * @param offerId The ID of the offer to update
- * @param imageUrl The new image URL
- * @returns true if the offer was found and updated, false otherwise
- */
-export async function updateSpecialOfferImageInMemory(
-  offerId: string,
-  imageUrl: string
-): Promise<boolean> {
-  const specialOffersMap = specialOffersStore.getMap();
-
-  if (!specialOffersMap) {
-    console.error('Special offers map not initialized');
-    return false;
+    console.log(`SpecialOffersStore: Map set with ${this.offersMap.size} entries`);
   }
 
-  // Debug: Log the map contents
-  console.log(`Special offers map contains ${specialOffersMap.size} entries`);
-  specialOffersMap.forEach((offers, clinicId) => {
-    console.log(`Clinic ${clinicId} has ${offers.length} offers`);
-    console.log(`Offer IDs: ${offers.map(o => o.id).join(', ')}`);
-  });
-
-  let found = false;
-  let updatedOffer: SpecialOffer | null = null;
-  let clinicId: string | null = null;
-
-  // Search through all clinic offers to find the matching ID
-  specialOffersMap.forEach((offers, cid) => {
-    const index = offers.findIndex(offer => offer.id === offerId);
-    if (index !== -1) {
-      console.log(`Found offer with ID ${offerId} for clinic ${cid}`);
-      // Update the offer in the array
-      offers[index] = {
-        ...offers[index],
-        banner_image: imageUrl,
-        updated_at: new Date().toISOString()
-      };
-      found = true;
-      updatedOffer = offers[index];
-      clinicId = cid;
+  public getMap(): Map<string, SpecialOffer[]> | null {
+    if (!this.offersMap) {
+      console.log('SpecialOffersStore: WARNING - Map accessed before being set');
+      return null;
     }
-  });
+    return this.offersMap;
+  }
+}
 
-  if (found && updatedOffer && clinicId) {
-    console.log(`Successfully updated offer with ID ${offerId}`);
-    // Notify clients about the update via WebSocket
-    const webSocketService = getWebSocketService();
-    if (webSocketService) {
-      webSocketService.broadcast(
-        {
-          type: 'special_offer_updated',
-          payload: {
-            offer: updatedOffer,
-            clinicId
-          },
-          sender: {
-            id: 'system',
-            type: 'admin'
-          }
-        },
-        'clinic'
-      );
+// Export getter and setter for the map
+export function setSpecialOffersMap(map: Map<string, SpecialOffer[]>): void {
+  const store = SpecialOffersStore.getInstance();
+  store.setMap(map);
+}
+
+export function getSpecialOffersMap(): Map<string, SpecialOffer[]> {
+  const store = SpecialOffersStore.getInstance();
+  const map = store.getMap();
+  return map || new Map<string, SpecialOffer[]>();
+}
+
+export function updateSpecialOfferImageInMemory(offerId: string, imageUrl: string): boolean {
+  try {
+    const specialOffers = getSpecialOffersMap();
+    
+    console.log(`Special offers map contains ${specialOffers.size} entries`);
+    
+    let found = false;
+    
+    // Search for the offer in all clinics
+    specialOffers.forEach((clinicOffers, clinicId) => {
+      const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+      if (offerIndex >= 0) {
+        console.log(`Found offer with ID ${offerId} in clinic ${clinicId} at index ${offerIndex}`);
+        // Update the offer's image URL
+        clinicOffers[offerIndex] = {
+          ...clinicOffers[offerIndex],
+          banner_image: imageUrl,
+          updated_at: new Date().toISOString()
+        };
+        specialOffers.set(clinicId, clinicOffers);
+        found = true;
+      }
+    });
+    
+    if (!found) {
+      console.error(`Special offer with ID ${offerId} not found`);
+      return false;
     }
     
+    console.log(`Successfully updated image URL for offer ID ${offerId}`);
     return true;
+  } catch (error) {
+    console.error('Error updating special offer image in memory:', error);
+    return false;
   }
-
-  console.error(`Special offer with ID ${offerId} not found`);
-  return false;
 }
