@@ -569,32 +569,35 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="md:w-1/2 h-64 md:h-auto relative">
-                {/* Use direct OpenAI URL for OpenAI-generated images */}
-                <img 
-                  src={offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net') 
-                    ? offer.banner_image // Use the actual OpenAI URL directly without modifications
-                    : getImageUrl(offer)} // Use normal URL handling for other images
-                  alt={offer.title}
-                  className="w-full h-full object-cover"
-                  data-offer-id={offer.id}
-                  data-refresh-key={imageRefreshKey}
-                  onLoad={(e) => {
-                    console.log(`✅ Successfully loaded image for offer ${offer.id}`);
-                    // Check if this is an OpenAI image
-                    if (offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net')) {
-                      console.log('👍 Successfully loaded OpenAI DALL-E image from Azure Blob Storage');
-                    }
-                  }}
-                  onError={(e) => {
-                    console.error(`❌ Error loading image for offer ${offer.id}:`, e);
-                    console.log('🔍 Image URL that failed:', e.currentTarget.src);
-                    
-                    // Fallback to a default image if loading fails
-                    e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
-                  }}
-                  crossOrigin="anonymous" // CrossOrigin attribute for CORS issues
-                />
+              <div className="md:w-1/2 h-64 md:h-[400px] relative overflow-hidden">
+                {/* Fixed size container to ensure consistent dimensions */}
+                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                  {/* Use direct OpenAI URL for OpenAI-generated images */}
+                  <img 
+                    src={offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net') 
+                      ? offer.banner_image // Use the actual OpenAI URL directly without modifications
+                      : getImageUrl(offer)} // Use normal URL handling for other images
+                    alt={offer.title}
+                    className="w-full h-full object-cover object-center"
+                    data-offer-id={offer.id}
+                    data-refresh-key={imageRefreshKey}
+                    onLoad={(e) => {
+                      console.log(`✅ Successfully loaded image for offer ${offer.id}`);
+                      // Check if this is an OpenAI image
+                      if (offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net')) {
+                        console.log('👍 Successfully loaded OpenAI DALL-E image from Azure Blob Storage');
+                      }
+                    }}
+                    onError={(e) => {
+                      console.error(`❌ Error loading image for offer ${offer.id}:`, e);
+                      console.log('🔍 Image URL that failed:', e.currentTarget.src);
+                      
+                      // Fallback to a default image if loading fails
+                      e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
+                    }}
+                    crossOrigin="anonymous" // CrossOrigin attribute for CORS issues
+                  />
+                </div>
                 <div className="absolute top-4 left-4">
                   <Badge className={cn("py-1.5 px-3", getBadgeStyle(offer.promotion_level))}>
                     {offer.promotion_level === 'premium' && <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
