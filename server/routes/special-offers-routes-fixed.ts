@@ -559,6 +559,106 @@ router.get('/api/commission-tiers', (req, res) => {
   res.json(commissionTiers);
 });
 
+// Endpoint to force refresh a special offer image (can be used by admins/clinics)
+router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
+  try {
+    // Ensure user is authenticated (can be admin or clinic staff)
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const { offerId } = req.params;
+    
+    if (!offerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Offer ID is required'
+      });
+    }
+    
+    console.log(`Request to refresh image for offer ID: ${offerId}`);
+    
+    // Flag to track if the offer was found
+    let offerFound = false;
+    let updatedImageUrl = '';
+    let foundOffer = null;
+    
+    // Search for the offer in all clinics
+    specialOffers.forEach((clinicOffers, clinicId) => {
+      const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+      
+      if (offerIndex >= 0) {
+        const offer = clinicOffers[offerIndex];
+        foundOffer = offer;
+        
+        if (offer.banner_image) {
+          // Generate a completely new cache busting URL
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substring(2, 10);
+          const originalUrl = offer.banner_image.split('?')[0]; // Get base URL without params
+          
+          // Create a new URL with robust cache busting parameters
+          updatedImageUrl = `${originalUrl}?t=${timestamp}&r=${randomId}&nocache=true`;
+          
+          // Update the offer in memory
+          clinicOffers[offerIndex] = {
+            ...offer,
+            banner_image: updatedImageUrl,
+            updated_at: new Date().toISOString()
+          };
+          
+          // Update the map
+          specialOffers.set(clinicId, clinicOffers);
+          offerFound = true;
+          
+          console.log(`Successfully refreshed image URL for offer "${offer.title}"`);
+          console.log(`New image URL: ${updatedImageUrl}`);
+        }
+      }
+    });
+    
+    if (!offerFound) {
+      return res.status(404).json({
+        success: false,
+        message: 'Offer not found or has no image to refresh'
+      });
+    }
+    
+    // Send WebSocket notification of the update
+    try {
+      const { getWebSocketService } = await import('../services/websocketService');
+      const wss = getWebSocketService();
+      
+      if (wss) {
+        wss.broadcast(JSON.stringify({
+          type: 'special_offer_image_refreshed',
+          offerId,
+          imageUrl: updatedImageUrl,
+          timestamp: Date.now(),
+          command: 'force_reload_image'
+        }));
+        
+        console.log('Sent WebSocket notification to force image refresh');
+      }
+    } catch (wsError) {
+      console.error('WebSocket notification error:', wsError);
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Special offer image refreshed successfully',
+      offer: foundOffer,
+      imageUrl: updatedImageUrl
+    });
+  } catch (error) {
+    console.error('Error refreshing special offer image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh special offer image'
+    });
+  }
+});
+
 // Set the map in our singleton store AFTER adding all the sample offers
 // This ensures our helper has access to a fully populated map
 setSpecialOffersMap(specialOffers);
