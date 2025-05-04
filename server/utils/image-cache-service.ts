@@ -1,63 +1,44 @@
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
 import { promisify } from 'util';
+import axios from 'axios';
 import { createHash } from 'crypto';
 import { AppError } from './app-error';
 
-// Promisify fs functions
+// File system promises
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
 const access = promisify(fs.access);
 const readFile = promisify(fs.readFile);
 
-// Constants
+// Constants - simplified to use only one directory
 const IMAGE_CACHE_DIR = path.join(process.cwd(), 'public', 'cached-images');
 const IMAGE_PUBLIC_PATH = '/cached-images';
 
-// Create rotating versioned directories to force cache refresh
-// Use a daily rotation for the version number to ensure absolute cache freshness
-const today = new Date();
-const dailyVersion = `v${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
-const VERSIONED_CACHE_DIR = path.join(process.cwd(), 'public', `cached-images-${dailyVersion}`);
-const VERSIONED_PUBLIC_PATH = `/cached-images-${dailyVersion}`;
-
-// Ensure the cache directories exist
+// Ensure the cache directory exists
 async function ensureCacheDirectoryExists(): Promise<void> {
   try {
-    console.log('🔄 Daily versioned cache directory initialized:', VERSIONED_CACHE_DIR);
-    console.log(`🔄 Using daily version: ${dailyVersion} for absolute cache freshness`);
-    
-    // Check and create the main cache directory
+    // Check and create the cache directory
     try {
       await access(IMAGE_CACHE_DIR);
-      console.log(`✅ Regular image cache directory exists: ${IMAGE_CACHE_DIR}`);
+      console.log(`✅ Image cache directory exists: ${IMAGE_CACHE_DIR}`);
     } catch {
       await mkdir(IMAGE_CACHE_DIR, { recursive: true });
-      console.log(`✨ Created regular image cache directory: ${IMAGE_CACHE_DIR}`);
-    }
-    
-    // Check and create the versioned cache directory
-    try {
-      await access(VERSIONED_CACHE_DIR);
-      console.log(`✅ Daily versioned cache directory exists: ${VERSIONED_CACHE_DIR}`);
-    } catch {
-      await mkdir(VERSIONED_CACHE_DIR, { recursive: true });
-      console.log(`✨ Created daily versioned cache directory: ${VERSIONED_CACHE_DIR}`);
+      console.log(`✨ Created image cache directory: ${IMAGE_CACHE_DIR}`);
     }
   } catch (error) {
-    console.error('❌ Failed to create image cache directories:', error);
-    throw new AppError('Failed to create image cache directories', 500);
+    console.error('❌ Failed to create image cache directory:', error);
+    throw new AppError('Failed to create image cache directory', 500);
   }
 }
 
-// Initialize the cache directories when the module is loaded
+// Initialize the cache directory when the module is loaded
 ensureCacheDirectoryExists().catch(err => {
   console.error('Error initializing image cache service:', err);
 });
 
-// In-memory cache lookup to speed up checks with versioning information
-const urlToFileMap = new Map<string, { originalUrl: string, regularPath: string, versionedPath: string, timestamp: number }>();
+// In-memory cache lookup to speed up checks
+const urlToFileMap = new Map<string, { originalUrl: string, path: string, timestamp: number }>();
 
 /**
  * Service for caching external images to avoid expiration issues with
@@ -79,21 +60,18 @@ export class ImageCacheService {
     const fileHash = createHash('md5').update(url).digest('hex');
     const extensions = ['.jpg', '.png', '.jpeg', '.webp', '.gif'];
     
-    // Check both the regular cache and versioned cache directories
+    // Check the cache directory
     for (const ext of extensions) {
       const filePath = path.join(IMAGE_CACHE_DIR, `${fileHash}${ext}`);
-      const versionedPath = path.join(VERSIONED_CACHE_DIR, `${fileHash}${ext}`);
       
-      if (fs.existsSync(filePath) || fs.existsSync(versionedPath)) {
-        // If found in either location, add to in-memory cache for future lookups
-        const regularUrl = `${IMAGE_PUBLIC_PATH}/${fileHash}${ext}`;
-        const versionedUrl = `${VERSIONED_PUBLIC_PATH}/${fileHash}${ext}`;
+      if (fs.existsSync(filePath)) {
+        // If found, add to in-memory cache for future lookups
+        const publicUrl = `${IMAGE_PUBLIC_PATH}/${fileHash}${ext}`;
         
-        // Add both paths to the cache map
+        // Add path to the cache map
         urlToFileMap.set(url, {
           originalUrl: url,
-          regularPath: regularUrl,
-          versionedPath: versionedUrl,
+          path: publicUrl,
           timestamp: Date.now()
         });
         
@@ -107,20 +85,14 @@ export class ImageCacheService {
   /**
    * Get the cached URL for an image
    * @param url The original URL of the image
-   * @param forceVersioned Force using versioned path for aggressive cache breaking
    * @returns The cached URL if cached, otherwise null
    */
-  static getCachedUrl(url: string, forceVersioned = false): string | null {
+  static getCachedUrl(url: string): string | null {
     // Check if URL is in memory cache
     if (urlToFileMap.has(url)) {
       const cacheInfo = urlToFileMap.get(url);
-      // If forcing versioned path or if entry is an object with paths
-      if (typeof cacheInfo === 'object' && cacheInfo.versionedPath) {
-        return forceVersioned ? cacheInfo.versionedPath : cacheInfo.regularPath;
-      }
-      // For backward compatibility with old cache entries
-      if (typeof cacheInfo === 'string') {
-        return cacheInfo;
+      if (cacheInfo) {
+        return cacheInfo.path;
       }
       return null;
     }
@@ -130,24 +102,18 @@ export class ImageCacheService {
     const extensions = ['.jpg', '.png', '.jpeg', '.webp', '.gif'];
     
     for (const ext of extensions) {
-      const regularFilePath = path.join(IMAGE_CACHE_DIR, `${fileHash}${ext}`);
-      const versionedFilePath = path.join(VERSIONED_CACHE_DIR, `${fileHash}${ext}`);
-      const regularPublicUrl = `${IMAGE_PUBLIC_PATH}/${fileHash}${ext}`;
-      const versionedPublicUrl = `${VERSIONED_PUBLIC_PATH}/${fileHash}${ext}`;
+      const filePath = path.join(IMAGE_CACHE_DIR, `${fileHash}${ext}`);
+      const publicUrl = `${IMAGE_PUBLIC_PATH}/${fileHash}${ext}`;
       
-      const regularExists = fs.existsSync(regularFilePath);
-      const versionedExists = fs.existsSync(versionedFilePath) || regularExists; // If regular exists, we can create versioned
-      
-      if (regularExists || versionedExists) {
-        // Add both paths to the cache map
+      if (fs.existsSync(filePath)) {
+        // Add path to the cache map
         urlToFileMap.set(url, {
           originalUrl: url,
-          regularPath: regularPublicUrl,
-          versionedPath: versionedPublicUrl,
+          path: publicUrl,
           timestamp: Date.now()
         });
         
-        return forceVersioned ? versionedPublicUrl : regularPublicUrl;
+        return publicUrl;
       }
     }
     
@@ -162,7 +128,7 @@ export class ImageCacheService {
    */
   static getVersionedUrl(url: string): string | null {
     console.log(`🔄 Getting versioned URL for: ${url}`);
-    const cachedUrl = ImageCacheService.getCachedUrl(url, true);
+    const cachedUrl = ImageCacheService.getCachedUrl(url);
     
     if (!cachedUrl) {
       console.log(`❌ No cached URL found for: ${url}`);
@@ -174,9 +140,10 @@ export class ImageCacheService {
     // Add timestamp and random value to force browsers to reload
     const timestamp = Date.now();
     const randomValue = Math.random().toString(36).substring(2, 10);
-    const versionedUrl = `${cachedUrl}?t=${timestamp}&r=${randomValue}&nocache=true&daily=${dailyVersion}`;
+    const userId = Math.random().toString(36).substring(2, 10); // Random user ID to break CDN caching
+    const versionedUrl = `${cachedUrl}?t=${timestamp}&r=${randomValue}&u=${userId}&nocache=true`;
     
-    console.log(`🌟 Created daily versioned URL: ${versionedUrl}`);
+    console.log(`🌟 Created versioned URL: ${versionedUrl}`);
     return versionedUrl;
   }
 
@@ -206,7 +173,6 @@ export class ImageCacheService {
 
       // Download the image
       console.log(`📥 Downloading image from: ${url}`);
-      console.log(`📥 Using daily versioned directory: ${VERSIONED_CACHE_DIR}`);
       
       const response = await axios.get(url, {
         responseType: 'arraybuffer',
@@ -242,41 +208,34 @@ export class ImageCacheService {
       const fileHash = createHash('md5').update(url).digest('hex');
       const fileName = `${fileHash}${extension}`;
       
-      // Generate both regular and versioned file paths
-      const regularFilePath = path.join(IMAGE_CACHE_DIR, fileName);
-      const versionedFilePath = path.join(VERSIONED_CACHE_DIR, fileName);
+      // Set the file paths
+      const filePath = path.join(IMAGE_CACHE_DIR, fileName);
+      const publicUrl = `${IMAGE_PUBLIC_PATH}/${fileName}`;
       
-      // Create the public URLs
-      const regularPublicUrl = `${IMAGE_PUBLIC_PATH}/${fileName}`;
-      const versionedPublicUrl = `${VERSIONED_PUBLIC_PATH}/${fileName}`;
-      
-      // Define the image buffer once
+      // Define the image buffer
       const imageBuffer = Buffer.from(response.data);
       
       try {
-        // Write the image to both locations
-        await writeFile(regularFilePath, imageBuffer);
-        console.log(`📥 Successfully wrote file to regular path: ${regularFilePath}`);
+        // Write the image to the file system
+        await writeFile(filePath, imageBuffer);
+        console.log(`📥 Successfully wrote file: ${filePath}`);
+        console.log(`📥 File size: ${fs.statSync(filePath).size} bytes`);
         
-        await writeFile(versionedFilePath, imageBuffer);
-        console.log(`📥 Successfully wrote file to versioned path: ${versionedFilePath}`);
-        
-        // Save in memory cache with both paths
+        // Save in memory cache
         urlToFileMap.set(url, {
           originalUrl: url,
-          regularPath: regularPublicUrl,
-          versionedPath: versionedPublicUrl,
+          path: publicUrl,
           timestamp: Date.now()
         });
         
-        console.log(`📥 Image successfully cached in both locations and added to memory map`);
+        console.log(`📥 Image successfully cached and added to memory map`);
         
-        // By default, return the regular URL as it's more compatible
-        return regularPublicUrl;
+        // Return the URL
+        return publicUrl;
       } catch (error) {
         const writeError = error as Error;
-        console.error(`❌ Error writing image files:`, writeError);
-        throw new AppError(`Failed to write image files: ${writeError.message}`, 500);
+        console.error(`❌ Error writing image file:`, writeError);
+        throw new AppError(`Failed to write image file: ${writeError.message}`, 500);
       }
     } catch (error) {
       console.error('❌ Failed to cache image:', error);
