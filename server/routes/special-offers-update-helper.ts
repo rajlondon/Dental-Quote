@@ -7,16 +7,49 @@
 import { SpecialOffer } from '@shared/specialOffers';
 import { getWebSocketService } from '../services/websocketService';
 
-// Reference to the specialOffers Map from special-offers-routes.ts
-let specialOffersMap: Map<string, SpecialOffer[]> | null = null;
+// Singleton pattern for global access to special offers map
+class SpecialOffersStore {
+  private static instance: SpecialOffersStore;
+  private offersMap: Map<string, SpecialOffer[]>;
+
+  private constructor() {
+    this.offersMap = new Map<string, SpecialOffer[]>();
+  }
+
+  public static getInstance(): SpecialOffersStore {
+    if (!SpecialOffersStore.instance) {
+      SpecialOffersStore.instance = new SpecialOffersStore();
+    }
+    return SpecialOffersStore.instance;
+  }
+
+  public getMap(): Map<string, SpecialOffer[]> {
+    return this.offersMap;
+  }
+
+  public setMap(map: Map<string, SpecialOffer[]>): void {
+    this.offersMap = map;
+    console.log('Special offers map has been set in the store');
+  }
+}
+
+// Get the singleton instance
+const specialOffersStore = SpecialOffersStore.getInstance();
 
 /**
  * Set the reference to the specialOffers Map
  * This should be called from special-offers-routes.ts when the module is initialized
  */
 export function setSpecialOffersMap(map: Map<string, SpecialOffer[]>) {
-  specialOffersMap = map;
+  specialOffersStore.setMap(map);
   console.log('Special offers map has been set in update-helper');
+}
+
+/**
+ * Get the special offers map
+ */
+export function getSpecialOffersMap(): Map<string, SpecialOffer[]> {
+  return specialOffersStore.getMap();
 }
 
 /**
@@ -29,10 +62,19 @@ export async function updateSpecialOfferImageInMemory(
   offerId: string,
   imageUrl: string
 ): Promise<boolean> {
+  const specialOffersMap = specialOffersStore.getMap();
+
   if (!specialOffersMap) {
     console.error('Special offers map not initialized');
     return false;
   }
+
+  // Debug: Log the map contents
+  console.log(`Special offers map contains ${specialOffersMap.size} entries`);
+  specialOffersMap.forEach((offers, clinicId) => {
+    console.log(`Clinic ${clinicId} has ${offers.length} offers`);
+    console.log(`Offer IDs: ${offers.map(o => o.id).join(', ')}`);
+  });
 
   let found = false;
   let updatedOffer: SpecialOffer | null = null;
@@ -42,6 +84,7 @@ export async function updateSpecialOfferImageInMemory(
   specialOffersMap.forEach((offers, cid) => {
     const index = offers.findIndex(offer => offer.id === offerId);
     if (index !== -1) {
+      console.log(`Found offer with ID ${offerId} for clinic ${cid}`);
       // Update the offer in the array
       offers[index] = {
         ...offers[index],
@@ -55,6 +98,7 @@ export async function updateSpecialOfferImageInMemory(
   });
 
   if (found && updatedOffer && clinicId) {
+    console.log(`Successfully updated offer with ID ${offerId}`);
     // Notify clients about the update via WebSocket
     const webSocketService = getWebSocketService();
     if (webSocketService) {
@@ -77,5 +121,6 @@ export async function updateSpecialOfferImageInMemory(
     return true;
   }
 
+  console.error(`Special offer with ID ${offerId} not found`);
   return false;
 }

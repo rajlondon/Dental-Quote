@@ -80,12 +80,19 @@ router.post('/special-offer-image', isAuthenticated, catchAsync(async (req: Requ
       throw new AppError('Failed to generate image URL', 500);
     }
     
-    // Save the image URL to the database
-    const updateResult = await storage.updateSpecialOfferImage(offerId, result.url);
+    // Update the special offer image directly using our helper
+    // Note: We're bypassing the storage interface to directly use the helper
+    // which has access to the in-memory map
+    const { updateSpecialOfferImageInMemory } = await import('./special-offers-update-helper');
+    console.log('Updating special offer image for offer ID:', offerId);
+    
+    const updateResult = await updateSpecialOfferImageInMemory(offerId, result.url);
     
     if (!updateResult) {
       throw new AppError('Failed to update special offer image in database', 500);
     }
+    
+    console.log('Image updated successfully for offer ID:', offerId);
     
     // Notify clients via WebSocket that the special offer has been updated
     const wss = getWebSocketService();

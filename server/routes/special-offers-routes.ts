@@ -23,8 +23,13 @@ const router = express.Router();
 const specialOffers = new Map<string, SpecialOffer[]>();
 
 // Export the specialOffers map reference to the update helper
-import { setSpecialOffersMap } from './special-offers-update-helper';
+import { setSpecialOffersMap, getSpecialOffersMap } from './special-offers-update-helper';
+// Set the map in our singleton store
 setSpecialOffersMap(specialOffers);
+
+// For debugging, let's log the state of the map
+console.log(`Special offers map initialized with ${specialOffers.size} entries`);
+console.log(`SpecialOffersStore has map with ${getSpecialOffersMap().size} entries`);
 
 // Commission tier definitions
 const commissionTiers: CommissionTier[] = [
