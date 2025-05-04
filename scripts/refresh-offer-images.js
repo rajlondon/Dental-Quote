@@ -36,13 +36,13 @@ const offers = [
     id: '00d74238-40b3-4514-8214-7360a113d1ce',
     title: 'Dental Implant + Crown Bundle',
     promotion_level: 'featured',
-    prompt: 'Create a completely natural-looking, photorealistic image showing a dental clinic treatment room with specialized implant equipment. Show an organized, clean space with modern dental technology, sterilized implant components on a tray, and tasteful, professional decor. Include subtle details like dental models showing implants and natural light from windows. No text overlays, watermarks, or artificial elements. The image should appear as a high-quality professional photograph taken for a dental clinic website, not AI-generated.'
+    prompt: 'Create a completely natural-looking, photorealistic image showing a modern dental clinic treatment room specialized for implant procedures. Show a pristine treatment chair with overhead lights, sterilized implant components arranged on a stainless steel tray, and a digital display showing a 3D implant model. Include subtle details like dental tools, a glass wall with natural light, and soft blue/white color scheme. The image should look like a professional marketing photograph shot with a Canon 5D, 4K quality with perfect lighting, not AI-generated.'
   },
   {
     id: '2caaa0b3-4af0-4c68-8768-18ef46e0717c',
     title: 'Luxury Airport Transfer',
     promotion_level: 'premium',
-    prompt: 'Create a completely natural-looking, photorealistic image of a premium black Mercedes sedan parked outside Istanbul Airport with a uniformed chauffeur holding a door open. Show the modern airport architecture in the background and capture the exclusive, VIP atmosphere of the scene. Natural lighting, realistic details, and professional composition. No text overlays, watermarks, or artificial elements. The image should appear as a high-quality professional transportation service photograph, not AI-generated.'
+    prompt: 'Create a completely natural-looking, photorealistic image of a premium black Mercedes S-Class sedan parked outside Istanbul Airport\'s international terminal. Show a professional uniformed chauffeur in suit and tie holding a passenger door open with the modern glass/steel terminal architecture visible in the background. Early evening golden hour lighting with slight reflections on the polished black car. Include subtle details like a "VIP Transfer" sign and blurred travelers in background. The image should look like professional marketing content shot with a full frame camera for a luxury transportation service, not AI-generated.'
   }
 ];
 
@@ -58,7 +58,8 @@ async function generateImage(offer) {
       enableImageCache: true,
       customPrompt: offer.prompt, // Add custom prompt
       naturalStyle: true, // Signal that we want a natural-looking image
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      useFallback: true // Force fallback mode for testing
     };
     
     // Make request to our API - use the actual server URL from environment or default to localhost
