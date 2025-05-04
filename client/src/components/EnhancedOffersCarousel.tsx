@@ -173,8 +173,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     
     // Process the banner image URL
     if (offer.banner_image) {
-      // Check if this is an OpenAI URL (they don't need cache busting)
-      if (offer.banner_image.includes('openai.com')) {
+      // Check if this is an OpenAI URL (they don't need aggressive cache busting)
+      // Need to handle both direct openai.com URLs and Azure blob storage URLs
+      const isOpenAIUrl = offer.banner_image.startsWith('https://') && 
+                         (offer.banner_image.includes('openai') || 
+                          offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net'));
+      
+      if (isOpenAIUrl) {
         // Add minimal cache busting for OpenAI URLs
         finalUrl = `${offer.banner_image.split('?')[0]}?t=${timestamp}`; 
       } else {
