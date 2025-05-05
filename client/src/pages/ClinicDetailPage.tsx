@@ -64,7 +64,10 @@ const ClinicDetailPage: React.FC = () => {
   const [, setLocation] = useLocation();
   const [clinic, setClinic] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [specialOffers, setSpecialOffers] = useState<any[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(true);
 
+  // Fetch clinic data
   useEffect(() => {
     // In a real app, this would be an API call using the clinic ID
     const foundClinic = clinics.find(c => 
@@ -78,6 +81,27 @@ const ClinicDetailPage: React.FC = () => {
     }
     setLoading(false);
   }, [params.id]);
+
+  // Fetch special offers for this clinic
+  useEffect(() => {
+    if (!clinic) return;
+    
+    setLoadingOffers(true);
+    // Use the clinic ID to fetch special offers
+    fetch(`/api/special-offers/clinic/${clinic.id}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log("Clinic special offers:", data);
+        setSpecialOffers(data);
+      })
+      .catch(error => {
+        console.error("Error fetching special offers:", error);
+        setSpecialOffers([]);
+      })
+      .finally(() => {
+        setLoadingOffers(false);
+      });
+  }, [clinic]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
@@ -337,6 +361,86 @@ const ClinicDetailPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Special Offers Section */}
+                  {specialOffers.length > 0 && (
+                    <div className="mt-8">
+                      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                        Special Offers
+                        <Badge variant="secondary" className="bg-amber-100 hover:bg-amber-100 text-amber-800 border-amber-200">
+                          {specialOffers.length} Available
+                        </Badge>
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {specialOffers.map((offer) => (
+                          <div key={offer.id} className="bg-gradient-to-br from-white to-primary/5 rounded-lg border border-primary/20 overflow-hidden shadow-sm">
+                            {offer.banner_image && (
+                              <div className="h-40 overflow-hidden relative">
+                                <img 
+                                  src={offer.banner_image} 
+                                  alt={offer.title} 
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                <div className="absolute bottom-0 left-0 right-0 p-3">
+                                  <Badge className="bg-amber-500 text-white border-0">
+                                    {offer.discount_type === 'percentage' 
+                                      ? `${offer.discount_value}% OFF` 
+                                      : `£${offer.discount_value} OFF`}
+                                  </Badge>
+                                </div>
+                              </div>
+                            )}
+                            <div className="p-4">
+                              <h3 className="font-semibold text-lg">{offer.title}</h3>
+                              <p className="text-sm text-gray-700 mt-1 mb-4">{offer.description}</p>
+                              
+                              <div className="space-y-3">
+                                {offer.applicable_treatments && offer.applicable_treatments.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="font-medium">Applicable for: </span>
+                                    {offer.applicable_treatments.join(', ')}
+                                  </div>
+                                )}
+                                
+                                <div className="text-sm flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-gray-500" />
+                                  <span>Valid until: {new Date(offer.end_date).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="mt-4 pt-4 border-t border-gray-100">
+                                <Button 
+                                  className="w-full"
+                                  onClick={() => {
+                                    // Save the special offer to session storage for use in quote page
+                                    const offerData = {
+                                      id: offer.id,
+                                      title: offer.title,
+                                      clinicId: offer.clinic_id,
+                                      discountValue: offer.discount_value,
+                                      discountType: offer.discount_type,
+                                      applicableTreatment: offer.applicable_treatments?.[0] || ''
+                                    };
+                                    
+                                    sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
+                                    console.log('Saved special offer to session storage:', offerData);
+                                    
+                                    // Redirect to the quote page
+                                    setLocation('/your-quote');
+                                  }}
+                                >
+                                  Use This Offer
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Quote CTA */}
                   <div className="mt-8 bg-primary/5 rounded-lg p-6 border border-primary/20">
