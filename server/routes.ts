@@ -40,6 +40,7 @@ import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
 import openaiRoutes from "./routes/openai-routes";
 import imageCacheRoutes from "./routes/image-cache-routes";
+import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
 // Import error handling routes (only for development)
@@ -991,6 +992,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.locals.emailService = emailService;
   
   console.log('WebSocket and notification services initialized for cross-portal data synchronization');
+  
+  // Initialize special offers image cache
+  initializeSpecialOfferImageCache()
+    .then(() => console.log('Special offer image cache initialized successfully'))
+    .catch(err => console.error('Error initializing special offer image cache:', err));
   
   return httpServer;
 }
