@@ -789,11 +789,44 @@ router.post('/refresh-images', async (req, res) => {
         
         // Update the offer with the new image
         const oldImageUrl = offer.banner_image;
-        offer.banner_image = imageResult.url;
+        
+        // Cache the OpenAI-generated image URL to local storage
+        const { ImageCacheService } = await import('../utils/image-cache-service');
+        console.log(`Caching OpenAI-generated image URL: ${imageResult.url}`);
+        
+        try {
+          // Force refresh to make sure we always have the latest image
+          const cachedImageUrl = await ImageCacheService.cacheImage(imageResult.url, true);
+          console.log(`Successfully cached OpenAI image to: ${cachedImageUrl}`);
+          
+          // Update the offer with the cached image URL (which is permanent and stable)
+          offer.banner_image = cachedImageUrl;
+        } catch (cacheError) {
+          console.error('Error caching OpenAI image:', cacheError);
+          // If caching fails, use the raw URL but log the issue
+          offer.banner_image = imageResult.url;
+          console.warn('Using temporary OpenAI URL due to caching failure - this URL may expire');
+        }
+        
         offer.updated_at = new Date().toISOString();
         
+        // Make sure we update the specialOffers Map with the modified offer
+        // This ensures the change is persisted in memory
+        const updatedClinicOffers = specialOffers.get(clinicId) || [];
+        const offerIndex = updatedClinicOffers.findIndex(o => o.id === offer.id);
+        if (offerIndex >= 0) {
+          updatedClinicOffers[offerIndex] = offer;
+          specialOffers.set(clinicId, updatedClinicOffers);
+          console.log(`Updated specialOffers Map with the new image URL for offer ID: ${offer.id}`);
+        }
+        
         // Update all clients via WebSocket
-        await updateHelper.notifyClientsOfImageUpdate(offer.id, imageResult.url);
+        try {
+          // Use the cached URL in notifications to ensure client displays the permanent URL
+          await updateHelper.notifyClientsOfImageUpdate(offer.id, offer.banner_image);
+        } catch (wsError) {
+          console.error('Error notifying WebSocket clients of image update:', wsError);
+        }
         
         // Add to the list of refreshed offers
         refreshedOffers.push({
