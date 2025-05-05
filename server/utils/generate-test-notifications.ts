@@ -7,25 +7,36 @@ import { eq } from 'drizzle-orm';
  * Generates test notifications for development and testing purposes.
  * This creates sample notifications for each type (message, appointment, etc.)
  * to allow UI testing without needing real data.
+ * 
+ * @param userId - The user ID for which to generate notifications. If not provided,
+ *                will use the first patient found in the database.
  */
-export async function generateTestNotifications() {
+export async function generateTestNotifications(userId?: number) {
   try {
     console.log('Generating test notifications...');
     
-    // Get the patient user ID (user with role 'patient')
-    const patientUser = await db.query.users.findFirst({
-      where: eq(users.role, 'patient')
-    });
+    let targetUserId = userId;
     
-    if (!patientUser) {
-      console.error('No patient user found. Cannot generate test notifications.');
-      return 0;
+    // If no userId was provided, find a patient user
+    if (!targetUserId) {
+      const patientUser = await db.query.users.findFirst({
+        where: eq(users.role, 'patient')
+      });
+      
+      if (!patientUser) {
+        console.error('No patient user found. Cannot generate test notifications.');
+        return 0;
+      }
+      
+      targetUserId = patientUser.id;
     }
+    
+    console.log(`Generating test notifications for user ID: ${targetUserId}`);
     
     // Define test notifications that match our schema (notifications table)
     const testNotifications = [
       {
-        userId: patientUser.id,
+        userId: targetUserId,
         title: "New Message from Dr. Smith",
         message: "Your treatment plan has been updated. Please review the changes.",
         isRead: false,
@@ -35,7 +46,7 @@ export async function generateTestNotifications() {
         entityId: 1
       },
       {
-        userId: patientUser.id,
+        userId: targetUserId,
         title: "Upcoming Appointment",
         message: "You have an appointment scheduled for tomorrow at 10:00 AM.",
         isRead: false,
@@ -45,7 +56,7 @@ export async function generateTestNotifications() {
         entityId: 2
       },
       {
-        userId: patientUser.id,
+        userId: targetUserId,
         title: "New Quote Available",
         message: "Your quote for dental implants is now available for review.",
         isRead: false,
@@ -55,7 +66,7 @@ export async function generateTestNotifications() {
         entityId: 3
       },
       {
-        userId: patientUser.id,
+        userId: targetUserId,
         title: "Document Upload Reminder",
         message: "Please upload your X-rays for your upcoming consultation.",
         isRead: false,
@@ -65,7 +76,7 @@ export async function generateTestNotifications() {
         entityId: 4
       },
       {
-        userId: patientUser.id,
+        userId: targetUserId,
         title: "Special Offer: 20% Off Teeth Whitening",
         message: "Limited time offer on professional teeth whitening when booked with any other treatment.",
         isRead: false,
