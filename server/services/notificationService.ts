@@ -112,8 +112,17 @@ export class NotificationService {
       console.log(`Found ${result.rows.length} total notifications in the database`);
       
       // Filter results in application code instead of SQL WHERE clause to avoid parameter issues
-      const userNotifications = result.rows.filter(row => row.user_id === userIdNumber);
+      // Use String() to ensure we're comparing the same types
+      const userNotifications = result.rows.filter(row => 
+        String(row.user_id) === String(userIdNumber)
+      );
       console.log(`Found ${userNotifications.length} notifications for user ${userIdNumber}`);
+      
+      if (userNotifications.length > 0) {
+        // Log the first notification to debug data types
+        const firstNotification = userNotifications[0];
+        console.log(`Sample notification - ID: ${firstNotification.id}, UserID: ${firstNotification.user_id} (${typeof firstNotification.user_id})`);
+      }
       
       // Apply status filter if needed
       const filteredNotifications = status === 'unread' 
