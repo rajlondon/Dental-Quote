@@ -30,7 +30,8 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     try {
       // Only allow if user is admin or if we're in development
       if (process.env.NODE_ENV !== 'production' || (req.isAuthenticated() && req.user.role === 'admin')) {
-        const { generateTestNotifications } = require('../utils/generate-test-notifications');
+        // Import the function using ES module dynamic import
+        const { generateTestNotifications } = await import('../utils/generate-test-notifications');
         const count = await generateTestNotifications();
         return res.status(200).json({ 
           success: true, 
