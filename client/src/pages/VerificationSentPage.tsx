@@ -13,12 +13,28 @@ const VerificationSentPage: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [isResending, setIsResending] = useState(false);
   
+  const [hasPendingOffer, setHasPendingOffer] = useState(false);
+  const [offerTitle, setOfferTitle] = useState("");
+  
   useEffect(() => {
     // Extract email from URL query parameters
     const params = new URLSearchParams(window.location.search);
     const emailParam = params.get('email');
     if (emailParam) {
       setEmail(emailParam);
+    }
+    
+    // Check if there's a pending special offer stored from registration
+    const pendingOfferData = localStorage.getItem('pendingSpecialOfferAfterVerification');
+    if (pendingOfferData) {
+      try {
+        const offerData = JSON.parse(pendingOfferData);
+        setHasPendingOffer(true);
+        setOfferTitle(offerData.title || "dental treatment");
+        console.log("Found pending special offer for after verification:", offerData);
+      } catch (error) {
+        console.error("Error parsing pending offer during verification page:", error);
+      }
     }
   }, []);
   
@@ -100,6 +116,15 @@ const VerificationSentPage: React.FC = () => {
                 Click the link in the email we just sent you to verify your account. If you don't see the email, check your spam folder.
               </AlertDescription>
             </Alert>
+            
+            {hasPendingOffer && (
+              <Alert className="bg-primary/10 border-primary/20">
+                <AlertTitle className="text-primary">Your Quote Request is Saved</AlertTitle>
+                <AlertDescription className="mt-2">
+                  Once you verify your email and log in, we'll immediately process your request for <span className="font-semibold">{offerTitle}</span>.
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="text-center text-sm text-muted-foreground mt-4">
               <p>Didn't receive the email? Click the button below to resend.</p>

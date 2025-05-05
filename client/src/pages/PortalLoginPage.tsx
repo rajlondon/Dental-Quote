@@ -199,11 +199,35 @@ const PortalLoginPage: React.FC = () => {
       // Parse the response text as JSON since we already consumed the response body
       const data = respText ? JSON.parse(respText) : {};
       
-      // Show success message based on response
-      toast({
-        title: "Registration Successful",
-        description: "Please check your email for verification instructions.",
-      });
+      // Check if there is a pending special offer to preserve through verification process
+      const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+      if (pendingOfferData) {
+        // Store with a different key that persists through the verification process
+        localStorage.setItem('pendingSpecialOfferAfterVerification', pendingOfferData);
+        console.log("Saved pending special offer for after verification");
+        
+        // Show additional toast informing user about the special offer
+        try {
+          const offerData = JSON.parse(pendingOfferData);
+          toast({
+            title: "Registration Successful",
+            description: `Please check your email for verification. Your ${offerData.title} quote will be ready after verification.`,
+          });
+        } catch (error) {
+          console.error("Error parsing pending offer during registration:", error);
+          // Show regular success message if there's an error with the offer
+          toast({
+            title: "Registration Successful",
+            description: "Please check your email for verification instructions.",
+          });
+        }
+      } else {
+        // Show regular success message if no pending offer
+        toast({
+          title: "Registration Successful",
+          description: "Please check your email for verification instructions.",
+        });
+      }
       
       // Redirect to verification notice page
       setLocation('/verification-sent?email=' + encodeURIComponent(values.email));
