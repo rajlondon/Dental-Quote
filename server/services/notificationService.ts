@@ -111,17 +111,43 @@ export class NotificationService {
       const result = await db.execute(query);
       console.log(`Found ${result.rows.length} total notifications in the database`);
       
-      // Filter results in application code instead of SQL WHERE clause to avoid parameter issues
-      // Use String() to ensure we're comparing the same types
-      const userNotifications = result.rows.filter(row => 
-        String(row.user_id) === String(userIdNumber)
-      );
-      console.log(`Found ${userNotifications.length} notifications for user ${userIdNumber}`);
+      // Investigate all notifications to understand the filtering issue
+      console.log("All notifications user_ids:", result.rows.map(row => `${row.user_id} (${typeof row.user_id})`).join(', '));
+      
+      // Try filtering with different methods to ensure we catch all notifications
+      const exactMatchNotifications = result.rows.filter(row => row.user_id === userIdNumber);
+      const stringMatchNotifications = result.rows.filter(row => String(row.user_id) === String(userIdNumber));
+      
+      // Use the method that finds more notifications
+      const userNotifications = stringMatchNotifications.length > exactMatchNotifications.length 
+        ? stringMatchNotifications 
+        : exactMatchNotifications;
+        
+      console.log(`Found ${exactMatchNotifications.length} exact match notifications and ${stringMatchNotifications.length} string match notifications for user ${userIdNumber}`);
       
       if (userNotifications.length > 0) {
         // Log the first notification to debug data types
         const firstNotification = userNotifications[0];
         console.log(`Sample notification - ID: ${firstNotification.id}, UserID: ${firstNotification.user_id} (${typeof firstNotification.user_id})`);
+      } else {
+        // If we still have no notifications, fallback to a direct SQL query approach
+        console.log("No notifications found with standard filtering, trying direct SQL");
+        
+        // Try a directed SQL approach as a fallback
+        const sqlQuery = `
+          SELECT * FROM notifications
+          WHERE user_id = $1
+          ORDER BY created_at DESC
+        `;
+        
+        const sqlResult = await db.execute(sqlQuery, [userIdNumber]);
+        console.log(`Direct SQL found ${sqlResult.rows.length} notifications for user ${userIdNumber}`);
+        
+        // If we found notifications with SQL, use them
+        if (sqlResult.rows.length > 0) {
+          // Override the empty userNotifications with SQL results
+          userNotifications.push(...sqlResult.rows);
+        }
       }
       
       // Apply status filter if needed
