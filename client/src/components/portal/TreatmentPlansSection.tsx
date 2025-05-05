@@ -299,9 +299,14 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                 View details
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
-                                setSelectedTreatmentLine(tl);
-                                setIsEditMode(true);
-                                setIsDetailsOpen(true);
+                                try {
+                                  console.log("Edit action clicked for treatment line:", tl.id);
+                                  setSelectedTreatmentLine(tl);
+                                  setIsEditMode(true);
+                                  setIsDetailsOpen(true);
+                                } catch (error) {
+                                  console.error("Error in edit action:", error);
+                                }
                               }}>
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
@@ -310,8 +315,13 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() => {
-                                  setSelectedTreatmentLine(tl);
-                                  setIsDeleteConfirmOpen(true);
+                                  try {
+                                    console.log("Delete action clicked for treatment line:", tl.id);
+                                    setSelectedTreatmentLine(tl);
+                                    setIsDeleteConfirmOpen(true);
+                                  } catch (error) {
+                                    console.error("Error in delete action:", error);
+                                  }
                                 }}
                               >
                                 <Trash className="h-4 w-4 mr-2" />
@@ -490,15 +500,23 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                   </Button>
                   <Button 
                     onClick={() => {
-                      // Save the changes
-                      updateTreatmentLine.mutate({
-                        id: selectedTreatmentLine.id,
-                        data: {
+                      try {
+                        console.log("Updating treatment line with ID:", selectedTreatmentLine.id);
+                        console.log("Update data:", {
                           patientNotes: selectedTreatmentLine.patientNotes
-                        }
-                      });
-                      setIsEditMode(false);
-                      setIsDetailsOpen(false);
+                        });
+                        // Save the changes
+                        updateTreatmentLine.mutate({
+                          id: selectedTreatmentLine.id,
+                          data: {
+                            patientNotes: selectedTreatmentLine.patientNotes
+                          }
+                        });
+                        setIsEditMode(false);
+                        setIsDetailsOpen(false);
+                      } catch (error) {
+                        console.error("Error in update mutation:", error);
+                      }
                     }}
                   >
                     Save Changes
@@ -538,8 +556,13 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
               <Button 
                 variant="destructive"
                 onClick={() => {
-                  deleteTreatmentLine.mutate(selectedTreatmentLine.id);
-                  setIsDeleteConfirmOpen(false);
+                  try {
+                    console.log("Deleting treatment line with ID:", selectedTreatmentLine.id);
+                    deleteTreatmentLine.mutate(selectedTreatmentLine.id);
+                    setIsDeleteConfirmOpen(false);
+                  } catch (error) {
+                    console.error("Error in delete mutation:", error);
+                  }
                 }}
               >
                 Delete
