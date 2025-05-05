@@ -11,10 +11,7 @@ import { User } from '@shared/schema';
 const router = express.Router();
 
 // In-memory storage for development (replace with DB in production)
-const specialOffers = new Map<string, SpecialOffer[]>();
-
-// Export the specialOffers map reference to the update helper
-import { setSpecialOffersMap, getSpecialOffersMap } from './special-offers-update-helper';
+export const specialOffers = new Map<string, SpecialOffer[]>();
 
 // Sample offers for development - demonstrating premium special offers
 const sampleOffers: SpecialOffer[] = [
@@ -740,12 +737,10 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
   }
 });
 
-// Set the map in our singleton store AFTER adding all the sample offers
-// This ensures our helper has access to a fully populated map
-setSpecialOffersMap(specialOffers);
+// Map is now directly exported as a named export
+// No need to set it in a helper as it's directly accessible
 
 // For debugging
 console.log(`Initialized special offers map with ${specialOffers.size} entries`);
-console.log(`SpecialOffersStore has map with ${getSpecialOffersMap().size} entries`);
 
 export default router;

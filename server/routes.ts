@@ -34,6 +34,7 @@ import bookingRoutes from "./routes/booking-routes";
 import appointmentRoutes from "./routes/appointment-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
+import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
@@ -269,6 +270,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register special offers routes with commission-based promotion system
   app.use(specialOffersRoutes);
+  
+  // Register special offers update helper routes for image generation
+  app.use(specialOffersUpdateHelper);
   
   // Register trending packages routes with commission-based promotion system
   app.use(trendingPackagesRoutes);

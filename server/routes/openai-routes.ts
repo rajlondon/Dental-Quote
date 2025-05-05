@@ -197,13 +197,27 @@ router.post('/special-offer-image', catchAsync(async (req: Request, res: Respons
       console.log(`Cache-busting parameters added: ${imageUrl}`);
     }
     
-    // Update the special offer image in memory
-    const { updateSpecialOfferImageInMemory } = await import('./special-offers-update-helper');
+    // Update the special offer image in memory - directly access the exported map
     console.log('Updating special offer image for offer ID:', offerId);
     
-    const updateResult = await updateSpecialOfferImageInMemory(offerId, imageUrl);
+    // Import the specialOffers map to update it directly
+    const { specialOffers } = await import('./special-offers-routes-fixed');
+    let updateSuccess = false;
     
-    if (!updateResult) {
+    // Search for the offer in all clinic offers
+    for (const [clinicId, clinicOffers] of specialOffers.entries()) {
+      const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+      if (offerIndex !== -1) {
+        // Update the offer image
+        clinicOffers[offerIndex].banner_image = imageUrl;
+        clinicOffers[offerIndex].updated_at = new Date().toISOString();
+        specialOffers.set(clinicId, clinicOffers);
+        updateSuccess = true;
+        break;
+      }
+    }
+    
+    if (!updateSuccess) {
       throw new AppError('Failed to update special offer image in database', 500);
     }
     
@@ -297,7 +311,16 @@ router.post('/special-offer-image', catchAsync(async (req: Request, res: Respons
           console.log(`✅ Image successfully cached, versioned URL: ${versionedUrl}`);
           
           // Update the special offer with the versioned URL to ensure cache busting
-          await updateSpecialOfferImageInMemory(offerId, versionedUrl);
+          // Find and update the special offer directly
+          for (const [clinicId, clinicOffers] of specialOffers.entries()) {
+            const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+            if (offerIndex !== -1) {
+              clinicOffers[offerIndex].banner_image = versionedUrl;
+              clinicOffers[offerIndex].updated_at = new Date().toISOString();
+              specialOffers.set(clinicId, clinicOffers);
+              break;
+            }
+          }
           
           // Return the versioned URL which completely bypasses browser cache
           const uniqueTimestamp = Date.now();
