@@ -33,9 +33,9 @@ export function usePackages() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["/api/treatment-module/packages"],
+    queryKey: ["/api/public/packages"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/treatment-module/packages");
+      const response = await apiRequest("GET", "/api/public/packages");
       const data = await response.json() as PackagesResponse;
       
       if (!data.success) {

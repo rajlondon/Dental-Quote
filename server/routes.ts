@@ -26,6 +26,7 @@ import fileRoutes from "./routes/fileRoutes";
 import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentPlansModuleRoutes from "./routes/treatment-plans-routes";
+import publicPackagesRoutes from "./routes/public-packages-routes";
 import treatmentRoutes from "./routes/treatment-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
@@ -182,6 +183,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If they're trying to access directly, redirect to login
     return res.redirect("/portal-login");
   });
+  
+  // Register public package routes that don't require authentication
+  app.use('/api/public', publicPackagesRoutes);
   
   // IMPORTANT: Register routes in this order to avoid conflicts:
   // 1. Global auth middleware
