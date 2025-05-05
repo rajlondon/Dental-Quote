@@ -327,11 +327,53 @@ const PortalLoginPage: React.FC = () => {
         }, 100);
       } else {
         // Default to patient portal for any other role
-        console.log("Patient user detected, redirecting to patient portal");
+        console.log("Patient user detected, checking for pending actions");
         // Pre-cache user data
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         
+        // Check if there's a pending special offer to process
+        const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+        if (pendingOfferData) {
+          try {
+            // Parse the pending offer data
+            const offerData = JSON.parse(pendingOfferData);
+            console.log("Found pending special offer request:", offerData);
+            
+            // Create URL parameters for quote page
+            const params = new URLSearchParams({
+              specialOffer: offerData.id,
+              offerTitle: offerData.title,
+              offerClinic: offerData.clinicId || '',
+              offerDiscount: offerData.discountValue?.toString() || '0',
+              offerDiscountType: offerData.discountType || 'percentage',
+              treatment: offerData.applicableTreatment || 'Dental Implants'
+            });
+            
+            // Clear the pending offer from storage
+            sessionStorage.removeItem('pendingSpecialOffer');
+            
+            // Notify user
+            toast({
+              title: "Welcome!",
+              description: `Processing your quote request for: ${offerData.title}`,
+              variant: "default",
+            });
+            
+            // Redirect to quote page with the special offer parameters
+            setTimeout(() => {
+              console.log("Redirecting to quote page with special offer");
+              window.location.href = `/your-quote?${params.toString()}`;
+            }, 100);
+            
+            return; // Exit early as we're handling special redirect
+          } catch (error) {
+            console.error("Error processing pending special offer:", error);
+            // Continue with normal patient portal redirect if there's an error
+          }
+        }
+        
+        // Normal patient portal redirect if no pending actions
         setTimeout(() => {
           console.log("Redirecting to patient portal");
           setLocation('/client-portal');
