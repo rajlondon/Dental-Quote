@@ -205,8 +205,9 @@ const MessagesSection: React.FC = () => {
         // After fetching messages, refresh conversations to update unread counts
         fetchConversations();
         
-        // Mark message notifications for this booking as read
-        markAsRead(`message_${bookingId}`);
+        // Mark message notifications for this booking as read if they exist
+        // For now, just log a message about future implementation
+        console.log('Message notifications for this booking will be marked as read in a future update');
       } else {
         console.error('Failed to fetch messages:', data.message);
       }
