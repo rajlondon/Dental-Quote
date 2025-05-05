@@ -826,5 +826,176 @@ router.delete('/saved/:id', catchAsync(async (req: Request, res: Response) => {
 }));
 
 // Export both the router and specialOffers map for direct access
+
+// Endpoints for User Saved Special Offers
+// Save a special offer to user's account
+router.post('/api/special-offers/save-to-account', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  try {
+    const { specialOfferId, clinicId, offerDetails } = req.body;
+    
+    if (!specialOfferId) {
+      return res.status(400).json({ success: false, message: "Special offer ID is required" });
+    }
+
+    // Check if this offer is already saved by the user
+    const existingSavedOffer = await db.select().from(userSavedSpecialOffers).where(
+      and(
+        eq(userSavedSpecialOffers.userId, req.user.id),
+        eq(userSavedSpecialOffers.specialOfferId, specialOfferId)
+      )
+    );
+
+    if (existingSavedOffer.length > 0) {
+      return res.status(200).json({ 
+        success: true, 
+        message: "Offer already saved to your account",
+        data: existingSavedOffer[0]
+      });
+    }
+
+    // Save the offer to the user's account
+    const [savedOffer] = await db.insert(userSavedSpecialOffers).values({
+      userId: req.user.id,
+      specialOfferId,
+      clinicId: clinicId || null,
+      offerDetails,
+      savedAt: new Date(),
+      viewed: false,
+      status: 'active'
+    }).returning();
+
+    return res.status(201).json({
+      success: true,
+      message: "Special offer saved to your account",
+      data: savedOffer
+    });
+  } catch (error) {
+    console.error("Error saving special offer to account:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to save special offer"
+    });
+  }
+}));
+
+// Get user's saved special offers
+router.get('/api/special-offers/saved', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  try {
+    // Get all saved offers for the user
+    const savedOffers = await db.select().from(userSavedSpecialOffers)
+      .where(eq(userSavedSpecialOffers.userId, req.user.id))
+      .orderBy(desc(userSavedSpecialOffers.savedAt));
+
+    return res.status(200).json({
+      success: true,
+      count: savedOffers.length,
+      data: savedOffers
+    });
+  } catch (error) {
+    console.error("Error fetching saved special offers:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve saved special offers"
+    });
+  }
+}));
+
+// Update a saved special offer (e.g., mark as viewed, update status)
+router.patch('/api/special-offers/saved/:id', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  try {
+    const offerId = parseInt(req.params.id);
+    if (isNaN(offerId)) {
+      return res.status(400).json({ success: false, message: "Invalid offer ID" });
+    }
+
+    // Make sure this offer belongs to the authenticated user
+    const [existingSavedOffer] = await db.select().from(userSavedSpecialOffers).where(
+      and(
+        eq(userSavedSpecialOffers.id, offerId),
+        eq(userSavedSpecialOffers.userId, req.user.id)
+      )
+    );
+
+    if (!existingSavedOffer) {
+      return res.status(404).json({ success: false, message: "Saved offer not found" });
+    }
+
+    // Update the offer with the provided fields
+    const [updatedOffer] = await db.update(userSavedSpecialOffers)
+      .set({
+        ...req.body,
+        // If status is being set to 'redeemed', add redemption date
+        ...(req.body.status === 'redeemed' && { redemptionDate: new Date() })
+      })
+      .where(eq(userSavedSpecialOffers.id, offerId))
+      .returning();
+
+    return res.status(200).json({
+      success: true,
+      message: "Saved offer updated",
+      data: updatedOffer
+    });
+  } catch (error) {
+    console.error("Error updating saved special offer:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update saved special offer"
+    });
+  }
+}));
+
+// Delete a saved special offer
+router.delete('/api/special-offers/saved/:id', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  try {
+    const offerId = parseInt(req.params.id);
+    if (isNaN(offerId)) {
+      return res.status(400).json({ success: false, message: "Invalid offer ID" });
+    }
+
+    // Make sure this offer belongs to the authenticated user
+    const [existingSavedOffer] = await db.select().from(userSavedSpecialOffers).where(
+      and(
+        eq(userSavedSpecialOffers.id, offerId),
+        eq(userSavedSpecialOffers.userId, req.user.id)
+      )
+    );
+
+    if (!existingSavedOffer) {
+      return res.status(404).json({ success: false, message: "Saved offer not found" });
+    }
+
+    // Delete the offer
+    await db.delete(userSavedSpecialOffers)
+      .where(eq(userSavedSpecialOffers.id, offerId));
+
+    return res.status(200).json({
+      success: true,
+      message: "Saved offer deleted"
+    });
+  } catch (error) {
+    console.error("Error deleting saved special offer:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete saved special offer"
+    });
+  }
+}));
+
 export { specialOffers };
 export default router;
