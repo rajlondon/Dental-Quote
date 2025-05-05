@@ -394,11 +394,11 @@ const PortalLoginPage: React.FC = () => {
               variant: "default",
             });
             
-            // Redirect to the quote form, which will then proceed to results
+            // Redirect to the quote page where user can select treatments and clinics
             // with the special offer clinic highlighted
             setTimeout(() => {
-              console.log("Redirecting to quote form with special offer context");
-              window.location.href = '/quote-form';
+              console.log("Redirecting to quote page with special offer context");
+              window.location.href = '/your-quote';
             }, 100);
             
             return; // Exit early as we're handling special redirect

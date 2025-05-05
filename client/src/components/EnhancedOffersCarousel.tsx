@@ -474,10 +474,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         variant: "default",
       });
       
-      // Redirect to the quote form, which will then proceed to results
+      // Redirect to the quote page where user can select treatments and clinics
       // with the special offer clinic highlighted
-      console.log("Redirecting to quote form with special offer context");
-      window.location.href = '/quote-form';
+      console.log("Redirecting to quote page with special offer context");
+      window.location.href = '/your-quote';
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
       // User is not logged in, save offer details in sessionStorage
