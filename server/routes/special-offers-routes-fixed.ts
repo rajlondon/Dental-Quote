@@ -745,6 +745,11 @@ console.log(`Initialized special offers map with ${specialOffers.size} entries`)
 
 // Add an endpoint to refresh all special offer images
 router.post('/refresh-images', async (req, res) => {
+  // Ensure user is authenticated (should be admin or clinic staff)
+  if (!req.isAuthenticated()) {
+    console.log('Authentication required for refresh-images endpoint');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   const { forceRegenerate = false, naturalStyle = true } = req.body;
   
   console.log(`Starting to refresh all special offer images...`);
