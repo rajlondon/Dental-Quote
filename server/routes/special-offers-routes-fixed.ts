@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   SpecialOffer, 
@@ -6,7 +6,12 @@ import {
   specialOfferSchema, 
   createSpecialOfferSchema 
 } from '@shared/specialOffers';
-import { User } from '@shared/schema';
+import { User, userSavedSpecialOffers } from '@shared/schema';
+import { isAuthenticated } from '../middleware/auth';
+import { db } from '../db';
+import { eq, and, desc } from 'drizzle-orm';
+import { AppError } from '../utils/app-error';
+import { catchAsync } from '../utils/catch-async';
 
 const router = express.Router();
 
@@ -985,5 +990,133 @@ router.post('/refresh-images', async (req, res) => {
     refreshedOffers
   });
 });
+
+// User: Save a special offer to their account
+router.post('/api/special-offers/save-to-account', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  
+  // Extract offer details from request body
+  const { specialOfferId, clinicId, offerDetails } = req.body;
+  
+  if (!specialOfferId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Special offer ID is required'
+    });
+  }
+  
+  try {
+    // Insert into user_saved_special_offers table
+    const [savedOffer] = await db.insert(userSavedSpecialOffers).values({
+      userId,
+      specialOfferId,
+      clinicId,
+      offerDetails,
+      savedAt: new Date(),
+      viewed: false,
+      status: 'active',
+    }).returning();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Special offer saved successfully',
+      data: savedOffer
+    });
+  } catch (error) {
+    console.error('Error saving special offer:', error);
+    throw new AppError(`Failed to save special offer: ${error.message}`, 500);
+  }
+}));
+
+// User: Get all saved special offers
+router.get('/api/special-offers/saved', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  
+  try {
+    // Query all saved offers for the user
+    const savedOffers = await db.select()
+      .from(userSavedSpecialOffers)
+      .where(eq(userSavedSpecialOffers.userId, userId))
+      .orderBy(desc(userSavedSpecialOffers.savedAt));
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Saved special offers retrieved successfully',
+      data: savedOffers
+    });
+  } catch (error) {
+    console.error('Error retrieving saved special offers:', error);
+    throw new AppError(`Failed to retrieve saved special offers: ${error.message}`, 500);
+  }
+}));
+
+// User: Update a saved special offer (mark as viewed, update status, etc.)
+router.patch('/api/special-offers/saved/:id', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const offerId = parseInt(req.params.id);
+  const updates = req.body;
+  
+  try {
+    // Update the saved offer
+    const [updatedOffer] = await db.update(userSavedSpecialOffers)
+      .set(updates)
+      .where(
+        and(
+          eq(userSavedSpecialOffers.id, offerId),
+          eq(userSavedSpecialOffers.userId, userId)
+        )
+      )
+      .returning();
+    
+    if (!updatedOffer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Saved offer not found'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Saved offer updated successfully',
+      data: updatedOffer
+    });
+  } catch (error) {
+    console.error('Error updating saved special offer:', error);
+    throw new AppError(`Failed to update saved special offer: ${error.message}`, 500);
+  }
+}));
+
+// User: Delete a saved special offer
+router.delete('/api/special-offers/saved/:id', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const offerId = parseInt(req.params.id);
+  
+  try {
+    // Delete the saved offer
+    const [deletedOffer] = await db.delete(userSavedSpecialOffers)
+      .where(
+        and(
+          eq(userSavedSpecialOffers.id, offerId),
+          eq(userSavedSpecialOffers.userId, userId)
+        )
+      )
+      .returning();
+    
+    if (!deletedOffer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Saved offer not found'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Saved offer deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting saved special offer:', error);
+    throw new AppError(`Failed to delete saved special offer: ${error.message}`, 500);
+  }
+}));
 
 export default router;
