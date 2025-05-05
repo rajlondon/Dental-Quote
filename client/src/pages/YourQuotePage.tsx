@@ -1046,7 +1046,7 @@ const YourQuotePage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Quote steps tracking
-  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'review' | 'select-clinic'>('build-plan');
+  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'select-clinic' | 'review'>('build-plan');
   const [isQuoteReady, setIsQuoteReady] = useState(false);
   
   // Function to open edit quote modal
@@ -1078,16 +1078,47 @@ const YourQuotePage: React.FC = () => {
   // Function to handle patient info form submission
   const handlePatientInfoSubmit = (data: PatientInfo) => {
     setPatientInfo(data);
-    setCurrentStep('review');
-    setIsQuoteReady(true);
+    setCurrentStep('select-clinic');
     
     toast({
       title: "Information Saved",
-      description: "Your personal information has been saved successfully.",
+      description: "Your personal information has been saved successfully. Now select a clinic for your treatment.",
     });
     
-    // Scroll to the top of the review section
+    // Scroll to the top of the section
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Function to handle clinic selection
+  const handleClinicSelect = (clinic: ClinicInfo) => {
+    setSelectedClinic(clinic);
+    
+    toast({
+      title: "Clinic Selected",
+      description: `You have selected ${clinic.name} for your treatment.`,
+    });
+  };
+  
+  // Function to confirm clinic selection and move to review
+  const handleConfirmClinic = () => {
+    if (selectedClinic) {
+      setCurrentStep('review');
+      setIsQuoteReady(true);
+      
+      toast({
+        title: "Clinic Confirmed",
+        description: "Your clinic selection has been confirmed. Please review your quote details.",
+      });
+      
+      // Scroll to the top of the review section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      toast({
+        title: "No Clinic Selected",
+        description: "Please select a clinic before proceeding.",
+        variant: "destructive"
+      });
+    }
   };
   
   // Calculate totals
@@ -1244,7 +1275,7 @@ const YourQuotePage: React.FC = () => {
                 )}
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'build-plan' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -1286,21 +1317,42 @@ const YourQuotePage: React.FC = () => {
                 
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
-                    ${currentStep === 'review' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                    ${currentStep === 'select-clinic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
                     ${!patientInfo ? 'opacity-50' : ''}
                   `}
-                  onClick={() => patientInfo && setCurrentStep('review')}
+                  onClick={() => patientInfo && setCurrentStep('select-clinic')}
+                >
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
+                    currentStep === 'select-clinic' ? 'bg-blue-500' : 
+                    selectedClinic ? 'bg-green-500' : 'bg-gray-300'
+                  }`}>
+                    {selectedClinic ? <Check className="h-5 w-5" /> : '3'}
+                  </div>
+                  <div>
+                    <p className="font-medium">Select Clinic</p>
+                    <p className="text-xs text-gray-600">
+                      {selectedClinic ? `Selected: ${selectedClinic.name}` : 'Choose your preferred clinic'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
+                    ${currentStep === 'review' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                    ${!selectedClinic ? 'opacity-50' : ''}
+                  `}
+                  onClick={() => selectedClinic && setCurrentStep('review')}
                 >
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
                     currentStep === 'review' ? 'bg-blue-500' : 
                     isQuoteReady ? 'bg-green-500' : 'bg-gray-300'
                   }`}>
-                    {isQuoteReady ? <Check className="h-5 w-5" /> : '3'}
+                    {isQuoteReady ? <Check className="h-5 w-5" /> : '4'}
                   </div>
                   <div>
                     <p className="font-medium">Review & Submit</p>
                     <p className="text-xs text-gray-600">
-                      {isQuoteReady ? 'Quote ready' : 'Complete first two steps'}
+                      {isQuoteReady ? 'Quote ready' : 'Complete previous steps'}
                     </p>
                   </div>
                 </div>
@@ -1437,7 +1489,113 @@ const YourQuotePage: React.FC = () => {
             </>
           )}
           
-          {/* Step 3: Review and Submit (conditionally displayed) */}
+          {/* Step 3: Clinic Selection (conditionally displayed) */}
+          {currentStep === 'select-clinic' && (
+            <>
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-xl font-bold">
+                    <MapPin className="mr-2 h-5 w-5 text-blue-500" />
+                    Select Your Preferred Clinic
+                  </CardTitle>
+                  <CardDescription>
+                    Choose a clinic that best matches your needs and budget. {specialOffer && "Clinics with special offers are highlighted."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Special Offer Notification - Show if there's a special offer */}
+                    {specialOffer && (
+                      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="flex items-start">
+                          <Sparkles className="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <h3 className="font-medium text-blue-700">Special Offer Applied</h3>
+                            <p className="text-sm text-blue-600">
+                              Your quote includes the "{specialOffer.title}" special offer from a participating clinic.
+                              This clinic is listed first in your results.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Clinic sorting options */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                      <p className="text-sm text-gray-700">Showing {clinics.length} available clinics for your treatment</p>
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-700">Sort by:</label>
+                        <select 
+                          className="text-sm border rounded-md px-2 py-1"
+                          onChange={(e) => {
+                            // Here we'd implement sorting logic
+                            const sortOption = e.target.value;
+                            let sortedClinics = [...clinics];
+                            
+                            if (sortOption === 'price-asc') {
+                              sortedClinics.sort((a, b) => a.priceGBP - b.priceGBP);
+                            } else if (sortOption === 'price-desc') {
+                              sortedClinics.sort((a, b) => b.priceGBP - a.priceGBP);
+                            } else if (sortOption === 'rating') {
+                              sortedClinics.sort((a, b) => b.rating - a.rating);
+                            } else if (sortOption === 'special-offers') {
+                              sortedClinics.sort((a, b) => {
+                                if (a.hasSpecialOffer && !b.hasSpecialOffer) return -1;
+                                if (!a.hasSpecialOffer && b.hasSpecialOffer) return 1;
+                                return 0;
+                              });
+                            }
+                            
+                            setClinics(sortedClinics);
+                          }}
+                        >
+                          <option value="special-offers">Special Offers First</option>
+                          <option value="price-asc">Price (Low to High)</option>
+                          <option value="price-desc">Price (High to Low)</option>
+                          <option value="rating">Rating</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {/* Clinic list */}
+                    <div className="space-y-6">
+                      {clinics.map((clinic) => (
+                        <ClinicCard
+                          key={clinic.id}
+                          clinic={clinic}
+                          isSelected={selectedClinic?.id === clinic.id}
+                          onSelect={() => handleClinicSelect(clinic)}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Navigation buttons */}
+                    <div className="flex justify-between mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentStep('patient-info')}
+                        className="flex items-center gap-2"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Patient Info
+                      </Button>
+                      
+                      <Button
+                        onClick={handleConfirmClinic}
+                        className="flex items-center gap-2"
+                        disabled={!selectedClinic}
+                      >
+                        Continue to Review
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+          
+          {/* Step 4: Review and Submit (conditionally displayed) */}
           {currentStep === 'review' && (
             <>
               <Card className="mb-8">
@@ -1488,6 +1646,61 @@ const YourQuotePage: React.FC = () => {
                         )}
                       </div>
                     </div>
+                    
+                    {/* Selected Clinic Information */}
+                    {selectedClinic && (
+                      <div>
+                        <h3 className="font-semibold text-gray-700 mb-3">Selected Clinic</h3>
+                        <div className="bg-gray-50 p-4 rounded-md flex items-start gap-4">
+                          <img 
+                            src={selectedClinic.images[0]} 
+                            alt={selectedClinic.name} 
+                            className="w-20 h-20 object-cover rounded-md hidden md:block" 
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-bold text-lg">{selectedClinic.name}</h4>
+                              <TierBadge tier={selectedClinic.tier} />
+                              {selectedClinic.hasSpecialOffer && (
+                                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                                  <Sparkles className="h-3 w-3 mr-1" /> Special Offer
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center text-gray-700 mb-2">
+                              <MapPin className="h-4 w-4 mr-1 text-gray-500" />
+                              <span className="text-sm">{selectedClinic.location}</span>
+                              <span className="mx-2">•</span>
+                              <RatingStars rating={selectedClinic.rating} />
+                              <span className="ml-1 text-xs text-gray-500">({selectedClinic.reviewCount})</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                              <div>
+                                <p className="text-sm font-medium text-gray-500">Price</p>
+                                <p className="font-bold text-blue-600">£{selectedClinic.priceGBP}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-500">Guarantee</p>
+                                <p>{selectedClinic.guarantee}</p>
+                              </div>
+                            </div>
+                            
+                            {selectedClinic.hasSpecialOffer && selectedClinic.specialOfferDetails && (
+                              <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-100">
+                                <p className="text-sm font-medium text-blue-700">
+                                  {selectedClinic.specialOfferDetails.title} - 
+                                  {selectedClinic.specialOfferDetails.discountType === 'percentage' ? 
+                                    ` ${selectedClinic.specialOfferDetails.discountValue}% OFF` : 
+                                    ` £${selectedClinic.specialOfferDetails.discountValue} OFF`}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Patient Information */}
                     {patientInfo && (
