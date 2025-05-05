@@ -1,15 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 import { 
-  Notification, 
+  Notification as NotificationInterface, 
   CreateNotification, 
   UpdateNotification, 
   NotificationResponse 
 } from '@shared/notifications';
 import { WebSocketService } from './websocketService';
 import { EmailNotificationService } from './emailNotificationService';
-
-// In-memory storage for notifications (replace with database in production)
-const notifications = new Map<string, Notification[]>();
+import { db } from '../db';
+import { notifications } from '@shared/schema';
+import { eq, desc } from 'drizzle-orm';
 
 /**
  * Notification Service - Manages cross-portal notifications
@@ -26,31 +26,28 @@ export class NotificationService {
   
   /**
    * Create a new notification
+   * This now uses the database schema notification format
    */
-  public async createNotification(data: CreateNotification): Promise<Notification> {
-    const now = new Date().toISOString();
-    
-    const newNotification: Notification = {
-      id: uuidv4(),
-      ...data,
-      status: 'unread',
-      created_at: now,
-    };
-    
-    // Determine which map key to use based on target
-    const targetKey = this.getStorageKey(newNotification);
-    
-    // Get existing notifications or initialize
-    const existingNotifications = notifications.get(targetKey) || [];
-    existingNotifications.push(newNotification);
-    notifications.set(targetKey, existingNotifications);
+  public async createNotification(data: any): Promise<any> {
+    // Insert the notification into the database
+    const [newNotification] = await db.insert(notifications).values({
+      userId: data.userId,
+      title: data.title,
+      message: data.message,
+      content: data.content,
+      isRead: data.isRead || false,
+      type: data.type || 'info',
+      action: data.action,
+      entityType: data.entityType,
+      entityId: data.entityId
+    }).returning();
     
     // Send real-time notification using WebSocket
-    this.sendRealTimeNotification(newNotification);
+    this.sendRealTimeNotification(this.mapToLegacyFormat(newNotification));
     
     // Send email notification if appropriate
     try {
-      await this.emailService.processNotification(newNotification);
+      await this.emailService.processNotification(this.mapToLegacyFormat(newNotification));
     } catch (error) {
       console.error('Failed to send email notification:', error);
       // Don't fail the entire notification process if email fails
@@ -67,122 +64,100 @@ export class NotificationService {
     userId: string,
     status?: 'unread' | 'all'
   ): Promise<NotificationResponse> {
-    const targetKey = `${userType}-${userId}`;
-    const allNotifications = notifications.get(targetKey) || [];
-    
-    // Also check the "all" target for each user type
-    const typeWideNotifications = notifications.get(`${userType}-all`) || [];
-    
-    // Also check system-wide notifications
-    const systemWideNotifications = notifications.get('all-all') || [];
-    
-    // Combine all relevant notifications
-    let allRelevantNotifications = [
-      ...allNotifications,
-      ...typeWideNotifications,
-      ...systemWideNotifications
-    ];
-    
-    // Filter by status if requested
-    if (status === 'unread') {
-      allRelevantNotifications = allRelevantNotifications.filter(
-        notification => notification.status === 'unread'
-      );
+    try {
+      // Query database for notifications for this user
+      const userIdNum = parseInt(userId, 10);
+      
+      // Build the query with filters
+      let query = db.select().from(notifications).where(eq(notifications.userId, userIdNum));
+      
+      // If status is unread, add that filter
+      if (status === 'unread') {
+        query = query.where(eq(notifications.isRead, false));
+      }
+      
+      // Execute the query and get results
+      const dbNotifications = await query.orderBy(desc(notifications.createdAt));
+      
+      // Map to the interface expected by the client
+      const mappedNotifications = dbNotifications.map(n => this.mapToLegacyFormat(n));
+      
+      // Count unread notifications
+      const unreadCount = dbNotifications.filter(n => !n.isRead).length;
+      
+      return {
+        notifications: mappedNotifications,
+        unread_count: unreadCount
+      };
+    } catch (error) {
+      console.error('Error fetching notifications from database:', error);
+      // Return empty result on error
+      return {
+        notifications: [],
+        unread_count: 0
+      };
     }
-    
-    // Sort by creation date (newest first)
-    allRelevantNotifications.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    
-    // Count unread notifications
-    const unreadCount = allRelevantNotifications.filter(
-      n => n.status === 'unread'
-    ).length;
-    
-    return {
-      notifications: allRelevantNotifications,
-      unread_count: unreadCount
-    };
   }
   
   /**
    * Update notification status (mark as read/archived)
    */
-  public async updateNotification(data: UpdateNotification): Promise<Notification | null> {
-    // Loop through all notification collections
-    const entries = Array.from(notifications.entries());
-    for (const [key, notificationsList] of entries) {
-      const notificationIndex = notificationsList.findIndex((n: Notification) => n.id === data.id);
+  public async updateNotification(data: UpdateNotification): Promise<any> {
+    try {
+      // Convert string ID to number if needed
+      const notificationId = typeof data.id === 'string' ? parseInt(data.id, 10) : data.id;
       
-      if (notificationIndex !== -1) {
-        const originalNotification = notificationsList[notificationIndex];
-        
-        // Track engagement metrics if status is changing from unread to read
-        const isMarkingAsRead = data.status === 'read' && originalNotification.status === 'unread';
-        
-        // Calculate time to read if marking as read
-        let timeToRead: number | undefined;
-        if (isMarkingAsRead) {
-          const createdTime = new Date(originalNotification.created_at).getTime();
-          const readTime = new Date().getTime();
-          timeToRead = Math.floor((readTime - createdTime) / 1000); // in seconds
-        }
-        
-        // Update the notification
-        const updatedNotification = {
-          ...originalNotification,
-          ...data,
-          // If we're updating the status, add read_at timestamp and engagement metrics
-          ...(isMarkingAsRead ? { 
-            read_at: new Date().toISOString(),
-            metadata: {
-              ...originalNotification.metadata,
-              engagement: {
-                time_to_read: timeToRead,
-                read_date: new Date().toISOString(),
-                // Track the number of times the notification has been viewed/marked as read
-                view_count: ((originalNotification.metadata?.engagement?.view_count || 0) + 1)
-              }
-            } 
-          } : {})
-        };
-        
-        // Replace the notification in the collection
-        notificationsList[notificationIndex] = updatedNotification;
-        notifications.set(key, notificationsList);
-        
-        // Log analytics data for admin reports
-        if (isMarkingAsRead) {
-          console.log(`Notification engagement: ID ${updatedNotification.id}, Time to read: ${timeToRead}s, Target: ${updatedNotification.target_type}-${updatedNotification.target_id || 'all'}`);
-        }
-        
-        return updatedNotification;
+      // First, fetch the notification to check its current state
+      const [originalNotification] = await db.select().from(notifications)
+        .where(eq(notifications.id, notificationId));
+      
+      if (!originalNotification) {
+        return null;
       }
+      
+      // Determine if we're marking as read
+      const isMarkingAsRead = data.status === 'read' && !originalNotification.isRead;
+      const now = new Date();
+      
+      // Update the notification in the database
+      const [updatedNotification] = await db.update(notifications)
+        .set({
+          isRead: data.status === 'read',
+        })
+        .where(eq(notifications.id, notificationId))
+        .returning();
+      
+      // Log analytics data for admin reports
+      if (isMarkingAsRead) {
+        const timeToRead = Math.floor((now.getTime() - originalNotification.createdAt.getTime()) / 1000);
+        console.log(`Notification engagement: ID ${updatedNotification.id}, Time to read: ${timeToRead}s, User: ${originalNotification.userId}`);
+      }
+      
+      return this.mapToLegacyFormat(updatedNotification);
+    } catch (error) {
+      console.error('Error updating notification status:', error);
+      return null;
     }
-    
-    return null;
   }
   
   /**
    * Delete a notification
    */
   public async deleteNotification(id: string): Promise<boolean> {
-    let deleted = false;
-    
-    // Loop through all notification collections
-    const entries = Array.from(notifications.entries());
-    for (const [key, notificationsList] of entries) {
-      const filteredList = notificationsList.filter((n: Notification) => n.id !== id);
+    try {
+      // Convert string ID to number if needed
+      const notificationId = typeof id === 'string' ? parseInt(id, 10) : id;
       
-      // If the list size changed, we found and removed the notification
-      if (filteredList.length !== notificationsList.length) {
-        notifications.set(key, filteredList);
-        deleted = true;
-      }
+      // Delete the notification from the database
+      const result = await db.delete(notifications)
+        .where(eq(notifications.id, notificationId))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      return false;
     }
-    
-    return deleted;
   }
   
   /**
@@ -193,16 +168,14 @@ export class NotificationService {
     userId: string
   ): Promise<boolean> {
     try {
-      // Get all relevant notifications for this user
-      const { notifications: userNotifications } = await this.getNotifications(userType, userId, 'unread');
+      // Convert string ID to number
+      const userIdNumber = parseInt(userId, 10);
       
-      // Mark each notification as read
-      for (const notification of userNotifications) {
-        await this.updateNotification({
-          id: notification.id,
-          status: 'read'
-        });
-      }
+      // Bulk update all unread notifications for this user to read
+      await db.update(notifications)
+        .set({ isRead: true })
+        .where(eq(notifications.userId, userIdNumber))
+        .where(eq(notifications.isRead, false));
       
       return true;
     } catch (error) {
@@ -263,9 +236,30 @@ export class NotificationService {
   }
   
   /**
+   * Map database notification to the legacy format used by WebSocket and Email services
+   */
+  private mapToLegacyFormat(notification: any): NotificationInterface {
+    // Map from the database schema notification to the interface expected by the existing services
+    return {
+      id: String(notification.id),
+      title: notification.title,
+      message: notification.message,
+      status: notification.isRead ? 'read' : 'unread',
+      category: notification.entityType as any || 'system',
+      priority: 'medium',
+      created_at: notification.createdAt?.toISOString() || new Date().toISOString(),
+      target_type: 'patient',
+      target_id: String(notification.userId),
+      source_type: 'system',
+      source_id: 'system',
+      action_url: notification.action
+    };
+  }
+  
+  /**
    * Determine storage key for a notification
    */
-  private getStorageKey(notification: Notification): string {
+  private getStorageKey(notification: NotificationInterface): string {
     // Handle system-wide notifications that target all users across all portals
     if (notification.target_type === 'all') {
       return 'all-all';
@@ -293,61 +287,60 @@ export class NotificationService {
     notifications_by_category: Record<string, number>;
     notifications_by_priority: Record<string, number>;
   }> {
-    // Get all notifications from all collections
-    const allNotifications: Notification[] = [];
-    const entries = Array.from(notifications.entries());
-    for (const [_, notificationsList] of entries) {
-      allNotifications.push(...notificationsList);
+    try {
+      // Get all notifications from database
+      const allNotifications = await db.select().from(notifications);
+      
+      // Count notifications by status
+      const readNotifications = allNotifications.filter(n => n.isRead);
+      const unreadNotifications = allNotifications.filter(n => !n.isRead);
+      
+      // Calculate engagement rate
+      const totalCount = allNotifications.length;
+      const readCount = readNotifications.length;
+      const unreadCount = unreadNotifications.length;
+      const engagementRate = totalCount > 0 ? (readCount / totalCount) * 100 : 0;
+      
+      // Calculate average time to read (simplified without metadata)
+      // This is just a placeholder since we don't have read time tracking yet
+      const averageTimeToRead = null;
+      
+      // Count notifications by category (entityType)
+      const notificationsByCategory: Record<string, number> = {};
+      allNotifications.forEach(notification => {
+        const category = notification.entityType || 'system';
+        notificationsByCategory[category] = (notificationsByCategory[category] || 0) + 1;
+      });
+      
+      // Count notifications by priority (using type as proxy since we don't have priority)
+      const notificationsByPriority: Record<string, number> = {};
+      allNotifications.forEach(notification => {
+        const priority = notification.type || 'medium';
+        notificationsByPriority[priority] = (notificationsByPriority[priority] || 0) + 1;
+      });
+      
+      return {
+        total_notifications: totalCount,
+        read_count: readCount,
+        unread_count: unreadCount,
+        engagement_rate: Number(engagementRate.toFixed(2)),
+        average_time_to_read: null, // No read time tracking in current schema
+        notifications_by_category: notificationsByCategory,
+        notifications_by_priority: notificationsByPriority
+      };
+    } catch (error) {
+      console.error('Error fetching notification analytics:', error);
+      // Return empty analytics on error
+      return {
+        total_notifications: 0,
+        read_count: 0,
+        unread_count: 0,
+        engagement_rate: 0,
+        average_time_to_read: null,
+        notifications_by_category: {},
+        notifications_by_priority: {}
+      };
     }
-    
-    // Count notifications by status
-    const readNotifications = allNotifications.filter(n => n.status === 'read');
-    const unreadNotifications = allNotifications.filter(n => n.status === 'unread');
-    
-    // Calculate engagement rate
-    const totalCount = allNotifications.length;
-    const readCount = readNotifications.length;
-    const unreadCount = unreadNotifications.length;
-    const engagementRate = totalCount > 0 ? (readCount / totalCount) * 100 : 0;
-    
-    // Calculate average time to read (for notifications that have been read)
-    let averageTimeToRead: number | null = null;
-    
-    const notificationsWithReadTime = readNotifications.filter(
-      n => n.metadata?.engagement?.time_to_read !== undefined
-    );
-    
-    if (notificationsWithReadTime.length > 0) {
-      const totalTimeToRead = notificationsWithReadTime.reduce(
-        (sum, n) => sum + (n.metadata?.engagement?.time_to_read || 0), 
-        0
-      );
-      averageTimeToRead = totalTimeToRead / notificationsWithReadTime.length;
-    }
-    
-    // Count notifications by category
-    const notificationsByCategory: Record<string, number> = {};
-    allNotifications.forEach(notification => {
-      const category = notification.category;
-      notificationsByCategory[category] = (notificationsByCategory[category] || 0) + 1;
-    });
-    
-    // Count notifications by priority
-    const notificationsByPriority: Record<string, number> = {};
-    allNotifications.forEach(notification => {
-      const priority = notification.priority;
-      notificationsByPriority[priority] = (notificationsByPriority[priority] || 0) + 1;
-    });
-    
-    return {
-      total_notifications: totalCount,
-      read_count: readCount,
-      unread_count: unreadCount,
-      engagement_rate: Number(engagementRate.toFixed(2)),
-      average_time_to_read: averageTimeToRead ? Number(averageTimeToRead.toFixed(2)) : null,
-      notifications_by_category: notificationsByCategory,
-      notifications_by_priority: notificationsByPriority
-    };
   }
 }
 
