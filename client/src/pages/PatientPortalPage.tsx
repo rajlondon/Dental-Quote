@@ -374,6 +374,38 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         </Card>
       </div>
       
+      {/* Saved Special Offers Section */}
+      <div id="saved-offers-section" className="mt-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>{t('portal.dashboard.saved_offers', 'Your Saved Special Offers')}</CardTitle>
+            <CardDescription>
+              {t('portal.dashboard.saved_offers_description', 'View and manage your saved treatment offers and promotions')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-3">
+                  {t('portal.dashboard.saved_offers_prompt', 'Find your saved special offers from clinics including discounts and promotions')}
+                </p>
+                <Button 
+                  variant="default"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setActiveSection('saved_offers')}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {t('portal.dashboard.view_saved_offers', 'View Saved Offers')}
+                </Button>
+              </div>
+              <div className="hidden md:block">
+                <CheckCircle2 className="h-16 w-16 text-blue-200" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       {/* Hotel Accommodation Section */}
       <div id="hotel-section" className="grid md:grid-cols-1 gap-6 mt-6">
         {/* Hotel Accommodation Section with view toggle controls */}
@@ -477,7 +509,7 @@ const PatientPortalPage: React.FC = () => {
         // Parse the offer data
         const offer = JSON.parse(offerData);
         
-        // Save the offer to the user's account
+        // Save the offer to the user's account using our new API endpoint
         const response = await fetch('/api/special-offers/save-to-account', {
           method: 'POST',
           headers: {
