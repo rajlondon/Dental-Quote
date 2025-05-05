@@ -131,11 +131,21 @@ export const createNotificationRoutes = (notificationService: NotificationServic
         sourceType = 'system';
       }
       
-      // Override source info with authenticated user
+      // Map from the API schema to the database schema
+      // The database has: id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
       const notification = await notificationService.createNotification({
-        ...notificationData,
+        userId: parseInt(notificationData.target_id || String(req.user.id), 10),
+        title: notificationData.title,
+        message: notificationData.message,
+        isRead: false,
+        type: notificationData.priority, // map priority to type
+        action: notificationData.action_url, // map action_url to action
+        entityType: notificationData.category, // map category to entityType
+        entityId: notificationData.metadata?.entityId ? parseInt(notificationData.metadata.entityId, 10) : null,
+        // Include source info in the metadata
         source_type: sourceType,
-        source_id: String(req.user.id)
+        source_id: String(req.user.id),
+        target_type: notificationData.target_type
       });
       
       res.status(201).json(notification);

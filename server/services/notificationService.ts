@@ -26,22 +26,48 @@ export class NotificationService {
   
   /**
    * Create a new notification
-   * This now uses the database schema notification format
+   * This now uses the database schema notification format with raw SQL queries
+   * to avoid ORM schema mismatches
    */
   public async createNotification(data: any): Promise<any> {
     try {
-      // Insert the notification into the database
-      // Omitting the 'content' field as it doesn't exist in the database yet
-      const [newNotification] = await db.insert(notifications).values({
-        userId: data.userId,
-        title: data.title,
-        message: data.message,
-        isRead: data.isRead || false,
-        type: data.type || 'info',
-        action: data.action,
-        entityType: data.entityType,
-        entityId: data.entityId
-      }).returning();
+      // Insert using a raw SQL query to bypass Drizzle ORM schema issues
+      const insertQuery = `
+        INSERT INTO notifications 
+          (user_id, title, message, is_read, type, action, entity_type, entity_id)
+        VALUES 
+          ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
+      `;
+
+      const result = await db.execute(insertQuery, [
+        data.userId,
+        data.title,
+        data.message,
+        data.isRead || false,
+        data.type || 'info',
+        data.action || null,
+        data.entityType || null,
+        data.entityId || null
+      ]);
+      
+      // Map the raw result to our expected format
+      const newNotification = {
+        id: result.rows[0].id,
+        userId: result.rows[0].user_id,
+        title: result.rows[0].title,
+        message: result.rows[0].message,
+        isRead: result.rows[0].is_read,
+        type: result.rows[0].type,
+        action: result.rows[0].action,
+        entityType: result.rows[0].entity_type,
+        entityId: result.rows[0].entity_id,
+        createdAt: new Date(result.rows[0].created_at),
+        // Add these fields for compatibility with the interface
+        target_type: data.target_type || 'patient',
+        source_type: data.source_type || 'system',
+        source_id: data.source_id || 'system'
+      };
       
       // Send real-time notification using WebSocket
       this.sendRealTimeNotification(this.mapToLegacyFormat(newNotification));
@@ -73,7 +99,8 @@ export class NotificationService {
       // Query database for notifications for this user
       const userIdNum = parseInt(userId, 10);
       
-      // Building a safer query to ensure we don't reference columns that don't exist
+      // Building a safer query that only uses columns that exist in the database
+      // Based on actual database schema: id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
       const query = `
         SELECT id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
         FROM notifications
