@@ -430,7 +430,7 @@ router.post("/book-package/:packageId", isAuthenticated, async (req: Request, re
       // Create a new quote request for the patient
       const [createdQuoteRequest] = await db.insert(quoteRequests).values({
         userId: req.user.id,
-        name: req.user.name || req.user.username,
+        name: `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || "Patient",
         email: req.user.email,
         phone: req.user.phone || "",
         treatment: packageData.name,
