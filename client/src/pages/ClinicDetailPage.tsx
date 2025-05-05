@@ -558,6 +558,20 @@ const ClinicDetailPage: React.FC = () => {
                                       applicableTreatment: offer.applicable_treatments?.[0] || ''
                                     };
                                     
+                                    // Check if we're already processing this offer to avoid duplicate redirects
+                                    const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+                                    if (processingOffer === offer.id) {
+                                      console.log('Already processing this offer, not setting pendingSpecialOffer again');
+                                      // Just redirect without setting pendingSpecialOffer again
+                                      setLocation('/your-quote');
+                                      return;
+                                    }
+                                    
+                                    // Clear any existing special offer data first
+                                    sessionStorage.removeItem('pendingSpecialOffer');
+                                    sessionStorage.removeItem('processingSpecialOffer');
+                                    
+                                    // Set the new pendingSpecialOffer
                                     sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
                                     console.log('Saved special offer to session storage:', offerData);
                                     

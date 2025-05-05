@@ -497,6 +497,27 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
       
+      // Check if we're already processing this offer to avoid duplicate redirects
+      const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+      if (processingOffer === standardizedOfferData.id) {
+        console.log('Already processing this offer, not setting pendingSpecialOffer again');
+        
+        // Notify user they need to login with existing data
+        toast({
+          title: "Login Required",
+          description: "Please create an account or login to request this special offer",
+          variant: "default",
+        });
+        
+        // Redirect to login page
+        setTimeout(() => setLocation('/portal-login'), 100);
+        return;
+      }
+      
+      // Clear any existing offer data first
+      sessionStorage.removeItem('pendingSpecialOffer');
+      sessionStorage.removeItem('processingSpecialOffer');
+      
       // Save the standardized offer data to sessionStorage for retrieval after login
       console.log("Saving pendingSpecialOffer:", standardizedOfferData);
       sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));

@@ -71,9 +71,19 @@ const EmailVerifiedPage: React.FC = () => {
                                 : 'Dental Implants')
             };
             
-            // Save to sessionStorage for the login page to find
-            sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(formattedOffer));
-            console.log("Saved formatted special offer to pendingSpecialOffer:", formattedOffer);
+            // Check if we're already processing this offer to avoid duplicate redirects
+            const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+            if (processingOffer === formattedOffer.id) {
+              console.log('Already processing this offer, not setting pendingSpecialOffer again');
+            } else {
+              // Clear any existing offer data first
+              sessionStorage.removeItem('pendingSpecialOffer');
+              sessionStorage.removeItem('processingSpecialOffer');
+              
+              // Save to sessionStorage for the login page to find
+              sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(formattedOffer));
+              console.log("Saved formatted special offer to pendingSpecialOffer:", formattedOffer);
+            }
           } catch (error) {
             console.error("Error processing offer data for login:", error);
           }
