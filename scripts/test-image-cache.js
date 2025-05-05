@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'fs';
 
 const BASE_URL = 'http://localhost:5000';
-const TEST_IMAGE_URL = 'https://mydentalfly-documents-prod.s3.eu-north-1.amazonaws.com/clinic/33/b65ec6a3-fa85-4a61-abce-7deeac2caef5-1744222855673.jpg';
+const TEST_IMAGE_URL = 'https://placehold.co/600x400/png';
 
 async function testImageCache() {
   try {
