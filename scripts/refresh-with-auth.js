@@ -3,8 +3,8 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:5000';
 
 // Using the clinic credentials for authentication
-const USERNAME = 'clinic@test.com';
-const PASSWORD = 'clinicpass';
+const EMAIL = 'clinic@mydentalfly.com';
+const PASSWORD = 'Clinic123!';
 
 async function refreshWithAuth() {
   console.log('Starting authenticated refresh process...');
@@ -13,17 +13,17 @@ async function refreshWithAuth() {
     // Step 1: Login to get authenticated session
     console.log('Logging in as clinic user...');
     const loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
-      username: USERNAME,
+      email: EMAIL,
       password: PASSWORD
     }, {
       withCredentials: true
     });
     
-    if (!loginResponse.data || !loginResponse.data.id) {
+    if (!loginResponse.data || !loginResponse.data.success || !loginResponse.data.user) {
       throw new Error('Login failed, no user data returned');
     }
     
-    console.log(`Login successful, user ID: ${loginResponse.data.id}`);
+    console.log(`Login successful, user ID: ${loginResponse.data.user.id}`);
     
     // Get cookies from the login response
     const cookies = loginResponse.headers['set-cookie'];
@@ -47,7 +47,7 @@ async function refreshWithAuth() {
     // Step 3: Now try the batch refresh endpoint
     console.log('Refreshing all special offer images...');
     
-    const batchResponse = await axios.post(`${BASE_URL}/api/special-offers/refresh-images`, {
+    const batchResponse = await axios.post(`${BASE_URL}/refresh-images`, {
       forceRegenerate: true,
       naturalStyle: true
     }, {
@@ -61,7 +61,7 @@ async function refreshWithAuth() {
     
     // Step 4: Logging out
     console.log('Logging out...');
-    await axios.post(`${BASE_URL}/api/logout`, {}, {
+    await axios.post(`${BASE_URL}/api/auth/logout`, {}, {
       headers: {
         Cookie: cookies.join('; ')
       }
