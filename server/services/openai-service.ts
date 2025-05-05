@@ -128,12 +128,28 @@ export async function generateImage(
 export async function generateDentalTreatmentImage(
   treatmentType: string
 ): Promise<{ url: string }> {
-  const basePrompt = `Create a high-quality, professional dental marketing image for ${treatmentType}. 
-The image should look realistic and medical, suitable for a premium dental clinic website.
-It should showcase the treatment result with clean, bright teeth and a natural-looking smile.
-Use soft lighting and a clean, sterile aesthetic with a subtle blue dental theme.
-The image should convey professionalism, expertise, and trust - key values in dental tourism.
-Do not include any text in the image.`;
+  const timestamp = Date.now();
+  const uniqueId = Math.random().toString(36).substring(2, 10);
+  
+  const basePrompt = `Create a photograph for a dental clinic website showcasing ${treatmentType} treatment results.
+
+SUBJECT:
+- Show a natural result of the treatment - a person with a genuine, non-exaggerated smile
+- The person should have realistic skin texture with natural imperfections and asymmetry
+- Focus on a realistic smile that shows healthy, well-proportioned teeth (not unnaturally white)
+- The person should be in casual professional attire, against a neutral background
+- No dental office equipment or clinical setting should be visible
+
+TECHNICAL ASPECTS:
+- Use portrait photography techniques with 85mm lens equivalent, f/2.8-4.0 aperture simulation
+- Create natural, soft lighting with proper facial highlights and shadows
+- Apply subtle depth of field with background slightly out of focus
+- Include realistic catch lights in the eyes and natural skin tones
+- Ensure the composition follows professional portrait photography guidelines
+- Add minor natural photography imperfections - slight grain in shadows, natural vignetting
+
+IMPORTANT: Study real dental result photography from top dental clinics. The image must be indistinguishable from a photograph taken by a professional dental photographer using high-end equipment.
+(Unique generation ID: ${timestamp}-${uniqueId})`;
 
   return generateImage(basePrompt, "1024x1024");
 }
@@ -191,7 +207,7 @@ export async function generateSpecialOfferImage(
   
   if (naturalStyle) {
     // More photorealistic, less AI-looking prompt style
-    basePrompt = `Create a professional, photorealistic marketing image for a dental tourism special offer titled "${offerTitle}". Make it look like a high-quality stock photograph, not AI-generated.`;
+    basePrompt = `Create a completely realistic photograph for a dental tourism marketing campaign featuring an offer called "${offerTitle}". The image should look exactly like a professional photograph taken with a high-end DSLR or mirrorless camera, not like digital art or an AI-generated image.`;
   } else {
     // Standard prompt style
     basePrompt = `Create a completely unique and original marketing image for a dental tourism special offer titled "${offerTitle}".`;
@@ -204,30 +220,58 @@ export async function generateSpecialOfferImage(
   
   if (offerType.toLowerCase().includes("hotel") || offerTitle.toLowerCase().includes("hotel")) {
     specificDetails = `
-Create a professional photograph of a luxury hotel room in Istanbul with a stunning Bosphorus view. The room should have:
-- Premium king-size bed with crisp white linens and decorative pillows
-- Floor-to-ceiling windows showing Istanbul landmarks and blue water
-- Elegant modern furnishings in neutral colors with subtle Turkish design elements
-- Soft, golden hour lighting casting warm tones across the room
-- A small seating area with comfortable armchairs
-- Subtle luxury touches like fresh flowers or a welcome fruit basket
-- The composition should be from a corner of the room, showing depth and spaciousness
-- Use photorealistic lighting and natural colors that a professional hotel photographer would use
+Create a photograph of a luxury hotel room that resembles professional hotel marketing photography.
 
-The image must look like it was taken by a professional hotel photographer with a high-end DSLR camera.`;
+SETTING:
+- A luxury hotel room in Istanbul with a king-size bed with neutral/gray bedding and subtle textural elements
+- Large floor-to-ceiling windows showing a nighttime city skyline with visible lights and landmarks
+- Warm, ambient lighting from bedside lamps creating a cozy atmosphere with natural shadows
+- Include a corner seating area with a small side table and some lived-in details
+- The room should have warm wood tones and earthy colors that give it a high-end but natural appearance
+
+TECHNICAL ASPECTS:
+- Use a wide angle lens perspective (24mm equivalent) with subtle lens distortion at the edges
+- Employ real-world architectural photography lighting techniques with proper shadows under furniture
+- Include realistic reflections on surfaces like wood and glass that follow proper physics
+- Add subtle imperfections that real rooms have - slight wrinkles in fabrics, minor asymmetry
+- Use the natural color science of Sony or Canon cameras with accurate white balance
+- The image should have slight vignetting and depth of field characteristics of real photography
+
+COMPOSITION:
+- Frame from a lower corner of the room to show depth and create a welcoming composition
+- Natural perspective with proper vanishing points for the windows and furniture
+- Allow some areas to fall into natural shadow rather than being perfectly evenly lit
+- Create realistic window exposure that shows both the room interior and night cityscape
+- Leave room for organic negative space rather than perfectly balanced composition
+
+IMPORTANT: Study the aesthetics of Ritz-Carlton and Four Seasons hotel photography for reference. The final image should be indistinguishable from a professional photograph taken with high-end equipment by a hotel photographer.`;
   } 
   else if (offerType.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("airport")) {
     specificDetails = `
-Create a professional photograph of a luxury airport transfer service in Istanbul. The image should show:
-- A black Mercedes S-Class or similar premium vehicle with polished finish parked in front of a modern terminal
-- A professional chauffeur in a dark suit standing by the open rear passenger door
-- Early evening lighting with the sky still blue but city lights coming on
-- Airport architecture visible but softly blurred in the background
-- Clean, uncluttered composition focusing on the vehicle and driver
-- The angle should be slightly from the front quarter of the vehicle to show its prestigious profile
-- Use photorealistic lighting and colors that a professional automotive photographer would use
+Create a photograph of luxury airport transfer service that resembles professional automotive and travel photography.
 
-The image must look like it was taken by a professional transportation service photographer with high-end equipment.`;
+SUBJECT:
+- A black Mercedes S-Class sedan (or equivalent luxury car) with a chauffeur in a suit by the open rear door
+- Position in front of an airport terminal entrance with some architecture visible but not dominating
+- Car should have proper reflections, realistic chrome/metal surfaces, and accurate proportions
+- The chauffeur should look natural (not AI-generated) with realistic facial features and stance
+
+TECHNICAL ASPECTS:
+- Use golden hour/dusk lighting with the sky transitioning to evening blue
+- Include practical lighting from airport entrance illuminating the scene naturally
+- Employ automotive photography techniques with a 35mm lens perspective
+- Create realistic highlights on the car's paint with proper reflections (not perfect mirror reflections)
+- Include subtle lens flare or bokeh from lights in the background
+- Use slight vignetting and proper depth of field for a high-end camera look
+- Capture realistic shadows underneath the vehicle that match the lighting conditions
+
+COMPOSITION:
+- Frame from a slightly lower angle (about waist height) and from the front quarter to show the car's profile
+- Allow some environmental elements (other travelers with luggage in background, airport signage)
+- Create a natural sense of depth with foreground, midground, and background elements
+- Include small imperfections that real photography would have - very slight motion blur of background people, minor lens distortion
+
+IMPORTANT: Study the aesthetics of luxury car service marketing photos. The final image should be indistinguishable from a professional photograph taken by an automotive/travel photographer at dusk using professional equipment.`;
   }
   else if (offerType.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consult")) {
     specificDetails = `
@@ -287,16 +331,31 @@ IMPORTANT: The image must look like a real photograph taken by a professional po
     const professionalScenes = [
       {
         scene: "dental clinic reception",
-        details: `Create a professional photograph of a luxury dental clinic reception area in Istanbul. The image should show:
-- A modern, minimalist reception area with marble or quartz surfaces
-- Comfortable seating area with designer furniture in neutral tones
-- Subtle Turkish design elements like geometric patterns or tasteful artwork
-- Soft, professional lighting highlighting the elegant space
-- A clean, uncluttered environment with premium finishes
-- A reception desk with a subtle dental clinic logo (not readable)
-- Optional: a glimpse of Istanbul skyline through large windows
-- The composition should be wide angle to show the spaciousness of the area
-- Use photorealistic lighting like professional architectural photography`
+        details: `Create a photograph of a luxury dental clinic reception area that resembles professional architectural photography.
+
+SETTING:
+- A modern reception area with marble reception desk and neutral-toned waiting area
+- Subtle Turkish design elements like a geometric pattern rug or tasteful artwork
+- Natural light coming through windows, complemented by warm interior lighting
+- Elements of a high-end medical facility with premium finishes and materials
+- A glimpse of Istanbul skyline or Bosphorus visible through windows
+
+TECHNICAL ASPECTS:
+- Use a wide angle lens perspective (16-24mm equivalent) with natural perspective correction
+- Create architectural photography lighting with balanced exposure between interior and exterior
+- Include realistic reflections on surfaces like marble, glass, and polished floors
+- Show natural shadows under furniture and at wall junctions
+- Add subtle imperfections - slight asymmetry in furniture placement, natural wear patterns
+- Use professional architectural photography white balance and color grading
+
+COMPOSITION:
+- Frame from a slightly elevated position (chest height) to show the space's flow
+- Allow some areas to fall into natural shadow rather than being perfectly evenly lit
+- Capture depth through multiple layers - foreground, midground, and background
+- Include typical reception area items like magazines, a water dispenser, or plants
+- Create a natural sense of scale with proper spatial relationships
+
+IMPORTANT: Study high-end hospitality and medical facility photography. The final image should be indistinguishable from a photograph taken by a professional architectural photographer using professional lighting equipment.`
       },
       {
         scene: "dental treatment result",
