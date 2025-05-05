@@ -93,6 +93,7 @@ export function useTreatmentLines(quoteId?: string) {
   // Update an existing treatment line
   const updateTreatmentLine = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      console.log(`Sending PUT request to /api/treatment-module/treatment-lines/${id} with data:`, data);
       const response = await apiRequest("PUT", `/api/treatment-module/treatment-lines/${id}`, data);
       return await response.json();
     },
@@ -117,6 +118,7 @@ export function useTreatmentLines(quoteId?: string) {
   // Delete a treatment line (soft delete)
   const deleteTreatmentLine = useMutation({
     mutationFn: async (id: string) => {
+      console.log(`Sending DELETE request to /api/treatment-module/treatment-lines/${id}`);
       const response = await apiRequest("DELETE", `/api/treatment-module/treatment-lines/${id}`);
       return await response.json();
     },
