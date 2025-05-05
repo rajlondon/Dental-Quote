@@ -9,6 +9,7 @@ class ImageCacheServiceClass {
   private urlToPathMap: Map<string, string>;
   private pathToUrlMap: Map<string, string>;
   private initialized: boolean = false;
+  private cacheTimestamps: Map<string, number> = new Map();
 
   constructor() {
     // Set the cache path relative to project root
@@ -137,6 +138,22 @@ class ImageCacheServiceClass {
       return this.pathToUrlMap.get(fullPath) || null;
     }
     return null;
+  }
+  
+  // Get a versioned URL that forces cache bypassing
+  public getVersionedUrl(url: string): string | null {
+    // First make sure the URL is cached
+    const cachedUrl = this.getCachedUrl(url);
+    if (!cachedUrl) {
+      return null;
+    }
+    
+    // Add a timestamp to the URL to force cache busting
+    const timestamp = Date.now();
+    this.cacheTimestamps.set(url, timestamp);
+    
+    // Add cache-busting parameters
+    return `${cachedUrl}?t=${timestamp}&nocache=true`;
   }
 
   // Clear the cache for a specific URL

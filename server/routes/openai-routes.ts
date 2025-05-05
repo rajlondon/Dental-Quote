@@ -265,11 +265,9 @@ router.post('/special-offer-image', catchAsync(async (req: Request, res: Respons
       }, 4000);
     }
     
-    // Check if the image URL is from OpenAI (starts with https:// and contains openai)
-    // Need to handle both blob.core.windows.net URLs and any future URL formats from OpenAI
-    const isOpenAIUrl = imageUrl.startsWith('https://') && 
-                        (imageUrl.includes('openai') || 
-                         imageUrl.includes('oaidalleapiprodscus.blob.core.windows.net'));
+    // Use our utility function to check if the image is from OpenAI
+    const { isOpenAIGeneratedImageUrl } = await import('../services/openai-service');
+    const isOpenAIUrl = isOpenAIGeneratedImageUrl(imageUrl);
     
     // Add cache-busting timestamp to OpenAI URLs to ensure browsers reload the image
     if (isOpenAIUrl && !imageUrl.includes('?')) {
