@@ -58,6 +58,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   notifications: many(notifications),
   hotelBookings: many(hotelBookings),
   savedSpecialOffers: many(userSavedSpecialOffers),
+  treatmentLines: many(treatmentLines, { relationName: "patient_treatment_lines" }),
 }));
 
 export const insertUserSchema = createInsertSchema(users)
@@ -783,3 +784,88 @@ export const userSavedSpecialOffersRelations = relations(userSavedSpecialOffers,
 
 export type InsertUserSavedSpecialOffer = Omit<typeof userSavedSpecialOffers.$inferInsert, "id" | "savedAt">;
 export type UserSavedSpecialOffer = typeof userSavedSpecialOffers.$inferSelect;
+
+// === PACKAGES ===
+export const packages = pgTable("packages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  imageUrl: varchar("image_url", { length: 255 }),
+  procedureCode: varchar("procedure_code", { length: 50 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("GBP"),
+  isActive: boolean("is_active").default(true),
+  includesHotel: boolean("includes_hotel").default(false),
+  hotelDetails: json("hotel_details"),
+  includesFlight: boolean("includes_flight").default(false),
+  flightDetails: json("flight_details"),
+  treatmentDuration: integer("treatment_duration"), // in days
+  featuredOnHomepage: boolean("featured_on_homepage").default(false),
+  adminApproved: boolean("admin_approved").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertPackageSchema = createInsertSchema(packages)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export type Package = typeof packages.$inferSelect;
+export type InsertPackage = z.infer<typeof insertPackageSchema>;
+
+// === TREATMENT LINES ===
+export const treatmentLines = pgTable("treatment_lines", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  patientId: integer("patient_id").notNull().references(() => users.id),
+  quoteId: uuid("quote_id").notNull(), // parent quote ID
+  procedureCode: varchar("procedure_code", { length: 50 }).notNull(), // e.g. "ALL_ON_4"
+  description: text("description").notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  isPackage: boolean("is_package").default(false), // true if came from package rail
+  packageId: uuid("package_id").references(() => packages.id),
+  status: varchar("status", { length: 20 }).default("draft").notNull(), // draft, confirmed, deleted
+  patientNotes: text("patient_notes"),
+  clinicNotes: text("clinic_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertTreatmentLineSchema = createInsertSchema(treatmentLines)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export type TreatmentLine = typeof treatmentLines.$inferSelect;
+export type InsertTreatmentLine = z.infer<typeof insertTreatmentLineSchema>;
+
+export const packagesRelations = relations(packages, ({ one, many }) => ({
+  clinic: one(clinics, {
+    fields: [packages.clinicId],
+    references: [clinics.id],
+  }),
+  treatmentLines: many(treatmentLines),
+}));
+
+export const treatmentLinesRelations = relations(treatmentLines, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [treatmentLines.clinicId],
+    references: [clinics.id],
+  }),
+  package: one(packages, {
+    fields: [treatmentLines.packageId],
+    references: [packages.id],
+  }),
+  patient: one(users, {
+    fields: [treatmentLines.patientId],
+    references: [users.id],
+    relationName: "patient_treatment_lines",
+  }),
+}));
