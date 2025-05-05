@@ -1,37 +1,143 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { trendingPackages, type TrendingPackage, type Excursion } from "@/data/packages";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, MapPin, Plane, Shield, Star, Users } from "lucide-react";
+import { AlertCircle, Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, Loader2, MapPin, Plane, Shield, Star, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePackages } from "@/hooks/use-packages";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/use-auth";
 
 // PackageDetailPage component
 const PackageDetailPage = () => {
   const { id } = useParams();
-  const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
+  const { user } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [mockedPackageData, setMockedPackageData] = useState<TrendingPackage | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
   
+  // Use our packages hook for API data
+  const { getPackage, bookPackage } = usePackages();
+  const { 
+    data: actualPackageData, 
+    isLoading, 
+    error, 
+    refetch 
+  } = getPackage(id || "");
+  
+  // Handle booking a package
+  const handleBookPackage = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login or register to book this package",
+        variant: "destructive"
+      });
+      setLocation("/auth");
+      return;
+    }
+    
+    // Check if user is a patient
+    if (user.role !== "patient") {
+      toast({
+        title: "Patient Account Required",
+        description: "Only patients can book treatment packages",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsBooking(true);
+      
+      // Call the API to book the package
+      const result = await bookPackage.mutateAsync(id || "");
+      
+      // Redirect to patient portal with the newly booked treatment
+      if (result.success) {
+        setLocation("/patient/portal");
+      }
+    } catch (error) {
+      console.error("Error booking package:", error);
+      toast({
+        title: "Booking Failed",
+        description: (error as Error)?.message || "Failed to book the package",
+        variant: "destructive"
+      });
+    } finally {
+      setIsBooking(false);
+    }
+  };
+  
+  // For now, we'll continue to use the mocked data for display formatting,
+  // but we fetch the real package data from API for booking
   useEffect(() => {
     // Debug info
     console.log("Package ID from params:", id);
-    console.log("Available packages:", trendingPackages.map(p => p.id));
     
-    // Find the package by ID
+    // Find the package by ID from our mocked data for display
     const pkg = trendingPackages.find(p => p.id === id);
-    console.log("Found package:", pkg);
     
     if (pkg) {
-      setPackageData(pkg);
+      setMockedPackageData(pkg);
       document.title = `${pkg.title} - MyDentalFly`;
     } else {
       document.title = "Package Not Found - MyDentalFly";
     }
-  }, [id]);
+    
+    // Fetch the real data from API
+    refetch();
+  }, [id, refetch]);
   
-  if (!packageData) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="container mx-auto py-16 px-4">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-4">Loading Package...</h1>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+  
+  // Error state
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="container mx-auto py-16 px-4">
+          <div className="text-center">
+            <Alert variant="destructive" className="mb-6 max-w-lg mx-auto">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                {(error as Error)?.message || "Failed to load package data. Please try again later."}
+              </AlertDescription>
+            </Alert>
+            <Button asChild>
+              <a href="/">Return to Homepage</a>
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+  
+  // No package found
+  if (!mockedPackageData || !actualPackageData) {
     return (
       <>
         <Navbar />
@@ -50,7 +156,7 @@ const PackageDetailPage = () => {
   }
   
   // Count complimentary excursions
-  const complimentaryExcursions = packageData.excursions.filter(exc => exc.included);
+  const complimentaryExcursions = mockedPackageData.excursions.filter(exc => exc.included);
   
   // Tier styles
   const tierStyles = {
@@ -70,28 +176,28 @@ const PackageDetailPage = () => {
           <ChevronRight className="h-4 w-4 mx-1" />
           <a href="/#packages" className="hover:text-primary">Packages</a>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <span className="text-gray-700">{packageData.title}</span>
+          <span className="text-gray-700">{mockedPackageData.title}</span>
         </div>
       
         {/* Package header section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <div className="mb-6 rounded-lg overflow-hidden h-[300px] shadow-md">
-              <img src={`/images/packages/${packageData.id}.png`} alt={packageData.title} className="w-full h-full object-cover" />
+              <img src={`/images/packages/${mockedPackageData.id}.png`} alt={mockedPackageData.title} className="w-full h-full object-cover" />
             </div>
             <div className="flex items-center gap-2 mb-3">
-              <Badge className={`${tierStyles[packageData.tier]} flex items-center gap-1`}>
+              <Badge className={`${tierStyles[mockedPackageData.tier]} flex items-center gap-1`}>
                 <Crown className="h-3 w-3" />
-                {packageData.tier.charAt(0).toUpperCase() + packageData.tier.slice(1)} Package
+                {mockedPackageData.tier.charAt(0).toUpperCase() + mockedPackageData.tier.slice(1)} Package
               </Badge>
               <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                {packageData.duration}
+                {mockedPackageData.duration}
               </Badge>
             </div>
             
-            <h1 className="text-3xl font-bold mb-4">{packageData.title}</h1>
+            <h1 className="text-3xl font-bold mb-4">{mockedPackageData.title}</h1>
             
-            <p className="text-gray-700 mb-6">{packageData.description}</p>
+            <p className="text-gray-700 mb-6">{mockedPackageData.description}</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <Card>
@@ -102,10 +208,10 @@ const PackageDetailPage = () => {
                   </h3>
                   
                   <div className="mb-2">
-                    <div className="font-medium">{packageData.clinic.name}</div>
+                    <div className="font-medium">{mockedPackageData.clinic.name}</div>
                     <div className="text-sm text-gray-600 flex items-center mt-1">
                       <MapPin className="h-4 w-4 mr-1 text-gray-500" />
-                      {packageData.clinic.location}
+                      {mockedPackageData.clinic.location}
                     </div>
                   </div>
                 </CardContent>
@@ -216,8 +322,31 @@ const PackageDetailPage = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  <Button className="w-full">Book This Package</Button>
+                  <Button 
+                    className="w-full" 
+                    onClick={handleBookPackage}
+                    disabled={isBooking || !actualPackageData}
+                  >
+                    {isBooking ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Booking...
+                      </>
+                    ) : (
+                      "Book This Package"
+                    )}
+                  </Button>
                   <Button variant="outline" className="w-full">Request More Information</Button>
+                  
+                  {/* Real package info from API */}
+                  {actualPackageData && (
+                    <div className="mt-3 p-3 border border-blue-100 bg-blue-50 rounded-md">
+                      <p className="text-xs text-blue-800 mb-1">API Package Information:</p>
+                      <p className="text-xs text-blue-600 font-medium">{actualPackageData.name}</p>
+                      <p className="text-xs text-blue-600">Price: {formatCurrency(Number(actualPackageData.price), actualPackageData.currency || 'GBP')}</p>
+                      <p className="text-xs text-blue-600">Clinic: {actualPackageData.clinic?.name}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
