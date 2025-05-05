@@ -53,6 +53,7 @@ const mockBookingData = {
 // Import components 
 import MessagesSection from '@/components/portal/MessagesSection';
 import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
+import SavedSpecialOffersSection from '@/components/portal/SavedSpecialOffersSection';
 import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
@@ -461,27 +462,75 @@ const PatientPortalPage: React.FC = () => {
   const { t } = useTranslation();
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, generateTestNotifications } = useNotifications();
   
-  // CRITICAL FIX: Clear any special offer data when the patient portal is loaded 
-  // This prevents redirect loops where a user gets stuck in the special offer flow
+  // Special offers handling: Save pending offers to user account instead of just clearing
   useEffect(() => {
-    // Check if we need to clear any lingering special offer data
+    // Only proceed if we have a logged in user
+    if (!user?.id) return;
+    
+    // Check if we have a pending special offer to save
     const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
     const processingOffer = sessionStorage.getItem('processingSpecialOffer');
     const activeOffer = sessionStorage.getItem('activeSpecialOffer');
     
-    if (pendingOfferData || processingOffer || activeOffer) {
-      console.log("🧹 Patient portal loaded - clearing all special offer data to prevent redirect loops");
+    const saveSpecialOfferToAccount = async (offerData: string) => {
+      try {
+        // Parse the offer data
+        const offer = JSON.parse(offerData);
+        
+        // Save the offer to the user's account
+        const response = await fetch('/api/special-offers/save-to-account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            specialOfferId: offer.id,
+            clinicId: parseInt(offer.clinic_id) || null,
+            offerDetails: offer,
+          }),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          toast({
+            title: "Special Offer Saved",
+            description: "We've saved this special offer to your account for future reference.",
+            variant: "default"
+          });
+        } else {
+          console.error("Failed to save special offer:", result.message);
+          toast({
+            title: "Couldn't Save Offer",
+            description: "There was an issue saving this offer to your account. You can try again later.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error saving special offer:", error);
+        toast({
+          title: "Error",
+          description: "There was an error processing your special offer.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    if (pendingOfferData) {
+      console.log("📋 Patient portal loaded - saving pending special offer to user account");
       
-      // Remove all special offer related data
+      // Save the pending offer to the user's account
+      saveSpecialOfferToAccount(pendingOfferData);
+    }
+    
+    // Always clear session storage to prevent redirect loops
+    if (pendingOfferData || processingOffer || activeOffer) {
+      console.log("🧹 Cleaning up special offer session storage");
+      
+      // Remove all special offer related data from session storage
       sessionStorage.removeItem('pendingSpecialOffer');
       sessionStorage.removeItem('processingSpecialOffer');
       sessionStorage.removeItem('activeSpecialOffer');
-      
-      toast({
-        title: "Ready for new offers",
-        description: "We've reset your special offer selection. You can browse and select new offers at any time.",
-        variant: "default"
-      });
     }
   }, [toast, user?.id]);
 
