@@ -571,6 +571,79 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Add an endpoint to refresh all special offer images
+router.post('/refresh-images', catchAsync(async (req, res) => {
+  const { forceRegenerate = false, naturalStyle = true } = req.body;
+  
+  console.log(`Starting to refresh all special offer images...`);
+  console.log(`Force regenerate: ${forceRegenerate}, Natural style: ${naturalStyle}`);
+  
+  const refreshedOffers: { id: string, title: string, image_url: string }[] = [];
+  
+  // Import modules dynamically to avoid circular dependencies
+  const { generateSpecialOfferImage } = await import('../services/openai-service');
+  const { default: updateHelper } = await import('./special-offers-update-helper');
+  
+  // Get all offers from all clinics
+  let totalOffers = 0;
+  
+  // Process each clinic's offers
+  for (const [clinicId, offers] of specialOffers.entries()) {
+    console.log(`Processing clinic ${clinicId} with ${offers.length} offers`);
+    totalOffers += offers.length;
+    
+    // Process each offer for this clinic
+    for (const offer of offers) {
+      try {
+        console.log(`Refreshing image for offer: ${offer.title} (${offer.id})`);
+        
+        // Generate a new image using our improved prompts
+        const imageResult = await generateSpecialOfferImage(
+          offer.title,
+          offer.offer_type || 'premium',
+          undefined, // no custom prompt
+          naturalStyle
+        );
+        
+        if (!imageResult || !imageResult.url) {
+          console.error(`Failed to generate image for offer ${offer.id}`);
+          continue;
+        }
+        
+        // Update the offer with the new image
+        const oldImageUrl = offer.banner_image;
+        offer.banner_image = imageResult.url;
+        offer.updated_at = new Date().toISOString();
+        
+        // Update all clients via WebSocket
+        await updateHelper.notifyClientsOfImageUpdate(offer.id, imageResult.url);
+        
+        // Add to the list of refreshed offers
+        refreshedOffers.push({
+          id: offer.id,
+          title: offer.title,
+          image_url: imageResult.url
+        });
+        
+        console.log(`✅ Successfully refreshed image for offer ${offer.id}`);
+        console.log(`Old URL: ${oldImageUrl}`);
+        console.log(`New URL: ${imageResult.url}`);
+      } catch (error) {
+        console.error(`Error refreshing image for offer ${offer.id}:`, error);
+      }
+    }
+  }
+  
+  // Return success response
+  res.json({
+    success: true,
+    message: `Refreshed ${refreshedOffers.length} of ${totalOffers} offer images`,
+    totalOffers,
+    refreshedCount: refreshedOffers.length,
+    refreshedOffers
+  });
+}));
+
 // Export both the router and specialOffers map for direct access
 export { specialOffers };
 export default router;

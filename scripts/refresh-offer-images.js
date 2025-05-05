@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
-const axios = require("axios");
-const { exec } = require("child_process");
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
+import { exec } from 'child_process';
 
 // Refresh all special offer images by calling the API to regenerate them
 async function refreshOfferImages() {
