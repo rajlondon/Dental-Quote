@@ -1541,20 +1541,35 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
                 
                 return (
-                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-blue-50 border-blue-100' : ''}>
+                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-primary/5 border-primary/20' : ''}>
                     <TableCell>
                       <div>
                         {treatment.specialOffer && (
-                          <Badge className="mb-2 bg-blue-100 text-blue-800 hover:bg-blue-100 flex items-center w-fit">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            Special Offer
-                          </Badge>
+                          <div className="relative mb-2">
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/15 flex items-center w-fit px-2 py-0.5 border border-primary/20">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Special Offer
+                            </Badge>
+                            <div className="absolute h-6 w-6 -right-1 -top-1 animate-pulse">
+                              <div className="absolute inset-0 rounded-full bg-primary/20 transform scale-75 animate-ping"></div>
+                              <div className="absolute inset-0 rounded-full bg-primary/10"></div>
+                            </div>
+                          </div>
                         )}
-                        <span className="font-medium">{treatment.name}</span>
+                        <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : ''}`}>
+                          {treatment.name}
+                        </span>
                         {treatment.specialOffer && (
-                          <span className="block text-xs text-blue-700 font-medium mt-1">
-                            {treatment.specialOffer.title}
-                          </span>
+                          <div className="flex items-center mt-1 gap-2">
+                            <span className="text-xs text-primary font-medium">
+                              {treatment.specialOffer.title}
+                            </span>
+                            <Badge variant="outline" className="h-4 text-[10px] px-1.5 bg-primary/5 border-primary/20 text-primary">
+                              {treatment.specialOffer.discountType === 'percentage' ? 
+                                `${treatment.specialOffer.discountValue}% OFF` : 
+                                `£${treatment.specialOffer.discountValue} OFF`}
+                            </Badge>
+                          </div>
                         )}
                         {treatment.guarantee && (
                           <span className="block text-xs text-gray-500">
@@ -1605,13 +1620,13 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <span className="line-through text-sm text-gray-500">
                                 £{Math.round(treatment.priceGBP * (100 / (100 - (treatment.specialOffer.discountType === 'percentage' ? treatment.specialOffer.discountValue : 0))))}
                               </span>
-                              <span className="font-bold text-blue-700">£{treatment.priceGBP}</span>
+                              <span className="font-bold text-primary">£{treatment.priceGBP}</span>
                             </div>
                             <span className="block text-xs text-gray-500">
                               ${treatment.priceUSD}
                             </span>
                             <div className="flex justify-end items-center mt-1">
-                              <Badge className="text-xs h-5 bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">
+                              <Badge className="text-xs h-5 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20">
                                 {treatment.specialOffer.discountType === 'percentage' 
                                   ? `Save ${treatment.specialOffer.discountValue}%` 
                                   : `Save £${treatment.specialOffer.discountValue}`}
