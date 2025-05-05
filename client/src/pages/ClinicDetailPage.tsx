@@ -72,18 +72,41 @@ const ClinicDetailPage: React.FC = () => {
 
   // Fetch clinic data
   useEffect(() => {
-    // In a real app, this would be an API call using the clinic ID
-    const foundClinic = clinics.find(c => 
-      c.id === params.id || 
-      c.name.toLowerCase().replace(/\s+/g, '-') === params.id
-    );
+    console.log("Searching for clinic with ID:", params.id);
+    
+    // First, try to find by exact ID
+    let foundClinic = clinics.find(c => c.id === params.id);
+    
+    // If not found, try other matching strategies
+    if (!foundClinic) {
+      // Try to match by name slug
+      foundClinic = clinics.find(c => 
+        c.name.toLowerCase().replace(/\s+/g, '-') === params.id
+      );
+      
+      // If still not found and the ID is numeric, try to find by index
+      if (!foundClinic && !isNaN(Number(params.id))) {
+        const index = Number(params.id);
+        if (index >= 0 && index < clinics.length) {
+          foundClinic = clinics[index];
+        }
+      }
+    }
     
     if (foundClinic) {
+      console.log("Found clinic:", foundClinic.name);
       setClinic(foundClinic);
       document.title = `${foundClinic.name} - MyDentalFly`;
+    } else {
+      console.error("Clinic not found for ID:", params.id);
+      toast({
+        title: "Clinic Not Found",
+        description: `We couldn't find a clinic with the ID: ${params.id}`,
+        variant: "destructive"
+      });
     }
     setLoading(false);
-  }, [params.id]);
+  }, [params.id, toast]);
 
   // Fetch special offers for this clinic
   useEffect(() => {
