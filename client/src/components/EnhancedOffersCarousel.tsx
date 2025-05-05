@@ -62,7 +62,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   // Fetch special offers data
   const { 
     data: offers, 
-    isLoading, 
+    isLoading: offersLoading, 
     error 
   } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/special-offers/homepage'],
@@ -428,15 +428,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     }
   };
 
-  // Handle quote request
+  const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
+  
+  // Handle quote request with authentication check
   const handleRequestQuote = (offer: SpecialOffer) => {
-    toast({
-      title: "Special Offer Selected",
-      description: `Your quote will include: ${offer.title}`,
-      variant: "default",
-    });
-    
-    // Build query parameters
+    // Build query parameters for the offer
     const params = new URLSearchParams({
       specialOffer: offer.id,
       offerTitle: offer.title,
@@ -446,8 +443,39 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       treatment: offer.applicable_treatments?.[0] || 'Dental Implants'
     });
     
-    // Navigate to quote page
-    window.location.href = `/your-quote?${params.toString()}`;
+    // Check if user is authenticated
+    if (!authLoading && user) {
+      // User is logged in, proceed with quote and notify
+      toast({
+        title: "Special Offer Selected",
+        description: `Your quote includes: ${offer.title}`,
+        variant: "default",
+      });
+      
+      // Navigate directly to quote page
+      window.location.href = `/your-quote?${params.toString()}`;
+    } else {
+      // User is not logged in, save offer details in sessionStorage
+      // This will be retrieved after login/registration
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify({
+        id: offer.id,
+        title: offer.title,
+        clinicId: offer.clinic_id,
+        discountValue: offer.discount_value,
+        discountType: offer.discount_type,
+        applicableTreatment: offer.applicable_treatments?.[0]
+      }));
+      
+      // Notify user they need to login
+      toast({
+        title: "Login Required",
+        description: "Please create an account or login to request this special offer",
+        variant: "default",
+      });
+      
+      // Redirect to login page
+      setLocation('/portal-login');
+    }
   };
 
   // Generate navigation dots
@@ -471,7 +499,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   };
 
   // Loading state
-  if (isLoading) {
+  if (offersLoading) {
     return (
       <div className={cn("my-12 py-8 px-4", className)}>
         <div className="container mx-auto">
