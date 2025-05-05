@@ -31,6 +31,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
+import { queryClient } from '@/lib/queryClient';
 
 // Mock data for the dashboard view
 const mockBookingData = {
@@ -233,6 +234,53 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
               <Button variant="outline" className="w-full mt-2">
                 {t('portal.dashboard.view_all', 'View All Notifications')}
               </Button>
+              
+              {/* Generate Test Notifications Button - Only visible in non-production environments */}
+              {process.env.NODE_ENV !== 'production' && (
+                <Button 
+                  variant="outline"
+                  className="w-full mt-2 text-sm text-amber-600 border-amber-200 hover:bg-amber-50 flex items-center gap-2"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/notifications/generate-test', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        }
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (data.success) {
+                        toast({
+                          title: "Test Notifications Created",
+                          description: `Created ${data.count} test notifications`,
+                          variant: "success",
+                        });
+                        
+                        // Refresh the notifications list
+                        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: data.message || "Failed to create test notifications",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Error generating test notifications:", error);
+                      toast({
+                        title: "Error",
+                        description: "Something went wrong. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  <Bell className="h-4 w-4" />
+                  Generate Test Notifications
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
