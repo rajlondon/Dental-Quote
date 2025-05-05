@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
 import { queryClient } from '@/lib/queryClient';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import TreatmentPlansSection from '@/components/portal/TreatmentPlansSection';
 
 // Mock data for the dashboard view

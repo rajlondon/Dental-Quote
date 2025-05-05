@@ -499,21 +499,34 @@ router.post("/book-package/:packageId", isAuthenticated, async (req: Request, re
       })
     });
     
-    return res.status(201).json({
-      success: true,
-      data: {
-        treatmentLine: newTreatmentLine,
-        quoteId: quoteId,
-        package: packageData
-      },
-      message: "Package booked successfully"
-    });
+    // For API calls, return JSON response
+    if (req.headers['accept'] === 'application/json') {
+      return res.status(201).json({
+        success: true,
+        data: {
+          treatmentLine: newTreatmentLine,
+          quoteId: quoteId,
+          package: packageData
+        },
+        message: "Package booked successfully"
+      });
+    }
+    
+    // For browser form submissions, redirect to the patient portal
+    return res.redirect('/client-portal?booked=true&package=' + encodeURIComponent(packageData.name));
   } catch (error) {
     console.error(`Error booking package ${packageId}:`, error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to book package"
-    });
+    
+    // For API calls, return JSON error
+    if (req.headers['accept'] === 'application/json') {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to book package"
+      });
+    }
+    
+    // For browser form submissions, redirect to error page
+    return res.redirect('/client-portal?error=booking-failed&package=' + encodeURIComponent(packageId));
   }
 });
 
