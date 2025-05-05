@@ -459,7 +459,7 @@ const PatientPortalPage: React.FC = () => {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const { t } = useTranslation();
-  const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, generateTestNotifications } = useNotifications();
 
   // Nav items with icons
   const navItems = [
@@ -615,32 +615,8 @@ const PatientPortalPage: React.FC = () => {
                 className="w-full justify-start text-blue-600 mb-2"
                 onClick={async () => {
                   try {
-                    const res = await fetch('/api/notifications/generate-test', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                    });
-                    
-                    if (res.ok) {
-                      toast({
-                        title: "Test Notifications Created",
-                        description: "Sample notifications have been generated for testing.",
-                        variant: "default",
-                      });
-                      // Reload notifications
-                      // Assuming we use SWR for data fetching
-                      fetch('/api/notifications').then(() => {
-                        toast({
-                          title: "Refreshing Notifications",
-                          description: "Refreshing your notifications list",
-                          variant: "default",
-                        });
-                      });
-                    } else {
-                      throw new Error('Failed to generate test notifications');
-                    }
-                  } catch (error) {
+                    await generateTestNotifications();
+                  } catch (error: any) {
                     toast({
                       title: "Error Creating Test Notifications",
                       description: error.message || "Something went wrong",
@@ -763,6 +739,7 @@ const PatientPortalPage: React.FC = () => {
               markAsRead={markAsRead}
               markAllAsRead={markAllAsRead}
               deleteNotification={deleteNotification}
+              generateTestNotifications={generateTestNotifications}
             />
           </div>
         </div>
@@ -786,6 +763,7 @@ const PatientPortalPage: React.FC = () => {
                 markAsRead={markAsRead}
                 markAllAsRead={markAllAsRead}
                 deleteNotification={deleteNotification}
+                generateTestNotifications={generateTestNotifications}
               />
               
               <Button 
