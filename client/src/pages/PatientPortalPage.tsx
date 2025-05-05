@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
 import { queryClient } from '@/lib/queryClient';
+import TreatmentPlansSection from '@/components/portal/TreatmentPlansSection';
 
 // Mock data for the dashboard view
 const mockBookingData = {
@@ -64,7 +65,6 @@ const AppointmentsSection = () => <div className="p-4">Appointments functionalit
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
 const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
-const TreatmentPlanSection = () => <div className="p-4">Treatment Plan details would go here</div>;
 const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
 const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
 
@@ -659,7 +659,9 @@ const PatientPortalPage: React.FC = () => {
       case 'profile':
         return <ProfileSection />;
       case 'treatment_plan':
-        return <TreatmentPlanSection />;
+        // Using mock data for quote ID as an example. In a real implementation, 
+        // this would come from the user's actual data
+        return <TreatmentPlansSection />;
       case 'dental_chart':
         return <DentalChartSection />;
       case 'treatment_comparison':
