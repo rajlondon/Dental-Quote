@@ -101,36 +101,35 @@ export class NotificationService {
       // Convert string ID to number if needed
       const userIdNumber = parseInt(userId, 10);
       
-      // Build query based on status filter
-      let query = `
-        SELECT id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
-        FROM notifications
-        WHERE user_id = $1
-      `;
+      // Debug - checking user ID value that's passed to the query
+      console.log(`Looking for notifications for user ID: ${userIdNumber}`);
       
-      // Add read status filter if needed
-      if (status === 'unread') {
-        query += ' AND is_read = false';
-      }
-      
-      // Add sorting
-      query += ' ORDER BY created_at DESC';
+      // Use simpler query with explicit parameter values for debugging
+      let query = "SELECT * FROM notifications";
       
       // Execute query
-      const result = await db.execute(query, [userIdNumber]);
+      const result = await db.execute(query);
+      console.log(`Found ${result.rows.length} total notifications in the database`);
+      
+      // Filter results in application code instead of SQL WHERE clause to avoid parameter issues
+      const userNotifications = result.rows.filter(row => row.user_id === userIdNumber);
+      console.log(`Found ${userNotifications.length} notifications for user ${userIdNumber}`);
+      
+      // Apply status filter if needed
+      const filteredNotifications = status === 'unread' 
+        ? userNotifications.filter(row => !row.is_read) 
+        : userNotifications;
+      
+      // Sort manually
+      filteredNotifications.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
       
       // Count unread notifications
-      const unreadQuery = `
-        SELECT COUNT(*) as count
-        FROM notifications
-        WHERE user_id = $1 AND is_read = false
-      `;
-      
-      const unreadResult = await db.execute(unreadQuery, [userIdNumber]);
-      const unreadCount = parseInt(unreadResult.rows[0]?.count || '0', 10);
+      const unreadCount = userNotifications.filter(row => !row.is_read).length;
       
       // Map results to our notification format
-      const notifications = result.rows.map(row => this.mapToLegacyFormat({
+      const notifications = filteredNotifications.map(row => this.mapToLegacyFormat({
         id: row.id,
         userId: row.user_id,
         title: row.title,
