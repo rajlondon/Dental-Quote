@@ -9,6 +9,21 @@ import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useAuth } from '@/hooks/use-auth';
+import clinicsData from '@/data/clinics.json';
+
+// Helper function to map numeric clinic IDs to clinic slug IDs
+function mapNumericClinicIdToSlug(numericId: string): string {
+  // Map of numeric IDs to slugs based on clinics.json data
+  const numericToSlugMap: Record<string, string> = {
+    "1": "dentgroup-istanbul",
+    "2": "istanbul-dental-care",
+    "3": "maltepe-dental-clinic",
+    "4": "dentakay-istanbul",
+    "5": "crown-dental-turkey"
+  };
+  
+  return numericToSlugMap[numericId] || numericId;
+}
 
 // Add window interface extension
 declare global {
@@ -708,7 +723,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                       Request Quote
                     </Button>
                     <Button variant="outline" asChild>
-                      <Link href={`/clinic/${offer.clinic_id || 1}`}>
+                      <Link href={`/clinic/${mapNumericClinicIdToSlug(offer.clinic_id || "1")}`}>
                         View Clinic
                       </Link>
                     </Button>
