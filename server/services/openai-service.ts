@@ -166,7 +166,7 @@ export async function generateSpecialOfferImage(
   offerTitle: string,
   offerType: string = "premium",
   customPrompt?: string,
-  naturalStyle: boolean = false
+  naturalStyle: boolean = true // Set default to true for all special offer images
 ): Promise<{ url: string }> {
   // Generate a unique timestamp and randomizer to ensure we get different images each time
   const timestamp = new Date().toISOString();
@@ -178,13 +178,22 @@ export async function generateSpecialOfferImage(
     // Still add the unique modifier to ensure different images
     const uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
     
-    // Use the custom prompt as is, just append the unique ID
-    const prompt = `${customPrompt} ${uniqueModifier}`;
+    // Enhance the custom prompt with specific photography directives
+    const enhancedPrompt = `${customPrompt}
+
+IMPORTANT TECHNICAL GUIDELINES:
+- Create the image using professional photography techniques with natural lighting, shadows, and reflections
+- Include subtle imperfections that real photographs have (slight asymmetry, natural vignetting, realistic depth of field)
+- Use the color science of professional cameras with accurate white balance and natural color rendering
+- Avoid perfect symmetry, unnaturally even lighting, or computer-generated perfection
+- The image should be indistinguishable from a professional photograph taken with high-end equipment
+
+${uniqueModifier}`;
     
-    console.log(`Generating special offer image with custom prompt (ID: ${uniqueId})`);
+    console.log(`Generating special offer image with enhanced custom prompt (ID: ${uniqueId})`);
     
     // Generate the image with wider format for banner images
-    const result = await generateImage(prompt, "1792x1024");
+    const result = await generateImage(enhancedPrompt, "1792x1024");
     
     // If successful, ensure the URL has a cache-busting parameter
     if (result && result.url) {
@@ -205,13 +214,18 @@ export async function generateSpecialOfferImage(
   // Base prompt structure with built-in uniqueness
   let basePrompt = "";
   
-  if (naturalStyle) {
-    // More photorealistic, less AI-looking prompt style
-    basePrompt = `Create a completely realistic photograph for a dental tourism marketing campaign featuring an offer called "${offerTitle}". The image should look exactly like a professional photograph taken with a high-end DSLR or mirrorless camera, not like digital art or an AI-generated image.`;
-  } else {
-    // Standard prompt style
-    basePrompt = `Create a completely unique and original marketing image for a dental tourism special offer titled "${offerTitle}".`;
-  }
+  // Always use the more photorealistic, natural style
+  basePrompt = `Create a completely realistic photograph for a dental tourism marketing campaign featuring an offer called "${offerTitle}". 
+
+The image should be created using professional photography techniques with the following characteristics:
+- Natural lighting with proper shadows and realistic reflections
+- Authentic perspective and depth that follows the physics of real camera lenses
+- Subtle imperfections and asymmetry found in real-world photography
+- Professional white balance and color grading typical of high-end commercial photography
+- The scene should have the visual qualities of an image shot with a professional DSLR or mirrorless camera
+
+This image must be indistinguishable from a professional photograph and avoid any characteristics that would make it look AI-generated.`;
+  
   
   // Additional unique identifier to force the model to generate a different image each time
   let uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
@@ -359,36 +373,89 @@ IMPORTANT: Study high-end hospitality and medical facility photography. The fina
       },
       {
         scene: "dental treatment result",
-        details: `Create a professional photograph showcasing high-quality dental work results. The image should show:
-- A natural, attractive close-up smile of a person with perfect teeth (just the smile, not full face)
-- Clean, professional dental photography lighting with natural colors
-- No visible dental tools or equipment - just the beautiful result
-- Natural-looking, not artificially white teeth with realistic reflections
-- A simple, neutral background typical of professional dental photography
-- The image should have the crisp, clean aesthetic of clinical photography
-- Use photorealistic lighting and colors that a professional dental photographer would use`
+        details: `Create a photograph of dental treatment results that resembles professional dental photography.
+
+SUBJECT:
+- A close-up view of a natural smile showing healthy, well-aligned teeth (not unnaturally white)
+- Frame just the mouth area through the chin and upper lip, not the full face
+- Natural lip color and skin texture with realistic pores and subtle imperfections
+- Focus on showing teeth that look like real ceramic dental work, not digitally perfect teeth
+- No visible dental tools, equipment, or clinic setting - just the smile result
+
+TECHNICAL ASPECTS:
+- Use professional dental photography techniques with proper ring flash lighting simulation
+- Create natural reflections on teeth surfaces that follow proper light physics
+- Include subtle imperfections that real dental photos have - slight variations in tooth color/shape
+- Apply proper color rendering with neutral white balance typical of clinical photography
+- Use macro lens (85-105mm equivalent) with shallow depth of field (f/5.6-f/8)
+- Maintain high detail in focal area with natural falloff at edges
+
+COMPOSITION:
+- Center the smile with professional dental photography framing
+- Ensure natural curvature of the dental arch with proper perspective
+- Show symmetry but avoid perfect mathematical symmetry
+- Create proper exposure with detail in both highlight and shadow areas
+- Capture realistic specular highlights on moist teeth surfaces
+
+IMPORTANT: Study real dental before/after photography from leading cosmetic dentists. The final image should be indistinguishable from a photograph taken by a professional dental photographer using specialized dental photography equipment.`
       },
       {
         scene: "istanbul skyline with clinic",
-        details: `Create a professional photograph combining Istanbul's skyline with a modern dental facility. The image should show:
-- A high-end dental clinic with glass walls offering a panoramic view of Istanbul
-- The iconic skyline with the Blue Mosque or Hagia Sophia visible in the distance
-- Modern dental chairs and equipment suggesting advanced technology
-- Clean, bright interior with professional medical lighting
-- The composition should balance the interior space and the stunning view
-- Golden hour lighting creating a warm, inviting atmosphere
-- Use photorealistic lighting and colors that a professional architectural photographer would use`
+        details: `Create a photograph of a modern dental clinic with Istanbul views that resembles professional architectural photography.
+
+SETTING:
+- A high-end dental clinic treatment room with floor-to-ceiling glass walls or windows
+- The iconic Istanbul skyline with Blue Mosque or Hagia Sophia visible in the distance
+- Modern dental chair and minimal equipment suggesting advanced technology
+- Clean, bright interior with a mix of natural light and professional medical lighting
+- Elegant, minimalist interior design with premium materials (marble, wood accents)
+
+TECHNICAL ASPECTS:
+- Use architectural/interior photography techniques with a balanced exposure
+- Create natural lighting with golden hour warm tones through the windows
+- Balance interior lighting with exterior light using HDR-like technique
+- Include realistic reflections on glass, chrome and polished surfaces
+- Apply proper white balance calibration across indoor/outdoor elements
+- Create proper depth of field that keeps both interior and view in reasonable focus
+- Include realistic light falloff and natural shadows in interior corners
+
+COMPOSITION:
+- Frame from a position that creates pleasing perspective lines toward the view
+- Balance the interior dental elements with the exterior skyline (rule of thirds)
+- Create a sense of depth with foreground, midground (clinic) and background (skyline)
+- Allow some subtle lens flare or highlight bloom from window light
+- Include subtle real-world imperfections in the interior like slight asymmetry
+
+IMPORTANT: Study high-end medical facility photography combined with architectural photography. The final image should be indistinguishable from a photograph taken by a professional architectural photographer during golden hour using professional equipment and lighting.`
       },
       {
         scene: "dental vacation concept",
-        details: `Create a professional photograph representing dental tourism in Istanbul. The image should show:
-- A split composition: on one side, a modern dental clinic interior, on the other, a glimpse of Istanbul landmarks
-- Clean, bright lighting on the dental side, warm golden light on the tourism side
-- Subtle transition between the two concepts, perhaps using glass or a doorway
-- Professional, uncluttered composition with premium aesthetic
-- No text or obvious branding elements
-- The image should convey both healthcare quality and travel experience 
-- Use photorealistic lighting and colors that would appear in a travel magazine feature`
+        details: `Create a photograph that combines dental care and tourism in Istanbul using professional travel and healthcare photography techniques.
+
+SETTING:
+- Create a transitional scene that connects a modern dental clinic with a view of Istanbul landmarks
+- Show a dental clinic waiting or relaxation area with large windows or glass doors opening to a terrace/balcony
+- Visible Istanbul landmarks (Hagia Sophia, Blue Mosque or Bosphorus) through the windows/doors
+- The interior should have modern furniture, marble surfaces, and premium healthcare design elements
+- The exterior/view should show the city in attractive golden hour lighting
+
+TECHNICAL ASPECTS:
+- Use techniques from luxury travel and hospitality photography
+- Balance interior lighting (bright, clean) with exterior golden hour warmth
+- Create realistic light transition from interior to exterior with proper exposure gradient
+- Include realistic reflections on glass surfaces with accurate transparency physics
+- Apply natural shadow transitions between areas rather than perfect even lighting
+- Use professional travel photography white balance adjustments (slightly warmer for exterior)
+- Include natural lens characteristics (subtle vignetting, slight lens distortion at edges)
+
+COMPOSITION:
+- Create a natural transitional flow from healthcare space to tourism vista
+- Use leading lines that draw the eye from foreground (clinic) to background (cityscape)
+- Frame with subtle rule-of-thirds placement of key elements
+- Include meaningful details that tell the story of medical tourism
+- Allow natural asymmetry and imperfections that real-world spaces contain
+
+IMPORTANT: Study high-end travel magazine photography and medical facility marketing. The final image should be indistinguishable from a photograph taken by a professional travel/hospitality photographer using high-end equipment and balanced lighting techniques.`
       }
     ];
     
