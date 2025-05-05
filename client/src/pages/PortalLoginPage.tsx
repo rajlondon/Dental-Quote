@@ -357,12 +357,15 @@ const PortalLoginPage: React.FC = () => {
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         
         // Check if there's a pending special offer to process
+        console.log("Checking sessionStorage for pendingSpecialOffer");
         const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+        console.log("pendingSpecialOffer data:", pendingOfferData);
+        
         if (pendingOfferData) {
           try {
             // Parse the pending offer data
             const offerData = JSON.parse(pendingOfferData);
-            console.log("Found pending special offer request:", offerData);
+            console.log("Successfully parsed pending special offer request:", offerData);
             
             // Create URL parameters for quote page
             const params = new URLSearchParams({
@@ -373,6 +376,8 @@ const PortalLoginPage: React.FC = () => {
               offerDiscountType: offerData.discountType || 'percentage',
               treatment: offerData.applicableTreatment || 'Dental Implants'
             });
+            
+            console.log("Created URL parameters for special offer:", params.toString());
             
             // Clear the pending offer from storage
             sessionStorage.removeItem('pendingSpecialOffer');
@@ -393,6 +398,15 @@ const PortalLoginPage: React.FC = () => {
             return; // Exit early as we're handling special redirect
           } catch (error) {
             console.error("Error processing pending special offer:", error);
+            console.error("Error details:", error instanceof Error ? error.message : String(error));
+            
+            // Show an error toast to inform the user
+            toast({
+              title: "Error Processing Offer",
+              description: "We couldn't process your special offer request. You'll be redirected to your dashboard.",
+              variant: "destructive",
+            });
+            
             // Continue with normal patient portal redirect if there's an error
           }
         }
