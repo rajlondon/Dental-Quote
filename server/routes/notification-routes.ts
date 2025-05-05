@@ -28,14 +28,28 @@ export const createNotificationRoutes = (notificationService: NotificationServic
   // Generate test notifications - development only endpoint
   router.post('/api/notifications/generate-test', async (req, res) => {
     try {
-      // Only allow if user is admin or if we're in development
-      if (process.env.NODE_ENV !== 'production' || (req.isAuthenticated() && req.user.role === 'admin')) {
+      // Check authentication and permissions
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Authentication required'
+        });
+      }
+      
+      // Only allow if user is logged in and we're in development or user is admin
+      if (process.env.NODE_ENV !== 'production' || req.user.role === 'admin') {
         // Import the function using ES module dynamic import
         const { generateTestNotifications } = await import('../utils/generate-test-notifications');
-        const count = await generateTestNotifications();
+        
+        // Get the current logged-in user's ID
+        const userId = req.user.id;
+        console.log(`Generating test notifications for user ${userId}`);
+        
+        // Pass the current user ID to create notifications for them
+        const count = await generateTestNotifications(userId);
         return res.status(200).json({ 
           success: true, 
-          message: `Successfully generated ${count} test notifications`,
+          message: `Successfully generated ${count} test notifications for user ${userId}`,
           count 
         });
       } else {
