@@ -455,11 +455,35 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
 const PatientPortalPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { logoutMutation } = useAuth();
+  const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const { t } = useTranslation();
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, generateTestNotifications } = useNotifications();
+  
+  // CRITICAL FIX: Clear any special offer data when the patient portal is loaded 
+  // This prevents redirect loops where a user gets stuck in the special offer flow
+  useEffect(() => {
+    // Check if we need to clear any lingering special offer data
+    const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+    const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+    const activeOffer = sessionStorage.getItem('activeSpecialOffer');
+    
+    if (pendingOfferData || processingOffer || activeOffer) {
+      console.log("🧹 Patient portal loaded - clearing all special offer data to prevent redirect loops");
+      
+      // Remove all special offer related data
+      sessionStorage.removeItem('pendingSpecialOffer');
+      sessionStorage.removeItem('processingSpecialOffer');
+      sessionStorage.removeItem('activeSpecialOffer');
+      
+      toast({
+        title: "Ready for new offers",
+        description: "We've reset your special offer selection. You can browse and select new offers at any time.",
+        variant: "default"
+      });
+    }
+  }, [toast, user?.id]);
 
   // Nav items with icons
   const navItems = [
@@ -497,6 +521,11 @@ const PatientPortalPage: React.FC = () => {
 
   // Handle logout
   const handleLogout = () => {
+    // Clear all special offer data when logging out
+    sessionStorage.removeItem('pendingSpecialOffer');
+    sessionStorage.removeItem('processingSpecialOffer');
+    sessionStorage.removeItem('activeSpecialOffer');
+    
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
         // Use direct window.location for more reliable navigation after logout
