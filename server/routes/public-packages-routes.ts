@@ -234,4 +234,15 @@ router.get("/packages/:packageId", async (req: Request, res: Response) => {
   }
 });
 
+// Route to redirect authenticated patients to the booking flow
+router.get("/book-package/:packageId", async (req: Request, res: Response) => {
+  const { packageId } = req.params;
+  
+  console.log(`[DEBUG] PUBLIC GET /api/public/book-package/${packageId} redirect request received`);
+  
+  // Redirect to the patient portal login with a special query parameter
+  // This query param will be picked up after login to continue the booking flow
+  return res.redirect(`/portal-login?booking=${packageId}&redirect=patient`);
+});
+
 export default router;
