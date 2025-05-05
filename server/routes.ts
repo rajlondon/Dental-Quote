@@ -25,6 +25,7 @@ import portalRoutes from "./routes/portal-routes";
 import fileRoutes from "./routes/fileRoutes";
 import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
+import treatmentPlansModuleRoutes from "./routes/treatment-plans-routes";
 import treatmentRoutes from "./routes/treatment-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
@@ -204,6 +205,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register treatment plan routes
   app.use('/api/treatment-plans', treatmentPlanRoutes);
+  
+  // Register treatment plans module routes (for packages and treatment lines)
+  app.use('/api/treatment-module', treatmentPlansModuleRoutes);
   
   // Register new treatment management routes for clinics
   app.use(treatmentRoutes);
