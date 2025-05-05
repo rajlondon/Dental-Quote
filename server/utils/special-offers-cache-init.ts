@@ -10,6 +10,14 @@ import { ImageCacheService } from './image-cache-service';
 import path from 'path';
 import fs from 'fs';
 
+// Type definition for special offer
+interface SpecialOffer {
+  id: string;
+  title: string;
+  banner_image?: string;
+  [key: string]: any; // Allow other properties
+}
+
 /**
  * Initialize the cache for all special offer banner images
  * This ensures all images are available in our cache
@@ -34,7 +42,7 @@ export async function initializeSpecialOfferImageCache(): Promise<void> {
   const allPromises: Promise<void>[] = [];
   
   specialOffers.forEach((clinicOffers, clinicId) => {
-    clinicOffers.forEach((offer, index) => {
+    clinicOffers.forEach((offer: SpecialOffer, index) => {
       totalOffers++;
       
       // Skip if the offer doesn't have a banner image
@@ -53,6 +61,12 @@ export async function initializeSpecialOfferImageCache(): Promise<void> {
         try {
           // Handle both relative paths and absolute URLs
           let imageUrl = offer.banner_image;
+          
+          // Skip if no image URL is available
+          if (!imageUrl) {
+            console.warn(`⚠️ No banner image for offer "${offer.title}"`);
+            return;
+          }
           
           // If it's a relative path, convert to absolute URL for the current environment
           if (imageUrl.startsWith('/')) {
