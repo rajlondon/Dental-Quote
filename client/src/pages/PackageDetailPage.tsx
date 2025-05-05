@@ -13,6 +13,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 
+// Helper function to format currency
+const formatCurrency = (amount: number, currency = 'GBP') => {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
 // PackageDetailPage component
 const PackageDetailPage = () => {
   const { id } = useParams();
@@ -225,15 +235,15 @@ const PackageDetailPage = () => {
                   </h3>
                   
                   <div className="mb-2">
-                    <div className="font-medium">{packageData.hotel.name}</div>
+                    <div className="font-medium">{mockedPackageData.hotel.name}</div>
                     <div className="flex items-center mt-1">
                       <div className="flex mr-2">
-                        {[...Array(packageData.hotel.stars)].map((_, i) => (
+                        {[...Array(mockedPackageData.hotel.stars)].map((_, i) => (
                           <Star key={i} className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
                         ))}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {packageData.hotel.area}
+                        {mockedPackageData.hotel.area}
                       </div>
                     </div>
                   </div>
@@ -244,7 +254,7 @@ const PackageDetailPage = () => {
             <div className="mb-8">
               <h3 className="font-medium mb-3">Treatments Included</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {packageData.treatments.map((treatment, i) => (
+                {mockedPackageData.treatments.map((treatment, i) => (
                   <div key={i} className="flex items-start">
                     <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                     <span>{treatment.count}x {treatment.name}</span>
@@ -257,24 +267,24 @@ const PackageDetailPage = () => {
               <h3 className="font-medium mb-4">What's Included in Your Package</h3>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="flex flex-col items-center">
-                  <Hotel className={`h-6 w-6 ${packageData.includedServices.hotel ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${packageData.includedServices.hotel ? 'text-gray-700' : 'text-gray-400'}`}>Hotel</span>
+                  <Hotel className={`h-6 w-6 ${mockedPackageData.includedServices.hotel ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.hotel ? 'text-gray-700' : 'text-gray-400'}`}>Hotel</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <Plane className={`h-6 w-6 ${packageData.includedServices.transfers ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${packageData.includedServices.transfers ? 'text-gray-700' : 'text-gray-400'}`}>Transfers</span>
+                  <Plane className={`h-6 w-6 ${mockedPackageData.includedServices.transfers ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.transfers ? 'text-gray-700' : 'text-gray-400'}`}>Transfers</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <Shield className={`h-6 w-6 ${packageData.includedServices.consultation ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${packageData.includedServices.consultation ? 'text-gray-700' : 'text-gray-400'}`}>Consultation</span>
+                  <Shield className={`h-6 w-6 ${mockedPackageData.includedServices.consultation ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.consultation ? 'text-gray-700' : 'text-gray-400'}`}>Consultation</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <Landmark className={`h-6 w-6 ${packageData.includedServices.cityTour ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${packageData.includedServices.cityTour ? 'text-gray-700' : 'text-gray-400'}`}>City Tour</span>
+                  <Landmark className={`h-6 w-6 ${mockedPackageData.includedServices.cityTour ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.cityTour ? 'text-gray-700' : 'text-gray-400'}`}>City Tour</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <MapPin className={`h-6 w-6 ${packageData.includedServices.excursions ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${packageData.includedServices.excursions ? 'text-gray-700' : 'text-gray-400'}`}>Excursions</span>
+                  <MapPin className={`h-6 w-6 ${mockedPackageData.includedServices.excursions ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.excursions ? 'text-gray-700' : 'text-gray-400'}`}>Excursions</span>
                 </div>
               </div>
             </div>
@@ -286,9 +296,9 @@ const PackageDetailPage = () => {
                 <div className="text-center mb-4">
                   <div className="text-sm text-gray-600 mb-1">Complete Package</div>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-primary">£{packageData.totalPrice}</span>
+                    <span className="text-3xl font-bold text-primary">£{mockedPackageData.totalPrice}</span>
                     <Badge className="bg-green-100 text-green-700 border-green-200">
-                      Save £{packageData.savings}
+                      Save £{mockedPackageData.savings}
                     </Badge>
                   </div>
                 </div>
@@ -363,7 +373,7 @@ const PackageDetailPage = () => {
           
           <TabsContent value="excursions" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {packageData.excursions.map((excursion) => (
+              {mockedPackageData.excursions.map((excursion) => (
                 <Card key={excursion.id} className={excursion.included ? 'border-green-200' : ''}>
                   <div className="relative h-48 bg-gray-100">
                     {excursion.included && (
@@ -404,7 +414,7 @@ const PackageDetailPage = () => {
                   <h4 className="font-medium text-lg">Arrival Day</h4>
                   <p className="text-gray-600 mt-2">
                     Arrive at Istanbul Airport where you'll be greeted by our representative. 
-                    You'll be transferred to {packageData.hotel.name} for check-in and rest.
+                    You'll be transferred to {mockedPackageData.hotel.name} for check-in and rest.
                   </p>
                 </div>
                 
@@ -414,7 +424,7 @@ const PackageDetailPage = () => {
                   </div>
                   <h4 className="font-medium text-lg">Initial Consultation</h4>
                   <p className="text-gray-600 mt-2">
-                    Visit {packageData.clinic.name} for your comprehensive dental assessment.
+                    Visit {mockedPackageData.clinic.name} for your comprehensive dental assessment.
                     The dentist will confirm your treatment plan and prepare for the procedures.
                   </p>
                 </div>
@@ -454,25 +464,25 @@ const PackageDetailPage = () => {
                       <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                       <span>All dental treatments listed</span>
                     </li>
-                    {packageData.includedServices.hotel && (
+                    {mockedPackageData.includedServices.hotel && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>{packageData.duration} accommodation at {packageData.hotel.name}</span>
+                        <span>{mockedPackageData.duration} accommodation at {mockedPackageData.hotel.name}</span>
                       </li>
                     )}
-                    {packageData.includedServices.transfers && (
+                    {mockedPackageData.includedServices.transfers && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                         <span>Airport transfers and clinic transportation</span>
                       </li>
                     )}
-                    {packageData.includedServices.consultation && (
+                    {mockedPackageData.includedServices.consultation && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                         <span>Initial consultation and follow-up appointments</span>
                       </li>
                     )}
-                    {packageData.includedServices.cityTour && (
+                    {mockedPackageData.includedServices.cityTour && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                         <span>Guided city tour of Istanbul</span>
