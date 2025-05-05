@@ -23,6 +23,26 @@ export function isOpenAIConfigured(): boolean {
   return !!process.env.OPENAI_API_KEY;
 }
 
+/**
+ * Check if a URL is from OpenAI/DALL-E
+ * This helps identify URLs that need special handling because they expire quickly
+ * @param url The URL to check
+ * @returns Boolean indicating if the URL is from OpenAI
+ */
+export function isOpenAIGeneratedImageUrl(url: string): boolean {
+  if (!url || !url.startsWith('https://')) {
+    return false;
+  }
+  
+  // Check for known OpenAI URL patterns
+  return (
+    url.includes('openai') || 
+    url.includes('oaidalleapiprodscus.blob.core.windows.net') ||
+    url.includes('dall-e') ||
+    url.includes('dalleapi')
+  );
+}
+
 // Check if we might be approaching rate limits
 function checkRateLimits(): boolean {
   const now = Date.now();
