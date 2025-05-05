@@ -519,7 +519,7 @@ const PatientPortalPage: React.FC = () => {
                 <div className="flex items-center w-full">
                   <span className="mr-3">{item.icon}</span>
                   <span>{t(`portal.nav.${item.id}`, item.label)}</span>
-                  {item.notificationCount && (
+                  {item.notificationCount > 0 && (
                     <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
                   )}
                 </div>
@@ -598,7 +598,7 @@ const PatientPortalPage: React.FC = () => {
                             <div className="flex items-center w-full">
                               <span className="mr-3">{item.icon}</span>
                               <span>{t(`portal.nav.${item.id}`, item.label)}</span>
-                              {item.notificationCount && (
+                              {item.notificationCount > 0 && (
                                 <Badge className="ml-auto bg-blue-500">{item.notificationCount}</Badge>
                               )}
                             </div>
