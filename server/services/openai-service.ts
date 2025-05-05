@@ -231,31 +231,56 @@ The image must look like it was taken by a professional transportation service p
   }
   else if (offerType.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consult")) {
     specificDetails = `
-Create a professional photograph of a dental consultation in a modern Istanbul clinic. The image should show:
-- A dentist in a white coat and professional attire explaining something to a patient
-- The dentist using a tablet or dental model to explain a procedure
-- A modern, clean dental office with contemporary furniture and subtle Turkish design elements
-- State-of-the-art dental equipment visible but not dominating the scene
-- Natural, professional lighting with soft shadows typical of medical photography
-- The patient looking engaged and comfortable (not showing dental work in progress)
-- The composition should be at eye level, capturing genuine interaction
-- Use photorealistic lighting and colors that a professional medical photographer would use
+Create a photograph that could be featured in a dental practice brochure or medical journal. The photo should be:
 
-The image must look like it was taken by a professional healthcare photographer with high-end equipment.`;
+SUBJECT:
+- A real dentist in a professional white coat consulting with a patient in an office setting (NOT in a dental treatment room)
+- Shot from an angle that captures their genuine interaction without feeling posed or artificial
+- The dentist showing a tablet or simple dental model to the patient (no equipment in use)
+- Both individuals should have realistic facial features, skin textures, and expressions
+- Focus on the consultation aspect - a conversation happening, not a procedure
+
+SETTING:
+- A dentist's office with typical details - desk, bookshelf, perhaps window with natural light
+- Shot with diffused lighting that creates gentle shadows and depth
+- Avoid any unrealistic or perfect geometric lighting fixtures
+- Include natural office elements like a cup of coffee, papers, or other realistic details
+- The setting should have subtle depth of field - focus on the people, background slightly blurred
+
+TECHNICAL ASPECTS:
+- Use a photography style similar to actual medical documentation or healthcare marketing
+- Lighting should mimic professional documentary-style photography with natural shadows
+- Capture the imperfections real photography has - slight grain, natural shadows, realistic depth
+- Use a color palette that matches real medical office photography - slightly desaturated, professional
+- The composition should feel like it was shot with a 50mm or 85mm lens at f/4.0
+
+IMPORTANT: The image must look like an actual photograph taken in a real dental clinic with real people, not an AI interpretation of one.`;
   }
   else if (offerType.toLowerCase().includes("implant") || offerTitle.toLowerCase().includes("implant")) {
     specificDetails = `
-Create a professional photograph showcasing the results of dental implant treatment. The image should feature:
-- A natural, attractive smile of a middle-aged person showing perfect teeth (result, not procedure)
-- The subject should have a genuine, confident expression (not exaggerated)
-- Clean, professional studio lighting with soft catch lights in the eyes
-- A simple, neutral background with subtle gradient
-- The composition should be a close-up focusing on the smile but showing enough face for context
-- Natural skin tones and texture without excessive retouching
-- The teeth should look realistic and not artificially white
-- Use photorealistic lighting and colors that a professional dental photographer would use
+Create a photograph suitable for a dental clinic's website showing implant treatment results:
 
-The image must look like it was taken by a professional dental photographer with specialized equipment for clinical photography.`;
+SUBJECT:
+- A portrait showing a natural smile of a real person (not an AI-generated face)
+- The person should have realistic skin texture with natural imperfections (small wrinkles, pores visible)
+- The expression should be genuinely happy but not exaggerated - like a patient satisfied with their treatment
+- Focus on a natural smile that shows healthy, well-proportioned teeth (not unnaturally white or perfect)
+- The person should be in casual professional attire, not a dental setting
+
+TECHNICAL ASPECTS:
+- Shoot with portrait photography techniques - 85mm lens equivalent, f/2.8-4.0 aperture
+- Use soft, natural lighting with visible catch lights in the eyes 
+- The background should be slightly out of focus (bokeh effect) like real portrait photography
+- Use natural light techniques - slight shadow under the chin, natural skin tones
+- Include some asymmetry and natural variations in both the face and framing
+- Apply minimal retouching to maintain authentic skin texture and realistic teeth coloration
+
+COMPOSITION:
+- Frame as a casual portrait where the smile is prominent but not the only focus
+- The image should have the slight imperfections of real photography (small shadows, natural contrast)
+- Avoid dental office elements or clinical equipment - this is about results, not procedures
+
+IMPORTANT: The image must look like a real photograph taken by a professional portrait photographer showing a genuine person, not an idealized or artificial representation.`;
   }
   else {
     // Generic special offer prompt with specific professional photography directions
@@ -318,7 +343,8 @@ The image must look like it was taken by a professional dental photographer with
   let commonEnding = `
 Do not include any text or captions within the image.
 Make it sophisticated and aspirational, like a high-end professional advertisement.
-The image must be completely different from previous generations, with unique composition and elements.`;
+The image must be completely different from previous generations, with unique composition and elements.
+IMPORTANT: Create the image with natural imperfections that real photographs have - authentic lighting, realistic shadows, and proper human proportions. Avoid the perfectly symmetrical, overly clean aesthetic that makes images look AI-generated.`;
 
   // For natural style, add additional directives
   if (naturalStyle) {
