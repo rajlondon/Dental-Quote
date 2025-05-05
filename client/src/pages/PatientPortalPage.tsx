@@ -628,15 +628,45 @@ const PatientPortalPage: React.FC = () => {
     try {
       const params = new URLSearchParams(window.location.search);
       const section = params.get('section');
+      const booked = params.get('booked');
+      const packageName = params.get('package');
+      const error = params.get('error');
+      
+      // Handle section navigation
       if (section && navItems.some(item => item.id === section)) {
         setActiveSection(section);
+      }
+      
+      // Handle package booking success
+      if (booked === 'true' && packageName) {
+        toast({
+          title: "Package Booked Successfully",
+          description: `You have successfully booked the ${packageName} package.`,
+          variant: "default",
+        });
+        
+        // Clean up URL parameters by replacing with just the current path
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      } 
+      // Handle package booking error
+      else if (error === 'booking-failed' && packageName) {
+        toast({
+          title: "Booking Failed",
+          description: `There was an error booking the ${packageName} package. Please try again or contact support.`,
+          variant: "destructive",
+        });
+        
+        // Clean up URL parameters
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
       }
     } catch (error) {
       console.error("Error parsing URL parameters:", error);
       // Fallback to dashboard if there's an error
       setActiveSection('dashboard');
     }
-  }, []);
+  }, [toast]);
 
   // Render the appropriate section based on activeSection
   const renderActiveSection = () => {
