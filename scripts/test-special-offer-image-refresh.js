@@ -18,8 +18,8 @@ const __dirname = path.dirname(__filename);
 const BASE_URL = 'http://localhost:5000';
 const TEST_IMAGE_PATH = path.join(__dirname, '../public/default-offer.jpg');
 const ADMIN_CREDENTIALS = {
-  email: 'clinic@mydentalfly.com',
-  password: 'clinicpassword'
+  email: 'admin@mydentalfly.com',
+  password: 'password123'
 };
 
 // Cookie jar to store session cookies
