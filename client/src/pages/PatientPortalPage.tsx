@@ -340,7 +340,13 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
               </Button>
             </div>
             
-            {hotelViewMode === 'selection' && <HotelSelectionSection />}
+            {hotelViewMode === 'selection' && <HotelSelectionSection 
+              showSelfArrangedOption={true}
+              clinicName="DentSpa Istanbul"
+              checkInDate={new Date(2025, 5, 10)}
+              checkOutDate={new Date(2025, 5, 17)}
+              numberOfGuests={2}
+            />}
             {hotelViewMode === 'confirmed' && <HotelAccommodationSection hotelBooking={{
               id: "123",
               hotelName: "Istanbul Luxury Suites",
@@ -362,7 +368,13 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
               paymentStatus: "paid",
               cancellationPolicy: "Free cancellation until 48 hours before check-in"
             }} />}
-            {hotelViewMode === 'self-arranged' && <HotelSelectionSection initialAccommodationType="self" />}
+            {hotelViewMode === 'self-arranged' && <HotelSelectionSection 
+              showSelfArrangedOption={true}
+              clinicName="DentSpa Istanbul"
+              checkInDate={new Date(2025, 5, 10)}
+              checkOutDate={new Date(2025, 5, 17)}
+              numberOfGuests={2}
+            />}
           </CardContent>
         </Card>
       </div>
