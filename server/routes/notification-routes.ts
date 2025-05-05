@@ -269,8 +269,60 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     }
   });
 
-  // Test endpoint for email notifications (only available in development mode)
+  // Test endpoint to generate sample notifications (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
+    router.post('/api/notifications/generate-test', async (req, res) => {
+      try {
+        if (!req.isAuthenticated()) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+        
+        // Create a variety of test notifications for the authenticated user
+        const testTypes = ['info', 'warning', 'success', 'error'];
+        const testEntityTypes = ['appointment', 'treatment', 'message', 'payment', 'document', 'system', 'offer'];
+        
+        const results = [];
+        
+        // Generate 5 test notifications with different types
+        for (let i = 0; i < 5; i++) {
+          const type = testTypes[i % testTypes.length];
+          const entityType = testEntityTypes[i % testEntityTypes.length];
+          
+          const testNotification = {
+            userId: req.user.id,
+            title: `Test ${type.charAt(0).toUpperCase() + type.slice(1)} Notification ${i+1}`,
+            message: `This is a test ${type} notification #${i+1} for testing the notification system.`,
+            isRead: i % 2 === 0, // alternate between read and unread
+            type: type,
+            action: '/patient/profile',
+            entityType: entityType,
+            entityId: i + 1,
+            // Include additional metadata
+            source_type: 'system',
+            source_id: 'test-generator',
+            target_type: 'patient'
+          };
+          
+          // Process the notification
+          const notification = await notificationService.createNotification(testNotification);
+          results.push(notification);
+        }
+        
+        res.status(201).json({
+          success: true,
+          message: `Generated ${results.length} test notifications`,
+          notifications: results
+        });
+      } catch (error) {
+        console.error('Error generating test notifications:', error);
+        res.status(500).json({ 
+          error: 'Failed to generate test notifications',
+          details: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
+    
+    // Email test endpoint
     router.post('/api/test/email-notification', async (req, res) => {
       try {
         if (!req.isAuthenticated()) {
@@ -278,15 +330,16 @@ export const createNotificationRoutes = (notificationService: NotificationServic
         }
 
         // Create a test notification for the authenticated user
+        // Making sure to only use fields that exist in the database schema
         const testNotification = {
           userId: req.user.id,
           title: 'Test Email Notification',
           message: 'This is a test email notification to verify the integration.',
-          content: 'This is a test email notification to verify the integration with more details.',
           isRead: false,
           type: 'info',
           action: '/patient/profile',
-          entityType: 'appointment'
+          entityType: 'appointment',
+          entityId: null
         };
 
         // Process the notification which should trigger an email

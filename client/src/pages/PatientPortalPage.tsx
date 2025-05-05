@@ -593,6 +593,45 @@ const PatientPortalPage: React.FC = () => {
               <UserCog className="h-5 w-5 mr-3" />
               {t('portal.account_settings', 'Account Settings')}
             </Button>
+            {/* Only show test notifications button in development */}
+            {process.env.NODE_ENV !== 'production' && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-blue-600 mb-2"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/notifications/generate-test', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                    });
+                    
+                    if (res.ok) {
+                      toast({
+                        title: "Test Notifications Created",
+                        description: "Sample notifications have been generated for testing.",
+                        variant: "default",
+                      });
+                      // Reload notifications
+                      mutate('/api/notifications');
+                    } else {
+                      throw new Error('Failed to generate test notifications');
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Error Creating Test Notifications",
+                      description: error.message || "Something went wrong",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                <Bell className="h-5 w-5 mr-3" />
+                Generate Test Notifications
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
               className="w-full justify-start text-gray-700"

@@ -101,15 +101,55 @@ export class NotificationService {
       
       // Building a safer query that only uses columns that exist in the database
       // Based on actual database schema: id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
-      const query = `
+      // First, make sure the table exists by checking with INFORMATION_SCHEMA
+      const checkTableQuery = `
+        SELECT EXISTS (
+          SELECT FROM pg_tables
+          WHERE schemaname = 'public'
+          AND tablename = 'notifications'
+        )
+      `;
+      
+      const tableCheck = await db.execute(checkTableQuery);
+      const tableExists = tableCheck.rows[0]?.exists === true;
+      
+      if (!tableExists) {
+        console.log('Notifications table does not exist, creating it');
+        // Create the table if it doesn't exist
+        const createTableQuery = `
+          CREATE TABLE IF NOT EXISTS notifications (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            title VARCHAR(100) NOT NULL,
+            message TEXT NOT NULL,
+            is_read BOOLEAN DEFAULT FALSE,
+            type VARCHAR(20) DEFAULT 'info',
+            action VARCHAR(255),
+            entity_type VARCHAR(50),
+            entity_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `;
+        await db.execute(createTableQuery);
+        console.log('Notifications table created');
+      }
+      
+      // We need to use a different approach for parameterized queries with conditionals
+      let query = `
         SELECT id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
         FROM notifications
         WHERE user_id = $1
-        ${status === 'unread' ? 'AND is_read = false' : ''}
-        ORDER BY created_at DESC
       `;
       
-      // Execute the raw query instead of using the drizzle ORM
+      // Add the status filter as a conditional
+      if (status === 'unread') {
+        query += ` AND is_read = false`;
+      }
+      
+      // Add the order by clause
+      query += ` ORDER BY created_at DESC`;
+      
+      // Execute the raw query with proper parameters
       const result = await db.execute(query, [userIdNum]);
       
       // Since we're using a raw query, transform the result to match our expected format
