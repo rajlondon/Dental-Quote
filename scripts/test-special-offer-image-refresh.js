@@ -18,21 +18,69 @@ const __dirname = path.dirname(__filename);
 const BASE_URL = 'http://localhost:5000';
 const TEST_IMAGE_PATH = path.join(__dirname, '../public/default-offer.jpg');
 const ADMIN_CREDENTIALS = {
-  username: 'admin@example.com',
-  password: 'password123'
+  email: 'clinic@mydentalfly.com',
+  password: 'clinicpassword'
 };
+
+// Cookie jar to store session cookies
+const cookieJar = {};
+
+// Add cookie handling to axios
+axios.interceptors.response.use(response => {
+  const setCookieHeader = response.headers['set-cookie'];
+  if (setCookieHeader) {
+    // Store cookies
+    setCookieHeader.forEach(cookie => {
+      const [cookiePart] = cookie.split(';');
+      const [name, value] = cookiePart.split('=');
+      cookieJar[name] = value;
+    });
+    console.log('Cookie received and stored');
+  }
+  return response;
+});
+
+// Add cookies to requests
+axios.interceptors.request.use(config => {
+  const cookieString = Object.entries(cookieJar)
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ');
+  
+  if (cookieString) {
+    config.headers.Cookie = cookieString;
+  }
+  return config;
+});
 
 // Utility to create authenticated client
 async function createAuthenticatedClient() {
-  const client = axios.create({ withCredentials: true });
+  // Create a client that will share our cookie jar
+  const client = axios.create({
+    withCredentials: true,
+    baseURL: BASE_URL
+  });
   
   try {
+    console.log('🔑 Attempting to log in as admin...');
     // Log in as admin
-    await client.post(`${BASE_URL}/api/auth/login`, ADMIN_CREDENTIALS);
+    const response = await client.post('/api/auth/login', ADMIN_CREDENTIALS);
     console.log('✅ Successfully authenticated as admin');
+    
+    // Check if we're actually authenticated by requesting current user
+    try {
+      const userResponse = await client.get('/api/auth/user');
+      console.log(`✅ Verified authentication, logged in as: ${userResponse.data.email}`);
+    } catch (verifyError) {
+      console.error('❌ Failed to verify authentication:', verifyError.message);
+    }
+    
     return client;
   } catch (error) {
     console.error('❌ Authentication failed:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     throw error;
   }
 }
