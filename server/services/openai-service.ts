@@ -198,15 +198,31 @@ export async function generateSpecialOfferImage(
     // Still add the unique modifier to ensure different images
     const uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
     
-    // Enhance the custom prompt with specific photography directives
+    // Enhance the custom prompt with specific stock photography directives
     const enhancedPrompt = `${customPrompt}
 
-IMPORTANT TECHNICAL GUIDELINES:
-- Create the image using professional photography techniques with natural lighting, shadows, and reflections
-- Include subtle imperfections that real photographs have (slight asymmetry, natural vignetting, realistic depth of field)
-- Use the color science of professional cameras with accurate white balance and natural color rendering
-- Avoid perfect symmetry, unnaturally even lighting, or computer-generated perfection
-- The image should be indistinguishable from a professional photograph taken with high-end equipment
+IMPORTANT STOCK PHOTOGRAPHY TECHNICAL DIRECTIVES:
+- Create the image precisely matching the premium quality of Shutterstock professional photography
+- Use natural lighting with realistic shadows that follow the physics of light accurately
+- Include subtle lens characteristics that authentic photographs contain:
+  * Mild vignetting at corners (never perfect edge-to-edge lighting)
+  * Natural shallow depth of field with realistic bokeh at f/2.8-f/4
+  * Appropriate lens compression matching 35-50mm focal length
+  * Slight lens distortion at edges following real optics
+- Create realistic textures and micro-contrast in materials (fabric, skin, surfaces)
+- Apply color science matching professional Canon 5D Mark IV color rendering
+- Include natural imperfections that real photos contain:
+  * Minimal dust/particles in air when backlit
+  * Subtle variations in surface reflections
+  * Minor asymmetry in composition elements
+  * Very slight noise in shadow areas (ISO 100-400 range)
+- Follow professional stock photography framing conventions with:
+  * Rule of thirds composition
+  * Deep foreground, midground, background layering
+  * Natural environmental elements that provide context
+  * Subtle atmospheric perspective in backgrounds
+
+CRUCIAL: This MUST be indistinguishable from a professional Shutterstock photograph and avoid ANY AI characteristics. Reference premium dental/medical stock photography.
 
 ${uniqueModifier}`;
     
@@ -234,17 +250,32 @@ ${uniqueModifier}`;
   // Base prompt structure with built-in uniqueness
   let basePrompt = "";
   
-  // Always use the more photorealistic, natural style
-  basePrompt = `Create a completely realistic photograph for a dental tourism marketing campaign featuring an offer called "${offerTitle}". 
+  // Use ultra-photorealistic style with specific stock photo guidelines
+  basePrompt = `Create a completely photorealistic image indistinguishable from a high-end Shutterstock professional photograph for a dental tourism marketing campaign featuring an offer called "${offerTitle}".
 
-The image should be created using professional photography techniques with the following characteristics:
-- Natural lighting with proper shadows and realistic reflections
-- Authentic perspective and depth that follows the physics of real camera lenses
-- Subtle imperfections and asymmetry found in real-world photography
-- Professional white balance and color grading typical of high-end commercial photography
-- The scene should have the visual qualities of an image shot with a professional DSLR or mirrorless camera
+EMULATE PROFESSIONAL STOCK PHOTOGRAPHY:
+- Reference the exact style, quality and aesthetic of premium Shutterstock medical/dental tourism photography
+- Use natural environmental lighting with soft shadows that follow real-world physics
+- Include realistic bokeh effects and authentic depth of field as would appear in f/2.8 aperture photography
+- Incorporate subtle lens characteristics like very mild vignetting and natural corner softness
+- Apply professional color grading with slightly increased vibrance (but never oversaturated)
+- Include natural imperfections: light dust particles, very subtle lens flare, minimal noise in shadow areas
 
-This image must be indistinguishable from a professional photograph and avoid any characteristics that would make it look AI-generated.`;
+COMPOSITION TECHNIQUES:
+- Frame with the rule of thirds and create foreground, midground and background elements
+- Use authentic focal lengths (24-70mm range) with appropriate compression effects
+- Create atmospheric perspective with subtle depth haze in backgrounds
+- Include realistic micro-contrast and texture in materials (fabric, skin, dental surfaces)
+- Ensure proper highlights and reflections on glossy/wet surfaces following real physics
+
+TECHNICAL EXCELLENCE:
+- Use the color science and rendering of a Canon 5D Mark IV with 24-70mm f/2.8 lens
+- Shoot at ISO 100-400 range with corresponding minimal noise characteristics
+- Apply professional white balance calibration with intentional slight warmth
+- Include the minor asymmetries and beautiful imperfections that real photos have
+- The final image should be impossible to distinguish from genuine professional photography
+
+IMPORTANT: The image must look like it belongs in a premium stock photo collection and avoid ANY characteristic that would identify it as AI-generated.`;
   
   
   // Additional unique identifier to force the model to generate a different image each time
