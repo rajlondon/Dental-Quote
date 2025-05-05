@@ -567,6 +567,7 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
     const { offerId } = req.params;
     const { 
       cachedImageUrl,      // Optional cached URL if provided by client
+      imageUrl,            // Direct image URL to use (from caching service)
       useOpenAI = false,   // Force using OpenAI instead of cached image
       customPrompt = ''    // Optional custom prompt for OpenAI image generation
     } = req.body;
@@ -715,8 +716,14 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
         foundOffer = offer;
         
         if (offer.banner_image) {
+          // Check if we have a direct image URL provided
+          if (imageUrl) {
+            // Use the direct image URL provided by the client
+            updatedImageUrl = imageUrl;
+            console.log(`Using provided image URL directly: ${imageUrl}`);
+          }
           // Check if we have a cached URL provided by the client
-          if (cachedImageUrl) {
+          else if (cachedImageUrl) {
             // Use the permanently cached URL from our image cache service
             updatedImageUrl = cachedImageUrl;
             console.log(`Using permanently cached image URL: ${cachedImageUrl}`);
