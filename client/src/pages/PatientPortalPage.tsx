@@ -555,6 +555,7 @@ const PatientPortalPage: React.FC = () => {
       icon: <Calendar className="h-5 w-5" />, 
       notificationCount: notifications.filter(n => n.type === 'appointment' && !n.read).length 
     },
+    { id: 'saved_offers', label: 'Saved Offers', icon: <CheckCircle2 className="h-5 w-5" /> },
     { id: 'documents', label: 'Documents', icon: <FileText className="h-5 w-5" /> },
     { id: 'treatment_plan', label: 'Treatment Plan', icon: <Stethoscope className="h-5 w-5" /> },
     { id: 'dental_chart', label: 'Dental Chart', icon: <BarChart2 className="h-5 w-5" /> },
@@ -631,6 +632,8 @@ const PatientPortalPage: React.FC = () => {
         return <DentalChartSection />;
       case 'treatment_comparison':
         return <TreatmentComparisonSection />;
+      case 'saved_offers':
+        return <SavedSpecialOffersSection />;
       case 'testing':
         return <PatientPortalTesting setActiveSection={setActiveSection} />;
       default:
