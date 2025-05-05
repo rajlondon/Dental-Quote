@@ -113,11 +113,16 @@ const ClinicCard = ({
     }
   };
   
-  // Make sure we have a valid clinic ID for navigation
+  // Ensure we have a proper clinic ID for navigation
+  // This is critical for linking to the ClinicDetailPage
   const clinicId = id || '';
   
-  // Add log for debugging clinic links
-  console.log(`Clinic card for ${name}, using ID for link: ${clinicId}`);
+  // Add detailed logging for debugging routing issues
+  console.log(`Clinic card for ${name} with ID: ${clinicId}`, {
+    clinicName: name,
+    clinicId: id,
+    link: `/clinic/${clinicId}`
+  });
   
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${featured ? 'ring-2 ring-primary' : ''}`}>

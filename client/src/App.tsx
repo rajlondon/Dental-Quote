@@ -16,6 +16,8 @@ import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
 import ClinicGuard from "@/components/ClinicGuard";
 import AdminPortalGuard from "@/components/AdminPortalGuard";
+import ClinicRouter from "@/pages/ClinicRouter";
+import ClinicDebugPage from "@/pages/ClinicDebugPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -133,7 +135,10 @@ function Router() {
         {() => <Redirect to="/your-quote" />}
       </Route>
       <Route path="/booking" component={BookingPage} />
+      {/* Create separate routes for clinic testing and clinic detail pages */}
       <Route path="/clinic/:id" component={ClinicDetailPage} />
+      <Route path="/clinic-test/:id" component={ClinicRouter} />
+      <Route path="/clinic-debug/:id?" component={ClinicDebugPage} />
       <Route path="/package/:id" component={PackageDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/portal">
