@@ -410,32 +410,23 @@ Frame with pleasing perspective lines leading to the view with rule-of-thirds co
       },
       {
         scene: "dental vacation concept",
-        details: `Create a photograph that combines dental care and tourism in Istanbul using professional travel and healthcare photography techniques.
+        details: `Create a photograph combining dental tourism in Istanbul using luxury travel and healthcare photography techniques.
 
 SETTING:
-- Create a transitional scene that connects a modern dental clinic with a view of Istanbul landmarks
-- Show a dental clinic waiting or relaxation area with large windows or glass doors opening to a terrace/balcony
-- Visible Istanbul landmarks (Hagia Sophia, Blue Mosque or Bosphorus) through the windows/doors
-- The interior should have modern furniture, marble surfaces, and premium healthcare design elements
-- The exterior/view should show the city in attractive golden hour lighting
+- Modern dental clinic lounge area with large windows/doors to terrace
+- Istanbul landmarks (Hagia Sophia/Blue Mosque/Bosphorus) visible through windows
+- Premium healthcare interior with marble surfaces and high-end furniture
+- Golden hour lighting on cityscape with clean interior lighting
+- Transitional space connecting medical care with Istanbul travel experience
 
-TECHNICAL ASPECTS:
-- Use techniques from luxury travel and hospitality photography
-- Balance interior lighting (bright, clean) with exterior golden hour warmth
-- Create realistic light transition from interior to exterior with proper exposure gradient
-- Include realistic reflections on glass surfaces with accurate transparency physics
-- Apply natural shadow transitions between areas rather than perfect even lighting
-- Use professional travel photography white balance adjustments (slightly warmer for exterior)
-- Include natural lens characteristics (subtle vignetting, slight lens distortion at edges)
+TECHNICAL:
+- Luxury travel and hospitality photography style
+- Balanced lighting between bright interior and warm golden hour exterior
+- Professional reflections on glass with accurate transparency physics
+- Subtle natural lens characteristics (mild vignetting, minimal distortion)
+- Travel magazine color grading with slightly warmer exterior tones
 
-COMPOSITION:
-- Create a natural transitional flow from healthcare space to tourism vista
-- Use leading lines that draw the eye from foreground (clinic) to background (cityscape)
-- Frame with subtle rule-of-thirds placement of key elements
-- Include meaningful details that tell the story of medical tourism
-- Allow natural asymmetry and imperfections that real-world spaces contain
-
-IMPORTANT: Study high-end travel magazine photography and medical facility marketing. The final image should be indistinguishable from a photograph taken by a professional travel/hospitality photographer using high-end equipment and balanced lighting techniques.`
+Create an image with natural flow from healthcare space to tourism view using leading lines. The final image should exactly match high-end travel magazine photography featuring medical tourism destinations.`
       }
     ];
     
@@ -445,19 +436,15 @@ IMPORTANT: Study high-end travel magazine photography and medical facility marke
     specificDetails = selectedScene.details;
   }
   
-  // Common ending for all prompts
+  // Common ending for all prompts - optimized for length
   let commonEnding = `
-Do not include any text or captions within the image.
-Make it sophisticated and aspirational, like a high-end professional advertisement.
-The image must be completely different from previous generations, with unique composition and elements.
-IMPORTANT: Create the image with natural imperfections that real photographs have - authentic lighting, realistic shadows, and proper human proportions. Avoid the perfectly symmetrical, overly clean aesthetic that makes images look AI-generated.`;
+No text or captions in the image. Create sophisticated and aspirational high-end advertisement style.
+Include natural photographic imperfections - authentic lighting, realistic shadows, and slight asymmetry.
+Avoid perfect symmetry or unnaturally clean aesthetics that make images look AI-generated.`;
 
-  // For natural style, add additional directives
+  // Brief additives for natural style 
   if (naturalStyle) {
-    commonEnding += `
-Make the image appear completely natural and photorealistic.
-Avoid any stylistic elements that make it look AI-generated.
-It should be indistinguishable from a professional stock photograph.`;
+    commonEnding += ` Create a completely natural, photorealistic image indistinguishable from professional stock photography.`;
   }
   
   // Add the unique modifier
