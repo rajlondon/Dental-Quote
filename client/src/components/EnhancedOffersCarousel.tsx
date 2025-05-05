@@ -450,20 +450,34 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     
     // Check if user is authenticated
     if (!authLoading && user) {
-      console.log("User authenticated, proceeding directly to quote page");
+      console.log("User authenticated, proceeding to quote form with special offer context");
+      
+      // User is logged in, save offer details for use in quote flow
+      const offerData = {
+        id: offer.id,
+        title: offer.title,
+        clinicId: offer.clinic_id,
+        discountValue: offer.discount_value,
+        discountType: offer.discount_type,
+        applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants'
+      };
+      
+      // Store the special offer in sessionStorage for use by the quote form
+      // and eventually by the clinic results page
+      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+      console.log("Saved activeSpecialOffer to sessionStorage:", offerData);
+      
       // User is logged in, proceed with quote and notify
       toast({
         title: "Special Offer Selected",
-        description: `Your quote includes: ${offer.title}`,
+        description: `${offer.title} will be applied to your quote results.`,
         variant: "default",
       });
       
-      // Using window.location is more reliable for preserving URL parameters
-      console.log("User is authenticated, navigating directly to quote page");
-      console.log("Navigation URL:", `/your-quote?${params.toString()}`);
-      
-      // Use window.location.href for a full page navigation that preserves all parameters
-      window.location.href = `/your-quote?${params.toString()}`;
+      // Redirect to the quote form, which will then proceed to results
+      // with the special offer clinic highlighted
+      console.log("Redirecting to quote form with special offer context");
+      window.location.href = '/quote-form';
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
       // User is not logged in, save offer details in sessionStorage

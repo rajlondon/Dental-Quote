@@ -379,20 +379,26 @@ const PortalLoginPage: React.FC = () => {
             
             console.log("Created URL parameters for special offer:", params.toString());
             
-            // Clear the pending offer from storage
+            // Clear the pending offer from sessionStorage
             sessionStorage.removeItem('pendingSpecialOffer');
+            
+            // Store the special offer in sessionStorage for use by the quote form
+            // and eventually by the clinic results page
+            sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+            console.log("Saved activeSpecialOffer to sessionStorage:", offerData);
             
             // Notify user
             toast({
-              title: "Welcome!",
-              description: `Processing your quote request for: ${offerData.title}`,
+              title: "Special Offer Selected",
+              description: `${offerData.title} will be applied to your quote results.`,
               variant: "default",
             });
             
-            // Redirect to quote page with the special offer parameters
+            // Redirect to the quote form, which will then proceed to results
+            // with the special offer clinic highlighted
             setTimeout(() => {
-              console.log("Redirecting to quote page with special offer");
-              window.location.href = `/your-quote?${params.toString()}`;
+              console.log("Redirecting to quote form with special offer context");
+              window.location.href = '/quote-form';
             }, 100);
             
             return; // Exit early as we're handling special redirect
