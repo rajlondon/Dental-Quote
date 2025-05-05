@@ -158,7 +158,7 @@ const ClinicCard = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2">
-          <Link href={`/clinic/${id || name.toLowerCase().replace(/\s+/g, '-')}`} className="w-full">
+          <Link href={`/clinic/${id}`} className="w-full">
             <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
               View Clinic
             </Button>
