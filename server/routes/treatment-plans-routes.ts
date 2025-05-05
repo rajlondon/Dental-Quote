@@ -36,13 +36,33 @@ const treatmentLineSchema = z.object({
 
 // Get all available packages
 router.get("/packages", isAuthenticated, async (req: Request, res: Response) => {
+  console.log(`[DEBUG] GET /packages request received, authenticated as:`, 
+    req.user ? `User ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated');
+  
   try {
     const packagesList = await db.select().from(packages).where(eq(packages.isActive, true));
     
-    return res.status(200).json({
+    console.log(`[DEBUG] Found ${packagesList.length} active packages`);
+    
+    // Let's make sure we're returning valid JSON
+    const responseData = {
       success: true,
       data: packagesList
-    });
+    };
+    
+    // Verify the data can be serialized properly
+    try {
+      const serializedData = JSON.stringify(responseData);
+      console.log(`[DEBUG] Successfully serialized package data: ${serializedData.substring(0, 100)}...`);
+      
+      return res.status(200).json(responseData);
+    } catch (jsonError) {
+      console.error('[ERROR] Failed to serialize package data to JSON:', jsonError);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to serialize package data"
+      });
+    }
   } catch (error) {
     console.error("Error fetching packages:", error);
     return res.status(500).json({
@@ -56,6 +76,9 @@ router.get("/packages", isAuthenticated, async (req: Request, res: Response) => 
 router.get("/packages/:packageId", isAuthenticated, async (req: Request, res: Response) => {
   const { packageId } = req.params;
   
+  console.log(`[DEBUG] GET /packages/${packageId} request received, authenticated as:`, 
+    req.user ? `User ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated');
+  
   try {
     const packageData = await db.query.packages.findFirst({
       where: eq(packages.id, packageId as string),
@@ -65,16 +88,34 @@ router.get("/packages/:packageId", isAuthenticated, async (req: Request, res: Re
     });
     
     if (!packageData) {
+      console.log(`[ERROR] Package not found: ${packageId}`);
       return res.status(404).json({
         success: false,
         message: "Package not found"
       });
     }
     
-    return res.status(200).json({
+    console.log(`[DEBUG] Package data found for ${packageId}`);
+    
+    // Let's make sure we're returning valid JSON
+    const responseData = {
       success: true,
       data: packageData
-    });
+    };
+    
+    // Verify the data can be serialized properly
+    try {
+      const serializedData = JSON.stringify(responseData);
+      console.log(`[DEBUG] Successfully serialized package data: ${serializedData.substring(0, 100)}...`);
+      
+      return res.status(200).json(responseData);
+    } catch (jsonError) {
+      console.error('[ERROR] Failed to serialize package data to JSON:', jsonError);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to serialize package data"
+      });
+    }
   } catch (error) {
     console.error(`Error fetching package ${packageId}:`, error);
     return res.status(500).json({
