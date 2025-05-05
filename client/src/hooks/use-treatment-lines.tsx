@@ -31,11 +31,13 @@ export function useTreatmentLines(quoteId?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["/api/treatment-module/treatment-lines", quoteId],
+    queryKey: ["/api/treatment-plans/treatment-lines", quoteId],
     queryFn: async () => {
       if (!quoteId) return [];
       
-      const response = await apiRequest("GET", `/api/treatment-module/treatment-lines/${quoteId}`);
+      // Updated URL to match server-side route
+      console.log(`Sending GET request to /api/treatment-plans/treatment-lines/${quoteId}`);
+      const response = await apiRequest("GET", `/api/treatment-plans/treatment-lines/${quoteId}`);
       const data = await response.json() as TreatmentLineResponse;
       
       if (!data.success) {
@@ -53,9 +55,11 @@ export function useTreatmentLines(quoteId?: string) {
     isLoading: isSummaryLoading,
     error: summaryError,
   } = useQuery({
-    queryKey: ["/api/treatment-module/patient/treatment-summary"],
+    queryKey: ["/api/treatment-plans/patient/treatment-summary"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/treatment-module/patient/treatment-summary");
+      // Updated URL to match server-side route
+      console.log("Sending GET request to /api/treatment-plans/patient/treatment-summary");
+      const response = await apiRequest("GET", "/api/treatment-plans/patient/treatment-summary");
       const data = await response.json() as TreatmentSummaryResponse;
       
       if (!data.success) {
@@ -69,12 +73,15 @@ export function useTreatmentLines(quoteId?: string) {
   // Add a new treatment line
   const addTreatmentLine = useMutation({
     mutationFn: async (treatmentLine: any) => {
-      const response = await apiRequest("POST", "/api/treatment-module/treatment-lines", treatmentLine);
+      // Updated URL to match server-side route
+      console.log("Sending POST request to /api/treatment-plans/treatment-lines with data:", treatmentLine);
+      const response = await apiRequest("POST", "/api/treatment-plans/treatment-lines", treatmentLine);
       return await response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      // Updated query keys to match the new endpoint paths
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/treatment-lines", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/patient/treatment-summary"] });
       
       toast({
         title: "Treatment added",
@@ -93,13 +100,15 @@ export function useTreatmentLines(quoteId?: string) {
   // Update an existing treatment line
   const updateTreatmentLine = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      console.log(`Sending PUT request to /api/treatment-module/treatment-lines/${id} with data:`, data);
-      const response = await apiRequest("PUT", `/api/treatment-module/treatment-lines/${id}`, data);
+      // Updated URL to match server-side route
+      console.log(`Sending PUT request to /api/treatment-plans/treatment-lines/${id} with data:`, data);
+      const response = await apiRequest("PUT", `/api/treatment-plans/treatment-lines/${id}`, data);
       return await response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      // Updated query keys to match the new endpoint paths
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/treatment-lines", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/patient/treatment-summary"] });
       
       toast({
         title: "Treatment updated",
@@ -118,13 +127,15 @@ export function useTreatmentLines(quoteId?: string) {
   // Delete a treatment line (soft delete)
   const deleteTreatmentLine = useMutation({
     mutationFn: async (id: string) => {
-      console.log(`Sending DELETE request to /api/treatment-module/treatment-lines/${id}`);
-      const response = await apiRequest("DELETE", `/api/treatment-module/treatment-lines/${id}`);
+      // Updated URL to match server-side route
+      console.log(`Sending DELETE request to /api/treatment-plans/treatment-lines/${id}`);
+      const response = await apiRequest("DELETE", `/api/treatment-plans/treatment-lines/${id}`);
       return await response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      // Updated query keys to match the new endpoint paths
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/treatment-lines", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/patient/treatment-summary"] });
       
       toast({
         title: "Treatment removed",
