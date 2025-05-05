@@ -75,6 +75,7 @@ interface DashboardSectionProps {
 // Dashboard section component
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
   return (
@@ -246,7 +247,8 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json'
-                        }
+                        },
+                        credentials: 'include'
                       });
                       
                       const data = await response.json();
