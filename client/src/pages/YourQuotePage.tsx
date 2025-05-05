@@ -368,6 +368,22 @@ const ClinicCard: React.FC<{
               <p className="text-3xl font-bold text-blue-600">£{clinic.priceGBP}</p>
               <p className="text-sm text-gray-500">${clinic.priceUSD}</p>
               <p className="text-xs text-gray-500 mt-1">Treatment price</p>
+              
+              {/* Display special offer details if available */}
+              {clinic.hasSpecialOffer && clinic.specialOfferDetails && (
+                <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
+                  <p className="text-sm font-medium text-blue-700 flex items-center">
+                    <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
+                    {clinic.specialOfferDetails.title}
+                  </p>
+                  <p className="text-xs font-bold text-blue-800">
+                    {clinic.specialOfferDetails.discountType === 'percentage' 
+                      ? `${clinic.specialOfferDetails.discountValue}% OFF` 
+                      : `£${clinic.specialOfferDetails.discountValue} OFF`
+                    }
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="mb-4">
