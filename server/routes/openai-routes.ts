@@ -14,52 +14,6 @@ import { getWebSocketService } from '../services/websocketService';
 
 const router = express.Router();
 
-// Get reference to the existing WebSocket service to emit updates
-// This doesn't create a new WebSocket server, just gets a reference to the existing one
-
-/**
- * Check if OpenAI API is configured
- * GET /api/openai/status
- */
-router.get('/status', (req: Request, res: Response) => {
-  const configured = isOpenAIConfigured();
-  
-  res.json({
-    success: true,
-    configured,
-    message: configured 
-      ? 'OpenAI API is properly configured' 
-      : 'OpenAI API is not configured. Set the OPENAI_API_KEY environment variable.'
-  });
-});
-
-/**
- * Generate an image using DALL-E
- * POST /api/openai/generate-image
- */
-router.post('/generate-image', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
-  const { prompt, size } = req.body;
-  
-  if (!prompt) {
-    throw new AppError('Prompt is required', 400);
-  }
-  
-  if (!isOpenAIConfigured()) {
-    throw new AppError('OpenAI API is not configured', 503);
-  }
-  
-  const result = await generateImage(prompt, size);
-  
-  res.json({
-    success: true,
-    data: result
-  });
-}));
-
-/**
- * Generate a special offer image and save it to S3
- * POST /api/openai/special-offer-image
- */
 // Helper function to check API key auth for script access
 const checkApiKeyAuth = (req: Request): boolean => {
   const authHeader = req.headers.authorization;
@@ -84,6 +38,65 @@ const checkApiKeyAuth = (req: Request): boolean => {
   
   return false;
 };
+
+// Get reference to the existing WebSocket service to emit updates
+// This doesn't create a new WebSocket server, just gets a reference to the existing one
+
+/**
+ * Check if OpenAI API is configured
+ * GET /api/openai/status
+ */
+router.get('/status', (req: Request, res: Response) => {
+  const configured = isOpenAIConfigured();
+  
+  res.json({
+    success: true,
+    configured,
+    message: configured 
+      ? 'OpenAI API is properly configured' 
+      : 'OpenAI API is not configured. Set the OPENAI_API_KEY environment variable.'
+  });
+});
+
+/**
+ * Generate an image using DALL-E
+ * POST /api/openai/generate-image
+ * Supports both session authentication and API key authentication
+ */
+router.post('/generate-image', catchAsync(async (req: Request, res: Response) => {
+  // Allow both cookie-based auth and API key auth
+  const isApiKeyAuth = checkApiKeyAuth(req);
+  const isUserAuth = req.isAuthenticated();
+  
+  if (!isUserAuth && !isApiKeyAuth) {
+    throw new AppError('Authentication required. Please log in to access this resource.', 401);
+  }
+  
+  const { prompt, size } = req.body;
+  
+  if (!prompt) {
+    throw new AppError('Prompt is required', 400);
+  }
+  
+  if (!isOpenAIConfigured()) {
+    throw new AppError('OpenAI API is not configured', 503);
+  }
+  
+  console.log(`Generating image for prompt: ${prompt.substring(0, 100)}...`);
+  console.log(`Auth method: ${isUserAuth ? 'User session' : 'API key'}`);
+  
+  const result = await generateImage(prompt, size);
+  
+  res.json({
+    success: true,
+    data: result
+  });
+}));
+
+/**
+ * Generate a special offer image and save it to S3
+ * POST /api/openai/special-offer-image
+ */
 
 router.post('/special-offer-image', catchAsync(async (req: Request, res: Response) => {
   // Allow both cookie-based auth and API key auth
