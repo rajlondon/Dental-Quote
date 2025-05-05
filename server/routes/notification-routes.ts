@@ -25,6 +25,34 @@ declare global {
 export const createNotificationRoutes = (notificationService: NotificationService) => {
   const router = express.Router();
   
+  // Generate test notifications - development only endpoint
+  router.post('/api/notifications/generate-test', async (req, res) => {
+    try {
+      // Only allow if user is admin or if we're in development
+      if (process.env.NODE_ENV !== 'production' || (req.isAuthenticated() && req.user.role === 'admin')) {
+        const { generateTestNotifications } = require('../utils/generate-test-notifications');
+        const count = await generateTestNotifications();
+        return res.status(200).json({ 
+          success: true, 
+          message: `Successfully generated ${count} test notifications`,
+          count 
+        });
+      } else {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Access denied. This endpoint is only available in development mode or for admin users.'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to generate test notifications:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to generate test notifications', 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
   // Interface for engagement analytics data
   interface NotificationAnalytics {
     total_notifications: number;
@@ -241,20 +269,14 @@ export const createNotificationRoutes = (notificationService: NotificationServic
 
         // Create a test notification for the authenticated user
         const testNotification = {
-          id: uuidv4(),
+          userId: req.user.id,
           title: 'Test Email Notification',
           message: 'This is a test email notification to verify the integration.',
-          target_type: 'patient',
-          target_id: String(req.user.id),
-          source_type: 'system',
-          source_id: 'system',
-          category: 'appointment', // Using appointment category to trigger email
-          subcategory: 'test',
-          priority: 'high', // High priority to trigger email
-          status: 'unread',
-          action_url: '/patient/profile',
-          created_at: new Date(),
-          updated_at: new Date()
+          content: 'This is a test email notification to verify the integration with more details.',
+          isRead: false,
+          type: 'info',
+          action: '/patient/profile',
+          entityType: 'appointment'
         };
 
         // Process the notification which should trigger an email
