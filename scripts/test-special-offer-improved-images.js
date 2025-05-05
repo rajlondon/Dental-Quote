@@ -4,10 +4,12 @@
  * This script will generate new special offer images with our enhanced prompts
  * to compare against the previous AI-generated images.
  */
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const FormData = require('form-data');
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import FormData from 'form-data';
 
 // Set global variables
 const API_URL = 'http://localhost:5000';
@@ -33,41 +35,46 @@ const TEST_OFFERS = [
   }
 ];
 
-// Create authenticated client with clinic credentials
+// Create authenticated client with clinic credentials - using cookie session
 async function createAuthenticatedClient() {
   try {
-    // Log in as a clinic user
-    const loginResponse = await axios.post(`${API_URL}/api/auth/login`, {
-      email: 'clinic@example.com',
-      password: 'clinic123'
+    // For session-based authentication, we need to login using our credentials
+    // Create a cookie-jar enabled client
+    const cookieClient = axios.create({
+      baseURL: API_URL,
+      withCredentials: true
     });
     
-    // Extract the authentication token
-    if (loginResponse.data && loginResponse.data.token) {
-      authToken = loginResponse.data.token;
-      console.log('✅ Authentication successful');
-      
-      // Return a configured axios instance
-      return axios.create({
-        baseURL: API_URL,
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true
+    // First, try to login with the correct credentials for our system
+    try {
+      await cookieClient.post(`/api/auth/login`, {
+        username: 'clinic',
+        password: 'clinic123'
       });
-    } else {
-      // Cookie-based auth
-      const cookieClient = axios.create({
-        baseURL: API_URL,
-        withCredentials: true
-      });
-      
-      return cookieClient;
+      console.log('✅ Session-based authentication successful');
+    } catch (loginError) {
+      console.log('⚠️ Session login failed, will try direct API access');
+      // We'll continue anyway as we might already have a valid session
     }
+    
+    // Check if we're authenticated by making a request
+    try {
+      const userResponse = await cookieClient.get('/api/auth/user');
+      if (userResponse.data && userResponse.data.id) {
+        console.log(`✅ Authenticated as user: ${userResponse.data.username} (ID: ${userResponse.data.id})`);
+      }
+    } catch (checkError) {
+      console.log('⚠️ Authentication check failed, but will proceed with requests anyway');
+    }
+    
+    return cookieClient;
   } catch (error) {
-    console.error('❌ Authentication failed:', error.message);
-    throw error;
+    console.error('❌ Authentication process failed:', error.message);
+    // Continue with an unauthenticated client as a fallback
+    return axios.create({
+      baseURL: API_URL,
+      withCredentials: true
+    });
   }
 }
 
@@ -82,7 +89,7 @@ async function generateSpecialOfferImages(client) {
       console.log(`\nGenerating image for "${offer.title}" (type: ${offer.type})`);
       
       // Call the OpenAI special offer image generation endpoint
-      const response = await client.post('/api/openai/generate-special-offer-image', {
+      const response = await client.post('/api/special-offers/generate-image', {
         title: offer.title,
         offerType: offer.type,
         naturalStyle: true // Ensure we're using the natural style
@@ -94,6 +101,10 @@ async function generateSpecialOfferImages(client) {
         
         // Download the image for viewing
         const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        
+        // Get directory name in ESM (replacement for __dirname)
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = dirname(__filename);
         const outputDir = path.join(__dirname, '../test-images');
         
         // Create directory if it doesn't exist
