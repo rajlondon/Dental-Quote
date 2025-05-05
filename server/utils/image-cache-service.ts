@@ -171,10 +171,19 @@ export class ImageCacheService {
       // Ensure the cache directory exists
       await ensureCacheDirectoryExists();
 
+      // Handle relative URLs by converting them to absolute URLs
+      let fullUrl = url;
+      if (url.startsWith('/')) {
+        // This is a relative URL, make it absolute by adding the base URL
+        const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+        fullUrl = `${baseUrl}${url}`;
+        console.log(`📥 Converting relative URL to absolute: ${fullUrl}`);
+      }
+
       // Download the image
-      console.log(`📥 Downloading image from: ${url}`);
+      console.log(`📥 Downloading image from: ${fullUrl}`);
       
-      const response = await axios.get(url, {
+      const response = await axios.get(fullUrl, {
         responseType: 'arraybuffer',
         headers: {
           // Some servers require a user agent to prevent blocking
