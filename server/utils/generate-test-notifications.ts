@@ -31,7 +31,10 @@ export async function generateTestNotifications(userId?: number) {
       targetUserId = patientUser.id;
     }
     
-    console.log(`Generating test notifications for user ID: ${targetUserId}`);
+    // Convert to string and back to number to ensure consistent type matching
+    targetUserId = Number(String(targetUserId));
+    
+    console.log(`Generating test notifications for user ID: ${targetUserId} (${typeof targetUserId})`);
     
     // Define test notifications that match our schema (notifications table)
     const testNotifications = [

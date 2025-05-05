@@ -114,16 +114,13 @@ export class NotificationService {
       // Investigate all notifications to understand the filtering issue
       console.log("All notifications user_ids:", result.rows.map(row => `${row.user_id} (${typeof row.user_id})`).join(', '));
       
-      // Try filtering with different methods to ensure we catch all notifications
-      const exactMatchNotifications = result.rows.filter(row => row.user_id === userIdNumber);
-      const stringMatchNotifications = result.rows.filter(row => String(row.user_id) === String(userIdNumber));
+      // Always use string comparison to ensure consistent type matching
+      // This avoids issues where database could return user_id as string or number type
+      const userNotifications = result.rows.filter(row => 
+        String(row.user_id) === String(userIdNumber)
+      );
       
-      // Use the method that finds more notifications
-      const userNotifications = stringMatchNotifications.length > exactMatchNotifications.length 
-        ? stringMatchNotifications 
-        : exactMatchNotifications;
-        
-      console.log(`Found ${exactMatchNotifications.length} exact match notifications and ${stringMatchNotifications.length} string match notifications for user ${userIdNumber}`);
+      console.log(`Used string comparison to find ${userNotifications.length} notifications for user ${userIdNumber}`);
       
       if (userNotifications.length > 0) {
         // Log the first notification to debug data types
