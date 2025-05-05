@@ -22,51 +22,95 @@ export async function generateTestNotifications() {
       return 0;
     }
     
-    // Define test notifications with various types
+    // Define test notifications with various types that match our schema
     const testNotifications = [
       {
-        userId: patientUser.id,
+        target_id: String(patientUser.id),
         title: "New Message from Dr. Smith",
         message: "Your treatment plan has been updated. Please review the changes.",
-        content: "Your treatment plan has been updated with new procedures. Please review the changes and let us know if you have any questions.",
-        isRead: false,
-        type: "info",
-        action: "/portal?section=messages",
-        entityType: "message",
-        entityId: 1
+        category: "message",
+        priority: "medium",
+        target_type: "patient",
+        source_type: "clinic",
+        source_id: "1", // Clinic ID
+        read: false,
+        action_url: "/portal?section=messages",
+        metadata: {
+          sender_name: "Dr. Smith",
+          conversation_id: "1",
+          message_preview: "I've updated your treatment plan with the latest recommendations..."
+        }
       },
       {
-        userId: patientUser.id,
+        target_id: String(patientUser.id),
         title: "Upcoming Appointment",
         message: "You have an appointment scheduled for tomorrow at 10:00 AM.",
-        content: "Reminder: You have a dental consultation appointment scheduled for tomorrow at 10:00 AM with Dr. Smith at DentSpa Istanbul. Please arrive 15 minutes early.",
-        isRead: false,
-        type: "info",
-        action: "/portal?section=appointments",
-        entityType: "appointment",
-        entityId: 2
+        category: "appointment",
+        priority: "high",
+        target_type: "patient",
+        source_type: "system",
+        source_id: "system",
+        read: false,
+        action_url: "/portal?section=appointments",
+        metadata: {
+          appointment_id: "2",
+          appointment_date: "2025-05-06T10:00:00",
+          clinic_name: "DentSpa Istanbul",
+          doctor_name: "Dr. Smith"
+        }
       },
       {
-        userId: patientUser.id,
+        target_id: String(patientUser.id),
         title: "New Quote Available",
         message: "Your quote for dental implants is now available for review.",
-        content: "We've prepared a detailed quote for your dental implant treatment. The total estimate is £3,200. Please review and contact us if you have any questions.",
-        isRead: false,
-        type: "success",
-        action: "/portal?section=quotes",
-        entityType: "quote",
-        entityId: 3
+        category: "treatment",
+        priority: "medium",
+        target_type: "patient",
+        source_type: "clinic",
+        source_id: "1",
+        read: false,
+        action_url: "/portal?section=quotes",
+        metadata: {
+          quote_id: "3",
+          treatment_type: "Dental Implants",
+          price_estimate: "3200",
+          currency: "GBP"
+        }
       },
       {
-        userId: patientUser.id,
+        target_id: String(patientUser.id),
         title: "Document Upload Reminder",
         message: "Please upload your X-rays for your upcoming consultation.",
-        content: "To help us prepare for your consultation, please upload your recent X-rays through the documents section. This will allow our dentists to review your case before your arrival.",
-        isRead: false,
-        type: "warning",
-        action: "/portal?section=documents",
-        entityType: "document",
-        entityId: 4
+        category: "document",
+        priority: "medium",
+        target_type: "patient",
+        source_type: "system",
+        source_id: "system",
+        read: false,
+        action_url: "/portal?section=documents",
+        metadata: {
+          required_document: "X-rays",
+          due_date: "2025-05-10",
+          appointment_id: "2"
+        }
+      },
+      {
+        target_id: String(patientUser.id),
+        title: "Special Offer: 20% Off Teeth Whitening",
+        message: "Limited time offer on professional teeth whitening when booked with any other treatment.",
+        category: "offer",
+        priority: "low",
+        target_type: "patient",
+        source_type: "clinic",
+        source_id: "2",
+        read: false,
+        action_url: "/portal?section=offers",
+        metadata: {
+          offer_id: "5",
+          clinic_name: "Premium Dental Clinic",
+          discount: "20%",
+          expires: "2025-06-01"
+        }
       }
     ];
     

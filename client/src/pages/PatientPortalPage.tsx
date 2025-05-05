@@ -257,7 +257,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                         toast({
                           title: "Test Notifications Created",
                           description: `Created ${data.count} test notifications`,
-                          variant: "success",
+                          variant: "default",
                         });
                         
                         // Refresh the notifications list
