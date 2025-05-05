@@ -113,6 +113,12 @@ const ClinicCard = ({
     }
   };
   
+  // Make sure we have a valid clinic ID for navigation
+  const clinicId = id || '';
+  
+  // Add log for debugging clinic links
+  console.log(`Clinic card for ${name}, using ID for link: ${clinicId}`);
+  
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${featured ? 'ring-2 ring-primary' : ''}`}>
       <div className="relative">
@@ -158,7 +164,7 @@ const ClinicCard = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2">
-          <Link href={`/clinic/${id}`} className="w-full">
+          <Link href={`/clinic/${clinicId}`} className="w-full">
             <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
               View Clinic
             </Button>
