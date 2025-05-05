@@ -80,27 +80,50 @@ router.get("/packages/:packageId", isAuthenticated, async (req: Request, res: Re
     req.user ? `User ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated');
   
   try {
+    // Map URL slugs to package IDs if needed
+    const slugToIdMap: Record<string, string> = {
+      'hollywood-smile-vacation': 'e53cc92a-596d-4edc-a3f4-b1f31856415e',
+      // Add more mappings as needed
+    };
+    
+    // Get the actual ID to use for the database query
+    const dbPackageId = slugToIdMap[packageId] || packageId;
+    
+    console.log(`[DEBUG] Looking up package - URL param: ${packageId}, Database ID: ${dbPackageId}`);
+    
     const packageData = await db.query.packages.findFirst({
-      where: eq(packages.id, packageId as string),
+      where: eq(packages.id, dbPackageId as string),
       with: {
         clinic: true
       }
     });
     
     if (!packageData) {
-      console.log(`[ERROR] Package not found: ${packageId}`);
+      console.log(`[ERROR] Package not found: ${packageId} (DB ID: ${dbPackageId})`);
       return res.status(404).json({
         success: false,
         message: "Package not found"
       });
     }
     
-    console.log(`[DEBUG] Package data found for ${packageId}`);
+    console.log(`[DEBUG] Package data found for ${packageId} (DB ID: ${dbPackageId})`);
+    
+    // Process JSON fields to ensure proper serialization
+    const processedPackage = {
+      ...packageData,
+      // Safely handle potential JSON string fields
+      hotelDetails: typeof packageData.hotelDetails === 'string' 
+        ? JSON.parse(packageData.hotelDetails) 
+        : packageData.hotelDetails,
+      flightDetails: typeof packageData.flightDetails === 'string' 
+        ? JSON.parse(packageData.flightDetails) 
+        : packageData.flightDetails
+    };
     
     // Let's make sure we're returning valid JSON
     const responseData = {
       success: true,
-      data: packageData
+      data: processedPackage
     };
     
     // Verify the data can be serialized properly
@@ -111,6 +134,18 @@ router.get("/packages/:packageId", isAuthenticated, async (req: Request, res: Re
       return res.status(200).json(responseData);
     } catch (jsonError) {
       console.error('[ERROR] Failed to serialize package data to JSON:', jsonError);
+      
+      // Try to identify the problematic fields
+      console.error('[DEBUG] Problem fields examination:');
+      for (const [key, value] of Object.entries(processedPackage)) {
+        try {
+          JSON.stringify({ [key]: value });
+          console.log(`[DEBUG] Field '${key}' serializes correctly`);
+        } catch (fieldError) {
+          console.error(`[ERROR] Field '${key}' causes serialization error:`, fieldError);
+        }
+      }
+      
       return res.status(500).json({
         success: false,
         message: "Failed to serialize package data"
@@ -332,6 +367,8 @@ router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res:
 router.post("/book-package/:packageId", isAuthenticated, async (req: Request, res: Response) => {
   const { packageId } = req.params;
   
+  console.log(`[DEBUG] POST /book-package/${packageId} request received`);
+  
   if (!req.user) {
     return res.status(401).json({
       success: false,
@@ -340,9 +377,20 @@ router.post("/book-package/:packageId", isAuthenticated, async (req: Request, re
   }
   
   try {
+    // Map URL slugs to package IDs if needed
+    const slugToIdMap: Record<string, string> = {
+      'hollywood-smile-vacation': 'e53cc92a-596d-4edc-a3f4-b1f31856415e',
+      // Add more mappings as needed
+    };
+    
+    // Get the actual ID to use for the database query
+    const dbPackageId = slugToIdMap[packageId] || packageId;
+    
+    console.log(`[DEBUG] Booking package - URL param: ${packageId}, Database ID: ${dbPackageId}`);
+    
     // Get the package details
     const packageData = await db.query.packages.findFirst({
-      where: eq(packages.id, packageId as string),
+      where: eq(packages.id, dbPackageId as string),
       with: {
         clinic: true
       }
