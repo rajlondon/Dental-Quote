@@ -614,7 +614,14 @@ const PatientPortalPage: React.FC = () => {
                         variant: "default",
                       });
                       // Reload notifications
-                      mutate('/api/notifications');
+                      // Assuming we use SWR for data fetching
+                      fetch('/api/notifications').then(() => {
+                        toast({
+                          title: "Refreshing Notifications",
+                          description: "Refreshing your notifications list",
+                          variant: "default",
+                        });
+                      });
                     } else {
                       throw new Error('Failed to generate test notifications');
                     }
