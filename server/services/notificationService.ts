@@ -193,8 +193,17 @@ export class NotificationService {
    */
   public async updateNotification(data: UpdateNotification): Promise<any> {
     try {
+      console.log(`Updating notification ${data.id} to status ${data.status}`);
+      
       // Convert string ID to number if needed
       const notificationId = typeof data.id === 'string' ? parseInt(data.id, 10) : data.id;
+      
+      if (isNaN(notificationId)) {
+        console.error(`Invalid notification ID: ${data.id}`);
+        return null;
+      }
+      
+      console.log(`Looking for notification with ID: ${notificationId}`);
       
       // Use a raw SQL query to fetch the notification first
       const getQuery = `
@@ -204,6 +213,7 @@ export class NotificationService {
       `;
       
       const getResult = await db.execute(getQuery, [notificationId]);
+      console.log(`Found ${getResult.rows.length} notifications with ID ${notificationId}`);
       
       if (getResult.rows.length === 0) {
         return null;
@@ -227,6 +237,8 @@ export class NotificationService {
       const isMarkingAsRead = data.status === 'read' && !originalNotification.isRead;
       const now = new Date();
       
+      console.log(`Updating notification ${notificationId} - setting is_read=${data.status === 'read'}`);
+      
       // Update the notification with raw SQL
       const updateQuery = `
         UPDATE notifications
@@ -241,8 +253,11 @@ export class NotificationService {
       ]);
       
       if (updateResult.rows.length === 0) {
+        console.error(`Failed to update notification ${notificationId} - no rows returned`);
         return null;
       }
+      
+      console.log(`Successfully updated notification ${notificationId}`);
       
       // Map the updated notification to our expected format
       const updatedNotification = {
