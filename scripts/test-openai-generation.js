@@ -1,5 +1,7 @@
 /**
- * Simple test script for generating special offer images with the improved prompts
+ * Simple test script for direct OpenAI image generation
+ * 
+ * This script tests the direct image generation without trying to update special offers
  */
 import axios from 'axios';
 import fs from 'fs';
@@ -18,41 +20,26 @@ const API_URL = 'http://localhost:5000';
 const API_KEY = 'mydentalfly-api-token-12345';
 
 // Script configuration
-const USE_FALLBACK = true; // Set to true to use fallback images instead of OpenAI
+const USE_FALLBACK = false; // Set to true to use fallback images instead of OpenAI
 
-// Test data for special offer images
-const TEST_OFFERS = [
+// Test prompts for image generation
+const TEST_PROMPTS = [
   {
     title: "Premium Dental Implant Package",
-    offerType: "implant"
+    prompt: "Create a high-quality photograph of a dental implant next to a crown on a clean white surface with professional lighting"
   }
-  // Uncomment these for more comprehensive testing
-  // {
-  //   title: "Luxury Hotel Stay & Dental Treatment",
-  //   offerType: "hotel"
-  // },
-  // {
-  //   title: "Free Dental Consultation",
-  //   offerType: "consultation"
-  // },
-  // {
-  //   title: "VIP Airport Transfer",
-  //   offerType: "transfer"
-  // }
 ];
 
-// Generate a test image
-async function generateTestImage(title, offerType) {
-  console.log(`\nGenerating test image for "${title}" (type: ${offerType})`);
+// Generate a test image using direct API endpoint
+async function generateTestImage(title, prompt) {
+  console.log(`\nGenerating test image for "${title}"`);
+  console.log(`Prompt: ${prompt.substring(0, 60)}...`);
   
   try {
-    // Create request to the special-offer-image endpoint with API key authentication
-    const response = await axios.post(`${API_URL}/api/openai/special-offer-image`, {
-      offerId: `test-${Date.now()}`, // Create a temporary ID for testing
-      offerTitle: title,
-      offerType: offerType,
-      naturalStyle: true, // Use natural style for more photorealistic images
-      useFallback: USE_FALLBACK // Use fallback mode if configured
+    // Create request to the generate-image endpoint with API key authentication
+    const response = await axios.post(`${API_URL}/api/openai/generate-image`, {
+      prompt: prompt,
+      size: "1024x1024"
     }, {
       headers: {
         'x-api-key': API_KEY
@@ -90,7 +77,7 @@ async function generateTestImage(title, offerType) {
       
       return {
         title,
-        offerType,
+        prompt,
         imageUrl,
         localPath: outputPath
       };
@@ -128,8 +115,8 @@ async function checkOpenAIConfiguration() {
 
 // Main test function
 async function runTest() {
-  console.log('=== Testing Special Offer Image Generation ===');
-  console.log('This will test the enhanced prompts used in image generation');
+  console.log('=== Testing OpenAI Direct Image Generation ===');
+  console.log('This will test direct OpenAI image generation with prompts');
   
   // Check if OpenAI is configured
   const isConfigured = await checkOpenAIConfiguration();
@@ -140,9 +127,9 @@ async function runTest() {
   
   const results = [];
   
-  // Generate images for each test offer
-  for (const offer of TEST_OFFERS) {
-    const result = await generateTestImage(offer.title, offer.offerType);
+  // Generate images for each test prompt
+  for (const test of TEST_PROMPTS) {
+    const result = await generateTestImage(test.title, test.prompt);
     if (result) {
       results.push(result);
     }
@@ -150,9 +137,9 @@ async function runTest() {
   
   // Display summary
   console.log('\n=== Image Generation Results ===');
-  console.log(`Total attempted: ${TEST_OFFERS.length}`);
+  console.log(`Total attempted: ${TEST_PROMPTS.length}`);
   console.log(`Successfully generated: ${results.length}`);
-  console.log(`Failed: ${TEST_OFFERS.length - results.length}`);
+  console.log(`Failed: ${TEST_PROMPTS.length - results.length}`);
   
   if (results.length > 0) {
     console.log('\nGenerated Images:');
