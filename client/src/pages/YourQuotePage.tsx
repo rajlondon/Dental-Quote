@@ -994,6 +994,10 @@ const YourQuotePage: React.FC = () => {
       };
       
       console.log("Created special offer data from URL params:", offerData);
+      
+      // Always save to sessionStorage for persistence in future navigation
+      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+      
       return offerData;
     }
     
@@ -1013,6 +1017,33 @@ const YourQuotePage: React.FC = () => {
         };
       } catch (error) {
         console.error("Error parsing special offer from sessionStorage:", error);
+      }
+    }
+    
+    // Also check for pendingSpecialOffer which may happen when redirected after login
+    const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+    if (pendingOfferData) {
+      try {
+        const offerData = JSON.parse(pendingOfferData);
+        console.log("Found pendingSpecialOffer in sessionStorage:", offerData);
+        
+        // Convert to the right format
+        const formattedOffer = {
+          id: offerData.id,
+          title: offerData.title,
+          clinicId: offerData.clinicId || offerData.clinic_id || '',
+          discountValue: offerData.discountValue || offerData.discount_value || 0,
+          discountType: (offerData.discountType || offerData.discount_type || 'percentage') as 'percentage' | 'fixed_amount',
+          applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
+        };
+        
+        // Save to activeSpecialOffer key for future use and clear pending
+        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
+        sessionStorage.removeItem('pendingSpecialOffer');
+        
+        return formattedOffer;
+      } catch (error) {
+        console.error("Error parsing pending special offer:", error);
       }
     }
     

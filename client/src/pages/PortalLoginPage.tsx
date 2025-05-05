@@ -202,19 +202,35 @@ const PortalLoginPage: React.FC = () => {
       // Check if there is a pending special offer to preserve through verification process
       const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
       if (pendingOfferData) {
-        // Store with a different key that persists through the verification process
-        localStorage.setItem('pendingSpecialOfferAfterVerification', pendingOfferData);
-        console.log("Saved pending special offer for after verification");
-        
-        // Show additional toast informing user about the special offer
         try {
-          const offerData = JSON.parse(pendingOfferData);
+          // Parse and format the offer data consistently
+          const rawOfferData = JSON.parse(pendingOfferData);
+          
+          // Create a standardized format to ensure field consistency
+          const formattedOfferData = {
+            id: rawOfferData.id,
+            title: rawOfferData.title,
+            clinicId: rawOfferData.clinicId || rawOfferData.clinic_id || '',
+            discountValue: rawOfferData.discountValue || rawOfferData.discount_value || 0,
+            discountType: rawOfferData.discountType || rawOfferData.discount_type || 'percentage',
+            applicableTreatment: rawOfferData.applicableTreatment || 
+                             (rawOfferData.applicable_treatments && rawOfferData.applicable_treatments.length > 0 
+                              ? rawOfferData.applicable_treatments[0] 
+                              : 'Dental Implants')
+          };
+          
+          // Store with a different key in localStorage that persists through verification process
+          // We use localStorage instead of sessionStorage so it survives between sessions
+          localStorage.setItem('pendingSpecialOfferAfterVerification', JSON.stringify(formattedOfferData));
+          console.log("Saved formatted special offer for after verification:", formattedOfferData);
+          
+          // Show enhanced message about offer being preserved
           toast({
             title: "Registration Successful",
-            description: `Please check your email for verification. Your ${offerData.title} quote will be ready after verification.`,
+            description: `Please check your email for verification. Your ${formattedOfferData.title} quote will be available after verification.`,
           });
         } catch (error) {
-          console.error("Error parsing pending offer during registration:", error);
+          console.error("Error processing pending offer during registration:", error);
           // Show regular success message if there's an error with the offer
           toast({
             title: "Registration Successful",
@@ -367,38 +383,52 @@ const PortalLoginPage: React.FC = () => {
             const offerData = JSON.parse(pendingOfferData);
             console.log("Successfully parsed pending special offer request:", offerData);
             
-            // Create URL parameters for quote page
+            // Format the offer data for consistency
+            const formattedOfferData = {
+              id: offerData.id,
+              title: offerData.title,
+              clinicId: offerData.clinicId || offerData.clinic_id || '',
+              discountValue: offerData.discountValue || offerData.discount_value || 0,
+              discountType: offerData.discountType || offerData.discount_type || 'percentage',
+              applicableTreatment: offerData.applicableTreatment || 
+                                   (offerData.applicable_treatments && offerData.applicable_treatments.length > 0 
+                                    ? offerData.applicable_treatments[0] 
+                                    : 'Dental Implants')
+            };
+            
+            // Create URL parameters for quote page to ensure they're visible in the URL
             const params = new URLSearchParams({
-              specialOffer: offerData.id,
-              offerTitle: offerData.title,
-              offerClinic: offerData.clinicId || '',
-              offerDiscount: offerData.discountValue?.toString() || '0',
-              offerDiscountType: offerData.discountType || 'percentage',
-              treatment: offerData.applicableTreatment || 'Dental Implants'
+              specialOffer: formattedOfferData.id,
+              offerTitle: formattedOfferData.title,
+              offerClinic: formattedOfferData.clinicId,
+              offerDiscount: formattedOfferData.discountValue.toString(),
+              offerDiscountType: formattedOfferData.discountType,
+              treatment: formattedOfferData.applicableTreatment
             });
             
             console.log("Created URL parameters for special offer:", params.toString());
             
-            // Clear the pending offer from sessionStorage
-            sessionStorage.removeItem('pendingSpecialOffer');
+            // We won't remove pendingSpecialOffer until YourQuotePage confirms it has received it
+            // This provides a fallback in case of navigation issues
             
-            // Store the special offer in sessionStorage for use by the quote form
-            // and eventually by the clinic results page
-            sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
-            console.log("Saved activeSpecialOffer to sessionStorage:", offerData);
+            // Store the formatted offer in activeSpecialOffer for use by the YourQuotePage
+            sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOfferData));
+            console.log("Saved activeSpecialOffer to sessionStorage:", formattedOfferData);
             
             // Notify user
             toast({
               title: "Special Offer Selected",
-              description: `${offerData.title} will be applied to your quote results.`,
+              description: `${formattedOfferData.title} will be applied to your quote results.`,
               variant: "default",
             });
             
-            // Redirect to the quote page where user can select treatments and clinics
-            // with the special offer clinic highlighted
+            // Redirect to the quote page with the URL parameters 
+            // This makes the special offer visible in the URL and provides additional resilience
             setTimeout(() => {
               console.log("Redirecting to quote page with special offer context");
-              window.location.href = '/your-quote';
+              const quoteUrl = `/your-quote?${params.toString()}`;
+              console.log("Redirect URL:", quoteUrl);
+              window.location.href = quoteUrl;
             }, 100);
             
             return; // Exit early as we're handling special redirect
