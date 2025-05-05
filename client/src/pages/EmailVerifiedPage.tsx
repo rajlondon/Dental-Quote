@@ -1,21 +1,72 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 const EmailVerifiedPage: React.FC = () => {
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [hasPendingOffer, setHasPendingOffer] = useState(false);
+  const [offerTitle, setOfferTitle] = useState("");
+  const [offerParams, setOfferParams] = useState<URLSearchParams | null>(null);
   
-  // Auto-redirect to login page after 5 seconds
+  // Check for pending special offers on mount
+  useEffect(() => {
+    const pendingOfferData = localStorage.getItem('pendingSpecialOfferAfterVerification');
+    if (pendingOfferData) {
+      try {
+        const offerData = JSON.parse(pendingOfferData);
+        setHasPendingOffer(true);
+        setOfferTitle(offerData.title || "dental treatment");
+        
+        // Create URL parameters for quote page
+        const params = new URLSearchParams({
+          specialOffer: offerData.id,
+          offerTitle: offerData.title,
+          offerClinic: offerData.clinicId || offerData.clinic_id || '',
+          offerDiscount: offerData.discountValue?.toString() || offerData.discount_value?.toString() || '0',
+          offerDiscountType: offerData.discountType || offerData.discount_type || 'percentage',
+          treatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
+        });
+        
+        setOfferParams(params);
+        
+        console.log("Found pending special offer after verification:", offerData);
+        
+        // Clear the offer data since we've handled it
+        localStorage.removeItem('pendingSpecialOfferAfterVerification');
+      } catch (error) {
+        console.error("Error processing pending offer after verification:", error);
+      }
+    }
+  }, []);
+  
+  // Auto-redirect to login page after delay
   useEffect(() => {
     const redirectTimer = setTimeout(() => {
-      navigate('/portal-login');
+      if (hasPendingOffer && offerParams) {
+        // If there's a pending offer, redirect to login with a flag to process the offer
+        localStorage.setItem('redirectToOfferAfterLogin', 'true');
+        sessionStorage.setItem('pendingSpecialOffer', localStorage.getItem('pendingSpecialOfferAfterVerification') || '');
+        
+        toast({
+          title: "Email Verified Successfully",
+          description: `Please log in to continue with your ${offerTitle} request.`,
+        });
+        
+        navigate('/portal-login');
+      } else {
+        // Standard redirect to login
+        navigate('/portal-login');
+      }
     }, 5000);
     
     return () => clearTimeout(redirectTimer);
-  }, [navigate]);
+  }, [navigate, hasPendingOffer, offerParams, offerTitle, toast]);
   
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
