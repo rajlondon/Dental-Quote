@@ -951,9 +951,11 @@ const YourQuotePage: React.FC = () => {
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
   
-  // Special offer data (if passed from homepage)
+  // Special offer data (if passed from homepage or stored in sessionStorage)
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
     console.log("Initializing YourQuotePage with URL params:", window.location.search);
+    
+    // First check URL parameters
     const offerId = searchParams.get('specialOffer');
     console.log("Special offer ID from URL:", offerId);
     
@@ -975,12 +977,30 @@ const YourQuotePage: React.FC = () => {
         applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
       };
       
-      console.log("Created special offer data:", offerData);
+      console.log("Created special offer data from URL params:", offerData);
       return offerData;
-    } else {
-      console.log("No special offer parameters found in URL");
     }
     
+    // If not in URL, check sessionStorage
+    const storedOffer = sessionStorage.getItem('activeSpecialOffer');
+    if (storedOffer) {
+      try {
+        const offerData = JSON.parse(storedOffer);
+        console.log("Retrieved special offer from sessionStorage:", offerData);
+        return {
+          id: offerData.id,
+          title: offerData.title,
+          clinicId: offerData.clinicId,
+          discountValue: offerData.discountValue || 0,
+          discountType: offerData.discountType || 'percentage',
+          applicableTreatment: offerData.applicableTreatment || 'Dental Implants'
+        };
+      } catch (error) {
+        console.error("Error parsing special offer from sessionStorage:", error);
+      }
+    }
+    
+    console.log("No special offer found in URL or sessionStorage");
     return null;
   });
   
@@ -1134,6 +1154,13 @@ const YourQuotePage: React.FC = () => {
     // In a real implementation, we would parse query parameters here
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
+    
+    // If we have a special offer from URL params, store it in sessionStorage for persistence across page reloads
+    if (specialOffer && searchParams.get('specialOffer')) {
+      // Save to sessionStorage for persistence across authentication redirects
+      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(specialOffer));
+      console.log("Saved special offer to sessionStorage:", specialOffer);
+    }
     
     // Show welcome toast - adjusting based on whether this came from special offer
     if (specialOffer) {
