@@ -96,13 +96,56 @@ export class NotificationService {
     status?: 'unread' | 'all'
   ): Promise<NotificationResponse> {
     try {
-      // Temporarily return empty notifications to prevent errors
-      // This is a defensive approach until we can debug the database issues
       console.log(`GetNotifications called for user ${userId} of type ${userType} with status ${status || 'all'}`);
       
+      // Convert string ID to number if needed
+      const userIdNumber = parseInt(userId, 10);
+      
+      // Build query based on status filter
+      let query = `
+        SELECT id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
+        FROM notifications
+        WHERE user_id = $1
+      `;
+      
+      // Add read status filter if needed
+      if (status === 'unread') {
+        query += ' AND is_read = false';
+      }
+      
+      // Add sorting
+      query += ' ORDER BY created_at DESC';
+      
+      // Execute query
+      const result = await db.execute(query, [userIdNumber]);
+      
+      // Count unread notifications
+      const unreadQuery = `
+        SELECT COUNT(*) as count
+        FROM notifications
+        WHERE user_id = $1 AND is_read = false
+      `;
+      
+      const unreadResult = await db.execute(unreadQuery, [userIdNumber]);
+      const unreadCount = parseInt(unreadResult.rows[0]?.count || '0', 10);
+      
+      // Map results to our notification format
+      const notifications = result.rows.map(row => this.mapToLegacyFormat({
+        id: row.id,
+        userId: row.user_id,
+        title: row.title,
+        message: row.message,
+        isRead: row.is_read,
+        type: row.type,
+        action: row.action,
+        entityType: row.entity_type || 'system',
+        entityId: row.entity_id,
+        createdAt: new Date(row.created_at)
+      }));
+      
       return {
-        notifications: [],
-        unread_count: 0
+        notifications,
+        unread_count: unreadCount
       };
     } catch (error) {
       console.error('Error fetching notifications from database:', error);
