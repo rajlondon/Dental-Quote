@@ -134,6 +134,74 @@ export default function SavedSpecialOffersSection() {
     );
   }
 
+  // Function to save a test special offer
+  const saveTestSpecialOffer = async () => {
+    try {
+      setLoading(true);
+      const testOffer = {
+        id: `test-offer-${Date.now()}`,
+        clinic_id: "1",
+        title: "Test Special Offer",
+        description: "This is a test special offer to verify the saved offers functionality.",
+        discount_type: "percentage",
+        discount_value: 15,
+        applicable_treatments: ["Dental Implants", "Crowns"],
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        is_active: true,
+        promotion_level: "standard",
+        terms_conditions: "Test terms and conditions. This offer is for testing purposes only.",
+        clinic_name: "Test Dental Clinic",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Save the test offer using the API endpoint
+      const response = await fetch('/api/special-offers/save-to-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          specialOfferId: testOffer.id,
+          clinicId: parseInt(testOffer.clinic_id),
+          offerDetails: testOffer,
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Test Offer Saved",
+          description: "A test special offer has been saved to your account.",
+        });
+        
+        // Refresh the saved offers list
+        const refreshResponse = await fetch('/api/special-offers/saved');
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          setSavedOffers(data.data || []);
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to save test offer: " + result.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error saving test offer:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while saving the test offer.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (savedOffers.length === 0) {
     return (
       <Card className="mt-4">
@@ -148,13 +216,24 @@ export default function SavedSpecialOffersSection() {
             <p className="text-gray-500">
               {t('portal.saved_offers.browse_message', 'Browse clinics and special offers to find deals that interest you.')}
             </p>
-            <Button 
-              variant="default" 
-              className="mt-4"
-              onClick={() => window.location.href = '/clinics'}
-            >
-              {t('portal.saved_offers.browse_clinics', 'Browse Clinics')}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
+              <Button 
+                variant="default" 
+                onClick={() => window.location.href = '/clinics'}
+              >
+                {t('portal.saved_offers.browse_clinics', 'Browse Clinics')}
+              </Button>
+              
+              {/* Add test button - this would be hidden in production */}
+              {process.env.NODE_ENV !== 'production' && (
+                <Button 
+                  variant="outline" 
+                  onClick={saveTestSpecialOffer}
+                >
+                  Add Test Offer
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -163,12 +242,27 @@ export default function SavedSpecialOffersSection() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">
-        {t('portal.saved_offers.title', 'Your Saved Special Offers')}
-      </h2>
-      <p className="text-gray-500">
-        {t('portal.saved_offers.description', 'Special offers you\'ve saved for future reference.')}
-      </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">
+            {t('portal.saved_offers.title', 'Your Saved Special Offers')}
+          </h2>
+          <p className="text-gray-500">
+            {t('portal.saved_offers.description', 'Special offers you\'ve saved for future reference.')}
+          </p>
+        </div>
+        
+        {/* Add test button when there are already offers - hidden in production */}
+        {process.env.NODE_ENV !== 'production' && (
+          <Button 
+            variant="outline" 
+            onClick={saveTestSpecialOffer}
+            size="sm"
+          >
+            Add Test Offer
+          </Button>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 gap-4">
         {savedOffers.map((savedOffer) => {
