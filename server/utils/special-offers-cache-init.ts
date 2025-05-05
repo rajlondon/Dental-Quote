@@ -9,6 +9,7 @@ import { specialOffers } from '../routes/special-offers-routes-fixed';
 import { ImageCacheService } from './image-cache-service';
 import path from 'path';
 import fs from 'fs';
+import * as crypto from 'crypto';
 
 // Type definition for special offer
 interface SpecialOffer {
@@ -68,11 +69,35 @@ export async function initializeSpecialOfferImageCache(): Promise<void> {
             return;
           }
           
-          // If it's a relative path, convert to absolute URL for the current environment
+          // If it's a relative path, use the file system path instead of URL
           if (imageUrl.startsWith('/')) {
-            // For local development or when running in Replit
-            const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-            imageUrl = `${baseUrl}${imageUrl}`;
+            // For local paths, we should directly read from the filesystem
+            // instead of making HTTP requests to our own server
+            const imagePath = path.join(process.cwd(), 'public', imageUrl.substring(1));
+            if (fs.existsSync(imagePath)) {
+              console.log(`Using local file system path for ${imageUrl}: ${imagePath}`);
+              
+              // Create a direct copy of the image in the cache
+              const hash = crypto.createHash('md5').update(imageUrl).digest('hex');
+              const extension = path.extname(imagePath);
+              const filename = `${hash}${extension}`;
+              const cachePath = path.join(cacheDir, filename);
+              
+              // Copy the file directly
+              fs.copyFileSync(imagePath, cachePath);
+              
+              // Return the cached URL path
+              const cachedUrl = `/cached-images/${filename}`;
+              clinicOffers[index].banner_image = cachedUrl;
+              cachedImages++;
+              console.log(`✅ Successfully cached image for "${offer.title}": ${cachedUrl}`);
+              return;
+            } else {
+              console.warn(`Local image file not found: ${imagePath}`);
+              // If file doesn't exist locally, we'll try a remote request as fallback
+              const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+              imageUrl = `${baseUrl}${imageUrl}`;
+            }
           }
           
           // Cache the image
@@ -130,7 +155,7 @@ export function getOffersWithNonCachedImages(): { clinicId: string, offerId: str
   const results: { clinicId: string, offerId: string, title: string, imageUrl: string }[] = [];
   
   specialOffers.forEach((clinicOffers, clinicId) => {
-    clinicOffers.forEach(offer => {
+    clinicOffers.forEach((offer: SpecialOffer) => {
       if (offer.banner_image && !isImageUrlCached(offer.banner_image)) {
         results.push({
           clinicId,
