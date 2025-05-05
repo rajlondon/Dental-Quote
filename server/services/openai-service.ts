@@ -258,23 +258,60 @@ Create a professional photograph showcasing the results of dental implant treatm
 The image must look like it was taken by a professional dental photographer with specialized equipment for clinical photography.`;
   }
   else {
-    // Generic special offer prompt with randomized elements to ensure variation
-    const randomElements = [
-      "a glimpse of Istanbul's iconic skyline with sophisticated dental imagery",
-      "a modern dental clinic with luxury elements and Istanbul visible through windows",
-      "a beautiful smile makeover with luxury travel elements subtly incorporated",
-      "a high-end dental office reception area with Turkish design elements",
-      "an elegant blend of dental care aesthetics with Turkish hospitality elements"
+    // Generic special offer prompt with specific professional photography directions
+    const professionalScenes = [
+      {
+        scene: "dental clinic reception",
+        details: `Create a professional photograph of a luxury dental clinic reception area in Istanbul. The image should show:
+- A modern, minimalist reception area with marble or quartz surfaces
+- Comfortable seating area with designer furniture in neutral tones
+- Subtle Turkish design elements like geometric patterns or tasteful artwork
+- Soft, professional lighting highlighting the elegant space
+- A clean, uncluttered environment with premium finishes
+- A reception desk with a subtle dental clinic logo (not readable)
+- Optional: a glimpse of Istanbul skyline through large windows
+- The composition should be wide angle to show the spaciousness of the area
+- Use photorealistic lighting like professional architectural photography`
+      },
+      {
+        scene: "dental treatment result",
+        details: `Create a professional photograph showcasing high-quality dental work results. The image should show:
+- A natural, attractive close-up smile of a person with perfect teeth (just the smile, not full face)
+- Clean, professional dental photography lighting with natural colors
+- No visible dental tools or equipment - just the beautiful result
+- Natural-looking, not artificially white teeth with realistic reflections
+- A simple, neutral background typical of professional dental photography
+- The image should have the crisp, clean aesthetic of clinical photography
+- Use photorealistic lighting and colors that a professional dental photographer would use`
+      },
+      {
+        scene: "istanbul skyline with clinic",
+        details: `Create a professional photograph combining Istanbul's skyline with a modern dental facility. The image should show:
+- A high-end dental clinic with glass walls offering a panoramic view of Istanbul
+- The iconic skyline with the Blue Mosque or Hagia Sophia visible in the distance
+- Modern dental chairs and equipment suggesting advanced technology
+- Clean, bright interior with professional medical lighting
+- The composition should balance the interior space and the stunning view
+- Golden hour lighting creating a warm, inviting atmosphere
+- Use photorealistic lighting and colors that a professional architectural photographer would use`
+      },
+      {
+        scene: "dental vacation concept",
+        details: `Create a professional photograph representing dental tourism in Istanbul. The image should show:
+- A split composition: on one side, a modern dental clinic interior, on the other, a glimpse of Istanbul landmarks
+- Clean, bright lighting on the dental side, warm golden light on the tourism side
+- Subtle transition between the two concepts, perhaps using glass or a doorway
+- Professional, uncluttered composition with premium aesthetic
+- No text or obvious branding elements
+- The image should convey both healthcare quality and travel experience 
+- Use photorealistic lighting and colors that would appear in a travel magazine feature`
+      }
     ];
     
-    // Select a random element to ensure variation
-    const randomElement = randomElements[Math.floor(Math.random() * randomElements.length)];
+    // Select a random professional scene to ensure variation
+    const selectedScene = professionalScenes[Math.floor(Math.random() * professionalScenes.length)];
     
-    specificDetails = `
-The image should have a luxurious, premium aesthetic with subtle elements suggesting dental care combined with travel experience.
-Use a scene that combines ${randomElement}.
-Use clean, bright, professional lighting and a color palette that feels premium and trustworthy.
-The image should convey quality, exclusivity, and premium service - key values in dental tourism.`;
+    specificDetails = selectedScene.details;
   }
   
   // Common ending for all prompts

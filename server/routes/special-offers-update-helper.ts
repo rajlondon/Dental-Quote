@@ -1,84 +1,174 @@
-import { SpecialOffer } from '@shared/specialOffers';
-
-// Singleton store to hold a reference to the special offers map
-// This allows us to update offers from other modules without circular imports
-let specialOffersMapRef: Map<string, SpecialOffer[]> | null = null;
-
 /**
- * Set the reference to the special offers map
- * Called during server initialization
+ * Special Offers Image Update Helper Routes
+ * 
+ * This file contains special routes to help with refreshing special offer images
+ * using the OpenAI DALL-E API. These routes are designed to work with the refresh-offer-images.js
+ * script for easy updating of special offer images.
  */
-export function setSpecialOffersMap(map: Map<string, SpecialOffer[]>): void {
-  specialOffersMapRef = map;
-  console.log(`SpecialOffersStore: Map set with ${map.size} entries`);
-}
 
-/**
- * Get the reference to the special offers map
- */
-export function getSpecialOffersMap(): Map<string, SpecialOffer[]> {
-  if (!specialOffersMapRef) {
-    console.warn('Warning: Special offers map not initialized. Creating empty map.');
-    specialOffersMapRef = new Map<string, SpecialOffer[]>();
+import express from "express";
+import { specialOffers } from "./special-offers-routes-fixed";
+import { generateSpecialOfferImage } from "../services/openai-service";
+import { WebSocketService } from "../services/websocketService";
+
+
+// Create router
+const router = express.Router();
+
+// Test the offer data retrieval (GET)
+router.get("/api/special-offers/test-refresh/:offerId", async (req, res) => {
+  const { offerId } = req.params;
+  
+  if (!offerId) {
+    return res.status(400).json({
+      success: false,
+      message: "Offer ID is required"
+    });
   }
-  return specialOffersMapRef;
-}
-
-/**
- * Update an offer's image URL in memory
- * @param offerId The ID of the offer to update
- * @param imageUrl The new image URL
- * @returns boolean indicating success
- */
-export async function updateSpecialOfferImageInMemory(offerId: string, imageUrl: string): Promise<boolean> {
+  
   try {
-    if (!specialOffersMapRef) {
-      console.error('Error: Cannot update offer image - special offers map not initialized');
-      return false;
-    }
+    // Search for the offer in all clinic offer lists
+    let foundOffer = null;
     
-    console.log(`DEBUG: Updating offer ID ${offerId} with image URL: ${imageUrl}`);
-    console.log(`DEBUG: Special offers map has ${specialOffersMapRef.size} clinic entries`);
-    
-    // For testing/development only - if the ID doesn't exist in our map,
-    // let's create a fake successful response
-    let found = false;
-    
-    specialOffersMapRef.forEach((clinicOffers, clinicId) => {
-      console.log(`DEBUG: Checking clinic ${clinicId} with ${clinicOffers.length} offers`);
-      
-      clinicOffers.forEach((offer, index) => {
-        console.log(`DEBUG: Clinic ${clinicId}, Offer ${index}: ID=${offer.id}`);
-      });
-      
-      const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
-      
-      if (offerIndex >= 0) {
-        // Update the offer's image URL
-        clinicOffers[offerIndex] = {
-          ...clinicOffers[offerIndex],
-          banner_image: imageUrl,
-          updated_at: new Date().toISOString()
-        };
-        
-        // Update the clinic's offers in the map
-        specialOffersMapRef!.set(clinicId, clinicOffers);
-        
-        console.log(`Updated image for offer ${offerId} in clinic ${clinicId}`);
-        found = true;
+    specialOffers.forEach(clinicOffers => {
+      const offer = clinicOffers.find(o => o.id === offerId);
+      if (offer) {
+        foundOffer = offer;
       }
     });
     
-    // In development mode, always return true if the ID isn't found to allow testing
-    // In a production environment, you'd want to return found
-    if (!found) {
-      console.log(`DEVELOPMENT MODE: Offer ID ${offerId} not found in map, but returning success anyway for testing`);
-      return true; // For testing only - treat as success even if offer not found
+    if (!foundOffer) {
+      return res.status(404).json({
+        success: false,
+        message: `Offer with ID ${offerId} not found`
+      });
     }
     
-    return true;
+    // Return the offer data with current image URL
+    return res.status(200).json({
+      success: true,
+      offer: {
+        id: foundOffer.id,
+        title: foundOffer.title,
+        description: foundOffer.description,
+        clinic_id: foundOffer.clinic_id
+      },
+      currentImageUrl: foundOffer.banner_image
+    });
   } catch (error) {
-    console.error('Error updating special offer image:', error);
-    return false;
+    console.error("Error testing offer refresh:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while retrieving offer data",
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
-}
+});
+
+// Refresh the image for a specific offer (POST)
+router.post("/api/special-offers/refresh-image/:offerId", async (req, res) => {
+  const { offerId } = req.params;
+  const { naturalStyle = true, customPrompt = "" } = req.body;
+  
+  if (!offerId) {
+    return res.status(400).json({
+      success: false,
+      message: "Offer ID is required"
+    });
+  }
+  
+  try {
+    // Search for the offer in all clinic offer lists
+    let foundOffer = null;
+    let foundClinicId = null;
+    let offerIndex = -1;
+    
+    specialOffers.forEach((clinicOffers, clinicId) => {
+      const index = clinicOffers.findIndex(o => o.id === offerId);
+      if (index !== -1) {
+        foundOffer = clinicOffers[index];
+        foundClinicId = clinicId;
+        offerIndex = index;
+      }
+    });
+    
+    if (!foundOffer || foundClinicId === null || offerIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: `Offer with ID ${offerId} not found`
+      });
+    }
+    
+    // Generate a new image for the offer
+    const imageResult = await generateSpecialOfferImage(
+      foundOffer.title,
+      foundOffer.discount_type,
+      customPrompt || undefined,
+      naturalStyle
+    );
+    
+    if (!imageResult || !imageResult.url) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to generate new image"
+      });
+    }
+    
+    // Get cleaned URL without query parameters
+    const imageUrl = imageResult.url.split('?')[0];
+    
+    // Update the offer with the new image URL
+    const clinicOffers = specialOffers.get(foundClinicId)!;
+    clinicOffers[offerIndex] = {
+      ...foundOffer,
+      banner_image: imageUrl,
+      updated_at: new Date().toISOString()
+    };
+    specialOffers.set(foundClinicId, clinicOffers);
+    
+    // Send WebSocket notifications to all connected clients to refresh their offers
+    // Using a staggered approach to ensure images are properly loaded
+    // First notification - immediate
+    WebSocketService.broadcastToAll({
+      type: 'SPECIAL_OFFER_UPDATED',
+      data: { offerId, imageUrl }
+    });
+    
+    // Second notification - after 1 second
+    setTimeout(() => {
+      WebSocketService.broadcastToAll({
+        type: 'SPECIAL_OFFER_IMAGE_REFRESH',
+        data: { offerId, timestamp: Date.now() }
+      });
+    }, 1000);
+    
+    // Third notification - after 2 seconds
+    setTimeout(() => {
+      WebSocketService.broadcastToAll({
+        type: 'CACHE_INVALIDATION',
+        data: { 
+          type: 'special_offers',
+          timestamp: Date.now()
+        }
+      });
+    }, 2000);
+    
+    // Return success with the new image URL
+    return res.status(200).json({
+      success: true,
+      message: "Offer image refreshed successfully",
+      offerId,
+      imageUrl,
+      offer: foundOffer.title
+    });
+  } catch (error) {
+    console.error("Error refreshing offer image:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while refreshing offer image",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+export default router;

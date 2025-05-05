@@ -22,6 +22,7 @@ interface Message {
  * Handles bidirectional communication between patient and clinic portals
  */
 export class WebSocketService {
+  private static instance: WebSocketService;
   private wss: WebSocketServer;
   private clients: Map<string, Client> = new Map();
   
@@ -31,7 +32,30 @@ export class WebSocketService {
     
     this.setupEventHandlers();
     
+    // Store the instance for static access
+    WebSocketService.instance = this;
+    
     console.log('WebSocket service initialized');
+  }
+  
+  // Static method to broadcast to all connected clients
+  public static broadcastToAll(data: any): void {
+    if (!WebSocketService.instance) {
+      console.error('WebSocketService not initialized yet');
+      return;
+    }
+    
+    const message = JSON.stringify(data);
+    let clientCount = 0;
+    
+    WebSocketService.instance.clients.forEach(client => {
+      if (client.ws.readyState === WebSocket.OPEN) {
+        client.ws.send(message);
+        clientCount++;
+      }
+    });
+    
+    console.log(`Broadcast message sent to ${clientCount} clients:`, data.type);
   }
   
   private setupEventHandlers() {
