@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sparkles, ChevronLeft, ChevronRight, Clock, Tag, RefreshCw } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useWebSocket } from '@/hooks/use-websocket';
+import { useAuth } from '@/hooks/use-auth';
 
 // Add window interface extension
 declare global {
