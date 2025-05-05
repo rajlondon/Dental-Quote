@@ -76,6 +76,7 @@ interface DashboardSectionProps {
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { notifications } = useNotifications();
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
   return (
@@ -221,7 +222,9 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                   <MessageSquare className="h-5 w-5 text-blue-500 mr-2" />
                   <span>{t('portal.dashboard.unread_messages', 'Unread Messages')}</span>
                 </div>
-                <Badge className="bg-blue-500">{mockBookingData.unreadMessages}</Badge>
+                <Badge className="bg-blue-500">
+                  {notifications.filter(n => n.type === 'message' && !n.read).length || 0}
+                </Badge>
               </div>
               
               <div className="flex items-center justify-between">
@@ -229,10 +232,22 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                   <Calendar className="h-5 w-5 text-green-500 mr-2" />
                   <span>{t('portal.dashboard.upcoming_appointments', 'Upcoming Appointments')}</span>
                 </div>
-                <Badge className="bg-green-500">{mockBookingData.upcomingAppointments}</Badge>
+                <Badge className="bg-green-500">
+                  {notifications.filter(n => n.type === 'appointment' && !n.read).length || 0}
+                </Badge>
               </div>
               
-              <Button variant="outline" className="w-full mt-2">
+              <Button 
+                variant="outline" 
+                className="w-full mt-2"
+                onClick={() => {
+                  // Open the notifications popover or navigate to the notifications page
+                  const notificationsElement = document.querySelector('[data-notifications-trigger]');
+                  if (notificationsElement) {
+                    (notificationsElement as HTMLButtonElement).click();
+                  }
+                }}
+              >
                 {t('portal.dashboard.view_all', 'View All Notifications')}
               </Button>
               
