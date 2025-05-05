@@ -8,7 +8,6 @@ import {
 } from '@shared/specialOffers';
 import { User } from '@shared/schema';
 import { getWebSocketService } from '../services/websocketService';
-import { updateSpecialOfferImageInMemory, getSpecialOffersMap } from './special-offers-update-helper';
 import { AppError } from '../utils/app-error';
 import { catchAsync } from '../utils/catch-async';
 
@@ -26,14 +25,10 @@ const router = express.Router();
 // In-memory storage for development (replace with DB in production)
 const specialOffers = new Map<string, SpecialOffer[]>();
 
-// Set the map reference in the update helper
-import { setSpecialOffersMap } from './special-offers-update-helper';
-// Set the map in our singleton store
-setSpecialOffersMap(specialOffers);
+// Map is directly exported, no need for helper functions
 
 // For debugging, let's log the state of the map
 console.log(`Special offers map initialized with ${specialOffers.size} entries`);
-console.log(`SpecialOffersStore has map with ${getSpecialOffersMap().size} entries`);
 
 // Commission tier definitions
 const commissionTiers: CommissionTier[] = [
@@ -451,12 +446,11 @@ router.post('/api/special-offers/refresh-image/:offerId', catchAsync(async (req:
   console.log(`🔄 Image refresh requested for offer: ${offerId}`);
   
   // Find the offer in the in-memory store
-  const specialOffersMap = getSpecialOffersMap();
   let found = false;
   let offerImageUrl = '';
   
   // Search for the offer in all clinics
-  specialOffersMap.forEach((clinicOffers, clinicId) => {
+  specialOffers.forEach((clinicOffers, clinicId) => {
     const offer = clinicOffers.find(o => o.id === offerId);
     if (offer) {
       console.log(`Found offer ${offerId} in clinic ${clinicId}`);
@@ -484,7 +478,19 @@ router.post('/api/special-offers/refresh-image/:offerId', catchAsync(async (req:
   }
   
   // Update the offer image in memory with the cache-busting URL
-  const updateSuccess = updateSpecialOfferImageInMemory(offerId, offerImageUrl);
+  let updateSuccess = false;
+  
+  // Find and update the special offer directly in our in-memory map
+  for (const [clinicId, clinicOffers] of specialOffers.entries()) {
+    const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+    if (offerIndex !== -1) {
+      clinicOffers[offerIndex].banner_image = offerImageUrl;
+      clinicOffers[offerIndex].updated_at = new Date().toISOString();
+      specialOffers.set(clinicId, clinicOffers);
+      updateSuccess = true;
+      break;
+    }
+  }
   
   if (!updateSuccess) {
     throw new AppError('Failed to update offer image in memory', 500);
