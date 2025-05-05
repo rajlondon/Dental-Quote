@@ -65,7 +65,8 @@ const PackageDetailPage = () => {
         description: "Please login or register to book this package",
       });
       
-      // Redirect to our public booking endpoint which will handle authentication flow
+      // Since the original endpoint is for GET (redirect), we should continue to use it
+      // The public endpoint will redirect to login with booking parameters
       window.location.href = `/api/public/book-package/${id}`;
       return;
     }

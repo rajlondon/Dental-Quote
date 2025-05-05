@@ -168,8 +168,19 @@ const PortalLoginPage: React.FC = () => {
           description: "You'll be redirected to complete your booking",
         });
         
-        // Redirect to the authenticated booking endpoint
-        window.location.href = `/api/treatment-plans/book-package/${packageId}`;
+        // Create a form to submit a POST request to the booking endpoint
+        // This is necessary because we defined the booking endpoint as POST
+        toast({
+          title: "Redirecting",
+          description: "Processing your booking request..."
+        });
+        
+        // Create a hidden form for POST submission
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/api/treatment-plans/book-package/${packageId}`;
+        document.body.appendChild(form);
+        form.submit();
         return;
       }
     }
