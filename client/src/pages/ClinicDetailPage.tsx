@@ -32,6 +32,7 @@ import { Link } from "wouter";
 // Import clinic data
 import clinics from "@/data/clinics.json";
 import { Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock treatment categories and pricing for demo purposes
 const treatmentCategories = [
@@ -67,6 +68,7 @@ const ClinicDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [specialOffers, setSpecialOffers] = useState<any[]>([]);
   const [loadingOffers, setLoadingOffers] = useState(true);
+  const { toast } = useToast();
 
   // Fetch clinic data
   useEffect(() => {
@@ -88,8 +90,24 @@ const ClinicDetailPage: React.FC = () => {
     if (!clinic) return;
     
     setLoadingOffers(true);
+    
+    // Map clinic IDs to numeric IDs for the API
+    // This mapping is needed because clinics.json uses string IDs like "dentgroup-istanbul"
+    // while the special offers API expects numeric IDs
+    const clinicIdMap: Record<string, string> = {
+      "dentgroup-istanbul": "1",
+      "dent-istanbul": "2",
+      "istanbul-aesthetic-center": "3",
+      "dentalpark-turkey": "4",
+      "esta-istanbul": "5"
+    };
+    
+    // Use the mapped clinic ID for the API call
+    const apiClinicId = clinicIdMap[clinic.id] || clinic.id;
+    console.log(`Fetching special offers for clinic ID: ${clinic.id} (mapped to API ID: ${apiClinicId})`);
+    
     // Use the clinic ID to fetch special offers
-    fetch(`/api/special-offers/clinic/${clinic.id}`)
+    fetch(`/api/special-offers/clinic/${apiClinicId}`)
       .then(response => response.json())
       .then(data => {
         console.log("Clinic special offers:", data);
@@ -331,9 +349,27 @@ const ClinicDetailPage: React.FC = () => {
                                     size="sm"
                                     className="text-primary p-0"
                                     onClick={() => {
-                                      // Store offer data in session storage
-                                      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-                                      // Navigate to quote page
+                                      // Store offer data in session for the quote flow
+                                      const offerData = {
+                                        id: offer.id,
+                                        title: offer.title,
+                                        clinicId: offer.clinic_id,
+                                        discountValue: offer.discount_value,
+                                        discountType: offer.discount_type,
+                                        applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants'
+                                      };
+                                      
+                                      // Store in sessionStorage
+                                      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+                                      
+                                      // Notify user
+                                      toast({
+                                        title: "Special Offer Selected",
+                                        description: `${offer.title} will be applied to your quote.`,
+                                        variant: "default",
+                                      });
+                                      
+                                      // Redirect to quote page
                                       setLocation('/your-quote');
                                     }}
                                   >
