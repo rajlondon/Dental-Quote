@@ -49,16 +49,26 @@ export function usePackages() {
   // Fetch a specific package by ID
   const getPackage = (packageId: string) => {
     return useQuery({
-      queryKey: ["/api/treatment-module/packages", packageId],
+      queryKey: ["/api/public/packages", packageId],
       queryFn: async () => {
-        const response = await apiRequest("GET", `/api/treatment-module/packages/${packageId}`);
-        const data = await response.json() as PackageResponse;
+        // Log for debugging
+        console.log(`[DEBUG] Fetching package with ID: ${packageId}`);
         
-        if (!data.success) {
-          throw new Error("Failed to fetch package details");
+        try {
+          const response = await apiRequest("GET", `/api/public/packages/${packageId}`);
+          const data = await response.json() as PackageResponse;
+          
+          if (!data.success) {
+            console.error(`[ERROR] Package fetch failed: ${data.message || "Unknown error"}`);
+            throw new Error("Failed to fetch package details");
+          }
+          
+          console.log(`[DEBUG] Successfully fetched package: ${packageId}`);
+          return data.data;
+        } catch (error) {
+          console.error(`[ERROR] Exception in package fetch:`, error);
+          throw error;
         }
-        
-        return data.data;
       },
       enabled: !!packageId,
     });
