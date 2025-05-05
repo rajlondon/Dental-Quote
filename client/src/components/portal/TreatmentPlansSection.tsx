@@ -33,12 +33,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, AlertCircle, CheckCircle2, Package, HelpCircle } from "lucide-react";
+import { Loader2, FileText, AlertCircle, CheckCircle2, Package, HelpCircle, MoreVertical, Pencil, Trash, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PatientTreatmentPlansProps {
   quoteId?: string;
@@ -47,6 +55,8 @@ interface PatientTreatmentPlansProps {
 const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }) => {
   const [selectedTreatmentLine, setSelectedTreatmentLine] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   
   const { 
     treatmentLines, 
@@ -54,7 +64,9 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
     error,
     treatmentSummary,
     isSummaryLoading,
-    summaryError 
+    summaryError,
+    updateTreatmentLine,
+    deleteTreatmentLine
   } = useTreatmentLines(quoteId);
 
   // Status badge component with appropriate colors
@@ -273,9 +285,40 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                         <TableCell className="text-center">{tl.quantity}</TableCell>
                         <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice) * tl.quantity, 'GBP')}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => showTreatmentDetails(tl)}>
-                            View
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => showTreatmentDetails(tl)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedTreatmentLine(tl);
+                                setIsEditMode(true);
+                                setIsDetailsOpen(true);
+                              }}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setSelectedTreatmentLine(tl);
+                                  setIsDeleteConfirmOpen(true);
+                                }}
+                              >
+                                <Trash className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -346,61 +389,161 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
       
       {/* Treatment details dialog */}
       {selectedTreatmentLine && (
-        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <Dialog 
+          open={isDetailsOpen} 
+          onOpenChange={(open) => {
+            setIsDetailsOpen(open);
+            if (!open) setIsEditMode(false);
+          }}
+        >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Treatment Details</DialogTitle>
+              <DialogTitle>{isEditMode ? "Edit Treatment" : "Treatment Details"}</DialogTitle>
               <DialogDescription>
-                Full information about your selected treatment
+                {isEditMode 
+                  ? "Update information about your selected treatment"
+                  : "Full information about your selected treatment"
+                }
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Treatment</p>
-                <p>{selectedTreatmentLine.description}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Status</p>
-                  <StatusBadge status={selectedTreatmentLine.status} />
+              {isEditMode ? (
+                // Edit mode view - Would implement form controls here
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Patient Notes:</label>
+                    <textarea 
+                      className="w-full min-h-[100px] p-2 border rounded-md"
+                      defaultValue={selectedTreatmentLine.patientNotes || ''}
+                      placeholder="Add your notes about this treatment..."
+                      onChange={(e) => {
+                        // Update the selected treatment line with the new notes
+                        setSelectedTreatmentLine({
+                          ...selectedTreatmentLine,
+                          patientNotes: e.target.value
+                        });
+                      }}
+                    />
+                  </div>
                 </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Type</p>
-                  <p>{selectedTreatmentLine.isPackage ? 'Package' : 'Individual Treatment'}</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Procedure Code</p>
-                  <p>{selectedTreatmentLine.procedureCode}</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Quantity</p>
-                  <p>{selectedTreatmentLine.quantity}</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Unit Price</p>
-                  <p>{formatCurrency(Number(selectedTreatmentLine.unitPrice), 'GBP')}</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Total</p>
-                  <p>{formatCurrency(Number(selectedTreatmentLine.unitPrice) * selectedTreatmentLine.quantity, 'GBP')}</p>
-                </div>
-              </div>
-              
-              {selectedTreatmentLine.patientNotes && (
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Your Notes</p>
-                  <p className="text-sm">{selectedTreatmentLine.patientNotes}</p>
-                </div>
+              ) : (
+                // View mode - Regular details view
+                <>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">Treatment</p>
+                    <p>{selectedTreatmentLine.description}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Status</p>
+                      <StatusBadge status={selectedTreatmentLine.status} />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Type</p>
+                      <p>{selectedTreatmentLine.isPackage ? 'Package' : 'Individual Treatment'}</p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Procedure Code</p>
+                      <p>{selectedTreatmentLine.procedureCode}</p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Quantity</p>
+                      <p>{selectedTreatmentLine.quantity}</p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Unit Price</p>
+                      <p>{formatCurrency(Number(selectedTreatmentLine.unitPrice), 'GBP')}</p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Total</p>
+                      <p>{formatCurrency(Number(selectedTreatmentLine.unitPrice) * selectedTreatmentLine.quantity, 'GBP')}</p>
+                    </div>
+                  </div>
+                  
+                  {selectedTreatmentLine.patientNotes && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">Your Notes</p>
+                      <p className="text-sm">{selectedTreatmentLine.patientNotes}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <DialogFooter>
-              <Button onClick={() => setIsDetailsOpen(false)}>Close</Button>
+              {isEditMode ? (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsEditMode(false);
+                      // Reset any changes
+                      setSelectedTreatmentLine({...selectedTreatmentLine});
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      // Save the changes
+                      updateTreatmentLine.mutate({
+                        id: selectedTreatmentLine.id,
+                        data: {
+                          patientNotes: selectedTreatmentLine.patientNotes
+                        }
+                      });
+                      setIsEditMode(false);
+                      setIsDetailsOpen(false);
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setIsDetailsOpen(false)}>Close</Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {/* Delete confirmation dialog */}
+      {selectedTreatmentLine && (
+        <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to remove this treatment from your plan?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm">{selectedTreatmentLine.description}</p>
+              <p className="text-sm font-semibold mt-2">
+                This action cannot be undone.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDeleteConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => {
+                  deleteTreatmentLine.mutate(selectedTreatmentLine.id);
+                  setIsDeleteConfirmOpen(false);
+                }}
+              >
+                Delete
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
