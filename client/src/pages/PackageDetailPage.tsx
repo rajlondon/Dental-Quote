@@ -32,14 +32,28 @@ const PackageDetailPage = () => {
   const [mockedPackageData, setMockedPackageData] = useState<TrendingPackage | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   
+  // Convert URL-friendly ID to internal package ID
+  // For now, we map 'hollywood-smile-vacation' to our actual ID
+  const getInternalPackageId = (urlSlug: string) => {
+    const slugToIdMap: Record<string, string> = {
+      'hollywood-smile-vacation': 'e53cc92a-596d-4edc-a3f4-b1f31856415e',
+      // Add more mappings as needed
+    };
+    
+    return slugToIdMap[urlSlug] || urlSlug;
+  };
+  
   // Use our packages hook for API data
   const { getPackage, bookPackage } = usePackages();
+  const internalPackageId = getInternalPackageId(id || "");
+  console.log(`[DEBUG] URL slug: ${id}, mapped to internal ID: ${internalPackageId}`);
+  
   const { 
     data: actualPackageData, 
     isLoading, 
     error, 
     refetch 
-  } = getPackage(id || "");
+  } = getPackage(internalPackageId);
   
   // Handle booking a package
   const handleBookPackage = async () => {
@@ -67,8 +81,8 @@ const PackageDetailPage = () => {
     try {
       setIsBooking(true);
       
-      // Call the API to book the package
-      const result = await bookPackage.mutateAsync(id || "");
+      // Call the API to book the package with the internal ID
+      const result = await bookPackage.mutateAsync(internalPackageId);
       
       // Redirect to patient portal with the newly booked treatment
       if (result.success) {
