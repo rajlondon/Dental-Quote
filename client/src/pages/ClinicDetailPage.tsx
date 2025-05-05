@@ -31,6 +31,7 @@ import { Link } from "wouter";
 
 // Import clinic data
 import clinics from "@/data/clinics.json";
+import { Sparkles } from "lucide-react";
 
 // Mock treatment categories and pricing for demo purposes
 const treatmentCategories = [
@@ -306,6 +307,44 @@ const ClinicDetailPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Special Offers Section */}
+                      {specialOffers.length > 0 && (
+                        <div className="bg-amber-50 rounded-lg p-4 border border-amber-200 mb-6">
+                          <h3 className="font-medium mb-3 flex items-center">
+                            <Sparkles className="h-5 w-5 text-amber-500 mr-2" />
+                            Special Offers
+                          </h3>
+                          <div className="space-y-3">
+                            {specialOffers.map((offer, index) => (
+                              <div key={index} className="bg-white rounded p-3 border border-amber-200">
+                                <h4 className="font-medium text-amber-700">{offer.title}</h4>
+                                <p className="text-sm text-gray-600 mt-1 mb-2">{offer.description.substring(0, 100)}...</p>
+                                <div className="flex justify-between items-center">
+                                  <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                                    {offer.discount_type === 'percentage' ? 
+                                      `${offer.discount_value}% Off` : 
+                                      `£${offer.discount_value} Off`}
+                                  </Badge>
+                                  <Button 
+                                    variant="link"
+                                    size="sm"
+                                    className="text-primary p-0"
+                                    onClick={() => {
+                                      // Store offer data in session storage
+                                      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+                                      // Navigate to quote page
+                                      setLocation('/your-quote');
+                                    }}
+                                  >
+                                    Get Quote
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                         <h3 className="font-medium mb-3">Opening Hours</h3>
