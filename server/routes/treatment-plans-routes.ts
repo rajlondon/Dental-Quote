@@ -2,8 +2,7 @@ import express, { Router, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { packages, treatmentLines, users, clinics } from "@shared/schema";
-import { ensureAuthenticated } from "../middleware/auth-middleware";
-import { uploadToS3 } from "../services/s3Service";
+import { isAuthenticated } from "../middleware/auth";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
@@ -26,7 +25,7 @@ const treatmentLineSchema = z.object({
   procedureCode: z.string(),
   description: z.string(),
   quantity: z.number().default(1),
-  unitPrice: z.number(),
+  unitPrice: z.string(), // Decimal in DB is handled as string
   isPackage: z.boolean().default(false),
   packageId: z.string().uuid().optional(),
   status: z.enum(["draft", "confirmed", "deleted"]).default("draft"),
@@ -35,7 +34,7 @@ const treatmentLineSchema = z.object({
 });
 
 // Get all available packages
-router.get("/packages", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/packages", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const packagesList = await db.select().from(packages).where(eq(packages.isActive, true));
     
@@ -53,7 +52,7 @@ router.get("/packages", ensureAuthenticated, async (req: Request, res: Response)
 });
 
 // Get a specific package by ID
-router.get("/packages/:packageId", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/packages/:packageId", isAuthenticated, async (req: Request, res: Response) => {
   const { packageId } = req.params;
   
   try {
@@ -85,7 +84,7 @@ router.get("/packages/:packageId", ensureAuthenticated, async (req: Request, res
 });
 
 // Get treatment lines for a given quote
-router.get("/treatment-lines/:quoteId", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/treatment-lines/:quoteId", isAuthenticated, async (req: Request, res: Response) => {
   const { quoteId } = req.params;
   
   if (!quoteId) {
@@ -119,7 +118,7 @@ router.get("/treatment-lines/:quoteId", ensureAuthenticated, async (req: Request
 });
 
 // Add a new treatment line
-router.post("/treatment-lines", ensureAuthenticated, async (req: Request, res: Response) => {
+router.post("/treatment-lines", isAuthenticated, async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
@@ -161,7 +160,7 @@ router.post("/treatment-lines", ensureAuthenticated, async (req: Request, res: R
 });
 
 // Update an existing treatment line
-router.put("/treatment-lines/:id", ensureAuthenticated, async (req: Request, res: Response) => {
+router.put("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Response) => {
   const { id } = req.params;
   
   if (!req.user) {
@@ -230,7 +229,7 @@ router.put("/treatment-lines/:id", ensureAuthenticated, async (req: Request, res
 });
 
 // Delete a treatment line
-router.delete("/treatment-lines/:id", ensureAuthenticated, async (req: Request, res: Response) => {
+router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Response) => {
   const { id } = req.params;
   
   if (!req.user) {
@@ -288,7 +287,7 @@ router.delete("/treatment-lines/:id", ensureAuthenticated, async (req: Request, 
 });
 
 // Get patient treatment summary
-router.get("/patient/treatment-summary", ensureAuthenticated, async (req: Request, res: Response) => {
+router.get("/patient/treatment-summary", isAuthenticated, async (req: Request, res: Response) => {
   if (!req.user || req.user.role !== "patient") {
     return res.status(403).json({
       success: false,
