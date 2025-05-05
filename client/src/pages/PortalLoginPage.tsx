@@ -122,29 +122,65 @@ const PortalLoginPage: React.FC = () => {
     setupReloadTracker();
   }, []);
   
+  // Extract any query parameters from URL
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
+  
+  // Get and parse URL search params
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setSearchParams(params);
+      
+      // Debug logging
+      if (params.has('booking')) {
+        console.log(`[DEBUG] Found booking param for package: ${params.get('booking')}`);
+      }
+    }
+  }, []);
+  
   // Check if user is already authenticated
   useEffect(() => {
+    // Don't redirect if not logged in
+    if (!user) return;
+    
+    console.log("User already authenticated in PortalLoginPage, checking for special offer data and booking param");
+    
     // First, clean up any lingering special offer data if user is already authenticated
     // This prevents the "loop" where login -> offer check -> redirect to quote -> login again
-    if (user) {
-      console.log("User already authenticated in PortalLoginPage, checking for special offer data");
-      const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
-      const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+    const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+    const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+    
+    if (pendingOfferData || processingOffer) {
+      console.log("Found lingering special offer data, clearing it to prevent redirect loops");
+      sessionStorage.removeItem('pendingSpecialOffer');
+      sessionStorage.removeItem('processingSpecialOffer');
+    }
+    
+    // Check if we have a package booking redirect
+    if (searchParams && searchParams.has('booking') && user.role === 'patient') {
+      const packageId = searchParams.get('booking');
+      console.log(`[DEBUG] Redirecting to book package: ${packageId}`);
       
-      if (pendingOfferData || processingOffer) {
-        console.log("Found lingering special offer data, clearing it to prevent redirect loops");
-        sessionStorage.removeItem('pendingSpecialOffer');
-        sessionStorage.removeItem('processingSpecialOffer');
+      // If user is a patient, redirect them to book the package through the API
+      if (user.emailVerified) {
+        toast({
+          title: "Ready to Book",
+          description: "You'll be redirected to complete your booking",
+        });
+        
+        // Redirect to the authenticated booking endpoint
+        window.location.href = `/api/treatment-plans/book-package/${packageId}`;
+        return;
       }
-      
-      // Now proceed with normal redirects based on user role
-      if (user.role === 'admin') {
-        setLocation('/admin-portal');
-      } else if (user.role === 'clinic_staff') {
-        setLocation('/clinic-portal');
-      } else if (user.role === 'patient' && user.emailVerified) {
-        setLocation('/client-portal');
-      }
+    }
+    
+    // Standard redirect based on user role if no special redirect is needed
+    if (user.role === 'admin') {
+      setLocation('/admin-portal');
+    } else if (user.role === 'clinic_staff') {
+      setLocation('/clinic-portal');
+    } else if (user.role === 'patient' && user.emailVerified) {
+      setLocation('/client-portal');
     }
     
     // Check if user came from clinic selection
@@ -152,7 +188,7 @@ const PortalLoginPage: React.FC = () => {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
-  }, [user]);
+  }, [user, searchParams]);
   
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {

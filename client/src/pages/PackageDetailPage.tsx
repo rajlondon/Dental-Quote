@@ -59,12 +59,14 @@ const PackageDetailPage = () => {
   const handleBookPackage = async () => {
     // Check if user is logged in
     if (!user) {
+      // Use the public booking redirect flow instead of directly showing an error
       toast({
         title: "Login Required",
         description: "Please login or register to book this package",
-        variant: "destructive"
       });
-      setLocation("/auth");
+      
+      // Redirect to our public booking endpoint which will handle authentication flow
+      window.location.href = `/api/public/book-package/${id}`;
       return;
     }
     
