@@ -51,7 +51,33 @@ const EmailVerifiedPage: React.FC = () => {
       if (hasPendingOffer && offerParams) {
         // If there's a pending offer, redirect to login with a flag to process the offer
         localStorage.setItem('redirectToOfferAfterLogin', 'true');
-        sessionStorage.setItem('pendingSpecialOffer', localStorage.getItem('pendingSpecialOfferAfterVerification') || '');
+        
+        // Store the pending offer data in sessionStorage for the login page to process
+        // We need to make sure we're using the data we've already parsed and validated
+        const pendingOfferData = localStorage.getItem('pendingSpecialOfferAfterVerification');
+        if (pendingOfferData) {
+          try {
+            const offerData = JSON.parse(pendingOfferData);
+            // Format the offer data consistently before storing
+            const formattedOffer = {
+              id: offerData.id,
+              title: offerData.title,
+              clinicId: offerData.clinicId || offerData.clinic_id || '',
+              discountValue: offerData.discountValue || offerData.discount_value || 0,
+              discountType: offerData.discountType || offerData.discount_type || 'percentage',
+              applicableTreatment: offerData.applicableTreatment || 
+                               (offerData.applicable_treatments && offerData.applicable_treatments.length > 0 
+                                ? offerData.applicable_treatments[0] 
+                                : 'Dental Implants')
+            };
+            
+            // Save to sessionStorage for the login page to find
+            sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(formattedOffer));
+            console.log("Saved formatted special offer to pendingSpecialOffer:", formattedOffer);
+          } catch (error) {
+            console.error("Error processing offer data for login:", error);
+          }
+        }
         
         toast({
           title: "Email Verified Successfully",
