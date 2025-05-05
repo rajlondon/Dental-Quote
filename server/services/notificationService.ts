@@ -29,31 +29,36 @@ export class NotificationService {
    * This now uses the database schema notification format
    */
   public async createNotification(data: any): Promise<any> {
-    // Insert the notification into the database
-    const [newNotification] = await db.insert(notifications).values({
-      userId: data.userId,
-      title: data.title,
-      message: data.message,
-      content: data.content,
-      isRead: data.isRead || false,
-      type: data.type || 'info',
-      action: data.action,
-      entityType: data.entityType,
-      entityId: data.entityId
-    }).returning();
-    
-    // Send real-time notification using WebSocket
-    this.sendRealTimeNotification(this.mapToLegacyFormat(newNotification));
-    
-    // Send email notification if appropriate
     try {
-      await this.emailService.processNotification(this.mapToLegacyFormat(newNotification));
+      // Insert the notification into the database
+      // Omitting the 'content' field as it doesn't exist in the database yet
+      const [newNotification] = await db.insert(notifications).values({
+        userId: data.userId,
+        title: data.title,
+        message: data.message,
+        isRead: data.isRead || false,
+        type: data.type || 'info',
+        action: data.action,
+        entityType: data.entityType,
+        entityId: data.entityId
+      }).returning();
+      
+      // Send real-time notification using WebSocket
+      this.sendRealTimeNotification(this.mapToLegacyFormat(newNotification));
+      
+      // Send email notification if appropriate
+      try {
+        await this.emailService.processNotification(this.mapToLegacyFormat(newNotification));
+      } catch (error) {
+        console.error('Failed to send email notification:', error);
+        // Don't fail the entire notification process if email fails
+      }
+      
+      return newNotification;
     } catch (error) {
-      console.error('Failed to send email notification:', error);
-      // Don't fail the entire notification process if email fails
+      console.error('Error creating notification:', error);
+      throw error;
     }
-    
-    return newNotification;
   }
   
   /**
@@ -68,16 +73,31 @@ export class NotificationService {
       // Query database for notifications for this user
       const userIdNum = parseInt(userId, 10);
       
-      // Build the query with filters
-      let query = db.select().from(notifications).where(eq(notifications.userId, userIdNum));
+      // Building a safer query to ensure we don't reference columns that don't exist
+      const query = `
+        SELECT id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
+        FROM notifications
+        WHERE user_id = $1
+        ${status === 'unread' ? 'AND is_read = false' : ''}
+        ORDER BY created_at DESC
+      `;
       
-      // If status is unread, add that filter
-      if (status === 'unread') {
-        query = query.where(eq(notifications.isRead, false));
-      }
+      // Execute the raw query instead of using the drizzle ORM
+      const result = await db.execute(query, [userIdNum]);
       
-      // Execute the query and get results
-      const dbNotifications = await query.orderBy(desc(notifications.createdAt));
+      // Since we're using a raw query, transform the result to match our expected format
+      const dbNotifications = result.rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        title: row.title,
+        message: row.message,
+        isRead: row.is_read,
+        type: row.type,
+        action: row.action,
+        entityType: row.entity_type,
+        entityId: row.entity_id,
+        createdAt: row.created_at
+      }));
       
       // Map to the interface expected by the client
       const mappedNotifications = dbNotifications.map(n => this.mapToLegacyFormat(n));
@@ -107,25 +127,67 @@ export class NotificationService {
       // Convert string ID to number if needed
       const notificationId = typeof data.id === 'string' ? parseInt(data.id, 10) : data.id;
       
-      // First, fetch the notification to check its current state
-      const [originalNotification] = await db.select().from(notifications)
-        .where(eq(notifications.id, notificationId));
+      // Use a raw SQL query to fetch the notification first
+      const getQuery = `
+        SELECT id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
+        FROM notifications
+        WHERE id = $1
+      `;
       
-      if (!originalNotification) {
+      const getResult = await db.execute(getQuery, [notificationId]);
+      
+      if (getResult.rows.length === 0) {
         return null;
       }
+      
+      // Map the raw result to our expected format
+      const originalNotification = {
+        id: getResult.rows[0].id,
+        userId: getResult.rows[0].user_id,
+        title: getResult.rows[0].title,
+        message: getResult.rows[0].message,
+        isRead: getResult.rows[0].is_read,
+        type: getResult.rows[0].type,
+        action: getResult.rows[0].action,
+        entityType: getResult.rows[0].entity_type,
+        entityId: getResult.rows[0].entity_id,
+        createdAt: new Date(getResult.rows[0].created_at)
+      };
       
       // Determine if we're marking as read
       const isMarkingAsRead = data.status === 'read' && !originalNotification.isRead;
       const now = new Date();
       
-      // Update the notification in the database
-      const [updatedNotification] = await db.update(notifications)
-        .set({
-          isRead: data.status === 'read',
-        })
-        .where(eq(notifications.id, notificationId))
-        .returning();
+      // Update the notification with raw SQL
+      const updateQuery = `
+        UPDATE notifications
+        SET is_read = $1
+        WHERE id = $2
+        RETURNING id, user_id, title, message, is_read, type, action, entity_type, entity_id, created_at
+      `;
+      
+      const updateResult = await db.execute(updateQuery, [
+        data.status === 'read',
+        notificationId
+      ]);
+      
+      if (updateResult.rows.length === 0) {
+        return null;
+      }
+      
+      // Map the updated notification to our expected format
+      const updatedNotification = {
+        id: updateResult.rows[0].id,
+        userId: updateResult.rows[0].user_id,
+        title: updateResult.rows[0].title,
+        message: updateResult.rows[0].message,
+        isRead: updateResult.rows[0].is_read,
+        type: updateResult.rows[0].type,
+        action: updateResult.rows[0].action,
+        entityType: updateResult.rows[0].entity_type,
+        entityId: updateResult.rows[0].entity_id,
+        createdAt: new Date(updateResult.rows[0].created_at)
+      };
       
       // Log analytics data for admin reports
       if (isMarkingAsRead) {
@@ -148,12 +210,16 @@ export class NotificationService {
       // Convert string ID to number if needed
       const notificationId = typeof id === 'string' ? parseInt(id, 10) : id;
       
-      // Delete the notification from the database
-      const result = await db.delete(notifications)
-        .where(eq(notifications.id, notificationId))
-        .returning();
+      // Delete with raw SQL query
+      const deleteQuery = `
+        DELETE FROM notifications
+        WHERE id = $1
+        RETURNING id
+      `;
       
-      return result.length > 0;
+      const result = await db.execute(deleteQuery, [notificationId]);
+      
+      return result.rows.length > 0;
     } catch (error) {
       console.error('Error deleting notification:', error);
       return false;
@@ -171,11 +237,14 @@ export class NotificationService {
       // Convert string ID to number
       const userIdNumber = parseInt(userId, 10);
       
-      // Bulk update all unread notifications for this user to read
-      await db.update(notifications)
-        .set({ isRead: true })
-        .where(eq(notifications.userId, userIdNumber))
-        .where(eq(notifications.isRead, false));
+      // Bulk update with raw SQL
+      const updateQuery = `
+        UPDATE notifications
+        SET is_read = true
+        WHERE user_id = $1 AND is_read = false
+      `;
+      
+      await db.execute(updateQuery, [userIdNumber]);
       
       return true;
     } catch (error) {
@@ -288,35 +357,58 @@ export class NotificationService {
     notifications_by_priority: Record<string, number>;
   }> {
     try {
-      // Get all notifications from database
-      const allNotifications = await db.select().from(notifications);
+      // Query to get counts directly from the database
+      const countQuery = `
+        SELECT 
+          COUNT(*) as total,
+          SUM(CASE WHEN is_read = true THEN 1 ELSE 0 END) as read_count,
+          SUM(CASE WHEN is_read = false THEN 1 ELSE 0 END) as unread_count
+        FROM notifications
+      `;
       
-      // Count notifications by status
-      const readNotifications = allNotifications.filter(n => n.isRead);
-      const unreadNotifications = allNotifications.filter(n => !n.isRead);
+      // Execute count query
+      const countResult = await db.execute(countQuery);
+      
+      // Get counts from result
+      const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
+      const readCount = parseInt(countResult.rows[0]?.read_count || '0', 10);
+      const unreadCount = parseInt(countResult.rows[0]?.unread_count || '0', 10);
       
       // Calculate engagement rate
-      const totalCount = allNotifications.length;
-      const readCount = readNotifications.length;
-      const unreadCount = unreadNotifications.length;
       const engagementRate = totalCount > 0 ? (readCount / totalCount) * 100 : 0;
       
-      // Calculate average time to read (simplified without metadata)
-      // This is just a placeholder since we don't have read time tracking yet
-      const averageTimeToRead = null;
+      // Query to get entity type (category) breakdown
+      const categoryQuery = `
+        SELECT entity_type, COUNT(*) as count
+        FROM notifications
+        GROUP BY entity_type
+      `;
       
-      // Count notifications by category (entityType)
+      // Query to get type (priority) breakdown
+      const priorityQuery = `
+        SELECT type, COUNT(*) as count
+        FROM notifications
+        GROUP BY type
+      `;
+      
+      // Execute category query
+      const categoryResult = await db.execute(categoryQuery);
+      
+      // Build category map
       const notificationsByCategory: Record<string, number> = {};
-      allNotifications.forEach(notification => {
-        const category = notification.entityType || 'system';
-        notificationsByCategory[category] = (notificationsByCategory[category] || 0) + 1;
+      categoryResult.rows.forEach(row => {
+        const category = row.entity_type || 'system';
+        notificationsByCategory[category] = parseInt(row.count, 10);
       });
       
-      // Count notifications by priority (using type as proxy since we don't have priority)
+      // Execute priority query
+      const priorityResult = await db.execute(priorityQuery);
+      
+      // Build priority map
       const notificationsByPriority: Record<string, number> = {};
-      allNotifications.forEach(notification => {
-        const priority = notification.type || 'medium';
-        notificationsByPriority[priority] = (notificationsByPriority[priority] || 0) + 1;
+      priorityResult.rows.forEach(row => {
+        const priority = row.type || 'medium';
+        notificationsByPriority[priority] = parseInt(row.count, 10);
       });
       
       return {
