@@ -457,6 +457,31 @@ const QuoteSummary: React.FC<{
       </CardHeader>
       
       <CardContent className="pt-4">
+        {/* Special Offer Section - Show if there's a special offer */}
+        {specialOffer && (
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-md relative overflow-hidden">
+            <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center transform rotate-12">
+              <Sparkles className="h-8 w-8 text-primary" />
+            </div>
+            <div className="flex items-start">
+              <div className="flex-1 pr-16">
+                <div className="flex items-center">
+                  <h3 className="text-lg font-semibold text-primary">{specialOffer.title}</h3>
+                  <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary ml-2 px-2 py-0">
+                    {specialOffer.discountType === 'percentage' ? 
+                      `${specialOffer.discountValue}% OFF` : 
+                      `£${specialOffer.discountValue} OFF`}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This special offer includes a discount on {specialOffer.applicableTreatment}.
+                  The discount has been applied to your quote.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* User Information Section - only show if we have user info from form */}
         {userName && (
           <div className="mb-6 p-4 bg-blue-50 rounded-md">
