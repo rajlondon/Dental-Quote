@@ -180,7 +180,12 @@ export function NotificationsPopover({
           </div>
         )}
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative"
+            data-notifications-trigger="true"
+          >
             {connected ? (
               <Bell className="h-5 w-5" />
             ) : (
