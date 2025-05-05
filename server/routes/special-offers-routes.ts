@@ -6,10 +6,12 @@ import {
   specialOfferSchema, 
   createSpecialOfferSchema 
 } from '@shared/specialOffers';
-import { User } from '@shared/schema';
+import { User, userSavedSpecialOffers } from '@shared/schema';
 import { getWebSocketService } from '../services/websocketService';
 import { AppError } from '../utils/app-error';
 import { catchAsync } from '../utils/catch-async';
+import { db } from '../db';
+import { eq, and, desc } from 'drizzle-orm';
 
 // Extend Express.User interface to include clinicId
 declare global {
@@ -642,6 +644,185 @@ router.post('/refresh-images', catchAsync(async (req, res) => {
     refreshedCount: refreshedOffers.length,
     refreshedOffers
   });
+}));
+
+// API endpoint to save special offer to user account
+router.post('/save-to-account', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({
+      success: false,
+      message: 'You must be logged in to save special offers'
+    });
+  }
+
+  const { specialOfferId, clinicId, offerDetails } = req.body;
+
+  if (!specialOfferId || !offerDetails) {
+    return res.status(400).json({
+      success: false,
+      message: 'Special offer ID and details are required'
+    });
+  }
+
+  try {
+    // Use the drizzle db client to insert into the user_saved_special_offers table
+    const savedOffer = await db.insert(userSavedSpecialOffers).values({
+      userId: req.user.id,
+      specialOfferId,
+      clinicId: clinicId || null,
+      offerDetails: offerDetails,
+      status: 'active',
+    }).returning();
+
+    // Clear any pending special offer from session
+    if (req.session.pendingSpecialOffer) {
+      delete req.session.pendingSpecialOffer;
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Special offer saved to your account',
+      data: savedOffer[0]
+    });
+  } catch (error) {
+    console.error('Error saving special offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save special offer to your account',
+      error: error.message
+    });
+  }
+}));
+
+// API endpoint to get user's saved special offers
+router.get('/saved', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({
+      success: false,
+      message: 'You must be logged in to view saved special offers'
+    });
+  }
+
+  try {
+    const savedOffers = await db.select()
+      .from(userSavedSpecialOffers)
+      .where(eq(userSavedSpecialOffers.userId, req.user.id))
+      .orderBy(desc(userSavedSpecialOffers.savedAt));
+
+    return res.status(200).json({
+      success: true,
+      count: savedOffers.length,
+      data: savedOffers
+    });
+  } catch (error) {
+    console.error('Error fetching saved special offers:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch saved special offers',
+      error: error.message
+    });
+  }
+}));
+
+// API endpoint to update a saved special offer (mark as viewed/redeemed)
+router.patch('/saved/:id', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({
+      success: false,
+      message: 'You must be logged in to update saved special offers'
+    });
+  }
+
+  const { id } = req.params;
+  const { viewed, status, notes, redemptionDate } = req.body;
+  
+  try {
+    // First check if the offer exists and belongs to the user
+    const existingOffer = await db.select()
+      .from(userSavedSpecialOffers)
+      .where(and(
+        eq(userSavedSpecialOffers.id, parseInt(id)),
+        eq(userSavedSpecialOffers.userId, req.user.id)
+      ));
+
+    if (!existingOffer.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'Saved offer not found or does not belong to you'
+      });
+    }
+
+    // Update the offer
+    const updateData: Partial<typeof userSavedSpecialOffers.$inferInsert> = {};
+    
+    if (viewed !== undefined) updateData.viewed = viewed;
+    if (status) updateData.status = status;
+    if (notes) updateData.notes = notes;
+    if (redemptionDate) updateData.redemptionDate = new Date(redemptionDate);
+
+    const updatedOffer = await db.update(userSavedSpecialOffers)
+      .set(updateData)
+      .where(eq(userSavedSpecialOffers.id, parseInt(id)))
+      .returning();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Saved offer updated successfully',
+      data: updatedOffer[0]
+    });
+  } catch (error) {
+    console.error('Error updating saved special offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update saved special offer',
+      error: error.message
+    });
+  }
+}));
+
+// API endpoint to delete a saved special offer
+router.delete('/saved/:id', catchAsync(async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({
+      success: false,
+      message: 'You must be logged in to delete saved special offers'
+    });
+  }
+
+  const { id } = req.params;
+  
+  try {
+    // First check if the offer exists and belongs to the user
+    const existingOffer = await db.select()
+      .from(userSavedSpecialOffers)
+      .where(and(
+        eq(userSavedSpecialOffers.id, parseInt(id)),
+        eq(userSavedSpecialOffers.userId, req.user.id)
+      ));
+
+    if (!existingOffer.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'Saved offer not found or does not belong to you'
+      });
+    }
+
+    // Delete the offer
+    await db.delete(userSavedSpecialOffers)
+      .where(eq(userSavedSpecialOffers.id, parseInt(id)));
+
+    return res.status(200).json({
+      success: true,
+      message: 'Saved offer deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting saved special offer:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete saved special offer',
+      error: error.message
+    });
+  }
 }));
 
 // Export both the router and specialOffers map for direct access
