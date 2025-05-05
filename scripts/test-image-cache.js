@@ -1,6 +1,6 @@
 // Script to test the image caching functionality
-const axios = require('axios');
-const fs = require('fs');
+import axios from 'axios';
+import fs from 'fs';
 
 const BASE_URL = 'http://localhost:5000';
 const TEST_IMAGE_URL = 'https://mydentalfly-documents-prod.s3.eu-north-1.amazonaws.com/clinic/33/b65ec6a3-fa85-4a61-abce-7deeac2caef5-1744222855673.jpg';
@@ -14,7 +14,7 @@ async function testImageCache() {
     
     const loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
       email: 'clinic@mydentalfly.com',
-      password: 'Test123$'
+      password: 'Clinic123!'
     });
     
     if (!loginResponse.data.success) {
