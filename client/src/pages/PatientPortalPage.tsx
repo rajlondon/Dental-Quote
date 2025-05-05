@@ -15,7 +15,12 @@ import {
   Stethoscope,
   BarChart2,
   TestTube,
-  Bell
+  Bell,
+  Hotel,
+  Plane,
+  CheckCircle2,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +55,9 @@ import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
+import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
+import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
+import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
@@ -230,7 +238,139 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         </Card>
       </div>
       
-      {/* More dashboard content would go here... */}
+      {/* Dental Journey Progress Section */}
+      <div id="dental-journey-section" className="mt-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>{t('portal.dashboard.your_journey', 'Your Dental Journey')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <div className="flex items-center mb-2">
+                <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                  <div 
+                    className="h-2 bg-blue-500 rounded-full" 
+                    style={{ width: `${mockBookingData.journeyProgress}%` }}
+                  />
+                </div>
+                <span className="ml-3 text-sm font-medium text-blue-600">
+                  {mockBookingData.journeyProgress}%
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="flex">
+                <div className="rounded-full bg-blue-100 p-2 h-10 w-10 flex items-center justify-center mr-3">
+                  <span className="text-blue-700 font-bold">1</span>
+                </div>
+                <div>
+                  <h4 className="font-medium">{t('portal.dashboard.step1', 'Initial Consultation')}</h4>
+                  <p className="text-sm text-gray-600">
+                    {t('portal.dashboard.step1_description', 'Complete your dental screening and consultation')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex">
+                <div className="rounded-full bg-blue-100 p-2 h-10 w-10 flex items-center justify-center mr-3">
+                  <span className="text-blue-700 font-bold">2</span>
+                </div>
+                <div>
+                  <h4 className="font-medium">{t('portal.dashboard.step2', 'Treatment Planning')}</h4>
+                  <p className="text-sm text-gray-600">
+                    {t('portal.dashboard.step2_description', 'Create your personalized treatment plan with the dentist')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex">
+                <div className="rounded-full bg-blue-100 p-2 h-10 w-10 flex items-center justify-center mr-3">
+                  <span className="text-blue-700 font-bold">3</span>
+                </div>
+                <div>
+                  <h4 className="font-medium">{t('portal.dashboard.step3', 'Treatment Procedure')}</h4>
+                  <p className="text-sm text-gray-600">
+                    {t('portal.dashboard.step3_description', 'Undergo your scheduled dental procedures')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex">
+                <div className="rounded-full bg-blue-100 p-2 h-10 w-10 flex items-center justify-center mr-3">
+                  <span className="text-blue-700 font-bold">4</span>
+                </div>
+                <div>
+                  <h4 className="font-medium">{t('portal.dashboard.step4', 'Follow-up & Care')}</h4>
+                  <p className="text-sm text-gray-600">
+                    {t('portal.dashboard.step4_description', 'Receive post-treatment support and follow-up care')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Hotel Accommodation Section */}
+      <div id="hotel-section" className="grid md:grid-cols-1 gap-6 mt-6">
+        {/* Hotel Accommodation Section with view toggle controls */}
+        <Card className="mb-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Hotel Accommodation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button 
+                variant={hotelViewMode === 'selection' ? 'default' : 'outline'} 
+                onClick={() => setHotelViewMode('selection')}
+                size="sm"
+              >
+                Hotel Selection View
+              </Button>
+              <Button 
+                variant={hotelViewMode === 'confirmed' ? 'default' : 'outline'} 
+                onClick={() => setHotelViewMode('confirmed')}
+                size="sm"
+              >
+                Confirmed Hotel View
+              </Button>
+              <Button 
+                variant={hotelViewMode === 'self-arranged' ? 'default' : 'outline'} 
+                onClick={() => setHotelViewMode('self-arranged')}
+                size="sm"
+              >
+                Self-Arranged View
+              </Button>
+            </div>
+            
+            {hotelViewMode === 'selection' && <HotelSelectionSection />}
+            {hotelViewMode === 'confirmed' && <HotelAccommodationSection hotelBooking={{
+              id: "123",
+              hotelName: "Istanbul Luxury Suites",
+              roomType: "Deluxe Room",
+              checkInDate: "2025-06-10",
+              checkOutDate: "2025-06-17",
+              numberOfGuests: 2,
+              status: "confirmed",
+              bookingReference: "HTL-12345",
+              hotelAddress: "123 Golden Horn Blvd, Istanbul",
+              hotelPhone: "+90 212 555 1234",
+              hotelWebsite: "https://istanbulluxurysuites.example.com",
+              hotelEmail: "reservations@istanbulluxurysuites.example.com",
+              amenities: ["Free WiFi", "Breakfast Included", "Spa Access"],
+              distanceToClinic: "1.2 km",
+              transferIncluded: true,
+              notes: "Near the metro station, 20 minutes from the airport",
+              bookingDate: "2025-05-01",
+              paymentStatus: "paid",
+              cancellationPolicy: "Free cancellation until 48 hours before check-in"
+            }} />}
+            {hotelViewMode === 'self-arranged' && <HotelSelectionSection initialAccommodationType="self" />}
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Flight Details Section */}
+      <div id="flight-section" className="mt-6 mb-8">
+        <FlightDetailsSection />
+      </div>
     </div>
   );
 };
