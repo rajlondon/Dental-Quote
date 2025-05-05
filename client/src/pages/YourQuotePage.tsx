@@ -70,6 +70,14 @@ interface ClinicInfo {
     cityTour?: boolean;
   };
   images: string[];
+  // Special offer fields
+  hasSpecialOffer?: boolean;
+  specialOfferDetails?: {
+    id: string;
+    title: string;
+    discountValue: number;
+    discountType: 'percentage' | 'fixed_amount';
+  };
 }
 
 interface QuoteParams {
@@ -274,10 +282,23 @@ const ClinicCard: React.FC<{
 }> = ({ clinic, isSelected, onSelect }) => {
   
   return (
-    <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${isSelected ? 'border-blue-500 shadow-lg' : 'border-gray-200'}`}>
+    <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
+      isSelected 
+        ? 'border-blue-500 shadow-lg' 
+        : clinic.hasSpecialOffer 
+          ? 'border-blue-300 shadow-md' 
+          : 'border-gray-200'
+    }`}>
       {isSelected && (
         <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 text-sm font-semibold z-10 rounded-bl-md">
           Selected
+        </div>
+      )}
+      
+      {clinic.hasSpecialOffer && (
+        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
+          <Sparkles className="h-4 w-4 mr-1 text-yellow-300" />
+          Special Offer
         </div>
       )}
       
@@ -963,6 +984,58 @@ const YourQuotePage: React.FC = () => {
     return null;
   });
   
+  // Clinics state
+  const [clinics, setClinics] = useState<ClinicInfo[]>(() => {
+    // Start with our clinic data
+    let clinicsList = [...CLINIC_DATA];
+    
+    // If there's a special offer, sort clinics to prioritize the one with the offer
+    if (specialOffer && specialOffer.clinicId) {
+      clinicsList = clinicsList.sort((a, b) => {
+        // Put the clinic with the special offer first
+        if (a.id === specialOffer.clinicId) return -1;
+        if (b.id === specialOffer.clinicId) return 1;
+        
+        // Then sort by tier (premium first)
+        if (a.tier === 'premium' && b.tier !== 'premium') return -1;
+        if (a.tier !== 'premium' && b.tier === 'premium') return 1;
+        
+        // Then by price (ascending)
+        return a.priceGBP - b.priceGBP;
+      });
+      
+      // Add special offer indicator to the relevant clinic
+      clinicsList = clinicsList.map(clinic => {
+        if (clinic.id === specialOffer.clinicId) {
+          return {
+            ...clinic,
+            hasSpecialOffer: true,
+            specialOfferDetails: {
+              id: specialOffer.id,
+              title: specialOffer.title,
+              discountValue: specialOffer.discountValue,
+              discountType: specialOffer.discountType
+            }
+          };
+        }
+        return clinic;
+      });
+      
+      console.log(`Prioritized clinic ${specialOffer.clinicId} for special offer: ${specialOffer.title}`);
+    } else {
+      // Regular sorting by tier and then price
+      clinicsList = clinicsList.sort((a, b) => {
+        if (a.tier === 'premium' && b.tier !== 'premium') return -1;
+        if (a.tier !== 'premium' && b.tier === 'premium') return 1;
+        return a.priceGBP - b.priceGBP;
+      });
+    }
+    
+    return clinicsList;
+  });
+  
+  const [selectedClinic, setSelectedClinic] = useState<ClinicInfo | null>(null);
+  
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
   
@@ -973,7 +1046,7 @@ const YourQuotePage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Quote steps tracking
-  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'review'>('build-plan');
+  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'review' | 'select-clinic'>('build-plan');
   const [isQuoteReady, setIsQuoteReady] = useState(false);
   
   // Function to open edit quote modal
