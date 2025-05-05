@@ -72,33 +72,69 @@ const ClinicDetailPage: React.FC = () => {
 
   // Fetch clinic data
   useEffect(() => {
-    console.log("Searching for clinic with ID:", params.id);
+    // Enhanced debugging information for clinic routing
+    console.log("ClinicDetailPage: Searching for clinic with ID:", params?.id);
+    console.log("ClinicDetailPage: URL params:", params);
+    console.log("ClinicDetailPage: All available clinics:", clinics.map(c => ({ id: c.id, name: c.name })));
+    
+    // Safety check - if params.id is undefined, this is a serious issue
+    if (!params || !params.id) {
+      console.error("ClinicDetailPage: Critical error - params.id is undefined or empty");
+      toast({
+        title: "Routing Error",
+        description: "There was a problem with the clinic URL. Please try again from the home page.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+    
+    // Normalize the ID to handle case sensitivity or trailing spaces
+    const normalizedId = params.id.trim().toLowerCase();
+    console.log("ClinicDetailPage: Normalized ID for search:", normalizedId);
     
     // First, try to find by exact ID
-    let foundClinic = clinics.find(c => c.id === params.id);
+    let foundClinic = clinics.find(c => c.id.toLowerCase() === normalizedId);
     
     // If not found, try other matching strategies
     if (!foundClinic) {
+      console.log("ClinicDetailPage: Exact ID match failed, trying alternative matching methods");
+      
       // Try to match by name slug
       foundClinic = clinics.find(c => 
-        c.name.toLowerCase().replace(/\s+/g, '-') === params.id
+        c.name.toLowerCase().replace(/\s+/g, '-') === normalizedId
       );
       
+      if (foundClinic) {
+        console.log("ClinicDetailPage: Found clinic by name slug match");
+      }
+      
       // If still not found and the ID is numeric, try to find by index
-      if (!foundClinic && !isNaN(Number(params.id))) {
-        const index = Number(params.id);
+      if (!foundClinic && !isNaN(Number(normalizedId))) {
+        const index = Number(normalizedId);
+        console.log(`ClinicDetailPage: Trying index-based lookup with index: ${index}`);
+        
         if (index >= 0 && index < clinics.length) {
           foundClinic = clinics[index];
+          console.log("ClinicDetailPage: Found clinic by index lookup");
         }
       }
+    } else {
+      console.log("ClinicDetailPage: Found clinic by exact ID match");
     }
     
     if (foundClinic) {
-      console.log("Found clinic:", foundClinic.name);
+      console.log("ClinicDetailPage: Successfully found clinic:", foundClinic.name, "with ID:", foundClinic.id);
       setClinic(foundClinic);
       document.title = `${foundClinic.name} - MyDentalFly`;
+      
+      // Success toast for better user feedback
+      toast({
+        title: "Clinic Found",
+        description: `You are viewing ${foundClinic.name}`,
+      });
     } else {
-      console.error("Clinic not found for ID:", params.id);
+      console.error("ClinicDetailPage: Clinic not found for ID:", params.id);
       toast({
         title: "Clinic Not Found",
         description: `We couldn't find a clinic with the ID: ${params.id}`,
@@ -106,7 +142,7 @@ const ClinicDetailPage: React.FC = () => {
       });
     }
     setLoading(false);
-  }, [params.id, toast]);
+  }, [params, toast]);
 
   // Fetch special offers for this clinic
   useEffect(() => {
