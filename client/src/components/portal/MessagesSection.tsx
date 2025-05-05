@@ -22,7 +22,8 @@ import {
   CheckCircle, 
   Search,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  PlusCircle
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,6 +31,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useNotifications } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
+import { apiRequest } from '@/lib/queryClient';
 
 // Types for API responses
 interface Conversation {
@@ -89,6 +91,7 @@ const MessagesSection: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isCreatingTest, setIsCreatingTest] = useState(false);
   
   // Filter for showing active or all conversations
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'active'>('all');
@@ -286,6 +289,61 @@ const MessagesSection: React.FC = () => {
     return matchesSearch && matchesTab;
   });
   
+  // Create test conversation for testing the messaging functionality
+  const createTestConversation = async () => {
+    setIsCreatingTest(true);
+    
+    try {
+      // First create a test booking
+      const bookingResponse = await apiRequest('POST', '/api/test/create-test-booking', {
+        patientEmail: 'patient@mydentalfly.com',
+        clinicEmail: 'clinic@mydentalfly.com'
+      });
+      
+      const bookingData = await bookingResponse.json();
+      
+      if (!bookingData.success && !bookingData.message?.includes('Existing booking found')) {
+        throw new Error(bookingData.message || 'Failed to create test booking');
+      }
+      
+      const bookingId = bookingData.booking?.id;
+      
+      if (!bookingId) {
+        throw new Error('No booking ID returned from test booking creation');
+      }
+      
+      // Now create test messages for this booking
+      const messagesResponse = await apiRequest('POST', '/api/test/create-test-messages', {
+        bookingId
+      });
+      
+      const messagesData = await messagesResponse.json();
+      
+      if (!messagesData.success) {
+        throw new Error(messagesData.message || 'Failed to create test messages');
+      }
+      
+      toast({
+        title: "Test Conversation Created",
+        description: `Created a test conversation with ${messagesData.messageCount} messages for you to try out the messaging feature.`,
+        variant: "default"
+      });
+      
+      // Refresh the conversations list
+      await fetchConversations();
+      
+    } catch (error) {
+      console.error('Error creating test conversation:', error);
+      toast({
+        title: "Error Creating Test Conversation",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingTest(false);
+    }
+  };
+  
   // Get total unread count
   const totalUnreadCount = conversations.reduce((total, conversation) => 
     total + conversation.unreadCount, 0);
@@ -360,6 +418,29 @@ const MessagesSection: React.FC = () => {
                             ? t("portal.messages.try_different_search", "Try a different search term")
                             : t("portal.messages.create_booking", "Book a treatment to start messaging clinics")}
                         </p>
+                        
+                        {/* Add a test messages button when no conversations available */}
+                        {!searchQuery && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="gap-2" 
+                            onClick={createTestConversation}
+                            disabled={isCreatingTest}
+                          >
+                            {isCreatingTest ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Creating Test Conversation...
+                              </>
+                            ) : (
+                              <>
+                                <PlusCircle className="h-4 w-4" />
+                                Create Test Conversation
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       // List of conversations

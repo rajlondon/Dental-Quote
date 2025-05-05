@@ -72,18 +72,24 @@ const PatientPortalTesting: React.FC<{
           variant: "default"
         });
         
+        // Create test messages for this booking
+        await createTestMessages(data.booking?.id);
+        
         // Navigate to messages section
         setTimeout(() => {
           setActiveSection('messages');
         }, 1500);
       } else {
-        // If booking already exists, still show success
+        // If booking already exists, still show success and create messages
         if (data.message?.includes('Existing booking found')) {
           toast({
             title: "Existing Test Booking Found",
-            description: "A booking already exists between you and the clinic. You can use this for messaging tests.",
+            description: "A booking already exists between you and the clinic. Creating test messages for this booking.",
             variant: "default"
           });
+          
+          // Create test messages for this booking
+          await createTestMessages(data.booking?.id);
           
           // Navigate to messages section
           setTimeout(() => {
@@ -105,7 +111,40 @@ const PatientPortalTesting: React.FC<{
     }
   };
   
-  // Deprecated demo message function (replaced with actual API implementation)
+  // Create test messages for a booking
+  const createTestMessages = async (bookingId: number) => {
+    if (!bookingId) {
+      console.error('Cannot create test messages: No booking ID provided');
+      return;
+    }
+    
+    try {
+      const response = await apiRequest('POST', '/api/test/create-test-messages', {
+        bookingId
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Test Messages Created",
+          description: `Created ${data.messageCount} test messages for you to try the messaging system.`,
+          variant: "default"
+        });
+      } else {
+        console.error('Failed to create test messages:', data.message);
+      }
+    } catch (error) {
+      console.error('Error creating test messages:', error);
+      toast({
+        title: "Error Creating Test Messages",
+        description: "Could not create test messages, but the booking was created successfully.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Create booking and messages for testing
   const createDemoMessage = () => {
     createTestBooking();
   };
