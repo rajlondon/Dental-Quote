@@ -198,31 +198,18 @@ export async function generateSpecialOfferImage(
     // Still add the unique modifier to ensure different images
     const uniqueModifier = `(Unique generation ID: ${timestamp}-${uniqueId})`;
     
-    // Enhance the custom prompt with specific stock photography directives
+    // Enhance the custom prompt with concise stock photography directives
     const enhancedPrompt = `${customPrompt}
 
-IMPORTANT STOCK PHOTOGRAPHY TECHNICAL DIRECTIVES:
-- Create the image precisely matching the premium quality of Shutterstock professional photography
-- Use natural lighting with realistic shadows that follow the physics of light accurately
-- Include subtle lens characteristics that authentic photographs contain:
-  * Mild vignetting at corners (never perfect edge-to-edge lighting)
-  * Natural shallow depth of field with realistic bokeh at f/2.8-f/4
-  * Appropriate lens compression matching 35-50mm focal length
-  * Slight lens distortion at edges following real optics
-- Create realistic textures and micro-contrast in materials (fabric, skin, surfaces)
-- Apply color science matching professional Canon 5D Mark IV color rendering
-- Include natural imperfections that real photos contain:
-  * Minimal dust/particles in air when backlit
-  * Subtle variations in surface reflections
-  * Minor asymmetry in composition elements
-  * Very slight noise in shadow areas (ISO 100-400 range)
-- Follow professional stock photography framing conventions with:
-  * Rule of thirds composition
-  * Deep foreground, midground, background layering
-  * Natural environmental elements that provide context
-  * Subtle atmospheric perspective in backgrounds
+PROFESSIONAL PHOTOGRAPHY DIRECTIVES:
+- Match Shutterstock premium photography quality and style
+- Use natural lighting with accurate shadows and reflections
+- Include authentic lens characteristics (mild vignetting, bokeh at f/2.8-4.0)
+- Apply Canon 5D Mark IV professional color science
+- Incorporate subtle photographic imperfections and asymmetries
+- Use rule of thirds with proper foreground/midground/background layering
 
-CRUCIAL: This MUST be indistinguishable from a professional Shutterstock photograph and avoid ANY AI characteristics. Reference premium dental/medical stock photography.
+This MUST be indistinguishable from a professional Shutterstock photograph.
 
 ${uniqueModifier}`;
     
@@ -250,32 +237,23 @@ ${uniqueModifier}`;
   // Base prompt structure with built-in uniqueness
   let basePrompt = "";
   
-  // Use ultra-photorealistic style with specific stock photo guidelines
-  basePrompt = `Create a completely photorealistic image indistinguishable from a high-end Shutterstock professional photograph for a dental tourism marketing campaign featuring an offer called "${offerTitle}".
+  // Use photorealistic Shutterstock style with optimized length
+  basePrompt = `Create a high-end Shutterstock-quality photograph for a dental tourism campaign featuring "${offerTitle}".
 
-EMULATE PROFESSIONAL STOCK PHOTOGRAPHY:
-- Reference the exact style, quality and aesthetic of premium Shutterstock medical/dental tourism photography
-- Use natural environmental lighting with soft shadows that follow real-world physics
-- Include realistic bokeh effects and authentic depth of field as would appear in f/2.8 aperture photography
-- Incorporate subtle lens characteristics like very mild vignetting and natural corner softness
-- Apply professional color grading with slightly increased vibrance (but never oversaturated)
-- Include natural imperfections: light dust particles, very subtle lens flare, minimal noise in shadow areas
+PROFESSIONAL STOCK PHOTO STYLE:
+- Match premium Shutterstock medical/tourism photography aesthetic
+- Natural lighting with proper shadows and realistic reflections
+- Subtle lens effects (mild vignetting, natural bokeh at f/2.8)
+- Professional color grading with natural vibrance
+- Include realistic imperfections that stock photos have
 
-COMPOSITION TECHNIQUES:
-- Frame with the rule of thirds and create foreground, midground and background elements
-- Use authentic focal lengths (24-70mm range) with appropriate compression effects
-- Create atmospheric perspective with subtle depth haze in backgrounds
-- Include realistic micro-contrast and texture in materials (fabric, skin, dental surfaces)
-- Ensure proper highlights and reflections on glossy/wet surfaces following real physics
+TECHNICAL DETAILS:
+- Canon 5D Mark IV color science with 24-70mm lens perspective
+- Rule of thirds composition with proper depth layers
+- Authentic textures and material rendering
+- Natural asymmetries and photographic imperfections
 
-TECHNICAL EXCELLENCE:
-- Use the color science and rendering of a Canon 5D Mark IV with 24-70mm f/2.8 lens
-- Shoot at ISO 100-400 range with corresponding minimal noise characteristics
-- Apply professional white balance calibration with intentional slight warmth
-- Include the minor asymmetries and beautiful imperfections that real photos have
-- The final image should be impossible to distinguish from genuine professional photography
-
-IMPORTANT: The image must look like it belongs in a premium stock photo collection and avoid ANY characteristic that would identify it as AI-generated.`;
+The final image must be indistinguishable from a professionally shot photograph in a premium stock collection.`;
   
   
   // Additional unique identifier to force the model to generate a different image each time
@@ -285,199 +263,150 @@ IMPORTANT: The image must look like it belongs in a premium stock photo collecti
   
   if (offerType.toLowerCase().includes("hotel") || offerTitle.toLowerCase().includes("hotel")) {
     specificDetails = `
-Create a photograph of a luxury hotel room that resembles professional hotel marketing photography.
+Create a photograph of a luxury hotel room in Istanbul that looks like professional hotel marketing photography.
 
 SETTING:
-- A luxury hotel room in Istanbul with a king-size bed with neutral/gray bedding and subtle textural elements
-- Large floor-to-ceiling windows showing a nighttime city skyline with visible lights and landmarks
-- Warm, ambient lighting from bedside lamps creating a cozy atmosphere with natural shadows
-- Include a corner seating area with a small side table and some lived-in details
-- The room should have warm wood tones and earthy colors that give it a high-end but natural appearance
+- Elegant king-size bed with neutral/gray bedding and luxurious textures
+- Floor-to-ceiling windows showing Istanbul's nighttime skyline with city lights
+- Warm ambient lighting from bedside lamps with natural shadows
+- Corner seating area with tasteful furniture and lived-in details
+- Warm wood tones and earthy colors with high-end finishes
 
-TECHNICAL ASPECTS:
-- Use a wide angle lens perspective (24mm equivalent) with subtle lens distortion at the edges
-- Employ real-world architectural photography lighting techniques with proper shadows under furniture
-- Include realistic reflections on surfaces like wood and glass that follow proper physics
-- Add subtle imperfections that real rooms have - slight wrinkles in fabrics, minor asymmetry
-- Use the natural color science of Sony or Canon cameras with accurate white balance
-- The image should have slight vignetting and depth of field characteristics of real photography
+TECHNICAL:
+- Wide angle (24mm) perspective with natural distortion at edges
+- Balanced exposure showing both room interior and night view
+- Realistic reflections on surfaces with proper shadows
+- Natural imperfections (slight fabric wrinkles, minimal asymmetry)
+- Professional hotel photography style with atmospheric depth
 
-COMPOSITION:
-- Frame from a lower corner of the room to show depth and create a welcoming composition
-- Natural perspective with proper vanishing points for the windows and furniture
-- Allow some areas to fall into natural shadow rather than being perfectly evenly lit
-- Create realistic window exposure that shows both the room interior and night cityscape
-- Leave room for organic negative space rather than perfectly balanced composition
-
-IMPORTANT: Study the aesthetics of Ritz-Carlton and Four Seasons hotel photography for reference. The final image should be indistinguishable from a professional photograph taken with high-end equipment by a hotel photographer.`;
+Capture the luxury feel of high-end Istanbul accommodations with photorealistic quality like Ritz-Carlton marketing materials.`;
   } 
   else if (offerType.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("transfer") || offerTitle.toLowerCase().includes("airport")) {
     specificDetails = `
-Create a photograph of luxury airport transfer service that resembles professional automotive and travel photography.
+Create a photograph of luxury airport transfer service that mimics professional automotive marketing photography.
 
 SUBJECT:
-- A black Mercedes S-Class sedan (or equivalent luxury car) with a chauffeur in a suit by the open rear door
-- Position in front of an airport terminal entrance with some architecture visible but not dominating
-- Car should have proper reflections, realistic chrome/metal surfaces, and accurate proportions
-- The chauffeur should look natural (not AI-generated) with realistic facial features and stance
+- Black Mercedes S-Class sedan with chauffeur in suit by open rear door
+- Positioned at airport terminal entrance with visible architecture
+- Realistic car details with proper reflections on paint and chrome surfaces
+- Natural-looking chauffeur with authentic facial features and stance
 
-TECHNICAL ASPECTS:
-- Use golden hour/dusk lighting with the sky transitioning to evening blue
-- Include practical lighting from airport entrance illuminating the scene naturally
-- Employ automotive photography techniques with a 35mm lens perspective
-- Create realistic highlights on the car's paint with proper reflections (not perfect mirror reflections)
-- Include subtle lens flare or bokeh from lights in the background
-- Use slight vignetting and proper depth of field for a high-end camera look
-- Capture realistic shadows underneath the vehicle that match the lighting conditions
+LIGHTING & STYLE:
+- Golden hour/dusk lighting with blue-gradient evening sky
+- Practical lighting from airport entrance illuminating the scene
+- 35mm lens perspective with automotive photography techniques
+- Subtle lens flare and bokeh effects from background lights
+- Natural vignetting and professional depth of field
 
 COMPOSITION:
-- Frame from a slightly lower angle (about waist height) and from the front quarter to show the car's profile
-- Allow some environmental elements (other travelers with luggage in background, airport signage)
-- Create a natural sense of depth with foreground, midground, and background elements
-- Include small imperfections that real photography would have - very slight motion blur of background people, minor lens distortion
+- Lower angle view (waist height) showing car's front quarter profile
+- Environmental context (travelers with luggage, airport signage)
+- Professional automotive photography with realistic imperfections
 
-IMPORTANT: Study the aesthetics of luxury car service marketing photos. The final image should be indistinguishable from a professional photograph taken by an automotive/travel photographer at dusk using professional equipment.`;
+Create an image that looks exactly like luxury car service marketing material photographed at dusk by a professional automotive photographer.`;
   }
   else if (offerType.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consultation") || offerTitle.toLowerCase().includes("consult")) {
     specificDetails = `
-Create a photograph that could be featured in a dental practice brochure or medical journal. The photo should be:
+Create a professional dental consultation photograph for a medical brochure or website.
 
-SUBJECT:
-- A real dentist in a professional white coat consulting with a patient in an office setting (NOT in a dental treatment room)
-- Shot from an angle that captures their genuine interaction without feeling posed or artificial
-- The dentist showing a tablet or simple dental model to the patient (no equipment in use)
-- Both individuals should have realistic facial features, skin textures, and expressions
-- Focus on the consultation aspect - a conversation happening, not a procedure
+SCENE:
+- Dentist in white coat consulting with patient in office setting (not treatment room)
+- Natural interaction showing dentist explaining with tablet or dental model
+- Both individuals with realistic features, textures and expressions
+- Authentic office environment with desk, bookshelf and natural light
+- Professional but warm atmosphere with natural office details
 
-SETTING:
-- A dentist's office with typical details - desk, bookshelf, perhaps window with natural light
-- Shot with diffused lighting that creates gentle shadows and depth
-- Avoid any unrealistic or perfect geometric lighting fixtures
-- Include natural office elements like a cup of coffee, papers, or other realistic details
-- The setting should have subtle depth of field - focus on the people, background slightly blurred
+PHOTOGRAPHY STYLE:
+- Medical documentary style with diffused lighting and natural shadows
+- 50mm lens perspective at f/4.0 with shallow depth of field
+- Professional healthcare marketing color palette (slightly desaturated)
+- Natural photographic imperfections and realistic textures
+- Composition focusing on human interaction rather than clinical elements
 
-TECHNICAL ASPECTS:
-- Use a photography style similar to actual medical documentation or healthcare marketing
-- Lighting should mimic professional documentary-style photography with natural shadows
-- Capture the imperfections real photography has - slight grain, natural shadows, realistic depth
-- Use a color palette that matches real medical office photography - slightly desaturated, professional
-- The composition should feel like it was shot with a 50mm or 85mm lens at f/4.0
-
-IMPORTANT: The image must look like an actual photograph taken in a real dental clinic with real people, not an AI interpretation of one.`;
+Create an image indistinguishable from actual professional medical photography taken in a real dental office.`;
   }
   else if (offerType.toLowerCase().includes("implant") || offerTitle.toLowerCase().includes("implant")) {
     specificDetails = `
-Create a photograph suitable for a dental clinic's website showing implant treatment results:
+Create a portrait photograph showing dental implant treatment results for a clinic website.
 
 SUBJECT:
-- A portrait showing a natural smile of a real person (not an AI-generated face)
-- The person should have realistic skin texture with natural imperfections (small wrinkles, pores visible)
-- The expression should be genuinely happy but not exaggerated - like a patient satisfied with their treatment
-- Focus on a natural smile that shows healthy, well-proportioned teeth (not unnaturally white or perfect)
-- The person should be in casual professional attire, not a dental setting
+- Natural-looking person with authentic smile showing healthy, well-proportioned teeth
+- Realistic skin texture with natural imperfections (subtle wrinkles, visible pores)
+- Genuine happy expression of a satisfied patient
+- Person in casual professional attire, not in clinical setting
+- Focus on natural-looking dental work (not unnaturally white or perfect)
 
-TECHNICAL ASPECTS:
-- Shoot with portrait photography techniques - 85mm lens equivalent, f/2.8-4.0 aperture
-- Use soft, natural lighting with visible catch lights in the eyes 
-- The background should be slightly out of focus (bokeh effect) like real portrait photography
-- Use natural light techniques - slight shadow under the chin, natural skin tones
-- Include some asymmetry and natural variations in both the face and framing
-- Apply minimal retouching to maintain authentic skin texture and realistic teeth coloration
+PHOTOGRAPHY STYLE:
+- Portrait photography with 85mm lens at f/2.8-4.0 aperture
+- Soft natural lighting with subtle catch lights in eyes
+- Background slightly out of focus with professional bokeh effect
+- Natural skin tones with minimal retouching
+- Professional portrait composition with smile as focal point
+- Authentic photographic imperfections (natural shadows, realistic contrast)
 
-COMPOSITION:
-- Frame as a casual portrait where the smile is prominent but not the only focus
-- The image should have the slight imperfections of real photography (small shadows, natural contrast)
-- Avoid dental office elements or clinical equipment - this is about results, not procedures
-
-IMPORTANT: The image must look like a real photograph taken by a professional portrait photographer showing a genuine person, not an idealized or artificial representation.`;
+Create an image that looks exactly like a professional portrait photograph taken by an experienced photographer for a dental clinic's marketing materials.`;
   }
   else {
     // Generic special offer prompt with specific professional photography directions
     const professionalScenes = [
       {
         scene: "dental clinic reception",
-        details: `Create a photograph of a luxury dental clinic reception area that resembles professional architectural photography.
+        details: `Create a photograph of a luxury dental clinic reception area using professional architectural photography techniques.
 
 SETTING:
-- A modern reception area with marble reception desk and neutral-toned waiting area
-- Subtle Turkish design elements like a geometric pattern rug or tasteful artwork
-- Natural light coming through windows, complemented by warm interior lighting
-- Elements of a high-end medical facility with premium finishes and materials
-- A glimpse of Istanbul skyline or Bosphorus visible through windows
+- Modern reception with marble desk and Turkish design elements
+- Natural light through windows showing glimpse of Istanbul skyline
+- Premium healthcare facility materials and high-end finishes
+- Warm interior lighting complementing daylight
 
-TECHNICAL ASPECTS:
-- Use a wide angle lens perspective (16-24mm equivalent) with natural perspective correction
-- Create architectural photography lighting with balanced exposure between interior and exterior
-- Include realistic reflections on surfaces like marble, glass, and polished floors
-- Show natural shadows under furniture and at wall junctions
-- Add subtle imperfections - slight asymmetry in furniture placement, natural wear patterns
-- Use professional architectural photography white balance and color grading
+STYLE:
+- Wide angle (16-24mm) perspective with architectural photography techniques
+- Balanced exposure between interior and exterior elements
+- Professional reflections on marble, glass and polished surfaces
+- Natural shadows and subtle design imperfections
+- Professional interior photography color grading
 
-COMPOSITION:
-- Frame from a slightly elevated position (chest height) to show the space's flow
-- Allow some areas to fall into natural shadow rather than being perfectly evenly lit
-- Capture depth through multiple layers - foreground, midground, and background
-- Include typical reception area items like magazines, a water dispenser, or plants
-- Create a natural sense of scale with proper spatial relationships
-
-IMPORTANT: Study high-end hospitality and medical facility photography. The final image should be indistinguishable from a photograph taken by a professional architectural photographer using professional lighting equipment.`
+Frame from elevated position showing natural flow and depth with typical reception elements. Create an image indistinguishable from professional architectural photography of a luxury medical facility.`
       },
       {
         scene: "dental treatment result",
-        details: `Create a photograph of dental treatment results that resembles professional dental photography.
+        details: `Create a dental treatment result photograph using professional dental photography techniques.
 
 SUBJECT:
-- A close-up view of a natural smile showing healthy, well-aligned teeth (not unnaturally white)
-- Frame just the mouth area through the chin and upper lip, not the full face
-- Natural lip color and skin texture with realistic pores and subtle imperfections
-- Focus on showing teeth that look like real ceramic dental work, not digitally perfect teeth
-- No visible dental tools, equipment, or clinic setting - just the smile result
+- Close-up view of natural smile showing healthy, well-aligned teeth
+- Frame only mouth area (chin to upper lip), not full face
+- Natural lip color and skin texture with subtle pores and imperfections
+- Realistic ceramic dental work appearance (not artificially perfect)
+- No dental tools or clinical setting visible
 
-TECHNICAL ASPECTS:
-- Use professional dental photography techniques with proper ring flash lighting simulation
-- Create natural reflections on teeth surfaces that follow proper light physics
-- Include subtle imperfections that real dental photos have - slight variations in tooth color/shape
-- Apply proper color rendering with neutral white balance typical of clinical photography
-- Use macro lens (85-105mm equivalent) with shallow depth of field (f/5.6-f/8)
-- Maintain high detail in focal area with natural falloff at edges
+TECHNICAL:
+- Professional dental photography with ring flash lighting
+- Natural reflections on tooth surfaces following proper light physics
+- Subtle imperfections in tooth color/shape like real dental photos
+- Macro lens (85-105mm) effect with f/5.6-8 depth of field
+- Neutral white balance with clinical photography color rendering
 
-COMPOSITION:
-- Center the smile with professional dental photography framing
-- Ensure natural curvature of the dental arch with proper perspective
-- Show symmetry but avoid perfect mathematical symmetry
-- Create proper exposure with detail in both highlight and shadow areas
-- Capture realistic specular highlights on moist teeth surfaces
-
-IMPORTANT: Study real dental before/after photography from leading cosmetic dentists. The final image should be indistinguishable from a photograph taken by a professional dental photographer using specialized dental photography equipment.`
+Create an image exactly matching professional dental before/after photography used by leading cosmetic dentists, with natural dental arch curvature and realistic teeth surface highlights.`
       },
       {
         scene: "istanbul skyline with clinic",
-        details: `Create a photograph of a modern dental clinic with Istanbul views that resembles professional architectural photography.
+        details: `Create a photograph of a high-end dental clinic with Istanbul skyline views using professional architectural photography techniques.
 
 SETTING:
-- A high-end dental clinic treatment room with floor-to-ceiling glass walls or windows
-- The iconic Istanbul skyline with Blue Mosque or Hagia Sophia visible in the distance
-- Modern dental chair and minimal equipment suggesting advanced technology
-- Clean, bright interior with a mix of natural light and professional medical lighting
-- Elegant, minimalist interior design with premium materials (marble, wood accents)
+- Modern treatment room with floor-to-ceiling windows
+- Istanbul skyline with Blue Mosque or Hagia Sophia visible in distance
+- Minimalist interior with premium materials (marble, wood accents)
+- Advanced dental technology with clean, uncluttered design
+- Golden hour lighting illuminating both interior and exterior
 
-TECHNICAL ASPECTS:
-- Use architectural/interior photography techniques with a balanced exposure
-- Create natural lighting with golden hour warm tones through the windows
-- Balance interior lighting with exterior light using HDR-like technique
-- Include realistic reflections on glass, chrome and polished surfaces
-- Apply proper white balance calibration across indoor/outdoor elements
-- Create proper depth of field that keeps both interior and view in reasonable focus
-- Include realistic light falloff and natural shadows in interior corners
+PHOTOGRAPHY STYLE:
+- Architectural interior photography with balanced exposure
+- Natural golden hour light with professional interior lighting
+- Realistic reflections on glass, chrome and polished surfaces
+- Professional depth of field keeping both clinic and view in focus
+- Subtle lens effects (minimal flare, natural vignetting)
 
-COMPOSITION:
-- Frame from a position that creates pleasing perspective lines toward the view
-- Balance the interior dental elements with the exterior skyline (rule of thirds)
-- Create a sense of depth with foreground, midground (clinic) and background (skyline)
-- Allow some subtle lens flare or highlight bloom from window light
-- Include subtle real-world imperfections in the interior like slight asymmetry
-
-IMPORTANT: Study high-end medical facility photography combined with architectural photography. The final image should be indistinguishable from a photograph taken by a professional architectural photographer during golden hour using professional equipment and lighting.`
+Frame with pleasing perspective lines leading to the view with rule-of-thirds composition. Image should match high-end architectural photography of premium medical facilities with iconic skyline views.`
       },
       {
         scene: "dental vacation concept",
