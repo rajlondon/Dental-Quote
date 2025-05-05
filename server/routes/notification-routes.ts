@@ -25,48 +25,7 @@ declare global {
 export const createNotificationRoutes = (notificationService: NotificationService) => {
   const router = express.Router();
   
-  // Generate test notifications - development only endpoint
-  router.post('/api/notifications/generate-test', async (req, res) => {
-    try {
-      // Check authentication and permissions
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required'
-        });
-      }
-      
-      // Only allow if user is logged in and we're in development or user is admin
-      if (process.env.NODE_ENV !== 'production' || req.user.role === 'admin') {
-        // Import the function using ES module dynamic import
-        const { generateTestNotifications } = await import('../utils/generate-test-notifications');
-        
-        // Get the current logged-in user's ID
-        const userId = req.user.id;
-        console.log(`Generating test notifications for user ${userId}`);
-        
-        // Pass the current user ID to create notifications for them
-        const count = await generateTestNotifications(userId);
-        return res.status(200).json({ 
-          success: true, 
-          message: `Successfully generated ${count} test notifications for user ${userId}`,
-          count 
-        });
-      } else {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Access denied. This endpoint is only available in development mode or for admin users.'
-        });
-      }
-    } catch (error) {
-      console.error('Failed to generate test notifications:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Failed to generate test notifications', 
-        error: error instanceof Error ? error.message : String(error) 
-      });
-    }
-  });
+  // Test notification generation is now handled in the test endpoint section below
   
   // Interface for engagement analytics data
   interface NotificationAnalytics {
@@ -292,41 +251,18 @@ export const createNotificationRoutes = (notificationService: NotificationServic
           return res.status(401).json({ error: 'Unauthorized' });
         }
         
-        // Create a variety of test notifications for the authenticated user
-        const testTypes = ['info', 'warning', 'success', 'error'];
-        const testEntityTypes = ['appointment', 'treatment', 'message', 'payment', 'document', 'system', 'offer'];
+        // Get the current logged-in user's ID
+        const userId = req.user.id;
+        console.log(`Generating test notifications for user ${userId} (${typeof userId})`);
         
-        const results = [];
+        // Use the utility function with dynamic import
+        const { generateTestNotifications } = await import('../utils/generate-test-notifications');
+        const count = await generateTestNotifications(userId);
         
-        // Generate 5 test notifications with different types
-        for (let i = 0; i < 5; i++) {
-          const type = testTypes[i % testTypes.length];
-          const entityType = testEntityTypes[i % testEntityTypes.length];
-          
-          const testNotification = {
-            userId: req.user.id,
-            title: `Test ${type.charAt(0).toUpperCase() + type.slice(1)} Notification ${i+1}`,
-            message: `This is a test ${type} notification #${i+1} for testing the notification system.`,
-            isRead: i % 2 === 0, // alternate between read and unread
-            type: type,
-            action: '/patient/profile',
-            entityType: entityType,
-            entityId: i + 1,
-            // Include additional metadata
-            source_type: 'system',
-            source_id: 'test-generator',
-            target_type: 'patient'
-          };
-          
-          // Process the notification
-          const notification = await notificationService.createNotification(testNotification);
-          results.push(notification);
-        }
-        
-        res.status(201).json({
-          success: true,
-          message: `Generated ${results.length} test notifications`,
-          notifications: results
+        return res.status(200).json({ 
+          success: true, 
+          message: `Successfully generated ${count} test notifications for user ${userId}`,
+          count 
         });
       } catch (error) {
         console.error('Error generating test notifications:', error);

@@ -39,6 +39,7 @@ interface NotificationsPopoverProps {
   markAsRead?: (id: string) => void;
   markAllAsRead?: () => void;
   deleteNotification?: (id: string) => void;
+  generateTestNotifications?: () => Promise<void>;
   connected?: boolean;
   onRetryConnection?: () => void;
 }
