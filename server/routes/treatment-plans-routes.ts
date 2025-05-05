@@ -1,10 +1,11 @@
 import express, { Router, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc, sql } from "drizzle-orm";
-import { packages, treatmentLines, users, clinics } from "@shared/schema";
+import { packages, treatmentLines, users, clinics, quoteRequests } from "@shared/schema";
 import { isAuthenticated } from "../middleware/auth";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
+import { storage } from "../storage";
 
 const router: Router = express.Router();
 
@@ -282,6 +283,147 @@ router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res:
     return res.status(500).json({
       success: false,
       message: "Failed to delete treatment line"
+    });
+  }
+});
+
+// Book a treatment package
+router.post("/book-package/:packageId", isAuthenticated, async (req: Request, res: Response) => {
+  const { packageId } = req.params;
+  
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized"
+    });
+  }
+  
+  try {
+    // Get the package details
+    const packageData = await db.query.packages.findFirst({
+      where: eq(packages.id, packageId as string),
+      with: {
+        clinic: true
+      }
+    });
+    
+    if (!packageData) {
+      return res.status(404).json({
+        success: false,
+        message: "Package not found"
+      });
+    }
+    
+    // Check if this is a patient
+    if (req.user.role !== "patient") {
+      return res.status(403).json({
+        success: false,
+        message: "Only patients can book packages"
+      });
+    }
+    
+    // Generate a unique quote ID for treatment lines
+    const quoteId = uuidv4();
+    
+    // Find or create a quote request for the patient
+    // We'll use this for tracking the booking in the system
+    const existingQuoteRequests = await db.select().from(quoteRequests)
+      .where(and(
+        eq(quoteRequests.userId, req.user.id),
+        eq(quoteRequests.status, "active")
+      ));
+    
+    let quoteRequestId: number;
+    
+    if (existingQuoteRequests.length > 0) {
+      quoteRequestId = existingQuoteRequests[0].id;
+    } else {
+      // Create a new quote request for the patient
+      const [createdQuoteRequest] = await db.insert(quoteRequests).values({
+        userId: req.user.id,
+        name: req.user.name || req.user.username,
+        email: req.user.email,
+        phone: req.user.phone || "",
+        treatment: packageData.name,
+        specificTreatment: packageData.description,
+        selectedClinicId: packageData.clinicId,
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+      
+      quoteRequestId = createdQuoteRequest.id;
+    }
+    
+    // Add the package as a treatment line
+    const treatmentLineData = {
+      id: uuidv4(),
+      clinicId: packageData.clinicId,
+      patientId: req.user.id,
+      quoteId: quoteId,
+      procedureCode: packageData.procedureCode,
+      description: packageData.name,
+      quantity: 1,
+      unitPrice: packageData.price.toString(),
+      isPackage: true,
+      packageId: packageData.id,
+      status: "confirmed", // Automatically confirm the package
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      patientNotes: `Booked package: ${packageData.name}`
+    };
+    
+    const [newTreatmentLine] = await db.insert(treatmentLines)
+      .values(treatmentLineData)
+      .returning();
+    
+    // Create a notification for the patient
+    await storage.createNotification({
+      userId: req.user.id,
+      type: "treatment",
+      title: "Package Booked",
+      message: `You have successfully booked the ${packageData.name} package from ${packageData.clinic.name}`,
+      priority: "high",
+      category: "treatment",
+      read: false,
+      additionalData: JSON.stringify({
+        packageId: packageData.id,
+        treatmentLineId: newTreatmentLine.id,
+        quoteId: quoteId
+      })
+    });
+    
+    // Create a notification for the clinic
+    await storage.createNotification({
+      userId: packageData.clinicId,
+      type: "treatment",
+      title: "New Package Booking",
+      message: `A patient has booked the ${packageData.name} package`,
+      priority: "high",
+      category: "treatment",
+      read: false,
+      additionalData: JSON.stringify({
+        packageId: packageData.id,
+        patientId: req.user.id,
+        treatmentLineId: newTreatmentLine.id,
+        quoteId: quoteId
+      })
+    });
+    
+    return res.status(201).json({
+      success: true,
+      data: {
+        treatmentLine: newTreatmentLine,
+        quoteId: quoteId,
+        package: packageData
+      },
+      message: "Package booked successfully"
+    });
+  } catch (error) {
+    console.error(`Error booking package ${packageId}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to book package"
     });
   }
 });
