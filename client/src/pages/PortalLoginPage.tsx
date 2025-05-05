@@ -428,6 +428,13 @@ const PortalLoginPage: React.FC = () => {
               console.log("Redirecting to quote page with special offer context");
               const quoteUrl = `/your-quote?${params.toString()}`;
               console.log("Redirect URL:", quoteUrl);
+              // Mark this offer as being processed to prevent repeated redirects
+              const offerData = JSON.parse(pendingOfferData);
+              sessionStorage.setItem('processingSpecialOffer', offerData.id);
+              
+              // Remove the pendingSpecialOffer to prevent repeated redirects on subsequent logins
+              sessionStorage.removeItem('pendingSpecialOffer');
+              
               window.location.href = quoteUrl;
             }, 100);
             

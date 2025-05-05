@@ -1037,10 +1037,12 @@ const YourQuotePage: React.FC = () => {
           applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
         };
         
-        // Save to activeSpecialOffer key for future use and clear pending
+        // Save to activeSpecialOffer key for future use and clear all special offer flags
         sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
         sessionStorage.removeItem('pendingSpecialOffer');
+        sessionStorage.removeItem('processingSpecialOffer');
         
+        console.log("Special offer processing complete, cleared pendingSpecialOffer and processingSpecialOffer");
         return formattedOffer;
       } catch (error) {
         console.error("Error parsing pending special offer:", error);
