@@ -432,7 +432,7 @@ router.post("/book-package/:packageId", isAuthenticated, async (req: Request, re
         userId: req.user.id,
         name: `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || "Patient",
         email: req.user.email,
-        phone: req.user.phone || "",
+        phone: "",
         treatment: packageData.name,
         specificTreatment: packageData.description,
         selectedClinicId: packageData.clinicId,
@@ -450,7 +450,7 @@ router.post("/book-package/:packageId", isAuthenticated, async (req: Request, re
       clinicId: packageData.clinicId,
       patientId: req.user.id,
       quoteId: quoteId,
-      procedureCode: packageData.procedureCode,
+      procedureCode: packageData.procedureCode || 'PACKAGE', // Provide default if missing
       description: packageData.name,
       quantity: 1,
       unitPrice: packageData.price.toString(),
