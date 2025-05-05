@@ -124,12 +124,27 @@ const PortalLoginPage: React.FC = () => {
   
   // Check if user is already authenticated
   useEffect(() => {
-    if (user && user.role === 'admin') {
-      setLocation('/admin-portal');
-    } else if (user && user.role === 'clinic_staff') {
-      setLocation('/clinic-portal');
-    } else if (user && user.role === 'patient' && user.emailVerified) {
-      setLocation('/client-portal');
+    // First, clean up any lingering special offer data if user is already authenticated
+    // This prevents the "loop" where login -> offer check -> redirect to quote -> login again
+    if (user) {
+      console.log("User already authenticated in PortalLoginPage, checking for special offer data");
+      const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
+      const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+      
+      if (pendingOfferData || processingOffer) {
+        console.log("Found lingering special offer data, clearing it to prevent redirect loops");
+        sessionStorage.removeItem('pendingSpecialOffer');
+        sessionStorage.removeItem('processingSpecialOffer');
+      }
+      
+      // Now proceed with normal redirects based on user role
+      if (user.role === 'admin') {
+        setLocation('/admin-portal');
+      } else if (user.role === 'clinic_staff') {
+        setLocation('/clinic-portal');
+      } else if (user.role === 'patient' && user.emailVerified) {
+        setLocation('/client-portal');
+      }
     }
     
     // Check if user came from clinic selection
@@ -137,7 +152,7 @@ const PortalLoginPage: React.FC = () => {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
-  }, []);
+  }, [user]);
   
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
