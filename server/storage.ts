@@ -481,16 +481,26 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Updating special offer image for offer ID: ${offerId}`);
       
-      // Import the module using dynamic import for ES modules
-      const helperModule = await import('./routes/special-offers-update-helper');
-      const { updateSpecialOfferImageInMemory } = helperModule;
+      // Import the module to get direct access to the map
+      const { specialOffers } = await import('./routes/special-offers-routes');
       
-      if (!updateSpecialOfferImageInMemory) {
-        throw new Error('Failed to import updateSpecialOfferImageInMemory function');
+      if (!specialOffers) {
+        throw new Error('Failed to get specialOffers map');
       }
       
-      // Update the image in the in-memory map
-      const updated = await updateSpecialOfferImageInMemory(offerId, imageUrl);
+      // Find and update the special offer directly
+      let updated = false;
+      
+      for (const [clinicId, clinicOffers] of specialOffers.entries()) {
+        const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+        if (offerIndex !== -1) {
+          clinicOffers[offerIndex].banner_image = imageUrl;
+          clinicOffers[offerIndex].updated_at = new Date().toISOString();
+          specialOffers.set(clinicId, clinicOffers);
+          updated = true;
+          break;
+        }
+      }
       
       if (updated) {
         console.log(`Special offer image updated successfully for offer ID: ${offerId}`);

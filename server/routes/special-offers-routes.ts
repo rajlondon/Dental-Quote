@@ -529,12 +529,11 @@ if (process.env.NODE_ENV !== 'production') {
     }
     
     // Find the offer
-    const specialOffersMap = getSpecialOffersMap();
     let found = false;
     let offerImageUrl = '';
     
     // Search for the offer in all clinics
-    specialOffersMap.forEach((clinicOffers, clinicId) => {
+    specialOffers.forEach((clinicOffers, clinicId) => {
       const offer = clinicOffers.find(o => o.id === offerId);
       if (offer) {
         found = true;
@@ -572,4 +571,6 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Export both the router and specialOffers map for direct access
+export { specialOffers };
 export default router;
