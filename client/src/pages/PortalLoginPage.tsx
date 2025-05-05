@@ -176,9 +176,10 @@ const PortalLoginPage: React.FC = () => {
         });
         
         // Create a hidden form for POST submission
+        // Note the correct API path is /api/treatment-module, not /api/treatment-plans
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/api/treatment-plans/book-package/${packageId}`;
+        form.action = `/api/treatment-module/book-package/${packageId}`;
         document.body.appendChild(form);
         form.submit();
         return;
