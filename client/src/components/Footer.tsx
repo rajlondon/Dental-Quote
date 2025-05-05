@@ -107,6 +107,10 @@ const Footer: React.FC = () => {
               <Link href="/terms-of-service"><span className="text-blue-400 hover:text-white text-sm transition-colors cursor-pointer">Terms of Service</span></Link>
               <Link href="/cookies-policy"><span className="text-blue-400 hover:text-white text-sm transition-colors cursor-pointer">Cookie Policy</span></Link>
               <Link href="/clinics"><span className="text-blue-400 hover:text-white text-sm transition-colors cursor-pointer">For Clinics</span></Link>
+              {/* Debug link - only visible in development */}
+              {process.env.NODE_ENV !== 'production' && (
+                <Link href="/clinic-debug"><span className="text-amber-400 hover:text-amber-300 text-sm transition-colors cursor-pointer">Debug Tools</span></Link>
+              )}
             </div>
           </div>
         </div>
