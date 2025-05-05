@@ -91,11 +91,27 @@ const EmailVerifiedPage: React.FC = () => {
               Your email has been successfully verified
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mt-2">
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
               Thank you for verifying your email address. Your account is now fully activated and you can access all features of MyDentalFly.
             </p>
-            <p className="text-sm text-muted-foreground mt-4">
+            
+            {hasPendingOffer && (
+              <Alert className="bg-primary/10 border-primary/20 text-left">
+                <div className="flex items-start">
+                  <Sparkles className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                  <div>
+                    <AlertTitle className="text-primary font-medium">Special Offer Ready</AlertTitle>
+                    <AlertDescription className="mt-1">
+                      Your <span className="font-semibold">{offerTitle}</span> request is ready to process. 
+                      Please log in to continue with your quote.
+                    </AlertDescription>
+                  </div>
+                </div>
+              </Alert>
+            )}
+            
+            <p className="text-sm text-muted-foreground">
               You will be redirected to the login page in a few seconds...
             </p>
           </CardContent>
