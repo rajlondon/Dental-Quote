@@ -565,7 +565,11 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
     }
     
     const { offerId } = req.params;
-    const { cachedImageUrl } = req.body; // This will contain a cached URL if provided by client
+    const { 
+      cachedImageUrl,      // Optional cached URL if provided by client
+      useOpenAI = false,   // Force using OpenAI instead of cached image
+      customPrompt = ''    // Optional custom prompt for OpenAI image generation
+    } = req.body;
     
     if (!offerId) {
       return res.status(400).json({
@@ -581,6 +585,127 @@ router.post('/api/special-offers/refresh-image/:offerId', async (req, res) => {
     let updatedImageUrl = '';
     let foundOffer = null;
     
+    // If useOpenAI is true, we'll generate a new image with OpenAI
+    if (useOpenAI) {
+      console.log('Using OpenAI to generate a new image for this offer');
+      
+      // Search for the offer first to have the right context
+      let targetOffer = null;
+      let targetClinicId = null; 
+      let targetOfferIndex = -1;
+      
+      specialOffers.forEach((clinicOffers, clinicId) => {
+        const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
+        if (offerIndex >= 0) {
+          targetOffer = clinicOffers[offerIndex];
+          targetClinicId = clinicId;
+          targetOfferIndex = offerIndex;
+          foundOffer = targetOffer;
+          offerFound = true;
+        }
+      });
+      
+      if (!targetOffer) {
+        return res.status(404).json({
+          success: false,
+          message: 'Offer not found'
+        });
+      }
+      
+      try {
+        // Dynamically import the OpenAI service to avoid circular dependencies
+        const { generateSpecialOfferImage } = await import('../services/openai-service');
+        
+        console.log(`Generating special offer image for "${targetOffer.title}"`);
+        
+        // Use custom prompt if provided, otherwise use a default based on offer properties
+        const useCustom = customPrompt ? true : false;
+        const prompt = customPrompt || undefined;
+        
+        // Generate the image with OpenAI
+        const imageResult = await generateSpecialOfferImage(
+          targetOffer.title,
+          targetOffer.offer_type || 'premium',
+          prompt, 
+          true // use natural style
+        );
+        
+        if (!imageResult || !imageResult.url) {
+          throw new Error('Failed to generate image with OpenAI');
+        }
+        
+        console.log(`Successfully generated new image with OpenAI: ${imageResult.url}`);
+        
+        // Cache the new image before we update the offer
+        const { ImageCacheService } = await import('../utils/image-cache-service');
+        try {
+          // Force refresh to make sure we always have the latest image
+          const cachedImageUrl = await ImageCacheService.cacheImage(imageResult.url, true);
+          console.log(`Successfully cached OpenAI image to: ${cachedImageUrl}`);
+          
+          // Update the offer with the new image
+          const oldImageUrl = targetOffer.banner_image;
+          targetOffer.banner_image = cachedImageUrl;
+          targetOffer.updated_at = new Date().toISOString();
+          
+          // Update the offer in the specialOffers map
+          const clinicOffers = specialOffers.get(targetClinicId) || [];
+          clinicOffers[targetOfferIndex] = targetOffer;
+          specialOffers.set(targetClinicId, clinicOffers);
+          
+          // Set the updated image URL for the response
+          updatedImageUrl = cachedImageUrl;
+          
+          // Notify clients via WebSocket
+          try {
+            const { getWebSocketService } = await import('../services/websocketService');
+            const wss = getWebSocketService();
+            
+            if (wss) {
+              wss.broadcast(JSON.stringify({
+                type: 'special_offer_image_refresh',
+                payload: {
+                  offerId,
+                  imageUrl: cachedImageUrl,
+                  timestamp: Date.now()
+                }
+              }));
+              
+              console.log('Sent WebSocket notification about new OpenAI image');
+            }
+          } catch (wsError) {
+            console.error('WebSocket notification error:', wsError);
+          }
+        } catch (cacheError) {
+          console.error('Error caching OpenAI image:', cacheError);
+          
+          // If caching fails, use the original URL
+          targetOffer.banner_image = imageResult.url;
+          targetOffer.updated_at = new Date().toISOString();
+          
+          const clinicOffers = specialOffers.get(targetClinicId) || [];
+          clinicOffers[targetOfferIndex] = targetOffer;
+          specialOffers.set(targetClinicId, clinicOffers);
+          
+          updatedImageUrl = imageResult.url;
+        }
+        
+        return res.status(200).json({
+          success: true,
+          message: 'Special offer image refreshed successfully with OpenAI',
+          offer: targetOffer,
+          imageUrl: updatedImageUrl
+        });
+      } catch (error) {
+        console.error('Error generating image with OpenAI:', error);
+        return res.status(500).json({
+          success: false,
+          message: `Failed to generate image with OpenAI: ${error.message}`
+        });
+      }
+    }
+    
+    // If not using OpenAI, process using the existing cache system
     // Search for the offer in all clinics
     specialOffers.forEach((clinicOffers, clinicId) => {
       const offerIndex = clinicOffers.findIndex(o => o.id === offerId);
