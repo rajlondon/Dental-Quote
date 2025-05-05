@@ -708,7 +708,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                       Request Quote
                     </Button>
                     <Button variant="outline" asChild>
-                      <Link href={`/clinics/${offer.clinic_id || 1}`}>
+                      <Link href={`/clinic/${offer.clinic_id || 1}`}>
                         View Clinic
                       </Link>
                     </Button>
