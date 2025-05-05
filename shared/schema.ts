@@ -57,6 +57,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
   notifications: many(notifications),
   hotelBookings: many(hotelBookings),
+  savedSpecialOffers: many(userSavedSpecialOffers),
 }));
 
 export const insertUserSchema = createInsertSchema(users)
@@ -754,3 +755,31 @@ export type Hotel = typeof hotels.$inferSelect;
 // Hotel booking types
 export type InsertHotelBooking = Omit<typeof hotelBookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type HotelBooking = typeof hotelBookings.$inferSelect;
+
+// === USER SAVED SPECIAL OFFERS ===
+export const userSavedSpecialOffers = pgTable("user_saved_special_offers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  specialOfferId: varchar("special_offer_id", { length: 36 }).notNull(),
+  clinicId: integer("clinic_id").references(() => clinics.id),
+  offerDetails: json("offer_details").notNull(), // Store full offer details
+  savedAt: timestamp("saved_at").defaultNow().notNull(),
+  viewed: boolean("viewed").default(false),
+  status: varchar("status", { length: 20 }).default("active"), // active, redeemed, expired
+  redemptionDate: timestamp("redemption_date"),
+  notes: text("notes"),
+});
+
+export const userSavedSpecialOffersRelations = relations(userSavedSpecialOffers, ({ one }) => ({
+  user: one(users, {
+    fields: [userSavedSpecialOffers.userId],
+    references: [users.id],
+  }),
+  clinic: one(clinics, {
+    fields: [userSavedSpecialOffers.clinicId],
+    references: [clinics.id],
+  }),
+}));
+
+export type InsertUserSavedSpecialOffer = Omit<typeof userSavedSpecialOffers.$inferInsert, "id" | "savedAt">;
+export type UserSavedSpecialOffer = typeof userSavedSpecialOffers.$inferSelect;
