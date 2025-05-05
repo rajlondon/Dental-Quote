@@ -1,9 +1,4 @@
-import { 
-  NotificationCategory, 
-  NotificationPriority, 
-  NotificationTarget 
-} from '@shared/notifications';
-import { db } from '../db/database';
+import { db } from '../db';
 import { notifications } from '@shared/schema';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -24,80 +19,60 @@ export async function generateTestNotifications() {
     
     if (!patientUser) {
       console.error('No patient user found. Cannot generate test notifications.');
-      return;
+      return 0;
     }
     
     // Define test notifications with various types
     const testNotifications = [
       {
+        userId: patientUser.id,
         title: "New Message from Dr. Smith",
         message: "Your treatment plan has been updated. Please review the changes.",
-        category: "message" as NotificationCategory,
-        priority: "high" as NotificationPriority,
-        target_type: "patient" as NotificationTarget,
-        target_id: patientUser.id.toString(),
-        action_url: "/portal?section=messages",
-        read: false,
-        metadata: {
-          sender_id: 1,
-          sender_name: "Dr. Smith",
-          sender_role: "dentist"
-        }
+        content: "Your treatment plan has been updated with new procedures. Please review the changes and let us know if you have any questions.",
+        isRead: false,
+        type: "info",
+        action: "/portal?section=messages",
+        entityType: "message",
+        entityId: 1
       },
       {
+        userId: patientUser.id,
         title: "Upcoming Appointment",
         message: "You have an appointment scheduled for tomorrow at 10:00 AM.",
-        category: "appointment" as NotificationCategory,
-        priority: "high" as NotificationPriority,
-        target_type: "patient" as NotificationTarget,
-        target_id: patientUser.id.toString(),
-        action_url: "/portal?section=appointments",
-        read: false,
-        metadata: {
-          appointment_id: "12345",
-          appointment_date: "2025-05-06T10:00:00Z",
-          clinic_name: "DentSpa Istanbul"
-        }
+        content: "Reminder: You have a dental consultation appointment scheduled for tomorrow at 10:00 AM with Dr. Smith at DentSpa Istanbul. Please arrive 15 minutes early.",
+        isRead: false,
+        type: "info",
+        action: "/portal?section=appointments",
+        entityType: "appointment",
+        entityId: 2
       },
       {
+        userId: patientUser.id,
         title: "New Quote Available",
         message: "Your quote for dental implants is now available for review.",
-        category: "treatment" as NotificationCategory,
-        priority: "medium" as NotificationPriority,
-        target_type: "patient" as NotificationTarget,
-        target_id: patientUser.id.toString(),
-        action_url: "/portal?section=quotes",
-        read: false,
-        metadata: {
-          quote_id: "Q987",
-          treatment_type: "Dental Implants",
-          quote_amount: "£3,200"
-        }
+        content: "We've prepared a detailed quote for your dental implant treatment. The total estimate is £3,200. Please review and contact us if you have any questions.",
+        isRead: false,
+        type: "success",
+        action: "/portal?section=quotes",
+        entityType: "quote",
+        entityId: 3
       },
       {
+        userId: patientUser.id,
         title: "Document Upload Reminder",
         message: "Please upload your X-rays for your upcoming consultation.",
-        category: "document" as NotificationCategory,
-        priority: "medium" as NotificationPriority,
-        target_type: "patient" as NotificationTarget,
-        target_id: patientUser.id.toString(),
-        action_url: "/portal?section=documents",
-        read: false,
-        metadata: {
-          document_type: "X-ray",
-          due_date: "2025-05-10T00:00:00Z"
-        }
+        content: "To help us prepare for your consultation, please upload your recent X-rays through the documents section. This will allow our dentists to review your case before your arrival.",
+        isRead: false,
+        type: "warning",
+        action: "/portal?section=documents",
+        entityType: "document",
+        entityId: 4
       }
     ];
     
     // Insert the test notifications into the database
     for (const notification of testNotifications) {
-      await db.insert(notifications).values({
-        ...notification,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+      await db.insert(notifications).values(notification);
     }
     
     console.log(`Successfully created ${testNotifications.length} test notifications`);
