@@ -1,0 +1,412 @@
+import React, { useState } from "react";
+import { useTreatmentLines } from "@/hooks/use-treatment-lines";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, FileText, AlertCircle, CheckCircle2, Package, HelpCircle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface PatientTreatmentPlansProps {
+  quoteId?: string;
+}
+
+const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }) => {
+  const [selectedTreatmentLine, setSelectedTreatmentLine] = useState<any>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
+  const { 
+    treatmentLines, 
+    isLoading, 
+    error,
+    treatmentSummary,
+    isSummaryLoading,
+    summaryError 
+  } = useTreatmentLines(quoteId);
+
+  // Status badge component with appropriate colors
+  const StatusBadge = ({ status }: { status: string }) => {
+    let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
+    
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+        variant = "default";
+        break;
+      case 'deleted':
+        variant = "destructive";
+        break;
+      case 'draft':
+        variant = "secondary";
+        break;
+    }
+    
+    return <Badge variant={variant}>{status}</Badge>;
+  };
+
+  // Show treatment line details in a dialog
+  const showTreatmentDetails = (treatmentLine: any) => {
+    setSelectedTreatmentLine(treatmentLine);
+    setIsDetailsOpen(true);
+  };
+
+  // Handle loading states
+  if (isLoading || isSummaryLoading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Your Treatment Plans</CardTitle>
+          <CardDescription>Loading your dental treatment information...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-6">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Handle error states
+  if (error || summaryError) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Your Treatment Plans</CardTitle>
+          <CardDescription>There was an error loading your treatments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {(error as Error)?.message || (summaryError as Error)?.message || "Failed to load treatment plans. Please try again later."}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+        <CardFooter>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  // Handle empty state
+  if ((!treatmentLines || treatmentLines.length === 0) && 
+      (!treatmentSummary || treatmentSummary.totalTreatmentLines === 0)) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Your Treatment Plans</CardTitle>
+          <CardDescription>You don't have any dental treatments planned yet</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <FileText className="h-12 w-12 text-muted-foreground" />
+            <p className="text-muted-foreground">No treatment plans found</p>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Treatments will appear here once your dental clinic adds them to your plan or when you select a special offer package.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Your Treatment Plans</CardTitle>
+        <CardDescription>Review and manage your dental treatments</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="summary" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="details">Treatment Details</TabsTrigger>
+          </TabsList>
+          
+          {/* SUMMARY TAB */}
+          <TabsContent value="summary">
+            {treatmentSummary && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Total Treatments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{treatmentSummary.totalTreatmentLines}</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Total Investment</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{formatCurrency(treatmentSummary.totalSpent, 'GBP')}</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Treatment Status</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex space-x-2">
+                        <Badge variant="outline">In Progress</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <h3 className="text-lg font-semibold mt-6">Your Clinics</h3>
+                <div className="space-y-4">
+                  {treatmentSummary.treatmentsByClinic.map((clinicData, index) => (
+                    <Accordion type="single" collapsible key={index}>
+                      <AccordionItem value={`clinic-${clinicData.clinic.id}`}>
+                        <AccordionTrigger>
+                          <div className="flex items-center space-x-2">
+                            <span>{clinicData.clinic.name}</span>
+                            <Badge variant="outline">
+                              {clinicData.treatmentLines.length} treatments
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <ScrollArea className="h-[250px]">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Treatment</TableHead>
+                                  <TableHead className="text-right">Price</TableHead>
+                                  <TableHead className="text-center">Qty</TableHead>
+                                  <TableHead className="text-right">Total</TableHead>
+                                  <TableHead className="text-center">Type</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {clinicData.treatmentLines.map((tl) => (
+                                  <TableRow key={tl.id} className="cursor-pointer hover:bg-accent/50" onClick={() => showTreatmentDetails(tl)}>
+                                    <TableCell>{tl.description}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice), 'GBP')}</TableCell>
+                                    <TableCell className="text-center">{tl.quantity}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice) * tl.quantity, 'GBP')}</TableCell>
+                                    <TableCell className="text-center">
+                                      {tl.isPackage ? (
+                                        <Package className="h-4 w-4 inline-block" />
+                                      ) : (
+                                        <FileText className="h-4 w-4 inline-block" />
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </ScrollArea>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+          
+          {/* DETAILS TAB */}
+          <TabsContent value="details">
+            {quoteId && treatmentLines && treatmentLines.length > 0 ? (
+              <div className="space-y-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Treatment</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-center">Qty</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {treatmentLines.map((tl) => (
+                      <TableRow key={tl.id}>
+                        <TableCell>
+                          <div className="font-medium">{tl.description}</div>
+                          <div className="text-sm text-muted-foreground">{tl.procedureCode}</div>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={tl.status} />
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice), 'GBP')}</TableCell>
+                        <TableCell className="text-center">{tl.quantity}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice) * tl.quantity, 'GBP')}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => showTreatmentDetails(tl)}>
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                
+                {/* Show total section */}
+                <div className="flex justify-end pt-4">
+                  <div className="w-72 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>
+                        {formatCurrency(
+                          treatmentLines.reduce(
+                            (sum, tl) => sum + Number(tl.unitPrice) * tl.quantity,
+                            0
+                          ),
+                          'GBP'
+                        )}
+                      </span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-medium">
+                      <span>Total:</span>
+                      <span>
+                        {formatCurrency(
+                          treatmentLines.reduce(
+                            (sum, tl) => sum + Number(tl.unitPrice) * tl.quantity,
+                            0
+                          ),
+                          'GBP'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Show info panel for patients */}
+                <Alert className="mt-6">
+                  <HelpCircle className="h-4 w-4" />
+                  <AlertTitle>Need assistance?</AlertTitle>
+                  <AlertDescription>
+                    If you have questions about your treatment plan, please contact your dental clinic or our support team through the messaging system.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                {quoteId ? (
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <FileText className="h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">No treatments found for this quote</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">No quote ID provided</p>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Treatment details can only be viewed for a specific quote.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      
+      {/* Treatment details dialog */}
+      {selectedTreatmentLine && (
+        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Treatment Details</DialogTitle>
+              <DialogDescription>
+                Full information about your selected treatment
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none">Treatment</p>
+                <p>{selectedTreatmentLine.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Status</p>
+                  <StatusBadge status={selectedTreatmentLine.status} />
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Type</p>
+                  <p>{selectedTreatmentLine.isPackage ? 'Package' : 'Individual Treatment'}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Procedure Code</p>
+                  <p>{selectedTreatmentLine.procedureCode}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Quantity</p>
+                  <p>{selectedTreatmentLine.quantity}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Unit Price</p>
+                  <p>{formatCurrency(Number(selectedTreatmentLine.unitPrice), 'GBP')}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Total</p>
+                  <p>{formatCurrency(Number(selectedTreatmentLine.unitPrice) * selectedTreatmentLine.quantity, 'GBP')}</p>
+                </div>
+              </div>
+              
+              {selectedTreatmentLine.patientNotes && (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Your Notes</p>
+                  <p className="text-sm">{selectedTreatmentLine.patientNotes}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setIsDetailsOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </Card>
+  );
+};
+
+export default TreatmentPlansSection;
