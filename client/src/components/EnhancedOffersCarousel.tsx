@@ -458,7 +458,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         variant: "default",
       });
       
-      // Navigate directly to quote page
+      // Using window.location is more reliable for preserving URL parameters
+      console.log("User is authenticated, navigating directly to quote page");
+      console.log("Navigation URL:", `/your-quote?${params.toString()}`);
+      
+      // Use window.location.href for a full page navigation that preserves all parameters
       window.location.href = `/your-quote?${params.toString()}`;
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
@@ -484,7 +488,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       });
       
       // Redirect to login page
-      setLocation('/portal-login');
+      console.log("Redirecting to portal login page");
+      
+      // Use consistent navigation method with window.location.href
+      window.location.href = '/portal-login';
     }
   };
 

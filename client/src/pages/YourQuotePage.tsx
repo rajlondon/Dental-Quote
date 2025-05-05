@@ -932,11 +932,20 @@ const YourQuotePage: React.FC = () => {
   
   // Special offer data (if passed from homepage)
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
+    console.log("Initializing YourQuotePage with URL params:", window.location.search);
     const offerId = searchParams.get('specialOffer');
+    console.log("Special offer ID from URL:", offerId);
     
     // If there's a special offer ID in the URL parameters, create a special offer object
     if (offerId) {
-      return {
+      console.log("Special offer parameters found in URL:");
+      console.log("- Title:", searchParams.get('offerTitle'));
+      console.log("- Clinic ID:", searchParams.get('offerClinic'));
+      console.log("- Discount Value:", searchParams.get('offerDiscount'));
+      console.log("- Discount Type:", searchParams.get('offerDiscountType'));
+      console.log("- Treatment:", searchParams.get('treatment'));
+      
+      const offerData = {
         id: offerId,
         title: searchParams.get('offerTitle') || 'Special Offer',
         clinicId: searchParams.get('offerClinic') || '',
@@ -944,6 +953,11 @@ const YourQuotePage: React.FC = () => {
         discountType: (searchParams.get('offerDiscountType') || 'percentage') as 'percentage' | 'fixed_amount',
         applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
       };
+      
+      console.log("Created special offer data:", offerData);
+      return offerData;
+    } else {
+      console.log("No special offer parameters found in URL");
     }
     
     return null;
