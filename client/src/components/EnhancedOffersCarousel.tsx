@@ -433,6 +433,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   
   // Handle quote request with authentication check
   const handleRequestQuote = (offer: SpecialOffer) => {
+    console.log("Special Offer Request Quote clicked:", offer);
+    
     // Build query parameters for the offer
     const params = new URLSearchParams({
       specialOffer: offer.id,
@@ -443,8 +445,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       treatment: offer.applicable_treatments?.[0] || 'Dental Implants'
     });
     
+    console.log("Generated URL params:", params.toString());
+    console.log("Auth state - loading:", authLoading, "user:", user ? "logged in" : "not logged in");
+    
     // Check if user is authenticated
     if (!authLoading && user) {
+      console.log("User authenticated, proceeding directly to quote page");
       // User is logged in, proceed with quote and notify
       toast({
         title: "Special Offer Selected",
@@ -455,16 +461,20 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       // Navigate directly to quote page
       window.location.href = `/your-quote?${params.toString()}`;
     } else {
+      console.log("User not authenticated, saving offer to sessionStorage");
       // User is not logged in, save offer details in sessionStorage
       // This will be retrieved after login/registration
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify({
+      const offerData = {
         id: offer.id,
         title: offer.title,
         clinicId: offer.clinic_id,
         discountValue: offer.discount_value,
         discountType: offer.discount_type,
         applicableTreatment: offer.applicable_treatments?.[0]
-      }));
+      };
+      
+      console.log("Saving pendingSpecialOffer:", offerData);
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
       
       // Notify user they need to login
       toast({
