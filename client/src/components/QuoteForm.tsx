@@ -71,6 +71,31 @@ const QuoteForm: React.FC = () => {
   ]);
   const { toast } = useToast();
   
+  // Check for active special offer in sessionStorage
+  const [hasActiveOffer, setHasActiveOffer] = useState<boolean>(false);
+  const [activeOfferData, setActiveOfferData] = useState<any>(null);
+
+  // Check for activeSpecialOffer on component mount
+  React.useEffect(() => {
+    try {
+      const offerJson = sessionStorage.getItem('activeSpecialOffer');
+      if (offerJson) {
+        const offerData = JSON.parse(offerJson);
+        console.log("Found active special offer in sessionStorage:", offerData);
+        setHasActiveOffer(true);
+        setActiveOfferData(offerData);
+        
+        // Show toast notification about special offer
+        toast({
+          title: "Special Offer Applied",
+          description: `${offerData.title} will be applied to your quote results.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error checking for active special offer:", error);
+    }
+  }, []);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -127,6 +152,34 @@ const QuoteForm: React.FC = () => {
             <p className="text-neutral-600 mb-6 text-lg">
               {t('form.description')}
             </p>
+            
+            {/* Display active special offer banner if one exists */}
+            {hasActiveOffer && activeOfferData && (
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-blue-500/10 rounded-full"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 -ml-6 -mb-6 bg-blue-500/10 rounded-full"></div>
+                
+                <div className="flex items-start">
+                  <div className="mr-3 text-blue-500 mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
+                      <path d="M12 3l1.87 6.63L20 12l-6.13 2.37L12 21l-1.87-6.63L4 12l6.13-2.37L12 3z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-700 text-base">Special Offer Applied</h3>
+                    <p className="text-blue-600 text-sm">{activeOfferData.title}</p>
+                    <div className="flex items-center mt-1 text-xs text-blue-600">
+                      <span className="font-medium mr-2">
+                        {activeOfferData.discountType === 'percentage' 
+                          ? `${activeOfferData.discountValue}% OFF` 
+                          : `£${activeOfferData.discountValue} OFF`}
+                      </span>
+                      <span className="text-blue-500 opacity-70">• Will be applied to your results</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="bg-neutral-50 p-5 rounded-lg border border-neutral-200 mb-6">
               <h3 className="font-display font-semibold text-lg mb-2 text-primary">{t('form.expectations.title')}</h3>
@@ -223,8 +276,8 @@ const QuoteForm: React.FC = () => {
                       const treatmentValue = data.specificTreatment.replace('dental_', '');
                       const treatmentLabel = t(`form.treatments.${treatmentValue}`);
                       
-                      // Create query parameters to pass to the quote page
-                      const queryParams = new URLSearchParams({
+                      // Create base query parameters
+                      const params: Record<string, string> = {
                         treatment: treatmentLabel,
                         country: data.country,
                         city: data.city,
@@ -233,24 +286,36 @@ const QuoteForm: React.FC = () => {
                         name: data.name,
                         email: data.email,
                         phone: data.phone
-                      }).toString();
+                      };
+                      
+                      // Add special offer parameters if one is active
+                      if (hasActiveOffer && activeOfferData) {
+                        params.specialOffer = activeOfferData.id;
+                        params.offerTitle = activeOfferData.title;
+                        params.offerClinic = activeOfferData.clinicId;
+                        params.offerDiscount = activeOfferData.discountValue.toString();
+                        params.offerDiscountType = activeOfferData.discountType;
+                        if (activeOfferData.applicableTreatment) {
+                          params.applicableTreatment = activeOfferData.applicableTreatment;
+                        }
+                        console.log("Adding special offer parameters to quote URL:", activeOfferData);
+                        
+                        // Clear the special offer from sessionStorage to prevent reuse
+                        sessionStorage.removeItem('activeSpecialOffer');
+                      }
+                      
+                      // Convert to URLSearchParams
+                      const queryParams = new URLSearchParams(params).toString();
                       
                       // Log the queryParams for debugging
-                      console.log("Form submitted with parameters:", {
-                        country: data.country,
-                        city: data.city,
-                        treatment: treatmentLabel,
-                        travelMonth: data.startDate ? format(data.startDate, 'MMMM yyyy') : 'Flexible',
-                        budget: data.budget ? `£${data.budget} - £${parseInt(data.budget) + 1000}` : 'Flexible',
-                        name: data.name,
-                        email: data.email,
-                        phone: data.phone
-                      });
+                      console.log("Form submitted with parameters:", params);
                       
                       // Show success toast
                       toast({
                         title: "Quote Generated!",
-                        description: "We're taking you to your personalized dental clinic options",
+                        description: hasActiveOffer 
+                          ? "We're showing you clinics with your special offer!" 
+                          : "We're taking you to your personalized dental clinic options",
                       });
                       
                       // Reset form after successful submission
