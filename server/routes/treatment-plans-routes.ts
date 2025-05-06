@@ -243,9 +243,15 @@ router.post("/treatment-lines", isAuthenticated, async (req: Request, res: Respo
 router.put("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Response) => {
   const { id } = req.params;
   
-  console.log(`[DEBUG] PUT request to /api/treatment-plans/treatment-lines/${id}`);
+  console.log(`[DEBUG] ============ TREATMENT LINE UPDATE ============`);
+  console.log(`[DEBUG] PUT request to /treatment-lines/${id}`);
+  console.log(`[DEBUG] CORRECT ENDPOINT PATH: This route is mounted at: /api/treatment-module/treatment-lines/${id}`);
+  console.log(`[DEBUG] Full URL path requested: ${req.originalUrl}`);
+  console.log(`[DEBUG] Any request to /api/treatment-plans/treatment-lines/${id} will NOT work - only /api/treatment-module/... works`);
   console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
   console.log(`[DEBUG] Request body:`, req.body);
+  console.log(`[DEBUG] Host: ${req.headers.host}, Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
+  console.log(`[DEBUG] ===============================================`);
   
   if (!req.user) {
     return res.status(401).json({
@@ -318,12 +324,13 @@ router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res:
   
   console.log(`[DEBUG] ============ TREATMENT LINE DELETE ============`);
   console.log(`[DEBUG] DELETE request to /treatment-lines/${id}`);
-  console.log(`[DEBUG] This route is mounted at: /api/treatment-module/treatment-lines/${id}`);
-  console.log(`[DEBUG] Full URL path: ${req.originalUrl}`);
+  console.log(`[DEBUG] CORRECT ENDPOINT PATH: This route is mounted at: /api/treatment-module/treatment-lines/${id}`);
+  console.log(`[DEBUG] Full URL path requested: ${req.originalUrl}`);
+  console.log(`[DEBUG] Any request to /api/treatment-plans/treatment-lines/${id} will NOT work - only /api/treatment-module/... works`);
   console.log(`[DEBUG] HTTP method: ${req.method}`);
   console.log(`[DEBUG] Request body:`, req.body);
   console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
-  console.log(`[DEBUG] Headers:`, req.headers);
+  console.log(`[DEBUG] Host: ${req.headers.host}, Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
   console.log(`[DEBUG] ===============================================`);
   
   if (!req.user) {
