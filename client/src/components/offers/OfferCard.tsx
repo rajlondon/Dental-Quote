@@ -120,6 +120,7 @@ export function OfferCard({ offer }: OfferCardProps) {
       // Check if we have a quote ID and URL to redirect to
       if (data.quoteId && data.quoteUrl) {
         // Check if user needs to go through the dental quiz first (new users)
+        // Make sure we're using the correct API path
         const userData = await apiRequest('GET', '/api/auth/user');
         const userProfile = await userData.json();
         
