@@ -243,17 +243,18 @@ export function PatientQuotesContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-8 mx-auto max-w-7xl">
+      <div className="flex justify-between items-center mb-8 px-4">
         <div>
-          {/* Left empty for alignment purposes */}
+          <h2 className="text-2xl font-bold text-gray-800">{t('portal.quotes.title', 'My Quotes')}</h2>
+          <p className="text-gray-500 mt-1">{t('quotes.manage_description', 'View and manage your quote requests')}</p>
         </div>
         <div>
           <Button 
             onClick={() => setLocation("/your-quote")}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 px-4 py-2 h-10 bg-blue-600 hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4" /> New Quote Request
+            <Plus className="h-5 w-5" /> New Quote Request
           </Button>
         </div>
       </div>
@@ -261,16 +262,16 @@ export function PatientQuotesContent() {
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="w-full"
+        className="w-full px-4"
       >
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="all">{t('quotes.all', 'All')}</TabsTrigger>
-          <TabsTrigger value="in_progress">{t('quotes.in_progress', 'In Progress')}</TabsTrigger>
-          <TabsTrigger value="completed">{t('quotes.completed', 'Completed')}</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 max-w-md mb-2">
+          <TabsTrigger value="all" className="py-2.5 text-sm">{t('quotes.all', 'All')}</TabsTrigger>
+          <TabsTrigger value="in_progress" className="py-2.5 text-sm">{t('quotes.in_progress', 'In Progress')}</TabsTrigger>
+          <TabsTrigger value="completed" className="py-2.5 text-sm">{t('quotes.completed', 'Completed')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="all" className="mt-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
@@ -286,8 +287,8 @@ export function PatientQuotesContent() {
           </div>
         </TabsContent>
         
-        <TabsContent value="in_progress" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="in_progress" className="mt-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
@@ -303,8 +304,8 @@ export function PatientQuotesContent() {
           </div>
         </TabsContent>
         
-        <TabsContent value="completed" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="completed" className="mt-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
@@ -349,56 +350,56 @@ function QuoteCard({
   const statusIcon = getStatusIcon(quote.status);
   
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow border-gray-200">
+      <CardHeader className="pb-4 pt-5">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg">
+            <CardTitle className="text-xl font-bold">
               {quote.title || `Quote #${quote.id}`}
             </CardTitle>
-            <CardDescription className="line-clamp-1">
+            <CardDescription className="line-clamp-1 mt-1 text-sm">
               {quote.clinicName || 'Multiple Clinics'}
             </CardDescription>
           </div>
-          <Badge className={status.color}>{status.text}</Badge>
+          <Badge className={`${status.color} px-3 py-1 text-sm font-medium rounded-full`}>{status.text}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="pb-3">
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500">{t('quotes.created_date', 'Created')}</span>
-            <span className="font-medium">{formatDate(quote.createdAt) || 'N/A'}</span>
+      <CardContent className="pb-5">
+        <div className="space-y-4 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">{t('quotes.created_date', 'Created')}</span>
+            <span className="font-semibold text-gray-800">{formatDate(quote.createdAt) || 'N/A'}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">{t('quotes.treatments', 'Treatments')}</span>
-            <span className="font-medium">{quote.treatmentCount || 'Multiple'}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">{t('quotes.treatments', 'Treatments')}</span>
+            <span className="font-semibold text-gray-800">{quote.treatmentCount || 'Multiple'}</span>
           </div>
           {quote.totalPrice && (
-            <div className="flex justify-between">
-              <span className="text-gray-500">{t('quotes.estimated_cost', 'Est. Cost')}</span>
-              <span className="font-medium">£{quote.totalPrice}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">{t('quotes.estimated_cost', 'Est. Cost')}</span>
+              <span className="font-semibold text-blue-700">£{quote.totalPrice}</span>
             </div>
           )}
         </div>
       </CardContent>
-      <Separator />
-      <CardFooter className="pt-3 pb-3">
+      <Separator className="bg-gray-100" />
+      <CardFooter className="pt-4 pb-4 flex flex-col gap-3">
         <div className="flex items-center text-sm text-gray-600 w-full justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
             {statusIcon}
-            <span className="ml-2">{status.text}</span>
+            <span className="ml-2 font-medium">{status.text}</span>
           </div>
           <div className="flex gap-2 quote-actions">
             {/* View Button */}
             <Button 
               variant="outline" 
-              size="icon"
-              className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
+              size="sm"
+              className="h-9 px-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200 rounded-md"
               asChild
             >
               <Link to={`${getRoutePrefix()}/${quote.id}`}>
-                <Eye className="h-4 w-4" />
-                <span className="sr-only">View</span>
+                <Eye className="h-4 w-4 mr-1.5" />
+                <span>View</span>
               </Link>
             </Button>
             
@@ -406,13 +407,13 @@ function QuoteCard({
             {(quote.canEdit || ['draft', 'pending', 'sent', 'active'].includes(quote.status)) && (
               <Button 
                 variant="outline" 
-                size="icon"
-                className="h-8 w-8 text-amber-600 hover:bg-amber-50 border-amber-200"
+                size="sm"
+                className="h-9 px-3 text-amber-600 hover:bg-amber-50 hover:text-amber-700 border-amber-200 rounded-md"
                 asChild
               >
                 <Link to={`${getRoutePrefix()}/${quote.id}/edit`}>
-                  <Edit className="h-4 w-4" />
-                  <span className="sr-only">Edit</span>
+                  <Edit className="h-4 w-4 mr-1.5" />
+                  <span>Edit</span>
                 </Link>
               </Button>
             )}
@@ -422,18 +423,19 @@ function QuoteCard({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-gray-600 hover:bg-gray-50"
+                  size="sm"
+                  className="h-9 px-2 text-gray-600 hover:bg-gray-50 border-gray-200 rounded-md"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 
                 {/* Download PDF */}
                 <DropdownMenuItem 
                   onClick={() => onDownload(quote.id)}
+                  className="cursor-pointer"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
@@ -442,6 +444,7 @@ function QuoteCard({
                 {/* Contact Clinic */}
                 <DropdownMenuItem 
                   onClick={() => onContactClinic(quote.id)}
+                  className="cursor-pointer"
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Contact Clinic
@@ -453,6 +456,7 @@ function QuoteCard({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={() => onMakePayment && onMakePayment(quote.id)}
+                      className="cursor-pointer text-green-600 font-medium"
                     >
                       <Wallet className="h-4 w-4 mr-2" />
                       Make Payment
