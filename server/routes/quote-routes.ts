@@ -223,6 +223,13 @@ router.patch("/:id", isAuthenticated, async (req, res, next) => {
       // Patients can only update specific fields
       updateData = {
         notes: updateData.notes,
+        quoteData: updateData.quoteData,
+        name: updateData.name,
+        email: updateData.email,
+        phone: updateData.phone,
+        treatment: updateData.treatment,
+        specificTreatment: updateData.specificTreatment,
+        otherTreatment: updateData.otherTreatment,
         // Add any other fields that patients are allowed to update
       };
     } else if (user.role === "clinic_staff") {
