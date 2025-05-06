@@ -145,14 +145,66 @@ const PortalLoginPage: React.FC = () => {
     
     console.log("User already authenticated in PortalLoginPage, checking for special offer data and booking param");
     
-    // First, clean up any lingering special offer data if user is already authenticated
-    // This prevents the "loop" where login -> offer check -> redirect to quote -> login again
+    // If the user is already logged in and has a pending offer, we should process it directly
+    // instead of clearing it to avoid losing the user selection
     const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
     const processingOffer = sessionStorage.getItem('processingSpecialOffer');
+    const activeOffer = sessionStorage.getItem('activeSpecialOffer');
     
-    if (pendingOfferData || processingOffer) {
-      console.log("Found lingering special offer data, clearing it to prevent redirect loops");
-      sessionStorage.removeItem('pendingSpecialOffer');
+    // If there's an active/pending offer, process it directly to a treatment plan
+    if (pendingOfferData || activeOffer) {
+      try {
+        console.log("User already logged in with pending offer, creating treatment plan directly");
+        
+        // Parse the offer data
+        const offerData = JSON.parse(pendingOfferData || activeOffer || '{}');
+        const offerId = offerData.id;
+        
+        if (offerId) {
+          // Call the API to create a treatment plan
+          fetch(`/api/offers/${offerId}/start`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              clinicId: offerData.clinicId,
+              patientId: user.id,
+              additionalNotes: 'Created from special offer selection'
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log("Treatment plan created from offer:", data);
+            
+            if (data.treatmentPlanUrl) {
+              toast({
+                title: "Special Offer Processed",
+                description: `Treatment plan created from "${offerData.title}"`,
+              });
+              
+              // Clean up session storage
+              sessionStorage.removeItem('pendingSpecialOffer');
+              sessionStorage.removeItem('processingSpecialOffer');
+              sessionStorage.removeItem('activeSpecialOffer');
+              
+              // Redirect to the treatment plan
+              setTimeout(() => {
+                window.location.href = data.treatmentPlanUrl;
+              }, 100);
+              return;
+            }
+          })
+          .catch(error => {
+            console.error("Error creating treatment plan from offer:", error);
+          });
+        }
+      } catch (error) {
+        console.error("Error processing offer data:", error);
+      }
+    } else if (processingOffer) {
+      // If just processing, clean up to prevent loops
+      console.log("Found processingOffer only, clearing to prevent redirect loops");
       sessionStorage.removeItem('processingSpecialOffer');
     }
     

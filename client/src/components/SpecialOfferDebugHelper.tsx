@@ -1,331 +1,264 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
-import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Cross2Icon, ReloadIcon } from "@radix-ui/react-icons";
 
 export function SpecialOfferDebugHelper() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [sessionData, setSessionData] = useState<Record<string, any>>({});
-  const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
-  const [isTestRunning, setIsTestRunning] = useState(false);
+  const [pendingOffer, setPendingOffer] = useState<any>(null);
+  const [processingOffer, setProcessingOffer] = useState<string | null>(null);
+  const [activeOffer, setActiveOffer] = useState<any>(null);
+  const [offerError, setOfferError] = useState<string | null>(null);
   
-  // Get homepage offers to test with
-  const { data: offers, isLoading: offersLoading } = useQuery({
-    queryKey: ['/api/special-offers/homepage'],
-    queryFn: async () => {
-      const res = await fetch('/api/special-offers/homepage');
-      return res.json();
+  // Keep track of saved offers in localStorage
+  const [persistentOffer, setPersistentOffer] = useState<any>(null);
+  
+  // Mock data for testing
+  const testOffers = [
+    { 
+      id: "offer1", 
+      title: "Free Consultation Package", 
+      clinicId: "1",
+      discountValue: 100,
+      discountType: "percentage",
+      applicableTreatment: "Dental Implants"
     },
-    refetchOnWindowFocus: false
-  });
-  
-  // Check for existing treatment plans linked to this offer
-  const { data: existingPlan, refetch: refetchExistingPlan } = useQuery({
-    queryKey: ['/api/offers/existing-plan', selectedOffer],
-    queryFn: async () => {
-      if (!selectedOffer || !user) return null;
-      try {
-        const res = await fetch(`/api/offers/${selectedOffer}/last`);
-        if (res.status === 404) return null;
-        return res.json();
-      } catch (error) {
-        console.error("Error fetching existing plan:", error);
-        return null;
-      }
+    { 
+      id: "offer2", 
+      title: "Premium Hotel Deal", 
+      clinicId: "2",
+      discountValue: 200,
+      discountType: "fixed",
+      applicableTreatment: "Veneers"
     },
-    enabled: !!selectedOffer && !!user,
-    retry: false
-  });
+    { 
+      id: "offer3", 
+      title: "Dental Implant + Crown Bundle", 
+      clinicId: "3",
+      discountValue: 15,
+      discountType: "percentage",
+      applicableTreatment: "Dental Implants"
+    }
+  ];
   
-  // Get session storage data
-  const refreshSessionStorage = () => {
-    const data: Record<string, any> = {};
-    
-    // Check for special offer related items
-    const pendingOffer = sessionStorage.getItem('pendingSpecialOffer');
-    const processingOffer = sessionStorage.getItem('processingSpecialOffer');
-    const activeOffer = sessionStorage.getItem('activeSpecialOffer');
-    
-    if (pendingOffer) data.pendingSpecialOffer = JSON.parse(pendingOffer);
-    if (processingOffer) data.processingSpecialOffer = processingOffer;
-    if (activeOffer) data.activeSpecialOffer = JSON.parse(activeOffer);
-    
-    setSessionData(data);
+  // Refresh storage state
+  const refreshState = () => {
+    try {
+      const pendingData = sessionStorage.getItem('pendingSpecialOffer');
+      const processingData = sessionStorage.getItem('processingSpecialOffer');
+      const activeData = sessionStorage.getItem('activeSpecialOffer');
+      const persistentData = localStorage.getItem('pendingSpecialOfferAfterVerification');
+      
+      setPendingOffer(pendingData ? JSON.parse(pendingData) : null);
+      setProcessingOffer(processingData);
+      setActiveOffer(activeData ? JSON.parse(activeData) : null);
+      setPersistentOffer(persistentData ? JSON.parse(persistentData) : null);
+      
+      setOfferError(null);
+    } catch (error) {
+      console.error("Error parsing storage data:", error);
+      setOfferError(`Error parsing storage: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
   
-  // Refresh on mount and when user changes
+  // Initialize on mount
   useEffect(() => {
-    refreshSessionStorage();
-  }, [user]);
+    refreshState();
+    
+    // Add storage event listener to update when storage changes
+    const handleStorageChange = () => refreshState();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
   
-  // Create a treatment plan from the selected offer
-  const createTreatmentPlan = async () => {
-    if (!selectedOffer || !user) {
-      toast({
-        title: "Cannot create treatment plan",
-        description: "Please select an offer and ensure you are logged in",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsTestRunning(true);
-    
+  // Manually set a test offer
+  const setTestOffer = (offer: any) => {
     try {
-      // Find the clinic ID for the selected offer
-      const offer = offers.find((o: any) => o.id === selectedOffer);
-      if (!offer) throw new Error("Offer not found");
-      
-      const response = await apiRequest('POST', `/api/offers/${selectedOffer}/start`, {
-        clinicId: offer.clinic_id,
-        patientId: user.id,
-        additionalNotes: "Created for testing special offer flow"
-      });
-      
-      const result = await response.json();
-      
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
       toast({
-        title: "Treatment plan created",
-        description: `Created plan ID: ${result.treatmentPlanId}`,
+        title: "Test Offer Set",
+        description: `Set pending offer: ${offer.title}`
       });
-      
-      // Refresh the session storage display
-      refreshSessionStorage();
-      // Refresh existing plan query
-      refetchExistingPlan();
-      
+      refreshState();
     } catch (error) {
-      console.error("Error creating treatment plan:", error);
       toast({
-        title: "Failed to create treatment plan",
+        title: "Error Setting Offer",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive"
       });
-    } finally {
-      setIsTestRunning(false);
     }
   };
   
-  // Clear all session storage data related to special offers
-  const clearSessionStorage = () => {
+  // Clear all offer data
+  const clearAllOffers = () => {
     sessionStorage.removeItem('pendingSpecialOffer');
     sessionStorage.removeItem('processingSpecialOffer');
     sessionStorage.removeItem('activeSpecialOffer');
+    localStorage.removeItem('pendingSpecialOfferAfterVerification');
     
     toast({
-      title: "Session storage cleared",
-      description: "All special offer session data has been removed"
+      title: "All Offers Cleared",
+      description: "Cleared all special offer data from storage"
     });
     
-    refreshSessionStorage();
-  };
-  
-  // Test offer selection flow
-  const testOfferSelection = async () => {
-    if (!selectedOffer) {
-      toast({
-        title: "No offer selected",
-        description: "Please select an offer to test with",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsTestRunning(true);
-    
-    try {
-      // Find the offer in the list
-      const offer = offers.find((o: any) => o.id === selectedOffer);
-      if (!offer) throw new Error("Offer not found");
-      
-      // Clear existing session storage first
-      sessionStorage.removeItem('pendingSpecialOffer');
-      sessionStorage.removeItem('processingSpecialOffer');
-      sessionStorage.removeItem('activeSpecialOffer');
-      
-      // Create the standardized offer data
-      const standardizedOfferData = {
-        id: offer.id,
-        title: offer.title,
-        clinicId: offer.clinic_id,
-        discountValue: offer.discount_value,
-        discountType: offer.discount_type,
-        applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants'
-      };
-      
-      // Store in session storage like the real flow
-      if (user) {
-        // User is logged in, simulate clicking on offer from homepage
-        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(standardizedOfferData));
-        toast({
-          title: "Simulated logged-in flow",
-          description: "Offer saved to activeSpecialOffer in session storage"
-        });
-      } else {
-        // User is not logged in, simulate clicking on offer when logged out
-        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-        toast({
-          title: "Simulated logged-out flow",
-          description: "Offer saved to pendingSpecialOffer in session storage"
-        });
-      }
-      
-      refreshSessionStorage();
-      
-    } catch (error) {
-      console.error("Error testing offer selection:", error);
-      toast({
-        title: "Test failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive"
-      });
-    } finally {
-      setIsTestRunning(false);
-    }
+    refreshState();
   };
   
   return (
-    <div className="border rounded-lg p-4 bg-white">
-      <h2 className="text-lg font-semibold mb-4">Special Offer Test Helper</h2>
-      
-      <div className="space-y-4">
-        {/* User Status */}
-        <div className="bg-blue-50 p-3 rounded">
-          <h3 className="font-medium mb-2">User Status</h3>
-          {user ? (
-            <div className="text-sm">
-              <p><span className="font-medium">Logged in as:</span> {user.email}</p>
-              <p><span className="font-medium">User ID:</span> {user.id}</p>
-              <p><span className="font-medium">Role:</span> {user.role}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Not logged in. Some tests require authentication.
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>Special Offer Debugger</span>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={refreshState}
+            title="Refresh"
+          >
+            <ReloadIcon className="h-4 w-4" />
+          </Button>
+        </CardTitle>
+        <CardDescription>
+          Inspect and manipulate special offer flow data
+        </CardDescription>
+        {user && (
+          <Badge variant="outline" className="mt-2">
+            Logged in as: {user.email}
+          </Badge>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {offerError && (
+          <div className="bg-red-50 p-3 rounded-md text-red-800 text-sm">
+            {offerError}
+          </div>
+        )}
+        
+        <div className="space-y-2">
+          <Label>Session Storage State</Label>
+          <div className="bg-gray-50 p-3 rounded-md text-sm space-y-1">
+            <p>
+              <span className="font-semibold">pendingSpecialOffer:</span> 
+              {pendingOffer ? (
+                <span className="ml-1 text-green-700">Present</span>
+              ) : (
+                <span className="ml-1 text-gray-500">None</span>
+              )}
             </p>
-          )}
+            <p>
+              <span className="font-semibold">processingSpecialOffer:</span> 
+              {processingOffer ? (
+                <span className="ml-1 text-green-700">{processingOffer}</span>
+              ) : (
+                <span className="ml-1 text-gray-500">None</span>
+              )}
+            </p>
+            <p>
+              <span className="font-semibold">activeSpecialOffer:</span> 
+              {activeOffer ? (
+                <span className="ml-1 text-green-700">Present</span>
+              ) : (
+                <span className="ml-1 text-gray-500">None</span>
+              )}
+            </p>
+          </div>
         </div>
         
-        {/* Offer Selection */}
-        <div className="bg-gray-50 p-3 rounded">
-          <h3 className="font-medium mb-2">Step 1: Select an Offer</h3>
-          {offersLoading ? (
-            <p className="text-sm text-muted-foreground">Loading offers...</p>
-          ) : offers && offers.length > 0 ? (
-            <div className="space-y-2">
-              <select 
-                className="w-full p-2 border rounded"
-                value={selectedOffer || ''}
-                onChange={(e) => setSelectedOffer(e.target.value)}
-              >
-                <option value="">-- Select an offer --</option>
-                {offers.map((offer: any) => (
-                  <option key={offer.id} value={offer.id}>
-                    {offer.title} (Clinic: {offer.clinic_id})
-                  </option>
-                ))}
-              </select>
+        <div className="space-y-2">
+          <Label>Local Storage State (Persists)</Label>
+          <div className="bg-gray-50 p-3 rounded-md text-sm">
+            <p>
+              <span className="font-semibold">pendingSpecialOfferAfterVerification:</span> 
+              {persistentOffer ? (
+                <span className="ml-1 text-green-700">Present</span>
+              ) : (
+                <span className="ml-1 text-gray-500">None</span>
+              )}
+            </p>
+          </div>
+        </div>
+        
+        {(pendingOffer || activeOffer || persistentOffer) && (
+          <div className="space-y-2">
+            <Label>Current Offer Details</Label>
+            <div className="bg-gray-50 p-3 rounded-md text-sm space-y-2">
+              {pendingOffer && (
+                <div>
+                  <p className="font-semibold text-blue-700">Pending Offer:</p>
+                  <pre className="overflow-x-auto text-xs p-2 bg-gray-100 rounded mt-1">
+                    {JSON.stringify(pendingOffer, null, 2)}
+                  </pre>
+                </div>
+              )}
               
-              {selectedOffer && (
-                <div className="bg-green-50 p-2 rounded text-sm">
-                  <p className="font-medium">Selected: {offers.find((o: any) => o.id === selectedOffer)?.title}</p>
+              {activeOffer && (
+                <div>
+                  <p className="font-semibold text-green-700">Active Offer:</p>
+                  <pre className="overflow-x-auto text-xs p-2 bg-gray-100 rounded mt-1">
+                    {JSON.stringify(activeOffer, null, 2)}
+                  </pre>
+                </div>
+              )}
+              
+              {persistentOffer && (
+                <div>
+                  <p className="font-semibold text-purple-700">Persistent Offer:</p>
+                  <pre className="overflow-x-auto text-xs p-2 bg-gray-100 rounded mt-1">
+                    {JSON.stringify(persistentOffer, null, 2)}
+                  </pre>
                 </div>
               )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No offers available</p>
-          )}
-        </div>
-        
-        {/* Session Storage Data */}
-        <div className="bg-gray-50 p-3 rounded">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-medium">Session Storage</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={refreshSessionStorage}
-            >
-              Refresh
-            </Button>
           </div>
-          
-          {Object.keys(sessionData).length > 0 ? (
-            <div className="space-y-2">
-              {Object.entries(sessionData).map(([key, value]) => (
-                <div key={key} className="bg-white p-2 rounded border text-sm">
-                  <p className="font-medium">{key}:</p>
-                  <pre className="text-xs overflow-auto max-h-20 bg-gray-50 p-1 rounded">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                </div>
-              ))}
-              <Button
-                variant="destructive"
+        )}
+        
+        <Separator />
+        
+        <div className="space-y-2">
+          <Label>Test Actions</Label>
+          <div className="grid grid-cols-1 gap-2">
+            {testOffers.map((offer) => (
+              <Button 
+                key={offer.id}
+                variant="outline"
                 size="sm"
-                onClick={clearSessionStorage}
+                onClick={() => setTestOffer(offer)}
+                className="justify-start"
               >
-                Clear All Session Data
+                <span className="truncate">{offer.title}</span>
               </Button>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No special offer data in session storage</p>
-          )}
-        </div>
-        
-        {/* Existing Plan Check */}
-        <div className="bg-gray-50 p-3 rounded">
-          <h3 className="font-medium mb-2">Existing Treatment Plans</h3>
-          {selectedOffer && user ? (
-            existingPlan ? (
-              <div className="bg-green-50 p-2 rounded text-sm">
-                <p className="font-medium">Found existing plan:</p>
-                <p>Plan ID: {existingPlan.treatmentPlanId}</p>
-                <p>URL: {existingPlan.treatmentPlanUrl}</p>
-                <a 
-                  href={existingPlan.treatmentPlanUrl}
-                  className="text-blue-600 hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Plan
-                </a>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No existing plan found for this offer and user</p>
-            )
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Select an offer and log in to check for existing plans
-            </p>
-          )}
-        </div>
-        
-        {/* Test Actions */}
-        <div className="bg-gray-50 p-3 rounded">
-          <h3 className="font-medium mb-3">Test Actions</h3>
-          <div className="space-y-2">
-            <Button
-              onClick={testOfferSelection}
-              disabled={!selectedOffer || isTestRunning}
-              className="w-full"
-            >
-              Test Offer Selection Flow
-            </Button>
-            
-            <Button
-              onClick={createTreatmentPlan}
-              disabled={!selectedOffer || !user || isTestRunning}
-              className="w-full"
-              variant="outline"
-            >
-              Create Treatment Plan
-            </Button>
+            ))}
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button 
+          variant="destructive" 
+          size="sm"
+          onClick={clearAllOffers}
+          className="flex items-center"
+        >
+          <Cross2Icon className="mr-1 h-4 w-4" />
+          Clear All Offer Data
+        </Button>
+        
+        <Button 
+          variant="default" 
+          size="sm"
+          onClick={refreshState}
+        >
+          Refresh
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
