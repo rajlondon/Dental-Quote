@@ -1,8 +1,6 @@
-import React, { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import React, { createContext, useState, useCallback, useContext, useEffect, ReactNode } from 'react';
 import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import ROUTES, { isValidRoute, getSafeRedirect } from '@/lib/routes';
-import { useAuth } from '@/hooks/use-auth';
+import ROUTES from '@/lib/routes';
 
 type NavigationContextType = {
   navigateTo: (path: string, options?: NavigationOptions) => void;
@@ -19,70 +17,89 @@ type NavigationOptions = {
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [isNavigating, setIsNavigating] = useState(false);
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const [currentPath, setCurrentPath] = useState(() => {
+    // Use the current path or default to home
+    return typeof window !== 'undefined' ? window.location.pathname : ROUTES.HOME;
+  });
+
+  // Monitor navigation state
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Update current path when location changes
+    setCurrentPath(window.location.pathname);
+    
+    // Create a handler to track navigation state
+    const handleNavStart = () => setIsNavigating(true);
+    const handleNavEnd = () => {
+      setIsNavigating(false);
+      setCurrentPath(window.location.pathname);
+    };
+    
+    // Add event listeners for navigation
+    window.addEventListener('beforeunload', handleNavStart);
+    window.addEventListener('load', handleNavEnd);
+    
+    // Intercept click events on links to monitor navigation
+    const linkClickHandler = (e: MouseEvent) => {
+      // Check if it's an anchor element or has an anchor parent
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      
+      if (anchor && anchor.href && !anchor.target && 
+          anchor.href.startsWith(window.location.origin) && 
+          !anchor.classList.contains('no-navigation-indicator') &&
+          !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        setIsNavigating(true);
+        // Navigation indicator will be cleared after page loads
+        setTimeout(() => setIsNavigating(false), 5000); // Safeguard in case page load event doesn't fire
+      }
+    };
+    
+    document.addEventListener('click', linkClickHandler);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleNavStart);
+      window.removeEventListener('load', handleNavEnd);
+      document.removeEventListener('click', linkClickHandler);
+    };
+  }, []);
 
   /**
    * Safe navigation function that handles all route changes
    */
   const navigateTo = useCallback((path: string, options?: NavigationOptions) => {
-    // Start navigation indicator
+    if (typeof window === 'undefined') return;
+    
+    // Start navigation state
     setIsNavigating(true);
     
-    // Validate that the route exists
-    const validatedPath = getSafeRedirect(path, user?.role);
-    
-    if (validatedPath !== path) {
-      console.warn(`[Navigation] Invalid route attempted: ${path}, redirected to: ${validatedPath}`);
-      
-      // Show warning toast if not a retry attempt (prevents infinite loop)
-      if (!options?.retry) {
-        toast({
-          title: "Navigation Error",
-          description: "The page you attempted to visit doesn't exist. Redirecting you to a valid page.",
-          variant: "destructive"
-        });
-      }
-    }
-    
-    // Save any state in session storage before navigation if requested
+    // Save any state in session storage if needed
     if (options?.saveInSessionStorage) {
-      try {
-        sessionStorage.setItem(
-          options.saveInSessionStorage.key, 
-          options.saveInSessionStorage.value
-        );
-        console.log(`[Navigation] Saved ${options.saveInSessionStorage.key} in session storage`);
-      } catch (error) {
-        console.error('[Navigation] Failed to save in session storage:', error);
-      }
+      const { key, value } = options.saveInSessionStorage;
+      sessionStorage.setItem(key, value);
     }
     
-    // Use short timeout to ensure loading state is visible
-    // This helps users understand navigation is happening
+    // Execute navigation
+    if (options?.replace) {
+      // Use replace to avoid adding to history
+      setLocation(path, { replace: true });
+    } else {
+      // Default navigation
+      setLocation(path);
+    }
+    
+    // Safety timeout to clear navigation state if the load event doesn't fire
     setTimeout(() => {
-      // Use replace or normal navigation
-      if (options?.replace) {
-        setLocation(validatedPath, { replace: true });
-      } else {
-        setLocation(validatedPath);
-      }
-      
-      // End navigation indicator
       setIsNavigating(false);
-    }, 100);
-  }, [setLocation, toast, user]);
-
+      setCurrentPath(window.location.pathname);
+    }, 1000);
+  }, [setLocation]);
+  
   return (
-    <NavigationContext.Provider 
-      value={{ 
-        navigateTo,
-        isNavigating,
-        currentPath: location 
-      }}
-    >
+    <NavigationContext.Provider value={{ navigateTo, isNavigating, currentPath }}>
       {children}
     </NavigationContext.Provider>
   );
@@ -108,7 +125,7 @@ export function useNavigateToTreatmentDetail() {
   const { navigateTo } = useNavigation();
   
   return useCallback((treatmentLineId: string) => {
-    navigateTo(ROUTES.PATIENT_TREATMENT_DETAIL(treatmentLineId), {
+    navigateTo(`/portal/treatment/${treatmentLineId}`, {
       saveInSessionStorage: {
         key: 'selected_treatment_line_id',
         value: treatmentLineId
@@ -124,8 +141,11 @@ export function useNavigateToQuoteDetail() {
   const { navigateTo } = useNavigation();
   
   return useCallback((quoteId: string) => {
-    navigateTo(ROUTES.PATIENT_QUOTE_DETAIL(quoteId));
+    navigateTo(`/portal/quotes/${quoteId}`, {
+      saveInSessionStorage: {
+        key: 'selected_quote_id',
+        value: quoteId
+      }
+    });
   }, [navigateTo]);
 }
-
-export default useNavigation;
