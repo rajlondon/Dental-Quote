@@ -243,18 +243,19 @@ export function PatientQuotesContent() {
   }
 
   return (
-    <div className="space-y-8 mx-auto max-w-7xl">
-      <div className="flex justify-between items-center mb-8 px-4">
+    <div className="space-y-5 mx-auto max-w-7xl px-4 py-2">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">{t('portal.quotes.title', 'My Quotes')}</h2>
-          <p className="text-gray-500 mt-1">{t('quotes.manage_description', 'View and manage your quote requests')}</p>
+          <h2 className="text-xl font-bold text-gray-800">{t('portal.quotes.title', 'My Quotes')}</h2>
+          <p className="text-gray-500 text-sm mt-1">{t('quotes.manage_description', 'View and manage your quote requests')}</p>
         </div>
         <div>
           <Button 
             onClick={() => setLocation("/your-quote")}
-            className="flex items-center gap-2 px-4 py-2 h-10 bg-blue-600 hover:bg-blue-700"
+            className="flex items-center gap-1 px-3 py-1.5 h-9 bg-blue-600 hover:bg-blue-700 rounded-md"
+            size="sm"
           >
-            <Plus className="h-5 w-5" /> New Quote Request
+            <Plus className="h-4 w-4" /> New Quote Request
           </Button>
         </div>
       </div>
@@ -262,16 +263,16 @@ export function PatientQuotesContent() {
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="w-full px-4"
+        className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-3 max-w-md mb-2">
-          <TabsTrigger value="all" className="py-2.5 text-sm">{t('quotes.all', 'All')}</TabsTrigger>
-          <TabsTrigger value="in_progress" className="py-2.5 text-sm">{t('quotes.in_progress', 'In Progress')}</TabsTrigger>
-          <TabsTrigger value="completed" className="py-2.5 text-sm">{t('quotes.completed', 'Completed')}</TabsTrigger>
+        <TabsList className="flex w-fit border border-gray-200 rounded-md p-0.5 bg-gray-50 mb-4">
+          <TabsTrigger value="all" className="py-1.5 px-4 text-sm rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">{t('quotes.all', 'All')}</TabsTrigger>
+          <TabsTrigger value="in_progress" className="py-1.5 px-4 text-sm rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">{t('quotes.in_progress', 'In Progress')}</TabsTrigger>
+          <TabsTrigger value="completed" className="py-1.5 px-4 text-sm rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">{t('quotes.completed', 'Completed')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="mt-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="all" className="mt-4">
+          <div className="flex flex-col space-y-3">
             {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
@@ -287,8 +288,8 @@ export function PatientQuotesContent() {
           </div>
         </TabsContent>
         
-        <TabsContent value="in_progress" className="mt-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="in_progress" className="mt-4">
+          <div className="flex flex-col space-y-3">
             {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
@@ -304,8 +305,8 @@ export function PatientQuotesContent() {
           </div>
         </TabsContent>
         
-        <TabsContent value="completed" className="mt-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="completed" className="mt-4">
+          <div className="flex flex-col space-y-3">
             {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
@@ -351,88 +352,74 @@ function QuoteCard({
   
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow border-gray-200">
-      <CardHeader className="pb-4 pt-5">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl font-bold">
-              {quote.title || `Quote #${quote.id}`}
-            </CardTitle>
-            <CardDescription className="line-clamp-1 mt-1 text-sm">
-              {quote.clinicName || 'Multiple Clinics'}
-            </CardDescription>
-          </div>
-          <Badge className={`${status.color} px-3 py-1 text-sm font-medium rounded-full`}>{status.text}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="pb-5">
-        <div className="space-y-4 text-sm">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500 font-medium">{t('quotes.created_date', 'Created')}</span>
-            <span className="font-semibold text-gray-800">{formatDate(quote.createdAt) || 'N/A'}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500 font-medium">{t('quotes.treatments', 'Treatments')}</span>
-            <span className="font-semibold text-gray-800">{quote.treatmentCount || 'Multiple'}</span>
-          </div>
-          {quote.totalPrice && (
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">{t('quotes.estimated_cost', 'Est. Cost')}</span>
-              <span className="font-semibold text-blue-700">£{quote.totalPrice}</span>
+      <div className="flex flex-wrap md:flex-nowrap">
+        <div className="w-full md:w-2/5 p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-bold">{quote.title || `Quote #${quote.id}`}</h3>
+              <p className="text-sm text-gray-500 mt-1">{quote.clinicName || 'Multiple Clinics'}</p>
             </div>
-          )}
-        </div>
-      </CardContent>
-      <Separator className="bg-gray-100" />
-      <CardFooter className="pt-4 pb-4 flex flex-col gap-3">
-        <div className="flex items-center text-sm text-gray-600 w-full justify-between">
-          <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
-            {statusIcon}
-            <span className="ml-2 font-medium">{status.text}</span>
+            <Badge className={`${status.color} px-2.5 py-0.5 text-xs font-medium rounded-full`}>{status.text}</Badge>
           </div>
-          <div className="flex gap-2 quote-actions">
-            {/* View Button */}
+          
+          <div className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Created</span>
+              <span className="font-medium">{formatDate(quote.createdAt) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Treatments</span>
+              <span className="font-medium">{quote.treatmentCount || 'Multiple'}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="w-full md:w-3/5 p-5 md:border-l border-gray-100 flex flex-col justify-between">
+          <div className="flex items-center text-sm text-gray-600 md:justify-end justify-between">
+            <div className="flex items-center bg-gray-50 px-2.5 py-1 rounded-full">
+              {statusIcon}
+              <span className="ml-2 font-medium">{status.text}</span>
+            </div>
+          </div>
+          
+          <div className="flex mt-4 gap-3 md:justify-end">
             <Button 
               variant="outline" 
               size="sm"
-              className="h-9 px-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200 rounded-md"
+              className="h-8 px-2.5 text-gray-700 border-gray-200 rounded-md font-normal"
               asChild
             >
               <Link to={`${getRoutePrefix()}/${quote.id}`}>
-                <Eye className="h-4 w-4 mr-1.5" />
+                <Eye className="h-3.5 w-3.5 mr-1" />
                 <span>View</span>
               </Link>
             </Button>
             
-            {/* Edit Button - shown only for editable quotes */}
             {(quote.canEdit || ['draft', 'pending', 'sent', 'active'].includes(quote.status)) && (
               <Button 
                 variant="outline" 
                 size="sm"
-                className="h-9 px-3 text-amber-600 hover:bg-amber-50 hover:text-amber-700 border-amber-200 rounded-md"
+                className="h-8 px-2.5 text-amber-600 border-amber-200 rounded-md font-normal"
                 asChild
               >
                 <Link to={`${getRoutePrefix()}/${quote.id}/edit`}>
-                  <Edit className="h-4 w-4 mr-1.5" />
+                  <Edit className="h-3.5 w-3.5 mr-1" />
                   <span>Edit</span>
                 </Link>
               </Button>
             )}
             
-            {/* Dropdown Menu for additional actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 px-2 text-gray-600 hover:bg-gray-50 border-gray-200 rounded-md"
+                  className="h-8 w-8 p-0 text-gray-600 border-gray-200 rounded-md"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                
-                {/* Download PDF */}
+              <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem 
                   onClick={() => onDownload(quote.id)}
                   className="cursor-pointer"
@@ -441,7 +428,6 @@ function QuoteCard({
                   Download PDF
                 </DropdownMenuItem>
                 
-                {/* Contact Clinic */}
                 <DropdownMenuItem 
                   onClick={() => onContactClinic(quote.id)}
                   className="cursor-pointer"
@@ -450,7 +436,6 @@ function QuoteCard({
                   Contact Clinic
                 </DropdownMenuItem>
                 
-                {/* Make Payment - only for accepted quotes */}
                 {quote.status === 'accepted' && (
                   <>
                     <DropdownMenuSeparator />
@@ -467,7 +452,7 @@ function QuoteCard({
             </DropdownMenu>
           </div>
         </div>
-      </CardFooter>
+      </div>
     </Card>
   );
 }
