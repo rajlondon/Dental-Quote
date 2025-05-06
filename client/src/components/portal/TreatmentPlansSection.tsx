@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTreatmentLines } from "@/hooks/use-treatment-lines";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Card, 
   CardContent, 
@@ -57,6 +58,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const { toast } = useToast();
   
   const { 
     treatmentLines, 
@@ -66,7 +68,8 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
     isSummaryLoading,
     summaryError,
     updateTreatmentLine,
-    deleteTreatmentLine
+    deleteTreatmentLine,
+    refetch
   } = useTreatmentLines(quoteId);
 
   // Status badge component with appropriate colors
@@ -505,12 +508,33 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                         console.log("Update data:", {
                           patientNotes: selectedTreatmentLine.patientNotes
                         });
-                        // Save the changes
-                        updateTreatmentLine.mutate({
-                          id: selectedTreatmentLine.id,
-                          data: {
+                        // Use direct API call to treatment-module endpoint
+                        fetch(`/api/treatment-module/treatment-lines/${selectedTreatmentLine.id}`, {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
                             patientNotes: selectedTreatmentLine.patientNotes
-                          }
+                          })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                          console.log("Success updating treatment line:", data);
+                          // Force a refresh of the data
+                          if (refetch) refetch();
+                          toast({
+                            title: "Treatment updated",
+                            description: "Your treatment has been updated",
+                          });
+                        })
+                        .catch(error => {
+                          console.error("Error updating treatment line:", error);
+                          toast({
+                            title: "Failed to update treatment",
+                            description: error.message || "Something went wrong",
+                            variant: "destructive",
+                          });
                         });
                         setIsEditMode(false);
                         setIsDetailsOpen(false);
@@ -558,7 +582,32 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                 onClick={() => {
                   try {
                     console.log("Deleting treatment line with ID:", selectedTreatmentLine.id);
-                    deleteTreatmentLine.mutate(selectedTreatmentLine.id);
+                    
+                    // Use direct API call to treatment-module endpoint
+                    fetch(`/api/treatment-module/treatment-lines/${selectedTreatmentLine.id}`, {
+                      method: 'DELETE',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                      console.log("Success deleting treatment line:", data);
+                      // Force a refresh of the data
+                      if (refetch) refetch();
+                      toast({
+                        title: "Treatment removed",
+                        description: "Treatment has been removed from your plan",
+                      });
+                    })
+                    .catch(error => {
+                      console.error("Error deleting treatment line:", error);
+                      toast({
+                        title: "Failed to remove treatment",
+                        description: error.message || "Something went wrong",
+                        variant: "destructive",
+                      });
+                    });
                     setIsDeleteConfirmOpen(false);
                   } catch (error) {
                     console.error("Error in delete mutation:", error);
