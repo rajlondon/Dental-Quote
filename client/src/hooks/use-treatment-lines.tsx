@@ -24,9 +24,9 @@ export function useTreatmentLines(quoteId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // IMPORTANT: Base URL for all treatment module API calls
-  // This API path is mounted at /api/treatment-module in server/routes.ts
-  const API_BASE_URL = "/api/treatment-module";
+  // IMPORTANT: Base URL for all treatment line API calls
+  // This is the canonical API path for all treatment line operations
+  const API_TREATMENT = "/api/v1/treatment-lines";
 
   // Fetch treatment lines for a specific quote - try multiple API paths
   const {
@@ -35,7 +35,7 @@ export function useTreatmentLines(quoteId?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId],
+    queryKey: [API_TREATMENT, quoteId],
     queryFn: async () => {
       if (!quoteId) return [];
       
