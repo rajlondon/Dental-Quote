@@ -390,12 +390,21 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                 
                                 try {
                                   console.log("Delete action clicked for treatment line:", tl.id);
-                                  console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + tl.id);
+                                  
+                                  // Convert numeric IDs to UUID format if needed
+                                  let treatmentLineId = tl.id?.toString();
+                                  if (treatmentLineId && /^\d+$/.test(treatmentLineId)) {
+                                    const numericIdStr = treatmentLineId.toString();
+                                    treatmentLineId = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
+                                    console.log('[DEBUG] Converted numeric treatment line ID to UUID format:', treatmentLineId);
+                                  }
+                                  
+                                  console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + treatmentLineId);
                                   
                                   if (confirm("Are you sure you want to delete this treatment?")) {
                                     console.log("[DEBUG] Delete action - User confirmed delete");
                                     
-                                    deleteTreatmentLine.mutate(tl.id, {
+                                    deleteTreatmentLine.mutate(treatmentLineId, {
                                       onSuccess: (data) => {
                                         console.log("[DEBUG] Delete treatment line success:", data);
                                       },
@@ -593,6 +602,15 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                     onClick={() => {
                       try {
                         console.log("Updating treatment line with ID:", selectedTreatmentLine.id);
+                        
+                        // Convert numeric IDs to UUID format if needed
+                        let treatmentLineId = selectedTreatmentLine.id?.toString();
+                        if (treatmentLineId && /^\d+$/.test(treatmentLineId)) {
+                          const numericIdStr = treatmentLineId.toString();
+                          treatmentLineId = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
+                          console.log('[DEBUG] Converted numeric treatment line ID to UUID format:', treatmentLineId);
+                        }
+                        
                         const updateData = {
                           patientNotes: selectedTreatmentLine.patientNotes
                         };
@@ -601,7 +619,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                         // Use the updateTreatmentLine mutation from the hook
                         updateTreatmentLine.mutate(
                           { 
-                            id: selectedTreatmentLine.id, 
+                            id: treatmentLineId, 
                             data: updateData 
                           }, 
                           {
