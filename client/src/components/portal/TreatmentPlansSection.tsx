@@ -335,16 +335,21 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                 onClick={() => {
                                   try {
                                     console.log("Delete action clicked for treatment line:", tl.id);
+                                    console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + tl.id);
+                                    
                                     // Use the treatment hook's deleteTreatmentLine function
                                     if (confirm("Are you sure you want to delete this treatment?")) {
+                                      console.log("[DEBUG] Delete action - User confirmed delete");
+                                      
                                       // Use the deleteTreatmentLine mutation from the hook
                                       deleteTreatmentLine.mutate(tl.id, {
                                         onSuccess: (data) => {
-                                          console.log(`[DEBUG] Delete treatment line success:`, data);
+                                          console.log("[DEBUG] Delete treatment line success:", data);
                                           // No need for additional toast - the hook already shows it
                                         },
                                         onError: (error) => {
-                                          console.error(`[DEBUG] Delete treatment line error:`, error);
+                                          console.error("[DEBUG] Delete treatment line error:", error);
+                                          console.error("[DEBUG] Error details:", error instanceof Error ? error.message : String(error));
                                           // No need for additional toast - the hook already shows it
                                         }
                                       });
