@@ -8,6 +8,7 @@ import ScrollToTop from '@/components/ScrollToTop';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import QuoteSummaryPanel from '@/components/quote/QuoteSummaryPanel';
 import {
   Card,
   CardContent,
@@ -1631,91 +1632,124 @@ const YourQuotePage: React.FC = () => {
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
             <>
-              {/* Treatment Guide - Educational Component */}
-              <TreatmentGuide />
-              
-              {/* Treatment Plan Builder */}
-              <div className="mb-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl font-bold">
-                      <Pencil className="mr-2 h-5 w-5 text-blue-500" />
-                      Build Your Treatment Plan
-                    </CardTitle>
-                    <CardDescription>
-                      Add all the treatments you're interested in to get a comprehensive quote
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TreatmentPlanBuilder 
-                      initialTreatments={treatmentItems}
-                      onTreatmentsChange={handleTreatmentPlanChange}
-                    />
+              {/* Show different layouts based on flow type */}
+              {(isSpecialOfferFlow || isPackageFlow) ? (
+                <div className="grid md:grid-cols-2 gap-8 mb-8">
+                  <div>
+                    {/* Treatment Guide - Educational Component */}
+                    <TreatmentGuide />
                     
-                    {treatmentItems.length > 0 && (
-                      <div className="mt-6">
-                        {/* Show the special offer or package details if applicable */}
-                        {(isSpecialOfferFlow || isPackageFlow) && (
-                          <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-md">
-                            <div className="flex items-center">
-                              <Sparkles className="h-5 w-5 text-blue-600 mr-2" />
-                              <h3 className="font-medium text-blue-900">
-                                {isSpecialOfferFlow ? 'Your Special Offer' : 'Your Package Selection'}
-                              </h3>
-                            </div>
-                            <p className="text-sm text-blue-800 ml-7 mt-1">
-                              {isSpecialOfferFlow && specialOffer ? (
-                                <>
-                                  <span className="font-medium">{specialOffer.title}</span>
-                                  {specialOffer.discountType === 'percentage' ? 
-                                    ` - ${specialOffer.discountValue}% off` : 
-                                    ` - £${specialOffer.discountValue} off`
-                                  }
-                                </>
-                              ) : isPackageFlow ? (
-                                <>Package benefits will be applied to your treatment plan</>
-                              ) : null}
-                            </p>
-                          </div>
-                        )}
-                        
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm text-gray-600">
-                            {(isSpecialOfferFlow || isPackageFlow) ? (
-                              <>Continue to complete your personalized dental treatment plan</>
-                            ) : (
-                              <>Treatments added: {treatmentItems.length}</>
-                            )}
-                          </div>
-                          
-                          <Button 
-                            onClick={() => {
-                              // If this is a special offer or package flow and we have a clinicId,
-                              // we can potentially skip patient info and go straight to select-clinic
-                              if ((isSpecialOfferFlow || isPackageFlow) && clinicId && searchParams.get('skipInfo') === 'true') {
-                                // Find the clinic
-                                const matchedClinic = clinics.find(c => c.id.toString() === clinicId);
-                                if (matchedClinic) {
-                                  setSelectedClinic(matchedClinic);
-                                  setCurrentStep('select-clinic');
-                                } else {
-                                  setCurrentStep('patient-info');
-                                }
+                    {/* Treatment Plan Builder */}
+                    <div className="mb-8">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center text-xl font-bold">
+                            <Pencil className="mr-2 h-5 w-5 text-blue-500" />
+                            Build Your Treatment Plan
+                          </CardTitle>
+                          <CardDescription>
+                            Add all the treatments you're interested in
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <TreatmentPlanBuilder 
+                            initialTreatments={treatmentItems}
+                            onTreatmentsChange={handleTreatmentPlanChange}
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                  
+                  {/* Quote Summary Panel - Styled like the screenshot */}
+                  <div>
+                    {treatmentItems.length > 0 ? (
+                      <div className="sticky top-24">
+                        <QuoteSummaryPanel 
+                          treatments={treatmentItems}
+                          specialOfferTitle={specialOffer?.title}
+                          discountValue={specialOffer?.discountValue}
+                          discountType={specialOffer?.discountType}
+                          clinicName={selectedClinic?.name}
+                          onContinue={() => {
+                            // If this is a special offer or package flow and we have a clinicId,
+                            // we can potentially skip patient info and go straight to select-clinic
+                            if ((isSpecialOfferFlow || isPackageFlow) && clinicId && searchParams.get('skipInfo') === 'true') {
+                              // Find the clinic
+                              const matchedClinic = clinics.find(c => c.id.toString() === clinicId);
+                              if (matchedClinic) {
+                                setSelectedClinic(matchedClinic);
+                                setCurrentStep('select-clinic');
                               } else {
                                 setCurrentStep('patient-info');
                               }
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            Continue to Next Step
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                            } else {
+                              setCurrentStep('patient-info');
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-center flex flex-col items-center justify-center min-h-[300px]">
+                        <div className="text-gray-400 mb-4">
+                          <Pencil className="h-12 w-12" />
                         </div>
+                        <h3 className="text-lg font-medium text-gray-700 mb-2">
+                          Build Your Treatment Plan
+                        </h3>
+                        <p className="text-gray-500 text-sm max-w-md">
+                          Add treatments from the panel on the left to see your customized Istanbul price estimate.
+                        </p>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </div>
+              ) : (
+                // Original layout for normal flow
+                <>
+                  {/* Treatment Guide - Educational Component */}
+                  <TreatmentGuide />
+                  
+                  {/* Treatment Plan Builder */}
+                  <div className="mb-8">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center text-xl font-bold">
+                          <Pencil className="mr-2 h-5 w-5 text-blue-500" />
+                          Build Your Treatment Plan
+                        </CardTitle>
+                        <CardDescription>
+                          Add all the treatments you're interested in to get a comprehensive quote
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <TreatmentPlanBuilder 
+                          initialTreatments={treatmentItems}
+                          onTreatmentsChange={handleTreatmentPlanChange}
+                        />
+                        
+                        {treatmentItems.length > 0 && (
+                          <div className="mt-6">
+                            <div className="flex justify-between items-center">
+                              <div className="text-sm text-gray-600">
+                                Treatments added: {treatmentItems.length}
+                              </div>
+                              
+                              <Button 
+                                onClick={() => setCurrentStep('patient-info')}
+                                className="flex items-center gap-2"
+                              >
+                                Continue to Next Step
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
             </>
           )}
           
