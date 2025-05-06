@@ -279,9 +279,9 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   const handleEdit = () => {
     if (!quote?.id) return;
     
-    // Direct path navigation using string URL
+    // Use the navigateTo method for client-side navigation
     const editPath = `/patient/quotes/${quote.id}/edit`;
-    window.location.href = editPath;
+    navigateToRoute(editPath);
     
     // Show success toast
     toast({
