@@ -1220,28 +1220,57 @@ const YourQuotePage: React.FC = () => {
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
     
     // Sync QuoteFlowContext with URL parameters if they exist
-    const offerId = searchParams.get('specialOffer');
+    const offerIdFromUrl = searchParams.get('specialOffer');
     const clinicIdFromUrl = searchParams.get('clinicId');
     const packageIdFromUrl = searchParams.get('packageId');
+    const sourceTypeFromUrl = searchParams.get('source');
 
-    // If coming from special offer, update context with the source type and IDs
-    if (offerId) {
-      setSource('special_offer');
-      setOfferId(offerId);
-      if (clinicIdFromUrl) {
-        setClinicId(clinicIdFromUrl);
-      }
-      console.log("Updated QuoteFlowContext with special offer source:", offerId);
-    } 
-    // If coming from package, update context with the source type and IDs
-    else if (packageIdFromUrl) {
-      setSource('package');
-      setPackageId(packageIdFromUrl);
-      if (clinicIdFromUrl) {
-        setClinicId(clinicIdFromUrl);
-      }
-      console.log("Updated QuoteFlowContext with package source:", packageIdFromUrl);
+    // Determine the source type from URL parameters or use existing context
+    // Priority: explicit source parameter > specialOffer/packageId parameters > existing context
+    let detectedSource = source; // Default to existing context value
+    
+    if (sourceTypeFromUrl && ['special_offer', 'package', 'normal'].includes(sourceTypeFromUrl)) {
+      // Explicit source parameter has highest priority
+      detectedSource = sourceTypeFromUrl as 'special_offer' | 'package' | 'normal';
+      console.log(`Source explicitly specified in URL: ${detectedSource}`);
+    } else if (offerIdFromUrl) {
+      // Special offer ID parameter indicates special_offer source
+      detectedSource = 'special_offer';
+      console.log(`Source determined from specialOffer parameter: ${detectedSource}`);
+    } else if (packageIdFromUrl) {
+      // Package ID parameter indicates package source
+      detectedSource = 'package';
+      console.log(`Source determined from packageId parameter: ${detectedSource}`);
     }
+    
+    // Update context with the determined source type and relevant IDs
+    if (detectedSource !== source) {
+      console.log(`Updating source from ${source} to ${detectedSource}`);
+      setSource(detectedSource);
+    }
+    
+    // Always update IDs if they are provided in URL, regardless of source type
+    if (offerIdFromUrl && offerIdFromUrl !== offerId) {
+      console.log(`Updating offerId from ${offerId} to ${offerIdFromUrl}`);
+      setOfferId(offerIdFromUrl);
+    }
+    
+    if (packageIdFromUrl && packageIdFromUrl !== packageId) {
+      console.log(`Updating packageId from ${packageId} to ${packageIdFromUrl}`);
+      setPackageId(packageIdFromUrl);
+    }
+    
+    if (clinicIdFromUrl && clinicIdFromUrl !== clinicId) {
+      console.log(`Updating clinicId from ${clinicId} to ${clinicIdFromUrl}`);
+      setClinicId(clinicIdFromUrl);
+    }
+    
+    console.log("QuoteFlowContext after sync:", {
+      source: detectedSource,
+      offerId: offerIdFromUrl || offerId,
+      packageId: packageIdFromUrl || packageId,
+      clinicId: clinicIdFromUrl || clinicId
+    });
     
     // If we have a special offer from URL params, store it in sessionStorage for persistence across page reloads
     if (specialOffer && searchParams.get('specialOffer')) {
@@ -1957,21 +1986,71 @@ const YourQuotePage: React.FC = () => {
                           <Button 
                             variant="default"
                             className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600"
-                            onClick={() => {
+                            onClick={async () => {
                               // Create a treatment plan and redirect to the patient portal
                               toast({
                                 title: "Saving Treatment Plan",
-                                description: `Creating your ${source === 'package' ? 'package' : 'treatment'} plan and returning to the portal...`,
+                                description: `Creating your ${source === 'package' ? 'package' : 'treatment'} plan...`,
                               });
                               
-                              // Reset the quote flow context when navigating away
-                              setTimeout(() => {
-                                // Reset context
-                                resetFlow();
+                              try {
+                                // Prepare the treatment plan data
+                                const planData = {
+                                  title: source === 'package' 
+                                    ? `Package Plan from ${selectedClinic?.name || 'Clinic'}`
+                                    : `Treatment Plan from ${selectedClinic?.name || 'Clinic'}`,
+                                  clinicId: selectedClinic?.id || clinicId,
+                                  sourceType: source,
+                                  sourceId: source === 'package' ? packageId : offerId,
+                                  treatments: treatmentItems.map(item => ({
+                                    name: item.name,
+                                    quantity: item.quantity,
+                                    priceGBP: item.priceGBP,
+                                    priceUSD: item.priceUSD,
+                                    category: item.category
+                                  })),
+                                  patientInfo: {
+                                    ...patientInfo
+                                  }
+                                };
                                 
-                                // Redirect to patient portal with source parameter for analytics
-                                window.location.href = `/client-portal?source=${source}`;
-                              }, 1500);
+                                // Call the API to save the treatment plan
+                                const response = await fetch('/api/treatment-plans', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json'
+                                  },
+                                  body: JSON.stringify(planData)
+                                });
+                                
+                                if (!response.ok) {
+                                  throw new Error('Failed to save treatment plan');
+                                }
+                                
+                                const result = await response.json();
+                                
+                                toast({
+                                  title: "Success!",
+                                  description: `Your ${source === 'package' ? 'package' : 'treatment'} plan has been saved.`,
+                                  variant: "default"
+                                });
+                                
+                                // Reset context and redirect after successful save
+                                setTimeout(() => {
+                                  // Reset context
+                                  resetFlow();
+                                  
+                                  // Redirect to patient portal with source parameter for analytics
+                                  window.location.href = `/client-portal?source=${source}&planId=${result.id}`;
+                                }, 1500);
+                              } catch (error) {
+                                console.error('Error saving treatment plan:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to save your treatment plan. Please try again.",
+                                  variant: "destructive"
+                                });
+                              }
                             }}
                           >
                             <CheckCircle className="h-4 w-4" />
