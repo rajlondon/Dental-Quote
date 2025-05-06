@@ -28,7 +28,7 @@ export function useTreatmentLines(quoteId?: string) {
   // This API path is mounted at /api/treatment-module in server/routes.ts
   const API_BASE_URL = "/api/treatment-module";
 
-  // Fetch treatment lines for a specific quote
+  // Fetch treatment lines for a specific quote - try multiple API paths
   const {
     data: treatmentLines,
     isLoading,
@@ -39,28 +39,54 @@ export function useTreatmentLines(quoteId?: string) {
     queryFn: async () => {
       if (!quoteId) return [];
       
-      // Log the API call for debugging
-      console.log(`[API] GET ${API_BASE_URL}/treatment-lines/${quoteId}`);
+      // Log the API call for debugging with extra details
+      console.log(`[API ATTEMPT] Trying to fetch treatment lines for quote ID: ${quoteId}`);
+      console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/treatment-lines/${quoteId}`);
       
       try {
+        // First try the module path
+        console.log(`[API] Sending GET request via apiRequest utility to module path...`);
         const response = await apiRequest("GET", `${API_BASE_URL}/treatment-lines/${quoteId}`);
+        console.log(`[API] GET response status:`, response.status);
         const data = await response.json() as TreatmentLineResponse;
         
         if (!data.success) {
-          throw new Error("Failed to fetch treatment lines");
+          throw new Error("Failed to fetch treatment lines from primary path");
         }
         
-        console.log(`[API] Success - Found ${data.data?.length || 0} treatment lines`);
+        console.log(`[API] Success - Found ${data.data?.length || 0} treatment lines from primary path`);
         return data.data;
-      } catch (error) {
-        console.error(`[API] Error fetching treatment lines:`, error);
-        throw error;
+      } catch (firstError) {
+        console.warn(`[API] First fetch attempt failed:`, firstError);
+        
+        // If first attempt fails, try alternate API path
+        try {
+          const alternatePath = `/api/treatment-plans/treatment-lines/${quoteId}`;
+          console.log(`[API ATTEMPT] Trying alternate path: ${alternatePath}`);
+          
+          const response = await apiRequest("GET", alternatePath);
+          console.log(`[API] GET (alternate) response status:`, response.status);
+          const data = await response.json() as TreatmentLineResponse;
+          
+          if (!data.success) {
+            throw new Error("Failed to fetch treatment lines from alternate path");
+          }
+          
+          console.log(`[API] Success - Found ${data.data?.length || 0} treatment lines from alternate path`);
+          return data.data;
+        } catch (secondError) {
+          console.error(`[API] Both fetch attempts failed`);
+          console.error(`[API] First error:`, firstError);
+          console.error(`[API] Second error:`, secondError);
+          
+          throw new Error("Failed to fetch treatment lines using either API path");
+        }
       }
     },
     enabled: !!quoteId,
   });
 
-  // Fetch treatment summary for the logged-in patient
+  // Fetch treatment summary for the logged-in patient - try multiple API paths
   const {
     data: treatmentSummary,
     isLoading: isSummaryLoading,
@@ -68,46 +94,98 @@ export function useTreatmentLines(quoteId?: string) {
   } = useQuery({
     queryKey: [`${API_BASE_URL}/patient/treatment-summary`],
     queryFn: async () => {
-      // Log the API call for debugging
-      console.log(`[API] GET ${API_BASE_URL}/patient/treatment-summary`);
+      // Log the API call for debugging with extra details
+      console.log(`[API ATTEMPT] Trying to fetch treatment summary`);
+      console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/patient/treatment-summary`);
       
       try {
+        // First try the module path
+        console.log(`[API] Sending GET request via apiRequest utility to module path...`);
         const response = await apiRequest("GET", `${API_BASE_URL}/patient/treatment-summary`);
+        console.log(`[API] GET response status:`, response.status);
         const data = await response.json() as TreatmentSummaryResponse;
-      
+        
         if (!data.success) {
-          throw new Error("Failed to fetch treatment summary");
+          throw new Error("Failed to fetch treatment summary from primary path");
         }
         
-        console.log(`[API] Success - Fetched treatment summary`);
+        console.log(`[API] Success - Fetched treatment summary from primary path`);
         return data.data;
-      } catch (error) {
-        console.error(`[API] Error fetching treatment summary:`, error);
-        throw error;
+      } catch (firstError) {
+        console.warn(`[API] First summary fetch attempt failed:`, firstError);
+        
+        // If first attempt fails, try alternate API path
+        try {
+          const alternatePath = `/api/treatment-plans/patient/treatment-summary`;
+          console.log(`[API ATTEMPT] Trying alternate path: ${alternatePath}`);
+          
+          const response = await apiRequest("GET", alternatePath);
+          console.log(`[API] GET (alternate) response status:`, response.status);
+          const data = await response.json() as TreatmentSummaryResponse;
+          
+          if (!data.success) {
+            throw new Error("Failed to fetch treatment summary from alternate path");
+          }
+          
+          console.log(`[API] Success - Fetched treatment summary from alternate path`);
+          return data.data;
+        } catch (secondError) {
+          console.error(`[API] Both summary fetch attempts failed`);
+          console.error(`[API] First error:`, firstError);
+          console.error(`[API] Second error:`, secondError);
+          
+          throw new Error("Failed to fetch treatment summary using either API path");
+        }
       }
     },
   });
 
-  // Add a new treatment line
+  // Add a new treatment line - try multiple API paths
   const addTreatmentLine = useMutation({
     mutationFn: async (treatmentLine: any) => {
-      // Log the API call for debugging
-      console.log(`[API] POST ${API_BASE_URL}/treatment-lines with data:`, treatmentLine);
+      // Log the API call for debugging with extra details
+      console.log(`[API ATTEMPT] Trying to add new treatment line`);
+      console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/treatment-lines`);
+      console.log(`[API ATTEMPT] Treatment line data:`, treatmentLine);
       
       try {
+        // First try the module path
+        console.log(`[API] Sending POST request via apiRequest utility to module path...`);
         const response = await apiRequest("POST", `${API_BASE_URL}/treatment-lines`, treatmentLine);
+        console.log(`[API] POST response status:`, response.status);
         const result = await response.json();
         console.log(`[API] Add treatment line result:`, result);
         return result;
-      } catch (error) {
-        console.error(`[API] Error adding treatment line:`, error);
-        throw error;
+      } catch (firstError) {
+        console.warn(`[API] First add attempt failed:`, firstError);
+        
+        // If first attempt fails, try alternate API path
+        try {
+          const alternatePath = `/api/treatment-plans/treatment-lines`;
+          console.log(`[API ATTEMPT] Trying alternate path: ${alternatePath}`);
+          
+          const response = await apiRequest("POST", alternatePath, treatmentLine);
+          console.log(`[API] POST (alternate) response status:`, response.status);
+          const result = await response.json();
+          console.log(`[API] Add treatment line result (alternate):`, result);
+          return result;
+        } catch (secondError) {
+          console.error(`[API] Both add attempts failed`);
+          console.error(`[API] First error:`, firstError);
+          console.error(`[API] Second error:`, secondError);
+          
+          throw new Error("Failed to add treatment using either API path");
+        }
       }
     },
     onSuccess: (data) => {
-      // Use the consistent query keys with API_BASE_URL
+      // Invalidate multiple query keys to ensure refetch works
+      console.log(`[API] Successfully added treatment, invalidating queries`);
       queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/patient/treatment-summary`] });
+      // Also invalidate alternative path queries
+      queryClient.invalidateQueries({ queryKey: [`/api/treatment-plans/treatment-lines`, quoteId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/treatment-plans/patient/treatment-summary`] });
       
       toast({
         title: "Treatment added",
@@ -115,34 +193,61 @@ export function useTreatmentLines(quoteId?: string) {
       });
     },
     onError: (error: Error) => {
+      console.error(`[API] Final error in add mutation:`, error);
       toast({
         title: "Failed to add treatment",
-        description: error.message,
+        description: error.message || "There was a problem adding the treatment. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  // Update an existing treatment line
+  // Update an existing treatment line - try multiple API paths
   const updateTreatmentLine = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      // Log the API call for debugging
-      console.log(`[API] PUT ${API_BASE_URL}/treatment-lines/${id} with data:`, data);
+      // Log the API call for debugging with extra details
+      console.log(`[API ATTEMPT] Trying to update treatment line with ID: ${id}`);
+      console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/treatment-lines/${id}`);
+      console.log(`[API ATTEMPT] Update data:`, data);
       
       try {
+        // First try the module path
+        console.log(`[API] Sending PUT request via apiRequest utility to module path...`);
         const response = await apiRequest("PUT", `${API_BASE_URL}/treatment-lines/${id}`, data);
+        console.log(`[API] PUT response status:`, response.status);
         const result = await response.json();
         console.log(`[API] Update treatment line result:`, result);
         return result;
-      } catch (error) {
-        console.error(`[API] Error updating treatment line:`, error);
-        throw error;
+      } catch (firstError) {
+        console.warn(`[API] First update attempt failed:`, firstError);
+        
+        // If first attempt fails, try alternate API path
+        try {
+          const alternatePath = `/api/treatment-plans/treatment-lines/${id}`;
+          console.log(`[API ATTEMPT] Trying alternate path: ${alternatePath}`);
+          
+          const response = await apiRequest("PUT", alternatePath, data);
+          console.log(`[API] PUT (alternate) response status:`, response.status);
+          const result = await response.json();
+          console.log(`[API] Update treatment line result (alternate):`, result);
+          return result;
+        } catch (secondError) {
+          console.error(`[API] Both update attempts failed`);
+          console.error(`[API] First error:`, firstError);
+          console.error(`[API] Second error:`, secondError);
+          
+          throw new Error("Failed to update treatment using either API path");
+        }
       }
     },
     onSuccess: (data) => {
-      // Use the consistent query keys with API_BASE_URL
+      // Invalidate multiple query keys to ensure refetch works
+      console.log(`[API] Successfully updated treatment, invalidating queries`);
       queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/patient/treatment-summary`] });
+      // Also invalidate alternative path queries
+      queryClient.invalidateQueries({ queryKey: [`/api/treatment-plans/treatment-lines`, quoteId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/treatment-plans/patient/treatment-summary`] });
       
       toast({
         title: "Treatment updated",
@@ -150,9 +255,10 @@ export function useTreatmentLines(quoteId?: string) {
       });
     },
     onError: (error: Error) => {
+      console.error(`[API] Final error in update mutation:`, error);
       toast({
         title: "Failed to update treatment",
-        description: error.message,
+        description: error.message || "There was a problem updating the treatment. Please try again.",
         variant: "destructive",
       });
     },
