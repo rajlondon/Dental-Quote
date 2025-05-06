@@ -487,7 +487,7 @@ const PortalLoginPage: React.FC = () => {
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         
-        // Check if there's a pending special offer to process
+        // Check if there's a pending special offer to process (MVP spec implementation)
         console.log("Checking sessionStorage for pendingSpecialOffer");
         const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
         console.log("pendingSpecialOffer data:", pendingOfferData);
@@ -498,62 +498,63 @@ const PortalLoginPage: React.FC = () => {
             const offerData = JSON.parse(pendingOfferData);
             console.log("Successfully parsed pending special offer request:", offerData);
             
-            // Format the offer data for consistency
-            const formattedOfferData = {
-              id: offerData.id,
-              title: offerData.title,
-              clinicId: offerData.clinicId || offerData.clinic_id || '',
-              discountValue: offerData.discountValue || offerData.discount_value || 0,
-              discountType: offerData.discountType || offerData.discount_type || 'percentage',
-              applicableTreatment: offerData.applicableTreatment || 
-                                   (offerData.applicable_treatments && offerData.applicable_treatments.length > 0 
-                                    ? offerData.applicable_treatments[0] 
-                                    : 'Dental Implants')
-            };
+            // Following MVP spec: Create a quote directly from the offer ID
+            const offerId = offerData.id;
+            const clinicId = offerData.clinicId || offerData.clinic_id || '';
             
-            // Create URL parameters for quote page to ensure they're visible in the URL
-            const params = new URLSearchParams({
-              specialOffer: formattedOfferData.id,
-              offerTitle: formattedOfferData.title,
-              offerClinic: formattedOfferData.clinicId,
-              offerDiscount: formattedOfferData.discountValue.toString(),
-              offerDiscountType: formattedOfferData.discountType,
-              treatment: formattedOfferData.applicableTreatment
-            });
-            
-            console.log("Created URL parameters for special offer:", params.toString());
-            
-            // We won't remove pendingSpecialOffer until YourQuotePage confirms it has received it
-            // This provides a fallback in case of navigation issues
-            
-            // Store the formatted offer in activeSpecialOffer for use by the YourQuotePage
-            sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOfferData));
-            console.log("Saved activeSpecialOffer to sessionStorage:", formattedOfferData);
-            
-            // Notify user
-            toast({
-              title: "Special Offer Selected",
-              description: `${formattedOfferData.title} will be applied to your quote results.`,
-              variant: "default",
-            });
-            
-            // Redirect to the quote page with the URL parameters 
-            // This makes the special offer visible in the URL and provides additional resilience
-            setTimeout(() => {
-              console.log("Redirecting to quote page with special offer context");
-              const quoteUrl = `/your-quote?${params.toString()}`;
-              console.log("Redirect URL:", quoteUrl);
-              // Mark this offer as being processed to prevent repeated redirects
-              const offerData = JSON.parse(pendingOfferData);
-              sessionStorage.setItem('processingSpecialOffer', offerData.id);
+            if (offerId) {
+              console.log(`Creating quote from offer ${offerId} for clinic ${clinicId}`);
+              toast({
+                title: "Processing Special Offer",
+                description: "Creating your quote with the selected offer...",
+              });
               
-              // Remove the pendingSpecialOffer to prevent repeated redirects on subsequent logins
-              sessionStorage.removeItem('pendingSpecialOffer');
+              // Call the new API endpoint to start a quote from an offer
+              apiRequest('POST', `/api/v1/offers/${offerId}/start`, { clinicId })
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error('Failed to create quote from offer');
+                  }
+                  return response.json();
+                })
+                .then(data => {
+                  console.log("Quote created successfully:", data);
+                  
+                  if (data.quoteId && data.quoteUrl) {
+                    toast({
+                      title: "Special Offer Applied",
+                      description: "Your quote has been created with the special offer discount.",
+                    });
+                    
+                    // Clear all special offer storage
+                    sessionStorage.removeItem('pendingSpecialOffer');
+                    sessionStorage.removeItem('processingSpecialOffer');
+                    sessionStorage.removeItem('activeSpecialOffer');
+                    
+                    // Redirect to the quote review page
+                    setTimeout(() => {
+                      window.location.href = data.quoteUrl;
+                    }, 100);
+                  } else {
+                    throw new Error('Invalid response from server');
+                  }
+                })
+                .catch(error => {
+                  console.error("Error creating quote from offer:", error);
+                  toast({
+                    title: "Error Processing Offer",
+                    description: "We couldn't process your special offer. You'll be redirected to your dashboard.",
+                    variant: "destructive",
+                  });
+                  
+                  // Redirect to patient portal on error
+                  setTimeout(() => {
+                    setLocation('/client-portal');
+                  }, 500);
+                });
               
-              window.location.href = quoteUrl;
-            }, 100);
-            
-            return; // Exit early as we're handling special redirect
+              return; // Exit early as we're handling special redirect asynchronously
+            }
           } catch (error) {
             console.error("Error processing pending special offer:", error);
             console.error("Error details:", error instanceof Error ? error.message : String(error));
