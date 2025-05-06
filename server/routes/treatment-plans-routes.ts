@@ -164,6 +164,9 @@ router.get("/packages/:packageId", isAuthenticated, async (req: Request, res: Re
 router.get("/treatment-lines/:quoteId", isAuthenticated, async (req: Request, res: Response) => {
   const { quoteId } = req.params;
   
+  console.log(`[DEBUG] GET request to /api/treatment-plans/treatment-lines/${quoteId}`);
+  console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
+  
   if (!quoteId) {
     return res.status(400).json({
       success: false,
@@ -240,6 +243,10 @@ router.post("/treatment-lines", isAuthenticated, async (req: Request, res: Respo
 router.put("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Response) => {
   const { id } = req.params;
   
+  console.log(`[DEBUG] PUT request to /api/treatment-plans/treatment-lines/${id}`);
+  console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
+  console.log(`[DEBUG] Request body:`, req.body);
+  
   if (!req.user) {
     return res.status(401).json({
       success: false,
@@ -309,7 +316,11 @@ router.put("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Re
 router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Response) => {
   const { id } = req.params;
   
+  console.log(`[DEBUG] DELETE request to /api/treatment-plans/treatment-lines/${id}`);
+  console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
+  
   if (!req.user) {
+    console.log(`[DEBUG] Rejecting request due to missing authentication`);
     return res.status(401).json({
       success: false,
       message: "Unauthorized"
