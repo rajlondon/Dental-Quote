@@ -102,6 +102,7 @@ import PatientTreatmentPlanPage from "@/pages/patient/PatientTreatmentPlanPage";
 import ClinicTreatmentPlanPage from "@/pages/clinic/ClinicTreatmentPlanPage";
 import AdminTreatmentPlansPage from "@/pages/admin/AdminTreatmentPlansPage";
 import { UnifiedTreatmentPlansProvider } from "@/hooks/use-unified-treatment-plans";
+import { QuoteFlowProvider } from "@/contexts/QuoteFlowContext";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
