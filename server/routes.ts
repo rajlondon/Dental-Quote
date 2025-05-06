@@ -208,9 +208,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/files', uploadRateLimit, fileRoutes);
   
   // Register treatment plan routes
+  console.log('[DEBUG] Mounting treatmentPlanRoutes at /api/treatment-plans');
   app.use('/api/treatment-plans', treatmentPlanRoutes);
   
   // Register treatment plans module routes (for packages and treatment lines)
+  console.log('[DEBUG] Mounting treatmentPlansModuleRoutes at /api/treatment-module');
   app.use('/api/treatment-module', treatmentPlansModuleRoutes);
   
   // Register new treatment management routes for clinics
