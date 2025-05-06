@@ -628,8 +628,50 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       try {
         // Parse the offer data
         const offer = JSON.parse(offerData);
+        console.log("Processing special offer:", offer);
         
-        // Save the offer to the user's account using our new API endpoint
+        // First, create a treatment plan from the offer through the proper API endpoint
+        let treatmentPlanId = null;
+        try {
+          const createPlanResponse = await apiRequest(
+            'POST', 
+            '/api/treatment-plans/from-offer',
+            { 
+              offerId: offer.id,
+              clinicId: offer.clinicId || offer.clinic_id || null
+            }
+          );
+          
+          const createPlanResult = await createPlanResponse.json();
+          
+          if (createPlanResult.success && createPlanResult.treatmentPlanId) {
+            treatmentPlanId = createPlanResult.treatmentPlanId;
+            console.log("Successfully created treatment plan from offer:", treatmentPlanId);
+            
+            toast({
+              title: "Special Offer Applied",
+              description: "Your treatment plan has been created with the special offer.",
+              variant: "default"
+            });
+            
+            // Redirect to the treatment plan page after a short delay
+            setTimeout(() => {
+              setActiveSection('treatment_plan');
+              if (treatmentPlanId) {
+                // Provide the ID as a URL parameter for direct access
+                setLocation(`/patient/treatment-plans/${treatmentPlanId}`);
+              }
+            }, 1500);
+            
+            return; // Exit early since we're already handling the redirect
+          } else {
+            console.warn("Failed to create treatment plan, falling back to save-only:", createPlanResult.message);
+          }
+        } catch (planError) {
+          console.error("Error creating treatment plan from offer:", planError);
+        }
+        
+        // Fallback: Just save the offer to the user's account if creating a plan failed
         const response = await fetch('/api/special-offers/save-to-account', {
           method: 'POST',
           headers: {
@@ -637,7 +679,7 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
           },
           body: JSON.stringify({
             specialOfferId: offer.id,
-            clinicId: parseInt(offer.clinic_id) || null,
+            clinicId: parseInt(offer.clinicId || offer.clinic_id) || null,
             offerDetails: offer,
           }),
         });
