@@ -57,7 +57,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   const [selectedTreatmentLine, setSelectedTreatmentLine] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  // Removed isDeleteConfirmOpen since we're using confirm() directly
   const { toast } = useToast();
   
   const { 
@@ -304,11 +304,17 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                               <DropdownMenuItem onClick={() => {
                                 try {
                                   console.log("Edit action clicked for treatment line:", tl.id);
+                                  // Show edit dialog
                                   setSelectedTreatmentLine(tl);
                                   setIsEditMode(true);
                                   setIsDetailsOpen(true);
                                 } catch (error) {
                                   console.error("Error in edit action:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Could not open edit dialog",
+                                    variant: "destructive",
+                                  });
                                 }
                               }}>
                                 <Pencil className="h-4 w-4 mr-2" />
@@ -320,8 +326,33 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                 onClick={() => {
                                   try {
                                     console.log("Delete action clicked for treatment line:", tl.id);
-                                    setSelectedTreatmentLine(tl);
-                                    setIsDeleteConfirmOpen(true);
+                                    // Direct API call to delete the treatment line
+                                    if (confirm("Are you sure you want to delete this treatment?")) {
+                                      fetch(`/api/treatment-module/treatment-lines/${tl.id}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        }
+                                      })
+                                      .then(response => response.json())
+                                      .then(data => {
+                                        console.log("Success deleting treatment line:", data);
+                                        toast({
+                                          title: "Treatment removed",
+                                          description: "Treatment has been removed from your plan",
+                                        });
+                                        // Force refresh
+                                        window.location.reload();
+                                      })
+                                      .catch(error => {
+                                        console.error("Error deleting treatment line:", error);
+                                        toast({
+                                          title: "Failed to remove treatment",
+                                          description: "There was an error removing this treatment",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                    }
                                   } catch (error) {
                                     console.error("Error in delete action:", error);
                                   }
@@ -554,72 +585,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
         </Dialog>
       )}
       
-      {/* Delete confirmation dialog */}
-      {selectedTreatmentLine && (
-        <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to remove this treatment from your plan?
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-sm">{selectedTreatmentLine.description}</p>
-              <p className="text-sm font-semibold mt-2">
-                This action cannot be undone.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDeleteConfirmOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={() => {
-                  try {
-                    console.log("Deleting treatment line with ID:", selectedTreatmentLine.id);
-                    
-                    // Use direct API call to treatment-module endpoint
-                    fetch(`/api/treatment-module/treatment-lines/${selectedTreatmentLine.id}`, {
-                      method: 'DELETE',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                      console.log("Success deleting treatment line:", data);
-                      // Force a refresh of the data
-                      if (refetch) refetch();
-                      toast({
-                        title: "Treatment removed",
-                        description: "Treatment has been removed from your plan",
-                      });
-                    })
-                    .catch(error => {
-                      console.error("Error deleting treatment line:", error);
-                      toast({
-                        title: "Failed to remove treatment",
-                        description: error.message || "Something went wrong",
-                        variant: "destructive",
-                      });
-                    });
-                    setIsDeleteConfirmOpen(false);
-                  } catch (error) {
-                    console.error("Error in delete mutation:", error);
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* We no longer need the delete confirmation dialog since we're using confirm() in the dropdown */}
     </Card>
   );
 };
