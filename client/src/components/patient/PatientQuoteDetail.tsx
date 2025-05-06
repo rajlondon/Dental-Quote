@@ -11,6 +11,27 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle } from 'lucide-react';
 
+// Define the treatment type
+type QuoteTreatment = {
+  name: string;
+  quantity?: number;
+  price?: number;
+};
+
+// Quote shape for type safety
+interface Quote {
+  id: string | number;
+  status?: string;
+  title?: string;
+  createdAt?: string;
+  clinicName?: string;
+  clinicAddress?: string;
+  clinicContact?: string;
+  treatments?: QuoteTreatment[];
+  totalPrice?: number;
+  notes?: string;
+}
+
 interface PatientQuoteDetailProps {
   quoteId: string | number;
   onBack: () => void;
@@ -57,7 +78,12 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   });
 
   // Get status badge color and text for a status
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | undefined) => {
+    // Handle undefined or empty status
+    if (!status) {
+      return { color: 'bg-gray-400', text: 'Unknown' };
+    }
+    
     switch (status) {
       case 'sent':
         return { color: 'bg-blue-500', text: 'Sent' };
@@ -79,7 +105,12 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   };
 
   // Get the status icon for a quote based on its status
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | undefined) => {
+    // Handle undefined or empty status
+    if (!status) {
+      return <FileText className="h-5 w-5 text-gray-500" />;
+    }
+    
     switch (status) {
       case 'sent':
         return <Loader2 className="h-5 w-5 text-blue-500" />;
@@ -120,7 +151,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
     toast({
       title: "Quote accepted",
       description: "Thank you for accepting the quote. A representative will contact you soon.",
-      variant: "success"
+      variant: "default"
     });
   };
 
@@ -241,7 +272,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quote.treatments && quote.treatments.map((treatment, index) => (
+              {quote.treatments && quote.treatments.map((treatment: QuoteTreatment, index: number) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {treatment.name}
