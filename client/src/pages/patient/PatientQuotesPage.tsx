@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Plus, FileText } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { ROUTES } from "@/lib/routes";
 
 export default function PatientQuotesPage() {
   // Always declare all hooks at the top level
@@ -33,16 +34,25 @@ export default function PatientQuotesPage() {
     userQuotesQuery.refetch();
   }, [userQuotesQuery]);
 
-  // Prepare filtered quotes
+  // Prepare filtered quotes with extra safety checks
   const filteredQuotes = React.useMemo(() => {
-    return userQuotesQuery.data?.filter(quote => {
+    // Ensure data exists and is an array
+    const data = Array.isArray(userQuotesQuery.data) ? userQuotesQuery.data : [];
+    
+    // Safe filter operation
+    return data.filter(quote => {
+      // Add additional null check for quote and quote.status
+      if (!quote || typeof quote.status !== 'string') {
+        return false;
+      }
+      
       if (activeTab === "pending") {
         return ["pending", "assigned", "in_progress", "sent"].includes(quote.status);
       } else if (activeTab === "completed") {
         return ["accepted", "rejected", "completed", "cancelled", "expired"].includes(quote.status);
       }
       return true;
-    }) || [];
+    });
   }, [userQuotesQuery.data, activeTab]);
 
   // Determine what content to render based on state
@@ -67,7 +77,7 @@ export default function PatientQuotesPage() {
             onClick={() => {
               if (typeof window !== 'undefined') {
                 sessionStorage.setItem('patient_portal_section', 'quotes');
-                setLocation("/patient-portal");
+                setLocation(ROUTES.PATIENT_PORTAL);
               }
             }}
           >
@@ -78,17 +88,22 @@ export default function PatientQuotesPage() {
     }
 
     // Case 3: Showing a specific quote's details
-    if (quoteId && quoteQuery?.data) {
+    if (quoteId && quoteQuery?.data && quoteQuery.data.quoteRequest) {
+      // Extra safety checks
+      const quoteData = quoteQuery.data;
+      const quoteRequest = quoteData.quoteRequest || {};
+      const versions = Array.isArray(quoteData.versions) ? quoteData.versions : [];
+      
       return (
         <div className="container mx-auto py-6 px-4">
           <QuoteDetail
-            quoteRequest={quoteQuery.data.quoteRequest}
-            versions={quoteQuery.data.versions}
+            quoteRequest={quoteRequest}
+            versions={versions}
             portalType="patient"
             onBack={() => {
               if (typeof window !== 'undefined') {
                 sessionStorage.setItem('patient_portal_section', 'quotes');
-                setLocation("/patient-portal");
+                setLocation(ROUTES.PATIENT_PORTAL);
               }
             }}
           />
@@ -137,7 +152,7 @@ export default function PatientQuotesPage() {
           </TabsContent>
         </Tabs>
 
-        {(!userQuotesQuery.data || userQuotesQuery.data.length === 0) && !userQuotesQuery.isLoading && (
+        {(!Array.isArray(userQuotesQuery.data) || userQuotesQuery.data.length === 0) && !userQuotesQuery.isLoading && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Get Your Dental Treatment Quote</CardTitle>
