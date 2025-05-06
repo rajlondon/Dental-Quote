@@ -311,6 +311,75 @@ export const insertTreatmentPlanSchema = createInsertSchema(treatmentPlans)
 export type InsertTreatmentPlan = z.infer<typeof insertTreatmentPlanSchema>;
 export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
 
+// Define the specialOffers and treatmentPackages tables
+export const specialOffers = pgTable("special_offers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  clinicId: integer("clinic_id").references(() => clinics.id),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
+  discountType: varchar("discount_type", { length: 20 }).default("percentage"), // percentage or fixed_amount
+  imageUrl: varchar("image_url", { length: 255 }),
+  validUntil: timestamp("valid_until"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Create insert schema and type definitions for specialOffers
+export const insertSpecialOfferSchema = createInsertSchema(specialOffers)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export type InsertSpecialOffer = z.infer<typeof insertSpecialOfferSchema>;
+export type SpecialOffer = typeof specialOffers.$inferSelect;
+
+// Define relations for specialOffers
+export const specialOffersRelations = relations(specialOffers, ({ one, many }) => ({
+  clinic: one(clinics, {
+    fields: [specialOffers.clinicId],
+    references: [clinics.id],
+  }),
+  treatmentPlans: many(treatmentPlans)
+}));
+
+export const treatmentPackages = pgTable("treatment_packages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  clinicId: integer("clinic_id").references(() => clinics.id),
+  priceGBP: decimal("price_gbp", { precision: 10, scale: 2 }),
+  priceUSD: decimal("price_usd", { precision: 10, scale: 2 }),
+  imageUrl: varchar("image_url", { length: 255 }),
+  treatments: json("treatments").default([]),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Create insert schema and type definitions for treatmentPackages
+export const insertTreatmentPackageSchema = createInsertSchema(treatmentPackages)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export type InsertTreatmentPackage = z.infer<typeof insertTreatmentPackageSchema>;
+export type TreatmentPackage = typeof treatmentPackages.$inferSelect;
+
+// Define relations for treatmentPackages
+export const treatmentPackagesRelations = relations(treatmentPackages, ({ one, many }) => ({
+  clinic: one(clinics, {
+    fields: [treatmentPackages.clinicId],
+    references: [clinics.id],
+  }),
+  treatmentPlans: many(treatmentPlans)
+}));
+
 export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many }) => ({
   patient: one(users, {
     fields: [treatmentPlans.patientId],
@@ -328,6 +397,15 @@ export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many })
   quoteRequest: one(quoteRequests, {
     fields: [treatmentPlans.quoteRequestId],
     references: [quoteRequests.id],
+  }),
+  // Define the relations for special offers and packages
+  specialOffer: one(specialOffers, {
+    fields: [treatmentPlans.selectedOfferId],
+    references: [specialOffers.id],
+  }),
+  treatmentPackage: one(treatmentPackages, {
+    fields: [treatmentPlans.selectedPackageId], 
+    references: [treatmentPackages.id],
   }),
   files: many(files, { relationName: "treatment_plan_files" }),
   booking: many(bookings),
