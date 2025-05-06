@@ -497,16 +497,41 @@ const PatientPortalPage: React.FC = () => {
   const { t } = useTranslation();
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification, generateTestNotifications } = useNotifications();
   
-  // Fetch user's quotes for treatment plans
-  const { data: userQuotes } = useQuery({
+  // Fetch user's quotes for treatment plans with comprehensive error handling
+  const { 
+    data: userQuotes, 
+    isLoading: isLoadingQuotes,
+    error: quotesError
+  } = useQuery({
     queryKey: ['/api/quotes/user'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/quotes/user');
-      const data = await response.json();
-      console.log('[DEBUG] User quotes loaded:', data);
-      return data.data || [];
+      console.log('[DEBUG] Fetching user quotes from API');
+      try {
+        const response = await apiRequest('GET', '/api/quotes/user');
+        const data = await response.json();
+        console.log('[DEBUG] User quotes API response:', data);
+        
+        if (!data.success) {
+          console.error('[ERROR] User quotes API returned unsuccessful response:', data);
+          return [];
+        }
+        
+        if (!data.data || !Array.isArray(data.data)) {
+          console.error('[ERROR] User quotes API returned invalid data format:', data);
+          return [];
+        }
+        
+        console.log('[DEBUG] Successfully loaded user quotes:', data.data);
+        return data.data;
+      } catch (error) {
+        console.error('[ERROR] Failed to fetch user quotes:', error);
+        throw error;
+      }
     }
   });
+  
+  // Always have userQuotes as an array
+  const safeUserQuotes = Array.isArray(userQuotes) ? userQuotes : [];
   
   // Special offers handling: Save pending offers to user account instead of just clearing
   useEffect(() => {
@@ -703,10 +728,11 @@ const PatientPortalPage: React.FC = () => {
       case 'profile':
         return <ProfileSection />;
       case 'treatment_plan':
-        // Find and use the latest quote ID if available
-        const latestQuote = userQuotes && userQuotes.length > 0 ? userQuotes[0] : null;
+        // Find and use the latest quote ID if available using our safe array
+        const latestQuote = safeUserQuotes.length > 0 ? safeUserQuotes[0] : null;
         const quoteId = latestQuote?.id?.toString();
         console.log('[DEBUG] Using quote ID for treatment plan:', quoteId);
+        console.log('[DEBUG] Latest quote data:', latestQuote);
         return <TreatmentPlansSection quoteId={quoteId} />;
       case 'dental_chart':
         return <DentalChartSection />;
