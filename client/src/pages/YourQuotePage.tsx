@@ -1116,6 +1116,12 @@ const YourQuotePage: React.FC = () => {
   
   // Quote steps tracking
   const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'select-clinic' | 'review'>('build-plan');
+  
+  // Extract query parameters to control the flow
+  const stepFromUrl = searchParams.get('step');
+  const skipInfoParam = searchParams.get('skipInfo');
+  const clinicIdFromUrl = searchParams.get('clinicId');
+  const fromSpecialOffer = clinicIdFromUrl && clinicIdFromUrl.length > 0;
   const [isQuoteReady, setIsQuoteReady] = useState(false);
   
   // Function to open edit quote modal
@@ -1209,6 +1215,40 @@ const YourQuotePage: React.FC = () => {
       // Save to sessionStorage for persistence across authentication redirects
       sessionStorage.setItem('activeSpecialOffer', JSON.stringify(specialOffer));
       console.log("Saved special offer to sessionStorage:", specialOffer);
+    }
+    
+    // Handle URL parameters for special offer flow
+    if (fromSpecialOffer) {
+      console.log("Special offer flow detected with clinicId:", clinicIdFromUrl);
+      
+      // If skipInfo is true, we should move straight to selecting a clinic
+      if (skipInfoParam === 'true' && patientInfo) {
+        console.log("Skipping patient info step as requested in URL");
+        setCurrentStep('select-clinic');
+      }
+      
+      // For special offers, automatically select the clinic if it matches
+      if (clinicIdFromUrl && clinics.length > 0) {
+        const matchingClinic = clinics.find(c => c.id.toString() === clinicIdFromUrl);
+        if (matchingClinic) {
+          console.log("Auto-selecting clinic for special offer:", matchingClinic.name);
+          setSelectedClinic(matchingClinic);
+          
+          // If we already have patient info, we can move to review
+          if (patientInfo && treatmentItems.length > 0) {
+            console.log("Moving directly to review step with selected clinic");
+            setCurrentStep('review');
+            setIsQuoteReady(true);
+          }
+        }
+      }
+    }
+    
+    // Set the initial step based on URL parameters
+    if (stepFromUrl === 'dental-quiz') {
+      setCurrentStep('build-plan');
+    } else if (stepFromUrl === 'patient-info' && treatmentItems.length > 0) {
+      setCurrentStep('patient-info');
     }
     
     // Show welcome toast - adjusting based on whether this came from special offer
