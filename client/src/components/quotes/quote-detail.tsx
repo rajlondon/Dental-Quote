@@ -13,6 +13,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { getStatusBadgeColor, getStatusLabel } from "./quote-list-table";
+import { useNavigation } from "@/hooks/use-navigation";
+import ROUTES from "@/lib/routes";
 import { 
   ArrowLeft, 
   Clipboard, 
@@ -53,6 +55,8 @@ export default function QuoteDetail({
   onBack,
   actions = [],
 }: QuoteDetailProps) {
+  // Use our navigation system
+  const { navigateTo } = useNavigation();
   // Check if a custom action already exists for the same functionality
   const hasEquivalentCustomAction = () => {
     // If no actions provided, we definitely don't have an equivalent
@@ -115,7 +119,19 @@ export default function QuoteDetail({
       <div className="flex justify-between items-center">
         <Button
           variant="outline"
-          onClick={onBack}
+          onClick={() => {
+            // Use our navigation system first, fallback to legacy handler if provided
+            if (portalType === 'patient') {
+              navigateTo('/patient/quotes');
+            } else if (portalType === 'admin') {
+              navigateTo('/admin/quotes');
+            } else if (portalType === 'clinic') {
+              navigateTo('/clinic/quotes');
+            } else if (onBack) {
+              // Legacy fallback
+              onBack();
+            }
+          }}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
