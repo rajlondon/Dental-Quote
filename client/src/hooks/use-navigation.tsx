@@ -7,7 +7,7 @@ import { ROUTES } from '@/lib/routes';
 interface NavigationContextValue {
   navigateTo: (path: string, options?: NavigationOptions) => void;
   goBack: () => void;
-  navigateToRoute: (routeKey: keyof typeof ROUTES, params?: Record<string, string>, options?: NavigationOptions) => void;
+  navigateToRoute: (routeKeyOrPath: keyof typeof ROUTES | string, params?: Record<string, string | number>, options?: NavigationOptions) => void;
   currentRoute: string;
   previousRoute: string | null;
   isNavigating: boolean;
@@ -88,25 +88,34 @@ export const NavigationProvider = ({ children }: NavigationProviderProps) => {
   }, [currentRoute, navigate, setLoading, setError]);
 
   const navigateToRoute = useCallback((
-    routeKey: keyof typeof ROUTES, 
-    params: Record<string, string> = {}, 
+    routeKeyOrPath: keyof typeof ROUTES | string, 
+    params: Record<string, string | number> = {}, 
     options: NavigationOptions = {}
   ) => {
     try {
-      const routeTemplate = ROUTES[routeKey];
-      if (!routeTemplate) {
-        throw new Error(`Route with key "${String(routeKey)}" not found`);
+      // Determine if this is a direct path or a route key
+      let path: string;
+      
+      if (typeof routeKeyOrPath === 'string' && routeKeyOrPath.startsWith('/')) {
+        // This is a direct path, not a route key
+        path = routeKeyOrPath;
+      } else {
+        // This is a route key, look up the template
+        const routeKey = routeKeyOrPath as keyof typeof ROUTES;
+        const routeTemplate = ROUTES[routeKey];
+        if (!routeTemplate) {
+          throw new Error(`Route with key "${String(routeKey)}" not found`);
+        }
+        path = routeTemplate;
       }
       
-      // Replace parameters in route template
-      let path = routeTemplate;
+      // Replace parameters in the path
       Object.entries(params).forEach(([key, value]) => {
-        path = path.replace(`:${key}`, value);
+        path = path.replace(`:${key}`, String(value));
       });
       
       // Using "as any" to bypass the TypeScript limitation
       // This is safe because we're building paths from our routes registry
-      
       navigateTo(path, options);
     } catch (error) {
       console.error('Route navigation error:', error);
