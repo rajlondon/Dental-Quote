@@ -176,10 +176,14 @@ export function PatientQuotesContent() {
         <p className="text-gray-600 mb-6 max-w-md mx-auto">
           {t('quotes.no_quotes_description', 'You haven\'t requested any quotes yet. Get started by creating your first quote request.')}
         </p>
-        <Button asChild>
-          <a href="/quote-request" className="inline-flex items-center gap-2">
-            {t('quotes.new_quote', 'New Quote Request')}
-          </a>
+        <Button
+          onClick={() => {
+            window.location.href = '/your-quote';
+          }}
+          className="inline-flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          {t('quotes.new_quote', 'New Quote Request')}
         </Button>
       </div>
     );
@@ -192,10 +196,13 @@ export function PatientQuotesContent() {
           {/* Left empty for alignment purposes */}
         </div>
         <div>
-          <Button asChild>
-            <a href="/quote-request" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> New Quote Request
-            </a>
+          <Button 
+            onClick={() => {
+              window.location.href = '/your-quote';
+            }}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" /> New Quote Request
           </Button>
         </div>
       </div>
@@ -321,18 +328,37 @@ function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardP
             {statusIcon}
             <span className="ml-2">{status.text}</span>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-blue-600 hover:bg-blue-50 border-blue-200"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent parent card click
-              onClick(); // Use the same navigation function
-            }}
-          >
-            <FileText className="h-4 w-4 mr-1" />
-            {t('quotes.view_details', 'View Details')}
-          </Button>
+          <div className="flex gap-2">
+            {/* Only show this button if the quote is not yet accepted */}
+            {quote.status !== 'accepted' && quote.status !== 'completed' && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-green-600 hover:text-green-800 hover:bg-green-50"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent parent card click
+                  // This would normally navigate to action page or call a mutation
+                  window.alert('This feature is not yet implemented');
+                }}
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Accept
+              </Button>
+            )}
+          
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-blue-600 hover:bg-blue-50 border-blue-200 font-medium"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent parent card click
+                onClick(); // Use the same navigation function
+              }}
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              {t('quotes.view_details', 'View Details')}
+            </Button>
+          </div>
         </div>
       </CardFooter>
     </Card>
