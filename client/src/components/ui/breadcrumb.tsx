@@ -35,6 +35,11 @@ const BreadcrumbLink = ({ href, children, isCurrentPage }: BreadcrumbLinkProps) 
   );
 };
 
+interface ExtendedBreadcrumbItemProps extends BreadcrumbItemProps {
+  separator?: React.ReactNode;
+  isLastItem?: boolean;
+}
+
 const Breadcrumb = React.forwardRef<HTMLDivElement, BreadcrumbProps>(
   ({ className, separator = <ChevronRight className="h-4 w-4" />, children, ...props }, ref) => {
     const childCount = React.Children.count(children);
@@ -50,11 +55,13 @@ const Breadcrumb = React.forwardRef<HTMLDivElement, BreadcrumbProps>(
           {React.Children.map(children, (child, index) => {
             if (!React.isValidElement(child)) return null;
             
-            return React.cloneElement(child as React.ReactElement<BreadcrumbItemProps>, {
+            const childProps = {
               'aria-current': child.props.isCurrentPage ? 'page' : undefined,
               separator,
               isLastItem: index === childCount - 1,
-            });
+            } as Partial<ExtendedBreadcrumbItemProps>;
+            
+            return React.cloneElement(child as React.ReactElement<ExtendedBreadcrumbItemProps>, childProps);
           })}
         </ol>
       </nav>
