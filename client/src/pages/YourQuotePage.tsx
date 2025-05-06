@@ -946,6 +946,7 @@ import {
 // Import the new components
 import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
 import TreatmentGuide from '@/components/TreatmentGuide';
+import OfferConfirmationPage from '@/components/offers/OfferConfirmationPage';
 
 // Interface for special offer from URL parameters
 interface SpecialOfferParams {
@@ -1124,8 +1125,8 @@ const YourQuotePage: React.FC = () => {
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  // Quote steps tracking
-  const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'select-clinic' | 'review'>('build-plan');
+  // Quote steps tracking - add offer-confirmation step
+  const [currentStep, setCurrentStep] = useState<'build-plan' | 'offer-confirmation' | 'patient-info' | 'select-clinic' | 'review'>('build-plan');
   
   // Extract query parameters to control the flow
   const stepFromUrl = searchParams.get('step');
@@ -1157,9 +1158,74 @@ const YourQuotePage: React.FC = () => {
         title: "Treatment Plan Updated",
         description: "Your treatment plan has been updated.",
       });
+      
+      // For special offers or packages, move to confirmation step
+      if (isSpecialOfferFlow || isPackageFlow) {
+        setCurrentStep('offer-confirmation');
+      }
     }
   };
   
+  // Function to handle offer confirmation
+  const handleOfferConfirmation = async () => {
+    try {
+      // Make an API call to associate the offer/package with the user or treatment plan
+      if (isSpecialOfferFlow && offerId) {
+        // Call API to associate special offer with the user
+        await fetch('/api/treatment-plans/associate-offer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            offerId,
+            clinicId
+          }),
+        });
+
+        toast({
+          title: "Special Offer Confirmed",
+          description: "Your special offer has been saved and will be applied to your quote.",
+        });
+      } 
+      else if (isPackageFlow && packageId) {
+        // Call API to associate package with the user
+        await fetch('/api/treatment-plans/associate-package', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            packageId,
+            clinicId
+          }),
+        });
+
+        toast({
+          title: "Treatment Package Confirmed",
+          description: "Your treatment package has been saved and will be applied to your quote.",
+        });
+      }
+
+      // Move to the patient info step
+      setCurrentStep('patient-info');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error('Error confirming offer/package:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem confirming your selection. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Function to handle returning to the treatment plan step
+  const handleBackToTreatmentPlan = () => {
+    setCurrentStep('build-plan');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Function to handle patient info form submission
   const handlePatientInfoSubmit = (data: PatientInfo) => {
     setPatientInfo(data);
@@ -1753,6 +1819,27 @@ const YourQuotePage: React.FC = () => {
             </>
           )}
           
+          {/* Step 1.5: Offer Confirmation (conditionally displayed) */}
+          {currentStep === 'offer-confirmation' && (
+            <>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-4">Confirm Your Selection</h2>
+                <p className="text-gray-700 mb-4">
+                  Please confirm your special offer or treatment package to continue with your quote.
+                </p>
+              </div>
+              
+              <OfferConfirmationPage 
+                onConfirm={handleOfferConfirmation}
+                onBack={handleBackToTreatmentPlan}
+              />
+              
+              <div className="mt-8">
+                <FAQSection />
+              </div>
+            </>
+          )}
+          
           {/* Step 2: Patient Information (conditionally displayed) */}
           {currentStep === 'patient-info' && (
             <>
@@ -1769,11 +1856,18 @@ const YourQuotePage: React.FC = () => {
               <div className="flex justify-between">
                 <Button 
                   variant="outline"
-                  onClick={() => setCurrentStep('build-plan')}
+                  onClick={() => {
+                    // If this is a special offer or package flow, go back to the confirmation step
+                    if (isSpecialOfferFlow || isPackageFlow) {
+                      setCurrentStep('offer-confirmation');
+                    } else {
+                      setCurrentStep('build-plan');
+                    }
+                  }}
                   className="flex items-center gap-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back to Treatment Plan
+                  {isSpecialOfferFlow || isPackageFlow ? 'Back to Confirmation' : 'Back to Treatment Plan'}
                 </Button>
               </div>
             </>
