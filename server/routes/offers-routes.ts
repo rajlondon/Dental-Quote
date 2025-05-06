@@ -128,8 +128,36 @@ router.post('/offers/:offerId/start', async (req, res) => {
       clinicName: offer.clinicName
     };
     
+    // Convert treatment plan to the expected format
+    const treatmentPlanData = {
+      patientId: treatmentPlan.patientId ? Number(treatmentPlan.patientId) : 1, // Default to 1 if missing
+      clinicId: treatmentPlan.clinicId ? Number(treatmentPlan.clinicId) : undefined,
+      status: treatmentPlan.status || 'DRAFT',
+      notes: treatmentPlan.clientNotes || '',
+      treatmentDetails: {
+        id: treatmentPlan.id,
+        title: treatmentPlan.title,
+        description: treatmentPlan.description,
+        treatments: treatmentPlan.treatments,
+        totalPrice: treatmentPlan.totalPrice,
+        finalPrice: treatmentPlan.finalPrice,
+        discountPercentage: treatmentPlan.discountPercentage,
+        offerDetails: {
+          offerId: treatmentPlan.offerId,
+          offerType: treatmentPlan.offerType,
+          offerTitle: treatmentPlan.offerTitle,
+          offerImageUrl: treatmentPlan.offerImageUrl,
+          offerValidUntil: treatmentPlan.offerValidUntil
+        },
+        sourceType: treatmentPlan.sourceType,
+        sourceId: treatmentPlan.sourceId,
+        createdAt: treatmentPlan.createdAt,
+        updatedAt: treatmentPlan.updatedAt
+      }
+    };
+    
     // Save the treatment plan
-    await storage.createTreatmentPlan(treatmentPlan);
+    await storage.createTreatmentPlan(treatmentPlanData);
     
     // Generate response URL for redirect
     const treatmentPlanUrl = `/portal/treatment-plan/${treatmentPlanId}`;
@@ -154,6 +182,10 @@ router.post('/offers/:offerId/start', async (req, res) => {
 router.get('/offers/:offerId/last', isAuthenticated, async (req, res) => {
   try {
     const { offerId } = req.params;
+    // Only proceed if the user is authenticated
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
     const patientId = req.user.id.toString();
     
     const plan = await storage.getLastTreatmentPlanFromOffer(offerId, patientId);
