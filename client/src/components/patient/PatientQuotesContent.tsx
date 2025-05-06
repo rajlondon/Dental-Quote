@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Loader2, Plus, Eye, PencilIcon, Trash, DownloadIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { formatDate } from '@/lib/date-utils';
+import { formatDate } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import { useNavigation } from '@/hooks/use-navigation';
 import { 
