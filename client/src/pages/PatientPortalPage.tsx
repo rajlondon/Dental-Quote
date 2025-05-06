@@ -489,8 +489,16 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
   );
 };
 
-const PatientPortalPage: React.FC = () => {
-  const [activeSection, setActiveSection] = useState('dashboard');
+interface PatientPortalPageProps {
+  initialSection?: string;
+  quoteId?: string;
+}
+
+const PatientPortalPage: React.FC<PatientPortalPageProps> = ({ 
+  initialSection = 'dashboard',
+  quoteId
+}) => {
+  const [activeSection, setActiveSection] = useState(initialSection);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
@@ -662,16 +670,39 @@ const PatientPortalPage: React.FC = () => {
     });
   };
 
-  // Initialize based on URL parameters
+  // Initialize based on URL parameters and props
   useEffect(() => {
     try {
+      // Handle initialSection from props
+      if (initialSection && initialSection !== 'dashboard') {
+        console.log(`[DEBUG] Setting active section from props: ${initialSection}`);
+        setActiveSection(initialSection);
+        
+        // If we have a quoteId, we may need to handle it in specific sections
+        if (quoteId) {
+          console.log(`[DEBUG] Quote ID provided: ${quoteId}`);
+          
+          if (initialSection === 'quotes') {
+            // For quotes section, the quoteId will be handled by PatientQuotesPage
+            console.log(`[DEBUG] Setting quotes section with quoteId: ${quoteId}`);
+          } else if (initialSection === 'treatment_plan') {
+            // For treatment_plan section, the quoteId will be passed to TreatmentPlansSection
+            console.log(`[DEBUG] Setting treatment_plan section with quoteId: ${quoteId}`);
+          }
+        }
+        
+        // Return early as we've already set the section from props
+        return;
+      }
+      
+      // Fall back to URL parameters if no initialSection was provided
       const params = new URLSearchParams(window.location.search);
       const section = params.get('section');
       const booked = params.get('booked');
       const packageName = params.get('package');
       const error = params.get('error');
       
-      // Handle section navigation
+      // Handle section navigation from URL parameters
       if (section && navItems.some(item => item.id === section)) {
         setActiveSection(section);
       }
@@ -701,11 +732,11 @@ const PatientPortalPage: React.FC = () => {
         window.history.replaceState({}, document.title, newUrl);
       }
     } catch (error) {
-      console.error("Error parsing URL parameters:", error);
+      console.error("Error initializing section:", error);
       // Fallback to dashboard if there's an error
       setActiveSection('dashboard');
     }
-  }, [toast]);
+  }, [toast, initialSection, quoteId]);
 
   // Render the appropriate section based on activeSection
   const renderActiveSection = () => {
@@ -729,16 +760,20 @@ const PatientPortalPage: React.FC = () => {
       case 'profile':
         return <ProfileSection />;
       case 'treatment_plan':
-        // Find and use the latest quote ID if available using our safe array
-        const latestQuote = safeUserQuotes.length > 0 ? safeUserQuotes[0] : null;
+        // Use provided quoteId from props if available, otherwise use latest quote
+        let treatmentQuoteId = quoteId;
         
-        // Convert quote ID to proper UUID format if needed
-        const quoteId = ensureUuidFormat(latestQuote?.id);
+        if (!treatmentQuoteId) {
+          // Find and use the latest quote ID if available using our safe array
+          const latestQuote = safeUserQuotes.length > 0 ? safeUserQuotes[0] : null;
+          
+          // Convert quote ID to proper UUID format if needed
+          treatmentQuoteId = ensureUuidFormat(latestQuote?.id);
+        }
         
-        console.log('[DEBUG] Using quote ID for treatment plan:', quoteId);
-        console.log('[DEBUG] Latest quote data:', latestQuote);
+        console.log('[DEBUG] Using quote ID for treatment plan:', treatmentQuoteId);
         
-        return <TreatmentPlansSection quoteId={quoteId} />;
+        return <TreatmentPlansSection quoteId={treatmentQuoteId} />;
       case 'dental_chart':
         return <DentalChartSection />;
       case 'treatment_comparison':
