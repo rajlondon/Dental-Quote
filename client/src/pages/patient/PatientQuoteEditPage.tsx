@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
-import { useTreatmentMappings } from "../../../hooks/use-treatment-mappings";
+import { useTreatmentMappings } from "@/hooks/use-treatment-mappings";
 
 /**
  * Patient Quote Edit Page
