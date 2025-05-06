@@ -1,0 +1,113 @@
+1  Confirm where the button is pointing
+Open DevTools → Elements → click the eye icon → check the <a> or <button>:
+
+html
+Copy
+Edit
+<a href="/portal/quotes/11" …>
+or
+
+js
+Copy
+Edit
+navigate(`/portal/quotes/${quote.id}`)
+Note the exact path.
+
+2  Add the missing route
+If you’re using React‑Router v6 inside App.jsx (or PortalRoutes.tsx):
+
+tsx
+Copy
+Edit
+import QuoteDetail from "@/pages/portal/QuoteDetail";
+
+<Route path="/portal/quotes/:quoteId" element={<QuoteDetail />} />
+If you nest routes under /portal:
+
+tsx
+Copy
+Edit
+<Route path="quotes">
+  <Route index element={<QuotesList />} />
+  <Route path=":quoteId" element={<QuoteDetail />} />
+</Route>
+Then hit ⌘‑S → Replit should hot‑reload and the link will resolve instead of 404.
+
+3  Stub the detail page so Replit compiles
+tsx
+Copy
+Edit
+// src/pages/portal/QuoteDetail.tsx
+import { useParams } from "react-router-dom";
+
+export default function QuoteDetail() {
+  const { quoteId } = useParams();
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold">Quote #{quoteId}</h1>
+      <p>Placeholder – fetch and render treatment lines here.</p>
+    </div>
+  );
+}
+Once it renders, wire up:
+
+tsx
+Copy
+Edit
+useEffect(() => {
+  supabase
+    .from("treatment_line")
+    .select("*")
+    .eq("quoteId", quoteId)
+    .then(({ data }) => setLines(data));
+}, [quoteId]);
+4  Hook up Edit / Delete dropdown
+In your QuoteActions.tsx (eye icon, three‑dots icon, etc.):
+
+tsx
+Copy
+Edit
+import { DropdownMenu, DropdownItem } from "@/components/ui/dropdown";
+import { useNavigate } from "react-router-dom";
+
+export default function QuoteActions({ quote }) {
+  const nav = useNavigate();
+
+  return (
+    <DropdownMenu>
+      <DropdownItem onClick={() => nav(`/portal/quotes/${quote.id}`)}>
+        View
+      </DropdownItem>
+      <DropdownItem onClick={() => nav(`/portal/quotes/${quote.id}/edit`)}>
+        Edit
+      </DropdownItem>
+      <DropdownItem
+        className="text-red-600"
+        onClick={() =>
+          supabase.from("quote").delete().eq("id", quote.id)
+        }
+      >
+        Delete
+      </DropdownItem>
+    </DropdownMenu>
+  );
+}
+Then add routes for /edit or handle edit inline.
+
+5  If Replit “sticks” building
+Replit sometimes hangs when the router file changes:
+
+Click the “Stop” button (top‑centre) then Run again.
+
+If it still hangs, rm -rf node_modules && npm install in the shell, then run.
+
+(Because Vite caches route manifests and a new dynamic path invalidates them.)
+
+One‑liner prompt for the AI agent
+pgsql
+Copy
+Edit
+reference_file: docs/01_mvp_spec.md
+issue: #45 portal quote routes
+
+Add missing React‑Router routes so /portal/quotes/:quoteId and /portal/quotes/:quoteId/edit render QuoteDetail and QuoteEdit pages. Update QuoteActions component to use those routes. Keep existing styling. Return only updated files.

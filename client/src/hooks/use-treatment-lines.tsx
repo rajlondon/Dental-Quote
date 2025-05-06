@@ -24,6 +24,10 @@ export function useTreatmentLines(quoteId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // IMPORTANT: Base URL for all treatment module API calls
+  // This API path is mounted at /api/treatment-module in server/routes.ts
+  const API_BASE_URL = "/api/treatment-module";
+
   // Fetch treatment lines for a specific quote
   const {
     data: treatmentLines,
@@ -31,20 +35,27 @@ export function useTreatmentLines(quoteId?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["/api/treatment-module/treatment-lines", quoteId],
+    queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId],
     queryFn: async () => {
       if (!quoteId) return [];
       
-      // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending GET request to /api/treatment-module/treatment-lines/${quoteId}`);
-      const response = await apiRequest("GET", `/api/treatment-module/treatment-lines/${quoteId}`);
-      const data = await response.json() as TreatmentLineResponse;
+      // Log the API call for debugging
+      console.log(`[API] GET ${API_BASE_URL}/treatment-lines/${quoteId}`);
       
-      if (!data.success) {
-        throw new Error("Failed to fetch treatment lines");
+      try {
+        const response = await apiRequest("GET", `${API_BASE_URL}/treatment-lines/${quoteId}`);
+        const data = await response.json() as TreatmentLineResponse;
+        
+        if (!data.success) {
+          throw new Error("Failed to fetch treatment lines");
+        }
+        
+        console.log(`[API] Success - Found ${data.data?.length || 0} treatment lines`);
+        return data.data;
+      } catch (error) {
+        console.error(`[API] Error fetching treatment lines:`, error);
+        throw error;
       }
-      
-      return data.data;
     },
     enabled: !!quoteId,
   });
@@ -55,33 +66,48 @@ export function useTreatmentLines(quoteId?: string) {
     isLoading: isSummaryLoading,
     error: summaryError,
   } = useQuery({
-    queryKey: ["/api/treatment-module/patient/treatment-summary"],
+    queryKey: [`${API_BASE_URL}/patient/treatment-summary`],
     queryFn: async () => {
-      // Use the correct API endpoint that's actually mounted in the server
-      console.log("Sending GET request to /api/treatment-module/patient/treatment-summary");
-      const response = await apiRequest("GET", "/api/treatment-module/patient/treatment-summary");
-      const data = await response.json() as TreatmentSummaryResponse;
+      // Log the API call for debugging
+      console.log(`[API] GET ${API_BASE_URL}/patient/treatment-summary`);
       
-      if (!data.success) {
-        throw new Error("Failed to fetch treatment summary");
+      try {
+        const response = await apiRequest("GET", `${API_BASE_URL}/patient/treatment-summary`);
+        const data = await response.json() as TreatmentSummaryResponse;
+      
+        if (!data.success) {
+          throw new Error("Failed to fetch treatment summary");
+        }
+        
+        console.log(`[API] Success - Fetched treatment summary`);
+        return data.data;
+      } catch (error) {
+        console.error(`[API] Error fetching treatment summary:`, error);
+        throw error;
       }
-      
-      return data.data;
     },
   });
 
   // Add a new treatment line
   const addTreatmentLine = useMutation({
     mutationFn: async (treatmentLine: any) => {
-      // Use the correct API endpoint that's actually mounted in the server
-      console.log("Sending POST request to /api/treatment-module/treatment-lines with data:", treatmentLine);
-      const response = await apiRequest("POST", "/api/treatment-module/treatment-lines", treatmentLine);
-      return await response.json();
+      // Log the API call for debugging
+      console.log(`[API] POST ${API_BASE_URL}/treatment-lines with data:`, treatmentLine);
+      
+      try {
+        const response = await apiRequest("POST", `${API_BASE_URL}/treatment-lines`, treatmentLine);
+        const result = await response.json();
+        console.log(`[API] Add treatment line result:`, result);
+        return result;
+      } catch (error) {
+        console.error(`[API] Error adding treatment line:`, error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
-      // Use the correct query keys to match new endpoint paths
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      // Use the consistent query keys with API_BASE_URL
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/patient/treatment-summary`] });
       
       toast({
         title: "Treatment added",
@@ -100,15 +126,23 @@ export function useTreatmentLines(quoteId?: string) {
   // Update an existing treatment line
   const updateTreatmentLine = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending PUT request to /api/treatment-module/treatment-lines/${id} with data:`, data);
-      const response = await apiRequest("PUT", `/api/treatment-module/treatment-lines/${id}`, data);
-      return await response.json();
+      // Log the API call for debugging
+      console.log(`[API] PUT ${API_BASE_URL}/treatment-lines/${id} with data:`, data);
+      
+      try {
+        const response = await apiRequest("PUT", `${API_BASE_URL}/treatment-lines/${id}`, data);
+        const result = await response.json();
+        console.log(`[API] Update treatment line result:`, result);
+        return result;
+      } catch (error) {
+        console.error(`[API] Error updating treatment line:`, error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
-      // Use the correct query keys to match new endpoint paths
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      // Use the consistent query keys with API_BASE_URL
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/patient/treatment-summary`] });
       
       toast({
         title: "Treatment updated",
@@ -127,15 +161,23 @@ export function useTreatmentLines(quoteId?: string) {
   // Delete a treatment line (soft delete)
   const deleteTreatmentLine = useMutation({
     mutationFn: async (id: string) => {
-      // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending DELETE request to /api/treatment-module/treatment-lines/${id}`);
-      const response = await apiRequest("DELETE", `/api/treatment-module/treatment-lines/${id}`);
-      return await response.json();
+      // Log the API call for debugging
+      console.log(`[API] DELETE ${API_BASE_URL}/treatment-lines/${id}`);
+      
+      try {
+        const response = await apiRequest("DELETE", `${API_BASE_URL}/treatment-lines/${id}`);
+        const result = await response.json();
+        console.log(`[API] Delete treatment line result:`, result);
+        return result;
+      } catch (error) {
+        console.error(`[API] Error deleting treatment line:`, error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
-      // Use the correct query keys to match new endpoint paths
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      // Use the consistent query keys with API_BASE_URL
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId] });
+      queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/patient/treatment-summary`] });
       
       toast({
         title: "Treatment removed",
