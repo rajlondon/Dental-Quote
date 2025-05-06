@@ -1,261 +1,237 @@
-import express, { Router, Request, Response } from "express";
-import { isAuthenticated } from "../middleware/auth";
-import { storage } from "../storage";
-import { v4 as uuidv4 } from "uuid";
+import { Router } from 'express';
+import { storage } from '../storage';
+import { TreatmentPlanStatus } from '@shared/models/treatment-plan';
+import { treatmentPlans } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
 
-const router: Router = express.Router();
+const router = Router();
 
 /**
- * Create a new treatment plan from a special offer
- * POST /api/treatment-plans/from-offer
- * 
- * This endpoint creates a new treatment plan directly from a special offer
- * when a user clicks on a special offer card or banner.
+ * Associate a special offer with a user's treatment plan
+ * This endpoint creates a new treatment plan or updates an existing one
+ * with the selected offer ID and clinic ID
  */
-router.post("/from-offer", isAuthenticated, async (req: Request, res: Response) => {
+router.post('/treatment-plans/associate-offer', async (req, res) => {
   try {
-    // Extract the offer ID and clinic ID from the request body
-    const { offerId, clinicId, notes = "Created from special offer" } = req.body;
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated"
-      });
-    }
+    const { offerId, clinicId } = req.body;
     
     if (!offerId) {
-      return res.status(400).json({
-        success: false,
-        message: "Offer ID is required"
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing offer ID' 
       });
     }
     
-    console.log(`Creating treatment plan from offer ${offerId} for user ${userId} at clinic ${clinicId || 'unspecified'}`);
-    
-    // Get the offer details
-    const offer = await storage.getOffer(offerId);
-    if (!offer) {
-      return res.status(404).json({
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({
         success: false,
-        message: "Special offer not found"
+        message: 'Authentication required to associate offer with treatment plan'
       });
     }
     
-    // Create a new treatment plan with the offer details
-    const treatmentPlan = await storage.createTreatmentPlan({
-      patientId: userId.toString(),
-      clinicId: (clinicId || offer.clinicId)?.toString(),
-      title: `Special Offer: ${offer.title}`,
-      description: offer.description || "Special offer treatment plan",
-      status: "DRAFT",
-      source: "offer", // Mark the source as an offer
-      sourceId: offerId,
-      notes: notes || `Created from special offer: ${offer.title}`,
-      totalPrice: offer.discountedPrice || offer.originalPrice || 0
-    });
+    const userId = req.user.id.toString();
     
-    console.log(`Created treatment plan ${treatmentPlan.id} from offer ${offerId}`);
+    // Try to find an existing DRAFT treatment plan for the user
+    const existingPlan = await storage.getTreatmentPlanByUserIdAndStatus(userId, TreatmentPlanStatus.DRAFT);
     
-    // Add the special offer discount as a treatment line
-    await storage.createTreatmentLine({
-      quoteId: treatmentPlan.id,
-      description: `${offer.title} - Special Offer`,
-      price: offer.discountedPrice || offer.originalPrice || 0,
-      quantity: 1,
-      type: "special_offer",
-      isBonus: true,
-      notes: `Added from special offer: ${offer.title}`
-    });
-    
-    // Add any bonus items from the offer
-    if (offer.bonusItems && Array.isArray(offer.bonusItems) && offer.bonusItems.length > 0) {
-      for (const bonusItem of offer.bonusItems) {
-        await storage.createTreatmentLine({
-          quoteId: treatmentPlan.id,
-          description: bonusItem.description || `${offer.title} - Bonus Item`,
-          price: bonusItem.price || 0,
-          quantity: bonusItem.quantity || 1,
-          type: "bonus",
-          isBonus: true,
-          notes: `Bonus item from special offer: ${offer.title}`
-        });
-      }
+    if (existingPlan) {
+      // Update the existing plan with the offer ID
+      const updatedPlan = await db
+        .update(treatmentPlans)
+        .set({
+          selectedOfferId: offerId,
+          clinicId: clinicId || existingPlan.clinicId,
+          updatedAt: new Date()
+        })
+        .where(eq(treatmentPlans.id, existingPlan.id))
+        .returning();
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Special offer associated with existing treatment plan',
+        data: updatedPlan[0]
+      });
+    } else {
+      // Create a new treatment plan with the offer ID
+      const newPlan = await storage.createTreatmentPlan({
+        patientId: userId,
+        createdBy: userId,
+        title: 'Special Offer Treatment Plan',
+        status: TreatmentPlanStatus.DRAFT,
+        selectedOfferId: offerId,
+        clinicId: clinicId || null,
+        totalCostGBP: 0, // Will be calculated later
+        totalCostUSD: 0, // Will be calculated later
+        treatmentItems: []
+      });
+      
+      return res.status(201).json({
+        success: true,
+        message: 'Special offer associated with new treatment plan',
+        data: newPlan
+      });
     }
-    
-    // Return the treatment plan and URL for redirection
-    return res.status(201).json({
-      success: true,
-      message: "Treatment plan created from special offer",
-      treatmentPlanId: treatmentPlan.id, 
-      treatmentPlanUrl: `/patient/treatment-plans/${treatmentPlan.id}`
-    });
-    
   } catch (error) {
-    console.error("Error creating treatment plan from offer:", error);
+    console.error('Error associating offer with treatment plan:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to create treatment plan from special offer"
+      message: 'Internal server error',
+      error: error.message
     });
   }
 });
 
 /**
- * Create a new treatment plan from a treatment package
- * POST /api/treatment-plans/from-package
- * 
- * This endpoint creates a new treatment plan directly from a treatment package
- * when a user clicks on a package card or banner.
+ * Associate a treatment package with a user's treatment plan
+ * This endpoint creates a new treatment plan or updates an existing one
+ * with the selected package ID and clinic ID
  */
-router.post("/from-package", isAuthenticated, async (req: Request, res: Response) => {
+router.post('/treatment-plans/associate-package', async (req, res) => {
   try {
-    // Extract the package ID and clinic ID from the request body
-    const { packageId, clinicId, notes = "Created from treatment package" } = req.body;
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated"
-      });
-    }
+    const { packageId, clinicId } = req.body;
     
     if (!packageId) {
-      return res.status(400).json({
-        success: false,
-        message: "Package ID is required"
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing package ID' 
       });
     }
     
-    console.log(`Creating treatment plan from package ${packageId} for user ${userId} at clinic ${clinicId || 'unspecified'}`);
-    
-    // Get the package details
-    const packageData = await storage.getPackage(packageId);
-    if (!packageData) {
-      return res.status(404).json({
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({
         success: false,
-        message: "Treatment package not found"
+        message: 'Authentication required to associate package with treatment plan'
       });
     }
     
-    // Create a new treatment plan with the package details
-    const treatmentPlan = await storage.createTreatmentPlan({
-      patientId: userId.toString(),
-      clinicId: (clinicId || packageData.clinicId)?.toString(),
-      title: `Package: ${packageData.title}`,
-      description: packageData.description || "Treatment package plan",
-      status: "DRAFT",
-      source: "package", // Mark the source as a package
-      sourceId: packageId,
-      notes: notes || `Created from treatment package: ${packageData.title}`,
-      totalPrice: packageData.basePrice || 0
-    });
+    const userId = req.user.id.toString();
     
-    console.log(`Created treatment plan ${treatmentPlan.id} from package ${packageId}`);
+    // Try to find an existing DRAFT treatment plan for the user
+    const existingPlan = await storage.getTreatmentPlanByUserIdAndStatus(userId, TreatmentPlanStatus.DRAFT);
     
-    // Add the package as a treatment line
-    await storage.createTreatmentLine({
-      quoteId: treatmentPlan.id,
-      description: `${packageData.title} - Package Base`,
-      price: packageData.basePrice || 0,
-      quantity: 1,
-      type: "package",
-      isPackage: true,
-      notes: `Base package: ${packageData.title}`
-    });
-    
-    // Add any included treatments from the package
-    if (packageData.includedTreatments && Array.isArray(packageData.includedTreatments)) {
-      for (const treatment of packageData.includedTreatments) {
-        await storage.createTreatmentLine({
-          quoteId: treatmentPlan.id,
-          description: treatment.description || 'Included Treatment',
-          price: treatment.price || 0,
-          quantity: treatment.quantity || 1,
-          type: "included",
-          isPackage: true,
-          notes: `Included in package: ${packageData.title}`
-        });
-      }
+    if (existingPlan) {
+      // Update the existing plan with the package ID
+      const updatedPlan = await db
+        .update(treatmentPlans)
+        .set({
+          selectedPackageId: packageId,
+          clinicId: clinicId || existingPlan.clinicId,
+          updatedAt: new Date()
+        })
+        .where(eq(treatmentPlans.id, existingPlan.id))
+        .returning();
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Treatment package associated with existing treatment plan',
+        data: updatedPlan[0]
+      });
+    } else {
+      // Create a new treatment plan with the package ID
+      const newPlan = await storage.createTreatmentPlan({
+        patientId: userId,
+        createdBy: userId,
+        title: 'Treatment Package Plan',
+        status: TreatmentPlanStatus.DRAFT,
+        selectedPackageId: packageId,
+        clinicId: clinicId || null,
+        totalCostGBP: 0, // Will be calculated later
+        totalCostUSD: 0, // Will be calculated later
+        treatmentItems: []
+      });
+      
+      return res.status(201).json({
+        success: true,
+        message: 'Treatment package associated with new treatment plan',
+        data: newPlan
+      });
     }
-    
-    // Return the treatment plan and URL for redirection
-    return res.status(201).json({
-      success: true,
-      message: "Treatment plan created from package",
-      treatmentPlanId: treatmentPlan.id,
-      treatmentPlanUrl: `/patient/treatment-plans/${treatmentPlan.id}`
-    });
-    
   } catch (error) {
-    console.error("Error creating treatment plan from package:", error);
+    console.error('Error associating package with treatment plan:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to create treatment plan from package"
+      message: 'Internal server error',
+      error: error.message
     });
   }
 });
 
 /**
- * Legacy v1 endpoint for creating a treatment plan from a special offer
- * POST /offers/:offerId/start
- * 
- * Maintains compatibility with the old endpoint referenced in PortalLoginPage.tsx
+ * Get treatment plan with special offer or package details
+ * This endpoint retrieves a treatment plan with its associated offer/package details
  */
-router.post("/offers/:offerId/start", isAuthenticated, async (req: Request, res: Response) => {
+router.get('/treatment-plans/:id/with-offer-details', async (req, res) => {
   try {
-    const { offerId } = req.params;
-    const { clinicId } = req.body;
-    const userId = req.user?.id;
+    const { id } = req.params;
     
-    if (!userId) {
+    if (!id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing treatment plan ID' 
+      });
+    }
+    
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
       return res.status(401).json({
         success: false,
-        message: "User not authenticated"
+        message: 'Authentication required to view treatment plan details'
       });
     }
     
-    console.log(`Legacy endpoint: Creating treatment plan from offer ${offerId} for user ${userId} at clinic ${clinicId || 'unspecified'}`);
+    // Get the basic treatment plan
+    const plan = await storage.getTreatmentPlanById(id);
     
-    // Get the offer details
-    const offer = await storage.getOffer(offerId);
-    if (!offer) {
+    if (!plan) {
       return res.status(404).json({
         success: false,
-        message: "Special offer not found"
+        message: 'Treatment plan not found'
       });
     }
     
-    // Create a new treatment plan with the offer details
-    const treatmentPlan = await storage.createTreatmentPlan({
-      patientId: userId.toString(),
-      clinicId: (clinicId || offer.clinicId)?.toString(),
-      title: `Special Offer: ${offer.title}`,
-      description: offer.description || "Special offer treatment plan",
-      status: "DRAFT",
-      source: "offer", // Mark the source as an offer
-      sourceId: offerId,
-      notes: `Created from special offer: ${offer.title}`,
-      totalPrice: offer.discountedPrice || offer.originalPrice || 0
-    });
+    // Check if this plan belongs to the authenticated user or they are admin/clinic
+    const isAuthorized = 
+      plan.patientId === req.user.id.toString() || 
+      req.user.role === 'admin' || 
+      (req.user.role === 'clinic' && plan.clinicId === req.user.clinicId);
     
-    console.log(`Legacy endpoint: Created treatment plan ${treatmentPlan.id} from offer ${offerId}`);
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to view this treatment plan'
+      });
+    }
     
-    // Return the treatment plan with a URL format that matches the legacy expectations
-    return res.status(201).json({
+    // Enrich the plan with offer details if it has a selectedOfferId
+    let offerDetails = null;
+    if (plan.selectedOfferId) {
+      offerDetails = await storage.getSpecialOfferById(plan.selectedOfferId);
+    }
+    
+    // Enrich the plan with package details if it has a selectedPackageId
+    let packageDetails = null;
+    if (plan.selectedPackageId) {
+      packageDetails = await storage.getTreatmentPackageById(plan.selectedPackageId);
+    }
+    
+    // Return the plan with the enriched details
+    return res.status(200).json({
       success: true,
-      message: "Quote created from special offer",
-      quoteId: treatmentPlan.id,
-      treatmentPlanUrl: `/patient/treatment-plans/${treatmentPlan.id}`,
-      quoteUrl: `/portal/quote/${treatmentPlan.id}/review` // Legacy URL format for backward compatibility
+      data: {
+        ...plan,
+        offerDetails,
+        packageDetails
+      }
     });
-    
   } catch (error) {
-    console.error("Error creating quote from offer (legacy):", error);
+    console.error('Error retrieving treatment plan with offer details:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to create quote from special offer"
+      message: 'Internal server error',
+      error: error.message
     });
   }
 });
