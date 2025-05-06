@@ -1,0 +1,90 @@
+Why you’re stuck
+The Replit agent keeps editing files but never changes the one thing that actually matters:
+exactly one canonical route + one canonical ID format that both sides respect.
+
+Until you enforce that contract, every new “fix” only paper‑tapes the mismatch.
+
+1  Lock a single API contract
+Public path /api/v1/treatment-lines/:lineId
+
+ID format always UUID (numeric IDs converted on the way in)
+
+Write this at the top of docs/01_mvp_spec.md in bold so the agent sees it first.
+
+2  Minimal tasks that really solve it
+Here’s a copy‑and‑paste issue the agent can finish in one run; it touches only three files and deletes the duplicate route.
+
+txt
+Copy
+Edit
+reference_file: docs/01_mvp_spec.md
+issue: #48 harden-treatment-lines-api
+
+### Goal
+Stop ID/route collisions for Treatment Lines.
+
+### Tasks (do ONLY these)
+
+1. **Delete** the legacy router:
+   - remove import & app.use for `/api/treatment-module/treatment-lines`
+   - file: `server/routes/legacy/treatment-module.js`
+
+2. **Update single router** `/routes/v1/treatment-lines.js`
+   - add `import { extractNumericFromUuid } from '../../utils/id-converter.js'`
+   - in each handler, run:
+     ```js
+     const id = extractNumericFromUuid(req.params.lineId);
+     ```
+   - ensure DELETE, PATCH use `id` above.
+
+3. **Update client hook** `client/src/hooks/use-treatment-lines.tsx`
+   - base URL constant: `API_TREATMENT = '/api/v1/treatment-lines'`
+   - in `deleteLine`, `updateLine`:  
+     ```ts
+     const uuid = ensureUuidFormat(lineId);
+     fetch(`${API_TREATMENT}/${uuid}`, { method:'DELETE' })
+     ```
+
+4. **Add middleware** in `server/index.js` _above_ static serve:
+   ```js
+   app.use('/api/v1/treatment-lines', treatmentLinesRouter);
+Type safety
+
+in client/src/lib/id-converter.ts return string not undefined; throw if cannot convert.
+
+Out of scope
+No changes to database schema
+
+No new routes
+
+No additional logging
+
+Return only the modified files.
+
+yaml
+Copy
+Edit
+
+Paste that as a **single message** to the agent; it should:
+
+* remove the rogue route,
+* enforce UUIDs everywhere,
+* stop Express from falling through to the wrong handler,
+* and clean up the TypeScript `undefined` complains.
+
+---
+
+## 3  Verify in two commands
+
+```bash
+curl -X DELETE https://<repl‑url>/api/v1/treatment-lines/00000000-0000-4000-a000-000000000123
+# expect 204 No Content
+
+curl https://<repl‑url>/api/v1/treatment-lines?quoteId=11
+# expect 200 []
+If that works, the front‑end buttons will too (they just call the same URL).
+
+One extra sanity guard
+Add a Zod schema in the router to assert lineId is a valid v4/v5 UUID; respond 400 if not. That prevents future numeric IDs from sneaking back in.
+
+Run the prompt above, test with curl/Postman, and you should finally break the hours‑long loop. Let me know the curl output if anything still croaks!
