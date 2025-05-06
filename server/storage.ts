@@ -2,11 +2,13 @@ import { db } from "./db";
 import { eq, and, desc, asc, or, isNull, sql } from "drizzle-orm";
 import createMemoryStore from "memorystore";
 import session from "express-session";
+import { v4 as uuidv4 } from "uuid";
 import {
   users, User, InsertUser,
   quoteRequests, QuoteRequest, InsertQuoteRequest,
   quoteVersions, QuoteVersion, InsertQuoteVersion,
   treatmentPlans, TreatmentPlan, InsertTreatmentPlan,
+  treatmentLines,
   bookings, Booking, InsertBooking,
   payments, Payment, InsertPayment,
   appointments, Appointment, InsertAppointment,
@@ -148,6 +150,214 @@ export class DatabaseStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
     });
+  }
+  
+  // === Treatment Lines Canonical API Methods ===
+  
+  async getTreatmentLinesByQuoteId(quoteId: number): Promise<any[]> {
+    console.log(`[Storage] Getting treatment lines for quote ID: ${quoteId}`);
+    
+    try {
+      // First convert the numeric ID to UUID format for the query
+      const quoteUuid = `00000000-0000-4000-a000-${String(quoteId).padStart(12, '0')}`;
+      
+      // Query the treatment lines with clinic information
+      const treatmentLinesList = await db.query.treatmentLines.findMany({
+        where: eq(treatmentLines.quoteId, quoteUuid),
+        with: {
+          clinic: true,
+          package: true
+        },
+        orderBy: [desc(treatmentLines.createdAt)]
+      });
+      
+      console.log(`[Storage] Found ${treatmentLinesList.length} treatment lines for quote ID: ${quoteId}`);
+      return treatmentLinesList;
+    } catch (error) {
+      console.error(`[Storage] Error getting treatment lines for quote ID ${quoteId}:`, error);
+      return [];
+    }
+  }
+  
+  async getTreatmentSummaryForPatient(patientId: number): Promise<any> {
+    console.log(`[Storage] Getting treatment summary for patient ID: ${patientId}`);
+    
+    try {
+      // Get all treatment lines for the patient
+      const patientTreatmentLines = await db.query.treatmentLines.findMany({
+        where: eq(treatmentLines.patientId, patientId),
+        with: {
+          clinic: true,
+          package: true
+        },
+        orderBy: [desc(treatmentLines.createdAt)]
+      });
+      
+      // Group lines by clinic ID
+      const clinicMap = new Map();
+      
+      patientTreatmentLines.forEach(line => {
+        if (!line.clinicId) return;
+        
+        if (!clinicMap.has(line.clinicId)) {
+          clinicMap.set(line.clinicId, {
+            clinic: line.clinic || { id: line.clinicId, name: 'Unknown Clinic' },
+            treatmentLines: []
+          });
+        }
+        
+        clinicMap.get(line.clinicId).treatmentLines.push(line);
+      });
+      
+      // Calculate totals
+      const totalTreatmentLines = patientTreatmentLines.length;
+      const totalSpent = patientTreatmentLines.reduce((total, line) => {
+        const price = parseFloat(line.unitPrice || '0') * (line.quantity || 1);
+        return total + price;
+      }, 0);
+      
+      // Convert Map to array for output
+      const treatmentsByClinic = Array.from(clinicMap.values());
+      
+      console.log(`[Storage] Treatment summary for patient ID ${patientId}: ${totalTreatmentLines} lines, ${totalSpent} total spent`);
+      
+      return {
+        totalTreatmentLines,
+        totalSpent,
+        treatmentsByClinic
+      };
+    } catch (error) {
+      console.error(`[Storage] Error getting treatment summary for patient ID ${patientId}:`, error);
+      return {
+        totalTreatmentLines: 0,
+        totalSpent: 0,
+        treatmentsByClinic: []
+      };
+    }
+  }
+  
+  async createTreatmentLine(data: any): Promise<any> {
+    console.log(`[Storage] Creating treatment line for quote ID: ${data.quoteId}`);
+    
+    try {
+      // Ensure we have a UUID for the quoteId
+      const quoteUuid = `00000000-0000-4000-a000-${String(data.quoteId).padStart(12, '0')}`;
+      
+      // Generate a new UUID for the treatment line
+      const id = uuidv4();
+      
+      // Prepare the treatment line data
+      const treatmentLineData = {
+        id,
+        clinicId: data.clinicId,
+        patientId: data.patientId,
+        quoteId: quoteUuid,
+        procedureCode: data.procedureCode || data.name || 'CUSTOM',
+        description: data.description || data.name || 'Custom Treatment',
+        quantity: data.quantity || 1,
+        unitPrice: String(data.price || data.unitPrice || '0'),
+        isPackage: data.isPackage || false,
+        packageId: data.packageId,
+        status: data.status || 'draft',
+        patientNotes: data.patientNotes || '',
+        clinicNotes: data.clinicNotes || '',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Insert the treatment line
+      const [newLine] = await db.insert(treatmentLines).values(treatmentLineData).returning();
+      
+      console.log(`[Storage] Created treatment line ID: ${newLine.id}`);
+      return newLine;
+    } catch (error) {
+      console.error(`[Storage] Error creating treatment line:`, error);
+      throw error;
+    }
+  }
+  
+  async updateTreatmentLine(id: number, data: any): Promise<any | undefined> {
+    console.log(`[Storage] Updating treatment line ID: ${id}`);
+    
+    try {
+      // For UUID format IDs, we need to handle them differently
+      let treatmentLineUuid = String(id);
+      
+      // If it's a numeric ID, convert it to UUID format
+      if (/^\d+$/.test(treatmentLineUuid)) {
+        treatmentLineUuid = `00000000-0000-4000-a000-${treatmentLineUuid.padStart(12, '0')}`;
+      }
+      
+      // Prepare update data
+      const updateData: any = {
+        updatedAt: new Date()
+      };
+      
+      // Add optional fields if provided
+      if (data.procedureCode) updateData.procedureCode = data.procedureCode;
+      if (data.description) updateData.description = data.description;
+      if (data.quantity) updateData.quantity = data.quantity;
+      if (data.unitPrice) updateData.unitPrice = String(data.unitPrice);
+      if (data.status) updateData.status = data.status;
+      if (data.patientNotes !== undefined) updateData.patientNotes = data.patientNotes;
+      if (data.clinicNotes !== undefined) updateData.clinicNotes = data.clinicNotes;
+      
+      // Update the treatment line
+      const [updatedLine] = await db
+        .update(treatmentLines)
+        .set(updateData)
+        .where(eq(treatmentLines.id, treatmentLineUuid))
+        .returning();
+      
+      if (!updatedLine) {
+        console.log(`[Storage] No treatment line found with ID: ${treatmentLineUuid}`);
+        return undefined;
+      }
+      
+      console.log(`[Storage] Updated treatment line ID: ${updatedLine.id}`);
+      return updatedLine;
+    } catch (error) {
+      console.error(`[Storage] Error updating treatment line ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async deleteTreatmentLine(id: number): Promise<boolean> {
+    console.log(`[Storage] Deleting treatment line ID: ${id}`);
+    
+    try {
+      // For UUID format IDs, we need to handle them differently
+      let treatmentLineUuid = String(id);
+      
+      // If it's a numeric ID, convert it to UUID format
+      if (/^\d+$/.test(treatmentLineUuid)) {
+        treatmentLineUuid = `00000000-0000-4000-a000-${treatmentLineUuid.padStart(12, '0')}`;
+      }
+      
+      // Soft delete by updating the status and setting deletedAt
+      const [deletedLine] = await db
+        .update(treatmentLines)
+        .set({
+          status: 'deleted',
+          deletedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(treatmentLines.id, treatmentLineUuid))
+        .returning();
+      
+      const success = !!deletedLine;
+      
+      if (success) {
+        console.log(`[Storage] Successfully deleted treatment line ID: ${treatmentLineUuid}`);
+      } else {
+        console.log(`[Storage] No treatment line found with ID: ${treatmentLineUuid}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error(`[Storage] Error deleting treatment line ID ${id}:`, error);
+      return false;
+    }
   }
 
   // === User Management ===
