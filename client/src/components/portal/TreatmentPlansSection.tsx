@@ -326,36 +326,27 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                 onClick={() => {
                                   try {
                                     console.log("Delete action clicked for treatment line:", tl.id);
-                                    // Direct API call to delete the treatment line
+                                    // Use the treatment hook's deleteTreatmentLine function
                                     if (confirm("Are you sure you want to delete this treatment?")) {
-                                      // Use the route path where it's actually mounted: /api/treatment-module/treatment-lines/:id
-                                      fetch(`/api/treatment-module/treatment-lines/${tl.id}`, {
-                                        method: 'DELETE',
-                                        headers: {
-                                          'Content-Type': 'application/json',
+                                      // Use the deleteTreatmentLine mutation from the hook
+                                      deleteTreatmentLine.mutate(tl.id, {
+                                        onSuccess: () => {
+                                          console.log("Success deleting treatment line");
+                                          // No need for additional toast - the hook already shows it
+                                        },
+                                        onError: (error) => {
+                                          console.error("Error in delete mutation:", error);
+                                          // No need for additional toast - the hook already shows it
                                         }
-                                      })
-                                      .then(response => response.json())
-                                      .then(data => {
-                                        console.log("Success deleting treatment line:", data);
-                                        toast({
-                                          title: "Treatment removed",
-                                          description: "Treatment has been removed from your plan",
-                                        });
-                                        // Force refresh
-                                        window.location.reload();
-                                      })
-                                      .catch(error => {
-                                        console.error("Error deleting treatment line:", error);
-                                        toast({
-                                          title: "Failed to remove treatment",
-                                          description: "There was an error removing this treatment",
-                                          variant: "destructive",
-                                        });
                                       });
                                     }
                                   } catch (error) {
                                     console.error("Error in delete action:", error);
+                                    toast({
+                                      title: "Error",
+                                      description: "An unexpected error occurred",
+                                      variant: "destructive",
+                                    });
                                   }
                                 }}
                               >
@@ -537,41 +528,37 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                     onClick={() => {
                       try {
                         console.log("Updating treatment line with ID:", selectedTreatmentLine.id);
-                        console.log("Update data:", {
+                        const updateData = {
                           patientNotes: selectedTreatmentLine.patientNotes
-                        });
-                        // Use the route path where it's actually mounted: /api/treatment-module/treatment-lines/:id
-                        fetch(`/api/treatment-module/treatment-lines/${selectedTreatmentLine.id}`, {
-                          method: 'PUT',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({
-                            patientNotes: selectedTreatmentLine.patientNotes
-                          })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                          console.log("Success updating treatment line:", data);
-                          // Force a refresh of the data
-                          if (refetch) refetch();
-                          toast({
-                            title: "Treatment updated",
-                            description: "Your treatment has been updated",
-                          });
-                        })
-                        .catch(error => {
-                          console.error("Error updating treatment line:", error);
-                          toast({
-                            title: "Failed to update treatment",
-                            description: error.message || "Something went wrong",
-                            variant: "destructive",
-                          });
-                        });
-                        setIsEditMode(false);
-                        setIsDetailsOpen(false);
+                        };
+                        console.log("Update data:", updateData);
+                        
+                        // Use the updateTreatmentLine mutation from the hook
+                        updateTreatmentLine.mutate(
+                          { 
+                            id: selectedTreatmentLine.id, 
+                            data: updateData 
+                          }, 
+                          {
+                            onSuccess: () => {
+                              console.log("Success updating treatment line");
+                              // No need for additional toast - the hook already shows it
+                              setIsEditMode(false);
+                              setIsDetailsOpen(false);
+                            },
+                            onError: (error) => {
+                              console.error("Error in update mutation:", error);
+                              // No need for additional toast - the hook already shows it
+                            }
+                          }
+                        );
                       } catch (error) {
-                        console.error("Error in update mutation:", error);
+                        console.error("Error in update action:", error);
+                        toast({
+                          title: "Error",
+                          description: "An unexpected error occurred",
+                          variant: "destructive",
+                        });
                       }
                     }}
                   >
