@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useTreatmentLines } from "@/hooks/use-treatment-lines";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -60,6 +60,29 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   // Removed isDeleteConfirmOpen since we're using confirm() directly
   const { toast } = useToast();
   
+  // Convert numeric IDs to UUID format consistently
+  const sanitizedQuoteId = useMemo(() => {
+    // Early return if no quote ID
+    if (!quoteId) return undefined;
+    
+    // If it's already a UUID, no conversion needed
+    if (quoteId.includes('-')) {
+      console.log('[DEBUG] Quote ID already in UUID format:', quoteId);
+      return quoteId;
+    }
+    
+    // Convert numeric ID to UUID format
+    if (/^\d+$/.test(quoteId)) {
+      const numericIdStr = quoteId.toString();
+      const uuidFormat = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
+      console.log('[DEBUG] Converted numeric quote ID to UUID format:', uuidFormat);
+      return uuidFormat;
+    }
+    
+    // Default case - return as-is
+    return quoteId;
+  }, [quoteId]);
+  
   // Get treatment lines data and functions from the hook
   const { 
     treatmentLines, 
@@ -71,7 +94,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
     updateTreatmentLine,
     deleteTreatmentLine,
     refetch
-  } = useTreatmentLines(quoteId);
+  } = useTreatmentLines(sanitizedQuoteId);
   
   // Debug: log available hook functions and state
   console.log("Treatment hook functions available:", {
