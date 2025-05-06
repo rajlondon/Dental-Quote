@@ -306,11 +306,20 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => showTreatmentDetails(tl)}>
+                              <DropdownMenuItem onClick={(e) => {
+                                // Prevent default navigation behavior
+                                e.preventDefault();
+                                e.stopPropagation();
+                                showTreatmentDetails(tl);
+                              }}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 View details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
+                              <DropdownMenuItem onClick={(e) => {
+                                // Prevent default navigation behavior
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
                                 try {
                                   console.log("Edit action clicked for treatment line:", tl.id);
                                   // Show edit dialog
@@ -332,7 +341,11 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  // Prevent default navigation behavior
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  
                                   try {
                                     console.log("Delete action clicked for treatment line:", tl.id);
                                     console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + tl.id);
