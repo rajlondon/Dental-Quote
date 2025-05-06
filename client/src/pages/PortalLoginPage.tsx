@@ -6,6 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useTranslation } from 'react-i18next';
+
+// Add global window property for error toast tracking
+declare global {
+  interface Window {
+    __offerErrorToastShown?: boolean;
+    __directAdminNavigation?: boolean;
+  }
+}
 import { 
   AlertCircle, Check, Lock, Mail, Phone, User, ShieldCheck, Loader2
 } from 'lucide-react';
@@ -281,11 +289,22 @@ const PortalLoginPage: React.FC = () => {
           })
           .catch(error => {
             console.error("Error creating treatment plan from offer:", error);
-            toast({
-              title: "Error Processing Offer",
-              description: "There was a problem creating your treatment plan. Please try again.",
-              variant: "destructive"
-            });
+            
+            // Use a flag to prevent duplicate toasts
+            if (!window.__offerErrorToastShown) {
+              window.__offerErrorToastShown = true;
+              
+              toast({
+                title: "Error Processing Offer",
+                description: "There was a problem creating your treatment plan. Please try again.",
+                variant: "destructive"
+              });
+              
+              // Reset the flag after a delay
+              setTimeout(() => {
+                window.__offerErrorToastShown = false;
+              }, 5000);
+            }
           });
         }
       } catch (error) {
