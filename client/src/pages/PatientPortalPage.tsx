@@ -66,7 +66,7 @@ import HotelAccommodationSection from '@/components/dashboard/HotelAccommodation
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
 
 // Import our components for the quotes section
-import PatientQuotesContent from '@/components/patient/PatientQuotesContent-new';
+import PatientQuotesContent from '@/components/patient/PatientQuotesContent';
 import PatientQuoteDetail from '@/components/patient/PatientQuoteDetail';
 
 // Create a proper wrapper component for quotes section that can use hooks
@@ -128,24 +128,7 @@ const QuotesSectionWrapper = () => {
             />
           ) : (
             // Show the quotes list when no quote is selected
-            <PatientQuotesContent 
-              onSelectQuote={(id) => {
-                console.log(`[DEBUG] Quote selected: ${id}`);
-                
-                // Update state
-                setSelectedQuoteId(id.toString());
-                
-                // Update URL with the selected quote ID
-                const currentParams = new URLSearchParams(search);
-                currentParams.set('quoteId', id.toString());
-                
-                // Build and update the URL
-                let newSearch = currentParams.toString();
-                newSearch = newSearch ? `?${newSearch}` : '';
-                const newUrl = window.location.pathname + newSearch;
-                window.history.replaceState({}, '', newUrl);
-              }} 
-            />
+            <PatientQuotesContent />
           )}
         </div>
       </div>
