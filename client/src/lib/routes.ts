@@ -41,6 +41,14 @@ export const ROUTES = {
   ADMIN_TREATMENT_MAPPER: '/admin-treatment-mapper',
   CLINIC_TREATMENT_MAPPER: '/clinic-treatment-mapper',
   
+  // Treatment Plans (Unified)
+  PATIENT_TREATMENT_PLAN: '/portal/treatment-plan/:id',
+  CLINIC_TREATMENT_PLAN: '/clinic-portal/treatment-plan/:id',
+  CLINIC_TREATMENT_PLANS: '/clinic-portal/treatment-plans',
+  ADMIN_TREATMENT_PLAN: '/admin-portal/treatment-plan/:id',
+  ADMIN_TREATMENT_PLANS: '/admin-portal/treatment-plans',
+  ADMIN_TREATMENT_PLAN_ANALYTICS: '/admin-portal/treatment-plans/analytics',
+  
   // Bookings
   BOOKINGS: '/bookings',
   BOOKING_DETAIL: '/bookings/:id',
