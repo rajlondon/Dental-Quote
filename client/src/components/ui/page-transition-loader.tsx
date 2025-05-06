@@ -22,12 +22,12 @@ export const usePageTransition = () => {
   return context;
 };
 
-interface PageTransitionLoaderProps {
+interface PageTransitionProviderProps {
   children: ReactNode;
-  fallback?: ReactNode;
 }
 
-export function PageTransitionLoader({ children, fallback }: PageTransitionLoaderProps) {
+// Dedicated Provider Component
+export function PageTransitionProvider({ children }: PageTransitionProviderProps) {
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [location] = useLocation();
@@ -47,6 +47,22 @@ export function PageTransitionLoader({ children, fallback }: PageTransitionLoade
 
   return (
     <PageTransitionContext.Provider value={contextValue}>
+      {children}
+    </PageTransitionContext.Provider>
+  );
+}
+
+interface PageTransitionLoaderProps {
+  children?: ReactNode;
+  fallback?: ReactNode;
+}
+
+// Loader component that uses the context
+export function PageTransitionLoader({ children, fallback }: PageTransitionLoaderProps) {
+  const { isLoading, error } = usePageTransition();
+  
+  return (
+    <>
       {isLoading && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
@@ -60,7 +76,7 @@ export function PageTransitionLoader({ children, fallback }: PageTransitionLoade
       ) : (
         children
       )}
-    </PageTransitionContext.Provider>
+    </>
   );
 }
 

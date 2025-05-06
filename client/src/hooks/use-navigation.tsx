@@ -1,151 +1,140 @@
-import React, { createContext, useState, useCallback, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import ROUTES from '@/lib/routes';
+import { usePageTransition } from '@/components/ui/page-transition-loader';
+// Import the routes object directly
+import { ROUTES } from '@/lib/routes';
 
-type NavigationContextType = {
+interface NavigationContextValue {
   navigateTo: (path: string, options?: NavigationOptions) => void;
+  goBack: () => void;
+  navigateToRoute: (routeKey: keyof typeof ROUTES, params?: Record<string, string>, options?: NavigationOptions) => void;
+  currentRoute: string;
+  previousRoute: string | null;
   isNavigating: boolean;
-  currentPath: string;
-};
+}
 
-type NavigationOptions = {
-  saveInSessionStorage?: { key: string; value: string };
+interface NavigationOptions {
   replace?: boolean;
-  retry?: boolean;
+  skipConfirmation?: boolean;
+}
+
+const NavigationContext = createContext<NavigationContextValue | undefined>(undefined);
+
+export const useNavigation = () => {
+  const context = useContext(NavigationContext);
+  if (!context) {
+    throw new Error('useNavigation must be used within a NavigationProvider');
+  }
+  return context;
 };
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+interface NavigationProviderProps {
+  children: ReactNode;
+}
 
-export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [, setLocation] = useLocation();
+export const NavigationProvider = ({ children }: NavigationProviderProps) => {
+  const [, navigate] = useLocation();
+  const { setLoading, setError } = usePageTransition();
+  const [currentRoute, setCurrentRoute] = useState<string>(window.location.pathname);
+  const [previousRoute, setPreviousRoute] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [currentPath, setCurrentPath] = useState(() => {
-    // Use the current path or default to home
-    return typeof window !== 'undefined' ? window.location.pathname : ROUTES.HOME;
-  });
+  const [navigationHistory, setNavigationHistory] = useState<string[]>([window.location.pathname]);
 
-  // Monitor navigation state
+  // Update current route when location changes
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Update current path when location changes
-    setCurrentPath(window.location.pathname);
-    
-    // Create a handler to track navigation state
-    const handleNavStart = () => setIsNavigating(true);
-    const handleNavEnd = () => {
-      setIsNavigating(false);
-      setCurrentPath(window.location.pathname);
-    };
-    
-    // Add event listeners for navigation
-    window.addEventListener('beforeunload', handleNavStart);
-    window.addEventListener('load', handleNavEnd);
-    
-    // Intercept click events on links to monitor navigation
-    const linkClickHandler = (e: MouseEvent) => {
-      // Check if it's an anchor element or has an anchor parent
-      const target = e.target as HTMLElement;
-      const anchor = target.closest('a');
+    const handleRouteChange = () => {
+      const newPath = window.location.pathname;
       
-      if (anchor && anchor.href && !anchor.target && 
-          anchor.href.startsWith(window.location.origin) && 
-          !anchor.classList.contains('no-navigation-indicator') &&
-          !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        setIsNavigating(true);
-        // Navigation indicator will be cleared after page loads
-        setTimeout(() => setIsNavigating(false), 5000); // Safeguard in case page load event doesn't fire
+      // Don't add duplicate entries to history
+      if (navigationHistory[navigationHistory.length - 1] !== newPath) {
+        setPreviousRoute(navigationHistory[navigationHistory.length - 1]);
+        setNavigationHistory(prev => [...prev, newPath]);
       }
-    };
-    
-    document.addEventListener('click', linkClickHandler);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleNavStart);
-      window.removeEventListener('load', handleNavEnd);
-      document.removeEventListener('click', linkClickHandler);
-    };
-  }, []);
-
-  /**
-   * Safe navigation function that handles all route changes
-   */
-  const navigateTo = useCallback((path: string, options?: NavigationOptions) => {
-    if (typeof window === 'undefined') return;
-    
-    // Start navigation state
-    setIsNavigating(true);
-    
-    // Save any state in session storage if needed
-    if (options?.saveInSessionStorage) {
-      const { key, value } = options.saveInSessionStorage;
-      sessionStorage.setItem(key, value);
-    }
-    
-    // Execute navigation
-    if (options?.replace) {
-      // Use replace to avoid adding to history
-      setLocation(path, { replace: true });
-    } else {
-      // Default navigation
-      setLocation(path);
-    }
-    
-    // Safety timeout to clear navigation state if the load event doesn't fire
-    setTimeout(() => {
+      
+      setCurrentRoute(newPath);
       setIsNavigating(false);
-      setCurrentPath(window.location.pathname);
-    }, 1000);
-  }, [setLocation]);
-  
+      setLoading(false);
+    };
+
+    // Listen to history changes
+    window.addEventListener('popstate', handleRouteChange);
+    handleRouteChange(); // Initial call
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, [navigationHistory, setLoading]);
+
+  const navigateTo = useCallback((path: string, options: NavigationOptions = {}) => {
+    try {
+      setIsNavigating(true);
+      setLoading(true);
+      
+      // Save current route as previous before navigation
+      setPreviousRoute(currentRoute);
+      
+      // Use wouter's navigate function which handles client-side routing
+      navigate(path, { replace: options.replace });
+      
+      // Store navigation intent in session storage to handle potential page refresh
+      sessionStorage.setItem('lastNavigationIntent', path);
+      
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setError(error instanceof Error ? error : new Error('Unknown navigation error'));
+      setIsNavigating(false);
+      setLoading(false);
+    }
+  }, [currentRoute, navigate, setLoading, setError]);
+
+  const navigateToRoute = useCallback((
+    routeKey: keyof typeof ROUTES, 
+    params: Record<string, string> = {}, 
+    options: NavigationOptions = {}
+  ) => {
+    try {
+      const routeTemplate = ROUTES[routeKey];
+      if (!routeTemplate) {
+        throw new Error(`Route with key "${String(routeKey)}" not found`);
+      }
+      
+      // Replace parameters in route template
+      let path = routeTemplate;
+      Object.entries(params).forEach(([key, value]) => {
+        path = path.replace(`:${key}`, value);
+      });
+      
+      // Using "as any" to bypass the TypeScript limitation
+      // This is safe because we're building paths from our routes registry
+      
+      navigateTo(path, options);
+    } catch (error) {
+      console.error('Route navigation error:', error);
+      setError(error instanceof Error ? error : new Error('Unknown route navigation error'));
+    }
+  }, [navigateTo, setError]);
+
+  const goBack = useCallback(() => {
+    if (previousRoute) {
+      navigateTo(previousRoute);
+    } else {
+      // If no previous route, navigate to a default location like home
+      navigateTo('/');
+    }
+  }, [previousRoute, navigateTo]);
+
+  const value: NavigationContextValue = {
+    navigateTo,
+    goBack,
+    navigateToRoute,
+    currentRoute,
+    previousRoute,
+    isNavigating,
+  };
+
   return (
-    <NavigationContext.Provider value={{ navigateTo, isNavigating, currentPath }}>
+    <NavigationContext.Provider value={value}>
       {children}
     </NavigationContext.Provider>
   );
 };
-
-/**
- * Custom hook for consistent navigation throughout the app
- */
-export function useNavigation() {
-  const context = useContext(NavigationContext);
-  
-  if (context === undefined) {
-    throw new Error('useNavigation must be used within a NavigationProvider');
-  }
-  
-  return context;
-}
-
-/**
- * Utility to navigate to a treatment line detail
- */
-export function useNavigateToTreatmentDetail() {
-  const { navigateTo } = useNavigation();
-  
-  return useCallback((treatmentLineId: string) => {
-    navigateTo(`/portal/treatment/${treatmentLineId}`, {
-      saveInSessionStorage: {
-        key: 'selected_treatment_line_id',
-        value: treatmentLineId
-      }
-    });
-  }, [navigateTo]);
-}
-
-/**
- * Utility to navigate to a quote detail
- */
-export function useNavigateToQuoteDetail() {
-  const { navigateTo } = useNavigation();
-  
-  return useCallback((quoteId: string) => {
-    navigateTo(`/portal/quotes/${quoteId}`, {
-      saveInSessionStorage: {
-        key: 'selected_quote_id',
-        value: quoteId
-      }
-    });
-  }, [navigateTo]);
-}

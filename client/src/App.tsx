@@ -12,7 +12,7 @@ import ErrorTestPage from "@/pages/ErrorTestPage";
 import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
 import { ErrorBoundary, NavigationErrorBoundary } from "@/components/error-boundary";
 import { NavigationProvider, useNavigation } from "@/hooks/use-navigation";
-import { PageTransitionLoader } from "@/components/ui/page-transition-loader";
+import { PageTransitionProvider, PageTransitionLoader } from "@/components/ui/page-transition-loader";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
@@ -390,23 +390,28 @@ function App() {
           <AdminAuthProvider>
             <NotificationsProvider>
               <BookingsProvider>
-                <NavigationProvider>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <ScrollToTop />
-                    {/* Only exclude ReloadTranslations on clinic portal path */}
-                    {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                      <ReloadTranslations />
-                    }
-                    {/* Navigation status indicator */}
-                    <NavigationStatusBar />
-                    <ErrorBoundary>
-                      <Router />
-                    </ErrorBoundary>
-                    <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-                    <EnvironmentBadge />
-                    <Toaster />
-                  </Suspense>
-                </NavigationProvider>
+                <PageTransitionProvider>
+                  <NavigationProvider>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <ScrollToTop />
+                      {/* Only exclude ReloadTranslations on clinic portal path */}
+                      {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                        <ReloadTranslations />
+                      }
+                      {/* Navigation status indicator */}
+                      <NavigationStatusBar />
+                      {/* Use PageTransitionLoader to show loading states */}
+                      <PageTransitionLoader>
+                        <ErrorBoundary>
+                          <Router />
+                        </ErrorBoundary>
+                      </PageTransitionLoader>
+                      <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+                      <EnvironmentBadge />
+                      <Toaster />
+                    </Suspense>
+                  </NavigationProvider>
+                </PageTransitionProvider>
               </BookingsProvider>
             </NotificationsProvider>
           </AdminAuthProvider>
@@ -418,12 +423,14 @@ function App() {
 
 // Status bar that shows navigation state
 function NavigationStatusBar() {
-  const { isNavigating, currentPath } = useNavigation();
+  const { isNavigating, currentRoute } = useNavigation();
   
   // Don't render anything if not navigating
   if (!isNavigating) return null;
   
-  return <PageTransitionLoader />;
+  return (
+    <div className="fixed top-0 left-0 w-full h-1 bg-primary animate-pulse z-50" />
+  );
 }
 
 export default App;
