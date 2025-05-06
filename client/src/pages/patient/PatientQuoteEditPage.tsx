@@ -5,11 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, Save } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
+import { Loader2, ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
+import { useTreatmentMappings } from "@/hooks/use-treatment-mappings";
 
 /**
  * Patient Quote Edit Page
@@ -22,6 +32,17 @@ export default function PatientQuoteEditPage() {
   const queryClient = useQueryClient();
   const quoteId = params?.id;
 
+  // Fetch available treatments
+  const { data: treatmentMappings, isLoading: isLoadingTreatments } = useTreatmentMappings();
+
+  // Type for treatment items
+  type TreatmentItem = {
+    id: string | number;
+    name: string;
+    quantity: number;
+    price?: number;
+  };
+
   // Local state for form values
   const [formValues, setFormValues] = useState({
     name: "",
@@ -32,6 +53,9 @@ export default function PatientQuoteEditPage() {
     otherTreatment: "",
     notes: ""
   });
+
+  // Store treatments separately
+  const [selectedTreatments, setSelectedTreatments] = useState<TreatmentItem[]>([]);
 
   // Fetch quote data
   const { data: quoteData, isLoading, error } = useQuery({
@@ -56,9 +80,10 @@ export default function PatientQuoteEditPage() {
     enabled: !!quoteId
   });
 
-  // Update form values when quote data is loaded
+  // Update form values and load treatments when quote data is loaded
   useEffect(() => {
     if (quoteData) {
+      // Update basic form values
       setFormValues({
         name: quoteData.name || "",
         email: quoteData.email || "",
@@ -68,6 +93,23 @@ export default function PatientQuoteEditPage() {
         otherTreatment: quoteData.otherTreatment || "",
         notes: quoteData.notes || ""
       });
+      
+      // Try to load existing treatments if available
+      try {
+        if (quoteData.quoteData) {
+          // If quote data is a string, parse it
+          const parsedData = typeof quoteData.quoteData === 'string' 
+            ? JSON.parse(quoteData.quoteData) 
+            : quoteData.quoteData;
+          
+          if (parsedData && Array.isArray(parsedData.treatments)) {
+            console.log('[DEBUG] Loaded existing treatments:', parsedData.treatments);
+            setSelectedTreatments(parsedData.treatments);
+          }
+        }
+      } catch (error) {
+        console.error('[ERROR] Failed to parse existing treatments:', error);
+      }
     }
   }, [quoteData]);
 
@@ -115,13 +157,75 @@ export default function PatientQuoteEditPage() {
     }
   });
 
+  // Add a treatment
+  const handleAddTreatment = (treatmentId: string) => {
+    // Find the treatment in available treatments
+    let selectedTreatment = null;
+    
+    if (treatmentMappings) {
+      for (const category of treatmentMappings) {
+        const treatment = category.treatments.find(t => t.id.toString() === treatmentId);
+        if (treatment) {
+          selectedTreatment = treatment;
+          break;
+        }
+      }
+    }
+    
+    if (selectedTreatment) {
+      // Create a new treatment item
+      const newTreatment: TreatmentItem = {
+        id: selectedTreatment.id,
+        name: selectedTreatment.targetName || selectedTreatment.sourceName || 'Treatment',
+        quantity: 1,
+        price: selectedTreatment.targetPrice || selectedTreatment.sourcePrice || 0
+      };
+      
+      // Add it to the selected treatments list
+      setSelectedTreatments(prev => [...prev, newTreatment]);
+      
+      toast({
+        title: "Treatment Added",
+        description: `Added ${newTreatment.name} to your quote`,
+      });
+    }
+  };
+  
+  // Remove a treatment
+  const handleRemoveTreatment = (index: number) => {
+    setSelectedTreatments(prev => 
+      prev.filter((_, i) => i !== index)
+    );
+  };
+  
+  // Update treatment quantity
+  const handleUpdateQuantity = (index: number, quantity: number) => {
+    setSelectedTreatments(prev => 
+      prev.map((treatment, i) => 
+        i === index 
+          ? { ...treatment, quantity: Math.max(1, quantity) } 
+          : treatment
+      )
+    );
+  };
+  
+  // Calculate total price
+  const totalPrice = selectedTreatments.reduce(
+    (sum, treatment) => sum + ((treatment.price || 0) * treatment.quantity), 
+    0
+  );
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Prepare the data for update
     const updateData = {
-      ...formValues
+      ...formValues,
+      quoteData: JSON.stringify({
+        treatments: selectedTreatments,
+        totalPrice: totalPrice
+      })
     };
     
     console.log('[DEBUG] Submitting quote update:', updateData);
@@ -271,6 +375,147 @@ export default function PatientQuoteEditPage() {
                   rows={2}
                 />
               </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Selected Treatments</h3>
+                
+                <div className="flex items-center gap-2">
+                  <Select onValueChange={handleAddTreatment} disabled={isLoadingTreatments}>
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue placeholder="Add a treatment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {treatmentMappings && treatmentMappings.map((category) => (
+                        <SelectGroup key={category.id}>
+                          <SelectLabel>{category.name}</SelectLabel>
+                          {category.treatments.map((treatment) => (
+                            <SelectItem 
+                              key={treatment.id} 
+                              value={treatment.id.toString()}
+                            >
+                              {treatment.targetName || treatment.sourceName} (£{treatment.targetPrice || treatment.sourcePrice})
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center"
+                    disabled={isLoadingTreatments}
+                    onClick={() => {
+                      if (treatmentMappings && treatmentMappings.length > 0 &&
+                          treatmentMappings[0].treatments.length > 0) {
+                        const firstTreatment = treatmentMappings[0].treatments[0];
+                        handleAddTreatment(firstTreatment.id.toString());
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Treatment
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Treatment List */}
+              {selectedTreatments.length > 0 ? (
+                <div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Treatment
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Quantity
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {selectedTreatments.map((treatment, index) => (
+                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {treatment.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <div className="flex items-center w-24">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-2 h-7"
+                                  onClick={() => handleUpdateQuantity(index, (treatment.quantity || 1) - 1)}
+                                  disabled={treatment.quantity <= 1}
+                                >
+                                  -
+                                </Button>
+                                <Input 
+                                  type="number"
+                                  min={1}
+                                  value={treatment.quantity || 1}
+                                  onChange={(e) => handleUpdateQuantity(index, parseInt(e.target.value) || 1)}
+                                  className="mx-2 h-8 text-center"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-2 h-7"
+                                  onClick={() => handleUpdateQuantity(index, (treatment.quantity || 1) + 1)}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                              £{((treatment.price || 0) * (treatment.quantity || 1)).toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => handleRemoveTreatment(index)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-gray-50">
+                        <tr>
+                          <td colSpan={2} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                            Total:
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                            £{totalPrice.toFixed(2)}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                  <p className="text-gray-500">No treatments selected. Add treatments from the dropdown above.</p>
+                </div>
+              )}
             </div>
             
             <Separator />
