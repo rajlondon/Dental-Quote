@@ -7,11 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Loader2, Plus } from 'lucide-react';
+import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Loader2, Plus, Eye, PencilIcon, Trash, DownloadIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/date-utils';
 import { ROUTES } from '@/lib/routes';
 import { useNavigation } from '@/hooks/use-navigation';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
 
 // TypeScript interfaces for better type safety
 interface Quote {
@@ -331,35 +337,119 @@ function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardP
             <span className="ml-2">{status.text}</span>
           </div>
           <div className="flex gap-2">
-            {/* Only show this button if the quote is not yet accepted */}
-            {quote.status !== 'accepted' && quote.status !== 'completed' && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-green-600 hover:text-green-800 hover:bg-green-50"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent parent card click
-                  // This would normally navigate to action page or call a mutation
-                  window.alert('This feature is not yet implemented');
-                }}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Accept
-              </Button>
-            )}
-          
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-blue-600 hover:bg-blue-50 border-blue-200 font-medium"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent parent card click
-                onClick(); // Use the same navigation function
-              }}
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              {t('quotes.view_details', 'View Details')}
-            </Button>
+            <TooltipProvider>
+              {/* View details button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent parent card click
+                      onClick(); // Use the same navigation function
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View Details</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              {/* Edit button - only show if quote is still in certain states */}
+              {['pending', 'assigned', 'in_progress'].includes(quote.status) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="h-8 w-8 text-amber-600 hover:bg-amber-50 border-amber-200"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent parent card click
+                        // Navigate to edit page or show modal
+                        window.alert('Edit functionality will be implemented soon');
+                      }}
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit Quote</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {/* Accept button - only show for sent quotes */}
+              {quote.status === 'sent' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="h-8 w-8 text-green-600 hover:bg-green-50 border-green-200"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent parent card click
+                        // Action to accept the quote
+                        window.alert('Accept functionality will be implemented soon');
+                      }}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Accept Quote</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {/* Download button - for completed quotes */}
+              {['accepted', 'completed'].includes(quote.status) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="h-8 w-8 text-purple-600 hover:bg-purple-50 border-purple-200"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent parent card click
+                        // Action to download quote PDF
+                        window.alert('Download functionality will be implemented soon');
+                      }}
+                    >
+                      <DownloadIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Download Quote</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {/* Delete button - available for all quotes */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="h-8 w-8 text-red-600 hover:bg-red-50 border-red-200"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent parent card click
+                      // Action to delete quote (with confirmation)
+                      if (window.confirm('Are you sure you want to delete this quote?')) {
+                        window.alert('Delete functionality will be implemented soon');
+                      }
+                    }}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete Quote</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </CardFooter>
