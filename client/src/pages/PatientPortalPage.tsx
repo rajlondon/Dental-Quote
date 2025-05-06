@@ -65,8 +65,8 @@ import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection'
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
 
-// Import our new quotes content component
-import { PatientQuotesContent } from '@/components/patient/PatientQuotesContent';
+// Import our newly fixed quotes content component
+import PatientQuotesContent from '@/components/patient/PatientQuotesContent-new';
 
 // Create a proper wrapper component for quotes section that can use hooks
 const QuotesSectionWrapper = () => {

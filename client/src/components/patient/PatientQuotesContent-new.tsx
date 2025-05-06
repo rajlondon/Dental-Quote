@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +46,6 @@ interface QuoteCardProps {
   quote: Quote;
   getStatusBadge: (status: string) => StatusBadge;
   getStatusIcon: (status: string) => React.ReactNode;
-  onClick: () => void;
 }
 
 /**
@@ -56,8 +55,7 @@ interface QuoteCardProps {
 export function PatientQuotesContent() {
   const { t } = useTranslation();
   const { navigateTo, navigateToRoute } = useNavigation();
-  const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = React.useState('all');
+  const [activeTab, setActiveTab] = useState('all');
 
   // Fetch user quotes with error handling
   const {
@@ -234,12 +232,6 @@ export function PatientQuotesContent() {
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onClick={() => {
-                  // Navigate to the quote detail view
-                  console.log(`[DEBUG] Navigating to quote ${quote.id}`);
-                  sessionStorage.setItem('patient_portal_section', 'quotes');
-                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
-                }}
               />
             ))}
           </div>
@@ -253,12 +245,6 @@ export function PatientQuotesContent() {
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onClick={() => {
-                  // Navigate to the quote detail view
-                  console.log(`[DEBUG] Navigating to quote ${quote.id}`);
-                  sessionStorage.setItem('patient_portal_section', 'quotes');
-                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
-                }}
               />
             ))}
           </div>
@@ -272,12 +258,6 @@ export function PatientQuotesContent() {
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onClick={() => {
-                  // Navigate to the quote detail view
-                  console.log(`[DEBUG] Navigating to quote ${quote.id}`);
-                  sessionStorage.setItem('patient_portal_section', 'quotes');
-                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
-                }}
               />
             ))}
           </div>
@@ -288,26 +268,30 @@ export function PatientQuotesContent() {
 }
 
 // Card component for individual quotes
-function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardProps) {
+function QuoteCard({ quote, getStatusBadge, getStatusIcon }: QuoteCardProps) {
   const { t } = useTranslation();
   const { navigateTo } = useNavigation();
   const status = getStatusBadge(quote.status);
   const statusIcon = getStatusIcon(quote.status);
   
-  // Define direct navigation function to patient portal with quote ID
+  // Handle view details navigation
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent parent card click
-    // Store the current section in session storage
+    
+    // Store information in session storage for the portal to use
     sessionStorage.setItem('patient_portal_section', 'quotes');
     sessionStorage.setItem('viewing_quote_id', quote.id.toString());
+    
     // Navigate to patient portal with quote ID as query parameter
     navigateTo(`${ROUTES.PATIENT_PORTAL}?section=quotes&quoteId=${quote.id}`);
+    
+    console.log(`[DEBUG] Navigating to quote ${quote.id} using patient portal URL with query parameters`);
   };
   
   return (
     <Card 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={handleViewDetails} // Use our new handler directly
+      onClick={handleViewDetails}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
@@ -356,7 +340,7 @@ function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardP
                     variant="outline" 
                     size="icon"
                     className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
-                    onClick={handleViewDetails} // Use our new direct navigation handler
+                    onClick={handleViewDetails}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
