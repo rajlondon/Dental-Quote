@@ -147,6 +147,15 @@ export interface IStorage {
   // Additional booking methods
   getAllBookings(filters?: { status?: string, stage?: string }): Promise<Booking[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
+  
+  // Special offers methods
+  getHomepageOffers(): Promise<any[]>;
+  getOffersByClinic(clinicId: string): Promise<any[]>;
+  getOffer(offerId: string): Promise<any | undefined>;
+  createOffer(offer: any): Promise<any>;
+  updateOffer(offerId: string, data: any): Promise<any | undefined>;
+  deleteOffer(offerId: string): Promise<boolean>;
+  getLastTreatmentPlanFromOffer(offerId: string, patientId: string): Promise<any | undefined>;
 }
 
 // Database implementation of IStorage
