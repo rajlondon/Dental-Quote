@@ -958,6 +958,7 @@ interface SpecialOfferParams {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { source, offerId, packageId, clinicId, isSpecialOfferFlow, isPackageFlow } = useQuoteFlow();
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   
@@ -1120,8 +1121,8 @@ const YourQuotePage: React.FC = () => {
   // Extract query parameters to control the flow
   const stepFromUrl = searchParams.get('step');
   const skipInfoParam = searchParams.get('skipInfo');
-  const clinicIdFromUrl = searchParams.get('clinicId');
-  const fromSpecialOffer = clinicIdFromUrl && clinicIdFromUrl.length > 0;
+  const clinicIdFromUrl = searchParams.get('clinicId') || clinicId; // Use clinicId from context if available
+  const fromSpecialOffer = (clinicIdFromUrl && clinicIdFromUrl.length > 0) || isSpecialOfferFlow;
   const [isQuoteReady, setIsQuoteReady] = useState(false);
   
   // Function to open edit quote modal
@@ -1209,6 +1210,30 @@ const YourQuotePage: React.FC = () => {
     // In a real implementation, we would parse query parameters here
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
+    
+    // Sync QuoteFlowContext with URL parameters if they exist
+    const offerId = searchParams.get('specialOffer');
+    const clinicIdFromUrl = searchParams.get('clinicId');
+    const packageIdFromUrl = searchParams.get('packageId');
+
+    // If coming from special offer, update context with the source type and IDs
+    if (offerId) {
+      setSource('special_offer');
+      setOfferId(offerId);
+      if (clinicIdFromUrl) {
+        setClinicId(clinicIdFromUrl);
+      }
+      console.log("Updated QuoteFlowContext with special offer source:", offerId);
+    } 
+    // If coming from package, update context with the source type and IDs
+    else if (packageIdFromUrl) {
+      setSource('package');
+      setPackageId(packageIdFromUrl);
+      if (clinicIdFromUrl) {
+        setClinicId(clinicIdFromUrl);
+      }
+      console.log("Updated QuoteFlowContext with package source:", packageIdFromUrl);
+    }
     
     // If we have a special offer from URL params, store it in sessionStorage for persistence across page reloads
     if (specialOffer && searchParams.get('specialOffer')) {
