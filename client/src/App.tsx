@@ -379,6 +379,14 @@ function Router() {
       {process.env.NODE_ENV !== 'production' && (
         <>
           <Route path="/error-test" component={ErrorTestPage} />
+          <Route path="/test-special-offers" component={() => {
+            const TestSpecialOffersPage = React.lazy(() => import("@/pages/TestSpecialOffersPage"));
+            return (
+              <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading test page...</div>}>
+                <TestSpecialOffersPage />
+              </Suspense>
+            );
+          }} />
           <Route path="/testing/xray-component">
             {() => {
               const TestComponent = React.lazy(() => import("@/pages/testing/XrayComponentTest"));
