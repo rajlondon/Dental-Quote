@@ -22,7 +22,15 @@ const router: Router = express.Router();
 const treatmentLineSchema = z.object({
   clinicId: z.number(),
   patientId: z.number(),
-  quoteId: z.string().uuid(),
+  // Accept either a UUID string OR a numeric quote ID that will be converted to UUID format
+  quoteId: z.union([
+    z.string().uuid(),
+    z.string().regex(/^\d+$/).transform(val => {
+      // For numeric IDs, we'll generate a deterministic UUID based on the numeric ID
+      // This is a simple way to map numeric IDs to UUIDs consistently
+      return `00000000-0000-4000-a000-${val.padStart(12, '0')}`;
+    })
+  ]),
   procedureCode: z.string(),
   description: z.string(),
   quantity: z.number().default(1),
@@ -175,8 +183,16 @@ router.get("/treatment-lines/:quoteId", isAuthenticated, async (req: Request, re
   }
   
   try {
+    // For numeric quote IDs, generate a deterministic UUID
+    let normalizedQuoteId = quoteId;
+    // Check if quoteId is numeric
+    if (/^\d+$/.test(quoteId)) {
+      normalizedQuoteId = `00000000-0000-4000-a000-${quoteId.padStart(12, '0')}`;
+      console.log(`[DEBUG] Converted numeric quote ID ${quoteId} to UUID format: ${normalizedQuoteId}`);
+    }
+    
     const treatmentLinesList = await db.query.treatmentLines.findMany({
-      where: eq(treatmentLines.quoteId, quoteId as string),
+      where: eq(treatmentLines.quoteId, normalizedQuoteId),
       with: {
         clinic: true,
         package: true

@@ -143,6 +143,12 @@ export function useTreatmentLines(quoteId?: string) {
   // Add a new treatment line - try multiple API paths
   const addTreatmentLine = useMutation({
     mutationFn: async (treatmentLine: any) => {
+      // Make sure numeric quote IDs are converted to strings for the UUID conversion
+      if (treatmentLine.quoteId && typeof treatmentLine.quoteId === 'number') {
+        treatmentLine.quoteId = treatmentLine.quoteId.toString();
+        console.log(`[API] Converted numeric quoteId to string: ${treatmentLine.quoteId}`);
+      }
+      
       // Log the API call for debugging with extra details
       console.log(`[API ATTEMPT] Trying to add new treatment line`);
       console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/treatment-lines`);
@@ -205,6 +211,12 @@ export function useTreatmentLines(quoteId?: string) {
   // Update an existing treatment line - try multiple API paths
   const updateTreatmentLine = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      // Make sure numeric quote IDs are converted to strings for the UUID conversion
+      if (data.quoteId && typeof data.quoteId === 'number') {
+        data.quoteId = data.quoteId.toString();
+        console.log(`[API] Converted numeric quoteId to string: ${data.quoteId}`);
+      }
+      
       // Log the API call for debugging with extra details
       console.log(`[API ATTEMPT] Trying to update treatment line with ID: ${id}`);
       console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/treatment-lines/${id}`);
