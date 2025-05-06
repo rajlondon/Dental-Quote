@@ -46,13 +46,18 @@ interface QuoteCardProps {
   quote: Quote;
   getStatusBadge: (status: string) => StatusBadge;
   getStatusIcon: (status: string) => React.ReactNode;
+  onSelectQuote: (id: number) => void;
+}
+
+interface PatientQuotesContentProps {
+  onSelectQuote: (id: number) => void;
 }
 
 /**
  * Patient quotes display component optimized for use directly in the patient portal
  * This component DISPLAYS quotes data, while PatientQuotesPage is now only a redirect component
  */
-export function PatientQuotesContent() {
+export function PatientQuotesContent({ onSelectQuote }: PatientQuotesContentProps) {
   const { t } = useTranslation();
   const { navigateTo, navigateToRoute } = useNavigation();
   const [activeTab, setActiveTab] = useState('all');
@@ -268,7 +273,7 @@ export function PatientQuotesContent() {
 }
 
 // Card component for individual quotes
-function QuoteCard({ quote, getStatusBadge, getStatusIcon }: QuoteCardProps) {
+function QuoteCard({ quote, getStatusBadge, getStatusIcon, onSelectQuote }: QuoteCardProps) {
   const { t } = useTranslation();
   const { navigateTo } = useNavigation();
   const status = getStatusBadge(quote.status);
@@ -278,14 +283,21 @@ function QuoteCard({ quote, getStatusBadge, getStatusIcon }: QuoteCardProps) {
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent parent card click
     
-    // Store information in session storage for the portal to use
-    sessionStorage.setItem('patient_portal_section', 'quotes');
-    sessionStorage.setItem('viewing_quote_id', quote.id.toString());
-    
-    // Navigate to patient portal with quote ID as query parameter
-    navigateTo(`${ROUTES.PATIENT_PORTAL}?section=quotes&quoteId=${quote.id}`);
-    
-    console.log(`[DEBUG] Navigating to quote ${quote.id} using patient portal URL with query parameters`);
+    // Call the onSelectQuote callback with the quote ID
+    if (onSelectQuote) {
+      console.log(`[DEBUG] Selecting quote ${quote.id} using onSelectQuote callback`);
+      onSelectQuote(quote.id);
+    } else {
+      // Fallback to old navigation method if callback not provided
+      console.log('[WARNING] onSelectQuote not provided, falling back to direct navigation');
+      
+      // Store information in session storage for the portal to use
+      sessionStorage.setItem('patient_portal_section', 'quotes');
+      sessionStorage.setItem('viewing_quote_id', quote.id.toString());
+      
+      // Navigate to patient portal with quote ID as query parameter
+      navigateTo(`${ROUTES.PATIENT_PORTAL}?section=quotes&quoteId=${quote.id}`);
+    }
   };
   
   return (
