@@ -158,8 +158,12 @@ function Router() {
       </Route>
       
       {/* Patient Portal Routes - Publicly accessible */}
-      <Route path="/client-portal" component={PatientPortalPage} />
-      <Route path="/patient-portal" component={PatientPortalPage} />
+      <Route path="/client-portal">
+        {() => <PatientPortalPage />}
+      </Route>
+      <Route path="/patient-portal">
+        {() => <PatientPortalPage />}
+      </Route>
       <Route path="/dental-chart" component={DentalChartPage} />
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
@@ -172,6 +176,16 @@ function Router() {
       <Route path="/verification-sent" component={VerificationSentPage} />
       <Route path="/email-verified" component={EmailVerifiedPage} />
       <Route path="/verification-failed" component={VerificationFailedPage} />
+      
+      {/* Canonical route for patient quote details - redirect from /patient/quotes/:id */}
+      <Route path="/portal/quotes/:id">
+        {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
+      </Route>
+      
+      {/* Legacy route - redirect to canonical route */}
+      <Route path="/patient/quotes/:id">
+        {(params) => <Redirect to={`/portal/quotes/${params.id}`} />}
+      </Route>
       
       {/* Booking Routes */}
       <ProtectedRoute path="/bookings" component={BookingsPage} />
