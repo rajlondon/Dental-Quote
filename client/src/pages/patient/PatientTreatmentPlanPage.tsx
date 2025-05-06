@@ -1,105 +1,134 @@
 /**
  * Patient Treatment Plan Page
  * 
- * Displays and allows editing of treatment plans for patients
- * Uses the unified treatment plan components
+ * This page displays a specific treatment plan for a patient, including details,
+ * status, and available actions.
  */
-import React from 'react';
-import { useParams, useLocation } from 'wouter';
+import React, { useEffect } from 'react';
+import { useRoute } from 'wouter';
+import { Loader2 } from 'lucide-react';
+import { PatientTreatmentPlan } from '@/components/treatment/PatientTreatmentPlan';
+import { useUnifiedTreatmentPlans } from '@/hooks/use-unified-treatment-plans';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PatientTreatmentPlan } from '@/components/treatment';
-import { ensureUuidFormat } from '@/utils/id-converter';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useNavigation } from '@/hooks/use-navigation';
 
 export default function PatientTreatmentPlanPage() {
-  const params = useParams<{id?: string}>();
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  
-  // Get the plan ID from the URL params
+  const [, params] = useRoute('/portal/treatment-plan/:id');
   const planId = params?.id;
+  const { toast } = useToast();
+  const { navigateTo } = useNavigation();
   
-  // Convert numeric ID to UUID format if needed
-  const formattedPlanId = planId ? ensureUuidFormat(planId) : undefined;
-  
-  // Fetch quote data (if coming from a quote)
+  // Use the unified treatment plans hook for consistent data fetching
   const {
-    data: quoteData,
-    isLoading: isLoadingQuote,
-    error: quoteError
-  } = useQuery({
-    queryKey: ['/api/quotes/detail', formattedPlanId],
-    queryFn: async () => {
-      if (!formattedPlanId) return null;
-      
-      try {
-        const response = await apiRequest('GET', `/api/quotes/detail/${formattedPlanId}`);
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.message || 'Failed to fetch quote details');
-        }
-        
-        return result.data;
-      } catch (error) {
-        console.error('Error fetching quote details:', error);
-        return null;
-      }
-    },
-    enabled: !!formattedPlanId && !planId.includes('-'), // Only fetch if it's likely a quote ID (no hyphens)
-    retry: false
-  });
+    plan,
+    planLoading,
+    planError,
+    fetchPlan,
+    bookAppointmentWithClinic
+  } = useUnifiedTreatmentPlans('patient');
   
-  // Function to handle going back to the quotes list
-  const handleBackToQuotes = () => {
-    setLocation('/portal/quotes');
+  // Fetch the treatment plan data when the component mounts or the ID changes
+  useEffect(() => {
+    if (planId) {
+      fetchPlan(planId);
+    }
+  }, [planId, fetchPlan]);
+  
+  // Handle booking appointment with the clinic assigned to this plan
+  const handleBookAppointment = async (plan) => {
+    if (!plan.clinicId) {
+      toast({
+        title: 'No Clinic Assigned',
+        description: 'This treatment plan has not been assigned to a clinic yet.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      await bookAppointmentWithClinic(plan);
+      toast({
+        title: 'Appointment Request Sent',
+        description: 'Your appointment request has been sent to the clinic.',
+      });
+      navigateTo('/portal/appointments');
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast({
+        title: 'Booking Failed',
+        description: 'Failed to book an appointment. Please try again later.',
+        variant: 'destructive',
+      });
+    }
   };
   
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={handleBackToQuotes}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Quotes
-        </Button>
+  // Show loading state
+  if (planLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Loading treatment plan...</p>
       </div>
-      
-      {/* Display loading state while fetching data */}
-      {isLoadingQuote && (
-        <div className="flex justify-center items-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
-      
-      {/* Display quote error */}
-      {quoteError && !planId.includes('-') && (
-        <div className="text-center py-8">
-          <p className="text-destructive mb-2">
-            Failed to load quote details. The quote may have been deleted or you don't have permission to view it.
-          </p>
-          <Button variant="outline" onClick={handleBackToQuotes}>
-            Back to Quotes
+    );
+  }
+  
+  // Show error state
+  if (planError || !planId) {
+    return (
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>Error Loading Treatment Plan</AlertTitle>
+          <AlertDescription>
+            {planError?.message || 'Treatment plan ID is missing or invalid.'}
+          </AlertDescription>
+        </Alert>
+        
+        <div className="flex justify-center mt-6">
+          <Button onClick={() => navigateTo('/portal/treatment-plans')}>
+            Back to Treatment Plans
           </Button>
         </div>
-      )}
+      </div>
+    );
+  }
+  
+  return (
+    <div className="container max-w-5xl mx-auto py-6 px-4">
+      {/* Breadcrumb navigation */}
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/client-portal">Patient Portal</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/client-portal?section=treatment-plans">
+              Treatment Plans
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="#" className="font-medium cursor-default">
+              {plan?.title || 'Treatment Plan Details'}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       
-      {/* Display the treatment plan */}
-      {/* Since our new component handles loading state internally, we only need to wait for quote data if relevant */}
-      {(!isLoadingQuote || planId.includes('-')) && (
+      {/* Treatment plan display */}
+      <div className="bg-card rounded-lg border shadow-sm p-6">
+        <h1 className="text-3xl font-bold mb-6">{plan?.title || 'Treatment Plan'}</h1>
+        
         <PatientTreatmentPlan
-          planId={planId?.includes('-') ? planId : undefined}
-          quoteId={!planId?.includes('-') ? planId : undefined}
+          planId={planId}
           showActions={true}
           showFullDetails={true}
+          onBookAppointment={handleBookAppointment}
         />
-      )}
+      </div>
     </div>
   );
 }
