@@ -31,13 +31,13 @@ export function useTreatmentLines(quoteId?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["/api/treatment-module/treatment-lines", quoteId],
+    queryKey: ["/api/treatment-plans/treatment-lines", quoteId],
     queryFn: async () => {
       if (!quoteId) return [];
       
       // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending GET request to /api/treatment-module/treatment-lines/${quoteId}`);
-      const response = await apiRequest("GET", `/api/treatment-module/treatment-lines/${quoteId}`);
+      console.log(`Sending GET request to /api/treatment-plans/treatment-lines/${quoteId}`);
+      const response = await apiRequest("GET", `/api/treatment-plans/treatment-lines/${quoteId}`);
       const data = await response.json() as TreatmentLineResponse;
       
       if (!data.success) {
@@ -55,11 +55,11 @@ export function useTreatmentLines(quoteId?: string) {
     isLoading: isSummaryLoading,
     error: summaryError,
   } = useQuery({
-    queryKey: ["/api/treatment-module/patient/treatment-summary"],
+    queryKey: ["/api/treatment-plans/patient/treatment-summary"],
     queryFn: async () => {
       // Use the correct API endpoint that's actually mounted in the server
-      console.log("Sending GET request to /api/treatment-module/patient/treatment-summary");
-      const response = await apiRequest("GET", "/api/treatment-module/patient/treatment-summary");
+      console.log("Sending GET request to /api/treatment-plans/patient/treatment-summary");
+      const response = await apiRequest("GET", "/api/treatment-plans/patient/treatment-summary");
       const data = await response.json() as TreatmentSummaryResponse;
       
       if (!data.success) {
