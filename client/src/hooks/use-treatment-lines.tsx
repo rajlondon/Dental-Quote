@@ -74,14 +74,14 @@ export function useTreatmentLines(quoteId?: string) {
   const addTreatmentLine = useMutation({
     mutationFn: async (treatmentLine: any) => {
       // Use the correct API endpoint that's actually mounted in the server
-      console.log("Sending POST request to /api/treatment-module/treatment-lines with data:", treatmentLine);
-      const response = await apiRequest("POST", "/api/treatment-module/treatment-lines", treatmentLine);
+      console.log("Sending POST request to /api/treatment-plans/treatment-lines with data:", treatmentLine);
+      const response = await apiRequest("POST", "/api/treatment-plans/treatment-lines", treatmentLine);
       return await response.json();
     },
     onSuccess: (data) => {
       // Use the correct query keys to match new endpoint paths
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/treatment-lines", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/patient/treatment-summary"] });
       
       toast({
         title: "Treatment added",
@@ -101,14 +101,14 @@ export function useTreatmentLines(quoteId?: string) {
   const updateTreatmentLine = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending PUT request to /api/treatment-module/treatment-lines/${id} with data:`, data);
-      const response = await apiRequest("PUT", `/api/treatment-module/treatment-lines/${id}`, data);
+      console.log(`Sending PUT request to /api/treatment-plans/treatment-lines/${id} with data:`, data);
+      const response = await apiRequest("PUT", `/api/treatment-plans/treatment-lines/${id}`, data);
       return await response.json();
     },
     onSuccess: (data) => {
       // Use the correct query keys to match new endpoint paths
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/treatment-lines", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/patient/treatment-summary"] });
       
       toast({
         title: "Treatment updated",
@@ -128,14 +128,14 @@ export function useTreatmentLines(quoteId?: string) {
   const deleteTreatmentLine = useMutation({
     mutationFn: async (id: string) => {
       // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending DELETE request to /api/treatment-module/treatment-lines/${id}`);
-      const response = await apiRequest("DELETE", `/api/treatment-module/treatment-lines/${id}`);
+      console.log(`Sending DELETE request to /api/treatment-plans/treatment-lines/${id}`);
+      const response = await apiRequest("DELETE", `/api/treatment-plans/treatment-lines/${id}`);
       return await response.json();
     },
     onSuccess: (data) => {
       // Use the correct query keys to match new endpoint paths
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/treatment-lines", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/treatment-module/patient/treatment-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/treatment-lines", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans/patient/treatment-summary"] });
       
       toast({
         title: "Treatment removed",
