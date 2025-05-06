@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,7 @@ interface OfferCardProps {
  */
 export function OfferCard({ offer }: OfferCardProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -61,7 +61,7 @@ export function OfferCard({ offer }: OfferCardProps) {
         sessionStorage.setItem('processingSpecialOffer', offer.id);
         
         // Redirect to login page
-        navigate('/portal-login');
+        setLocation('/portal-login');
         return;
       }
       
@@ -106,7 +106,7 @@ export function OfferCard({ offer }: OfferCardProps) {
         sessionStorage.removeItem('processingSpecialOffer');
         
         // Redirect to the quote review page
-        navigate(data.quoteUrl);
+        window.location.href = data.quoteUrl;
       } else {
         throw new Error('Invalid response from server');
       }

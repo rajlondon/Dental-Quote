@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,7 @@ interface PackageCardProps {
  */
 export function PackageCard({ package: pkg }: PackageCardProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -63,7 +63,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
         sessionStorage.setItem('processingPackage', pkg.id);
         
         // Redirect to login page
-        navigate('/portal-login');
+        setLocation('/portal-login');
         return;
       }
       
@@ -108,7 +108,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
         sessionStorage.removeItem('processingPackage');
         
         // Redirect to the quote review page
-        navigate(data.quoteUrl);
+        window.location.href = data.quoteUrl;
       } else {
         throw new Error('Invalid response from server');
       }
