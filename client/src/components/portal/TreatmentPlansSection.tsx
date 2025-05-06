@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useTreatmentLines } from "@/hooks/use-treatment-lines-v2";
 import { useToast } from "@/hooks/use-toast";
@@ -120,19 +120,20 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   };
 
   // Show treatment line details in a dialog
-  const showTreatmentDetails = (treatmentLine: any) => {
+  const showTreatmentDetails = (treatmentLine: any, useSpaNavigation = false) => {
     console.log('[DEBUG] Showing treatment details for ID:', treatmentLine.id);
     console.log('[DEBUG] Treatment data:', treatmentLine);
     
-    // Two options for showing details:
-    // 1. Dialog approach (current implementation)
-    setSelectedTreatmentLine(treatmentLine);
-    setIsDetailsOpen(true);
-    console.log('[DEBUG] Details dialog should now be visible');
-    
-    // 2. SPA navigation approach (could be used for dedicated pages)
-    // const treatmentLineId = ensureUuidFormat(treatmentLine.id);
-    // setLocation(`/portal/treatment/${treatmentLineId}`);
+    if (useSpaNavigation) {
+      // SPA navigation approach for dedicated pages
+      const treatmentLineId = ensureUuidFormat(treatmentLine.id);
+      setLocation(`/portal/treatment/${treatmentLineId}`);
+    } else {
+      // Dialog approach (default implementation)
+      setSelectedTreatmentLine(treatmentLine);
+      setIsDetailsOpen(true);
+      console.log('[DEBUG] Details dialog should now be visible');
+    }
   };
   
   // Navigate to the full quote details page
@@ -143,6 +144,32 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
     // Use SPA navigation via wouter
     setLocation(`/portal/quotes/${sanitizedId}`);
   };
+  
+  // Check if there's a selected treatment line ID in session storage
+  useEffect(() => {
+    try {
+      const selectedTreatmentLineId = sessionStorage.getItem('selected_treatment_line_id');
+      
+      if (selectedTreatmentLineId && treatmentLines && treatmentLines.length > 0) {
+        console.log('[DEBUG] Found selected treatment line ID in session storage:', selectedTreatmentLineId);
+        
+        // Look for the treatment line with the matching ID
+        const treatmentLine = treatmentLines.find(tl => ensureUuidFormat(tl.id) === selectedTreatmentLineId);
+        
+        if (treatmentLine) {
+          console.log('[DEBUG] Found matching treatment line:', treatmentLine);
+          // Show the details dialog
+          showTreatmentDetails(treatmentLine);
+          // Clear from session storage to prevent showing on subsequent visits
+          sessionStorage.removeItem('selected_treatment_line_id');
+        } else {
+          console.log('[DEBUG] No matching treatment line found for ID:', selectedTreatmentLineId);
+        }
+      }
+    } catch (error) {
+      console.error('[ERROR] Error processing selected treatment line:', error);
+    }
+  }, [treatmentLines]);
 
   // Handle loading states
   if (isLoading || isSummaryLoading) {
