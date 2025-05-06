@@ -1,0 +1,114 @@
+Keep one quote flow—add just two “hooks”
+Your idea works and needs only two surgical changes to the existing flow:
+
+Offer / Package Picker page (NEW Step 3a)
+
+Results filter logic (show 1 clinic if an offer/package was chosen)
+
+Everything else—the dental chart, personal‑info step, patient‑portal review—stays untouched.
+
+1  Re‑numbered wizard (no screens removed)
+Step	Screen	Change needed
+1	Concerns & Desired Outcomes	none
+2	Dental Chart	none
+3a (new)	Offers & Packages (optional)	user taps “Select” on a card → we store selectedOfferId or selectedPackageId on the quote object
+3b	Personal Information	stays as‑is (prefilled if we already know user)
+4	Treatment Selector	no change—user can add extra lines
+5	Timeline & Budget	no change
+6	Results	**IF `selectedOfferId
+7	Patient Portal Review	render quote lines + bonus/discount rows (already saved in DB)
+
+No flow forks; we just insert one lightweight page and tweak the query driving Results.
+
+2  Back‑end tweaks (tiny)
+Table	Fields to add
+quotes	selectedOfferId (nullable), selectedPackageId (nullable)
+
+Results API change:
+
+sql
+Copy
+Edit
+-- if an offer/package chosen, force WHERE clinic_id = (SELECT clinic_id FROM offers WHERE id = selectedOfferId)
+SELECT * FROM clinics
+WHERE ($1::uuid IS NULL AND $2::uuid IS NULL) -- no offer/package
+   OR id = (SELECT clinic_id FROM offers WHERE id = $1)
+   OR id = (SELECT clinic_id FROM packages WHERE id = $2)
+LIMIT 1;
+This means front‑end just calls the same /api/clinics?quoteId=...; server decides if it should return one clinic or many.
+
+3  Offer lines auto‑added
+In the endpoint that handles “Select” on the Offers page:
+
+Upsert quotes.selectedOfferId
+
+Insert a line into quote_lines (bonus zero‑price or discounted package price)
+
+json
+Copy
+Edit
+{
+  "quoteId": "q_45",
+  "description": "Free Return Flights",
+  "unitPrice": 0,
+  "isBonus": true
+}
+Now the Patient Portal review page needs no extra code—it already loops over quote lines.
+
+4  Front‑end: minimal component additions
+OffersPage.tsx (new)
+
+fetch /api/offers?clinicCity=${city}
+
+cards ↴ onClick → POST /api/quotes/:id/select-offer → navigate("/wizard/personal-info").
+
+ResultsPage.tsx
+
+tsx
+Copy
+Edit
+const { quote } = useQuote();
+const clinics = useClinics(quote.id);
+
+// clinics returns length 1 if an offer/package was chosen
+if (clinics.length === 1) return <SingleClinicCard clinic={clinics[0]} />;
+return <ClinicsGrid clinics={clinics} />;
+Everything else is unchanged.
+
+5  Will users feel “trapped” with one clinic?
+Not if you:
+
+Display a “Change clinic” link under the single card.
+Clicking it resets selectedOfferId and re‑runs the search showing all clinics.
+
+Highlight why this clinic is shown:
+
+“You selected Free Return Flights—offered by Partner Clinic #1. Switch clinic ›”
+
+6  Testing with seeded data
+Seed one offer (Free Flights) tied to clinic A.
+
+Run flow: select offer → Results shows only clinic A → pick it → portal shows flight line at £0.
+
+Run flow again without selecting an offer → Results shows all clinics.
+
+7  If Replit agent still “doesn’t show changes”
+The agent probably edits code but the browser loads an old build.
+After each agent run:
+
+bash
+Copy
+Edit
+kill 1   # restarts Replit container cleanly
+Or append ?cacheBust=123 to the URL.
+
+Summary
+One extra page (Offers & Packages)
+
+Two new DB columns
+
+Results endpoint filters to one clinic when needed
+
+Same quote flow, same Review UI
+
+That meets your goals with the least disruption—and users still get a straightforward path whether they come for a bargain or for a full comparison.
