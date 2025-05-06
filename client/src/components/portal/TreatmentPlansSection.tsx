@@ -102,8 +102,11 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
 
   // Show treatment line details in a dialog
   const showTreatmentDetails = (treatmentLine: any) => {
+    console.log('[DEBUG] Showing treatment details for ID:', treatmentLine.id);
+    console.log('[DEBUG] Treatment data:', treatmentLine);
     setSelectedTreatmentLine(treatmentLine);
     setIsDetailsOpen(true);
+    console.log('[DEBUG] Details dialog should now be visible');
   };
 
   // Handle loading states
@@ -242,17 +245,32 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                               </TableHeader>
                               <TableBody>
                                 {clinicData.treatmentLines.map((tl) => (
-                                  <TableRow key={tl.id} className="cursor-pointer hover:bg-accent/50" onClick={() => showTreatmentDetails(tl)}>
+                                  <TableRow key={tl.id}>
                                     <TableCell>{tl.description}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice), 'GBP')}</TableCell>
                                     <TableCell className="text-center">{tl.quantity}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice) * tl.quantity, 'GBP')}</TableCell>
                                     <TableCell className="text-center">
-                                      {tl.isPackage ? (
-                                        <Package className="h-4 w-4 inline-block" />
-                                      ) : (
-                                        <FileText className="h-4 w-4 inline-block" />
-                                      )}
+                                      <div className="flex items-center justify-center space-x-2">
+                                        {tl.isPackage ? (
+                                          <Package className="h-4 w-4" />
+                                        ) : (
+                                          <FileText className="h-4 w-4" />
+                                        )}
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-6 w-6 p-0"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            showTreatmentDetails(tl);
+                                            return false;
+                                          }}
+                                        >
+                                          <Eye className="h-3 w-3" />
+                                          <span className="sr-only">View</span>
+                                        </Button>
+                                      </div>
                                     </TableCell>
                                   </TableRow>
                                 ))}
@@ -297,32 +315,31 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                         <TableCell className="text-center">{tl.quantity}</TableCell>
                         <TableCell className="text-right">{formatCurrency(Number(tl.unitPrice) * tl.quantity, 'GBP')}</TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={(e) => {
-                                // Prevent default navigation behavior
+                          {/* Replace dropdown with direct action buttons */}
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => {
                                 e.preventDefault();
-                                e.stopPropagation();
                                 showTreatmentDetails(tl);
-                              }}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                // Prevent default navigation behavior
+                                return false;
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => {
                                 e.preventDefault();
-                                e.stopPropagation();
                                 
                                 try {
                                   console.log("Edit action clicked for treatment line:", tl.id);
-                                  // Show edit dialog
                                   setSelectedTreatmentLine(tl);
                                   setIsEditMode(true);
                                   setIsDetailsOpen(true);
@@ -334,54 +351,52 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                     variant: "destructive",
                                   });
                                 }
-                              }}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={(e) => {
-                                  // Prevent default navigation behavior
-                                  e.preventDefault();
-                                  e.stopPropagation();
+                                return false;
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                
+                                try {
+                                  console.log("Delete action clicked for treatment line:", tl.id);
+                                  console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + tl.id);
                                   
-                                  try {
-                                    console.log("Delete action clicked for treatment line:", tl.id);
-                                    console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + tl.id);
+                                  if (confirm("Are you sure you want to delete this treatment?")) {
+                                    console.log("[DEBUG] Delete action - User confirmed delete");
                                     
-                                    // Use the treatment hook's deleteTreatmentLine function
-                                    if (confirm("Are you sure you want to delete this treatment?")) {
-                                      console.log("[DEBUG] Delete action - User confirmed delete");
-                                      
-                                      // Use the deleteTreatmentLine mutation from the hook
-                                      deleteTreatmentLine.mutate(tl.id, {
-                                        onSuccess: (data) => {
-                                          console.log("[DEBUG] Delete treatment line success:", data);
-                                          // No need for additional toast - the hook already shows it
-                                        },
-                                        onError: (error) => {
-                                          console.error("[DEBUG] Delete treatment line error:", error);
-                                          console.error("[DEBUG] Error details:", error instanceof Error ? error.message : String(error));
-                                          // No need for additional toast - the hook already shows it
-                                        }
-                                      });
-                                    }
-                                  } catch (error) {
-                                    console.error("Error in delete action:", error);
-                                    toast({
-                                      title: "Error",
-                                      description: "An unexpected error occurred",
-                                      variant: "destructive",
+                                    deleteTreatmentLine.mutate(tl.id, {
+                                      onSuccess: (data) => {
+                                        console.log("[DEBUG] Delete treatment line success:", data);
+                                      },
+                                      onError: (error) => {
+                                        console.error("[DEBUG] Delete treatment line error:", error);
+                                        console.error("[DEBUG] Error details:", error instanceof Error ? error.message : String(error));
+                                      }
                                     });
                                   }
-                                }}
-                              >
-                                <Trash className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                } catch (error) {
+                                  console.error("Error in delete action:", error);
+                                  toast({
+                                    title: "Error",
+                                    description: "An unexpected error occurred",
+                                    variant: "destructive",
+                                  });
+                                }
+                                return false;
+                              }}
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
