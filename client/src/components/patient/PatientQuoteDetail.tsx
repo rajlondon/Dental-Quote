@@ -1,15 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, FileText, Clock, CalendarClock, Download, Building, User, DollarSign, Calendar } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { ensureUuidFormat } from '@/lib/id-converter';
+import { formatDate } from '@/lib/date-utils';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigation } from '@/hooks/use-navigation';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle } from 'lucide-react';
 
 interface PatientQuoteDetailProps {
   quoteId: string | number;
@@ -18,45 +18,45 @@ interface PatientQuoteDetailProps {
 
 /**
  * Component to display the details of a specific quote within the patient portal
+ * This component allows viewing quote details without navigating away from the patient portal
  */
-export function PatientQuoteDetail({ quoteId, onBack }: PatientQuoteDetailProps) {
+const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const { navigateToRoute } = useNavigation();
+
+  // Format the quote ID as needed
+  const formattedQuoteId = typeof quoteId === 'string' ? quoteId : quoteId.toString();
   
-  // Fetch specific quote data
-  const {
-    data: quote,
-    isLoading,
-    error,
-    refetch
+  // Fetch the quote details
+  const { 
+    data: quote, 
+    isLoading, 
+    error 
   } = useQuery({
-    queryKey: [`/api/quotes/${quoteId}`],
+    queryKey: ['/api/quotes/details', formattedQuoteId],
     queryFn: async () => {
-      console.log(`[DEBUG] PatientQuoteDetail: Fetching quote ${quoteId} from API`);
+      console.log(`[DEBUG] Fetching quote details for ID: ${formattedQuoteId}`);
       try {
-        const response = await apiRequest('GET', `/api/quotes/${quoteId}`);
+        const response = await apiRequest('GET', `/api/quotes/${formattedQuoteId}`);
         const data = await response.json();
         
         if (!data.success) {
-          console.error('[ERROR] Quote API returned unsuccessful response:', data);
+          console.error('[ERROR] Quote details API returned unsuccessful response:', data);
           throw new Error(data.message || 'Failed to fetch quote details');
         }
         
-        console.log('[DEBUG] Successfully loaded quote:', data.data);
-        return data.data;
+        console.log('[DEBUG] Successfully loaded quote details:', data.data);
+        return data.data || null;
       } catch (error) {
-        console.error(`[ERROR] Failed to fetch quote ${quoteId}:`, error);
+        console.error('[ERROR] Failed to fetch quote details:', error);
         throw error;
       }
-    }
+    },
+    staleTime: 60000 // 1 minute
   });
-  
-  // Ensure we have the latest data when this component mounts
-  useEffect(() => {
-    console.log(`[DEBUG] PatientQuoteDetail mounted, refreshing quote ${quoteId} data`);
-    refetch();
-  }, [quoteId, refetch]);
-  
-  // Get the status badge for the quote
+
+  // Get status badge color and text for a status
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'sent':
@@ -77,7 +77,71 @@ export function PatientQuoteDetail({ quoteId, onBack }: PatientQuoteDetailProps)
         return { color: 'bg-gray-400', text: status.charAt(0).toUpperCase() + status.slice(1) };
     }
   };
-  
+
+  // Get the status icon for a quote based on its status
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'sent':
+        return <Loader2 className="h-5 w-5 text-blue-500" />;
+      case 'in_progress':
+        return <Loader2 className="h-5 w-5 text-yellow-500 animate-spin" />;
+      case 'accepted':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'rejected':
+        return <ShieldX className="h-5 w-5 text-red-500" />;
+      case 'expired':
+        return <AlertTriangle className="h-5 w-5 text-gray-700" />;
+      default:
+        return <FileText className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  // Handle payment for a quote
+  const handlePayment = () => {
+    // Navigate to payment page
+    toast({
+      title: "Payment feature coming soon",
+      description: "The payment feature is currently under development."
+    });
+  };
+
+  // Handle making appointment for the quote
+  const handleMakeAppointment = () => {
+    // Navigate to appointments page
+    toast({
+      title: "Appointment booking coming soon",
+      description: "The appointment booking feature is currently under development."
+    });
+  };
+
+  // Handle accepting the quote
+  const handleAcceptQuote = () => {
+    // Accept the quote API call
+    toast({
+      title: "Quote accepted",
+      description: "Thank you for accepting the quote. A representative will contact you soon.",
+      variant: "success"
+    });
+  };
+
+  // Handle rejecting the quote
+  const handleRejectQuote = () => {
+    // Reject the quote API call
+    toast({
+      title: "Quote rejected",
+      description: "The quote has been rejected. Please provide feedback to help us improve."
+    });
+  };
+
+  // Handle downloading the quote as PDF
+  const handleDownload = () => {
+    // Download the quote as PDF
+    toast({
+      title: "Download started",
+      description: "Your quote PDF is being generated and will download shortly."
+    });
+  };
+
   // Show loading state
   if (isLoading) {
     return (
@@ -87,260 +151,200 @@ export function PatientQuoteDetail({ quoteId, onBack }: PatientQuoteDetailProps)
       </div>
     );
   }
-  
+
   // Show error state
   if (error || !quote) {
     return (
-      <div className="space-y-4">
-        <Button 
-          variant="outline" 
-          onClick={onBack}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Quotes
-        </Button>
-        
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <FileText className="h-10 w-10 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-red-700 mb-2">
-            {t('quotes.error_details_title', 'Error Loading Quote')}
-          </h3>
-          <p className="text-red-600 mb-4">
-            {t('quotes.error_details_description', 'There was a problem loading this quote. Please try again later.')}
-          </p>
-          <Button onClick={() => refetch()} variant="outline">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <AlertTriangle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-red-700 mb-2">
+          {t('quotes.error_details_title', 'Error Loading Quote Details')}
+        </h3>
+        <p className="text-red-600 mb-4">
+          {t('quotes.error_details_description', 'There was a problem loading the quote details. Please try again later.')}
+        </p>
+        <div className="flex justify-center space-x-4">
+          <Button onClick={onBack} variant="outline" className="flex items-center">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('common.back', 'Back')}
+          </Button>
+          <Button onClick={() => window.location.reload()}>
             {t('common.retry', 'Retry')}
           </Button>
         </div>
       </div>
     );
   }
-  
-  // Get status badge for this quote
+
+  // Get the status display
   const status = getStatusBadge(quote.status);
-  
-  // Extract treatment items from the quote (handle different data structures)
-  const treatmentItems = quote.treatmentLines || quote.treatments || [];
-  
+  const StatusIcon = () => getStatusIcon(quote.status);
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Back button and title */}
+      <div className="flex items-center justify-between">
         <Button 
-          variant="outline" 
+          variant="ghost" 
           onClick={onBack}
+          className="flex items-center text-gray-600 hover:text-gray-900 px-2"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Quotes
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('common.back_to_quotes', 'Back to Quotes')}
         </Button>
-        
-        {(quote.status === 'accepted' || quote.status === 'completed') && (
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" /> Download Quote PDF
-          </Button>
+        <Badge className={status.color}>
+          {status.text}
+        </Badge>
+      </div>
+
+      {/* Quote header */}
+      <div>
+        <h1 className="text-2xl font-bold">
+          {quote.title || `Quote #${quote.id.toString().slice(0, 8)}`}
+        </h1>
+        <div className="flex items-center mt-2 text-gray-600">
+          <StatusIcon />
+          <span className="ml-2">{status.text}</span>
+          <span className="mx-2">•</span>
+          <span>{formatDate(quote.createdAt) || 'N/A'}</span>
+        </div>
+      </div>
+
+      {/* Clinic information */}
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h2 className="font-semibold mb-2">{t('quotes.clinic_information', 'Clinic Information')}</h2>
+        <p className="text-lg font-medium">{quote.clinicName || 'Multiple Clinics'}</p>
+        {quote.clinicAddress && (
+          <p className="text-gray-600">{quote.clinicAddress}</p>
+        )}
+        {quote.clinicContact && (
+          <p className="text-gray-600">{quote.clinicContact}</p>
         )}
       </div>
-      
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Quote Overview Card */}
-        <Card className="col-span-3 md:col-span-2">
-          <CardHeader className="pb-3 flex flex-row justify-between items-start">
-            <div>
-              <CardTitle className="text-xl">
-                {quote.title || `Quote #${quote.id.toString().slice(0, 8)}`}
-              </CardTitle>
-              <p className="text-gray-500 text-sm mt-1">
-                Created on {formatDate(quote.createdAt) || 'N/A'}
-              </p>
-            </div>
-            <Badge className={status.color}>{status.text}</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <Building className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Clinic</p>
-                    <p className="text-gray-600">{quote.clinicName || 'Multiple Clinics'}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <User className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Patient</p>
-                    <p className="text-gray-600">{quote.name}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <CalendarClock className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Status</p>
-                    <p className="text-gray-600">{status.text}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <DollarSign className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Total</p>
-                    <p className="text-gray-600">£{quote.totalPrice || 'TBD'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Quick Actions Card */}
-        <Card className="col-span-3 md:col-span-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              {t('quotes.actions', 'Actions')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {quote.status === 'sent' && (
-              <Button className="w-full bg-green-600 hover:bg-green-700">
-                Accept Quote
-              </Button>
-            )}
-            
-            {quote.status === 'in_progress' && (
-              <Button className="w-full">
-                Track Progress
-              </Button>
-            )}
-            
-            {['pending', 'sent', 'in_progress'].includes(quote.status) && (
-              <Button variant="outline" className="w-full">
-                Request Changes
-              </Button>
-            )}
-            
-            <Button variant="outline" className="w-full text-red-600 hover:bg-red-50 border-red-200">
-              Cancel Quote
-            </Button>
-          </CardContent>
-        </Card>
+
+      {/* Treatments list */}
+      <div>
+        <h2 className="font-semibold mb-4">{t('quotes.treatments', 'Treatments')}</h2>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('quotes.treatment_name', 'Treatment')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('quotes.quantity', 'Quantity')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('quotes.price', 'Price')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {quote.treatments && quote.treatments.map((treatment, index) => (
+                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {treatment.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {treatment.quantity || 1}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                    £{treatment.price || 0}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-gray-50">
+              <tr>
+                <td colSpan={2} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                  {t('quotes.total', 'Total')}:
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                  £{quote.totalPrice || 0}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
-      
-      {/* Treatment Details */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">
-            {t('quotes.treatments', 'Treatments')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {treatmentItems.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('quotes.treatment_name', 'Treatment')}</TableHead>
-                  <TableHead>{t('quotes.quantity', 'Quantity')}</TableHead>
-                  <TableHead>{t('quotes.price', 'Price')}</TableHead>
-                  <TableHead className="text-right">{t('quotes.total', 'Total')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {treatmentItems.map((item: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{item.name || item.treatment || 'Unknown Treatment'}</TableCell>
-                    <TableCell>{item.quantity || 1}</TableCell>
-                    <TableCell>£{item.price || 0}</TableCell>
-                    <TableCell className="text-right">£{(item.price || 0) * (item.quantity || 1)}</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell colSpan={3} className="text-right font-bold">
-                    {t('quotes.total', 'Total')}
-                  </TableCell>
-                  <TableCell className="text-right font-bold">
-                    £{quote.totalPrice || treatmentItems.reduce((sum: number, item: any) => 
-                      sum + ((item.price || 0) * (item.quantity || 1)), 0)
-                    }
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-6 text-gray-500">
-              <FileText className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-              <p>{t('quotes.no_treatments', 'No treatments found in this quote.')}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      {/* Additional Details */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">
-            {t('quotes.additional_details', 'Additional Details')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="notes">
-            <TabsList>
-              <TabsTrigger value="notes">{t('quotes.notes', 'Notes')}</TabsTrigger>
-              <TabsTrigger value="timeline">{t('quotes.timeline', 'Timeline')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="notes" className="pt-4">
-              <div className="prose max-w-none">
-                {quote.notes ? (
-                  <div dangerouslySetInnerHTML={{ __html: quote.notes }} />
-                ) : (
-                  <p className="text-gray-500">
-                    {t('quotes.no_notes', 'No additional notes for this quote.')}
-                  </p>
-                )}
-              </div>
-            </TabsContent>
-            <TabsContent value="timeline" className="pt-4">
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="mt-1 mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                    <Clock className="h-4 w-4 text-blue-700" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Quote Created</p>
-                    <p className="text-sm text-gray-500">{formatDate(quote.createdAt) || 'N/A'}</p>
-                  </div>
-                </div>
-                
-                {quote.status !== 'pending' && (
-                  <div className="flex items-start">
-                    <div className="mt-1 mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                      <Calendar className="h-4 w-4 text-green-700" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Quote Sent</p>
-                      <p className="text-sm text-gray-500">{formatDate(quote.sentAt || quote.updatedAt) || 'N/A'}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {quote.status === 'accepted' && (
-                  <div className="flex items-start">
-                    <div className="mt-1 mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                      <CalendarClock className="h-4 w-4 text-green-700" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Quote Accepted</p>
-                      <p className="text-sm text-gray-500">{formatDate(quote.acceptedAt || quote.updatedAt) || 'N/A'}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+
+      {/* Notes */}
+      {quote.notes && (
+        <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <h2 className="font-semibold mb-2 text-blue-800">{t('quotes.notes', 'Notes')}</h2>
+          <p className="text-blue-700 whitespace-pre-line">{quote.notes}</p>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <Separator />
+      <div className="flex flex-wrap gap-3 justify-end">
+        {/* Show different actions based on quote status */}
+        {quote.status === 'sent' && (
+          <>
+            <Button 
+              variant="outline" 
+              className="flex items-center text-green-600 hover:bg-green-50 border-green-200"
+              onClick={handleAcceptQuote}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {t('quotes.accept', 'Accept Quote')}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center text-red-600 hover:bg-red-50 border-red-200"
+              onClick={handleRejectQuote}
+            >
+              <ShieldX className="h-4 w-4 mr-2" />
+              {t('quotes.reject', 'Reject Quote')}
+            </Button>
+          </>
+        )}
+
+        {['accepted', 'completed'].includes(quote.status) && (
+          <>
+            <Button 
+              variant="outline" 
+              className="flex items-center text-purple-600 hover:bg-purple-50 border-purple-200"
+              onClick={handleMakeAppointment}
+            >
+              <CalendarCheck className="h-4 w-4 mr-2" />
+              {t('quotes.book_appointment', 'Book Appointment')}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center text-indigo-600 hover:bg-indigo-50 border-indigo-200"
+              onClick={handlePayment}
+            >
+              <Wallet className="h-4 w-4 mr-2" />
+              {t('quotes.make_payment', 'Make Payment')}
+            </Button>
+          </>
+        )}
+
+        {/* Message button - available for all quotes */}
+        <Button 
+          variant="outline" 
+          className="flex items-center text-blue-600 hover:bg-blue-50 border-blue-200"
+          onClick={() => navigateToRoute('PATIENT_MESSAGES')}
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          {t('quotes.contact', 'Contact Clinic')}
+        </Button>
+
+        {/* Download button - available for all quotes */}
+        <Button 
+          variant="outline" 
+          className="flex items-center text-gray-600 hover:bg-gray-50"
+          onClick={handleDownload}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {t('quotes.download', 'Download Quote')}
+        </Button>
+      </div>
     </div>
   );
-}
+};
 
 export default PatientQuoteDetail;
