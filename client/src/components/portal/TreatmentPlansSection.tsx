@@ -339,12 +339,12 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                     if (confirm("Are you sure you want to delete this treatment?")) {
                                       // Use the deleteTreatmentLine mutation from the hook
                                       deleteTreatmentLine.mutate(tl.id, {
-                                        onSuccess: () => {
-                                          console.log("Success deleting treatment line");
+                                        onSuccess: (data) => {
+                                          console.log(`[DEBUG] Delete treatment line success:`, data);
                                           // No need for additional toast - the hook already shows it
                                         },
                                         onError: (error) => {
-                                          console.error("Error in delete mutation:", error);
+                                          console.error(`[DEBUG] Delete treatment line error:`, error);
                                           // No need for additional toast - the hook already shows it
                                         }
                                       });
@@ -549,14 +549,14 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                             data: updateData 
                           }, 
                           {
-                            onSuccess: () => {
-                              console.log("Success updating treatment line");
+                            onSuccess: (data) => {
+                              console.log(`[DEBUG] Update treatment line success:`, data);
                               // No need for additional toast - the hook already shows it
                               setIsEditMode(false);
                               setIsDetailsOpen(false);
                             },
                             onError: (error) => {
-                              console.error("Error in update mutation:", error);
+                              console.error(`[DEBUG] Update treatment line error:`, error);
                               // No need for additional toast - the hook already shows it
                             }
                           }
