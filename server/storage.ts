@@ -1864,6 +1864,58 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
+  
+  async getPackage(packageId: string): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Getting treatment package with ID: ${packageId}`);
+      
+      // Query the package with clinic information
+      const packageData = await db.query.packages.findFirst({
+        where: eq(packages.id, packageId),
+        with: {
+          clinic: true
+        }
+      });
+      
+      if (!packageData) {
+        console.log(`[Storage] Package not found with ID: ${packageId}`);
+        return undefined;
+      }
+      
+      // Process JSON fields to ensure proper serialization
+      const processedPackage = {
+        ...packageData,
+        // Safely handle potential JSON string fields with null checks
+        hotelDetails: packageData.hotelDetails ? (
+          typeof packageData.hotelDetails === 'string' 
+            ? JSON.parse(packageData.hotelDetails) 
+            : packageData.hotelDetails
+        ) : null,
+        flightDetails: packageData.flightDetails ? (
+          typeof packageData.flightDetails === 'string' 
+            ? JSON.parse(packageData.flightDetails) 
+            : packageData.flightDetails
+        ) : null,
+        // Ensure the clinic data is provided in a consistent format
+        clinic: packageData.clinic ? {
+          id: packageData.clinic.id,
+          name: packageData.clinic.name,
+          email: packageData.clinic.email,
+          city: packageData.clinic.city,
+          country: packageData.clinic.country,
+          specialties: packageData.clinic.specialties || [],
+          rating: packageData.clinic.rating || 0,
+          reviewCount: packageData.clinic.reviewCount || 0
+        } : null
+      };
+      
+      console.log(`[Storage] Successfully retrieved package ${packageId}: ${processedPackage.name}`);
+      return processedPackage;
+    } catch (error) {
+      console.error(`[Storage] Error getting package ${packageId}:`, error);
+      return undefined;
+    }
+  }
 }
 
 // Export an instance of the storage class
