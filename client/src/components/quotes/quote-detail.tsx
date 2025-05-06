@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { getStatusBadgeColor, getStatusLabel } from "./quote-list-table";
 import { useNavigation } from "@/hooks/use-navigation";
-import ROUTES from "@/lib/routes";
+import { ROUTES } from "@/lib/routes";
 import { 
   ArrowLeft, 
   Clipboard, 
