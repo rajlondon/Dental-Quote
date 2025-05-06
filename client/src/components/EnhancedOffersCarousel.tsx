@@ -446,12 +446,18 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
+  const { setSource, setOfferId, setClinicId } = useQuoteFlow();
   
-  // Handle quote request with authentication check
+  // Handle quote request with authentication check using QuoteFlowContext
   const handleRequestQuote = (offer: SpecialOffer) => {
     console.log("Special Offer Request Quote clicked:", offer);
     
-    // Standardize the offer data format to ensure consistency across the application
+    // Set the source, offer ID, and clinic ID in the QuoteFlowContext
+    setSource('special_offer');
+    setOfferId(offer.id);
+    setClinicId(offer.clinic_id);
+    
+    // Standardize the offer data format to maintain compatibility with existing code
     const standardizedOfferData = {
       id: offer.id,
       title: offer.title,
@@ -463,40 +469,27 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                            : 'Dental Implants'
     };
     
-    // Build query parameters for the offer
-    const params = new URLSearchParams({
-      specialOffer: standardizedOfferData.id,
-      offerTitle: standardizedOfferData.title,
-      offerClinic: standardizedOfferData.clinicId || '',
-      offerDiscount: standardizedOfferData.discountValue.toString(),
-      offerDiscountType: standardizedOfferData.discountType,
-      treatment: standardizedOfferData.applicableTreatment
-    });
-    
-    console.log("Generated URL params:", params.toString());
     console.log("Auth state - loading:", authLoading, "user:", user ? "logged in" : "not logged in");
     
     // Check if user is authenticated
     if (!authLoading && user) {
-      console.log("User authenticated, proceeding to quote form with special offer context");
+      console.log("User authenticated, proceeding to quote flow with special offer context");
       
-      // Store the special offer in sessionStorage for use by the quote form
+      // Store the special offer in sessionStorage for backward compatibility
       sessionStorage.setItem('activeSpecialOffer', JSON.stringify(standardizedOfferData));
-      console.log("Saved activeSpecialOffer to sessionStorage:", standardizedOfferData);
       
       // User is logged in, proceed with quote and notify
       toast({
         title: "Special Offer Selected",
-        description: `${offer.title} will be applied to your quote results.`,
+        description: `${offer.title} will be applied to your quote.`,
         variant: "default",
       });
       
-      // Redirect to the quote page where user can select treatments and clinics
-      // with the special offer clinic highlighted - use setLocation for SPA navigation
+      // Redirect to the quote page where user can see selected offer
       console.log("Redirecting to quote page with special offer context");
       setLocation('/your-quote');
     } else {
-      console.log("User not authenticated, saving offer to sessionStorage");
+      console.log("User not authenticated, saving offer info for after login");
       
       // Check if we're already processing this offer to avoid duplicate redirects
       const processingOffer = sessionStorage.getItem('processingSpecialOffer');
@@ -520,8 +513,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       sessionStorage.removeItem('processingSpecialOffer');
       
       // Save the standardized offer data to sessionStorage for retrieval after login
+      // This maintains backward compatibility with existing code
       console.log("Saving pendingSpecialOffer:", standardizedOfferData);
       sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
+      sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
       
       // Notify user they need to login
       toast({
@@ -530,7 +525,14 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         variant: "default",
       });
       
-      // Redirect to login page - use setLocation for SPA navigation
+      // Save to toast message to confirm selection persisted
+      toast({
+        title: "Selection Saved",
+        description: "Your special offer selection will be applied after login",
+        variant: "default",
+      });
+      
+      // Redirect to login page
       console.log("Redirecting to portal login page");
       setLocation('/portal-login');
     }
