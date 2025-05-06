@@ -237,6 +237,7 @@ export function PatientQuotesContent({ onSelectQuote }: PatientQuotesContentProp
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
+                onSelectQuote={onSelectQuote}
               />
             ))}
           </div>
@@ -250,6 +251,7 @@ export function PatientQuotesContent({ onSelectQuote }: PatientQuotesContentProp
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
+                onSelectQuote={onSelectQuote}
               />
             ))}
           </div>
@@ -263,6 +265,7 @@ export function PatientQuotesContent({ onSelectQuote }: PatientQuotesContentProp
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
+                onSelectQuote={onSelectQuote}
               />
             ))}
           </div>

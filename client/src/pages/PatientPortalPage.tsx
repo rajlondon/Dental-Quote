@@ -73,16 +73,19 @@ import PatientQuoteDetail from '@/components/patient/PatientQuoteDetail';
 const QuotesSectionWrapper = () => {
   const { t } = useTranslation();
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
+  // Get URL parameters the wouter way
+  const search = useSearch();
   
   // Check URL params for quote ID
   useEffect(() => {
-    const quoteId = searchParams.get('quoteId');
+    // Use URLSearchParams to parse the search string
+    const params = new URLSearchParams(search);
+    const quoteId = params.get('quoteId');
     if (quoteId) {
       console.log(`[DEBUG] Found quoteId in URL params: ${quoteId}`);
       setSelectedQuoteId(quoteId);
     }
-  }, [searchParams]);
+  }, [search]);
   
   // Use effect hook to refresh quotes data when this section is displayed
   useEffect(() => {
@@ -92,10 +95,24 @@ const QuotesSectionWrapper = () => {
   
   // Handler for going back to quotes list
   const handleBackToQuotes = () => {
+    // Clear the selected quote ID
     setSelectedQuoteId(null);
-    // Clear the quoteId from URL without navigation
-    const newUrl = window.location.pathname + window.location.search.replace(/[?&]quoteId=[^&]+/, '');
+    
+    // Parse the current search parameters
+    const currentParams = new URLSearchParams(search);
+    
+    // Remove the quoteId parameter while preserving other parameters
+    currentParams.delete('quoteId');
+    
+    // Build the new URL
+    let newSearch = currentParams.toString();
+    newSearch = newSearch ? `?${newSearch}` : '';
+    const newUrl = window.location.pathname + newSearch;
+    
+    // Update the URL without triggering a navigation
     window.history.replaceState({}, '', newUrl);
+    
+    console.log('[DEBUG] Cleared quoteId from URL, returning to quotes list');
   };
   
   return (
@@ -114,7 +131,19 @@ const QuotesSectionWrapper = () => {
             <PatientQuotesContent 
               onSelectQuote={(id) => {
                 console.log(`[DEBUG] Quote selected: ${id}`);
+                
+                // Update state
                 setSelectedQuoteId(id.toString());
+                
+                // Update URL with the selected quote ID
+                const currentParams = new URLSearchParams(search);
+                currentParams.set('quoteId', id.toString());
+                
+                // Build and update the URL
+                let newSearch = currentParams.toString();
+                newSearch = newSearch ? `?${newSearch}` : '';
+                const newUrl = window.location.pathname + newSearch;
+                window.history.replaceState({}, '', newUrl);
               }} 
             />
           )}
