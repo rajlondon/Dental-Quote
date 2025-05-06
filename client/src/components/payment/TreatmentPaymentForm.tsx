@@ -96,7 +96,8 @@ export default function TreatmentPaymentForm({
   });
   
   // IMPORTANT: Using '/api/treatment-module/' for consistent API path usage
-  const API_BASE_URL = "/api/treatment-module";
+  // Update to use canonical API path format
+  const API_BASE_URL = "/api/v1";
 
   // Get treatment plan details if treatmentPlanId is provided
   const { data: treatmentPlan } = useQuery<TreatmentPlan>({
