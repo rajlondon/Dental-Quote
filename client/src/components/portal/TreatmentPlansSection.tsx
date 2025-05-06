@@ -328,8 +328,8 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                     console.log("Delete action clicked for treatment line:", tl.id);
                                     // Direct API call to delete the treatment line
                                     if (confirm("Are you sure you want to delete this treatment?")) {
-                                      // Note the correct route path: /api/treatment-plans/treatment-lines/:id
-                                      fetch(`/api/treatment-plans/treatment-lines/${tl.id}`, {
+                                      // Use the route path where it's actually mounted: /api/treatment-module/treatment-lines/:id
+                                      fetch(`/api/treatment-module/treatment-lines/${tl.id}`, {
                                         method: 'DELETE',
                                         headers: {
                                           'Content-Type': 'application/json',
