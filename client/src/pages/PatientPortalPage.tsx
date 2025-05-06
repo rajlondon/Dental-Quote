@@ -681,6 +681,14 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
         if (storedSection) {
           console.log(`[DEBUG] Setting active section from session storage: ${storedSection}`);
           setActiveSection(storedSection);
+          
+          // If it's the quotes section, ensure we trigger a quotes data refresh
+          if (storedSection === 'quotes') {
+            console.log(`[DEBUG] Quotes section activated, refreshing quote data`);
+            // Force a refresh of quotes data when the section is selected via session storage
+            queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
+          }
+          
           // Clear the flag to prevent it from affecting future navigation
           sessionStorage.removeItem('patient_portal_section');
           return; // Skip the rest of the initialization
@@ -691,6 +699,12 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       if (initialSection && initialSection !== 'dashboard') {
         console.log(`[DEBUG] Setting active section from props: ${initialSection}`);
         setActiveSection(initialSection);
+        
+        // If the section is quotes, ensure we have fresh data
+        if (initialSection === 'quotes') {
+          console.log(`[DEBUG] Quotes section activated from props, refreshing quote data`);
+          queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
+        }
         
         // If we have a quoteId, we may need to handle it in specific sections
         if (quoteId) {
