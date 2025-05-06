@@ -958,7 +958,14 @@ interface SpecialOfferParams {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { source, offerId, packageId, clinicId, isSpecialOfferFlow, isPackageFlow } = useQuoteFlow();
+  const { 
+    source, setSource,
+    offerId, setOfferId,
+    packageId, setPackageId,
+    clinicId, setClinicId,
+    isSpecialOfferFlow, isPackageFlow,
+    resetFlow
+  } = useQuoteFlow();
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   
@@ -1945,7 +1952,7 @@ const YourQuotePage: React.FC = () => {
                       </div>
                       
                       <div className="flex flex-col sm:flex-row gap-4">
-                        {fromSpecialOffer ? (
+                        {(fromSpecialOffer || isSpecialOfferFlow || isPackageFlow) ? (
                           <Button 
                             variant="default"
                             className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600"
@@ -1953,18 +1960,21 @@ const YourQuotePage: React.FC = () => {
                               // Create a treatment plan and redirect to the patient portal
                               toast({
                                 title: "Saving Treatment Plan",
-                                description: "Creating your treatment plan and returning to the portal...",
+                                description: `Creating your ${source === 'package' ? 'package' : 'treatment'} plan and returning to the portal...`,
                               });
                               
-                              // Simulate API call to create treatment plan
+                              // Reset the quote flow context when navigating away
                               setTimeout(() => {
-                                // Redirect to patient portal
-                                window.location.href = '/client-portal';
+                                // Reset context
+                                resetFlow();
+                                
+                                // Redirect to patient portal with source parameter for analytics
+                                window.location.href = `/client-portal?source=${source}`;
                               }, 1500);
                             }}
                           >
                             <CheckCircle className="h-4 w-4" />
-                            Save Your Treatment Plan
+                            Save Your {source === 'package' ? 'Package' : 'Treatment'} Plan
                           </Button>
                         ) : (
                           <>
