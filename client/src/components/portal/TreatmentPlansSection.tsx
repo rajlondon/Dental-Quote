@@ -208,8 +208,24 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Your Treatment Plans</CardTitle>
-        <CardDescription>Review and manage your dental treatments</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Your Treatment Plans</CardTitle>
+            <CardDescription>Review and manage your dental treatments</CardDescription>
+          </div>
+          
+          {quoteId && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigateToQuoteDetails(quoteId)}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              View Full Quote
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="summary" className="w-full">
