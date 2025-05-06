@@ -161,16 +161,27 @@ export function useTreatmentLines(quoteId?: string) {
   // Delete a treatment line (soft delete)
   const deleteTreatmentLine = useMutation({
     mutationFn: async (id: string) => {
-      // Log the API call for debugging
+      // Log the API call for debugging with extra details
       console.log(`[API] DELETE ${API_BASE_URL}/treatment-lines/${id}`);
+      console.log(`[API] DELETE endpoint full path: ${window.location.origin}${API_BASE_URL}/treatment-lines/${id}`);
+      console.log(`[API] Current API base URL is: ${API_BASE_URL}`);
       
       try {
+        console.log(`[API] Sending DELETE request via apiRequest utility...`);
         const response = await apiRequest("DELETE", `${API_BASE_URL}/treatment-lines/${id}`);
+        console.log(`[API] DELETE response status:`, response.status);
         const result = await response.json();
         console.log(`[API] Delete treatment line result:`, result);
         return result;
       } catch (error) {
         console.error(`[API] Error deleting treatment line:`, error);
+        // Try to provide more detailed error information
+        if (error instanceof Error) {
+          console.error(`[API] Error name: ${error.name}, message: ${error.message}`);
+          console.error(`[API] Error stack: ${error.stack}`);
+        } else {
+          console.error(`[API] Unknown error type:`, typeof error);
+        }
         throw error;
       }
     },
