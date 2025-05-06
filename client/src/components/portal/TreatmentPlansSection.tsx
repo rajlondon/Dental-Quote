@@ -389,7 +389,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                   const treatmentLineId = ensureUuidFormat(tl.id);
                                   console.log('[DEBUG] Using ID for deletion:', treatmentLineId);
                                   
-                                  console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + treatmentLineId);
+                                  console.log("[DEBUG] Delete action - using API path:", "/api/v1/treatment-lines/" + treatmentLineId);
                                   
                                   if (confirm("Are you sure you want to delete this treatment?")) {
                                     console.log("[DEBUG] Delete action - User confirmed delete");
