@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { useAuth } from '@/hooks/use-auth';
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import clinicsData from '@/data/clinics.json';
 
 // Helper function to map numeric clinic IDs to clinic slug IDs
