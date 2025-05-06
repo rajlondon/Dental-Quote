@@ -74,25 +74,12 @@ const MOCK_TREATMENTS = [
  */
 router.get('/api/treatments/categories', catchAsync(async (req, res) => {
   try {
-    // First try to get treatments from storage
-    let treatments = [];
+    // Since getTreatments is not implemented in the storage layer yet,
+    // we'll use the mock data for now
+    let treatments = MOCK_TREATMENTS;
     
-    try {
-      // Get clinic-specific treatments if user is authenticated and has clinicId
-      const clinicId = req.user?.clinicId;
-      
-      // Attempt to get real treatments from storage
-      treatments = await storage.getTreatments(clinicId || null);
-      
-      // If no treatments found, use mock data
-      if (!treatments || treatments.length === 0) {
-        console.log('[DEBUG] No treatments found in storage, using mock data');
-        treatments = MOCK_TREATMENTS;
-      }
-    } catch (err) {
-      console.error('[ERROR] Failed to fetch treatments from storage, using mock data:', err);
-      treatments = MOCK_TREATMENTS;
-    }
+    // Log this operation
+    console.log(`[DEBUG] Returning ${treatments.length} mock treatments for categories endpoint`)
     
     // Group treatments by category
     const categoriesMap = new Map();
