@@ -10,7 +10,7 @@ import { BookingsProvider } from "@/hooks/use-bookings";
 import { NotFoundPage } from "@/pages/ErrorPage";
 import ErrorTestPage from "@/pages/ErrorTestPage";
 import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
-import ErrorBoundary from "@/components/ui/error-boundary";
+import { ErrorBoundary, NavigationErrorBoundary } from "@/components/error-boundary";
 import { NavigationProvider, useNavigation } from "@/hooks/use-navigation";
 import { PageTransitionLoader } from "@/components/ui/page-transition-loader";
 import Home from "./pages/Home";

@@ -1,12 +1,10 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { RouteErrorMessage } from '@/components/ui/page-transition-loader';
-import ROUTES from '@/lib/routes';
-import { Link } from 'wouter';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onReset?: () => void;
 }
 
 interface ErrorBoundaryState {
@@ -15,12 +13,10 @@ interface ErrorBoundaryState {
 }
 
 /**
- * ErrorBoundary
- * 
- * A component that catches JavaScript errors anywhere in its child component tree,
- * logs those errors, and displays a fallback UI instead of the component tree that crashed.
+ * ErrorBoundary component that catches JavaScript errors in its child component tree
+ * and displays a fallback UI instead of crashing the whole application.
  */
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -32,41 +28,29 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log the error to an error reporting service
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
-    
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
+    // You can log the error to an error reporting service
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  resetError = (): void => {
+  resetErrorBoundary = (): void => {
+    if (this.props.onReset) {
+      this.props.onReset();
+    }
     this.setState({ hasError: false, error: null });
   };
 
   render(): ReactNode {
     if (this.state.hasError) {
-      // Return custom fallback UI if provided, otherwise use default
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
       return (
-        <div className="min-h-[400px] flex items-center justify-center p-6">
-          <div className="w-full max-w-md">
-            <RouteErrorMessage
-              message={`Something went wrong in this part of the page. ${this.state.error?.message || ''}`}
-              onRetry={this.resetError}
-            />
-            <div className="mt-6 text-center">
-              <Link 
-                to={ROUTES.HOME}
-                className="text-sm text-muted-foreground hover:text-foreground underline"
-              >
-                Go to Home Page
-              </Link>
-            </div>
-          </div>
+        <div className="p-4 flex justify-center items-center min-h-[300px]">
+          <RouteErrorMessage
+            message={this.state.error?.message || "Something went wrong"}
+            onRetry={this.resetErrorBoundary}
+          />
         </div>
       );
     }
@@ -76,27 +60,18 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 /**
- * withErrorBoundary
- * 
- * A higher-order component that wraps a component with an ErrorBoundary
+ * NavigationErrorBoundary specifically for catching errors during route changes
  */
-function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
-): React.FC<P> {
-  const WrappedComponent: React.FC<P> = (props) => {
-    return (
-      <ErrorBoundary {...errorBoundaryProps}>
-        <Component {...props} />
-      </ErrorBoundary>
-    );
-  };
-
-  // Set display name for debugging
-  const displayName = Component.displayName || Component.name || 'Component';
-  WrappedComponent.displayName = `withErrorBoundary(${displayName})`;
-
-  return WrappedComponent;
+export function NavigationErrorBoundary({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary
+      onReset={() => {
+        // Attempt to navigate to a safe route
+        window.history.pushState({}, '', '/');
+        window.location.reload();
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
 }
-
-export { ErrorBoundary, withErrorBoundary };
