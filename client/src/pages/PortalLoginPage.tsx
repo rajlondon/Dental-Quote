@@ -161,7 +161,30 @@ const PortalLoginPage: React.FC = () => {
         const offerId = offerData.id;
         
         if (offerId) {
-          // Call the API to create a treatment plan
+          // Check if user needs to go through the dental quiz first (new users)
+          const needsQuiz = !user.profileComplete;
+          
+          if (needsQuiz) {
+            // Store the pending offer for after quiz completion
+            localStorage.setItem('pendingOfferAfterQuiz', JSON.stringify({
+              offerId: offerId,
+              clinicId: offerData.clinicId,
+              offerTitle: offerData.title
+            }));
+            
+            toast({
+              title: "Let's Complete Your Dental Profile",
+              description: "Please answer a few questions about your dental needs first.",
+            });
+            
+            // Redirect to the quiz flow, but skip info page since we have basic info
+            setTimeout(() => {
+              window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + offerData.clinicId;
+            }, 100);
+            return;
+          }
+          
+          // If user has already completed profile, proceed with creating the treatment plan
           fetch(`/api/offers/${offerId}/start`, {
             method: 'POST',
             headers: {

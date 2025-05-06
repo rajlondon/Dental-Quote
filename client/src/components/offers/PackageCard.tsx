@@ -99,16 +99,39 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
       
       // Check if we have a quote ID and URL to redirect to
       if (data.quoteId && data.quoteUrl) {
-        toast({
-          title: "Success",
-          description: "Treatment package applied to your quote"
-        });
+        // Check if user needs to go through the dental quiz first (new users)
+        const userData = await apiRequest('GET', '/api/auth/user');
+        const userProfile = await userData.json();
         
-        // Clear processing state from session storage
-        sessionStorage.removeItem('processingPackage');
-        
-        // Redirect to the quote review page
-        window.location.href = data.quoteUrl;
+        if (userProfile && userProfile.user && !userProfile.user.profileComplete) {
+          // Store the pending quote ID for after quiz completion
+          localStorage.setItem('pendingQuoteAfterQuiz', JSON.stringify({
+            quoteId: data.quoteId,
+            quoteUrl: data.quoteUrl,
+            clinicId: pkg.clinicId,
+            offerTitle: pkg.title
+          }));
+          
+          toast({
+            title: "Let's Complete Your Dental Profile",
+            description: "Please answer a few questions about your dental needs first.",
+          });
+          
+          // Redirect to the quiz flow, but skip info page since we have basic info
+          window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + pkg.clinicId;
+        } else {
+          // If user has already completed profile, proceed to quote directly
+          toast({
+            title: "Success",
+            description: "Treatment package applied to your quote"
+          });
+          
+          // Clear processing state from session storage
+          sessionStorage.removeItem('processingPackage');
+          
+          // Redirect to the quote review page
+          window.location.href = data.quoteUrl;
+        }
       } else {
         throw new Error('Invalid response from server');
       }
