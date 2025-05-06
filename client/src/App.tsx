@@ -462,25 +462,25 @@ function App() {
                     <PageTransitionProvider>
                       <NavigationProvider>
                         <Suspense fallback={<div>Loading...</div>}>
-                        <ScrollToTop />
-                        {/* Only exclude ReloadTranslations on clinic portal path */}
-                        {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                          <ReloadTranslations />
-                        }
-                        {/* Navigation status indicator */}
-                        <NavigationStatusBar />
-                        {/* Use PageTransitionLoader to show loading states */}
-                        <PageTransitionLoader>
-                          <ErrorBoundary>
-                            <Router />
-                          </ErrorBoundary>
-                        </PageTransitionLoader>
-                        <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-                        <EnvironmentBadge />
-                        <Toaster />
-                      </Suspense>
-                    </NavigationProvider>
-                  </PageTransitionProvider>
+                          <ScrollToTop />
+                          {/* Only exclude ReloadTranslations on clinic portal path */}
+                          {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                            <ReloadTranslations />
+                          }
+                          {/* Navigation status indicator */}
+                          <NavigationStatusBar />
+                          {/* Use PageTransitionLoader to show loading states */}
+                          <PageTransitionLoader>
+                            <ErrorBoundary>
+                              <Router />
+                            </ErrorBoundary>
+                          </PageTransitionLoader>
+                          <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+                          <EnvironmentBadge />
+                          <Toaster />
+                        </Suspense>
+                      </NavigationProvider>
+                    </PageTransitionProvider>
                   </QuoteFlowProvider>
                 </UnifiedTreatmentPlansProvider>
               </BookingsProvider>
