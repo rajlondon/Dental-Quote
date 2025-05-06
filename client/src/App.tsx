@@ -182,6 +182,11 @@ function Router() {
         {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
       </Route>
       
+      {/* Route for individual treatment line details */}
+      <Route path="/portal/treatment/:id">
+        {(params) => <PatientPortalPage initialSection="treatments" treatmentLineId={params.id} />}
+      </Route>
+      
       {/* Legacy route - redirect to canonical route */}
       <Route path="/patient/quotes/:id">
         {(params) => <Redirect to={`/portal/quotes/${params.id}`} />}
