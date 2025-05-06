@@ -1834,8 +1834,28 @@ export class DatabaseStorage implements IStorage {
   async getLastTreatmentPlanFromOffer(offerId: string, patientId: string): Promise<any | undefined> {
     try {
       console.log(`Getting last treatment plan from offer ${offerId} for patient ${patientId}`);
-      // For now return undefined to simulate no existing plan
-      return undefined;
+      
+      // First convert the patientId to a number
+      const numericPatientId = parseInt(patientId, 10);
+      
+      // Query the treatment plans database
+      const treatmentPlansList = await db.query.treatmentPlans.findMany({
+        where: and(
+          eq(treatmentPlans.patientId, numericPatientId),
+          eq(treatmentPlans.sourceType, 'special_offer'),
+          eq(treatmentPlans.sourceId, offerId)
+        ),
+        orderBy: [desc(treatmentPlans.createdAt)],
+        limit: 1
+      });
+      
+      if (treatmentPlansList.length === 0) {
+        console.log(`No treatment plans found for offer ${offerId} and patient ${patientId}`);
+        return undefined;
+      }
+      
+      console.log(`Found treatment plan ${treatmentPlansList[0].id} for offer ${offerId} and patient ${patientId}`);
+      return treatmentPlansList[0];
     } catch (error) {
       console.error(`Error getting last treatment plan from offer ${offerId} for patient ${patientId}:`, error);
       return undefined;
