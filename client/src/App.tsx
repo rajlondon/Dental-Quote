@@ -199,10 +199,30 @@ function Router() {
           </Suspense>
         );
       }} />
+
+      {/* Patient Quote Edit Page - MUST come before the detail route */}
+      <Route path="/patient/quotes/:id/edit">
+        {(params) => {
+          // For now, redirect to the portal with correct params until we build a dedicated edit page
+          return <Redirect to={`/patient-portal?section=quotes&action=edit&id=${params.id}`} />;
+        }}
+      </Route>
+      
+      {/* Patient Quote Detail Page */}
+      <Route path="/patient/quotes/:id">
+        {(params) => {
+          const PatientQuoteDetailPage = React.lazy(() => import("@/pages/patient/PatientQuoteDetailPage"));
+          return (
+            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading details...</div>}>
+              <PatientQuoteDetailPage />
+            </Suspense>
+          );
+        }}
+      </Route>
       
       {/* Legacy route - redirect to canonical route */}
-      <Route path="/patient/quotes/:id">
-        {(params) => <Redirect to={`/portal/quotes/${params.id}`} />}
+      <Route path="/portal/quotes/:id">
+        {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
       </Route>
       
       {/* Booking Routes */}
