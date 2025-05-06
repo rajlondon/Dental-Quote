@@ -1,0 +1,108 @@
+What we just learned
+The link you click isn’t hitting the API at all—it’s navigating the browser to
+
+arduino
+Copy
+Edit
+/patient/quotes/11        ← front‑end route
+and the server responds 404 because:
+
+1. React Router has no <Route> that matches /patient/quotes/:id, or
+2. The route exists in React, but Express/Nginx is not forwarding unknown URLs back to index.html, so the SPA never gets a chance to render it.
+
+1  Decide the canonical path
+Pick one:
+
+/portal/quotes/:quoteId (what your code used earlier)
+
+/patient/quotes/:quoteId (what the button now produces)
+
+Let’s assume you prefer /portal/quotes/:quoteId (feel free to swap).
+
+2  Fix it in one place only
+A. Update the navigation link
+In the component that renders the action buttons (likely QuoteActions.tsx or a Link in TreatmentPlansSection):
+
+tsx
+Copy
+Edit
+const nav = useNavigate();
+nav(`/portal/quotes/${quote.id}`);   // ← make sure this matches the canonical route
+Remove any hard‑coded “patient/”.
+
+### B. or Add the missing React‑Router entry
+
+If you want to keep /patient/quotes/:id, add:
+
+tsx
+Copy
+Edit
+<Route path="patient">
+  <Route path="quotes/:quoteId" element={<QuoteDetail />} />
+</Route>
+inside App.tsx (or PortalRoutes.tsx).
+
+### C. Always serve index.html for SPA routes
+
+At the very bottom of server/index.js (after all /api and express.static):
+
+js
+Copy
+Edit
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve('dist/index.html'));
+});
+That guarantees any non‑API URL (like /patient/quotes/11) gets handled by React, even on hard refresh.
+
+3  60‑second smoke test
+bash
+Copy
+Edit
+# ➊ Does the front‑end route exist?
+curl -sI https://<repl-url>/portal/quotes/11 | head -1
+# should be 200 OK and return index.html, NOT 404
+
+# ➋ Does React render?
+Open browser → /portal/quotes/11 → expect QuoteDetail page
+If ➊ is still 404, the catch‑all route isn’t last in Express.
+If ➊ is 200 but React shows a blank page, the <Route> path doesn’t match.
+
+4  One‑shot prompt for the Replit AI agent
+css
+Copy
+Edit
+reference_file: docs/01_mvp_spec.md
+issue: #50 quote-detail-route-404
+
+Tasks:
+
+1. Make /portal/quotes/:quoteId the canonical SPA route.
+   - Update all navigate(<path>) and <Link to=...> to that path.
+   - Add <Route path="/portal/quotes/:quoteId" element={<QuoteDetail />} /> in PortalRoutes.tsx.
+
+2. Ensure Express serves index.html for any non‑API path:
+   app.get('*', (_, res) => res.sendFile(path.resolve('dist/index.html')));
+
+3. Remove any leftover “patient/quotes” navigation.
+
+Return only the modified files.
+Paste that prompt as a single message to the agent; it will:
+
+patch the Links,
+
+add the missing route,
+
+add the catch‑all handler.
+
+After that
+Reload → click the action button → URL becomes /portal/quotes/11 → React Router renders the Quote Detail page (no 404).
+
+Your API calls (/api/v1/treatment-lines) stay untouched.
+
+Give it a try—if curl still shows 404 post‑patch, send me the exact curl output and we’ll zero‑in further.
+
+
+
+
+
+
