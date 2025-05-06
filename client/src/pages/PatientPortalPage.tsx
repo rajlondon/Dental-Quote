@@ -492,11 +492,13 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
 interface PatientPortalPageProps {
   initialSection?: string;
   quoteId?: string;
+  treatmentLineId?: string;
 }
 
 const PatientPortalPage: React.FC<PatientPortalPageProps> = ({ 
   initialSection = 'dashboard',
-  quoteId
+  quoteId,
+  treatmentLineId
 }) => {
   const [activeSection, setActiveSection] = useState(initialSection);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -691,6 +693,20 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
           }
         }
         
+        // If we have a treatmentLineId, direct to the treatments section and prepare to show details
+        if (treatmentLineId) {
+          console.log(`[DEBUG] Treatment Line ID provided: ${treatmentLineId}`);
+          
+          // Force treatment_plan section when a specific treatment line is requested
+          if (initialSection === 'treatments') {
+            console.log(`[DEBUG] Setting treatment_plan section with treatment line: ${treatmentLineId}`);
+            setActiveSection('treatment_plan');
+            
+            // Store the treatment line ID in session storage for the component to access
+            sessionStorage.setItem('selected_treatment_line_id', treatmentLineId);
+          }
+        }
+        
         // Return early as we've already set the section from props
         return;
       }
@@ -736,7 +752,7 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       // Fallback to dashboard if there's an error
       setActiveSection('dashboard');
     }
-  }, [toast, initialSection, quoteId]);
+  }, [toast, initialSection, quoteId, treatmentLineId]);
 
   // Render the appropriate section based on activeSection
   const renderActiveSection = () => {
