@@ -13,8 +13,8 @@ export default function PatientQuoteDetailPage() {
   const [, setLocation] = useLocation();
   const quoteId = params?.id;
 
-  // Format the quote ID as needed
-  const formattedQuoteId = quoteId ? ensureUuidFormat(quoteId) : undefined;
+  // Use the original ID format - don't convert to UUID
+  const formattedQuoteId = quoteId;
 
   // Fetch the quote data when the component mounts
   const {

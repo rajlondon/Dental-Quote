@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { ensureUuidFormat } from '@/lib/id-converter';
+// No longer using UUID format conversion
 import { formatDate } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigation } from '@/hooks/use-navigation';
@@ -279,8 +279,9 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   const handleEdit = () => {
     if (!quote?.id) return;
     
-    // Use the dedicated edit route
-    navigateToRoute(`/patient/quotes/${quote.id}/edit`);
+    // Direct path navigation using string URL
+    const editPath = `/patient/quotes/${quote.id}/edit`;
+    window.location.href = editPath;
     
     // Show success toast
     toast({

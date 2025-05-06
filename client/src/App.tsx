@@ -203,8 +203,12 @@ function Router() {
       {/* Patient Quote Edit Page - MUST come before the detail route */}
       <Route path="/patient/quotes/:id/edit">
         {(params) => {
-          // For now, redirect to the portal with correct params until we build a dedicated edit page
-          return <Redirect to={`/patient-portal?section=quotes&action=edit&id=${params.id}`} />;
+          const PatientQuoteEditPage = React.lazy(() => import("@/pages/patient/PatientQuoteEditPage"));
+          return (
+            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading editor...</div>}>
+              <PatientQuoteEditPage />
+            </Suspense>
+          );
         }}
       </Route>
       
