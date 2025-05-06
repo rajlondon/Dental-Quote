@@ -730,7 +730,18 @@ const PatientPortalPage: React.FC = () => {
       case 'treatment_plan':
         // Find and use the latest quote ID if available using our safe array
         const latestQuote = safeUserQuotes.length > 0 ? safeUserQuotes[0] : null;
-        const quoteId = latestQuote?.id?.toString();
+        
+        // Convert quote ID to proper UUID format if it's numeric
+        let quoteId = latestQuote?.id?.toString();
+        
+        // Check if we have a numeric ID, and if so, convert it to deterministic UUID format
+        if (quoteId && /^\d+$/.test(quoteId)) {
+          // Generate a deterministic UUID based on the numeric ID (should match server-side conversion)
+          const numericIdStr = quoteId.toString();
+          quoteId = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
+          console.log('[DEBUG] Converted numeric quote ID to UUID format:', quoteId);
+        }
+        
         console.log('[DEBUG] Using quote ID for treatment plan:', quoteId);
         console.log('[DEBUG] Latest quote data:', latestQuote);
         return <TreatmentPlansSection quoteId={quoteId} />;
