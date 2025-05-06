@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,6 @@ import {
   Plus, 
   Eye, 
   Edit, 
-  Trash, 
   Download,
   MessageCircle,
   MoreVertical,
@@ -29,12 +28,6 @@ import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import { useNavigation } from '@/hooks/use-navigation';
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,14 +36,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 // TypeScript interfaces for better type safety
 interface Quote {
@@ -83,7 +68,7 @@ interface StatusBadge {
 export function PatientQuotesContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('all');
 
   // Fetch user quotes with error handling
@@ -172,22 +157,9 @@ export function PatientQuotesContent() {
     }
   };
 
-  // Handle viewing quote details
-  const handleViewQuote = (quoteId: number) => {
-    console.log(`[DEBUG] Viewing quote ${quoteId}`);
-    // Direct URL path-based navigation approach
-    window.location.href = `/patient-portal?section=quotes&quoteId=${quoteId}`;
-  };
-
-  // Handle editing a quote
-  const handleEditQuote = (quoteId: number) => {
-    console.log(`[DEBUG] Editing quote ${quoteId}`);
-    // Direct URL path-based navigation approach
-    window.location.href = `/patient-portal?section=quotes&action=edit&id=${quoteId}`;
-    toast({
-      title: "Edit Quote",
-      description: "You can now edit your quote details."
-    });
+  // Get the route prefix for links
+  const getRoutePrefix = () => {
+    return "/patient/quotes";
   };
 
   // Handle downloading a quote PDF
@@ -203,7 +175,7 @@ export function PatientQuotesContent() {
   // Handle contacting the clinic
   const handleContactClinic = (quoteId: number) => {
     console.log(`[DEBUG] Contacting clinic about quote ${quoteId}`);
-    window.location.href = `/patient-portal?section=messages`;
+    setLocation("/patient/messages");
     toast({
       title: "Contact Clinic",
       description: "You can now message the clinic about your quote."
@@ -213,7 +185,7 @@ export function PatientQuotesContent() {
   // Handle making a payment
   const handleMakePayment = (quoteId: number) => {
     console.log(`[DEBUG] Making payment for quote ${quoteId}`);
-    window.location.href = `/treatment-payment/${quoteId}`;
+    setLocation(`/treatment-payment/${quoteId}`);
     toast({
       title: "Payment",
       description: "Redirecting to payment page..."
@@ -260,9 +232,7 @@ export function PatientQuotesContent() {
           {t('quotes.no_quotes_description', 'You haven\'t requested any quotes yet. Get started by creating your first quote request.')}
         </p>
         <Button
-          onClick={() => {
-            window.location.href = `/your-quote`;
-          }}
+          onClick={() => setLocation("/your-quote")}
           className="inline-flex items-center gap-2"
         >
           <Plus className="h-4 w-4 mr-1" />
@@ -280,9 +250,7 @@ export function PatientQuotesContent() {
         </div>
         <div>
           <Button 
-            onClick={() => {
-              window.location.href = `/your-quote`;
-            }}
+            onClick={() => setLocation("/your-quote")}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" /> New Quote Request
@@ -309,8 +277,7 @@ export function PatientQuotesContent() {
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onView={handleViewQuote}
-                onEdit={handleEditQuote}
+                getRoutePrefix={getRoutePrefix}
                 onDownload={handleDownloadQuote}
                 onContactClinic={handleContactClinic}
                 onMakePayment={handleMakePayment}
@@ -327,8 +294,7 @@ export function PatientQuotesContent() {
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onView={handleViewQuote}
-                onEdit={handleEditQuote}
+                getRoutePrefix={getRoutePrefix}
                 onDownload={handleDownloadQuote}
                 onContactClinic={handleContactClinic}
                 onMakePayment={handleMakePayment}
@@ -345,8 +311,7 @@ export function PatientQuotesContent() {
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onView={handleViewQuote}
-                onEdit={handleEditQuote}
+                getRoutePrefix={getRoutePrefix}
                 onDownload={handleDownloadQuote}
                 onContactClinic={handleContactClinic}
                 onMakePayment={handleMakePayment}
@@ -364,8 +329,7 @@ interface QuoteCardProps {
   quote: Quote;
   getStatusBadge: (status: string) => StatusBadge;
   getStatusIcon: (status: string) => React.ReactNode;
-  onView: (quoteId: number) => void;
-  onEdit: (quoteId: number) => void;
+  getRoutePrefix: () => string;
   onDownload: (quoteId: number) => void;
   onContactClinic: (quoteId: number) => void;
   onMakePayment?: (quoteId: number) => void;
@@ -374,9 +338,8 @@ interface QuoteCardProps {
 function QuoteCard({ 
   quote, 
   getStatusBadge, 
-  getStatusIcon, 
-  onView,
-  onEdit,
+  getStatusIcon,
+  getRoutePrefix,
   onDownload,
   onContactClinic,
   onMakePayment 
@@ -385,19 +348,8 @@ function QuoteCard({
   const status = getStatusBadge(quote.status);
   const statusIcon = getStatusIcon(quote.status);
   
-  // This prevents the card click from triggering when clicking dropdown menu
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Only proceed with view if the click is directly on the card and not on action buttons
-    if (!(e.target as HTMLElement).closest('.quote-actions')) {
-      onView(quote.id);
-    }
-  };
-  
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={handleCardClick}
-    >
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
@@ -442,13 +394,12 @@ function QuoteCard({
               variant="outline" 
               size="icon"
               className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent parent card click
-                onView(quote.id);
-              }}
+              asChild
             >
-              <Eye className="h-4 w-4" />
-              <span className="sr-only">View</span>
+              <Link to={`${getRoutePrefix()}/${quote.id}`}>
+                <Eye className="h-4 w-4" />
+                <span className="sr-only">View</span>
+              </Link>
             </Button>
             
             {/* Edit Button - shown only for editable quotes */}
@@ -457,13 +408,12 @@ function QuoteCard({
                 variant="outline" 
                 size="icon"
                 className="h-8 w-8 text-amber-600 hover:bg-amber-50 border-amber-200"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent parent card click
-                  onEdit(quote.id);
-                }}
+                asChild
               >
-                <Edit className="h-4 w-4" />
-                <span className="sr-only">Edit</span>
+                <Link to={`${getRoutePrefix()}/${quote.id}/edit`}>
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Edit</span>
+                </Link>
               </Button>
             )}
             
@@ -474,7 +424,6 @@ function QuoteCard({
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 text-gray-600 hover:bg-gray-50"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -484,10 +433,7 @@ function QuoteCard({
                 
                 {/* Download PDF */}
                 <DropdownMenuItem 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDownload(quote.id);
-                  }}
+                  onClick={() => onDownload(quote.id)}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
@@ -495,10 +441,7 @@ function QuoteCard({
                 
                 {/* Contact Clinic */}
                 <DropdownMenuItem 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onContactClinic(quote.id);
-                  }}
+                  onClick={() => onContactClinic(quote.id)}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Contact Clinic
@@ -509,10 +452,7 @@ function QuoteCard({
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMakePayment && onMakePayment(quote.id);
-                      }}
+                      onClick={() => onMakePayment && onMakePayment(quote.id)}
                     >
                       <Wallet className="h-4 w-4 mr-2" />
                       Make Payment
