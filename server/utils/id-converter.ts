@@ -9,6 +9,11 @@
  * @returns A UUID formatted string
  */
 export function convertNumericToUuid(numericId: string | number): string {
+  if (!numericId) {
+    console.warn('[ID Converter] Attempted to convert undefined/null ID to UUID');
+    return '00000000-0000-4000-a000-000000000000';
+  }
+  
   const numericIdStr = String(numericId);
   return `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
 }
@@ -19,28 +24,45 @@ export function convertNumericToUuid(numericId: string | number): string {
  * @returns The numeric ID as a string, or the original UUID if extraction fails
  */
 export function extractNumericFromUuid(uuid: string): string {
+  // If it's null or undefined, return a safe default
+  if (!uuid) {
+    console.warn('[ID Converter] Attempted to extract from undefined/null UUID');
+    return '0';
+  }
+  
+  // If it's not a string, convert it
+  const uuidStr = String(uuid);
+  
+  // If it's already numeric, return as-is
+  if (/^\d+$/.test(uuidStr)) {
+    return uuidStr;
+  }
+  
   // If it's not in our UUID format, return as-is
-  if (!uuid || !uuid.includes('-') || !uuid.startsWith('00000000-0000-4000-a000-')) {
-    return uuid;
+  if (!uuidStr.includes('-') || !uuidStr.startsWith('00000000-0000-4000-a000-')) {
+    return uuidStr;
   }
   
   try {
-    const parts = uuid.split('-');
-    if (parts.length !== 5) return uuid;
+    const parts = uuidStr.split('-');
+    if (parts.length !== 5) return uuidStr;
     
     const numericPart = parts[4];
     // Remove leading zeros
     const cleanNumeric = numericPart.replace(/^0+/, '');
+    
+    // If it's an empty string after removing zeros, return '0'
+    if (cleanNumeric === '') return '0';
     
     // Validate it's actually a number
     if (/^\d+$/.test(cleanNumeric)) {
       return cleanNumeric;
     }
     
-    return uuid;
+    return uuidStr;
   } catch (error) {
-    console.error(`[ERROR] Failed to extract numeric ID from UUID: ${uuid}`, error);
-    return uuid;
+    console.error(`[ERROR] Failed to extract numeric ID from UUID: ${uuidStr}`, error);
+    return uuidStr;
   }
 }
 
@@ -50,5 +72,6 @@ export function extractNumericFromUuid(uuid: string): string {
  * @returns True if the ID is in UUID format
  */
 export function isUuidFormat(id: string): boolean {
-  return id.includes('-');
+  if (!id) return false;
+  return String(id).includes('-');
 }
