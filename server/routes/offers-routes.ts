@@ -3,10 +3,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Offer, OfferToTreatmentPlanRequest, OfferToTreatmentPlanResponse } from '@shared/models/offers';
 import { TreatmentPlan, TreatmentPlanStatus, PaymentStatus } from '@shared/models/treatment-plan';
 import { storage } from '../storage';
-import { checkAuthenticated, checkUser } from '../middleware/auth-middleware';
-import { getLogger } from '../utils/logger';
+import { isAuthenticated } from '../middleware/auth';
 
-const logger = getLogger('offers-routes');
+// Create a simple logger
+const logger = {
+  info: (message: string, ...args: any[]) => console.log(`[INFO] ${message}`, ...args),
+  error: (message: string, ...args: any[]) => console.error(`[ERROR] ${message}`, ...args),
+  debug: (message: string, ...args: any[]) => console.log(`[DEBUG] ${message}`, ...args)
+};
 const router = Router();
 
 // Get all active special offers for homepage display
@@ -147,7 +151,7 @@ router.post('/offers/:offerId/start', async (req, res) => {
 });
 
 // Get the last treatment plan created from this offer for this user (for handling refresh cases)
-router.get('/offers/:offerId/last', checkAuthenticated, async (req, res) => {
+router.get('/offers/:offerId/last', isAuthenticated, async (req, res) => {
   try {
     const { offerId } = req.params;
     const patientId = req.user.id.toString();

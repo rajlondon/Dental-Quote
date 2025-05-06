@@ -38,6 +38,7 @@ import appointmentRoutes from "./routes/appointment-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
+import offersRoutes from "./routes/offers-routes"; // Add our new offers routes
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
@@ -298,6 +299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register special offers update helper routes for image generation
   app.use(specialOffersUpdateHelper);
+  
+  // Register new unified treatment plan/offers integration routes
+  app.use('/api', offersRoutes);
   
   // Register trending packages routes with commission-based promotion system
   app.use(trendingPackagesRoutes);
