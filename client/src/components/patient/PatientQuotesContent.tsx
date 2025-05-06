@@ -200,7 +200,7 @@ export function PatientQuotesContent() {
         <div>
           <Button 
             onClick={() => {
-              window.location.href = '/your-quote';
+              navigateToRoute('YOUR_QUOTE');
             }}
             className="flex items-center gap-2"
           >
@@ -232,7 +232,7 @@ export function PatientQuotesContent() {
                   // Navigate to the quote detail view
                   console.log(`[DEBUG] Navigating to quote ${quote.id}`);
                   sessionStorage.setItem('patient_portal_section', 'quotes');
-                  setLocation(`/portal/quotes/${quote.id}`);
+                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
                 }}
               />
             ))}
@@ -251,7 +251,7 @@ export function PatientQuotesContent() {
                   // Navigate to the quote detail view
                   console.log(`[DEBUG] Navigating to quote ${quote.id}`);
                   sessionStorage.setItem('patient_portal_section', 'quotes');
-                  setLocation(`/portal/quotes/${quote.id}`);
+                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
                 }}
               />
             ))}
@@ -270,7 +270,7 @@ export function PatientQuotesContent() {
                   // Navigate to the quote detail view
                   console.log(`[DEBUG] Navigating to quote ${quote.id}`);
                   sessionStorage.setItem('patient_portal_section', 'quotes');
-                  setLocation(`/portal/quotes/${quote.id}`);
+                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
                 }}
               />
             ))}
