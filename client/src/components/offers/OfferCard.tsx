@@ -79,15 +79,15 @@ export function OfferCard({ offer }: OfferCardProps) {
         return;
       }
       
-      // User is logged in, we should redirect to the unified quote flow
+      // User is logged in, we should redirect to the offer confirmation page
       toast({
         title: "Special Offer Selected",
-        description: `${offer.title} will be applied to your quote`,
+        description: `Please confirm ${offer.title}`,
         variant: "default",
       });
       
-      // Redirect to quote flow with context already set
-      setLocation('/quote-flow');
+      // Redirect to confirmation page with context already set
+      setLocation('/offer-confirmation');
       
     } catch (error) {
       console.error('Error processing special offer:', error);

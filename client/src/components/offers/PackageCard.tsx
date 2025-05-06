@@ -81,15 +81,15 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
         return;
       }
       
-      // User is logged in, we should redirect to the unified quote flow
+      // User is logged in, we should redirect to the offer confirmation page
       toast({
         title: "Treatment Package Selected",
-        description: `${pkg.title} will be applied to your quote`,
+        description: `Please confirm ${pkg.title}`,
         variant: "default",
       });
       
-      // Redirect to quote flow with context already set
-      setLocation('/quote-flow');
+      // Redirect to confirmation page with context already set
+      setLocation('/offer-confirmation');
       
     } catch (error) {
       console.error('Error processing treatment package:', error);
