@@ -93,6 +93,7 @@ interface QuoteCardProps {
  */
 export function PatientQuotesContent() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { navigateTo, navigateToRoute } = useNavigation();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = React.useState('all');
@@ -133,7 +134,7 @@ export function PatientQuotesContent() {
 
   // Filter quotes by status based on active tab
   const filteredQuotes = React.useMemo(() => {
-    return quotes.filter(quote => {
+    return quotes.filter((quote: any) => {
       if (activeTab === 'in_progress') {
         return ['sent', 'in_progress'].includes(quote.status);
       } else if (activeTab === 'completed') {
@@ -181,6 +182,54 @@ export function PatientQuotesContent() {
       default:
         return <FileText className="h-5 w-5 text-gray-500" />;
     }
+  };
+
+  // Handle viewing quote details
+  const handleViewQuote = (quoteId: number) => {
+    console.log(`[DEBUG] Viewing quote ${quoteId}`);
+    sessionStorage.setItem('patient_portal_section', 'quotes');
+    sessionStorage.setItem('viewing_quote_id', quoteId.toString());
+    navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quoteId.toString() });
+  };
+
+  // Handle editing a quote
+  const handleEditQuote = (quoteId: number) => {
+    console.log(`[DEBUG] Editing quote ${quoteId}`);
+    window.location.href = `/patient-portal?section=quotes&action=edit&id=${quoteId}`;
+    toast({
+      title: "Edit Quote",
+      description: "You can now edit your quote details."
+    });
+  };
+
+  // Handle downloading a quote PDF
+  const handleDownloadQuote = (quoteId: number) => {
+    console.log(`[DEBUG] Downloading quote ${quoteId}`);
+    window.open(`/api/quotes/${quoteId}/pdf`, '_blank');
+    toast({
+      title: "Downloading Quote",
+      description: "Your quote PDF is being generated and will download shortly."
+    });
+  };
+
+  // Handle contacting the clinic
+  const handleContactClinic = (quoteId: number) => {
+    console.log(`[DEBUG] Contacting clinic about quote ${quoteId}`);
+    navigateToRoute('PATIENT_MESSAGES');
+    toast({
+      title: "Contact Clinic",
+      description: "You can now message the clinic about your quote."
+    });
+  };
+
+  // Handle making a payment
+  const handleMakePayment = (quoteId: number) => {
+    console.log(`[DEBUG] Making payment for quote ${quoteId}`);
+    window.location.href = `/treatment-payment/${quoteId}`;
+    toast({
+      title: "Payment",
+      description: "Redirecting to payment page..."
+    });
   };
 
   // Show loading state
@@ -266,18 +315,17 @@ export function PatientQuotesContent() {
 
         <TabsContent value="all" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredQuotes.map((quote) => (
+            {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onClick={() => {
-                  // Navigate to the quote detail view
-                  console.log(`[DEBUG] Navigating to quote ${quote.id}`);
-                  sessionStorage.setItem('patient_portal_section', 'quotes');
-                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
-                }}
+                onView={handleViewQuote}
+                onEdit={handleEditQuote}
+                onDownload={handleDownloadQuote}
+                onContactClinic={handleContactClinic}
+                onMakePayment={handleMakePayment}
               />
             ))}
           </div>
@@ -285,18 +333,17 @@ export function PatientQuotesContent() {
         
         <TabsContent value="in_progress" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredQuotes.map((quote) => (
+            {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onClick={() => {
-                  // Navigate to the quote detail view
-                  console.log(`[DEBUG] Navigating to quote ${quote.id}`);
-                  sessionStorage.setItem('patient_portal_section', 'quotes');
-                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
-                }}
+                onView={handleViewQuote}
+                onEdit={handleEditQuote}
+                onDownload={handleDownloadQuote}
+                onContactClinic={handleContactClinic}
+                onMakePayment={handleMakePayment}
               />
             ))}
           </div>
@@ -304,18 +351,17 @@ export function PatientQuotesContent() {
         
         <TabsContent value="completed" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredQuotes.map((quote) => (
+            {filteredQuotes.map((quote: any) => (
               <QuoteCard
                 key={quote.id}
                 quote={quote}
                 getStatusBadge={getStatusBadge}
                 getStatusIcon={getStatusIcon}
-                onClick={() => {
-                  // Navigate to the quote detail view
-                  console.log(`[DEBUG] Navigating to quote ${quote.id}`);
-                  sessionStorage.setItem('patient_portal_section', 'quotes');
-                  navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quote.id.toString() });
-                }}
+                onView={handleViewQuote}
+                onEdit={handleEditQuote}
+                onDownload={handleDownloadQuote}
+                onContactClinic={handleContactClinic}
+                onMakePayment={handleMakePayment}
               />
             ))}
           </div>
@@ -325,7 +371,7 @@ export function PatientQuotesContent() {
   );
 }
 
-// Card component for individual quotes
+// Card component for individual quotes with action menu
 function QuoteCard({ 
   quote, 
   getStatusBadge, 
@@ -337,80 +383,13 @@ function QuoteCard({
   onMakePayment 
 }: QuoteCardProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const { navigateTo, navigateToRoute } = useNavigation();
   const status = getStatusBadge(quote.status);
   const statusIcon = getStatusIcon(quote.status);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  
-  // Handle viewing quote details
-  const handleViewDetails = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation(); // Prevent parent card click
-    
-    // Store the current section in session storage
-    sessionStorage.setItem('patient_portal_section', 'quotes');
-    sessionStorage.setItem('viewing_quote_id', quote.id.toString());
-    
-    // Navigate to patient portal with quote ID as query parameter
-    window.location.href = `/patient-portal?section=quotes&quoteId=${quote.id}`;
-  };
-  
-  // Handle editing the quote
-  const handleEdit = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    // Navigate to edit page with params
-    window.location.href = `/patient-portal?section=quotes&action=edit&id=${quote.id}`;
-    
-    toast({
-      title: "Edit Quote",
-      description: "You can now edit your quote details."
-    });
-  };
-  
-  // Handle downloading the quote
-  const handleDownload = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    // Call API to download quote PDF
-    window.open(`/api/quotes/${quote.id}/pdf`, '_blank');
-    
-    toast({
-      title: "Downloading Quote",
-      description: "Your quote PDF is being generated and will download shortly."
-    });
-  };
-  
-  // Handle contacting the clinic
-  const handleContactClinic = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    // Navigate to messages
-    navigateToRoute('PATIENT_MESSAGES');
-    
-    toast({
-      title: "Contact Clinic",
-      description: "You can now message the clinic about your quote."
-    });
-  };
-  
-  // Handle making a payment
-  const handleMakePayment = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    // Navigate to payment page
-    window.location.href = `/treatment-payment/${quote.id}`;
-    
-    toast({
-      title: "Payment",
-      description: "Redirecting to payment page..."
-    });
-  };
   
   return (
     <Card 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={handleViewDetails} // Use our new handler directly
+      onClick={() => onView(quote.id)} // Use the onView callback
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
@@ -459,7 +438,10 @@ function QuoteCard({
                     variant="outline" 
                     size="icon"
                     className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
-                    onClick={handleViewDetails} // Use our new direct navigation handler
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent parent card click
+                      onView(quote.id);
+                    }}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -485,27 +467,27 @@ function QuoteCard({
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   
                   {/* View Details */}
-                  <DropdownMenuItem onClick={(e) => handleViewDetails()}>
+                  <DropdownMenuItem onClick={() => onView(quote.id)}>
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </DropdownMenuItem>
                   
                   {/* Edit - only for specific statuses or if canEdit is true */}
                   {(quote.canEdit || ['draft', 'pending', 'sent'].includes(quote.status)) && (
-                    <DropdownMenuItem onClick={(e) => handleEdit()}>
+                    <DropdownMenuItem onClick={() => onEdit(quote.id)}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Quote
                     </DropdownMenuItem>
                   )}
                   
                   {/* Download */}
-                  <DropdownMenuItem onClick={(e) => handleDownload()}>
+                  <DropdownMenuItem onClick={() => onDownload(quote.id)}>
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
                   </DropdownMenuItem>
                   
                   {/* Contact Clinic */}
-                  <DropdownMenuItem onClick={(e) => handleContactClinic()}>
+                  <DropdownMenuItem onClick={() => onContactClinic(quote.id)}>
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Contact Clinic
                   </DropdownMenuItem>
@@ -514,7 +496,7 @@ function QuoteCard({
                   {quote.status === 'accepted' && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={(e) => handleMakePayment()}>
+                      <DropdownMenuItem onClick={() => onMakePayment && onMakePayment(quote.id)}>
                         <Wallet className="h-4 w-4 mr-2" />
                         Make Payment
                       </DropdownMenuItem>
