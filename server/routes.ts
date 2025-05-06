@@ -26,6 +26,7 @@ import fileRoutes from "./routes/fileRoutes";
 import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentPlansModuleRoutes from "./routes/treatment-plans-routes";
+import treatmentOfferIntegration from "./routes/treatment-offer-integration"; // New integration between offers and treatment plans
 import publicPackagesRoutes from "./routes/public-packages-routes";
 import treatmentRoutes from "./routes/treatment-routes";
 import treatmentCategoriesRoutes from "./routes/treatment-categories-routes";
@@ -306,6 +307,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the new offer start routes for special offers and packages
   app.use('/api/v1', offerStartRoutes);
+  
+  // Register the treatment-offer integration endpoints that create treatment plans from offers
+  app.use('/api/treatment-plans', treatmentOfferIntegration);
+  
+  // Also register the LEGACY offer endpoint at the root for backward compatibility
+  app.use('/api', treatmentOfferIntegration);
   
   // Register trending packages routes with commission-based promotion system
   app.use(trendingPackagesRoutes);
