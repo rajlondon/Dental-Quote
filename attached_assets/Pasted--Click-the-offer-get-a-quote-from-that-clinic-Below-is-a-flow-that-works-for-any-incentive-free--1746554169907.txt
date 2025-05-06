@@ -1,0 +1,110 @@
+“Click the offer → get a quote from that clinic”
+Below is a flow that works for any incentive (free flight, hotel upgrade, %‑off veneer package, etc.) and never lets the user drift to other clinics.
+
+1  Special‑Offer card (home page or email)
+Visible fields	Hidden payload sent to API
+• Headline (“Free Return Flights”)
+• Short copy
+• “Request Quote” button	json { "clinicId": "cl_istanbul123", "offerId": "of_free_flights", "offerType": "bonus" }
+
+Button label stays “Request Quote” (universal wording).
+
+2  Immediate back‑end call
+ts
+Copy
+Edit
+POST /api/v1/offers/:offerId/start
+body = { clinicId, visitorEmail (if known) }
+Server returns:
+
+json
+Copy
+Edit
+{
+  "quoteId": "q_45",
+  "clinicId": "cl_istanbul123",
+  "offerId": "of_free_flights",
+  "requiredTreatments": ["DENTAL_IMPLANT"],
+  "bonusLine": {
+     "description": "Return flights UK→IST",
+     "price": 0,
+     "isBonus": true
+  }
+}
+Why this is useful
+All business logic (what treatments unlock the offer, 0 price vs discount) lives server‑side—front‑end stays dumb.
+
+You already know which clinic owns the quote; no risk of the user re‑routing to another clinic list.
+
+3  Front‑end routing logic
+If user is NOT logged in
+Show slim “Continue” page asking only:
+
+Email
+
+Password / Magic link
+After success, auto‑continue to Step 2.
+
+Skip the multi‑clinic results page entirely.
+Redirect directly to /portal/quote/q_45/review.
+
+Quote Review page shows:
+
+Treatment	Qty	Price
+Return flights UK→IST (Bonus)	1	£0
+Dental Implant (Standard)	1 (editable)	£306
+…user can add more treatments…		
+Total		£306
+
+Bonus line is greyed, non‑removable.
+
+Call to action: “Send to Partner Clinic”
+On click, status ➜ pendingClinic. Clinic chat thread opens.
+
+4  Clinic Portal behaviour
+See quote #45 flagged offerId = of_free_flights.
+
+UI reminder: “This quote is tied to Return flights bonus. Make sure booking includes flight.”
+
+When clinic edits the plan, bonus row remains locked at £0 (but they can upload a voucher / flight details later).
+
+5  Database & API additions
+Table	Fields
+offers	id, clinicId, title, description, offerType (bonus \
+quotes	id, clinicId, offerId nullable
+quote_lines	id, quoteId, description, unitPrice, quantity, isBonus boolean
+
+Trigger: before insert on quote_lines → if isBonus = true and user tries to delete → block.
+
+6  Edge‑cases handled
+Scenario	Result
+User clicks offer, logs in, then refreshes	quoteId already created, fetched via /offers/:offerId/last
+Offer expires tomorrow	/offers/:id/start returns HTTP 410; front‑end shows “Sorry, offer ended.”
+Bonus valid only if user keeps ≥ 6 veneers	Server side validator runs before status changes to pendingClinic; shows toast “Need at least 6 veneers for this offer.”
+
+7  Implementation steps for Replit agent
+sql
+Copy
+Edit
+reference_file: docs/01_mvp_spec.md
+issue: #51 special-offer-direct-quote
+
+Tasks:
+1. SQL: create offers table; add offerId varchar to quotes; add isBonus boolean to quote_lines.
+2. API: POST /api/v1/offers/:offerId/start → creates Quote, inserts bonus line, returns quoteId.
+3. Front‑end: OfferCard.onClick → await createQuoteFromOffer; redirect to /portal/quote/:quoteId/review (skip clinic list).
+4. QuoteReview component: render bonus line locked (disabled delete).
+5. Guard: delete‑line endpoint must reject if isBonus.
+Paste once; the agent focuses on only these files.
+
+Result
+User sees an enticing headline → one click → logs in → reviews a pre‑built quote tied to the correct clinic → hits send.
+No more detours, no multi‑clinic confusion, and the offer stays attached all the way through booking.
+
+
+
+
+
+
+
+

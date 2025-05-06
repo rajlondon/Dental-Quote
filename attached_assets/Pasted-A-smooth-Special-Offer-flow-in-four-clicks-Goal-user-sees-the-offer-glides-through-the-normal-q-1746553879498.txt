@@ -1,0 +1,100 @@
+A smooth “Special Offer” flow in four clicks
+Goal: user sees the offer → glides through the normal quote flow with zero extra thinking → ends up in their Patient Portal with the offer already parked in their draft treatment plan.
+
+1  Offer card on homepage
+Buttons
+
+“Request Quote” (primary) → CTA everyone understands.
+
+“View Clinic” (secondary) → for research‑minded users.
+
+What happens on click
+
+Check JWT:
+
+Logged‑in? continue.
+
+Not logged‑in? show lightweight modal → email + password / magic‑link. After auth, automatically resume (store returnTo=/special-offer/<id> in localStorage).
+
+Create (or fetch) a Draft Quote with:
+
+json
+Copy
+Edit
+{
+  "clinicId": "abc123",
+  "source": "special_offer",
+  "specialOfferId": "free‑consult‑pkg"
+}
+No treatment lines yet—just a quote shell.
+
+Redirect → Step 4 of the Quote Wizard (“Review Treatments”).
+Here the offer is visible but locked in: “Free Consultation Package – added (can’t remove)”
+User can now add other paid treatments (implants, veneers) as usual.
+
+2  Quote Wizard tweaks (5‑min UI)
+Step	Tweaked UI element
+1 Concerns	No change
+2 Dental Map	No change
+3 History	No change
+4 Treatments	At top of list:
+🎁 Free Consultation Package (from Partner Clinic #1) ‑ disabled checkbox
+5 Timeline & Budget	Show “Package includes free after‑care” line in summary
+6 Treatments Review	CTA: “Continue to Portal & Send to Clinic”
+
+User finishes wizard as normal.
+
+3  Patient Portal
+Dashboard toast
+
+“🎉 Your Free Consultation Package is included in Draft Quote #12. Complete your medical form or add X‑rays for the clinic to confirm.”
+
+Treatment Plan page
+
+Package line is pinned / non‑deletable.
+
+Additional lines editable.
+
+Button “Request Final Plan” triggers a status change draft → pendingClinic.
+
+4  Clinic Portal
+Quote arrives with flag specialOfferId.
+
+UI reminder:
+
+“This patient is entitled to the Free Consultation Package. Make sure it appears in the final plan.”
+
+Clinic can add paid treatments, but cannot remove offer.
+
+Why this flow works
+Principle	How we satisfy it
+Zero dead‑ends	User never lands on an empty login page; auth modal pops then resumes the same journey.
+Familiar path	You reuse the existing 6‑step wizard, so no new edge‑cases.
+Offer integrity	Package line is locked on both patient & clinic sides—no accidental removal.
+Upsell still possible	User can add crowns/implants alongside the free package.
+Analytics clarity	source="special_offer" + specialOfferId fields make funnel analysis trivial.
+
+Minimal implementation tasks
+Backend
+
+POST /api/v1/quotes/from-offer → returns quoteId.
+
+DB trigger to auto‑insert quote.specialOfferId.
+
+Front‑end
+
+Offer card onClick → createQuoteFromOffer(offerId, clinicId).
+
+Wizard step 4: if quote.specialOfferId, inject pinned line.
+
+Auth helper
+
+ts
+Copy
+Edit
+function withAuthNext(returnTo: string, cb: () => void) {
+  if (!isLoggedIn()) openAuthModal(returnTo);
+  else cb();
+}
+Toast on portal landing (quoteId pulled from URL params).
+
