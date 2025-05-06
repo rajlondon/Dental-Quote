@@ -617,8 +617,8 @@ const PortalLoginPage: React.FC = () => {
                 description: "Creating your quote with the selected offer...",
               });
               
-              // Call the new API endpoint to start a quote from an offer
-              apiRequest('POST', `/api/v1/offers/${offerId}/start`, { clinicId })
+              // Call the API endpoint to start a quote from an offer
+              apiRequest('POST', `/api/offers/${offerId}/start`, { clinicId })
                 .then(response => {
                   if (!response.ok) {
                     throw new Error('Failed to create quote from offer');
