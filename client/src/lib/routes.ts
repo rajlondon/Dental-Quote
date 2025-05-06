@@ -18,7 +18,9 @@ export const ROUTES = {
   PATIENT_PORTAL: '/patient-portal',
   PATIENT_DASHBOARD: '/patient-portal',
   PATIENT_QUOTES: '/patient/quotes',
-  PATIENT_QUOTE_DETAIL: '/portal/quotes/:id',
+  PATIENT_QUOTE_DETAIL: '/patient/quotes/:id',
+  PATIENT_QUOTE_EDIT: '/patient/quotes/:id/edit',
+  PATIENT_QUOTE_REVIEW: '/patient/quotes/:id/review',
   PATIENT_TREATMENT_DETAIL: '/portal/treatment/:id',
   PATIENT_MESSAGES: '/patient/messages',
   
