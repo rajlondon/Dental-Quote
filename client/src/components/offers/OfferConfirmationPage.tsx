@@ -108,7 +108,7 @@ export default function OfferConfirmationPage() {
       const data = await response.json();
       
       // Reset the context
-      reset();
+      resetFlow();
       
       toast({
         title: 'Success!',
@@ -141,7 +141,7 @@ export default function OfferConfirmationPage() {
   
   // Function to handle cancellation
   const handleCancel = () => {
-    reset();
+    resetFlow();
     setLocation('/');
   };
   
