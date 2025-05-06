@@ -279,8 +279,10 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   const handleEdit = () => {
     if (!quote?.id) return;
     
-    // Use the quote flow for editing
-    navigateToRoute('PATIENT_DASHBOARD', { section: 'quotes', action: 'edit', id: quote.id.toString() });
+    // Try using existing patient portal with section param
+    window.location.href = `/patient-portal?section=quotes&action=edit&id=${quote.id}`;
+    
+    // Show success toast
     toast({
       title: "Edit Quote",
       description: "You can now edit your quote details."
