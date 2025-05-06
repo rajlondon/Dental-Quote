@@ -1920,21 +1920,46 @@ const YourQuotePage: React.FC = () => {
                       </div>
                       
                       <div className="flex flex-col sm:flex-row gap-4">
-                        <Button 
-                          variant="default"
-                          className="flex items-center gap-2"
-                        >
-                          <Mail className="h-4 w-4" />
-                          Email Quote
-                        </Button>
-                        
-                        <Button 
-                          variant="default"
-                          className="flex items-center gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download PDF
-                        </Button>
+                        {fromSpecialOffer ? (
+                          <Button 
+                            variant="default"
+                            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600"
+                            onClick={() => {
+                              // Create a treatment plan and redirect to the patient portal
+                              toast({
+                                title: "Saving Treatment Plan",
+                                description: "Creating your treatment plan and returning to the portal...",
+                              });
+                              
+                              // Simulate API call to create treatment plan
+                              setTimeout(() => {
+                                // Redirect to patient portal
+                                window.location.href = '/client-portal';
+                              }, 1500);
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Save Your Treatment Plan
+                          </Button>
+                        ) : (
+                          <>
+                            <Button 
+                              variant="default"
+                              className="flex items-center gap-2"
+                            >
+                              <Mail className="h-4 w-4" />
+                              Email Quote
+                            </Button>
+                            
+                            <Button 
+                              variant="default"
+                              className="flex items-center gap-2"
+                            >
+                              <Download className="h-4 w-4" />
+                              Download PDF
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
