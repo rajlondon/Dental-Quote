@@ -242,6 +242,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup treatment mapper API routes
   setupTreatmentMapperApi(app);
   
+  // Register our new treatment plan/offer integration routes
+  console.log('[DEBUG] Mounting treatment-offer-integration at /api/treatment-plans');
+  app.use('/api/treatment-plans', treatmentOfferIntegration);
+
   // Register direct route for /api/quotes/clinic to avoid conflicts
   app.get('/api/quotes/clinic', isAuthenticated, ensureRole("clinic_staff"), async (req, res, next) => {
     try {
@@ -307,9 +311,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the new offer start routes for special offers and packages
   app.use('/api/v1', offerStartRoutes);
-  
-  // Register the treatment-offer integration endpoints that create treatment plans from offers
-  app.use('/api/treatment-plans', treatmentOfferIntegration);
   
   // Also register the LEGACY offer endpoint at the root for backward compatibility
   app.use('/api', treatmentOfferIntegration);
