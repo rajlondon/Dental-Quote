@@ -1,0 +1,129 @@
+Even after the hook refactor, the browser is still calling an endpoint the server doesn’t own. That means one of two things is still true:
+
+1. The front‑end is hitting the wrong URL (e.g. /api/treatment‑lines/…)
+2. Two different Express routers still register the same path, and the first one that matches returns 404.
+
+Below is a laser‑focused way to prove which, then fix only what’s broken.
+
+① Pinpoint the failing request
+Network tab → reload page → click the “eye” Actions button.
+
+Filter for treatment and copy the exact request path, host & status.
+
+bash
+Copy
+Edit
+GET https://mydentalfly.repl.co/api/v1/treatment-lines?quoteId=11 404
+or maybe
+
+bash
+Copy
+Edit
+POST /treatments/11/delete 404
+Copy/paste that line into your console log—we’ll use it in the next step.
+
+If the URL doesn’t start with /api/v1/… but your server routes do → front‑end still using the wrong base path.
+If the URL matches the server path exactly → there’s still a double‑mounted route.
+
+② If the front‑end path is wrong
+You already edited client/src/hooks/use‑treatment‑lines.tsx, but a stale import may be bypassing it.
+
+Grep the repo:
+
+bash
+Copy
+Edit
+grep -R \"treatment-lines\" client/src | cut -c1-120
+You should see only one file (the hook) after the refactor.
+If a component still fetches directly, update it to:
+
+ts
+Copy
+Edit
+fetch(`${API_BASE_URL}/treatment-lines?...`)
+Make sure API_BASE_URL really reads env vars in prod:
+
+ts
+Copy
+Edit
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "/api/v1";
+In Replit > Secrets, set VITE_API_BASE_URL=/api/v1.
+
+Restart the repl (Stop ▸ Run). Test again—404 should disappear.
+
+③ If the path is correct but still 404 → duplicate route
+Your logs will usually show both registrations on boot:
+
+bash
+Copy
+Edit
+[server] /api/v1/treatment-lines (router A)
+[server] /api/v1/treatment-lines (router B)
+Fastest fix
+Locate both routers
+
+bash
+Copy
+Edit
+grep -R \"treatment-lines\" server/routes
+Decide which file to keep—ideally the RESTful one under /v1/.
+
+In the other file either:
+
+Remove the conflicting route, or
+
+Prefix it (e.g. /api/internal/treatment-lines).
+
+Re‑register routers in server/index.js in this order:
+
+js
+Copy
+Edit
+app.use('/api/internal', internalRouter);   // non‑public helpers
+app.use('/api/v1', apiV1Router);            // public client API
+Express will now match /api/v1/… routes in apiV1Router only.
+
+Restart; hit the endpoint directly:
+
+bash
+Copy
+Edit
+curl -v https://mydentalfly.repl.co/api/v1/treatment-lines?quoteId=11
+Expect 200 or [].
+
+④ Add a loud error for the future
+To spot accidental duplicates fast:
+
+js
+Copy
+Edit
+function checkRouteDuplicates(app) {
+  const seen = new Set();
+  app._router.stack
+    .filter(r => r.route)
+    .forEach(r => {
+      const path = r.route.path;
+      if (seen.has(path)) {
+        console.error('⚠️  DUPLICATE ROUTE:', path);
+      }
+      seen.add(path);
+    });
+}
+checkRouteDuplicates(app);
+Place it after all app.use() calls in server/index.js. Replit logs will scream next time a route overlaps.
+
+10‑second prompt for the AI agent (if you want it to do steps ②‑③)
+bash
+Copy
+Edit
+reference_file: docs/01_mvp_spec.md
+issue: #47 treatment-api-404
+
+Goal: 404 fix.
+
+1. Ensure all client fetches use `${API_BASE_URL}/treatment-lines`.
+2. Deduplicate Express routes: keep /api/v1/treatment-lines in routes/v1/treatments.js, remove any duplicate in routes/legacy/.
+3. Add duplicate‑route detector helper to server/index.js.
+
+Return modified files only.

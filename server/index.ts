@@ -6,6 +6,39 @@ import cors from "cors";
 import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 
+/**
+ * Helper function to detect duplicate routes in Express app
+ * This helps identify conflicting routes that may cause 404 errors
+ */
+function checkRouteDuplicates(app: express.Application) {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  
+  if (!app._router || !app._router.stack) {
+    console.log('⚠️ No router stack found to check for duplicates');
+    return;
+  }
+  
+  app._router.stack
+    .filter((r: any) => r.route)
+    .forEach((r: any) => {
+      const path = r.route.path;
+      if (seen.has(path)) {
+        duplicates.add(path);
+      }
+      seen.add(path);
+    });
+  
+  if (duplicates.size > 0) {
+    console.error('⚠️ DUPLICATE ROUTES DETECTED:');
+    duplicates.forEach(path => {
+      console.error(`  - ${path}`);
+    });
+  } else {
+    console.log('✅ No duplicate routes detected');
+  }
+}
+
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {
   // Copy from environment secrets if available
@@ -71,6 +104,9 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+
+  // Check for duplicate routes to help diagnose 404 errors
+  checkRouteDuplicates(app);
 
   // Only apply our custom error handlers to API routes
   // This prevents interference with Vite's handling of frontend routes
