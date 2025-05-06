@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
-import { useTreatmentMappings } from "@/hooks/use-treatment-mappings";
+import { useTreatmentMappings, type TreatmentCategory, type Treatment } from "@/hooks/use-treatment-mappings";
 
 /**
  * Patient Quote Edit Page
@@ -160,11 +160,11 @@ export default function PatientQuoteEditPage() {
   // Add a treatment
   const handleAddTreatment = (treatmentId: string) => {
     // Find the treatment in available treatments
-    let selectedTreatment = null;
+    let selectedTreatment: Treatment | null = null;
     
     if (treatmentMappings) {
       for (const category of treatmentMappings) {
-        const treatment = category.treatments.find(t => t.id.toString() === treatmentId);
+        const treatment = category.treatments.find((t: Treatment) => t.id.toString() === treatmentId);
         if (treatment) {
           selectedTreatment = treatment;
           break;
@@ -389,10 +389,10 @@ export default function PatientQuoteEditPage() {
                       <SelectValue placeholder="Add a treatment" />
                     </SelectTrigger>
                     <SelectContent>
-                      {treatmentMappings && treatmentMappings.map((category) => (
+                      {treatmentMappings && treatmentMappings.map((category: TreatmentCategory) => (
                         <SelectGroup key={category.id}>
                           <SelectLabel>{category.name}</SelectLabel>
-                          {category.treatments.map((treatment) => (
+                          {category.treatments.map((treatment: Treatment) => (
                             <SelectItem 
                               key={treatment.id} 
                               value={treatment.id.toString()}
