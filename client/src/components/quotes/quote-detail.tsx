@@ -120,13 +120,17 @@ export default function QuoteDetail({
         <Button
           variant="outline"
           onClick={() => {
-            // Use our navigation system first, fallback to legacy handler if provided
+            // Use our improved navigation approach
             if (portalType === 'patient') {
-              navigateTo('/patient/quotes');
+              // Set the session flag first, then navigate to patient portal
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('patient_portal_section', 'quotes');
+                navigateTo(ROUTES.PATIENT_PORTAL);
+              }
             } else if (portalType === 'admin') {
-              navigateTo('/admin/quotes');
+              navigateTo(ROUTES.ADMIN_QUOTES);
             } else if (portalType === 'clinic') {
-              navigateTo('/clinic/quotes');
+              navigateTo(ROUTES.CLINIC_QUOTES);
             } else if (onBack) {
               // Legacy fallback
               onBack();
