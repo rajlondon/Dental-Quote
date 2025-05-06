@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, FileText, AlertCircle, CheckCircle2, Package, HelpCircle, MoreVertical, Pencil, Trash, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
+import { ensureUuidFormat } from "@/lib/id-converter"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -60,27 +61,20 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   // Removed isDeleteConfirmOpen since we're using confirm() directly
   const { toast } = useToast();
   
-  // Convert numeric IDs to UUID format consistently
+  // Convert numeric IDs to UUID format consistently using our utility
   const sanitizedQuoteId = useMemo(() => {
-    // Early return if no quote ID
     if (!quoteId) return undefined;
     
-    // If it's already a UUID, no conversion needed
-    if (quoteId.includes('-')) {
-      console.log('[DEBUG] Quote ID already in UUID format:', quoteId);
-      return quoteId;
+    // Use the id-converter utility for consistent ID handling
+    const uuidFormat = ensureUuidFormat(quoteId);
+    
+    if (uuidFormat !== quoteId) {
+      console.log('[DEBUG] Converted quote ID to UUID format:', uuidFormat);
+    } else {
+      console.log('[DEBUG] Quote ID already in correct format:', uuidFormat);
     }
     
-    // Convert numeric ID to UUID format
-    if (/^\d+$/.test(quoteId)) {
-      const numericIdStr = quoteId.toString();
-      const uuidFormat = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
-      console.log('[DEBUG] Converted numeric quote ID to UUID format:', uuidFormat);
-      return uuidFormat;
-    }
-    
-    // Default case - return as-is
-    return quoteId;
+    return uuidFormat;
   }, [quoteId]);
   
   // Get treatment lines data and functions from the hook
@@ -391,13 +385,9 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                                 try {
                                   console.log("Delete action clicked for treatment line:", tl.id);
                                   
-                                  // Convert numeric IDs to UUID format if needed
-                                  let treatmentLineId = tl.id?.toString();
-                                  if (treatmentLineId && /^\d+$/.test(treatmentLineId)) {
-                                    const numericIdStr = treatmentLineId.toString();
-                                    treatmentLineId = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
-                                    console.log('[DEBUG] Converted numeric treatment line ID to UUID format:', treatmentLineId);
-                                  }
+                                  // Convert to UUID format using the utility function
+                                  const treatmentLineId = ensureUuidFormat(tl.id);
+                                  console.log('[DEBUG] Using ID for deletion:', treatmentLineId);
                                   
                                   console.log("[DEBUG] Delete action - using API path:", "/api/treatment-module/treatment-lines/" + treatmentLineId);
                                   
@@ -603,13 +593,9 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                       try {
                         console.log("Updating treatment line with ID:", selectedTreatmentLine.id);
                         
-                        // Convert numeric IDs to UUID format if needed
-                        let treatmentLineId = selectedTreatmentLine.id?.toString();
-                        if (treatmentLineId && /^\d+$/.test(treatmentLineId)) {
-                          const numericIdStr = treatmentLineId.toString();
-                          treatmentLineId = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
-                          console.log('[DEBUG] Converted numeric treatment line ID to UUID format:', treatmentLineId);
-                        }
+                        // Convert to UUID format using the utility function
+                        const treatmentLineId = ensureUuidFormat(selectedTreatmentLine.id);
+                        console.log('[DEBUG] Using ID for update:', treatmentLineId);
                         
                         const updateData = {
                           patientNotes: selectedTreatmentLine.patientNotes
