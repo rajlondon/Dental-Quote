@@ -31,13 +31,13 @@ export function useTreatmentLines(quoteId?: string) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["/api/treatment-plans/treatment-lines", quoteId],
+    queryKey: ["/api/treatment-module/treatment-lines", quoteId],
     queryFn: async () => {
       if (!quoteId) return [];
       
       // Use the correct API endpoint that's actually mounted in the server
-      console.log(`Sending GET request to /api/treatment-plans/treatment-lines/${quoteId}`);
-      const response = await apiRequest("GET", `/api/treatment-plans/treatment-lines/${quoteId}`);
+      console.log(`Sending GET request to /api/treatment-module/treatment-lines/${quoteId}`);
+      const response = await apiRequest("GET", `/api/treatment-module/treatment-lines/${quoteId}`);
       const data = await response.json() as TreatmentLineResponse;
       
       if (!data.success) {
