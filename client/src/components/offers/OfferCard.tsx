@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
+import { useQuoteFlow } from "@/contexts/QuoteFlowContext";
 
 interface OfferCardProps {
   offer: {
@@ -36,6 +37,13 @@ export function OfferCard({ offer }: OfferCardProps) {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Use the QuoteFlow context
+  const { 
+    setSource, 
+    setOfferId, 
+    setClinicId 
+  } = useQuoteFlow();
+  
   // Background image style with fallback
   const backgroundImage = offer.image 
     ? `url(${offer.image})`
@@ -54,12 +62,18 @@ export function OfferCard({ offer }: OfferCardProps) {
     try {
       setIsProcessing(true);
       
+      // Set context data to track this flow
+      setSource('special_offer');
+      setOfferId(offer.id);
+      setClinicId(offer.clinicId);
+      
+      // Ensure flow data is also saved to session storage for login recovery
+      // This maintains compatibility with existing code
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+      sessionStorage.setItem('processingSpecialOffer', offer.id);
+      
       // If user is not logged in, redirect to login page with special offer info
       if (!user) {
-        // Save the offer ID to session storage to retrieve after login
-        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-        sessionStorage.setItem('processingSpecialOffer', offer.id);
-        
         // Redirect to login page
         setLocation('/portal-login');
         return;

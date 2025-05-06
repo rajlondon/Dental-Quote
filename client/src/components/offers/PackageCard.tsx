@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
+import { useQuoteFlow } from "@/contexts/QuoteFlowContext";
 
 interface PackageCardProps {
   package: {
@@ -35,6 +36,13 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Use the QuoteFlow context
+  const { 
+    setSource, 
+    setPackageId, 
+    setClinicId 
+  } = useQuoteFlow();
+  
   // Background image style with fallback
   const backgroundImage = pkg.image 
     ? `url(${pkg.image})`
@@ -56,12 +64,18 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
     try {
       setIsProcessing(true);
       
+      // Set context data to track this flow
+      setSource('package');
+      setPackageId(pkg.id);
+      setClinicId(pkg.clinicId);
+      
+      // Ensure flow data is also saved to session storage for login recovery
+      // This maintains compatibility with existing code
+      sessionStorage.setItem('pendingPackage', JSON.stringify(pkg));
+      sessionStorage.setItem('processingPackage', pkg.id);
+      
       // If user is not logged in, redirect to login page with package info
       if (!user) {
-        // Save the package ID to session storage to retrieve after login
-        sessionStorage.setItem('pendingPackage', JSON.stringify(pkg));
-        sessionStorage.setItem('processingPackage', pkg.id);
-        
         // Redirect to login page
         setLocation('/portal-login');
         return;
@@ -84,11 +98,32 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
   // Function to create a quote from a package via the API
   const createQuoteFromPackage = async (packageId: string, clinicId: string) => {
     try {
-      const response = await apiRequest(
-        'POST', 
-        `/api/v1/packages/${packageId}/start`,
-        { clinicId }
-      );
+      // Try the primary endpoint
+      let response;
+      try {
+        response = await apiRequest(
+          'POST', 
+          `/api/v1/packages/${packageId}/start`,
+          { clinicId }
+        );
+        
+        // If successful, proceed
+        if (response.ok) {
+          console.log("Successfully used primary package endpoint");
+        } else {
+          throw new Error("Primary package endpoint returned error status");
+        }
+      } catch (err) {
+        console.log("Primary package endpoint failed, trying fallback:", err);
+        
+        // Try fallback endpoint if primary fails
+        console.log("Attempting fallback endpoint for package");
+        response = await apiRequest(
+          'POST', 
+          `/api/packages/${packageId}/start`,
+          { clinicId }
+        );
+      }
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -109,7 +144,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
             quoteId: data.quoteId,
             quoteUrl: data.quoteUrl,
             clinicId: pkg.clinicId,
-            offerTitle: pkg.title
+            packageTitle: pkg.title
           }));
           
           toast({
