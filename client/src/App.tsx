@@ -458,9 +458,10 @@ function App() {
             <NotificationsProvider>
               <BookingsProvider>
                 <UnifiedTreatmentPlansProvider>
-                  <PageTransitionProvider>
-                    <NavigationProvider>
-                      <Suspense fallback={<div>Loading...</div>}>
+                  <QuoteFlowProvider>
+                    <PageTransitionProvider>
+                      <NavigationProvider>
+                        <Suspense fallback={<div>Loading...</div>}>
                         <ScrollToTop />
                         {/* Only exclude ReloadTranslations on clinic portal path */}
                         {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
@@ -480,6 +481,7 @@ function App() {
                       </Suspense>
                     </NavigationProvider>
                   </PageTransitionProvider>
+                  </QuoteFlowProvider>
                 </UnifiedTreatmentPlansProvider>
               </BookingsProvider>
             </NotificationsProvider>
