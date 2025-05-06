@@ -51,7 +51,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   
   // Fetch the quote details
   const { 
-    data: quote, 
+    data: quoteData, 
     isLoading, 
     error 
   } = useQuery({
@@ -76,6 +76,40 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
     },
     staleTime: 60000 // 1 minute
   });
+  
+  // Extract the specific quote details from the nested response
+  const quote = React.useMemo<Quote | null>(() => {
+    if (!quoteData) return null;
+    
+    // Extract quote from the nested structure based on the API response format
+    const quoteRequest = quoteData.quoteRequest || {};
+    const quoteVersions = quoteData.versions || [];
+    
+    // Get the latest version if it exists, otherwise use the quote request
+    const latestVersion = quoteVersions.length > 0 
+      ? quoteVersions[quoteVersions.length - 1] 
+      : null;
+    
+    // Construct a structured quote object with all necessary fields
+    return {
+      id: quoteRequest.id,
+      status: quoteRequest.status,
+      title: quoteRequest.treatment,
+      createdAt: quoteRequest.createdAt,
+      clinicName: 'Istanbul Dental Smile', // Default or from selected clinic
+      clinicAddress: 'Istanbul, Turkey',
+      clinicContact: '+90 123 456 7890',
+      totalPrice: 0, // To be calculated from treatments
+      notes: quoteRequest.notes,
+      treatments: [
+        {
+          name: quoteRequest.specificTreatment || quoteRequest.treatment || 'Dental Treatment',
+          quantity: 1,
+          price: 0 // Price not available in this view yet
+        }
+      ]
+    };
+  }, [quoteData]);
 
   // Get status badge color and text for a status
   const getStatusBadge = (status: string | undefined) => {
@@ -231,7 +265,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
       {/* Quote header */}
       <div>
         <h1 className="text-2xl font-bold">
-          {quote.title || `Quote #${quote.id.toString().slice(0, 8)}`}
+          {quote.title || (quote.id ? `Quote #${quote.id.toString().slice(0, 8)}` : 'Quote Details')}
         </h1>
         <div className="flex items-center mt-2 text-gray-600">
           <StatusIcon />
@@ -333,7 +367,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
           </>
         )}
 
-        {['accepted', 'completed'].includes(quote.status) && (
+        {quote.status && ['accepted', 'completed'].includes(quote.status) && (
           <>
             <Button 
               variant="outline" 
