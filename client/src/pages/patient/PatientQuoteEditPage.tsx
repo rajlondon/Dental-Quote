@@ -176,9 +176,9 @@ export default function PatientQuoteEditPage() {
       // Create a new treatment item
       const newTreatment: TreatmentItem = {
         id: selectedTreatment.id,
-        name: selectedTreatment.targetName || selectedTreatment.sourceName || 'Treatment',
+        name: selectedTreatment.name || 'Treatment',
         quantity: 1,
-        price: selectedTreatment.targetPrice || selectedTreatment.sourcePrice || 0
+        price: selectedTreatment.price || 0
       };
       
       // Add it to the selected treatments list
@@ -397,7 +397,7 @@ export default function PatientQuoteEditPage() {
                               key={treatment.id} 
                               value={treatment.id.toString()}
                             >
-                              {treatment.targetName || treatment.sourceName} (£{treatment.targetPrice || treatment.sourcePrice})
+                              {treatment.name} (£{treatment.price})
                             </SelectItem>
                           ))}
                         </SelectGroup>

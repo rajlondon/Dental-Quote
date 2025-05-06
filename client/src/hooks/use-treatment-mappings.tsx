@@ -36,11 +36,17 @@ export function useTreatmentMappings() {
         const response = await apiRequest('GET', '/api/treatments/categories');
         const result = await response.json();
         
+        console.log('[DEBUG] Treatment categories API response:', result);
+        
         if (!result.success) {
           throw new Error(result.message || 'Failed to fetch treatment categories');
         }
         
-        return result.data || [];
+        // Ensure we're getting the expected data structure
+        const categories = result.data || [];
+        console.log('[DEBUG] Parsed treatment categories:', categories);
+        
+        return categories;
       } catch (error) {
         console.error('[ERROR] Failed to load treatment mappings:', error);
         toast({
