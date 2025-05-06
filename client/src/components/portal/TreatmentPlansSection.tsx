@@ -540,8 +540,8 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
                         console.log("Update data:", {
                           patientNotes: selectedTreatmentLine.patientNotes
                         });
-                        // Note the correct route path: /api/treatment-plans/treatment-lines/:id
-                        fetch(`/api/treatment-plans/treatment-lines/${selectedTreatmentLine.id}`, {
+                        // Use the route path where it's actually mounted: /api/treatment-module/treatment-lines/:id
+                        fetch(`/api/treatment-module/treatment-lines/${selectedTreatmentLine.id}`, {
                           method: 'PUT',
                           headers: {
                             'Content-Type': 'application/json',
