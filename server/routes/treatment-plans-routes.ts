@@ -6,6 +6,7 @@ import { isAuthenticated } from "../middleware/auth";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { storage } from "../storage";
+import { extractNumericFromUuid } from "../utils/id-converter";
 
 const router: Router = express.Router();
 
@@ -347,6 +348,22 @@ router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res:
   console.log(`[DEBUG] Request body:`, req.body);
   console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
   console.log(`[DEBUG] Host: ${req.headers.host}, Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
+  
+  // Handle ID format conversion if needed
+  const treatmentLineId = id;
+  console.log(`[DEBUG] Original ID from URL: ${id}`);
+  
+  // If ID is in UUID format, extract the numeric part if it follows our pattern
+  if (id.includes('-')) {
+    try {
+      const numericId = extractNumericFromUuid(id);
+      console.log(`[DEBUG] UUID format detected. Original: ${id}, Extracted numeric ID: ${numericId}`);
+    } catch (e) {
+      console.log(`[DEBUG] ID appears to be in UUID format but doesn't follow our conversion pattern`);
+    }
+  }
+  
+  console.log(`[DEBUG] Using ID for database lookup: ${treatmentLineId}`);
   console.log(`[DEBUG] ===============================================`);
   
   if (!req.user) {
@@ -360,7 +377,7 @@ router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res:
   try {
     // Find existing treatment line
     const existingTreatmentLine = await db.query.treatmentLines.findFirst({
-      where: eq(treatmentLines.id, id)
+      where: eq(treatmentLines.id, treatmentLineId)
     });
     
     if (!existingTreatmentLine) {
@@ -387,7 +404,7 @@ router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res:
         status: "deleted",
         updatedAt: new Date()
       })
-      .where(eq(treatmentLines.id, id))
+      .where(eq(treatmentLines.id, treatmentLineId))
       .returning();
     
     return res.status(200).json({
