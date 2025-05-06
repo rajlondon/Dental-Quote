@@ -1431,6 +1431,34 @@ const YourQuotePage: React.FC = () => {
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
           
+          {/* Special Offer or Package Banner */}
+          {(isSpecialOfferFlow || isPackageFlow) && (
+            <div className="mb-6 bg-gradient-to-r from-blue-100 to-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mt-1">
+                  <Sparkles className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-3">
+                  <h2 className="font-semibold text-blue-900">
+                    {isSpecialOfferFlow ? 'Special Offer Selected' : 'Treatment Package Selected'}
+                  </h2>
+                  <p className="text-blue-800 font-medium">
+                    {isSpecialOfferFlow && offerId ? (
+                      <>Your quote includes the special offer: {specialOffer?.title || 'Special Offer'}</>
+                    ) : isPackageFlow && packageId ? (
+                      <>Your selected package will be applied to this quote</>
+                    ) : (
+                      <>We'll prepare your personalized treatment plan</>
+                    )}
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Complete the dental quiz below to customize your treatment experience
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Progress tracker */}
           <div className="mb-8">
             <div className="bg-white rounded-lg shadow-sm p-4">
@@ -1625,14 +1653,64 @@ const YourQuotePage: React.FC = () => {
                     />
                     
                     {treatmentItems.length > 0 && (
-                      <div className="mt-6 flex justify-end">
-                        <Button 
-                          onClick={() => setCurrentStep('patient-info')}
-                          className="flex items-center gap-2"
-                        >
-                          Continue to Next Step
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                      <div className="mt-6">
+                        {/* Show the special offer or package details if applicable */}
+                        {(isSpecialOfferFlow || isPackageFlow) && (
+                          <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-md">
+                            <div className="flex items-center">
+                              <Sparkles className="h-5 w-5 text-blue-600 mr-2" />
+                              <h3 className="font-medium text-blue-900">
+                                {isSpecialOfferFlow ? 'Your Special Offer' : 'Your Package Selection'}
+                              </h3>
+                            </div>
+                            <p className="text-sm text-blue-800 ml-7 mt-1">
+                              {isSpecialOfferFlow && specialOffer ? (
+                                <>
+                                  <span className="font-medium">{specialOffer.title}</span>
+                                  {specialOffer.discountType === 'percentage' ? 
+                                    ` - ${specialOffer.discountValue}% off` : 
+                                    ` - £${specialOffer.discountValue} off`
+                                  }
+                                </>
+                              ) : isPackageFlow ? (
+                                <>Package benefits will be applied to your treatment plan</>
+                              ) : null}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-gray-600">
+                            {(isSpecialOfferFlow || isPackageFlow) ? (
+                              <>Continue to complete your personalized dental treatment plan</>
+                            ) : (
+                              <>Treatments added: {treatmentItems.length}</>
+                            )}
+                          </div>
+                          
+                          <Button 
+                            onClick={() => {
+                              // If this is a special offer or package flow and we have a clinicId,
+                              // we can potentially skip patient info and go straight to select-clinic
+                              if ((isSpecialOfferFlow || isPackageFlow) && clinicId && searchParams.get('skipInfo') === 'true') {
+                                // Find the clinic
+                                const matchedClinic = clinics.find(c => c.id.toString() === clinicId);
+                                if (matchedClinic) {
+                                  setSelectedClinic(matchedClinic);
+                                  setCurrentStep('select-clinic');
+                                } else {
+                                  setCurrentStep('patient-info');
+                                }
+                              } else {
+                                setCurrentStep('patient-info');
+                              }
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            Continue to Next Step
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </CardContent>
