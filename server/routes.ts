@@ -28,6 +28,7 @@ import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentPlansModuleRoutes from "./routes/treatment-plans-routes";
 import publicPackagesRoutes from "./routes/public-packages-routes";
 import treatmentRoutes from "./routes/treatment-routes";
+import treatmentCategoriesRoutes from "./routes/treatment-categories-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
 import testRoutes from "./routes/test-routes";
@@ -223,6 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register new treatment management routes for clinics
   app.use(treatmentRoutes);
+  
+  // Register treatment categories routes for patient quote editing
+  app.use(treatmentCategoriesRoutes);
   
   // Register clinic API routes for quote generation and consultation booking
   // IMPORTANT: This is put before quote routes to avoid conflicts
