@@ -49,7 +49,8 @@ export function TreatmentPlanViewer({
   const { toast } = useToast();
 
   // IMPORTANT: Using '/api/treatment-module/' for consistent API path usage
-  const API_BASE_URL = "/api/treatment-module";
+  // Update to use canonical API path format
+  const API_BASE_URL = "/api/v1";
 
   // Query to fetch the treatment plan
   const {
