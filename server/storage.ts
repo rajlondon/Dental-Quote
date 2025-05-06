@@ -48,6 +48,13 @@ export interface IStorage {
   
   // Quote versions
   getQuoteVersions(quoteRequestId: number): Promise<QuoteVersion[]>;
+  
+  // Treatment Lines - Canonical API methods
+  getTreatmentLinesByQuoteId(quoteId: number): Promise<any[]>;
+  getTreatmentSummaryForPatient(patientId: number): Promise<any>;
+  createTreatmentLine(data: any): Promise<any>;
+  updateTreatmentLine(id: number, data: any): Promise<any | undefined>;
+  deleteTreatmentLine(id: number): Promise<boolean>;
   getLatestQuoteVersion(quoteRequestId: number): Promise<QuoteVersion | undefined>;
   createQuoteVersion(data: InsertQuoteVersion): Promise<QuoteVersion>;
   
