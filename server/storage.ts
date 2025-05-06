@@ -53,6 +53,9 @@ export interface IStorage {
   updateOffer(offerId: string, data: any): Promise<any | undefined>;
   deleteOffer(offerId: string): Promise<boolean>;
   updateSpecialOfferImage(offerId: string, imageUrl: string): Promise<boolean>;
+  
+  // Treatment packages methods
+  getPackage(packageId: string): Promise<any | undefined>;
   getLastTreatmentPlanFromOffer(offerId: string, patientId: string): Promise<any | undefined>;
   
   // Quote versions
