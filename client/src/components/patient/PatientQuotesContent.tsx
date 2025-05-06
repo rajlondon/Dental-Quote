@@ -11,6 +11,7 @@ import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Lo
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/date-utils';
 import { ROUTES } from '@/lib/routes';
+import { useNavigation } from '@/hooks/use-navigation';
 
 // TypeScript interfaces for better type safety
 interface Quote {
@@ -48,6 +49,7 @@ interface QuoteCardProps {
  */
 export function PatientQuotesContent() {
   const { t } = useTranslation();
+  const { navigateTo, navigateToRoute } = useNavigation();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = React.useState('all');
 
@@ -178,7 +180,7 @@ export function PatientQuotesContent() {
         </p>
         <Button
           onClick={() => {
-            window.location.href = '/your-quote';
+            navigateToRoute('YOUR_QUOTE');
           }}
           className="inline-flex items-center gap-2"
         >
