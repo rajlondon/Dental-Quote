@@ -316,12 +316,15 @@ router.put("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Re
 router.delete("/treatment-lines/:id", isAuthenticated, async (req: Request, res: Response) => {
   const { id } = req.params;
   
+  console.log(`[DEBUG] ============ TREATMENT LINE DELETE ============`);
   console.log(`[DEBUG] DELETE request to /treatment-lines/${id}`);
   console.log(`[DEBUG] This route is mounted at: /api/treatment-module/treatment-lines/${id}`);
   console.log(`[DEBUG] Full URL path: ${req.originalUrl}`);
   console.log(`[DEBUG] HTTP method: ${req.method}`);
+  console.log(`[DEBUG] Request body:`, req.body);
   console.log(`[DEBUG] Authenticated user: ${req.user ? `ID: ${req.user.id}, Role: ${req.user.role}` : 'Not authenticated'}`);
   console.log(`[DEBUG] Headers:`, req.headers);
+  console.log(`[DEBUG] ===============================================`);
   
   if (!req.user) {
     console.log(`[DEBUG] Rejecting request due to missing authentication`);

@@ -60,6 +60,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   // Removed isDeleteConfirmOpen since we're using confirm() directly
   const { toast } = useToast();
   
+  // Get treatment lines data and functions from the hook
   const { 
     treatmentLines, 
     isLoading, 
@@ -71,6 +72,14 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
     deleteTreatmentLine,
     refetch
   } = useTreatmentLines(quoteId);
+  
+  // Debug: log available hook functions and state
+  console.log("Treatment hook functions available:", {
+    hasUpdateFn: !!updateTreatmentLine,
+    hasDeleteFn: !!deleteTreatmentLine,
+    hasRefetchFn: !!refetch,
+    treatmentLinesCount: treatmentLines?.length || 0
+  });
 
   // Status badge component with appropriate colors
   const StatusBadge = ({ status }: { status: string }) => {
