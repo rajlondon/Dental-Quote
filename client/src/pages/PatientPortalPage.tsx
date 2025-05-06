@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { ensureUuidFormat } from '@/lib/id-converter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
   LayoutDashboard, 
@@ -731,19 +732,12 @@ const PatientPortalPage: React.FC = () => {
         // Find and use the latest quote ID if available using our safe array
         const latestQuote = safeUserQuotes.length > 0 ? safeUserQuotes[0] : null;
         
-        // Convert quote ID to proper UUID format if it's numeric
-        let quoteId = latestQuote?.id?.toString();
-        
-        // Check if we have a numeric ID, and if so, convert it to deterministic UUID format
-        if (quoteId && /^\d+$/.test(quoteId)) {
-          // Generate a deterministic UUID based on the numeric ID (should match server-side conversion)
-          const numericIdStr = quoteId.toString();
-          quoteId = `00000000-0000-4000-a000-${numericIdStr.padStart(12, '0')}`;
-          console.log('[DEBUG] Converted numeric quote ID to UUID format:', quoteId);
-        }
+        // Convert quote ID to proper UUID format if needed
+        const quoteId = ensureUuidFormat(latestQuote?.id);
         
         console.log('[DEBUG] Using quote ID for treatment plan:', quoteId);
         console.log('[DEBUG] Latest quote data:', latestQuote);
+        
         return <TreatmentPlansSection quoteId={quoteId} />;
       case 'dental_chart':
         return <DentalChartSection />;
