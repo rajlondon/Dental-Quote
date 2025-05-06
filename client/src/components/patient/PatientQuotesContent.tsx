@@ -76,17 +76,6 @@ interface StatusBadge {
   text: string;
 }
 
-interface QuoteCardProps {
-  quote: Quote;
-  getStatusBadge: (status: string) => StatusBadge;
-  getStatusIcon: (status: string) => React.ReactNode;
-  onView: (quoteId: number) => void;
-  onEdit: (quoteId: number) => void;
-  onDownload: (quoteId: number) => void;
-  onContactClinic: (quoteId: number) => void;
-  onMakePayment?: (quoteId: number) => void;
-}
-
 /**
  * Patient quotes display component optimized for use directly in the patient portal
  * This component DISPLAYS quotes data, while PatientQuotesPage is now only a redirect component
@@ -94,9 +83,8 @@ interface QuoteCardProps {
 export function PatientQuotesContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { navigateTo, navigateToRoute } = useNavigation();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = React.useState('all');
+  const [activeTab, setActiveTab] = useState('all');
 
   // Fetch user quotes with error handling
   const {
@@ -117,7 +105,7 @@ export function PatientQuotesContent() {
           return [];
         }
         
-        console.log('[DEBUG] Successfully loaded quotes:', data.data);
+        console.log('[DEBUG] Successfully loaded user quotes:', data.data);
         return data.data || [];
       } catch (error) {
         console.error('[ERROR] Failed to fetch quotes:', error);
@@ -187,14 +175,14 @@ export function PatientQuotesContent() {
   // Handle viewing quote details
   const handleViewQuote = (quoteId: number) => {
     console.log(`[DEBUG] Viewing quote ${quoteId}`);
-    sessionStorage.setItem('patient_portal_section', 'quotes');
-    sessionStorage.setItem('viewing_quote_id', quoteId.toString());
-    navigateToRoute('PATIENT_QUOTE_DETAIL', { id: quoteId.toString() });
+    // Direct URL path-based navigation approach
+    window.location.href = `/patient-portal?section=quotes&quoteId=${quoteId}`;
   };
 
   // Handle editing a quote
   const handleEditQuote = (quoteId: number) => {
     console.log(`[DEBUG] Editing quote ${quoteId}`);
+    // Direct URL path-based navigation approach
     window.location.href = `/patient-portal?section=quotes&action=edit&id=${quoteId}`;
     toast({
       title: "Edit Quote",
@@ -215,7 +203,7 @@ export function PatientQuotesContent() {
   // Handle contacting the clinic
   const handleContactClinic = (quoteId: number) => {
     console.log(`[DEBUG] Contacting clinic about quote ${quoteId}`);
-    navigateToRoute('PATIENT_MESSAGES');
+    window.location.href = `/patient-portal?section=messages`;
     toast({
       title: "Contact Clinic",
       description: "You can now message the clinic about your quote."
@@ -273,7 +261,7 @@ export function PatientQuotesContent() {
         </p>
         <Button
           onClick={() => {
-            navigateToRoute('YOUR_QUOTE');
+            window.location.href = `/your-quote`;
           }}
           className="inline-flex items-center gap-2"
         >
@@ -293,7 +281,7 @@ export function PatientQuotesContent() {
         <div>
           <Button 
             onClick={() => {
-              navigateToRoute('YOUR_QUOTE');
+              window.location.href = `/your-quote`;
             }}
             className="flex items-center gap-2"
           >
@@ -371,7 +359,18 @@ export function PatientQuotesContent() {
   );
 }
 
-// Card component for individual quotes with action menu
+// Card component for individual quotes
+interface QuoteCardProps {
+  quote: Quote;
+  getStatusBadge: (status: string) => StatusBadge;
+  getStatusIcon: (status: string) => React.ReactNode;
+  onView: (quoteId: number) => void;
+  onEdit: (quoteId: number) => void;
+  onDownload: (quoteId: number) => void;
+  onContactClinic: (quoteId: number) => void;
+  onMakePayment?: (quoteId: number) => void;
+}
+
 function QuoteCard({ 
   quote, 
   getStatusBadge, 
@@ -386,16 +385,24 @@ function QuoteCard({
   const status = getStatusBadge(quote.status);
   const statusIcon = getStatusIcon(quote.status);
   
+  // This prevents the card click from triggering when clicking dropdown menu
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only proceed with view if the click is directly on the card and not on action buttons
+    if (!(e.target as HTMLElement).closest('.quote-actions')) {
+      onView(quote.id);
+    }
+  };
+  
   return (
     <Card 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => onView(quote.id)} // Use the onView callback
+      onClick={handleCardClick}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">
-              {quote.title || `Quote #${quote.id.toString().slice(0, 8)}`}
+              {quote.title || `Quote #${quote.id}`}
             </CardTitle>
             <CardDescription className="line-clamp-1">
               {quote.clinicName || 'Multiple Clinics'}
@@ -429,82 +436,91 @@ function QuoteCard({
             {statusIcon}
             <span className="ml-2">{status.text}</span>
           </div>
-          <div className="flex gap-2">
-            <TooltipProvider>
-              {/* View details button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent parent card click
-                      onView(quote.id);
-                    }}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>View Details</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              {/* Action Dropdown Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 text-gray-600 hover:bg-gray-50"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  
-                  {/* View Details */}
-                  <DropdownMenuItem onClick={() => onView(quote.id)}>
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
-                  </DropdownMenuItem>
-                  
-                  {/* Edit - only for specific statuses or if canEdit is true */}
-                  {(quote.canEdit || ['draft', 'pending', 'sent'].includes(quote.status)) && (
-                    <DropdownMenuItem onClick={() => onEdit(quote.id)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Quote
+          <div className="flex gap-2 quote-actions">
+            {/* View Button */}
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-8 w-8 text-blue-600 hover:bg-blue-50 border-blue-200"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent parent card click
+                onView(quote.id);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+              <span className="sr-only">View</span>
+            </Button>
+            
+            {/* Edit Button - shown only for editable quotes */}
+            {(quote.canEdit || ['draft', 'pending', 'sent', 'active'].includes(quote.status)) && (
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="h-8 w-8 text-amber-600 hover:bg-amber-50 border-amber-200"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent parent card click
+                  onEdit(quote.id);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+                <span className="sr-only">Edit</span>
+              </Button>
+            )}
+            
+            {/* Dropdown Menu for additional actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 text-gray-600 hover:bg-gray-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                
+                {/* Download PDF */}
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDownload(quote.id);
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </DropdownMenuItem>
+                
+                {/* Contact Clinic */}
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onContactClinic(quote.id);
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contact Clinic
+                </DropdownMenuItem>
+                
+                {/* Make Payment - only for accepted quotes */}
+                {quote.status === 'accepted' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMakePayment && onMakePayment(quote.id);
+                      }}
+                    >
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Make Payment
                     </DropdownMenuItem>
-                  )}
-                  
-                  {/* Download */}
-                  <DropdownMenuItem onClick={() => onDownload(quote.id)}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </DropdownMenuItem>
-                  
-                  {/* Contact Clinic */}
-                  <DropdownMenuItem onClick={() => onContactClinic(quote.id)}>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contact Clinic
-                  </DropdownMenuItem>
-                  
-                  {/* Make Payment - only for accepted quotes */}
-                  {quote.status === 'accepted' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onMakePayment && onMakePayment(quote.id)}>
-                        <Wallet className="h-4 w-4 mr-2" />
-                        Make Payment
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TooltipProvider>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardFooter>
