@@ -2126,20 +2126,58 @@ const YourQuotePage: React.FC = () => {
                                   }
                                 };
                                 
-                                // Call the API to save the treatment plan
-                                const response = await fetch('/api/treatment-plans', {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json'
-                                  },
-                                  body: JSON.stringify(planData)
-                                });
+                                // Call the appropriate API endpoint based on source
+                                let response;
+                                
+                                if (source === 'offer' && offerId) {
+                                  console.log(`Using unified treatment plan API for offer ${offerId}`);
+                                  response = await fetch(`/api/treatment-plans/from-offer`, {
+                                    method: 'POST', 
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                      offerId: offerId,
+                                      clinicId: selectedClinic?.id || clinicId,
+                                      patientInfo: patientInfo,
+                                      notes: 'Created from YourQuotePage special offer flow'
+                                    })
+                                  });
+                                } else if (source === 'package' && packageId) {
+                                  console.log(`Using unified treatment plan API for package ${packageId}`);
+                                  response = await fetch(`/api/treatment-plans/from-package`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                      packageId: packageId,
+                                      clinicId: selectedClinic?.id || clinicId,
+                                      patientInfo: patientInfo,
+                                      additionalTreatments: treatmentItems,
+                                      notes: 'Created from YourQuotePage package flow'
+                                    })
+                                  });
+                                } else {
+                                  // Standard treatment plan
+                                  console.log('Using standard treatment plan API');
+                                  response = await fetch('/api/treatment-plans', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify(planData)
+                                  });
+                                }
                                 
                                 if (!response.ok) {
-                                  throw new Error('Failed to save treatment plan');
+                                  const errorText = await response.text();
+                                  console.error('Error response:', errorText);
+                                  throw new Error(`Failed to save treatment plan: ${errorText}`);
                                 }
                                 
                                 const result = await response.json();
+                                console.log('Treatment plan API response:', result);
                                 
                                 toast({
                                   title: "Success!",
@@ -2147,13 +2185,20 @@ const YourQuotePage: React.FC = () => {
                                   variant: "default"
                                 });
                                 
+                                // Clear any pending offer/package data
+                                sessionStorage.removeItem('pendingSpecialOffer');
+                                sessionStorage.removeItem('processingSpecialOffer');
+                                sessionStorage.removeItem('activeSpecialOffer');
+                                
                                 // Reset context and redirect after successful save
                                 setTimeout(() => {
                                   // Reset context
                                   resetFlow();
                                   
-                                  // Redirect to patient portal with source parameter for analytics
-                                  window.location.href = `/client-portal?source=${source}&planId=${result.id}`;
+                                  // Use the redirectUrl from API if available, otherwise use standard redirect
+                                  const redirectPath = result.redirectUrl || `/client-portal?source=${source}&planId=${result.id}`;
+                                  console.log(`Redirecting to: ${redirectPath}`);
+                                  window.location.href = redirectPath;
                                 }, 1500);
                               } catch (error) {
                                 console.error('Error saving treatment plan:', error);
