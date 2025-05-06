@@ -7,10 +7,40 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Loader2 } from 'lucide-react';
+import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Loader2, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/date-utils';
 import { ROUTES } from '@/lib/routes';
+
+// TypeScript interfaces for better type safety
+interface Quote {
+  id: number;
+  userId: number;
+  name: string;
+  email: string;
+  treatment: string;
+  specificTreatment?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  clinicName?: string;
+  treatmentCount?: number;
+  totalPrice?: number;
+  title?: string;
+  [key: string]: any; // Allow additional properties
+}
+
+interface StatusBadge {
+  color: string;
+  text: string;
+}
+
+interface QuoteCardProps {
+  quote: Quote;
+  getStatusBadge: (status: string) => StatusBadge;
+  getStatusIcon: (status: string) => React.ReactNode;
+  onClick: () => void;
+}
 
 /**
  * Patient quotes display component optimized for use directly in the patient portal
@@ -68,7 +98,7 @@ export function PatientQuotesContent() {
   }, [quotes, activeTab]);
 
   // Get the status badge color and text for a quote
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string): StatusBadge => {
     switch (status) {
       case 'sent':
         return { color: 'bg-blue-500', text: 'Sent' };
@@ -90,7 +120,7 @@ export function PatientQuotesContent() {
   };
 
   // Get the icon for a quote based on its status
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string): React.ReactNode => {
     switch (status) {
       case 'sent':
         return <Clock className="h-5 w-5 text-blue-500" />;
@@ -157,6 +187,19 @@ export function PatientQuotesContent() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          {/* Left empty for alignment purposes */}
+        </div>
+        <div>
+          <Button asChild>
+            <a href="/quote-request" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" /> New Quote Request
+            </a>
+          </Button>
+        </div>
+      </div>
+      
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
@@ -230,7 +273,7 @@ export function PatientQuotesContent() {
 }
 
 // Card component for individual quotes
-function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }) {
+function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardProps) {
   const { t } = useTranslation();
   const status = getStatusBadge(quote.status);
   const statusIcon = getStatusIcon(quote.status);
@@ -278,7 +321,16 @@ function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }) {
             {statusIcon}
             <span className="ml-2">{status.text}</span>
           </div>
-          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-blue-600 hover:bg-blue-50 border-blue-200"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent parent card click
+              onClick(); // Use the same navigation function
+            }}
+          >
+            <FileText className="h-4 w-4 mr-1" />
             {t('quotes.view_details', 'View Details')}
           </Button>
         </div>
