@@ -146,6 +146,18 @@ function Router() {
       <Route path="/quote-flow">
         {() => <YourQuotePage />}
       </Route>
+      
+      {/* Route for special offer confirmation */}
+      <Route path="/offer-confirmation">
+        {() => {
+          const OfferConfirmPage = React.lazy(() => import("@/components/offers/OfferConfirmationPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+              <OfferConfirmPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       <Route path="/booking" component={BookingPage} />
       {/* Create separate routes for clinic pages with enhanced routing and diagnostics */}
       <Route path="/clinic/:id" component={ClinicRouter} />
