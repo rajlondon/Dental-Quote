@@ -49,8 +49,9 @@ import { registerClinicRoutes } from "./clinic-api";
 // Import error handling routes (only for development)
 import errorTestRoutes from "./routes/error-test-routes";
 import { AppError, catchAsync } from "./middleware/error-handler";
-// Import the canonical v1 treatment lines router - resolving TypeScript error
+// Import the canonical v1 API routes
 import treatmentLinesRouter from "./routes/v1/treatment-lines";
+import { treatmentPlansRoutes } from "./routes/v1";
 // Import security middleware
 import { 
   csrfProtection, 
@@ -210,9 +211,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register file upload/management routes with upload rate limiting
   app.use('/api/files', uploadRateLimit, fileRoutes);
   
-  // Register the canonical v1 treatment lines API first (this is the single source of truth)
+  // Register the canonical v1 APIs (these are the single source of truth)
   console.log('[DEBUG] Mounting CANONICAL treatmentLinesRouter at /api/v1/treatment-lines');
   app.use('/api/v1/treatment-lines', treatmentLinesRouter);
+  
+  console.log('[DEBUG] Mounting CANONICAL treatmentPlansRoutes at /api/v1/treatment-plans');
+  app.use('/api/v1/treatment-plans', treatmentPlansRoutes);
   
   // Legacy routes - These are kept for backward compatibility during transition
   // Eventually these should be removed or redirected to the canonical endpoint
