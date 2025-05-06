@@ -98,30 +98,49 @@ export function OfferCard({ offer }: OfferCardProps) {
     try {
       let response;
       
-      // Try the proper endpoint first
+      // Try each endpoint in order until one succeeds
       try {
+        // First try our new unified endpoint (implemented in treatment-offer-integration.ts)
+        console.log("Attempting to use treatment plans from-offer endpoint");
         response = await apiRequest(
           'POST', 
-          `/api/v1/offers/${offerId}/start`,
-          { clinicId }
+          `/api/treatment-plans/from-offer`,
+          { offerId, clinicId, notes: "Selected from special offers" }
         );
         
-        // If we get a successful response, proceed with it
         if (response.ok) {
-          console.log("Successfully used primary endpoint");
+          console.log("Successfully used treatment-plans/from-offer endpoint");
         } else {
-          throw new Error("Primary endpoint returned error status");
+          throw new Error("New treatment-plans/from-offer endpoint returned error status");
         }
       } catch (err) {
-        console.log("First endpoint failed, trying fallback:", err);
+        console.log("New endpoint failed, trying legacy endpoints:", err);
         
-        // If the first attempt fails, try the fallback endpoint
-        console.log("Attempting fallback endpoint for special offer");
-        response = await apiRequest(
-          'POST', 
-          `/api/offers/${offerId}/start`,
-          { clinicId }
-        );
+        try {
+          // Try the primary legacy endpoint
+          console.log("Attempting first legacy endpoint for offer");
+          response = await apiRequest(
+            'POST', 
+            `/api/v1/offers/${offerId}/start`,
+            { clinicId }
+          );
+          
+          if (response.ok) {
+            console.log("Successfully used primary offer endpoint");
+          } else {
+            throw new Error("Primary offer endpoint returned error status");
+          }
+        } catch (secondErr) {
+          console.log("Primary legacy endpoint failed, trying last fallback:", secondErr);
+          
+          // Try the last fallback endpoint if all else fails
+          console.log("Attempting final fallback endpoint for offer");
+          response = await apiRequest(
+            'POST', 
+            `/api/offers/${offerId}/start`,
+            { clinicId }
+          );
+        }
       }
       
       if (!response.ok) {

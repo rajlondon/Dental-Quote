@@ -98,31 +98,50 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
   // Function to create a quote from a package via the API
   const createQuoteFromPackage = async (packageId: string, clinicId: string) => {
     try {
-      // Try the primary endpoint
+      // Try each endpoint in order until one succeeds
       let response;
       try {
+        // First try our new unified endpoint (implemented in treatment-offer-integration.ts)
+        console.log("Attempting to use treatment plans from-package endpoint");
         response = await apiRequest(
           'POST', 
-          `/api/v1/packages/${packageId}/start`,
-          { clinicId }
+          `/api/treatment-plans/from-package`,
+          { packageId, clinicId, notes: "Selected from packages showcase" }
         );
         
-        // If successful, proceed
         if (response.ok) {
-          console.log("Successfully used primary package endpoint");
+          console.log("Successfully used treatment-plans/from-package endpoint");
         } else {
-          throw new Error("Primary package endpoint returned error status");
+          throw new Error("New treatment-plans/from-package endpoint returned error status");
         }
       } catch (err) {
-        console.log("Primary package endpoint failed, trying fallback:", err);
+        console.log("New endpoint failed, trying legacy endpoints:", err);
         
-        // Try fallback endpoint if primary fails
-        console.log("Attempting fallback endpoint for package");
-        response = await apiRequest(
-          'POST', 
-          `/api/packages/${packageId}/start`,
-          { clinicId }
-        );
+        try {
+          // Try the primary legacy endpoint
+          console.log("Attempting first legacy endpoint");
+          response = await apiRequest(
+            'POST', 
+            `/api/v1/packages/${packageId}/start`,
+            { clinicId }
+          );
+          
+          if (response.ok) {
+            console.log("Successfully used primary package endpoint");
+          } else {
+            throw new Error("Primary package endpoint returned error status");
+          }
+        } catch (secondErr) {
+          console.log("Primary legacy endpoint failed, trying last fallback:", secondErr);
+          
+          // Try the last fallback endpoint if all else fails
+          console.log("Attempting final fallback endpoint for package");
+          response = await apiRequest(
+            'POST', 
+            `/api/packages/${packageId}/start`,
+            { clinicId }
+          );
+        }
       }
       
       if (!response.ok) {
