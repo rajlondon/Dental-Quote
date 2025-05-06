@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { ensureUuidFormat } from '@/lib/id-converter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
@@ -34,7 +34,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
-import { queryClient } from '@/lib/queryClient';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import TreatmentPlansSection from '@/components/portal/TreatmentPlansSection';
 
@@ -788,7 +787,23 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       case 'messages':
         return <MessagesSection />;
       case 'quotes':
-        return <PatientQuotesPage />;
+        // For the quotes section, we need to make sure all the data is fresh
+        // Trigger a fresh quotes data fetch
+        useEffect(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
+        }, []);
+        
+        // Create a wrapper that handles loading state within the portal
+        return (
+          <div className="container mx-auto py-6 px-4">
+            <h2 className="text-2xl font-bold mb-6">My Quotes</h2>
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-6">
+                <PatientQuotesPage />
+              </div>
+            </div>
+          </div>
+        );
       case 'quote_upload_xrays':
         return <PatientQuoteXrayUploadPage />;
       case 'quote_review':
