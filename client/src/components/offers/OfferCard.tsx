@@ -82,11 +82,33 @@ export function OfferCard({ offer }: OfferCardProps) {
   // Function to create a quote from an offer via the API
   const createQuoteFromOffer = async (offerId: string, clinicId: string) => {
     try {
-      const response = await apiRequest(
-        'POST', 
-        `/api/v1/offers/${offerId}/start`,
-        { clinicId }
-      );
+      let response;
+      
+      // Try the proper endpoint first
+      try {
+        response = await apiRequest(
+          'POST', 
+          `/api/v1/offers/${offerId}/start`,
+          { clinicId }
+        );
+        
+        // If we get a successful response, proceed with it
+        if (response.ok) {
+          console.log("Successfully used primary endpoint");
+        } else {
+          throw new Error("Primary endpoint returned error status");
+        }
+      } catch (err) {
+        console.log("First endpoint failed, trying fallback:", err);
+        
+        // If the first attempt fails, try the fallback endpoint
+        console.log("Attempting fallback endpoint for special offer");
+        response = await apiRequest(
+          'POST', 
+          `/api/offers/${offerId}/start`,
+          { clinicId }
+        );
+      }
       
       if (!response.ok) {
         const errorData = await response.json();
