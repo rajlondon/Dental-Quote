@@ -82,21 +82,43 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   const quote = React.useMemo<Quote | null>(() => {
     if (!quoteData) return null;
     
+    // Log the raw API response to understand the structure
+    console.log('[DEBUG] Raw quote API response data:', JSON.stringify(quoteData, null, 2));
+    
     // Extract quote from the nested structure based on the API response format
     const quoteRequest = quoteData.quoteRequest || {};
+    console.log('[DEBUG] Extracted quoteRequest:', JSON.stringify(quoteRequest, null, 2));
+    
     const quoteVersions = quoteData.versions || [];
+    console.log('[DEBUG] Extracted quoteVersions:', JSON.stringify(quoteVersions, null, 2));
     
     // Get the latest version if it exists, otherwise use the quote request
     const latestVersion = quoteVersions.length > 0 
       ? quoteVersions[quoteVersions.length - 1] 
       : null;
     
+    // Check if the quote has associated pricing data
+    console.log('[DEBUG] Quote pricing info:', {
+      hasEstimatedPrice: !!quoteRequest.estimatedPrice,
+      estimatedPrice: quoteRequest.estimatedPrice,
+      hasQuoteData: !!quoteRequest.quoteData,
+      quoteDataType: quoteRequest.quoteData ? typeof quoteRequest.quoteData : 'N/A',
+      parsedQuoteData: quoteRequest.quoteData ? 
+        (typeof quoteRequest.quoteData === 'string' ? 
+          JSON.parse(quoteRequest.quoteData) : quoteRequest.quoteData) : null
+    });
+    
     // Get proper treatments and pricing from the version if available
     let treatments = [];
     let totalPrice = 0;
     
+    // Try to extract treatment data from various fields
+    const parsedQuoteData = quoteRequest.quoteData && typeof quoteRequest.quoteData === 'string' ?
+      JSON.parse(quoteRequest.quoteData) : quoteRequest.quoteData;
+    
     if (latestVersion && latestVersion.treatments) {
       // Use treatments from the latest version
+      console.log('[DEBUG] Using treatments from latestVersion:', latestVersion.treatments);
       treatments = latestVersion.treatments.map(t => ({
         name: t.name || 'Treatment',
         quantity: t.quantity || 1,
@@ -105,22 +127,43 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
       
       // Calculate the total price
       totalPrice = treatments.reduce((sum, t) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
+    } else if (parsedQuoteData && parsedQuoteData.treatments) {
+      // If we have parsed quote data with treatments, use that
+      console.log('[DEBUG] Using treatments from parsedQuoteData:', parsedQuoteData.treatments);
+      treatments = parsedQuoteData.treatments.map(t => ({
+        name: t.name || 'Treatment',
+        quantity: t.quantity || 1,
+        price: t.price || 0
+      }));
+      
+      // Calculate the total price 
+      totalPrice = treatments.reduce((sum, t) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
     } else {
-      // Default treatment based on the request
+      // Use a default treatment based on the request
+      console.log('[DEBUG] Using default treatment based on quoteRequest');
       treatments = [
         {
           name: quoteRequest.specificTreatment || quoteRequest.treatment || 'Dental Treatment',
           quantity: 1,
-          price: quoteRequest.estimatedPrice || 0
+          price: quoteRequest.estimatedPrice || 1500 // Default price if none available
         }
       ];
-      totalPrice = quoteRequest.estimatedPrice || 0;
+      totalPrice = quoteRequest.estimatedPrice || 1500; // Default price if none available
+    }
+    
+    // Enhanced status determination logic
+    let status = quoteRequest.status || 'draft';
+    let canEdit = false;
+    
+    if (['draft', 'pending', 'new', 'active'].includes(status)) {
+      // These statuses are considered editable
+      canEdit = true;
     }
     
     // Construct a structured quote object with all necessary fields
-    return {
+    const result = {
       id: quoteRequest.id,
-      status: quoteRequest.status || 'draft',
+      status: status,
       title: quoteRequest.treatment,
       createdAt: quoteRequest.createdAt,
       clinicName: quoteRequest.clinicName || 'Istanbul Dental Smile',
@@ -129,8 +172,11 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
       totalPrice: totalPrice,
       notes: quoteRequest.notes,
       treatments: treatments,
-      canEdit: quoteRequest.status === 'draft' || quoteRequest.status === 'pending'
+      canEdit: canEdit
     };
+    
+    console.log('[DEBUG] Final structured quote object:', result);
+    return result;
   }, [quoteData]);
 
   // Get status badge color and text for a status
