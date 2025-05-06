@@ -98,6 +98,10 @@ import AdminBookingsPage from "@/pages/admin/admin-bookings-page";
 import AdminBookingDetailPage from "@/pages/admin/admin-booking-detail-page";
 import AdminNewQuotePage from "@/pages/admin/AdminNewQuotePage";
 import ContactWidget from "@/components/ContactWidget";
+import PatientTreatmentPlanPage from "@/pages/patient/PatientTreatmentPlanPage";
+import ClinicTreatmentPlanPage from "@/pages/clinic/ClinicTreatmentPlanPage";
+import AdminTreatmentPlansPage from "@/pages/admin/AdminTreatmentPlansPage";
+import { UnifiedTreatmentPlansProvider } from "@/hooks/use-unified-treatment-plans";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -189,6 +193,11 @@ function Router() {
         {(params) => <PatientPortalPage initialSection="treatments" treatmentLineId={params.id} />}
       </Route>
       
+      {/* Patient Treatment Plan Routes */}
+      <Route path="/portal/treatment-plan/:id">
+        {(params) => <PatientTreatmentPlanPage />}
+      </Route>
+      
       {/* Patient quotes section */}
       <Route path="/patient/quotes" component={() => {
         // Use dynamic import to avoid circular dependency issues
@@ -273,6 +282,11 @@ function Router() {
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
+      {/* Admin Treatment Plan Routes */}
+      <ProtectedRoute path="/admin-portal/treatment-plan/:id" component={AdminTreatmentPlansPage} requiredRole="admin" />
+      <ProtectedRoute path="/admin-portal/treatment-plans" component={AdminTreatmentPlansPage} requiredRole="admin" />
+      <ProtectedRoute path="/admin-portal/treatment-plans/analytics" component={AdminTreatmentPlansPage} requiredRole="admin" />
+      
       {/* Admin Booking Routes */}
       <ProtectedRoute path="/admin/bookings" component={AdminBookingsPage} requiredRole="admin" />
       <ProtectedRoute path="/admin/bookings/:id" component={AdminBookingDetailPage} requiredRole="admin" />
@@ -303,6 +317,10 @@ function Router() {
       </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
+      
+      {/* Clinic Treatment Plan Routes */}
+      <ProtectedRoute path="/clinic-portal/treatment-plan/:id" component={ClinicTreatmentPlanPage} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic-portal/treatment-plans" component={ClinicTreatmentPlanPage} requiredRole="clinic_staff" />
       
       {/* Clinic Booking Routes */}
       <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic_staff" />
@@ -425,28 +443,30 @@ function App() {
           <AdminAuthProvider>
             <NotificationsProvider>
               <BookingsProvider>
-                <PageTransitionProvider>
-                  <NavigationProvider>
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <ScrollToTop />
-                      {/* Only exclude ReloadTranslations on clinic portal path */}
-                      {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                        <ReloadTranslations />
-                      }
-                      {/* Navigation status indicator */}
-                      <NavigationStatusBar />
-                      {/* Use PageTransitionLoader to show loading states */}
-                      <PageTransitionLoader>
-                        <ErrorBoundary>
-                          <Router />
-                        </ErrorBoundary>
-                      </PageTransitionLoader>
-                      <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-                      <EnvironmentBadge />
-                      <Toaster />
-                    </Suspense>
-                  </NavigationProvider>
-                </PageTransitionProvider>
+                <UnifiedTreatmentPlansProvider>
+                  <PageTransitionProvider>
+                    <NavigationProvider>
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <ScrollToTop />
+                        {/* Only exclude ReloadTranslations on clinic portal path */}
+                        {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                          <ReloadTranslations />
+                        }
+                        {/* Navigation status indicator */}
+                        <NavigationStatusBar />
+                        {/* Use PageTransitionLoader to show loading states */}
+                        <PageTransitionLoader>
+                          <ErrorBoundary>
+                            <Router />
+                          </ErrorBoundary>
+                        </PageTransitionLoader>
+                        <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+                        <EnvironmentBadge />
+                        <Toaster />
+                      </Suspense>
+                    </NavigationProvider>
+                  </PageTransitionProvider>
+                </UnifiedTreatmentPlansProvider>
               </BookingsProvider>
             </NotificationsProvider>
           </AdminAuthProvider>

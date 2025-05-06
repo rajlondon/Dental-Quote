@@ -12,28 +12,37 @@ export interface BreadcrumbItemProps extends React.HTMLAttributes<HTMLLIElement>
   href?: string;
 }
 
-type BreadcrumbLinkProps = {
+interface BreadcrumbLinkProps extends React.HTMLAttributes<HTMLAnchorElement | HTMLSpanElement> {
   href: string;
   children: React.ReactNode;
   isCurrentPage?: boolean;
 };
 
-const BreadcrumbLink = ({ href, children, isCurrentPage }: BreadcrumbLinkProps) => {
-  if (isCurrentPage) {
+const BreadcrumbLink = React.forwardRef<HTMLAnchorElement | HTMLSpanElement, BreadcrumbLinkProps>(
+  ({ href, children, isCurrentPage, className, ...props }, ref) => {
+    if (isCurrentPage) {
+      return (
+        <span 
+          ref={ref as React.ForwardedRef<HTMLSpanElement>}
+          className={cn("text-foreground font-medium", className)} 
+          {...props}
+        >
+          {children}
+        </span>
+      );
+    }
+    
     return (
-      <span className="text-foreground font-medium">{children}</span>
+      <Link 
+        to={href}
+        className={cn("text-muted-foreground hover:text-foreground transition-colors", className)}
+        {...props}
+      >
+        {children}
+      </Link>
     );
   }
-  
-  return (
-    <Link 
-      to={href}
-      className="text-muted-foreground hover:text-foreground transition-colors"
-    >
-      {children}
-    </Link>
-  );
-};
+);
 
 interface ExtendedBreadcrumbItemProps extends BreadcrumbItemProps {
   separator?: React.ReactNode;
@@ -73,6 +82,9 @@ Breadcrumb.displayName = 'Breadcrumb';
 
 const BreadcrumbItem = React.forwardRef<HTMLLIElement, BreadcrumbItemProps & { separator?: React.ReactNode; isLastItem?: boolean }>(
   ({ className, isLastItem, separator, isCurrentPage, children, href, ...props }, ref) => {
+    // Split props between li element and potential BreadcrumbLink
+    const { className: _, isCurrentPage: __, ...linkProps } = props;
+    
     return (
       <li 
         ref={ref} 
@@ -80,7 +92,7 @@ const BreadcrumbItem = React.forwardRef<HTMLLIElement, BreadcrumbItemProps & { s
         {...props}
       >
         {href ? (
-          <BreadcrumbLink href={href} isCurrentPage={isCurrentPage}>
+          <BreadcrumbLink href={href} isCurrentPage={isCurrentPage} {...linkProps}>
             {children}
           </BreadcrumbLink>
         ) : (
@@ -110,4 +122,20 @@ const BreadcrumbSeparator = React.forwardRef<HTMLSpanElement, React.HTMLAttribut
 
 BreadcrumbSeparator.displayName = 'BreadcrumbSeparator';
 
-export { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator };
+// Create a BreadcrumbList component for better semantics
+const BreadcrumbList = React.forwardRef<HTMLOListElement, React.HTMLAttributes<HTMLOListElement>>(
+  ({ className, ...props }, ref) => {
+    return (
+      <ol 
+        ref={ref}
+        className={cn('flex items-center gap-1.5', className)}
+        {...props}
+      />
+    );
+  }
+);
+
+BreadcrumbList.displayName = 'BreadcrumbList';
+
+// Export the BreadcrumbLink component for direct usage
+export { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbList, BreadcrumbLink };
