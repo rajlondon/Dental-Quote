@@ -294,6 +294,9 @@ export const treatmentPlans = pgTable("treatment_plans", {
   notes: text("notes"), // Clinic comments
   portalStatus: varchar("portal_status", { length: 50 }).default("active"), // active, in_progress, completed
   quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id),
+  // Special offer and package selection fields
+  selectedOfferId: uuid("selected_offer_id").references(() => specialOffers.id),
+  selectedPackageId: uuid("selected_package_id").references(() => treatmentPackages.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
