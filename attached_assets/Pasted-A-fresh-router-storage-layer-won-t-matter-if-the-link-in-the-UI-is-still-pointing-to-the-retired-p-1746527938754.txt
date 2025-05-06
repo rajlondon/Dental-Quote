@@ -1,0 +1,70 @@
+A fresh router + storage layer won’t matter if the link in the UI is still pointing to the retired path—and that’s exactly what a 404 means: the browser ⇢ server round‑trip is happening, but the server doesn’t own the URL the client asks for.
+
+Let’s prove that in 60 seconds, then bake the fix into a single Replit‑agent prompt.
+
+1  Capture the exact failing URL
+Open the Network tab.
+
+Click the 🗑 clear icon, then click the Delete (or View) action button that triggers the error.
+
+You should see one fetch failing (Status 404).
+
+Copy its Request URL (right‑click → Copy → Copy link address).
+Example:
+
+ruby
+Copy
+Edit
+https://mydentalfly.replit.app/api/treatment-plans/treatment-lines/00000000-0000-4000-a000-000000000123
+If the path still contains treatment-plans or treatment-module, the front‑end never got switched to /api/v1/treatment-lines.
+
+2  Locate the stale path in your codebase
+bash
+Copy
+Edit
+grep -R \"treatment-plans/treatment-lines\" client/src | cut -c1-140
+grep -R \"treatment-module/treatment-lines\" client/src
+You’ll almost certainly find a component or hook that bypasses the new v2 hook and hard‑codes the old path.
+
+3  Patch ONE file, confirm end‑to‑end
+Change that line to:
+
+ts
+Copy
+Edit
+fetch(`/api/v1/treatment-lines/${ensureUuidFormat(id)}`, { … })
+Hit Save, Replit hot‑reloads, click the button again → expect 204 or 200.
+If it works, we can clean the repo; if not, report the new failing URL.
+
+4  Tell the Replit agent exactly what to change (succinct prompt)
+txt
+Copy
+Edit
+reference_file: docs/01_mvp_spec.md
+issue: #49 remove stale treatment-lines paths
+
+Tasks:
+1. Search client/src for "/api/treatment-" and replace any occurrence with "/api/v1/treatment-lines".
+2. Ensure *every* fetch/delete/patch in TreatmentPlansSection and child components calls ensureUuidFormat(id).
+3. Run type‑check; fix any missing import of ensureUuidFormat.
+
+No other files or routes should be modified.
+Return only the changed client files.
+Paste that as one message—the agent will do a global replace and import fix, nothing more.
+
+Still 404 after that?
+Re‑copy the failing URL and share it here. If it already has /api/v1/treatment-lines/…, then the server isn’t registering the router (mount order, filename typo). In that case:
+
+curl -v https://<repl‑url>/api/v1/treatment-lines/test
+If Express logs never appear, the router file isn’t imported.
+1‑liner fix in server/index.ts:
+
+js
+Copy
+Edit
+app.use('/api/v1/treatment-lines', require('./routes/v1/treatment-lines').default);
+Restart, curl again.
+
+Once that curl returns 400/404 from inside the router (you should see your duplicate‑route guard or a custom “Not Found” JSON), the front‑end will succeed.
+
+Let’s pin down that exact URL first—post it here if the quick grep doesn’t surface it.
