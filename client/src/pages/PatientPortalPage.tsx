@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -65,12 +65,24 @@ import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection'
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
 
-// Import our newly fixed quotes content component
+// Import our components for the quotes section
 import PatientQuotesContent from '@/components/patient/PatientQuotesContent-new';
+import PatientQuoteDetail from '@/components/patient/PatientQuoteDetail';
 
 // Create a proper wrapper component for quotes section that can use hooks
 const QuotesSectionWrapper = () => {
   const { t } = useTranslation();
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  
+  // Check URL params for quote ID
+  useEffect(() => {
+    const quoteId = searchParams.get('quoteId');
+    if (quoteId) {
+      console.log(`[DEBUG] Found quoteId in URL params: ${quoteId}`);
+      setSelectedQuoteId(quoteId);
+    }
+  }, [searchParams]);
   
   // Use effect hook to refresh quotes data when this section is displayed
   useEffect(() => {
@@ -78,13 +90,34 @@ const QuotesSectionWrapper = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
   }, []);
   
+  // Handler for going back to quotes list
+  const handleBackToQuotes = () => {
+    setSelectedQuoteId(null);
+    // Clear the quoteId from URL without navigation
+    const newUrl = window.location.pathname + window.location.search.replace(/[?&]quoteId=[^&]+/, '');
+    window.history.replaceState({}, '', newUrl);
+  };
+  
   return (
     <div className="container mx-auto py-6 px-4">
       <h2 className="text-2xl font-bold mb-6">{t('portal.quotes.title', 'My Quotes')}</h2>
       <div className="bg-white rounded-lg shadow">
         <div className="p-6">
-          {/* Use our new component that actually displays quotes */}
-          <PatientQuotesContent />
+          {selectedQuoteId ? (
+            // Show the quote detail component when a quote is selected
+            <PatientQuoteDetail 
+              quoteId={selectedQuoteId} 
+              onBack={handleBackToQuotes} 
+            />
+          ) : (
+            // Show the quotes list when no quote is selected
+            <PatientQuotesContent 
+              onSelectQuote={(id) => {
+                console.log(`[DEBUG] Quote selected: ${id}`);
+                setSelectedQuoteId(id.toString());
+              }} 
+            />
+          )}
         </div>
       </div>
     </div>
