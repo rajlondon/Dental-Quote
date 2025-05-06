@@ -158,37 +158,51 @@ export function useTreatmentLines(quoteId?: string) {
     },
   });
 
-  // Delete a treatment line (soft delete)
+  // Delete a treatment line (soft delete) - try multiple API paths
   const deleteTreatmentLine = useMutation({
     mutationFn: async (id: string) => {
       // Log the API call for debugging with extra details
-      console.log(`[API] DELETE ${API_BASE_URL}/treatment-lines/${id}`);
-      console.log(`[API] DELETE endpoint full path: ${window.location.origin}${API_BASE_URL}/treatment-lines/${id}`);
-      console.log(`[API] Current API base URL is: ${API_BASE_URL}`);
+      console.log(`[API ATTEMPT] Trying to delete treatment line with ID: ${id}`);
+      console.log(`[API ATTEMPT] First path: ${API_BASE_URL}/treatment-lines/${id}`);
       
       try {
-        console.log(`[API] Sending DELETE request via apiRequest utility...`);
+        // First try the module path
+        console.log(`[API] Sending DELETE request via apiRequest utility to module path...`);
         const response = await apiRequest("DELETE", `${API_BASE_URL}/treatment-lines/${id}`);
         console.log(`[API] DELETE response status:`, response.status);
         const result = await response.json();
         console.log(`[API] Delete treatment line result:`, result);
         return result;
-      } catch (error) {
-        console.error(`[API] Error deleting treatment line:`, error);
-        // Try to provide more detailed error information
-        if (error instanceof Error) {
-          console.error(`[API] Error name: ${error.name}, message: ${error.message}`);
-          console.error(`[API] Error stack: ${error.stack}`);
-        } else {
-          console.error(`[API] Unknown error type:`, typeof error);
+      } catch (firstError) {
+        console.warn(`[API] First delete attempt failed:`, firstError);
+        
+        // If first attempt fails, try alternate API path
+        try {
+          const alternatePath = `/api/treatment-plans/treatment-lines/${id}`;
+          console.log(`[API ATTEMPT] Trying alternate path: ${alternatePath}`);
+          
+          const response = await apiRequest("DELETE", alternatePath);
+          console.log(`[API] DELETE (alternate) response status:`, response.status);
+          const result = await response.json();
+          console.log(`[API] Delete treatment line result (alternate):`, result);
+          return result;
+        } catch (secondError) {
+          console.error(`[API] Both delete attempts failed`);
+          console.error(`[API] First error:`, firstError);
+          console.error(`[API] Second error:`, secondError);
+          
+          throw new Error("Failed to delete treatment using either API path");
         }
-        throw error;
       }
     },
     onSuccess: (data) => {
-      // Use the consistent query keys with API_BASE_URL
+      // Invalidate multiple query keys to ensure refetch works
+      console.log(`[API] Successfully deleted treatment, invalidating queries`);
       queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/treatment-lines`, quoteId] });
       queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/patient/treatment-summary`] });
+      // Also invalidate alternative path queries
+      queryClient.invalidateQueries({ queryKey: [`/api/treatment-plans/treatment-lines`, quoteId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/treatment-plans/patient/treatment-summary`] });
       
       toast({
         title: "Treatment removed",
@@ -196,9 +210,10 @@ export function useTreatmentLines(quoteId?: string) {
       });
     },
     onError: (error: Error) => {
+      console.error(`[API] Final error in delete mutation:`, error);
       toast({
         title: "Failed to remove treatment",
-        description: error.message,
+        description: error.message || "There was a problem removing the treatment. Please try again.",
         variant: "destructive",
       });
     },
