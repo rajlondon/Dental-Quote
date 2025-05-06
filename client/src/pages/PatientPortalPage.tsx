@@ -64,6 +64,32 @@ import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
+
+// Import our new quotes content component
+import { PatientQuotesContent } from '@/components/patient/PatientQuotesContent';
+
+// Create a proper wrapper component for quotes section that can use hooks
+const QuotesSectionWrapper = () => {
+  const { t } = useTranslation();
+  
+  // Use effect hook to refresh quotes data when this section is displayed
+  useEffect(() => {
+    console.log('[DEBUG] Quotes section wrapper mounted, refreshing quotes data');
+    queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
+  }, []);
+  
+  return (
+    <div className="container mx-auto py-6 px-4">
+      <h2 className="text-2xl font-bold mb-6">{t('portal.quotes.title', 'My Quotes')}</h2>
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6">
+          {/* Use our new component that actually displays quotes */}
+          <PatientQuotesContent />
+        </div>
+      </div>
+    </div>
+  );
+};
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
@@ -787,23 +813,8 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       case 'messages':
         return <MessagesSection />;
       case 'quotes':
-        // For the quotes section, we need to make sure all the data is fresh
-        // Trigger a fresh quotes data fetch
-        useEffect(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
-        }, []);
-        
-        // Create a wrapper that handles loading state within the portal
-        return (
-          <div className="container mx-auto py-6 px-4">
-            <h2 className="text-2xl font-bold mb-6">My Quotes</h2>
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6">
-                <PatientQuotesPage />
-              </div>
-            </div>
-          </div>
-        );
+        // Use the proper wrapper component that contains the useEffect hook
+        return <QuotesSectionWrapper />;
       case 'quote_upload_xrays':
         return <PatientQuoteXrayUploadPage />;
       case 'quote_review':
