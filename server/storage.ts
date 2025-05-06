@@ -45,8 +45,15 @@ export interface IStorage {
   // File upload
   uploadFile(file: Express.Multer.File): Promise<{ url: string, filename: string }>;
   
-  // Special offers
+  // Special offers and treatment packages
+  getHomepageOffers(): Promise<any[]>;
+  getOffersByClinic(clinicId: string): Promise<any[]>;
+  getOffer(offerId: string): Promise<any | undefined>;
+  createOffer(offer: any): Promise<any>;
+  updateOffer(offerId: string, data: any): Promise<any | undefined>;
+  deleteOffer(offerId: string): Promise<boolean>;
   updateSpecialOfferImage(offerId: string, imageUrl: string): Promise<boolean>;
+  getLastTreatmentPlanFromOffer(offerId: string, patientId: string): Promise<any | undefined>;
   
   // Quote versions
   getQuoteVersions(quoteRequestId: number): Promise<QuoteVersion[]>;
@@ -1603,6 +1610,227 @@ export class DatabaseStorage implements IStorage {
     }
     
     return stats;
+  }
+  
+  // Special offers methods
+  async getHomepageOffers(): Promise<any[]> {
+    try {
+      console.log('Getting homepage offers');
+      // For now, return temporary mock offers
+      return [
+        {
+          id: '1',
+          clinicId: '1',
+          clinicName: 'BeyazAda Dental Clinic',
+          title: 'Free Consultation Package',
+          description: 'Free consultation and X-ray with any implant treatment',
+          shortDescription: 'Free consultation with implants',
+          imageUrl: 'https://www.example.com/offer1.jpg',
+          offerType: 'SPECIAL_OFFER',
+          status: 'ACTIVE',
+          originalPrice: 150,
+          discountedPrice: 0,
+          discountPercentage: 100,
+          isFree: true,
+          validFrom: '2025-05-01',
+          validUntil: '2025-06-30',
+          treatmentLines: [
+            {
+              id: '1-1',
+              treatmentCode: 'CONSULT',
+              treatmentName: 'Initial Consultation',
+              description: 'Complete dental check-up and treatment planning',
+              quantity: 1,
+              unitPrice: 100,
+              discountedUnitPrice: 0,
+              isBonus: true,
+              isRequired: true,
+              educationalContent: {
+                description: 'A detailed consultation with our dental specialists',
+                ukComparisonPrice: 180,
+                benefitsList: ['Professional dental assessment', 'Treatment plan creation']
+              }
+            },
+            {
+              id: '1-2',
+              treatmentCode: 'XRAY',
+              treatmentName: 'Panoramic X-Ray',
+              description: 'Full mouth panoramic X-ray',
+              quantity: 1,
+              unitPrice: 50,
+              discountedUnitPrice: 0,
+              isBonus: true,
+              isRequired: true,
+              educationalContent: {
+                description: 'A panoramic X-ray shows all your teeth and jaw structure',
+                ukComparisonPrice: 90,
+                benefitsList: ['Complete view of all teeth', 'Identifies hidden issues']
+              }
+            }
+          ],
+          createdAt: '2025-05-01T10:00:00Z',
+          updatedAt: '2025-05-01T10:00:00Z'
+        }
+      ];
+    } catch (error) {
+      console.error('Error getting homepage offers:', error);
+      return [];
+    }
+  }
+
+  async getOffersByClinic(clinicId: string): Promise<any[]> {
+    try {
+      console.log(`Getting offers for clinic ${clinicId}`);
+      // For now return temporary mock offers for the clinic
+      return [
+        {
+          id: '1',
+          clinicId,
+          clinicName: 'BeyazAda Dental Clinic',
+          title: 'Free Consultation Package',
+          description: 'Free consultation and X-ray with any implant treatment',
+          shortDescription: 'Free consultation with implants',
+          imageUrl: 'https://www.example.com/offer1.jpg',
+          offerType: 'SPECIAL_OFFER',
+          status: 'ACTIVE',
+          originalPrice: 150,
+          discountedPrice: 0,
+          discountPercentage: 100,
+          isFree: true,
+          validFrom: '2025-05-01',
+          validUntil: '2025-06-30',
+          treatmentLines: [
+            {
+              id: '1-1',
+              treatmentCode: 'CONSULT',
+              treatmentName: 'Initial Consultation',
+              description: 'Complete dental check-up and treatment planning',
+              quantity: 1,
+              unitPrice: 100,
+              discountedUnitPrice: 0,
+              isBonus: true,
+              isRequired: true,
+              educationalContent: {
+                description: 'A detailed consultation with our dental specialists',
+                ukComparisonPrice: 180,
+                benefitsList: ['Professional dental assessment', 'Treatment plan creation']
+              }
+            }
+          ],
+          createdAt: '2025-05-01T10:00:00Z',
+          updatedAt: '2025-05-01T10:00:00Z'
+        }
+      ];
+    } catch (error) {
+      console.error(`Error getting offers for clinic ${clinicId}:`, error);
+      return [];
+    }
+  }
+
+  async getOffer(offerId: string): Promise<any | undefined> {
+    try {
+      console.log(`Getting offer ${offerId}`);
+      // For now return temporary mock offer
+      if (offerId === '1') {
+        return {
+          id: '1',
+          clinicId: '1',
+          clinicName: 'BeyazAda Dental Clinic',
+          title: 'Free Consultation Package',
+          description: 'Free consultation and X-ray with any implant treatment',
+          shortDescription: 'Free consultation with implants',
+          imageUrl: 'https://www.example.com/offer1.jpg',
+          offerType: 'SPECIAL_OFFER',
+          status: 'ACTIVE',
+          originalPrice: 150,
+          discountedPrice: 0,
+          discountPercentage: 100,
+          isFree: true,
+          validFrom: '2025-05-01',
+          validUntil: '2025-06-30',
+          treatmentLines: [
+            {
+              id: '1-1',
+              treatmentCode: 'CONSULT',
+              treatmentName: 'Initial Consultation',
+              description: 'Complete dental check-up and treatment planning',
+              quantity: 1,
+              unitPrice: 100,
+              discountedUnitPrice: 0,
+              isBonus: true,
+              isRequired: true,
+              educationalContent: {
+                description: 'A detailed consultation with our dental specialists',
+                ukComparisonPrice: 180,
+                benefitsList: ['Professional dental assessment', 'Treatment plan creation']
+              }
+            }
+          ],
+          createdAt: '2025-05-01T10:00:00Z',
+          updatedAt: '2025-05-01T10:00:00Z'
+        };
+      }
+      return undefined;
+    } catch (error) {
+      console.error(`Error getting offer ${offerId}:`, error);
+      return undefined;
+    }
+  }
+
+  async createOffer(offer: any): Promise<any> {
+    try {
+      console.log('Creating offer:', offer.title);
+      // For now just return the offer with an ID
+      return {
+        ...offer,
+        id: uuidv4(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error creating offer:', error);
+      throw error;
+    }
+  }
+
+  async updateOffer(offerId: string, data: any): Promise<any | undefined> {
+    try {
+      console.log(`Updating offer ${offerId}`);
+      const offer = await this.getOffer(offerId);
+      if (!offer) {
+        return undefined;
+      }
+      return {
+        ...offer,
+        ...data,
+        updatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error(`Error updating offer ${offerId}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteOffer(offerId: string): Promise<boolean> {
+    try {
+      console.log(`Deleting offer ${offerId}`);
+      // For now just return true to simulate success
+      return true;
+    } catch (error) {
+      console.error(`Error deleting offer ${offerId}:`, error);
+      return false;
+    }
+  }
+
+  async getLastTreatmentPlanFromOffer(offerId: string, patientId: string): Promise<any | undefined> {
+    try {
+      console.log(`Getting last treatment plan from offer ${offerId} for patient ${patientId}`);
+      // For now return undefined to simulate no existing plan
+      return undefined;
+    } catch (error) {
+      console.error(`Error getting last treatment plan from offer ${offerId} for patient ${patientId}:`, error);
+      return undefined;
+    }
   }
 }
 
