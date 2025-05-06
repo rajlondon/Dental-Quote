@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
-import { useTreatmentMappings } from "@/hooks/use-treatment-mappings";
+import { useTreatmentMappings } from "../../../hooks/use-treatment-mappings";
 
 /**
  * Patient Quote Edit Page
@@ -33,7 +33,7 @@ export default function PatientQuoteEditPage() {
   const quoteId = params?.id;
 
   // Fetch available treatments
-  const { data: treatmentMappings, isLoading: isLoadingTreatments } = useTreatmentMappings();
+  const { categories: treatmentMappings, loading: isLoadingTreatments } = useTreatmentMappings();
 
   // Type for treatment items
   type TreatmentItem = {
