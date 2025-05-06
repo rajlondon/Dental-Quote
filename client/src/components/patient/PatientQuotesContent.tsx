@@ -1,13 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, CheckCircle, Clock, FileText, ShieldX, AlertTriangle, Loader2, Plus, Eye, PencilIcon, Trash, DownloadIcon } from 'lucide-react';
+import { 
+  CalendarClock, 
+  CheckCircle, 
+  Clock, 
+  FileText, 
+  ShieldX, 
+  AlertTriangle, 
+  Loader2, 
+  Plus, 
+  Eye, 
+  Edit, 
+  Trash, 
+  Download,
+  MessageCircle,
+  MoreVertical,
+  Wallet
+} from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
@@ -18,6 +35,22 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // TypeScript interfaces for better type safety
 interface Quote {
@@ -34,6 +67,7 @@ interface Quote {
   treatmentCount?: number;
   totalPrice?: number;
   title?: string;
+  canEdit?: boolean;
   [key: string]: any; // Allow additional properties
 }
 
@@ -46,7 +80,11 @@ interface QuoteCardProps {
   quote: Quote;
   getStatusBadge: (status: string) => StatusBadge;
   getStatusIcon: (status: string) => React.ReactNode;
-  onClick: () => void;
+  onView: (quoteId: number) => void;
+  onEdit: (quoteId: number) => void;
+  onDownload: (quoteId: number) => void;
+  onContactClinic: (quoteId: number) => void;
+  onMakePayment?: (quoteId: number) => void;
 }
 
 /**
@@ -288,20 +326,85 @@ export function PatientQuotesContent() {
 }
 
 // Card component for individual quotes
-function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardProps) {
+function QuoteCard({ 
+  quote, 
+  getStatusBadge, 
+  getStatusIcon, 
+  onView,
+  onEdit,
+  onDownload,
+  onContactClinic,
+  onMakePayment 
+}: QuoteCardProps) {
   const { t } = useTranslation();
-  const { navigateTo } = useNavigation();
+  const { toast } = useToast();
+  const { navigateTo, navigateToRoute } = useNavigation();
   const status = getStatusBadge(quote.status);
   const statusIcon = getStatusIcon(quote.status);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   
-  // Define direct navigation function to patient portal with quote ID
-  const handleViewDetails = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent parent card click
+  // Handle viewing quote details
+  const handleViewDetails = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation(); // Prevent parent card click
+    
     // Store the current section in session storage
     sessionStorage.setItem('patient_portal_section', 'quotes');
     sessionStorage.setItem('viewing_quote_id', quote.id.toString());
+    
     // Navigate to patient portal with quote ID as query parameter
-    navigateTo(`${ROUTES.PATIENT_PORTAL}?section=quotes&quoteId=${quote.id}`);
+    window.location.href = `/patient-portal?section=quotes&quoteId=${quote.id}`;
+  };
+  
+  // Handle editing the quote
+  const handleEdit = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    // Navigate to edit page with params
+    window.location.href = `/patient-portal?section=quotes&action=edit&id=${quote.id}`;
+    
+    toast({
+      title: "Edit Quote",
+      description: "You can now edit your quote details."
+    });
+  };
+  
+  // Handle downloading the quote
+  const handleDownload = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    // Call API to download quote PDF
+    window.open(`/api/quotes/${quote.id}/pdf`, '_blank');
+    
+    toast({
+      title: "Downloading Quote",
+      description: "Your quote PDF is being generated and will download shortly."
+    });
+  };
+  
+  // Handle contacting the clinic
+  const handleContactClinic = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    // Navigate to messages
+    navigateToRoute('PATIENT_MESSAGES');
+    
+    toast({
+      title: "Contact Clinic",
+      description: "You can now message the clinic about your quote."
+    });
+  };
+  
+  // Handle making a payment
+  const handleMakePayment = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    // Navigate to payment page
+    window.location.href = `/treatment-payment/${quote.id}`;
+    
+    toast({
+      title: "Payment",
+      description: "Redirecting to payment page..."
+    });
   };
   
   return (
@@ -366,97 +469,59 @@ function QuoteCard({ quote, getStatusBadge, getStatusIcon, onClick }: QuoteCardP
                 </TooltipContent>
               </Tooltip>
               
-              {/* Edit button - only show if quote is still in certain states */}
-              {['pending', 'assigned', 'in_progress'].includes(quote.status) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      className="h-8 w-8 text-amber-600 hover:bg-amber-50 border-amber-200"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent parent card click
-                        // Navigate to edit page or show modal
-                        window.alert('Edit functionality will be implemented soon');
-                      }}
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit Quote</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              {/* Accept button - only show for sent quotes */}
-              {quote.status === 'sent' && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      className="h-8 w-8 text-green-600 hover:bg-green-50 border-green-200"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent parent card click
-                        // Action to accept the quote
-                        window.alert('Accept functionality will be implemented soon');
-                      }}
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Accept Quote</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              {/* Download button - for completed quotes */}
-              {['accepted', 'completed'].includes(quote.status) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      className="h-8 w-8 text-purple-600 hover:bg-purple-50 border-purple-200"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent parent card click
-                        // Action to download quote PDF
-                        window.alert('Download functionality will be implemented soon');
-                      }}
-                    >
-                      <DownloadIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Download Quote</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              {/* Delete button - available for all quotes */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
+              {/* Action Dropdown Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
                     size="icon"
-                    className="h-8 w-8 text-red-600 hover:bg-red-50 border-red-200"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent parent card click
-                      // Action to delete quote (with confirmation)
-                      if (window.confirm('Are you sure you want to delete this quote?')) {
-                        window.alert('Delete functionality will be implemented soon');
-                      }
-                    }}
+                    className="h-8 w-8 text-gray-600 hover:bg-gray-50"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Trash className="h-4 w-4" />
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Delete Quote</p>
-                </TooltipContent>
-              </Tooltip>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  
+                  {/* View Details */}
+                  <DropdownMenuItem onClick={(e) => handleViewDetails()}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                  
+                  {/* Edit - only for specific statuses or if canEdit is true */}
+                  {(quote.canEdit || ['draft', 'pending', 'sent'].includes(quote.status)) && (
+                    <DropdownMenuItem onClick={(e) => handleEdit()}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Quote
+                    </DropdownMenuItem>
+                  )}
+                  
+                  {/* Download */}
+                  <DropdownMenuItem onClick={(e) => handleDownload()}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </DropdownMenuItem>
+                  
+                  {/* Contact Clinic */}
+                  <DropdownMenuItem onClick={(e) => handleContactClinic()}>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Contact Clinic
+                  </DropdownMenuItem>
+                  
+                  {/* Make Payment - only for accepted quotes */}
+                  {quote.status === 'accepted' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={(e) => handleMakePayment()}>
+                        <Wallet className="h-4 w-4 mr-2" />
+                        Make Payment
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TooltipProvider>
           </div>
         </div>
