@@ -672,10 +672,22 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
     });
   };
 
-  // Initialize based on URL parameters and props
+  // Initialize based on URL parameters, props, and session storage
   useEffect(() => {
     try {
-      // Handle initialSection from props
+      // Check for the session flag first
+      if (typeof window !== 'undefined') {
+        const storedSection = sessionStorage.getItem('patient_portal_section');
+        if (storedSection) {
+          console.log(`[DEBUG] Setting active section from session storage: ${storedSection}`);
+          setActiveSection(storedSection);
+          // Clear the flag to prevent it from affecting future navigation
+          sessionStorage.removeItem('patient_portal_section');
+          return; // Skip the rest of the initialization
+        }
+      }
+      
+      // Handle initialSection from props if no session flag
       if (initialSection && initialSection !== 'dashboard') {
         console.log(`[DEBUG] Setting active section from props: ${initialSection}`);
         setActiveSection(initialSection);

@@ -190,9 +190,15 @@ function Router() {
       </Route>
       
       {/* Patient quotes section */}
-      <Route path="/patient/quotes">
-        {() => <PatientPortalPage initialSection="quotes" />}
-      </Route>
+      <Route path="/patient/quotes" component={() => {
+        // Use dynamic import to avoid circular dependency issues
+        const PatientQuotesWrapper = React.lazy(() => import("@/components/patient/PatientQuotesWrapper"));
+        return (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading...</div>}>
+            <PatientQuotesWrapper />
+          </Suspense>
+        );
+      }} />
       
       {/* Legacy route - redirect to canonical route */}
       <Route path="/patient/quotes/:id">
