@@ -61,6 +61,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   const [isEditMode, setIsEditMode] = useState(false);
   // Removed isDeleteConfirmOpen since we're using confirm() directly
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   
   // Convert numeric IDs to UUID format consistently using our utility
   const sanitizedQuoteId = useMemo(() => {
@@ -122,9 +123,25 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
   const showTreatmentDetails = (treatmentLine: any) => {
     console.log('[DEBUG] Showing treatment details for ID:', treatmentLine.id);
     console.log('[DEBUG] Treatment data:', treatmentLine);
+    
+    // Two options for showing details:
+    // 1. Dialog approach (current implementation)
     setSelectedTreatmentLine(treatmentLine);
     setIsDetailsOpen(true);
     console.log('[DEBUG] Details dialog should now be visible');
+    
+    // 2. SPA navigation approach (could be used for dedicated pages)
+    // const treatmentLineId = ensureUuidFormat(treatmentLine.id);
+    // setLocation(`/portal/treatment/${treatmentLineId}`);
+  };
+  
+  // Navigate to the full quote details page
+  const navigateToQuoteDetails = (quoteId: string) => {
+    console.log('[DEBUG] Navigating to quote details:', quoteId);
+    // Use the ID converter to ensure consistent format
+    const sanitizedId = ensureUuidFormat(quoteId);
+    // Use SPA navigation via wouter
+    setLocation(`/portal/quotes/${sanitizedId}`);
   };
 
   // Handle loading states
@@ -160,7 +177,7 @@ const TreatmentPlansSection: React.FC<PatientTreatmentPlansProps> = ({ quoteId }
           </Alert>
         </CardContent>
         <CardFooter>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <Button onClick={() => refetch()}>Retry</Button>
         </CardFooter>
       </Card>
     );
