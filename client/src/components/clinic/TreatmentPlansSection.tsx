@@ -204,7 +204,8 @@ export const TreatmentPlansSection = () => {
   };
 
   // IMPORTANT: Using '/api/treatment-module/' for consistent API path usage
-  const API_BASE_URL = "/api/treatment-module";
+  // Update to use canonical API path format
+  const API_BASE_URL = "/api/v1";
   
   // Handle send to patient
   const handleSendToPatient = async (plan: any) => {
