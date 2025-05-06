@@ -9,7 +9,7 @@ import { useNavigation } from '@/hooks/use-navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit } from 'lucide-react';
 
 // Define the treatment type
 type QuoteTreatment = {
@@ -30,6 +30,7 @@ interface Quote {
   treatments?: QuoteTreatment[];
   totalPrice?: number;
   notes?: string;
+  canEdit?: boolean;
 }
 
 interface PatientQuoteDetailProps {
@@ -90,24 +91,45 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
       ? quoteVersions[quoteVersions.length - 1] 
       : null;
     
-    // Construct a structured quote object with all necessary fields
-    return {
-      id: quoteRequest.id,
-      status: quoteRequest.status,
-      title: quoteRequest.treatment,
-      createdAt: quoteRequest.createdAt,
-      clinicName: 'Istanbul Dental Smile', // Default or from selected clinic
-      clinicAddress: 'Istanbul, Turkey',
-      clinicContact: '+90 123 456 7890',
-      totalPrice: 0, // To be calculated from treatments
-      notes: quoteRequest.notes,
-      treatments: [
+    // Get proper treatments and pricing from the version if available
+    let treatments = [];
+    let totalPrice = 0;
+    
+    if (latestVersion && latestVersion.treatments) {
+      // Use treatments from the latest version
+      treatments = latestVersion.treatments.map(t => ({
+        name: t.name || 'Treatment',
+        quantity: t.quantity || 1,
+        price: t.price || 0
+      }));
+      
+      // Calculate the total price
+      totalPrice = treatments.reduce((sum, t) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
+    } else {
+      // Default treatment based on the request
+      treatments = [
         {
           name: quoteRequest.specificTreatment || quoteRequest.treatment || 'Dental Treatment',
           quantity: 1,
-          price: 0 // Price not available in this view yet
+          price: quoteRequest.estimatedPrice || 0
         }
-      ]
+      ];
+      totalPrice = quoteRequest.estimatedPrice || 0;
+    }
+    
+    // Construct a structured quote object with all necessary fields
+    return {
+      id: quoteRequest.id,
+      status: quoteRequest.status || 'draft',
+      title: quoteRequest.treatment,
+      createdAt: quoteRequest.createdAt,
+      clinicName: quoteRequest.clinicName || 'Istanbul Dental Smile',
+      clinicAddress: quoteRequest.clinicAddress || 'Istanbul, Turkey',
+      clinicContact: quoteRequest.clinicPhone || '+90 123 456 7890',
+      totalPrice: totalPrice,
+      notes: quoteRequest.notes,
+      treatments: treatments,
+      canEdit: quoteRequest.status === 'draft' || quoteRequest.status === 'pending'
     };
   }, [quoteData]);
 
@@ -204,6 +226,18 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
     toast({
       title: "Download started",
       description: "Your quote PDF is being generated and will download shortly."
+    });
+  };
+  
+  // Handle editing the quote
+  const handleEdit = () => {
+    if (!quote?.id) return;
+    
+    // Use the quote flow for editing
+    navigateToRoute('PATIENT_DASHBOARD', { section: 'quotes', action: 'edit', id: quote.id.toString() });
+    toast({
+      title: "Edit Quote",
+      description: "You can now edit your quote details."
     });
   };
 
@@ -386,6 +420,18 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
               {t('quotes.make_payment', 'Make Payment')}
             </Button>
           </>
+        )}
+
+        {/* Edit button - only available for editable quotes */}
+        {quote.canEdit && (
+          <Button 
+            variant="outline" 
+            className="flex items-center text-amber-600 hover:bg-amber-50 border-amber-200"
+            onClick={handleEdit}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            {t('quotes.edit', 'Edit Quote')}
+          </Button>
         )}
 
         {/* Message button - available for all quotes */}
