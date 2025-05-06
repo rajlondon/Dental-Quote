@@ -140,6 +140,11 @@ function Router() {
       <Route path="/quote">
         {() => <Redirect to="/your-quote" />}
       </Route>
+      
+      {/* Route for the dental quiz workflow */}
+      <Route path="/quote-flow">
+        {() => <YourQuotePage />}
+      </Route>
       <Route path="/booking" component={BookingPage} />
       {/* Create separate routes for clinic pages with enhanced routing and diagnostics */}
       <Route path="/clinic/:id" component={ClinicRouter} />
