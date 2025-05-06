@@ -1,86 +1,128 @@
 /**
  * Patient Treatment Plan Component
  * 
- * Implements treatment plan functionality specifically for the patient portal
- * with appropriate permissions and UI for patient users.
+ * Extends the base treatment plan component with patient-specific functionality
  */
 import React from 'react';
-import { BaseTreatmentPlan } from './BaseTreatmentPlan';
-import { useAuth } from '@/hooks/use-auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, HelpCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { ArrowRight, Calendar, FileDown } from 'lucide-react';
+import { BaseTreatmentPlan, BaseTreatmentPlanProps } from './BaseTreatmentPlan';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { TreatmentPlan } from '@shared/models/treatment-plan';
 
-interface PatientTreatmentPlanProps {
-  quoteId?: string;
-  planId?: string | number;
-  showActions?: boolean;
-  showFullDetails?: boolean;
+export interface PatientTreatmentPlanProps extends Omit<BaseTreatmentPlanProps, 'onExportPdf' | 'onSendToPatient' | 'onComplete' | 'onCancel'> {
+  onBookAppointment?: (plan: TreatmentPlan) => void;
 }
 
+/**
+ * Patient-specific treatment plan component
+ */
 export function PatientTreatmentPlan({
-  quoteId,
   planId,
+  quoteId,
+  packageId,
+  specialOfferId,
   showActions = true,
-  showFullDetails = true
+  showFullDetails = false,
+  readonly = false,
+  onBookAppointment,
+  className = '',
 }: PatientTreatmentPlanProps) {
-  const { user } = useAuth();
-  const { t } = useTranslation();
+  const { toast } = useToast();
   
-  // Basic security check - component should only be used by patients
-  if (!user || user.role !== 'patient') {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Access Error</AlertTitle>
-        <AlertDescription>
-          You don't have permission to view this treatment plan.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // Handle exporting the treatment plan as PDF
+  const handleExportPdf = async (id: string) => {
+    try {
+      const response = await apiRequest('GET', `/api/v1/treatment-plans/${id}/pdf`, null, {
+        responseType: 'blob'
+      });
+      
+      // Create a blob URL for the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a link and click it to download the PDF
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `treatment-plan-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'PDF Downloaded',
+        description: 'Your treatment plan has been downloaded as a PDF.',
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: 'Download Failed',
+        description: 'Failed to download the treatment plan. Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  };
   
-  // Custom header for patient view
-  const renderHeader = () => (
-    <div>
-      <h2 className="text-2xl font-bold tracking-tight">
-        {t('patient.treatment_plan.title', 'My Treatment Plan')}
-      </h2>
-      <p className="text-muted-foreground">
-        {t('patient.treatment_plan.description', 'View and manage your dental treatment plan')}
-      </p>
-    </div>
-  );
-  
-  // Add help information after the plan
-  const renderHelpInfo = () => (
-    <Alert className="mt-6">
-      <HelpCircle className="h-4 w-4" />
-      <AlertTitle>
-        {t('patient.treatment_plan.help.title', 'Need assistance?')}
-      </AlertTitle>
-      <AlertDescription>
-        {t('patient.treatment_plan.help.description', 'If you have questions about your treatment plan, please contact your dental clinic or our support team through the messaging system.')}
-      </AlertDescription>
-    </Alert>
-  );
-  
+  // Render the base component with patient-specific props
   return (
     <div className="space-y-4">
-      <BaseTreatmentPlan 
-        quoteId={quoteId}
+      <BaseTreatmentPlan
         planId={planId}
-        title={t('patient.treatment_plan.title', 'My Treatment Plan')}
-        description={t('patient.treatment_plan.description', 'View and manage your dental treatment plan')}
+        quoteId={quoteId}
+        packageId={packageId}
+        specialOfferId={specialOfferId}
         showActions={showActions}
         showFullDetails={showFullDetails}
-        // Patient-specific customizations
-        allowCreating={false} // Patients can't create treatment plans directly
-        allowDeleting={false} // Patients can't delete treatment plans
-        renderHeader={renderHeader}
+        readonly={readonly}
+        onExportPdf={handleExportPdf}
+        className={className}
       />
       
-      {renderHelpInfo()}
+      {/* Patient-specific actions below the plan */}
+      {showActions && planId && (
+        <div className="flex flex-wrap justify-end gap-2 mt-4">
+          <Button
+            variant="outline"
+            onClick={() => handleExportPdf(planId)}
+            className="flex items-center gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            Download PDF
+          </Button>
+          
+          <Button
+            onClick={() => onBookAppointment && planId && onBookAppointment({
+              id: planId,
+              title: 'Treatment Plan',
+              status: 'ACCEPTED',
+              totalPrice: 0,
+              finalPrice: 0,
+              paymentStatus: 'UNPAID',
+              treatments: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              sourceType: 'CUSTOM'
+            })}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Book Appointment
+          </Button>
+          
+          <Button
+            variant="link"
+            onClick={() => window.open(`/portal/treatment-comparison?planId=${planId}`, '_blank')}
+            className="flex items-center gap-1"
+          >
+            Compare with other clinics
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

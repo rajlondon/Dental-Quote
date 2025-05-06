@@ -1,9 +1,9 @@
 /**
- * Treatment Plan Components
- * Export all treatment plan components for easy importing
+ * Treatment Components Barrel File
+ * 
+ * This file re-exports all treatment-related components for easier importing
  */
-
-export { BaseTreatmentPlan } from './BaseTreatmentPlan';
-export { PatientTreatmentPlan } from './PatientTreatmentPlan';
-export { ClinicTreatmentPlan } from './ClinicTreatmentPlan';
-export { AdminTreatmentPlan } from './AdminTreatmentPlan';
+export * from './BaseTreatmentPlan';
+export * from './PatientTreatmentPlan';
+export * from './ClinicTreatmentPlan';
+export * from './AdminTreatmentPlan';

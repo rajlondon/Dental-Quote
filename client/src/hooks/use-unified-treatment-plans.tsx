@@ -1,181 +1,263 @@
 /**
- * Unified Treatment Plan Hook
- * Provides consistent treatment plan functionality across all portals
- * with role-based permissions and operations
+ * Unified Treatment Plans Hook
+ * 
+ * This hook provides a centralized way to interact with treatment plans
+ * across all portals (patient, clinic, admin) with proper permissions handling.
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, ReactNode, useContext } from 'react';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseMutationResult,
+  UseQueryResult
+} from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { TreatmentPlan, TreatmentPlanStatus, TreatmentItem } from '@shared/models/treatment-plan';
-import { ensureUuidFormat } from '@/utils/id-converter';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
+import {
+  TreatmentPlan,
+  TreatmentItem,
+  TreatmentPlanStatus,
+  TreatmentPlanFilters,
+  CreateTreatmentPlanRequest,
+  UpdateTreatmentPlanRequest,
+  TreatmentPlanResponse,
+  TreatmentPlansListResponse,
+  PlanConversionOptions
+} from '@shared/models/treatment-plan';
 
-// API paths
-const API_TREATMENT_PLANS = '/api/v1/treatment-plans';
-const API_TREATMENT_LINES = '/api/v1/treatment-lines';
-
-// Interface for the hook arguments
-interface UseTreatmentPlansOptions {
-  quoteId?: string;
-  planId?: string | number;
-  page?: number;
-  limit?: number;
-  status?: string;
-  search?: string;
-}
-
-// Interface for treatment summary
-interface TreatmentSummary {
-  totalTreatmentLines: number;
-  totalCost: number;
-  clinics: Array<{
-    id: string;
-    name: string;
-    treatmentCount: number;
-    totalCost: number;
+// Define the context interface
+interface UnifiedTreatmentPlansContextType {
+  // Queries
+  useTreatmentPlan: (id?: string) => UseQueryResult<TreatmentPlan, Error>;
+  useTreatmentPlans: (filters?: TreatmentPlanFilters) => UseQueryResult<{
+    plans: TreatmentPlan[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }, Error>;
+  
+  // Mutations
+  createTreatmentPlan: UseMutationResult<TreatmentPlan, Error, CreateTreatmentPlanRequest>;
+  updateTreatmentPlan: UseMutationResult<TreatmentPlan, Error, UpdateTreatmentPlanRequest>;
+  deleteTreatmentPlan: UseMutationResult<void, Error, string>;
+  changeTreatmentPlanStatus: UseMutationResult<TreatmentPlan, Error, { id: string; status: TreatmentPlanStatus }>;
+  
+  // Conversion utilities
+  convertQuoteToTreatmentPlan: UseMutationResult<TreatmentPlan, Error, { 
+    quoteId: string; 
+    options?: PlanConversionOptions;
   }>;
+  convertPackageToTreatmentPlan: UseMutationResult<TreatmentPlan, Error, { 
+    packageId: string; 
+    options?: PlanConversionOptions;
+  }>;
+  convertSpecialOfferToTreatmentPlan: UseMutationResult<TreatmentPlan, Error, { 
+    offerId: string; 
+    options?: PlanConversionOptions;
+  }>;
+  
+  // Helper functions
+  getTreatmentPlanTotalPrice: (treatments: TreatmentItem[]) => number;
+  calculateFinalPrice: (totalPrice: number, discountPercentage?: number) => number;
+  
+  // User context
+  userRole: 'patient' | 'clinic' | 'admin' | 'visitor';
+  canEdit: (plan?: TreatmentPlan) => boolean;
+  canDelete: (plan?: TreatmentPlan) => boolean;
+  canChangeStatus: (plan?: TreatmentPlan) => boolean;
 }
 
-/**
- * Unified hook for treatment plans across all portals
- */
-export function useUnifiedTreatmentPlans(options: UseTreatmentPlansOptions = {}) {
-  const { user } = useAuth();
+// Create context
+export const UnifiedTreatmentPlansContext = createContext<UnifiedTreatmentPlansContextType | null>(null);
+
+// Provider component
+export function UnifiedTreatmentPlansProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: patientUser } = useAuth();
+  const { user: adminUser } = useAdminAuth();
   
-  // Extract options with defaults
-  const {
-    quoteId,
-    planId,
-    page = 1,
-    limit = 10,
-    status,
-    search
-  } = options;
+  // Determine user role based on available auth contexts
+  let userRole: 'patient' | 'clinic' | 'admin' | 'visitor' = 'visitor';
   
-  // Format IDs consistently
-  const formattedQuoteId = quoteId ? ensureUuidFormat(quoteId) : undefined;
-  const formattedPlanId = planId ? (typeof planId === 'string' ? ensureUuidFormat(planId) : planId) : undefined;
+  if (adminUser) {
+    userRole = 'admin';
+  } else if (patientUser) {
+    // Check if user has clinic role - this is a simplification
+    // In a real app, you'd have a more robust role system
+    if (patientUser.role === 'clinic_staff') {
+      userRole = 'clinic';
+    } else {
+      userRole = 'patient';
+    }
+  }
   
-  // Build query parameter string
-  const getQueryString = () => {
-    const params = new URLSearchParams();
-    
-    if (page) params.append('page', page.toString());
-    if (limit) params.append('limit', limit.toString());
-    if (status) params.append('status', status);
-    if (search) params.append('search', search);
-    if (formattedQuoteId) params.append('quoteId', formattedQuoteId);
-    
-    return params.toString();
+  // Utility functions
+  const getTreatmentPlanTotalPrice = (treatments: TreatmentItem[]): number => {
+    return treatments.reduce((total, item) => {
+      return total + (item.price * (item.quantity || 1));
+    }, 0);
   };
   
-  // Helper function to check permissions
-  const hasPermission = (action: 'view' | 'create' | 'update' | 'delete'): boolean => {
-    if (!user) return false;
+  const calculateFinalPrice = (totalPrice: number, discountPercentage?: number): number => {
+    if (!discountPercentage) return totalPrice;
     
-    switch (user.role) {
+    const discount = totalPrice * (discountPercentage / 100);
+    return totalPrice - discount;
+  };
+  
+  // Permission checks
+  const canEdit = (plan?: TreatmentPlan): boolean => {
+    if (!plan) return userRole !== 'visitor';
+    
+    switch (userRole) {
       case 'admin':
-        // Admin can do everything
         return true;
-        
-      case 'clinic_staff':
-        // Clinic staff can perform all actions but only on their own plans
-        return true;
-        
+      case 'clinic':
+        // Clinics can edit plans that are assigned to them or created by them
+        return plan.clinicId === patientUser?.id || plan.createdBy === patientUser?.id;
       case 'patient':
-        // Patients can view and update their own plans, but not create or delete
-        return action === 'view' || action === 'update';
-        
+        // Patients can only edit their own draft or proposed plans
+        return plan.patientId === patientUser?.id && 
+          (plan.status === TreatmentPlanStatus.DRAFT || plan.status === TreatmentPlanStatus.PROPOSED);
       default:
         return false;
     }
   };
   
-  // Query to fetch treatment plans or a single plan
-  const {
-    data: treatmentPlans,
-    isLoading: isLoadingPlans,
-    error: plansError,
-    refetch: refetchPlans
-  } = useQuery({
-    queryKey: formattedPlanId ? 
-      [API_TREATMENT_PLANS, formattedPlanId] : 
-      [API_TREATMENT_PLANS, getQueryString()],
-    queryFn: async () => {
-      console.log(`[API] Fetching treatment plan data with options:`, options);
-      
-      try {
-        // Different endpoint based on whether we're fetching a single plan or multiple
-        const endpoint = formattedPlanId ? 
-          `${API_TREATMENT_PLANS}/${formattedPlanId}` : 
-          `${API_TREATMENT_PLANS}?${getQueryString()}`;
+  const canDelete = (plan?: TreatmentPlan): boolean => {
+    if (!plan) return userRole === 'admin';
+    
+    switch (userRole) {
+      case 'admin':
+        return true;
+      case 'clinic':
+        // Clinics can delete only draft plans that are assigned to them
+        return plan.clinicId === patientUser?.id && plan.status === TreatmentPlanStatus.DRAFT;
+      case 'patient':
+        // Patients can't delete plans
+        return false;
+      default:
+        return false;
+    }
+  };
+  
+  const canChangeStatus = (plan?: TreatmentPlan): boolean => {
+    if (!plan) return userRole !== 'visitor';
+    
+    switch (userRole) {
+      case 'admin':
+        return true;
+      case 'clinic':
+        // Clinics can change status of plans assigned to them
+        return plan.clinicId === patientUser?.id;
+      case 'patient':
+        // Patients can only accept or reject proposed plans
+        return plan.patientId === patientUser?.id && 
+          plan.status === TreatmentPlanStatus.PROPOSED;
+      default:
+        return false;
+    }
+  };
+  
+  // Queries
+  const useTreatmentPlan = (id?: string): UseQueryResult<TreatmentPlan, Error> => {
+    return useQuery({
+      queryKey: ['/api/v1/treatment-plans', id],
+      queryFn: async () => {
+        if (!id) return null;
         
-        const response = await apiRequest('GET', endpoint);
-        const result = await response.json();
+        const response = await apiRequest('GET', `/api/v1/treatment-plans/${id}`);
+        const result: TreatmentPlanResponse = await response.json();
         
-        if (!result.success) {
+        if (!result.success || !result.data) {
+          throw new Error(result.message || 'Failed to fetch treatment plan');
+        }
+        
+        return result.data;
+      },
+      enabled: !!id
+    });
+  };
+  
+  const useTreatmentPlans = (
+    filters?: TreatmentPlanFilters
+  ): UseQueryResult<{
+    plans: TreatmentPlan[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }, Error> => {
+    // Build query string from filters
+    const queryParams = new URLSearchParams();
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(key, v));
+          } else {
+            queryParams.append(key, value.toString());
+          }
+        }
+      });
+    }
+    
+    // Auto-apply user role filters for security
+    if (userRole === 'patient' && patientUser?.id) {
+      queryParams.set('patientId', patientUser.id);
+    } else if (userRole === 'clinic' && patientUser?.id) {
+      queryParams.set('clinicId', patientUser.id);
+    }
+    
+    const queryString = queryParams.toString();
+    
+    return useQuery({
+      queryKey: ['/api/v1/treatment-plans', queryString],
+      queryFn: async () => {
+        const url = `/api/v1/treatment-plans${queryString ? `?${queryString}` : ''}`;
+        const response = await apiRequest('GET', url);
+        const result: TreatmentPlansListResponse = await response.json();
+        
+        if (!result.success || !result.data) {
           throw new Error(result.message || 'Failed to fetch treatment plans');
         }
         
         return result.data;
-      } catch (error) {
-        console.error('[ERROR] Failed to fetch treatment plans:', error);
-        throw error;
       }
-    },
-    enabled: hasPermission('view'),
-  });
-
-  // Query to fetch treatment summary stats if needed
-  const {
-    data: treatmentSummary,
-    isLoading: isLoadingSummary,
-    error: summaryError,
-    refetch: refetchSummary
-  } = useQuery({
-    queryKey: [API_TREATMENT_PLANS, 'summary', formattedQuoteId],
-    queryFn: async () => {
-      if (!formattedQuoteId) return null;
-      
-      try {
-        const response = await apiRequest('GET', `${API_TREATMENT_PLANS}/summary/${formattedQuoteId}`);
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.message || 'Failed to fetch treatment summary');
-        }
-        
-        return result.data as TreatmentSummary;
-      } catch (error) {
-        console.error('[ERROR] Failed to fetch treatment summary:', error);
-        return null;
-      }
-    },
-    enabled: !!formattedQuoteId && hasPermission('view'),
-  });
-
-  // Mutation to create a new treatment plan
+    });
+  };
+  
+  // Mutations
   const createTreatmentPlan = useMutation({
-    mutationFn: async (planData: Partial<TreatmentPlan>) => {
-      const response = await apiRequest('POST', API_TREATMENT_PLANS, planData);
-      const result = await response.json();
+    mutationFn: async (data: CreateTreatmentPlanRequest): Promise<TreatmentPlan> => {
+      // Auto-apply user context
+      if (userRole === 'patient' && patientUser?.id) {
+        data.patientId = patientUser.id;
+      } else if (userRole === 'clinic' && patientUser?.id) {
+        data.clinicId = patientUser.id;
+      }
       
-      if (!result.success) {
+      const response = await apiRequest('POST', '/api/v1/treatment-plans', data);
+      const result: TreatmentPlanResponse = await response.json();
+      
+      if (!result.success || !result.data) {
         throw new Error(result.message || 'Failed to create treatment plan');
       }
       
       return result.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
       toast({
         title: 'Treatment plan created',
-        description: 'The treatment plan was created successfully.',
+        description: 'The treatment plan has been created successfully.',
       });
-      
-      // Invalidate treatment plans queries to refetch data
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS] });
     },
     onError: (error: Error) => {
       toast({
@@ -183,30 +265,27 @@ export function useUnifiedTreatmentPlans(options: UseTreatmentPlansOptions = {})
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Mutation to update a treatment plan
+  
   const updateTreatmentPlan = useMutation({
-    mutationFn: async ({ id, data }: { id: string | number, data: Partial<TreatmentPlan> }) => {
-      const response = await apiRequest('PATCH', `${API_TREATMENT_PLANS}/${id}`, data);
-      const result = await response.json();
+    mutationFn: async (data: UpdateTreatmentPlanRequest): Promise<TreatmentPlan> => {
+      const response = await apiRequest('PUT', `/api/v1/treatment-plans/${data.id}`, data);
+      const result: TreatmentPlanResponse = await response.json();
       
-      if (!result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.message || 'Failed to update treatment plan');
       }
       
       return result.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans', data.id] });
       toast({
         title: 'Treatment plan updated',
-        description: 'The treatment plan was updated successfully.',
+        description: 'The treatment plan has been updated successfully.',
       });
-      
-      // Invalidate specific treatment plan query to refetch data
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS, variables.id] });
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS] });
     },
     onError: (error: Error) => {
       toast({
@@ -214,29 +293,25 @@ export function useUnifiedTreatmentPlans(options: UseTreatmentPlansOptions = {})
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Mutation to delete a treatment plan
+  
   const deleteTreatmentPlan = useMutation({
-    mutationFn: async (id: string | number) => {
-      const response = await apiRequest('DELETE', `${API_TREATMENT_PLANS}/${id}`);
+    mutationFn: async (id: string): Promise<void> => {
+      const response = await apiRequest('DELETE', `/api/v1/treatment-plans/${id}`);
       const result = await response.json();
       
       if (!result.success) {
         throw new Error(result.message || 'Failed to delete treatment plan');
       }
-      
-      return result.data;
     },
     onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
+      queryClient.removeQueries({ queryKey: ['/api/v1/treatment-plans', id] });
       toast({
         title: 'Treatment plan deleted',
-        description: 'The treatment plan was deleted successfully.',
+        description: 'The treatment plan has been deleted successfully.',
       });
-      
-      // Invalidate treatment plans queries to refetch data
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS] });
     },
     onError: (error: Error) => {
       toast({
@@ -244,138 +319,161 @@ export function useUnifiedTreatmentPlans(options: UseTreatmentPlansOptions = {})
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Mutation to add a treatment to a plan
-  const addTreatmentToPlan = useMutation({
-    mutationFn: async ({ planId, treatment }: { planId: string | number, treatment: TreatmentItem }) => {
-      const response = await apiRequest('POST', `${API_TREATMENT_PLANS}/${planId}/treatments`, treatment);
-      const result = await response.json();
+  
+  const changeTreatmentPlanStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: TreatmentPlanStatus }): Promise<TreatmentPlan> => {
+      const response = await apiRequest('PATCH', `/api/v1/treatment-plans/${id}/status`, { status });
+      const result: TreatmentPlanResponse = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to add treatment');
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to change treatment plan status');
       }
       
       return result.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans', data.id] });
       toast({
-        title: 'Treatment added',
-        description: 'The treatment was added to the plan successfully.',
+        title: 'Status updated',
+        description: `The treatment plan status is now "${data.status}".`,
       });
-      
-      // Invalidate specific treatment plan query to refetch data
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS, variables.planId] });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to add treatment',
+        title: 'Failed to update status',
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Mutation to update a treatment in a plan
-  const updateTreatmentInPlan = useMutation({
-    mutationFn: async ({ 
-      planId, 
-      treatmentId, 
-      treatment 
-    }: { 
-      planId: string | number, 
-      treatmentId: string | number, 
-      treatment: Partial<TreatmentItem> 
-    }) => {
-      const response = await apiRequest(
-        'PATCH', 
-        `${API_TREATMENT_PLANS}/${planId}/treatments/${treatmentId}`, 
-        treatment
-      );
-      const result = await response.json();
+  
+  // Conversion utilities
+  const convertQuoteToTreatmentPlan = useMutation({
+    mutationFn: async ({ quoteId, options }: { quoteId: string; options?: PlanConversionOptions }): Promise<TreatmentPlan> => {
+      const response = await apiRequest('POST', `/api/v1/treatment-plans/convert/quote/${quoteId}`, options || {});
+      const result: TreatmentPlanResponse = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to update treatment');
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to convert quote to treatment plan');
       }
       
       return result.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
       toast({
-        title: 'Treatment updated',
-        description: 'The treatment was updated successfully.',
+        title: 'Quote converted',
+        description: 'The quote has been converted to a treatment plan successfully.',
       });
-      
-      // Invalidate specific treatment plan query to refetch data
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS, variables.planId] });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to update treatment',
+        title: 'Conversion failed',
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Mutation to remove a treatment from a plan
-  const removeTreatmentFromPlan = useMutation({
-    mutationFn: async ({ planId, treatmentId }: { planId: string | number, treatmentId: string | number }) => {
-      const response = await apiRequest('DELETE', `${API_TREATMENT_PLANS}/${planId}/treatments/${treatmentId}`);
-      const result = await response.json();
+  
+  const convertPackageToTreatmentPlan = useMutation({
+    mutationFn: async ({ packageId, options }: { packageId: string; options?: PlanConversionOptions }): Promise<TreatmentPlan> => {
+      const response = await apiRequest('POST', `/api/v1/treatment-plans/convert/package/${packageId}`, options || {});
+      const result: TreatmentPlanResponse = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to remove treatment');
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to convert package to treatment plan');
       }
       
       return result.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
       toast({
-        title: 'Treatment removed',
-        description: 'The treatment was removed from the plan successfully.',
+        title: 'Package converted',
+        description: 'The package has been converted to a treatment plan successfully.',
       });
-      
-      // Invalidate specific treatment plan query to refetch data
-      queryClient.invalidateQueries({ queryKey: [API_TREATMENT_PLANS, variables.planId] });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to remove treatment',
+        title: 'Conversion failed',
         description: error.message,
         variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Return everything needed by the UI components
-  return {
-    // Data
-    treatmentPlans,
-    treatmentSummary,
-    
-    // Loading states
-    isLoadingPlans,
-    isLoadingSummary,
-    
-    // Errors
-    plansError,
-    summaryError,
-    
-    // Refetch functions
-    refetchPlans,
-    refetchSummary,
+  
+  const convertSpecialOfferToTreatmentPlan = useMutation({
+    mutationFn: async ({ offerId, options }: { offerId: string; options?: PlanConversionOptions }): Promise<TreatmentPlan> => {
+      const response = await apiRequest('POST', `/api/v1/treatment-plans/convert/special-offer/${offerId}`, options || {});
+      const result: TreatmentPlanResponse = await response.json();
+      
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Failed to convert special offer to treatment plan');
+      }
+      
+      return result.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/treatment-plans'] });
+      toast({
+        title: 'Special offer converted',
+        description: 'The special offer has been converted to a treatment plan successfully.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Conversion failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+  
+  // Context value
+  const contextValue: UnifiedTreatmentPlansContextType = {
+    // Queries
+    useTreatmentPlan,
+    useTreatmentPlans,
     
     // Mutations
     createTreatmentPlan,
     updateTreatmentPlan,
     deleteTreatmentPlan,
-    addTreatmentToPlan,
-    updateTreatmentInPlan,
-    removeTreatmentFromPlan,
+    changeTreatmentPlanStatus,
+    
+    // Conversion utilities
+    convertQuoteToTreatmentPlan,
+    convertPackageToTreatmentPlan,
+    convertSpecialOfferToTreatmentPlan,
     
     // Helper functions
-    hasPermission,
+    getTreatmentPlanTotalPrice,
+    calculateFinalPrice,
+    
+    // User context
+    userRole,
+    canEdit,
+    canDelete,
+    canChangeStatus,
   };
+  
+  return (
+    <UnifiedTreatmentPlansContext.Provider value={contextValue}>
+      {children}
+    </UnifiedTreatmentPlansContext.Provider>
+  );
+}
+
+// Hook to use the treatment plans context
+export function useUnifiedTreatmentPlans() {
+  const context = useContext(UnifiedTreatmentPlansContext);
+  
+  if (!context) {
+    throw new Error('useUnifiedTreatmentPlans must be used within a UnifiedTreatmentPlansProvider');
+  }
+  
+  return context;
 }
