@@ -185,7 +185,11 @@ const PortalLoginPage: React.FC = () => {
           }
           
           // If user has already completed profile, proceed with creating the treatment plan
-          fetch(`/api/offers/${offerId}/start`, {
+          // Try the proper endpoint first with fallback support
+          console.log(`Attempting to create treatment plan from offer ${offerId}`);
+          
+          // First try the v1 API endpoint
+          fetch(`/api/v1/offers/${offerId}/start`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -196,30 +200,68 @@ const PortalLoginPage: React.FC = () => {
               additionalNotes: 'Created from special offer selection'
             })
           })
-          .then(response => response.json())
-          .then(data => {
-            console.log("Treatment plan created from offer:", data);
-            
-            if (data.treatmentPlanUrl) {
-              toast({
-                title: "Special Offer Processed",
-                description: `Treatment plan created from "${offerData.title}"`,
+          .then(response => {
+            if (response.ok) {
+              return response.json().then(data => {
+                console.log("Treatment plan created from offer (v1 endpoint):", data);
+                return { success: true, data };
               });
+            } else {
+              console.log("V1 endpoint failed with status:", response.status);
+              // Try the fallback endpoint if the v1 endpoint fails
+              return fetch(`/api/offers/${offerId}/start`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  clinicId: offerData.clinicId,
+                  patientId: user.id,
+                  additionalNotes: 'Created from special offer selection (fallback endpoint)'
+                })
+              })
+              .then(fallbackResponse => {
+                if (fallbackResponse.ok) {
+                  return fallbackResponse.json().then(fallbackData => {
+                    console.log("Treatment plan created from offer (fallback endpoint):", fallbackData);
+                    return { success: true, data: fallbackData };
+                  });
+                } else {
+                  throw new Error(`Both API endpoints failed. Fallback status: ${fallbackResponse.status}`);
+                }
+              });
+            }
+          })
+          .then(result => {
+            if (result.success && result.data) {
+              const data = result.data;
               
-              // Clean up session storage
-              sessionStorage.removeItem('pendingSpecialOffer');
-              sessionStorage.removeItem('processingSpecialOffer');
-              sessionStorage.removeItem('activeSpecialOffer');
-              
-              // Redirect to the treatment plan
-              setTimeout(() => {
-                window.location.href = data.treatmentPlanUrl;
-              }, 100);
-              return;
+              if (data.treatmentPlanUrl) {
+                toast({
+                  title: "Special Offer Processed",
+                  description: `Treatment plan created from "${offerData.title}"`,
+                });
+                
+                // Clean up session storage
+                sessionStorage.removeItem('pendingSpecialOffer');
+                sessionStorage.removeItem('processingSpecialOffer');
+                sessionStorage.removeItem('activeSpecialOffer');
+                
+                // Redirect to the treatment plan
+                setTimeout(() => {
+                  window.location.href = data.treatmentPlanUrl;
+                }, 100);
+                return;
+              }
             }
           })
           .catch(error => {
             console.error("Error creating treatment plan from offer:", error);
+            toast({
+              title: "Error Processing Offer",
+              description: "There was a problem creating your treatment plan. Please try again.",
+              variant: "destructive"
+            });
           });
         }
       } catch (error) {
