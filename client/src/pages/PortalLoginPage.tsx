@@ -189,27 +189,30 @@ const PortalLoginPage: React.FC = () => {
           console.log(`Attempting to create treatment plan from offer ${offerId}`);
           
           // First try the v1 API endpoint
-          fetch(`/api/v1/offers/${offerId}/start`, {
+          console.log(`Creating treatment plan via POST to /api/v1/offers/${offerId}/start with clinicId:`, offerData.clinicId);
+          
+          // Try the unified treatment plan API 
+          fetch(`/api/treatment-plans/from-offer`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+              offerId: offerId,
               clinicId: offerData.clinicId,
-              patientId: user.id,
-              additionalNotes: 'Created from special offer selection'
+              notes: 'Created from special offer selection'
             })
           })
           .then(response => {
             if (response.ok) {
               return response.json().then(data => {
-                console.log("Treatment plan created from offer (v1 endpoint):", data);
+                console.log("Treatment plan created from unified endpoint:", data);
                 return { success: true, data };
               });
             } else {
-              console.log("V1 endpoint failed with status:", response.status);
-              // Try the fallback endpoint if the v1 endpoint fails
-              return fetch(`/api/offers/${offerId}/start`, {
+              console.log("Unified endpoint failed with status:", response.status);
+              // Try the v1 endpoint as fallback
+              return fetch(`/api/v1/offers/${offerId}/start`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -217,17 +220,38 @@ const PortalLoginPage: React.FC = () => {
                 body: JSON.stringify({
                   clinicId: offerData.clinicId,
                   patientId: user.id,
-                  additionalNotes: 'Created from special offer selection (fallback endpoint)'
+                  additionalNotes: 'Created from special offer selection'
                 })
               })
-              .then(fallbackResponse => {
-                if (fallbackResponse.ok) {
-                  return fallbackResponse.json().then(fallbackData => {
-                    console.log("Treatment plan created from offer (fallback endpoint):", fallbackData);
+              .then(v1Response => {
+                if (v1Response.ok) {
+                  return v1Response.json().then(fallbackData => {
+                    console.log("Treatment plan created from v1 endpoint:", fallbackData);
                     return { success: true, data: fallbackData };
                   });
                 } else {
-                  throw new Error(`Both API endpoints failed. Fallback status: ${fallbackResponse.status}`);
+                  // Try the legacy endpoint as last resort
+                  return fetch(`/api/offers/${offerId}/start`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      clinicId: offerData.clinicId,
+                      patientId: user.id,
+                      additionalNotes: 'Created from special offer selection (legacy endpoint)'
+                    })
+                  })
+                  .then(legacyResponse => {
+                    if (legacyResponse.ok) {
+                      return legacyResponse.json().then(legacyData => {
+                        console.log("Treatment plan created from legacy endpoint:", legacyData);
+                        return { success: true, data: legacyData };
+                      });
+                    } else {
+                      throw new Error(`All API endpoints failed. Legacy status: ${legacyResponse.status}`);
+                    }
+                  });
                 }
               });
             }
