@@ -81,8 +81,15 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
         return;
       }
       
-      // User is logged in, we can directly create a quote from the package
-      await createQuoteFromPackage(pkg.id, pkg.clinicId);
+      // User is logged in, we should redirect to the unified quote flow
+      toast({
+        title: "Treatment Package Selected",
+        description: `${pkg.title} will be applied to your quote`,
+        variant: "default",
+      });
+      
+      // Redirect to quote flow with context already set
+      setLocation('/quote-flow');
       
     } catch (error) {
       console.error('Error processing treatment package:', error);
