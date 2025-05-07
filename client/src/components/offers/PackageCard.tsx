@@ -104,7 +104,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
       
       // Proceed to the quote flow directly (will handle login as part of the flow)
       // Use skipInfo=true to bypass initial patient info page if they select "create account"
-      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${pkg.clinicId}&packageId=${pkg.id}&source=package`;
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${pkg.clinicId}&packageId=${pkg.id}&packageTitle=${encodeURIComponent(pkg.title || 'Treatment Package')}&source=package`;
       return;
       
     } catch (error) {

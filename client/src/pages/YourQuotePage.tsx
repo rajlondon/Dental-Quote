@@ -969,7 +969,7 @@ const YourQuotePage: React.FC = () => {
       });
     }
     
-    // Initialize treatments based on whether we have a special offer
+    // Initialize treatments based on whether we have a special offer or package
     if (specialOffer) {
       // Create a treatment item from the special offer
       const specialOfferTreatment: PlanTreatmentItem = {
@@ -1006,6 +1006,50 @@ const YourQuotePage: React.FC = () => {
       }
       
       setTreatmentItems([specialOfferTreatment]);
+    }
+    // Initialize with package data if available
+    else if (packageData && isPackageFlow) {
+      console.log("Initializing treatment plan with package data:", packageData);
+      
+      // Create a package treatment item
+      const packageTreatment: PlanTreatmentItem = {
+        id: `package_${Date.now()}`,
+        category: 'packages',
+        name: packageData.title || 'Treatment Package',
+        quantity: 1,
+        priceGBP: 1200, // Default package price, would be fetched from API in real app
+        priceUSD: 1550, // Default package price in USD
+        subtotalGBP: 1200,
+        subtotalUSD: 1550,
+        guarantee: '5-year',
+        isPackage: true,
+        packageId: packageData.id
+      };
+      
+      setTreatmentItems([packageTreatment]);
+      
+      // If we have a clinicId in packageData, prioritize that clinic
+      if (packageData.clinicId) {
+        console.log("Attempting to select clinic from package clinicId:", packageData.clinicId);
+        const packageClinic = clinics.find(c => c.id === packageData.clinicId);
+        if (packageClinic) {
+          console.log("Auto-selecting clinic for package:", packageClinic.name);
+          setSelectedClinic(packageClinic);
+          
+          // If we already have patient info, we can move to review
+          if (patientInfo && treatmentItems.length > 0) {
+            console.log("Moving directly to review step with selected clinic for package");
+            setCurrentStep('review');
+            setIsQuoteReady(true);
+          }
+        }
+      }
+      
+      // Show welcome toast for package
+      toast({
+        title: "Treatment Package Selected",
+        description: `Your quote includes: ${packageData.title || 'Treatment Package'}`,
+      });
     }
     // Initialize with a default treatment if the user came from selecting a specific treatment
     else if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
@@ -1085,6 +1129,7 @@ const YourQuotePage: React.FC = () => {
               {packageId && <p>Package ID: {packageId}</p>}
               {clinicId && <p>Clinic ID: {clinicId}</p>}
               {specialOffer && <p>Special Offer Title: {specialOffer.title}</p>}
+              {packageData && <p>Package Title: {packageData.title}</p>}
               <p>URL Search: {window.location.search}</p>
             </div>
           </div>
@@ -1104,7 +1149,7 @@ const YourQuotePage: React.FC = () => {
                     {isSpecialOfferFlow && offerId ? (
                       <>Your quote includes the special offer: <span className="font-bold underline">{specialOffer?.title || 'Special Offer'}</span></>
                     ) : isPackageFlow && packageId ? (
-                      <>Your selected package will be applied to this quote</>
+                      <>Your quote includes the package: <span className="font-bold underline">{packageData?.title || 'Treatment Package'}</span></>
                     ) : (
                       <>We'll prepare your personalized treatment plan</>
                     )}
