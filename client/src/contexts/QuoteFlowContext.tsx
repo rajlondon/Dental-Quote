@@ -36,8 +36,23 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [offerId, setOfferId] = useState<string | null>(null);
   const [packageId, setPackageId] = useState<string | null>(null);
   const [clinicId, setClinicId] = useState<string | null>(null);
-  const [promoToken, setPromoToken] = useState<string | null>(null);
-  const [promoType, setPromoType] = useState<string | null>(null);
+  const [promoToken, _setPromoToken] = useState<string | null>(null);
+  const [promoType, _setPromoType] = useState<string | null>(null);
+  
+  // Enhance setPromoToken to automatically set source to promo_token
+  const setPromoToken = (token: string | null) => {
+    _setPromoToken(token);
+    // When setting a promo token, automatically update the source
+    if (token) {
+      console.log("QuoteFlowContext: Setting promo token and forcing source to 'promo_token'");
+      setSource('promo_token');
+    }
+  };
+  
+  // Enhance setPromoType to maintain consistency
+  const setPromoType = (type: string | null) => {
+    _setPromoType(type);
+  };
   const [quoteId, setQuoteId] = useState<string | null>(null);
 
   // Helper properties for easier flow checks

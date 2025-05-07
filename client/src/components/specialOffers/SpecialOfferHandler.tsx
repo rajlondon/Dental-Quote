@@ -1,0 +1,177 @@
+import React, { useEffect } from 'react';
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
+import { PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
+import { useToast } from '@/hooks/use-toast';
+
+interface SpecialOfferHandlerProps {
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+    applicableTreatment?: string;
+  } | null;
+  packageData?: {
+    id: string;
+    title: string;
+    clinicId?: string;
+  } | null;
+  treatmentItems: PlanTreatmentItem[];
+  onTreatmentsChange: (treatments: PlanTreatmentItem[]) => void;
+}
+
+const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
+  specialOffer,
+  packageData,
+  treatmentItems,
+  onTreatmentsChange
+}) => {
+  const { 
+    isSpecialOfferFlow, 
+    isPackageFlow, 
+    isPromoTokenFlow,
+    promoToken,
+    promoType,
+    source
+  } = useQuoteFlow();
+  const { toast } = useToast();
+
+  // This effect ensures that when the quote flow indicates a special offer,
+  // but the treatment items don't reflect it, we add the special offer to the list
+  useEffect(() => {
+    console.log("🔍 SpecialOfferHandler checking for offers", {
+      isSpecialOfferFlow,
+      isPackageFlow,
+      isPromoTokenFlow,
+      promoToken,
+      promoType,
+      source,
+      treatmentItemsCount: treatmentItems.length,
+      hasSpecialOfferItem: treatmentItems.some(item => item.isSpecialOffer || item.isPackage || item.promoToken)
+    });
+
+    // Only run logic if we have a special offer type flow but no special offer items
+    if (
+      (isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && 
+      !treatmentItems.some(item => item.isSpecialOffer || item.isPackage || item.promoToken)
+    ) {
+      console.log("🛠️ SpecialOfferHandler adding missing special offer to treatment items");
+      
+      if (isSpecialOfferFlow && specialOffer) {
+        // Create a special offer treatment item
+        const specialOfferTreatment: PlanTreatmentItem = {
+          id: `special_offer_${Date.now()}`,
+          category: 'special_offer',
+          name: `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`,
+          quantity: 1,
+          priceGBP: 450, // Base price, will be discounted later
+          priceUSD: 580, // Base price, will be discounted later
+          subtotalGBP: 450,
+          subtotalUSD: 580,
+          guarantee: '5-year',
+          isSpecialOffer: true,
+          specialOffer: {
+            id: specialOffer.id,
+            title: specialOffer.title,
+            discountType: specialOffer.discountType,
+            discountValue: specialOffer.discountValue,
+            clinicId: specialOffer.clinicId
+          }
+        };
+        
+        // Apply the discount based on type
+        if (specialOffer.discountType === 'percentage') {
+          const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+          specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
+          specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
+          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
+          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
+        } else if (specialOffer.discountType === 'fixed_amount') {
+          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOffer.discountValue);
+          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert GBP to USD
+          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
+          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
+        }
+        
+        console.log("📋 SpecialOfferHandler adding special offer to treatment items:", specialOfferTreatment);
+        onTreatmentsChange([...treatmentItems, specialOfferTreatment]);
+        
+        toast({
+          title: "Special Offer Added",
+          description: `${specialOffer.title} has been added to your treatment plan.`,
+        });
+      } 
+      else if (isPackageFlow && packageData) {
+        // Create a package treatment item
+        const packageTreatment: PlanTreatmentItem = {
+          id: `package_${Date.now()}`,
+          category: 'packages',
+          name: packageData.title || 'Treatment Package',
+          quantity: 1,
+          priceGBP: 1200, // Default package price, would be fetched from API
+          priceUSD: 1550, // Default package price in USD
+          subtotalGBP: 1200,
+          subtotalUSD: 1550,
+          guarantee: '5-year',
+          isPackage: true,
+          packageId: packageData.id
+        };
+        
+        console.log("📋 SpecialOfferHandler adding package to treatment items:", packageTreatment);
+        onTreatmentsChange([...treatmentItems, packageTreatment]);
+        
+        toast({
+          title: "Package Added",
+          description: `${packageData.title} has been added to your treatment plan.`,
+        });
+      }
+      else if (isPromoTokenFlow && promoToken) {
+        // Use URL search parameters to get additional info
+        const urlParams = new URLSearchParams(window.location.search);
+        const treatmentName = urlParams.get('treatmentName') || 'Dental Treatment';
+        const promoTitle = urlParams.get('promoTitle') || 'Special Promotion';
+        
+        // Create a promo token treatment item
+        const promoTreatment: PlanTreatmentItem = {
+          id: `promo_${Date.now()}`,
+          category: promoType === 'package' ? 'packages' : 'special_offer',
+          name: `${promoType === 'package' ? 'Package: ' : 'Special Offer: '}${promoTitle}`,
+          quantity: 1,
+          priceGBP: 450, // Base price
+          priceUSD: 580, // Base price
+          subtotalGBP: 450,
+          subtotalUSD: 580,
+          guarantee: '5-year',
+          isSpecialOffer: promoType === 'special_offer',
+          isPackage: promoType === 'package',
+          promoToken: promoToken,
+          promoType: promoType as 'special_offer' | 'package'
+        };
+        
+        console.log("📋 SpecialOfferHandler adding promo token treatment:", promoTreatment);
+        onTreatmentsChange([...treatmentItems, promoTreatment]);
+        
+        toast({
+          title: "Promotion Added",
+          description: `Your promotion has been added to your treatment plan.`,
+        });
+      }
+    }
+  }, [
+    isSpecialOfferFlow, 
+    isPackageFlow, 
+    isPromoTokenFlow, 
+    specialOffer, 
+    packageData, 
+    promoToken,
+    promoType,
+    treatmentItems,
+    onTreatmentsChange
+  ]);
+
+  // This component doesn't render anything visible
+  return null;
+};
+
+export default SpecialOfferHandler;

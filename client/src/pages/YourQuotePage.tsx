@@ -1721,6 +1721,14 @@ const YourQuotePage: React.FC = () => {
                         </div>
                       </div>
                       
+                      {/* Add the SpecialOfferHandler component that ensures special offers are in the treatment items */}
+                      <SpecialOfferHandler
+                        specialOffer={specialOffer}
+                        packageData={packageData}
+                        treatmentItems={treatmentItems}
+                        onTreatmentsChange={setTreatmentItems}
+                      />
+                      
                       <TreatmentPlanBuilder
                         initialTreatments={treatmentItems}
                         onTreatmentsChange={setTreatmentItems}
