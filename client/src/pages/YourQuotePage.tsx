@@ -567,8 +567,15 @@ const YourQuotePage: React.FC = () => {
     return null;
   });
   
+  // Define package data interface for better type safety
+  interface PackageData {
+    id: string;
+    clinicId: string;
+    title: string;
+  }
+  
   // Treatment Package data (if passed from packages page or stored in sessionStorage)
-  const [packageData, setPackageData] = useState<any>(() => {
+  const [packageData, setPackageData] = useState<PackageData | null>(() => {
     // First check URL parameters
     const packageIdFromUrl = searchParams.get('packageId');
     console.log("Package ID from URL:", packageIdFromUrl);
