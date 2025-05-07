@@ -234,7 +234,7 @@ function Router() {
             hasXrays: true,
             hasCtScan: false,
             hasDentalPhotos: true,
-            preferredContactMethod: "email",
+            preferredContactMethod: "email" as "email" | "phone" | "whatsapp", // Type cast to match the PatientInfo type
             travelMonth: "August",
             departureCity: "London",
             additionalNotesForClinic: "Looking for a comfortable experience with minimal pain."
