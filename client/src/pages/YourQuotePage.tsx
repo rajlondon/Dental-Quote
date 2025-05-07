@@ -493,7 +493,7 @@ const YourQuotePage: React.FC = () => {
     if (offerIdFromUrl) {
       console.log("Special offer parameters found in URL:");
       console.log("- Title:", searchParams.get('offerTitle'));
-      console.log("- Clinic ID:", searchParams.get('offerClinic'));
+      console.log("- Clinic ID:", searchParams.get('offerClinic') || searchParams.get('clinicId'));
       console.log("- Discount Value:", searchParams.get('offerDiscount'));
       console.log("- Discount Type:", searchParams.get('offerDiscountType'));
       console.log("- Treatment:", searchParams.get('treatment'));
@@ -501,7 +501,7 @@ const YourQuotePage: React.FC = () => {
       const offerData = {
         id: offerIdFromUrl,
         title: searchParams.get('offerTitle') || 'Special Offer',
-        clinicId: searchParams.get('offerClinic') || '',
+        clinicId: searchParams.get('offerClinic') || searchParams.get('clinicId') || '',
         discountValue: parseInt(searchParams.get('offerDiscount') || '0'),
         discountType: (searchParams.get('offerDiscountType') || 'percentage') as 'percentage' | 'fixed_amount',
         applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
@@ -561,6 +561,73 @@ const YourQuotePage: React.FC = () => {
         return formattedOffer;
       } catch (error) {
         console.error("Error parsing pendingSpecialOffer from sessionStorage:", error);
+      }
+    }
+    
+    return null;
+  });
+  
+  // Treatment Package data (if passed from packages page or stored in sessionStorage)
+  const [packageData, setPackageData] = useState<any>(() => {
+    // First check URL parameters
+    const packageIdFromUrl = searchParams.get('packageId');
+    console.log("Package ID from URL:", packageIdFromUrl);
+    
+    // If there's a package ID in the URL parameters, create a package object
+    if (packageIdFromUrl) {
+      console.log("Package parameters found in URL:");
+      console.log("- Clinic ID:", searchParams.get('clinicId'));
+      
+      const packageInfo = {
+        id: packageIdFromUrl,
+        clinicId: searchParams.get('clinicId') || '',
+        title: searchParams.get('packageTitle') || 'Treatment Package'
+      };
+      
+      console.log("Created package data from URL params:", packageInfo);
+      
+      // Save to sessionStorage for persistence in future navigation
+      sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
+      
+      return packageInfo;
+    }
+    
+    // If not in URL, check sessionStorage
+    const storedPackage = sessionStorage.getItem('activePackage');
+    if (storedPackage) {
+      try {
+        const packageInfo = JSON.parse(storedPackage);
+        console.log("Retrieved package from sessionStorage:", packageInfo);
+        return packageInfo;
+      } catch (error) {
+        console.error("Error parsing package from sessionStorage:", error);
+      }
+    }
+    
+    // Also check for pendingPackage which may happen when redirected after login
+    const pendingPackageData = sessionStorage.getItem('pendingPackage');
+    if (pendingPackageData) {
+      try {
+        const packageInfo = JSON.parse(pendingPackageData);
+        console.log("Found pendingPackage in sessionStorage:", packageInfo);
+        
+        // Convert to the right format
+        const formattedPackage = {
+          id: packageInfo.id,
+          title: packageInfo.title,
+          clinicId: packageInfo.clinicId || ''
+        };
+        
+        // Now that we've processed it, clear it
+        sessionStorage.removeItem('pendingPackage');
+        
+        // But save it to activePackage for future persistence
+        sessionStorage.setItem('activePackage', JSON.stringify(formattedPackage));
+        
+        console.log("Converted pendingPackage to activePackage:", formattedPackage);
+        return formattedPackage;
+      } catch (error) {
+        console.error("Error parsing pendingPackage from sessionStorage:", error);
       }
     }
     
