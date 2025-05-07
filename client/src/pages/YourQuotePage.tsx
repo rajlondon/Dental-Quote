@@ -316,12 +316,15 @@ const ClinicCard: React.FC<{
   const sourceFromUrl = urlParams.get('source');
   const isSpecialOfferSource = sourceFromUrl === 'special_offer';
   
+  // Direct URL parameter check for offer-related indicators
+  const isOfferUrl = urlParams.has('specialOffer') || urlParams.has('offerId');
+  
   // Enhanced special offer detection:
   // 1. Check URL directly (most reliable)
   // 2. Check context source
   // 3. Check clinic hasSpecialOffer property 
-  const hasSpecialOfferFromUrl = specialOfferIdFromUrl !== null || isSpecialOfferSource;
-  const hasSpecialOfferFromContext = isSpecialOfferFlow && offerId !== null;
+  const hasSpecialOfferFromUrl = specialOfferIdFromUrl !== null || isSpecialOfferSource || isOfferUrl;
+  const hasSpecialOfferFromContext = isSpecialOfferFlow && (offerId !== null);
   
   // Log all detection methods to help debug
   console.log(`ClinicCard for ${clinic.name} with ID: ${clinic.id}`, {
@@ -331,7 +334,8 @@ const ClinicCard: React.FC<{
     isSpecialOfferFlow,
     specialOfferIdFromUrl,
     sourceFromUrl,
-    offerId
+    offerId,
+    isOfferUrl
   });
   
   // Final determination if this clinic should show special offer
