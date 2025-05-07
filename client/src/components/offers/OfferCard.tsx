@@ -118,6 +118,10 @@ export function OfferCard({ offer }: OfferCardProps) {
                 description: "Free consultation added to your treatment plan"
               });
               
+              // Redirect directly to treatment plan view
+              console.log("💫 Redirecting directly to treatment plan:", redirectUrl.toString());
+              window.location.href = redirectUrl.toString();
+              
               return {
                 quoteId: consultData.quoteId,
                 quoteUrl: redirectUrl.toString(),
@@ -266,22 +270,25 @@ export function OfferCard({ offer }: OfferCardProps) {
                 
                 const consultData = await freeConsultationResponse.json();
                 
-                if (consultData.quoteId && consultData.quoteUrl) {
+                if (consultData.treatmentPlanId && consultData.treatmentPlanUrl) {
                   // Add timestamp to prevent caching issues
-                  const quoteUrl = new URL(consultData.quoteUrl, window.location.origin);
-                  quoteUrl.searchParams.append('t', Date.now().toString());
+                  const redirectUrl = new URL(consultData.treatmentPlanUrl, window.location.origin);
+                  redirectUrl.searchParams.append('t', Date.now().toString());
                   
-                  // Redirect directly
-                  window.location.href = quoteUrl.toString();
+                  // Redirect directly to the treatment plan
+                  console.log("💫 Redirecting directly to treatment plan:", redirectUrl.toString());
+                  window.location.href = redirectUrl.toString();
                   
                   toast({
                     title: "Success",
-                    description: "Free consultation added to your quote"
+                    description: "Free consultation added to your treatment plan"
                   });
                   
                   return {
                     quoteId: consultData.quoteId,
-                    quoteUrl: quoteUrl.toString()
+                    quoteUrl: redirectUrl.toString(),
+                    treatmentPlanId: consultData.treatmentPlanId,
+                    treatmentPlanUrl: redirectUrl.toString()
                   } as QuoteResponse;
                 }
                 

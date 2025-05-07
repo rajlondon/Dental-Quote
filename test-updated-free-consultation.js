@@ -21,13 +21,14 @@ async function testUpdatedFreeConsultation() {
     console.log('Response Status:', response.status);
     console.log('Response Data:', JSON.stringify(response.data, null, 2));
     
-    // Now try to get the treatment lines associated with the quote
-    if (response.data.quoteId) {
-      console.log(`Fetching treatment lines for quote ID: ${response.data.quoteId}`);
-      const treatmentLinesResponse = await axios.get(`http://localhost:5000/api/quotes/${response.data.quoteId}/treatment-lines`);
+    // Success! Note that viewing treatment plans requires authentication
+    if (response.data.treatmentPlanId) {
+      console.log(`Successfully created treatment plan ID: ${response.data.treatmentPlanId}`);
+      console.log(`Treatment Plan URL: ${response.data.treatmentPlanUrl}`);
+      console.log(`Quote ID: ${response.data.quoteId}`);
       
-      console.log('Treatment Lines Response Status:', treatmentLinesResponse.status);
-      console.log('Treatment Lines Data:', JSON.stringify(treatmentLinesResponse.data, null, 2));
+      // Note: Viewing treatment plans requires authentication, so we can't fetch them in this test
+      console.log('NOTE: Viewing treatment plans requires authentication. In the real app flow, the user will be redirected to login/signup if not authenticated.');
     }
     
     return response.data;
