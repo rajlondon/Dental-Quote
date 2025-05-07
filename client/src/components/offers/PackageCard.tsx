@@ -99,12 +99,47 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
       }
       
       // If user is not logged in, save package details for later 
-      sessionStorage.setItem('pendingPackage', JSON.stringify(pkg));
+      // Store all package details for the quote flow to use
+      const packageData = {
+        id: pkg.id,
+        title: pkg.title,
+        clinicId: pkg.clinicId,
+        clinicName: pkg.clinicName,
+        description: pkg.description,
+        basePrice: pkg.basePrice,
+        currency: pkg.currency,
+        category: pkg.category,
+        image: pkg.image
+      };
+      
+      // Save to multiple storage mechanisms for redundancy
+      sessionStorage.setItem('pendingPackage', JSON.stringify(packageData));
       sessionStorage.setItem('processingPackage', pkg.id);
+      localStorage.setItem('selectedPackage', JSON.stringify(packageData));
+      
+      // Store comprehensive package details to ensure availability throughout the flow
+      try {
+        console.log("Storing package data for quote flow:", packageData);
+        
+        // Also store as treatment plan data to maximize compatibility
+        sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
+          id: `package-${pkg.id}`, 
+          packageId: pkg.id,
+          clinicId: pkg.clinicId,
+          treatments: [{ 
+            treatmentType: 'treatment-package', 
+            name: pkg.title,
+            packageId: pkg.id
+          }]
+        }));
+      } catch (err) {
+        console.error("Error storing package data:", err);
+      }
       
       // Proceed to the quote flow directly (will handle login as part of the flow)
       // Use skipInfo=true to bypass initial patient info page if they select "create account"
-      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${pkg.clinicId}&packageId=${pkg.id}&packageTitle=${encodeURIComponent(pkg.title || 'Treatment Package')}&source=package`;
+      // Include all possible parameters for maximum compatibility
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${pkg.clinicId}&packageId=${pkg.id}&packageTitle=${encodeURIComponent(pkg.title || 'Treatment Package')}&source=package&includePackage=true&package=${encodeURIComponent(JSON.stringify(packageData))}`;
       return;
       
     } catch (error) {
