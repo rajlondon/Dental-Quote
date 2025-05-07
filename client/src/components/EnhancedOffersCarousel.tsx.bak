@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sparkles, ChevronLeft, ChevronRight, Clock, Tag, RefreshCw, CheckCircle } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Clock, Tag, RefreshCw } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,44 +87,6 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     queryKey: ['/api/special-offers/homepage'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-
-  // Helper function to get image URL
-  const getImageUrl = useCallback((offer: SpecialOffer) => {
-    // Check if we have a cached URL for this offer
-    if (imageCache[offer.id]) {
-      return imageCache[offer.id];
-    }
-    
-    // If no banner image, use a default
-    if (!offer.banner_image) {
-      return '/images/offers/default-offer.jpg';
-    }
-    
-    // For OpenAI images, use as is
-    if (offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net') || 
-        offer.banner_image.includes('openai.com')) {
-      return offer.banner_image;
-    }
-    
-    // For all other images, apply aggressive cache busting
-    const baseUrl = offer.banner_image.split('?')[0];
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    return `${baseUrl}?t=${timestamp}&r=${random}&v=${imageRefreshKey}`;
-  }, [imageCache, imageRefreshKey]);
-
-  // Helper to get badge styles based on promotion level
-  const getBadgeStyle = (level?: string) => {
-    switch(level) {
-      case 'premium':
-        return 'bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 border-amber-300';
-      case 'featured':
-        return 'bg-gradient-to-r from-blue-200 to-indigo-300 text-blue-800 border-blue-300';
-      case 'standard':
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   // Register WebSocket handlers for special offer updates
   useEffect(() => {
@@ -389,46 +351,152 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     setCurrentIndex(prev => (prev + 1) % offers.length);
   };
 
-  // Handle user actions when they request a quote for a special offer
+  // Memoize the image URLs to prevent rendering loops
+  const getImageUrlsMemo = useMemo(() => {
+    const urls: Record<string, string> = {};
+  
+    if (!offers) return urls;
+    
+    // Process all offers at once in a single batch
+    offers.forEach(offer => {
+      // Ultra-aggressive cache busting parameters with high entropy
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      const cacheKey = `t=${timestamp}&r=${randomString}&v=${imageRefreshKey}&u=${uuid}&nocache=true`;
+      
+      let finalUrl = '';
+      
+      // Process the banner image URL
+      if (offer.banner_image) {
+        // We need to properly handle Azure Blob Storage URLs from OpenAI
+        const isAzureBlobUrl = offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net');
+        const isOpenAIUrl = offer.banner_image.includes('openai.com');
+        
+        // Debug information about the blob URL - only log once when detected
+        if (isAzureBlobUrl && typeof window !== 'undefined' && !window.blobUrlsLogged) {
+          // Initialize the tracking object if it doesn't exist
+          if (!window.blobUrlsLogged) {
+            window.blobUrlsLogged = {};
+          }
+          
+          if (!window.blobUrlsLogged[offer.id]) {
+            window.blobUrlsLogged[offer.id] = true;
+            
+            // Log debugging info but only once per offer
+            console.error(`🔵 DEBUGGING AZURE BLOB URL: ${offer.banner_image}`);
+            console.error(`🔵 Azure Blob URL characteristics:`);
+            console.error(`   - Starts with https://:`, offer.banner_image.startsWith('https://'));
+            console.error(`   - Contains query parameters:`, offer.banner_image.includes('?'));
+            console.error(`   - URL length:`, offer.banner_image.length);
+          }
+        }
+        
+        // Check if this is an OpenAI URL (they don't need aggressive cache busting)
+        if (isOpenAIUrl || isAzureBlobUrl) {
+          // Add minimal cache busting for OpenAI URLs
+          // We need to ensure we're using the raw URL without cutting it off or modifying it
+          finalUrl = offer.banner_image;
+          
+          // Only add timestamp if there isn't already a query parameter
+          if (!finalUrl.includes('?')) {
+            finalUrl = `${finalUrl}?t=${timestamp}`;
+          }
+        } else {
+          // Strip existing query parameters for all other URLs and apply aggressive cache busting
+          const baseUrl = offer.banner_image.split('?')[0];
+          finalUrl = `${baseUrl}?${cacheKey}`;
+        }
+      } else {
+        // Fallback images based on title with cache busting
+        let basePath = '/images/offers/premium-hotel-deal.jpg';
+        
+        if (offer.title.toLowerCase().includes('consultation')) {
+          basePath = '/images/offers/free-consultation.jpg';
+        } else if (offer.title.toLowerCase().includes('implant')) {
+          basePath = '/images/offers/dental-implant-crown-bundle.jpg';
+        } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
+          basePath = '/images/offers/luxury-airport-transfer.jpg';
+        }
+        
+        finalUrl = `${basePath}?${cacheKey}`;
+      }
+      
+      urls[offer.id] = finalUrl;
+    });
+    
+    return urls;
+  }, [offers, imageRefreshKey]);
+  
+  // Get image URL for a specific offer (using the memoized map)
+  const getImageUrl = useCallback((offer: SpecialOffer) => {
+    const url = getImageUrlsMemo[offer.id];
+    // If URL is missing from memo somehow, don't try to update state during render
+    return url || (offer.banner_image || '/images/offers/default.jpg');
+  }, [getImageUrlsMemo]);
+
+  // Get styling for promotion level badges
+  const getBadgeStyle = (level?: string) => {
+    switch(level) {
+      case 'premium':
+        return 'bg-gradient-to-r from-amber-500 to-yellow-300 text-amber-950 hover:from-amber-400 hover:to-yellow-200';
+      case 'featured':
+        return 'bg-gradient-to-r from-blue-500 to-blue-400 text-white hover:from-blue-400 hover:to-blue-300';
+      default:
+        return 'bg-gradient-to-r from-slate-500 to-slate-400 text-white hover:from-slate-400 hover:to-slate-300';
+    }
+  };
+
+  const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
+  const { setSource, setOfferId, setClinicId } = useQuoteFlow();
+  
+  // Handle quote request with authentication check using QuoteFlowContext
   const handleRequestQuote = (offer: SpecialOffer) => {
-    // Prepare standardized offer data for handoff to quote flow
+    console.log("Special Offer Request Quote clicked:", offer);
+    
+    // Set the source, offer ID, and clinic ID in the QuoteFlowContext
+    setSource('special_offer');
+    setOfferId(offer.id);
+    setClinicId(offer.clinic_id);
+    
+    // Standardize the offer data format to maintain compatibility with existing code
     const standardizedOfferData = {
       id: offer.id,
       title: offer.title,
       clinicId: offer.clinic_id,
       discountValue: offer.discount_value || 0,
       discountType: offer.discount_type || 'percentage',
-      applicableTreatment: (offer.applicable_treatments && offer.applicable_treatments.length > 0)
-        ? offer.applicable_treatments[0]
-        : 'dental-implants'
+      applicableTreatment: offer.applicable_treatments && offer.applicable_treatments.length > 0 
+                           ? offer.applicable_treatments[0] 
+                           : 'Dental Implants',
+      // Include price data for display in OfferCard
+      treatmentPriceGBP: offer.treatment_price_gbp,
+      treatmentPriceUSD: offer.treatment_price_usd,
+      // Include image for display
+      image: offer.banner_image
     };
     
-    // Get current user authentication status
-    const auth = useAuth();
+    console.log("Auth state - loading:", authLoading, "user:", user ? "logged in" : "not logged in");
     
-    // Check if user is logged in and handle accordingly
-    if (auth?.user) {
-      console.log("User is authenticated, proceeding with quote flow");
+    // Check if user is authenticated
+    if (!authLoading && user) {
+      console.log("User authenticated, proceeding to quote flow with special offer context");
       
-      // Store offer data for handoff to quote flow context
-      // Use the special offer quote flow method in QuoteFlowContext
-      const quoteFlow = useQuoteFlow();
+      // Store the special offer in sessionStorage for backward compatibility
+      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(standardizedOfferData));
       
-      if (quoteFlow?.startSpecialOfferQuote) {
-        quoteFlow.startSpecialOfferQuote(standardizedOfferData);
-      } else {
-        // Fallback if context method isn't available
-        // Clear any existing offer data first
-        sessionStorage.removeItem('pendingSpecialOffer');
-        sessionStorage.removeItem('processingSpecialOffer');
-        
-        // Store the offer data
-        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-        sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
-        
-        // Redirect to the quote flow with parameters
-        window.location.href = `/quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinic_id}&offerId=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
-      }
+      // User is logged in, proceed with quote and notify
+      toast({
+        title: "Special Offer Selected",
+        description: `${offer.title} will be applied to your quote.`,
+        variant: "default",
+      });
+      
+      // Redirect to the quote flow page with the offer context
+      console.log("Redirecting to quote flow with special offer context");
+      // Use window.location.href instead of setLocation to ensure the redirect happens
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${offer.clinic_id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
     } else {
       console.log("User not authenticated, proceeding directly to quote flow");
       
@@ -537,39 +605,40 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             size="icon" 
             className="rounded-full" 
             onClick={() => {
-              // Manual refresh button
-              setImageRefreshKey(Date.now());
-              setImageCache({});
-              queryClient.refetchQueries({ queryKey: ['/api/special-offers/homepage'] });
-              
-              toast({
-                title: 'Refreshing Offers',
-                description: 'Loading the latest special offers...',
-                variant: 'default',
-              });
-            }}
-            aria-label="Refresh offers"
-          >
-            <RefreshCw className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="rounded-full" 
-            onClick={goToPrevious}
-            aria-label="Previous offer"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="rounded-full" 
-            onClick={goToNext}
-            aria-label="Next offer"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+                // Manual refresh button
+                setImageRefreshKey(Date.now());
+                setImageCache({});
+                queryClient.refetchQueries({ queryKey: ['/api/special-offers/homepage'] });
+                
+                toast({
+                  title: 'Refreshing Offers',
+                  description: 'Loading the latest special offers...',
+                  variant: 'default',
+                });
+              }}
+              aria-label="Refresh offers"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full" 
+              onClick={goToPrevious}
+              aria-label="Previous offer"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full" 
+              onClick={goToNext}
+              aria-label="Next offer"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         
         <div className="relative overflow-hidden rounded-xl bg-white shadow-lg">
