@@ -1112,8 +1112,17 @@ const YourQuotePage: React.FC = () => {
   const treatmentPlanBuilderRef = React.useRef<any>(null);
   
   // Initialize treatments based on whether we have a special offer, package, or promo token
-    if (promoTokenFromUrl && isPromoTokenFlow) {
+    // We discovered the source should be promo_token but isPromoTokenFlow isn't reflecting that
+    // Check if we have a promo token regardless of the current isPromoTokenFlow value
+    if (promoTokenFromUrl) {
       console.log("Initializing treatment plan with promo token:", promoTokenFromUrl);
+      console.log("Current flow state:", { source, isPromoTokenFlow });
+      
+      // Force set the source to promo_token to ensure the banner displays
+      if (source !== 'promo_token') {
+        console.log("Forcing source to promo_token");
+        setSource('promo_token');
+      }
       
       // Fetch the promotion details from the token
       const treatmentType = promoTypeFromUrl || 'special_offer';
@@ -1322,7 +1331,8 @@ const YourQuotePage: React.FC = () => {
           </div>
 
           {/* Special Offer, Package, or Promo Token Banner - Now with stronger visual styling */}
-          {(isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && (
+          {/* Force show the banner if we have ANY promotion related data */}
+          {(isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow || promoToken) && (
             <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg p-5 shadow-md text-white">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
@@ -1332,6 +1342,7 @@ const YourQuotePage: React.FC = () => {
                   <h2 className="font-bold text-xl">
                     {isSpecialOfferFlow ? 'Special Offer Selected' : 
                      isPackageFlow ? 'Treatment Package Selected' : 
+                     promoToken ? 'Promotion Applied' : 
                      'Promotion Applied'}
                   </h2>
                   <p className="text-white font-medium text-lg mt-2">
@@ -1339,7 +1350,7 @@ const YourQuotePage: React.FC = () => {
                       <>Your quote includes the special offer: <span className="font-bold underline">{specialOffer?.title || 'Special Offer'}</span></>
                     ) : isPackageFlow && packageId ? (
                       <>Your quote includes the package: <span className="font-bold underline">{packageData?.title || 'Treatment Package'}</span></>
-                    ) : isPromoTokenFlow && promoToken ? (
+                    ) : promoToken ? (
                       <>Promotion token applied: <span className="font-bold underline">{searchParams.get('promoTitle') || 'Special Promotion'}</span></>
                     ) : (
                       <>We'll prepare your personalized treatment plan</>
