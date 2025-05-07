@@ -107,13 +107,53 @@ router.post('/match-treatments', async (req, res) => {
         console.log(`Against treatment names:`, treatmentNames);
         
         isMatch = offer.applicable_treatments.some(applicableTreatment => {
-          const appTreatLower = applicableTreatment.toLowerCase();
+          // Normalize the applicable treatment by replacing underscores with spaces
+          const normalizedAppTreatment = applicableTreatment.toLowerCase().replace(/_/g, ' ');
+          
           return treatmentNames.some(name => {
-            const nameLower = name.toLowerCase();
-            const nameMatch = nameLower.includes(appTreatLower);
-            const appMatch = appTreatLower.includes(nameLower);
-            console.log(`Comparing "${nameLower}" with "${appTreatLower}": nameMatch=${nameMatch}, appMatch=${appMatch}`);
-            return nameMatch || appMatch;
+            // Normalize the treatment name
+            const normalizedName = name.toLowerCase().replace(/_/g, ' ');
+            
+            // Remove periods from abbreviations
+            const cleanName = normalizedName.replace(/\./g, '');
+            const cleanAppTreatment = normalizedAppTreatment.replace(/\./g, '');
+            
+            // Check for exact match
+            if (cleanName === cleanAppTreatment) {
+              console.log(`Exact match between "${cleanName}" and "${cleanAppTreatment}"`);
+              return true;
+            }
+            
+            // Check if either contains the other
+            const nameMatch = cleanName.includes(cleanAppTreatment);
+            const appMatch = cleanAppTreatment.includes(cleanName);
+            
+            // Check for word match (handling abbreviations)
+            let wordMatch = false;
+            const nameWords = cleanName.split(' ');
+            const appWords = cleanAppTreatment.split(' ');
+            
+            // If normalized name starts with the same words as the applicable treatment,
+            // and has at least half the number of words, consider it a match
+            if (nameWords.length >= 2 && appWords.length >= 2) {
+              const minWordCount = Math.min(nameWords.length, appWords.length);
+              let matchingWords = 0;
+              
+              for (let i = 0; i < minWordCount; i++) {
+                // Check if words match or if it's an abbreviated version
+                if (nameWords[i] === appWords[i] || 
+                    (nameWords[i].length > 2 && appWords[i].startsWith(nameWords[i].substring(0, 3))) ||
+                    (appWords[i].length > 2 && nameWords[i].startsWith(appWords[i].substring(0, 3)))) {
+                  matchingWords++;
+                }
+              }
+              
+              wordMatch = matchingWords >= Math.floor(minWordCount / 2) + 1;
+            }
+            
+            console.log(`Comparing "${cleanName}" with "${cleanAppTreatment}": nameMatch=${nameMatch}, appMatch=${appMatch}, wordMatch=${wordMatch}`);
+            
+            return nameMatch || appMatch || wordMatch;
           });
         });
         
@@ -125,8 +165,17 @@ router.post('/match-treatments', async (req, res) => {
         const offerKeywords = offer.title.toLowerCase().split(' ');
         
         isMatch = offerKeywords.some((keyword: string) => 
-          treatmentNames.some(name => name.toLowerCase().includes(keyword)) || 
-          treatmentCategories.some(category => category && category.toLowerCase().includes(keyword))
+          treatmentNames.some(name => {
+            // Normalize the treatment name by replacing underscores with spaces
+            const normalizedName = name.toLowerCase().replace(/_/g, ' ');
+            return normalizedName.includes(keyword);
+          }) || 
+          treatmentCategories.some(category => {
+            if (!category) return false;
+            // Normalize the category by replacing underscores with spaces
+            const normalizedCategory = category.toLowerCase().replace(/_/g, ' ');
+            return normalizedCategory.includes(keyword);
+          })
         );
       }
       
