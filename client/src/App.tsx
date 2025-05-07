@@ -20,6 +20,7 @@ import ClinicGuard from "@/components/ClinicGuard";
 import AdminPortalGuard from "@/components/AdminPortalGuard";
 import ClinicRouter from "@/pages/ClinicRouter";
 import ClinicDebugPage from "@/pages/ClinicDebugPage";
+import SpecialOfferTestPage from "@/pages/SpecialOfferTestPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -352,6 +353,9 @@ function Router() {
       
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
+      
+      {/* Special Offers Testing Route */}
+      <Route path="/special-offers-test" component={SpecialOfferTestPage} />
       
       {/* Admin Treatment Plan Routes */}
       <ProtectedRoute path="/admin-portal/treatment-plan/:id" component={AdminTreatmentPlansPage} requiredRole="admin" />
