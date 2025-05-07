@@ -97,6 +97,15 @@ interface TreatmentItem {
   subtotalGBP: number;
   subtotalUSD: number;
   guarantee: string;
+  isSpecialOffer?: boolean;
+  isPackage?: boolean;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
 }
 
 interface PatientInfo {
