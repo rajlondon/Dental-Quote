@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 import { useQuoteFlow, useInitializeQuoteFlow } from '@/contexts/QuoteFlowContext';
+import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
+import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QuoteSummaryPanel from '@/components/quote/QuoteSummaryPanel';
