@@ -585,14 +585,55 @@ const YourQuotePage: React.FC = () => {
   
   // Treatment Package data (if passed from packages page or stored in sessionStorage)
   const [packageData, setPackageData] = useState<PackageData | null>(() => {
-    // First check URL parameters
+    console.log("Initializing package data from all possible sources");
+    
+    // First check URL parameters for packageId and package JSON params
     const packageIdFromUrl = searchParams.get('packageId');
-    console.log("Package ID from URL:", packageIdFromUrl);
+    const packageJsonFromUrl = searchParams.get('package');
+    
+    console.log("Package info from URL:", {
+      packageId: packageIdFromUrl,
+      packageJsonExists: !!packageJsonFromUrl,
+      clinicId: searchParams.get('clinicId'),
+      source: searchParams.get('source')
+    });
+    
+    // Try to read package from special "package" JSON parameter first
+    if (packageJsonFromUrl) {
+      try {
+        // The 'package' parameter contains a JSON string with complete package details
+        const packageInfo = JSON.parse(decodeURIComponent(packageJsonFromUrl));
+        console.log("Successfully parsed package JSON from URL param:", packageInfo);
+        
+        // Save it to multiple storages for maximum availability
+        sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
+        sessionStorage.setItem('pendingPackage', JSON.stringify(packageInfo));
+        localStorage.setItem('selectedPackage', JSON.stringify(packageInfo));
+        
+        // Also save it to the treatment plan format for compatibility
+        sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
+          id: `package-${packageInfo.id}`,
+          packageId: packageInfo.id,
+          clinicId: packageInfo.clinicId,
+          treatments: [{
+            treatmentType: 'treatment-package',
+            name: packageInfo.title,
+            packageId: packageInfo.id
+          }]
+        }));
+        
+        return packageInfo;
+      } catch (error) {
+        console.error("Error parsing package JSON from URL:", error);
+      }
+    }
     
     // If there's a package ID in the URL parameters, create a package object
     if (packageIdFromUrl) {
-      console.log("Package parameters found in URL:");
+      console.log("Package parameters found in URL parameters:");
+      console.log("- Package ID:", packageIdFromUrl);
       console.log("- Clinic ID:", searchParams.get('clinicId'));
+      console.log("- Package Title:", searchParams.get('packageTitle'));
       
       const packageInfo = {
         id: packageIdFromUrl,
@@ -602,13 +643,42 @@ const YourQuotePage: React.FC = () => {
       
       console.log("Created package data from URL params:", packageInfo);
       
-      // Save to sessionStorage for persistence in future navigation
+      // Save to multiple storage locations for redundancy
       sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
+      localStorage.setItem('selectedPackage', JSON.stringify(packageInfo));
+      
+      // Also save as a treatment plan for compatibility with treatment builder
+      sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
+        id: `package-${packageInfo.id}`,
+        packageId: packageInfo.id,
+        clinicId: packageInfo.clinicId,
+        treatments: [{
+          treatmentType: 'treatment-package',
+          name: packageInfo.title,
+          packageId: packageInfo.id
+        }]
+      }));
       
       return packageInfo;
     }
     
-    // If not in URL, check sessionStorage
+    // If not in URL, check localStorage first (most recent)
+    const storedPackageLS = localStorage.getItem('selectedPackage');
+    if (storedPackageLS) {
+      try {
+        const packageInfo = JSON.parse(storedPackageLS);
+        console.log("Retrieved package from localStorage:", packageInfo);
+        
+        // Sync it to sessionStorage as well
+        sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
+        
+        return packageInfo;
+      } catch (error) {
+        console.error("Error parsing package from localStorage:", error);
+      }
+    }
+    
+    // Then check sessionStorage
     const storedPackage = sessionStorage.getItem('activePackage');
     if (storedPackage) {
       try {
@@ -630,20 +700,48 @@ const YourQuotePage: React.FC = () => {
         // Convert to the right format
         const formattedPackage = {
           id: packageInfo.id,
-          title: packageInfo.title,
+          title: packageInfo.title || packageInfo.name || 'Treatment Package',
           clinicId: packageInfo.clinicId || ''
         };
         
-        // Now that we've processed it, clear it
-        sessionStorage.removeItem('pendingPackage');
-        
-        // But save it to activePackage for future persistence
+        // Store it to other locations but don't remove yet
         sessionStorage.setItem('activePackage', JSON.stringify(formattedPackage));
+        localStorage.setItem('selectedPackage', JSON.stringify(formattedPackage));
         
         console.log("Converted pendingPackage to activePackage:", formattedPackage);
         return formattedPackage;
       } catch (error) {
         console.error("Error parsing pendingPackage from sessionStorage:", error);
+      }
+    }
+    
+    // Finally check for treatment plan data that might contain package info
+    const pendingTreatmentPlan = sessionStorage.getItem('pendingTreatmentPlan');
+    if (pendingTreatmentPlan) {
+      try {
+        const planData = JSON.parse(pendingTreatmentPlan);
+        console.log("Found pendingTreatmentPlan in sessionStorage:", planData);
+        
+        // Check if this is a package-based treatment plan
+        if (planData.packageId || (planData.treatments && planData.treatments.some(t => t.packageId))) {
+          const packageId = planData.packageId || planData.treatments.find(t => t.packageId)?.packageId;
+          const packageTitle = planData.treatments?.find(t => t.packageId)?.name || 'Treatment Package';
+          
+          console.log("Found package info in treatment plan:", { packageId, packageTitle });
+          
+          if (packageId) {
+            const formattedPackage = {
+              id: packageId,
+              title: packageTitle,
+              clinicId: planData.clinicId || ''
+            };
+            
+            sessionStorage.setItem('activePackage', JSON.stringify(formattedPackage));
+            return formattedPackage;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing pendingTreatmentPlan from sessionStorage:", error);
       }
     }
     
