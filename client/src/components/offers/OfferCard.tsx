@@ -120,8 +120,16 @@ export function OfferCard({ offer }: OfferCardProps) {
             const consultData = await freeConsultationResponse.json();
             
             if (consultData.treatmentPlanId && consultData.treatmentPlanUrl) {
-              // Add timestamp to prevent caching issues
-              const redirectUrl = new URL(consultData.treatmentPlanUrl, window.location.origin);
+              // Ensure URL is of the correct format for treatment plans
+              const originalUrl = new URL(consultData.treatmentPlanUrl, window.location.origin);
+              
+              // Force the URL to use the correct /portal/treatment-plan/ format
+              let correctPath = originalUrl.pathname;
+              if (!correctPath.includes('treatment-plan')) {
+                correctPath = correctPath.replace('/portal/treatment/', '/portal/treatment-plan/');
+              }
+              
+              const redirectUrl = new URL(correctPath, window.location.origin);
               redirectUrl.searchParams.append('t', Date.now().toString());
               
               toast({
@@ -282,8 +290,16 @@ export function OfferCard({ offer }: OfferCardProps) {
                 const consultData = await freeConsultationResponse.json();
                 
                 if (consultData.treatmentPlanId && consultData.treatmentPlanUrl) {
-                  // Add timestamp to prevent caching issues
-                  const redirectUrl = new URL(consultData.treatmentPlanUrl, window.location.origin);
+                  // Ensure URL is of the correct format for treatment plans
+                  const originalUrl = new URL(consultData.treatmentPlanUrl, window.location.origin);
+                  
+                  // Force the URL to use the correct /portal/treatment-plan/ format
+                  let correctPath = originalUrl.pathname;
+                  if (!correctPath.includes('treatment-plan')) {
+                    correctPath = correctPath.replace('/portal/treatment/', '/portal/treatment-plan/');
+                  }
+                  
+                  const redirectUrl = new URL(correctPath, window.location.origin);
                   redirectUrl.searchParams.append('t', Date.now().toString());
                   
                   // Redirect directly to the treatment plan

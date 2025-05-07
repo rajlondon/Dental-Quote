@@ -104,7 +104,9 @@ router.post('/free-consultation', async (req, res) => {
     }
     
     // Generate a URL for the treatment plan
-    const treatmentPlanUrl = `/portal/treatment/${treatmentPlanId}`;
+    const treatmentPlanUrl = `/portal/treatment-plan/${treatmentPlanId}`;
+    
+    console.log(`Free consultation created with treatment plan ID ${treatmentPlanId}, redirecting to ${treatmentPlanUrl}`);
     
     return res.status(201).json({
       success: true,
