@@ -400,6 +400,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         veneers: '2 years',
         crowns: '2 years',
         fillings: '1 year'
+      },
+      // Force special offers for ALL clinics
+      hasSpecialOffer: true,
+      specialOffer: {
+        id: "affordable_offer_1",
+        title: "Free Airport Transfer",
+        discountType: "fixed_amount",
+        discountValue: 100,
+        clinicId: "dentalcare"
       }
     }
   ];
@@ -649,6 +658,23 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       <span>{clinic.location.area}, {clinic.location.city}</span>
                     </div>
                     
+                    {/* Eye-catching special offer banner */}
+                    {clinic.specialOffer && (
+                      <div className="mb-4 p-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-md shadow-md animate-pulse">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5" />
+                          <h3 className="font-bold text-white">LIMITED TIME SPECIAL OFFER!</h3>
+                        </div>
+                        <p className="mt-1 font-medium text-white">
+                          {clinic.specialOffer.title}
+                          {clinic.specialOffer.discountType === 'percentage' && 
+                            ` - Save ${clinic.specialOffer.discountValue}%!`}
+                          {clinic.specialOffer.discountType === 'fixed_amount' && 
+                            ` - Save £${clinic.specialOffer.discountValue}!`}
+                        </p>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                       {clinic.description}
                     </p>
@@ -785,9 +811,26 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       </div>
                       
                       <div className="mt-auto">
-                        <div className="flex flex-wrap justify-end">
+                        <div className="flex flex-wrap justify-between items-center">
+                          {/* Special offer callout - only when clinic has a special offer */}
+                          {clinic.specialOffer && (
+                            <div className="flex items-center mr-4">
+                              <div className="text-red-500">
+                                <Sparkles className="h-5 w-5 animate-pulse" />
+                              </div>
+                              <div className="ml-2">
+                                <p className="text-sm font-semibold text-red-600">
+                                  Claim this special offer now!
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Limited-time promotion
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
                           <Button 
-                            className="md:w-auto" 
+                            className={`md:w-auto ${clinic.specialOffer ? 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold shadow-lg' : ''}`}
                             onClick={() => {
                               // Save the selected clinic in localStorage
                               setSelectedClinic(clinic.id);
@@ -815,8 +858,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               });
                             }}
                           >
-                            <Heart className="mr-2 h-4 w-4" />
-                            Select This Clinic
+                            {clinic.specialOffer ? 
+                              <>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                Claim This Offer
+                              </> : 
+                              <>
+                                <Heart className="mr-2 h-4 w-4" />
+                                Select This Clinic
+                              </>
+                            }
                           </Button>
                         </div>
                       </div>
