@@ -20,6 +20,7 @@ import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
+import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
 
 // Defined specific dental treatment options
 const dentalTreatments = [

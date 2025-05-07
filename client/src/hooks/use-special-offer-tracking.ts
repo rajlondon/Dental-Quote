@@ -7,7 +7,7 @@ export interface SpecialOfferDetails {
   title: string;
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
-  clinicId: number | string;
+  clinicId: string;
   applicableTreatment?: string;
 }
 
@@ -54,7 +54,7 @@ export function useSpecialOfferTracking() {
         id: offerIdFromUrl,
         title: searchParams.get('offerTitle') || 'Special Offer',
         discountType: (searchParams.get('offerDiscountType') as 'percentage' | 'fixed_amount') || 'percentage',
-        discountValue: searchParams.get('offerDiscount') ? parseInt(searchParams.get('offerDiscount')!) : 20,
+        discountValue: searchParams.get('offerDiscount') ? parseInt(searchParams.get('offerDiscount') || '20') : 20,
         clinicId: clinicIdFromUrl || '1',
         applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
       };
