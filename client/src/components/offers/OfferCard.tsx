@@ -139,6 +139,9 @@ export function OfferCard({ offer }: OfferCardProps) {
         url.searchParams.append('offerDiscountType', offer.discountType);
       }
       
+      // Always include treatment parameter - critical for the YourQuotePage to create the special offer treatment item
+      url.searchParams.append('treatment', 'Dental Implants');
+      
       // Add timestamp to prevent caching
       url.searchParams.append('t', Date.now().toString());
       

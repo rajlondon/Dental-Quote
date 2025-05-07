@@ -522,8 +522,11 @@ const YourQuotePage: React.FC = () => {
       console.log("- Treatment:", searchParams.get('treatment'));
       
       // Log all URL parameters for debugging
-      console.log("All URL parameters for debugging:", 
-        Object.fromEntries([...searchParams.entries()]));
+      const urlParams: Record<string, string> = {};
+      searchParams.forEach((value, key) => {
+        urlParams[key] = value;
+      });
+      console.log("All URL parameters for debugging:", urlParams);
       
       // Ensure consistent parameter parsing with proper error handling
       let discountValue = 0;
@@ -1222,6 +1225,48 @@ const YourQuotePage: React.FC = () => {
     
     // Show welcome toast - adjusting based on whether this came from special offer
     if (specialOffer) {
+      // Create and add the special offer as a treatment item if we don't have any items yet
+      if (treatmentItems.length === 0) {
+        console.log("📣 Creating and adding special offer treatment from specialOffer object:", specialOffer);
+        const specialOfferTreatment: TreatmentItem = {
+          id: `special_offer_${Date.now()}`,
+          category: 'special_offer',
+          name: specialOffer.title || specialOffer.applicableTreatment,
+          quantity: 1,
+          priceGBP: 450, // Base price, will be discounted later
+          priceUSD: 580, // Base price, will be discounted later
+          subtotalGBP: 450,
+          subtotalUSD: 580,
+          guarantee: '5-year',
+          isSpecialOffer: true, // Add flag for consistent detection
+          specialOffer: {
+            id: specialOffer.id,
+            title: specialOffer.title,
+            discountType: specialOffer.discountType,
+            discountValue: specialOffer.discountValue,
+            clinicId: specialOffer.clinicId
+          }
+        };
+        
+        // Apply the discount based on type
+        if (specialOffer.discountType === 'percentage') {
+          const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+          specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
+          specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
+          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
+          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
+        } else if (specialOffer.discountType === 'fixed_amount') {
+          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOffer.discountValue);
+          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert GBP to USD
+          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
+          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
+        }
+        
+        // Actually add the treatment item to state
+        console.log("Setting special offer treatment:", specialOfferTreatment);
+        setTreatmentItems([specialOfferTreatment]);
+      }
+      
       toast({
         title: "Special Offer Selected",
         description: `Your quote includes: ${specialOffer.title}`,
@@ -1283,11 +1328,12 @@ const YourQuotePage: React.FC = () => {
       });
     }
     else if (specialOffer) {
+      console.log("📣 Creating treatment from special offer:", specialOffer);
       // Use our utility function to create a special offer treatment
       const specialOfferTreatment: TreatmentItem = {
         id: `special_offer_${Date.now()}`,
         category: 'special_offer',
-        name: specialOffer.applicableTreatment,
+        name: specialOffer.title || specialOffer.applicableTreatment, // Use title as main name
         quantity: 1,
         priceGBP: 450, // Base price, will be discounted later
         priceUSD: 580, // Base price, will be discounted later
