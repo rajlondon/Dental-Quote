@@ -789,6 +789,15 @@ const YourQuotePage: React.FC = () => {
     // First, initialize the QuoteFlowContext using our utility
     initializeFromUrlParams();
     
+    console.log('YourQuotePage: QuoteFlow context initialized with:', {
+      source,
+      offerId,
+      packageId,
+      clinicId,
+      isSpecialOfferFlow,
+      isPackageFlow
+    });
+    
     // Then add additional processing for this specific page
     // Determine the source type from URL parameters or use existing context
     // Priority: explicit source parameter > specialOffer/packageId parameters > existing context
@@ -996,27 +1005,42 @@ const YourQuotePage: React.FC = () => {
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
           
-          {/* Special Offer or Package Banner */}
+          {/* Always show debug info */}
+          <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <h3 className="text-sm font-semibold mb-2 text-gray-600">Debug Information:</h3>
+            <div className="text-xs text-gray-600 space-y-1">
+              <p>Source: {source}</p>
+              <p>Special Offer Flow: {isSpecialOfferFlow ? 'Yes' : 'No'}</p>
+              <p>Package Flow: {isPackageFlow ? 'Yes' : 'No'}</p>
+              {offerId && <p>Offer ID: {offerId}</p>}
+              {packageId && <p>Package ID: {packageId}</p>}
+              {clinicId && <p>Clinic ID: {clinicId}</p>}
+              {specialOffer && <p>Special Offer Title: {specialOffer.title}</p>}
+              <p>URL Search: {window.location.search}</p>
+            </div>
+          </div>
+
+          {/* Special Offer or Package Banner - Now with stronger visual styling */}
           {(isSpecialOfferFlow || isPackageFlow) && (
-            <div className="mb-6 bg-gradient-to-r from-blue-100 to-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+            <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg p-5 shadow-md text-white">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <Sparkles className="h-6 w-6 text-blue-600" />
+                  <Sparkles className="h-7 w-7 text-yellow-300" />
                 </div>
-                <div className="ml-3">
-                  <h2 className="font-semibold text-blue-900">
+                <div className="ml-4">
+                  <h2 className="font-bold text-xl">
                     {isSpecialOfferFlow ? 'Special Offer Selected' : 'Treatment Package Selected'}
                   </h2>
-                  <p className="text-blue-800 font-medium">
+                  <p className="text-white font-medium text-lg mt-2">
                     {isSpecialOfferFlow && offerId ? (
-                      <>Your quote includes the special offer: {specialOffer?.title || 'Special Offer'}</>
+                      <>Your quote includes the special offer: <span className="font-bold underline">{specialOffer?.title || 'Special Offer'}</span></>
                     ) : isPackageFlow && packageId ? (
                       <>Your selected package will be applied to this quote</>
                     ) : (
                       <>We'll prepare your personalized treatment plan</>
                     )}
                   </p>
-                  <p className="text-sm text-blue-700 mt-1">
+                  <p className="text-blue-100 mt-2">
                     Complete the dental quiz below to customize your treatment experience
                   </p>
                 </div>
