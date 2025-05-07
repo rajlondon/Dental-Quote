@@ -48,6 +48,9 @@ interface SpecialOffer {
   end_date?: string;
   promo_code?: string;
   terms_conditions?: string;
+  // Added price fields for displaying in the carousel
+  treatment_price_gbp?: number;
+  treatment_price_usd?: number;
   banner_image?: string;
   is_active?: boolean;
   admin_approved?: boolean;
@@ -466,7 +469,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       discountType: offer.discount_type || 'percentage',
       applicableTreatment: offer.applicable_treatments && offer.applicable_treatments.length > 0 
                            ? offer.applicable_treatments[0] 
-                           : 'Dental Implants'
+                           : 'Dental Implants',
+      // Include price data for display in OfferCard
+      treatmentPriceGBP: offer.treatment_price_gbp,
+      treatmentPriceUSD: offer.treatment_price_usd,
+      // Include image for display
+      image: offer.banner_image
     };
     
     console.log("Auth state - loading:", authLoading, "user:", user ? "logged in" : "not logged in");
@@ -700,6 +708,25 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                 
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{offer.title}</h3>
                 <p className="text-gray-600 mb-4">{offer.description}</p>
+                
+                {/* Display price information */}
+                {(offer.treatment_price_gbp || offer.treatment_price_usd) && (
+                  <div className="flex gap-2 mb-4 items-center">
+                    <span className="font-semibold text-gray-700">Price:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {offer.treatment_price_gbp && (
+                        <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                          £{offer.treatment_price_gbp}
+                        </Badge>
+                      )}
+                      {offer.treatment_price_usd && (
+                        <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+                          ${offer.treatment_price_usd}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="mt-auto space-y-4">
                   {offer.clinic_id && (
