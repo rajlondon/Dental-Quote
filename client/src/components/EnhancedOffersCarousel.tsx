@@ -413,59 +413,28 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         : 'dental-implants'
     };
     
-    // Get current user authentication status
-    const auth = useAuth();
+    // Always clear any existing offer data first
+    sessionStorage.removeItem('pendingSpecialOffer');
+    sessionStorage.removeItem('processingSpecialOffer');
     
-    // Check if user is logged in and handle accordingly
-    if (auth?.user) {
-      console.log("User is authenticated, proceeding with quote flow");
-      
-      // Store offer data for handoff to quote flow context
-      // Use the special offer quote flow method in QuoteFlowContext
-      const quoteFlow = useQuoteFlow();
-      
-      if (quoteFlow?.startSpecialOfferQuote) {
-        quoteFlow.startSpecialOfferQuote(standardizedOfferData);
-      } else {
-        // Fallback if context method isn't available
-        // Clear any existing offer data first
-        sessionStorage.removeItem('pendingSpecialOffer');
-        sessionStorage.removeItem('processingSpecialOffer');
-        
-        // Store the offer data
-        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-        sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
-        
-        // Redirect to the quote flow with parameters
-        window.location.href = `/quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinic_id}&offerId=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
-      }
-    } else {
-      console.log("User not authenticated, proceeding directly to quote flow");
-      
-      // Clear any existing offer data first (always clear it regardless of being processed)
-      sessionStorage.removeItem('pendingSpecialOffer');
-      sessionStorage.removeItem('processingSpecialOffer');
-      
-      // Save the standardized offer data to sessionStorage for retrieval during quote flow
-      console.log("Saving pendingSpecialOffer:", standardizedOfferData);
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-      sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
-      
-      // Notify user about processing the offer
-      toast({
-        title: "Special Offer Selected",
-        description: `${offer.title} will be applied to your quote.`,
-        variant: "default",
-      });
-      
-      // Redirect directly to the quote flow without requiring login first
-      console.log("Redirecting to quote page with offer details");
-      
-      // Fix the URL parameters to match what QuoteFlowContext is expecting
-      // Note that "offerId" is the key parameter the context looks for, not "specialOffer"
-      window.location.href = `/quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinic_id}&offerId=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
-      return;
-    }
+    // Store the offer data
+    console.log("Saving pendingSpecialOffer:", standardizedOfferData);
+    sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
+    sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
+    
+    // Notify user about processing the offer
+    toast({
+      title: "Special Offer Selected",
+      description: `${offer.title} will be applied to your quote.`,
+      variant: "default",
+    });
+    
+    // Redirect to the quote flow with parameters
+    console.log("Redirecting to quote page with offer details");
+    
+    // Fix the URL parameters to match what QuoteFlowContext is expecting
+    // Use both offerId and specialOffer parameters to ensure compatibility
+    window.location.href = `/quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinic_id}&offerId=${offer.id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
   };
 
   // Generate navigation dots
@@ -627,7 +596,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         e.currentTarget.src = '/images/offers/default-offer.jpg';
                       }
                     }}
-                    fetchPriority="high" // Modern browsers will prioritize loading
+                    importance="high" // Standard attribute for image priority
                   />
                 </div>
                 <div className="absolute top-4 left-4">
