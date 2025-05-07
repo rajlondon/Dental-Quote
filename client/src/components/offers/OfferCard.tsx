@@ -129,13 +129,41 @@ export function OfferCard({ offer }: OfferCardProps) {
                 correctPath = correctPath.replace('/portal/treatment/', '/portal/treatment-plan/');
               }
               
+              // Create URL with special offer parameters
               const redirectUrl = new URL(correctPath, window.location.origin);
               redirectUrl.searchParams.append('t', Date.now().toString());
+              
+              // Add source, offerId and clinicId to ensure YourQuotePage can detect the special offer
+              redirectUrl.searchParams.append('source', 'special_offer');
+              redirectUrl.searchParams.append('offerId', offerId);
+              redirectUrl.searchParams.append('clinicId', clinicId);
+              
+              // Also add offer details
+              if (offer.title) {
+                redirectUrl.searchParams.append('offerTitle', offer.title);
+              }
+              if (offer.discountType && offer.discountValue) {
+                redirectUrl.searchParams.append('offerDiscountType', offer.discountType);
+                redirectUrl.searchParams.append('offerDiscount', offer.discountValue.toString());
+              }
+              
+              // Log the enhanced URL
+              console.log("💫 Enhanced treatment plan URL with offer parameters:", redirectUrl.toString());
               
               toast({
                 title: "Success",
                 description: "Free consultation added to your treatment plan"
               });
+              
+              // Store offer in session storage for retrieval after redirect
+              sessionStorage.setItem('activeSpecialOffer', JSON.stringify({
+                id: offerId,
+                title: offer.title || 'Free Consultation Package',
+                clinicId: clinicId,
+                discountType: offer.discountType || 'percentage',
+                discountValue: offer.discountValue || 100,
+                applicableTreatment: 'Consultation'
+              }));
               
               // Redirect directly to treatment plan view
               console.log("💫 Redirecting directly to treatment plan:", redirectUrl.toString());
@@ -299,8 +327,36 @@ export function OfferCard({ offer }: OfferCardProps) {
                     correctPath = correctPath.replace('/portal/treatment/', '/portal/treatment-plan/');
                   }
                   
+                  // Create URL with special offer parameters
                   const redirectUrl = new URL(correctPath, window.location.origin);
                   redirectUrl.searchParams.append('t', Date.now().toString());
+                  
+                  // Add source, offerId and clinicId to ensure YourQuotePage can detect the special offer
+                  redirectUrl.searchParams.append('source', 'special_offer');
+                  redirectUrl.searchParams.append('offerId', offerId);
+                  redirectUrl.searchParams.append('clinicId', clinicId);
+                  
+                  // Also add offer details for complete context
+                  if (offer.title) {
+                    redirectUrl.searchParams.append('offerTitle', offer.title);
+                  }
+                  if (offer.discountType && offer.discountValue) {
+                    redirectUrl.searchParams.append('offerDiscountType', offer.discountType);
+                    redirectUrl.searchParams.append('offerDiscount', offer.discountValue.toString());
+                  }
+                  
+                  // Log the enhanced URL
+                  console.log("💫 Enhanced treatment plan URL with offer parameters:", redirectUrl.toString());
+                  
+                  // Store offer in session storage for retrieval after redirect
+                  sessionStorage.setItem('activeSpecialOffer', JSON.stringify({
+                    id: offerId,
+                    title: offer.title || 'Free Consultation Package',
+                    clinicId: clinicId,
+                    discountType: offer.discountType || 'percentage',
+                    discountValue: offer.discountValue || 100,
+                    applicableTreatment: 'Consultation'
+                  }));
                   
                   // Redirect directly to the treatment plan
                   console.log("💫 Redirecting directly to treatment plan:", redirectUrl.toString());
@@ -337,9 +393,19 @@ export function OfferCard({ offer }: OfferCardProps) {
                 
                 // Special offer data
                 consultationUrl.searchParams.append('specialOffer', 'true');
-                consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
-                consultationUrl.searchParams.append('offerDiscount', '100');
-                consultationUrl.searchParams.append('offerDiscountType', 'percentage');
+                consultationUrl.searchParams.append('offerTitle', offer.title || 'Free Consultation Package');
+                consultationUrl.searchParams.append('offerDiscount', offer.discountValue?.toString() || '100');
+                consultationUrl.searchParams.append('offerDiscountType', offer.discountType || 'percentage');
+                
+                // Store special offer in sessionStorage for retrieval in YourQuotePage
+                sessionStorage.setItem('activeSpecialOffer', JSON.stringify({
+                  id: offerId,
+                  title: offer.title || 'Free Consultation Package',
+                  clinicId: clinicId,
+                  discountType: offer.discountType || 'percentage',
+                  discountValue: offer.discountValue || 100,
+                  applicableTreatment: 'Consultation'
+                }));
                 
                 // Clinic data
                 consultationUrl.searchParams.append('clinicId', clinicId);
@@ -491,7 +557,29 @@ export function OfferCard({ offer }: OfferCardProps) {
         console.log("Quote created but no redirect occurred, manually redirecting");
         
         // If we have a quote URL, use it, otherwise construct a default one
-        const redirectUrl = response.quoteUrl || `/quote/wizard?quoteId=${response.quoteId}`;
+        let redirectUrl = response.quoteUrl || `/quote/wizard?quoteId=${response.quoteId}`;
+        
+        // Add sourceType, clinicId and offerId to the URL querystring to ensure
+        // the YourQuotePage can detect the special offer flow
+        if (!redirectUrl.includes('source=')) {
+          const separator = redirectUrl.includes('?') ? '&' : '?';
+          redirectUrl += `${separator}source=special_offer&offerId=${offer.id}&clinicId=${offer.clinicId}`;
+          
+          // Also add offer title and discount information for complete context
+          if (offer.title) {
+            redirectUrl += `&offerTitle=${encodeURIComponent(offer.title)}`;
+          }
+          if (offer.discountType && offer.discountValue) {
+            redirectUrl += `&offerDiscountType=${offer.discountType}&offerDiscount=${offer.discountValue}`;
+          }
+          
+          // Add treatment info if available
+          const treatment = isFreeConsultation ? 'Free Consultation' : 'Special Offer';
+          redirectUrl += `&treatment=${encodeURIComponent(treatment)}`;
+          
+          console.log("Enhanced redirect URL with offer parameters:", redirectUrl);
+        }
+        
         window.location.href = redirectUrl;
       }
     } catch (error: any) {
