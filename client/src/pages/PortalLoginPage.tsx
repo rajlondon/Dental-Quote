@@ -187,7 +187,7 @@ const PortalLoginPage: React.FC = () => {
             
             // Redirect to the quiz flow, but skip info page since we have basic info
             setTimeout(() => {
-              window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + offerData.clinicId;
+              window.location.href = '/quote?step=dental-quiz&skipInfo=true&clinicId=' + offerData.clinicId;
             }, 100);
             return;
           }

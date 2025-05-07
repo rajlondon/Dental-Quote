@@ -104,7 +104,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
       
       // Proceed to the quote flow directly (will handle login as part of the flow)
       // Use skipInfo=true to bypass initial patient info page if they select "create account"
-      window.location.href = `/quote-flow?step=start&skipInfo=true&clinicId=${pkg.clinicId}&packageId=${pkg.id}`;
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${pkg.clinicId}&packageId=${pkg.id}&source=package`;
       return;
       
     } catch (error) {
@@ -206,7 +206,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
           });
           
           // Redirect to the quiz flow, but skip info page since we have basic info
-          window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + pkg.clinicId;
+          window.location.href = '/quote?step=dental-quiz&skipInfo=true&clinicId=' + pkg.clinicId;
           return data as QuoteResponse;
         } else {
           // If user has already completed profile, proceed to quote directly

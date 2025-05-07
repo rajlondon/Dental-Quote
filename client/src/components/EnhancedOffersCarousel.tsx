@@ -487,7 +487,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       
       // Redirect to the quote flow page with the offer context
       console.log("Redirecting to quote flow with special offer context");
-      setLocation('/quote-flow');
+      setLocation('/quote');
     } else {
       console.log("User not authenticated, saving offer info for after login");
       
