@@ -17,11 +17,14 @@ interface QuoteFlowContextType {
   setPromoToken: (token: string | null) => void;
   promoType: string | null;
   setPromoType: (type: string | null) => void;
+  quoteId: string | null;
+  setQuoteId: (id: string | null) => void;
   isSpecialOfferFlow: boolean;
   isPackageFlow: boolean;
   isNormalFlow: boolean;
   isPromoTokenFlow: boolean;
   resetFlow: () => void;
+  buildUrl: (path: string) => string; // Helper for appending quoteId to URLs
 }
 
 // Create the context with default values
@@ -35,12 +38,24 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [clinicId, setClinicId] = useState<string | null>(null);
   const [promoToken, setPromoToken] = useState<string | null>(null);
   const [promoType, setPromoType] = useState<string | null>(null);
+  const [quoteId, setQuoteId] = useState<string | null>(null);
 
   // Helper properties for easier flow checks
   const isSpecialOfferFlow = source === 'special_offer';
   const isPackageFlow = source === 'package';
   const isNormalFlow = source === 'normal';
   const isPromoTokenFlow = source === 'promo_token';
+
+  // Helper to build URLs with quoteId when available
+  const buildUrl = (path: string): string => {
+    if (!quoteId) return path;
+    
+    // Check if the path already has query parameters
+    const hasQueryParams = path.includes('?');
+    const separator = hasQueryParams ? '&' : '?';
+    
+    return `${path}${separator}quoteId=${quoteId}`;
+  };
 
   // Reset the flow to default state
   const resetFlow = () => {
@@ -50,6 +65,7 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
     setClinicId(null);
     setPromoToken(null);
     setPromoType(null);
+    setQuoteId(null);
   };
 
   return (
@@ -67,11 +83,14 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
         setPromoToken,
         promoType,
         setPromoType,
+        quoteId,
+        setQuoteId,
         isSpecialOfferFlow,
         isPackageFlow,
         isNormalFlow,
         isPromoTokenFlow,
-        resetFlow
+        resetFlow,
+        buildUrl
       }}
     >
       {children}
@@ -96,7 +115,8 @@ export const useInitializeQuoteFlow = () => {
     setPackageId, 
     setClinicId,
     setPromoToken,
-    setPromoType
+    setPromoType,
+    setQuoteId
   } = useQuoteFlow();
 
   const initializeFromUrlParams = () => {
@@ -108,6 +128,7 @@ export const useInitializeQuoteFlow = () => {
     const sourceParam = urlParams.get('source');
     const promoTokenParam = urlParams.get('promoToken');
     const promoTypeParam = urlParams.get('promoType');
+    const quoteIdParam = urlParams.get('quoteId');
 
     console.log('QuoteFlowContext: Initializing from URL params:', {
       offerIdParam,
@@ -116,8 +137,15 @@ export const useInitializeQuoteFlow = () => {
       sourceParam,
       promoTokenParam,
       promoTypeParam,
+      quoteIdParam,
       urlSearch: window.location.search
     });
+    
+    // If quoteId is present in URL, preserve it across the flow
+    if (quoteIdParam) {
+      console.log('QuoteFlowContext: Setting quote ID from URL:', quoteIdParam);
+      setQuoteId(quoteIdParam);
+    }
 
     // First check for promo token flow
     if (sourceParam === 'promo_token' && promoTokenParam) {
