@@ -14,6 +14,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
 import {
   Accordion,
@@ -96,6 +97,27 @@ interface TreatmentItem {
   subtotalGBP: number;
   subtotalUSD: number;
   guarantee: string;
+}
+
+interface PatientInfo {
+  fullName: string;
+  email: string;
+  phone: string;
+  travelMonth?: string;
+  departureCity?: string;
+  hasXrays: boolean;
+  hasCtScan: boolean;
+  additionalNotes: string;
+  preferredContactMethod: 'email' | 'whatsapp';
+}
+
+interface SpecialOfferParams {
+  id: string;
+  title: string;
+  clinicId: string;
+  discountValue: number;
+  discountType: 'percentage' | 'fixed_amount';
+  applicableTreatment: string;
 }
 
 // Mock data for clinics
@@ -363,511 +385,63 @@ const ClinicCard: React.FC<{
           </div>
         </div>
         
-        {/* Right column - Price and action */}
-        <div className="md:w-1/4 p-4 bg-gray-50 flex flex-col justify-between border-t md:border-t-0 md:border-l border-gray-200">
+        {/* Right column - Pricing and action */}
+        <div className="md:w-1/4 p-4 bg-gray-50 flex flex-col justify-between">
           <div>
-            <div className="mb-4">
-              <p className="text-3xl font-bold text-blue-600">£{clinic.priceGBP}</p>
-              <p className="text-sm text-gray-500">${clinic.priceUSD}</p>
-              <p className="text-xs text-gray-500 mt-1">Treatment price</p>
-              
-              {/* Display special offer details if available */}
-              {clinic.hasSpecialOffer && clinic.specialOfferDetails && (
-                <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
-                  <p className="text-sm font-medium text-blue-700 flex items-center">
-                    <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
-                    {clinic.specialOfferDetails.title}
-                  </p>
-                  <p className="text-xs font-bold text-blue-800">
-                    {clinic.specialOfferDetails.discountType === 'percentage' 
-                      ? `${clinic.specialOfferDetails.discountValue}% OFF` 
-                      : `£${clinic.specialOfferDetails.discountValue} OFF`
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
+            <h4 className="font-bold text-lg mb-1">£{clinic.priceGBP}</h4>
+            <p className="text-gray-500 text-sm mb-4">Base package from</p>
             
-            <div className="mb-4">
-              <div className="flex items-start mb-1">
-                <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-gray-700">£200 deposit, remainder paid in-person at clinic after consultation</span>
-              </div>
-              <div className="flex items-start mb-1">
-                <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-gray-700">Price confirmed before treatment</span>
-              </div>
-              <div className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-gray-700">
-                  Concierge by {clinic.conciergeType === 'mydentalfly' ? 'MyDentalFly' : 'clinic'}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <Button 
-              className="w-full mb-2" 
-              onClick={onSelect}
-              variant={isSelected ? "outline" : "default"}
-              size="sm"
-            >
-              {isSelected ? 'Selected' : 'Choose This Clinic'}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full text-xs flex items-center justify-center"
-              size="sm"
-            >
-              <span>View Clinic Details</span>
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-};
-
-const QuoteSummary: React.FC<{ 
-  params: QuoteParams,
-  selectedClinic: ClinicInfo | null,
-  onEditQuote: () => void
-}> = ({ params, selectedClinic, onEditQuote }) => {
-  const { toast } = useToast();
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isEmailing, setIsEmailing] = useState(false);
-  
-  // Extract user info from URL query parameters
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  const userName = searchParams.get('name');
-  const userEmail = searchParams.get('email');
-  const userPhone = searchParams.get('phone');
-  
-  // Placeholder for download and email functions
-  const handleDownloadQuote = () => {
-    setIsDownloading(true);
-    
-    // Simulate PDF generation delay
-    setTimeout(() => {
-      setIsDownloading(false);
-      toast({
-        title: "PDF Download",
-        description: "Your quote PDF is being generated. It will download automatically.",
-      });
-    }, 1500);
-  };
-  
-  const handleEmailQuote = () => {
-    setIsEmailing(true);
-    
-    // Simulate email sending delay
-    setTimeout(() => {
-      setIsEmailing(false);
-      toast({
-        title: "Email Sent",
-        description: `Your quote has been emailed to ${userEmail || 'you'}.`,
-      });
-    }, 1500);
-  };
-  
-  // Calculate UK price comparison (simplified for this example)
-  const ukTreatmentPrice = selectedClinic ? selectedClinic.priceGBP * 2.5 : 0;
-  const savingsAmount = selectedClinic ? ukTreatmentPrice - selectedClinic.priceGBP : 0;
-  const savingsPercentage = selectedClinic ? Math.round((savingsAmount / ukTreatmentPrice) * 100) : 0;
-  
-  return (
-    <Card className="bg-white shadow-md mb-8">
-      <CardHeader className="bg-blue-50 pb-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <CardTitle className="text-xl font-bold">Your Quote Summary</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center text-xs mt-2 md:mt-0"
-            onClick={onEditQuote}
-          >
-            <Edit3 className="mr-2 h-3 w-3" />
-            Edit Quote
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pt-4">
-        {/* Special Offer Section - Show if there's a special offer */}
-        {specialOffer && (
-          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-md relative overflow-hidden">
-            <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center transform rotate-12">
-              <Sparkles className="h-8 w-8 text-primary" />
-            </div>
-            <div className="flex items-start">
-              <div className="flex-1 pr-16">
-                <div className="flex items-center">
-                  <h3 className="text-lg font-semibold text-primary">{specialOffer.title}</h3>
-                  <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary ml-2 px-2 py-0">
-                    {specialOffer.discountType === 'percentage' ? 
-                      `${specialOffer.discountValue}% OFF` : 
-                      `£${specialOffer.discountValue} OFF`}
-                  </Badge>
+            {clinic.hasSpecialOffer && (
+              <div className="bg-blue-50 p-2 rounded-md mb-4 border border-blue-100">
+                <div className="flex items-center mb-1">
+                  <Sparkles className="h-4 w-4 text-blue-500 mr-1" />
+                  <h5 className="font-semibold text-blue-700 text-sm">
+                    {clinic.specialOfferDetails?.title}
+                  </h5>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  This special offer includes a discount on {specialOffer.applicableTreatment}.
-                  The discount has been applied to your quote.
+                
+                <p className="text-blue-600 text-xs">
+                  {clinic.specialOfferDetails?.discountType === 'percentage' 
+                    ? `${clinic.specialOfferDetails?.discountValue}% discount on selected treatments` 
+                    : `£${clinic.specialOfferDetails?.discountValue} off selected treatments`}
                 </p>
               </div>
+            )}
+            
+            <div className="flex flex-col gap-2 mb-4">
+              <h4 className="font-medium text-sm text-gray-700">Materials:</h4>
+              <ul className="space-y-1">
+                {clinic.materials.map((material, index) => (
+                  <li key={index} className="flex items-center text-xs text-gray-600">
+                    <Check className="h-3 w-3 text-green-500 mr-1 flex-shrink-0" />
+                    <span>{material}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-        )}
-        
-        {/* User Information Section - only show if we have user info from form */}
-        {userName && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-md">
-            <h3 className="text-md font-medium mb-3 text-blue-900">Your Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm font-medium text-blue-700">Name</p>
-                <p className="text-base font-semibold mt-1">{userName}</p>
-              </div>
-              {userEmail && (
-                <div>
-                  <p className="text-sm font-medium text-blue-700">Email</p>
-                  <p className="text-base font-semibold mt-1">{userEmail}</p>
-                </div>
-              )}
-              {userPhone && (
-                <div>
-                  <p className="text-sm font-medium text-blue-700">Phone</p>
-                  <p className="text-base font-semibold mt-1">{userPhone}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">Treatment</h3>
-            <p className="text-base">{params.treatment || 'Not specified'}</p>
-          </div>
           
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">Travel Month</h3>
-            <p className="text-base">{params.travelMonth || 'Not specified'}</p>
-          </div>
-          
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">Budget Range</h3>
-            <p className="text-base">{params.budget || 'Not specified'}</p>
-          </div>
+          <Button
+            onClick={onSelect}
+            className={`w-full ${isSelected ? 'bg-blue-700 hover:bg-blue-800' : ''}`}
+          >
+            {isSelected ? 'Selected Clinic' : 'Select This Clinic'}
+          </Button>
         </div>
-        
-        {selectedClinic && (
-          <>
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">Selected Clinic</h3>
-              <div className="flex items-center p-3 bg-blue-50 rounded-md">
-                <img 
-                  src={selectedClinic.images[0]} 
-                  alt={selectedClinic.name} 
-                  className="w-16 h-16 object-cover rounded-md mr-4"
-                />
-                <div>
-                  <h4 className="font-semibold">{selectedClinic.name}</h4>
-                  <div className="flex items-center text-sm text-gray-600 mb-1">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    <span>{selectedClinic.location}</span>
-                  </div>
-                  <TierBadge tier={selectedClinic.tier} />
-                </div>
-                <div className="ml-auto text-right">
-                  <p className="text-2xl font-bold text-blue-600">£{selectedClinic.priceGBP}</p>
-                  <p className="text-sm text-gray-500">${selectedClinic.priceUSD}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border rounded-md p-4 mb-6 bg-emerald-50">
-              <h3 className="text-lg font-semibold mb-3">UK Price Comparison</h3>
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="flex items-center mb-3 md:mb-0">
-                  <div className="bg-white p-3 rounded-full mr-4 border border-emerald-200">
-                    <Sparkles className="h-6 w-6 text-emerald-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Same treatment in the UK would cost:</p>
-                    <p className="text-xl font-bold">£{ukTreatmentPrice}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-emerald-100 p-3 rounded-md text-center">
-                  <p className="text-sm text-gray-700">Your savings</p>
-                  <p className="text-xl font-bold text-emerald-700">£{savingsAmount} ({savingsPercentage}%)</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-3">
-              <Button 
-                onClick={() => {}}
-                className="flex-1 flex items-center justify-center py-6"
-              >
-                <CreditCard className="mr-2 h-5 w-5" />
-                Pay £200 Deposit & Book
-              </Button>
-              
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex items-center"
-                  onClick={handleDownloadQuote}
-                  disabled={isDownloading}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  PDF Quote
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="flex items-center"
-                  onClick={handleEmailQuote}
-                  disabled={isEmailing}
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Email Quote
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-        
-        {!selectedClinic && (
-          <div className="text-center py-6">
-            <p className="text-gray-500 mb-3">Please select a clinic from the options below</p>
-            <ChevronRight className="h-8 w-8 mx-auto text-gray-400 animate-bounce" />
-          </div>
-        )}
-      </CardContent>
+      </div>
     </Card>
   );
 };
 
-const EducationalSection: React.FC = () => {
-  return (
-    <div className="mb-10">
-      <h2 className="text-2xl font-bold mb-4">Understanding Your Quote</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Materials & Brands</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-700">Clinics use different dental implant brands and materials which affect price and longevity. Premium clinics use globally recognized brands like Nobel Biocare and Straumann.</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Price Adjustments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-700">Final prices may adjust slightly (±10%) after your X-rays and consultation, as your exact needs become clear. We'll always confirm before proceeding.</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Guarantees & Aftercare</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-700">All treatments include guarantees (ranging from 3-10 years) that are honored internationally. Your dental work is backed by both the clinic and MyDentalFly.</p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="mt-4 text-center">
-        <Button variant="link" className="text-blue-600">
-          Read Our Full Pricing Guide
-          <ChevronRight className="ml-1 h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-const FAQSection: React.FC = () => {
-  return (
-    <div className="mb-10">
-      <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
-      
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="item-1" className="border rounded-md mb-3 border-gray-200">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <span className="text-base font-medium">What happens after I choose a clinic?</span>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <p className="text-gray-700">
-              Once you select a clinic and pay the £200 deposit, your personal concierge will contact you within 24 hours to confirm your booking and discuss your travel dates. We'll then arrange your consultation, accommodation, and transportation in Istanbul.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="item-2" className="border rounded-md mb-3 border-gray-200">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <span className="text-base font-medium">Is my £200 deposit refundable?</span>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <p className="text-gray-700">
-              Yes, your deposit is fully refundable if you cancel more than 7 days before your scheduled consultation. If you proceed with treatment, the £200 is deducted from your final bill at the clinic. This deposit ensures we can secure your appointment and make all necessary arrangements.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="item-3" className="border rounded-md mb-3 border-gray-200">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <span className="text-base font-medium">Will my quote change after my dental review?</span>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <p className="text-gray-700">
-              In most cases, your quote will remain within ±10% of the estimate. However, after your X-rays and in-person consultation, the dentist might recommend adjustments to your treatment plan based on your specific dental condition. Any changes to your treatment plan and costs will be clearly explained and require your approval before proceeding.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-        
-        <AccordionItem value="item-4" className="border rounded-md mb-3 border-gray-200">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <span className="text-base font-medium">How do I contact MyDentalFly for help?</span>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <p className="text-gray-700">
-              Our team is available 24/7 through multiple channels. You can reach us by:
-            </p>
-            <ul className="list-disc pl-5 mt-2 text-gray-700">
-              <li>Calling our UK number: +44 7572 445856</li>
-              <li>WhatsApp chat for quick responses</li>
-              <li>Email: info@mydentalfly.com</li>
-              <li>Or through the live chat on our website</li>
-            </ul>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </div>
-  );
-};
-
-const CTASection: React.FC<{ 
-  selectedClinic: ClinicInfo | null,
-  treatmentItems?: PlanTreatmentItem[]
-}> = ({ selectedClinic, treatmentItems = [] }) => {
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  const userName = searchParams.get('name')?.split(' ')[0];
-  const treatment = searchParams.get('treatment');
-  
-  // Calculate total from treatment items if available
-  const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
-  const hasCustomPlan = treatmentItems.length > 0;
-  
-  // Format the deposit amount with commas for thousands
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-  
-  return (
-    <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
-      <div className="max-w-3xl mx-auto text-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">
-          {userName ? `${userName}, Ready to Transform Your Smile?` : 'Ready to Transform Your Smile?'}
-        </h2>
-        
-        <p className="text-blue-100 mb-4">
-          {selectedClinic ? (
-            <>
-              Book your {treatment || 'dental treatment'} at {selectedClinic.name} today with just a £200 deposit. 
-              Your personal concierge will handle all arrangements for a stress-free experience.
-            </>
-          ) : (
-            <>
-              Select a clinic above and book your dental treatment today with just a £200 deposit.
-              Your concierge will handle all arrangements for a stress-free experience.
-            </>
-          )}
-        </p>
-        
-        {hasCustomPlan && (
-          <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
-            <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
-            <p className="text-2xl font-bold">£{formatCurrency(totalGBP)}</p>
-            <p className="text-sm text-blue-200">Final price confirmed after dental review, payment only in-person at clinic</p>
-            <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
-          </div>
-        )}
-        
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
-          <Button 
-            className="bg-white text-blue-700 hover:bg-blue-50"
-            size="lg"
-            disabled={!selectedClinic}
-          >
-            <CreditCard className="mr-2 h-5 w-5" />
-            Pay £200 Deposit & Book Now
-          </Button>
-          
-          <Button 
-            variant="outline"
-            className="border-white text-white hover:bg-blue-700"
-            size="lg"
-          >
-            <Mail className="mr-2 h-5 w-5" />
-            Contact a Dental Advisor
-          </Button>
-        </div>
-        
-        <div className="mt-6 flex justify-center">
-          <div className="inline-block text-left bg-blue-500/30 rounded-lg p-4 max-w-md">
-            <h4 className="font-medium mb-2 flex items-center">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Booking Process
-            </h4>
-            <ul className="text-sm text-blue-100 space-y-2">
-              <li className="flex items-start">
-                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
-                Pay £200 deposit to secure your appointment
-              </li>
-              <li className="flex items-start">
-                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
-                Receive confirmation and pre-travel guidance
-              </li>
-              <li className="flex items-start">
-                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
-                Attend consultation and finalize treatment plan
-              </li>
-              <li className="flex items-start">
-                <Check className="h-3 w-3 mt-1 mr-2 flex-shrink-0" />
-                Pay remaining balance directly to the clinic
-              </li>
-            </ul>
-            <p className="text-xs text-blue-200 mt-3">
-              Your £200 deposit is fully refundable if you cancel more than 7 days before your consultation,
-              and is deducted from your final treatment cost.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// WhatsApp floating button component
-const WhatsAppButton: React.FC = () => {
+// WhatsApp button component
+const WhatsAppButton = () => {
   return (
     <a
-      href="https://wa.me/447572445856?text=Hello%20MyDentalFly,%20I%20need%20assistance%20with%20my%20dental%20treatment%20quote."
+      href="https://wa.me/447312345678?text=Hi%20MyDentalFly%2C%20I%20have%20a%20question%20about%20my%20dental%20quote."
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 bg-green-500 text-white rounded-full p-3 shadow-lg hover:bg-green-600 transition-colors z-50 flex items-center justify-center"
-      aria-label="Chat on WhatsApp"
+      className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
+      aria-label="Contact on WhatsApp"
     >
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
@@ -883,81 +457,7 @@ const WhatsAppButton: React.FC = () => {
   );
 };
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation, Link } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import ScrollToTop from '@/components/ScrollToTop';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Check, 
-  ChevronRight, 
-  MapPin, 
-  Star, 
-  Clock, 
-  Calendar, 
-  Download, 
-  Mail, 
-  CreditCard,
-  Hotel,
-  Car,
-  Shield,
-  Plane,
-  Sparkles,
-  Info,
-  ArrowLeft,
-  Edit3,
-  RefreshCcw,
-  MessageCircle,
-  CheckCircle,
-  Pencil
-} from 'lucide-react';
-import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
-import EditQuoteModal from '@/components/EditQuoteModal';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableFooter,
-} from "@/components/ui/table";
-
-// Import the new components
-import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
-import TreatmentGuide from '@/components/TreatmentGuide';
-import OfferConfirmationPage from '@/components/offers/OfferConfirmationPage';
-
-// Interface for special offer from URL parameters
-interface SpecialOfferParams {
-  id: string;
-  title: string;
-  clinicId: string;
-  discountValue: number;
-  discountType: 'percentage' | 'fixed_amount';
-  applicableTreatment: string;
-}
-
+// Main component for the Quote Page
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
@@ -969,6 +469,7 @@ const YourQuotePage: React.FC = () => {
     isSpecialOfferFlow, isPackageFlow,
     resetFlow
   } = useQuoteFlow();
+  
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   
@@ -983,11 +484,11 @@ const YourQuotePage: React.FC = () => {
     console.log("Initializing YourQuotePage with URL params:", window.location.search);
     
     // First check URL parameters
-    const offerId = searchParams.get('specialOffer');
-    console.log("Special offer ID from URL:", offerId);
+    const offerIdFromUrl = searchParams.get('specialOffer');
+    console.log("Special offer ID from URL:", offerIdFromUrl);
     
     // If there's a special offer ID in the URL parameters, create a special offer object
-    if (offerId) {
+    if (offerIdFromUrl) {
       console.log("Special offer parameters found in URL:");
       console.log("- Title:", searchParams.get('offerTitle'));
       console.log("- Clinic ID:", searchParams.get('offerClinic'));
@@ -996,7 +497,7 @@ const YourQuotePage: React.FC = () => {
       console.log("- Treatment:", searchParams.get('treatment'));
       
       const offerData = {
-        id: offerId,
+        id: offerIdFromUrl,
         title: searchParams.get('offerTitle') || 'Special Offer',
         clinicId: searchParams.get('offerClinic') || '',
         discountValue: parseInt(searchParams.get('offerDiscount') || '0'),
@@ -1048,19 +549,19 @@ const YourQuotePage: React.FC = () => {
           applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
         };
         
-        // Save to activeSpecialOffer key for future use and clear all special offer flags
-        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
+        // Now that we've processed it, clear it
         sessionStorage.removeItem('pendingSpecialOffer');
-        sessionStorage.removeItem('processingSpecialOffer');
         
-        console.log("Special offer processing complete, cleared pendingSpecialOffer and processingSpecialOffer");
+        // But save it to activeSpecialOffer for future persistence
+        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
+        
+        console.log("Converted pendingSpecialOffer to activeSpecialOffer:", formattedOffer);
         return formattedOffer;
       } catch (error) {
-        console.error("Error parsing pending special offer:", error);
+        console.error("Error parsing pendingSpecialOffer from sessionStorage:", error);
       }
     }
     
-    console.log("No special offer found in URL or sessionStorage");
     return null;
   });
   
@@ -1149,134 +650,123 @@ const YourQuotePage: React.FC = () => {
     });
   };
   
-  // Function to handle treatment plan changes
-  const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
-    setTreatmentItems(items);
-    
-    if (items.length > 0) {
-      toast({
-        title: "Treatment Plan Updated",
-        description: "Your treatment plan has been updated.",
-      });
-      
-      // For special offers or packages, move to confirmation step
-      if (isSpecialOfferFlow || isPackageFlow) {
-        setCurrentStep('offer-confirmation');
-      }
-    }
+  // Calculate totals
+  const calculateTotalGBP = () => {
+    return treatmentItems.reduce((total, item) => total + item.subtotalGBP, 0);
   };
   
-  // Function to handle offer confirmation
-  const handleOfferConfirmation = async () => {
-    try {
-      // Make an API call to associate the offer/package with the user or treatment plan
-      if (isSpecialOfferFlow && offerId) {
-        // Call API to associate special offer with the user
-        await fetch('/api/treatment-plans/associate-offer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            offerId,
-            clinicId
-          }),
-        });
-
-        toast({
-          title: "Special Offer Confirmed",
-          description: "Your special offer has been saved and will be applied to your quote.",
-        });
-      } 
-      else if (isPackageFlow && packageId) {
-        // Call API to associate package with the user
-        await fetch('/api/treatment-plans/associate-package', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            packageId,
-            clinicId
-          }),
-        });
-
-        toast({
-          title: "Treatment Package Confirmed",
-          description: "Your treatment package has been saved and will be applied to your quote.",
-        });
-      }
-
-      // Move to the patient info step
-      setCurrentStep('patient-info');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
-      console.error('Error confirming offer/package:', error);
-      toast({
-        title: "Error",
-        description: "There was a problem confirming your selection. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Function to handle returning to the treatment plan step
-  const handleBackToTreatmentPlan = () => {
-    setCurrentStep('build-plan');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Function to handle patient info form submission
-  const handlePatientInfoSubmit = (data: PatientInfo) => {
-    setPatientInfo(data);
-    setCurrentStep('select-clinic');
-    
-    toast({
-      title: "Information Saved",
-      description: "Your personal information has been saved successfully. Now select a clinic for your treatment.",
-    });
-    
-    // Scroll to the top of the section
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const calculateTotalUSD = () => {
+    return treatmentItems.reduce((total, item) => total + item.subtotalUSD, 0);
   };
   
-  // Function to handle clinic selection
-  const handleClinicSelect = (clinic: ClinicInfo) => {
-    setSelectedClinic(clinic);
-    
-    toast({
-      title: "Clinic Selected",
-      description: `You have selected ${clinic.name} for your treatment.`,
-    });
-  };
-  
-  // Function to confirm clinic selection and move to review
-  const handleConfirmClinic = () => {
-    if (selectedClinic) {
-      setCurrentStep('review');
-      setIsQuoteReady(true);
-      
+  // Helper function to save a treatment plan
+  const saveTreatmentPlan = async () => {
+    if (!patientInfo) {
       toast({
-        title: "Clinic Confirmed",
-        description: "Your clinic selection has been confirmed. Please review your quote details.",
-      });
-      
-      // Scroll to the top of the review section
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      toast({
-        title: "No Clinic Selected",
-        description: "Please select a clinic before proceeding.",
+        title: "Missing Information",
+        description: "Please complete the patient info form before saving your quote.",
         variant: "destructive"
       });
+      return null;
+    }
+    
+    if (!selectedClinic) {
+      toast({
+        title: "Clinic Required",
+        description: "Please select a clinic for your treatment plan.",
+        variant: "destructive"
+      });
+      return null;
+    }
+    
+    if (treatmentItems.length === 0) {
+      toast({
+        title: "Treatment Plan Empty",
+        description: "Please add at least one treatment to your plan.",
+        variant: "destructive"
+      });
+      return null;
+    }
+    
+    // Prepare the data to send
+    const planData = {
+      patientInfo: {
+        fullName: patientInfo.fullName,
+        email: patientInfo.email,
+        phone: patientInfo.phone,
+        travelMonth: patientInfo.travelMonth || quoteParams.travelMonth,
+        departureCity: patientInfo.departureCity || 'Unknown',
+        hasXrays: patientInfo.hasXrays,
+        hasCtScan: patientInfo.hasCtScan,
+        additionalNotes: patientInfo.additionalNotes || ''
+      },
+      quoteParams: quoteParams,
+      treatments: treatmentItems.map(item => ({
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        priceGBP: item.priceGBP,
+        priceUSD: item.priceUSD,
+        specialOffer: item.specialOffer || null
+      })),
+      clinic: {
+        id: selectedClinic.id,
+        name: selectedClinic.name,
+        tier: selectedClinic.tier
+      },
+      totalGBP: calculateTotalGBP(),
+      totalUSD: calculateTotalUSD(),
+      source: source,
+      offerId: offerId,
+      packageId: packageId
+    };
+    
+    try {
+      // Call the API to save the treatment plan
+      const response = await fetch('/api/treatment-plans/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(planData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save treatment plan');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Your treatment plan has been saved!",
+        });
+        
+        // Clear the special offer from session storage as it's now been used
+        if (specialOffer) {
+          sessionStorage.removeItem('activeSpecialOffer');
+        }
+        
+        return result;
+      } else {
+        throw new Error(result.message || 'Unknown error saving treatment plan');
+      }
+    } catch (error) {
+      console.error('Error saving treatment plan:', error);
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save your treatment plan",
+        variant: "destructive"
+      });
+      
+      return null;
     }
   };
   
-  // Calculate totals
-  const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
-  const totalUSD = treatmentItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
-  
-  // Format currency with commas
+  // Function to format numbers with commas for thousands
   const formatCurrency = (amount: number) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
@@ -1558,833 +1048,833 @@ const YourQuotePage: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div 
-                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
-                    ${currentStep === 'build-plan' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
-                  `}
-                  onClick={() => setCurrentStep('build-plan')}
+                  className={`relative flex items-center p-3 rounded-md ${
+                    currentStep === 'build-plan' 
+                      ? 'bg-blue-50 border border-blue-200' 
+                      : 'bg-gray-50 border border-gray-200'
+                  }`}
                 >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
-                    currentStep === 'build-plan' ? 'bg-blue-500' : 
-                    treatmentItems.length > 0 ? 'bg-green-500' : 'bg-gray-300'
+                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
+                    currentStep === 'build-plan' 
+                      ? 'bg-blue-500 text-white' 
+                      : treatmentItems.length > 0 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-500'
                   }`}>
-                    {treatmentItems.length > 0 ? <Check className="h-5 w-5" /> : '1'}
+                    {treatmentItems.length > 0 ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span>1</span>
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium">Build Treatment Plan</p>
-                    <p className="text-xs text-gray-600">{treatmentItems.length} treatments added</p>
+                    <h3 className="font-medium">Build Treatment Plan</h3>
+                    <p className="text-xs text-gray-500">Select your treatments</p>
                   </div>
+                  {currentStep !== 'build-plan' && treatmentItems.length > 0 && (
+                    <Button
+                      variant="ghost" 
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      onClick={() => setCurrentStep('build-plan')}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
                 
-                <div 
-                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
-                    ${currentStep === 'patient-info' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
-                    ${treatmentItems.length === 0 ? 'opacity-50' : ''}
-                  `}
-                  onClick={() => treatmentItems.length > 0 && setCurrentStep('patient-info')}
-                >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
-                    currentStep === 'patient-info' ? 'bg-blue-500' : 
-                    patientInfo ? 'bg-green-500' : 'bg-gray-300'
+                <div className={`relative flex items-center p-3 rounded-md ${
+                  currentStep === 'patient-info' 
+                    ? 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50 border border-gray-200'
+                }`}>
+                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
+                    currentStep === 'patient-info' 
+                      ? 'bg-blue-500 text-white' 
+                      : patientInfo 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-500'
                   }`}>
-                    {patientInfo ? <Check className="h-5 w-5" /> : '2'}
+                    {patientInfo ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span>2</span>
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium">Your Information</p>
-                    <p className="text-xs text-gray-600">
-                      {patientInfo ? 'Information saved' : 'Add your details'}
-                    </p>
+                    <h3 className="font-medium">Patient Information</h3>
+                    <p className="text-xs text-gray-500">Your contact details</p>
                   </div>
+                  {currentStep !== 'patient-info' && patientInfo && (
+                    <Button
+                      variant="ghost" 
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      onClick={() => setCurrentStep('patient-info')}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
                 
-                <div 
-                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
-                    ${currentStep === 'select-clinic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
-                    ${!patientInfo ? 'opacity-50' : ''}
-                  `}
-                  onClick={() => patientInfo && setCurrentStep('select-clinic')}
-                >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
-                    currentStep === 'select-clinic' ? 'bg-blue-500' : 
-                    selectedClinic ? 'bg-green-500' : 'bg-gray-300'
+                <div className={`relative flex items-center p-3 rounded-md ${
+                  currentStep === 'select-clinic' 
+                    ? 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50 border border-gray-200'
+                }`}>
+                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
+                    currentStep === 'select-clinic' 
+                      ? 'bg-blue-500 text-white' 
+                      : selectedClinic 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-500'
                   }`}>
-                    {selectedClinic ? <Check className="h-5 w-5" /> : '3'}
+                    {selectedClinic ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span>3</span>
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium">Select Clinic</p>
-                    <p className="text-xs text-gray-600">
-                      {selectedClinic ? `Selected: ${selectedClinic.name}` : 'Choose your preferred clinic'}
-                    </p>
+                    <h3 className="font-medium">Select Clinic</h3>
+                    <p className="text-xs text-gray-500">Choose your preferred clinic</p>
                   </div>
+                  {currentStep !== 'select-clinic' && selectedClinic && (
+                    <Button
+                      variant="ghost" 
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      onClick={() => setCurrentStep('select-clinic')}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
                 
-                <div 
-                  className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
-                    ${currentStep === 'review' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
-                    ${!selectedClinic ? 'opacity-50' : ''}
-                  `}
-                  onClick={() => selectedClinic && setCurrentStep('review')}
-                >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
-                    currentStep === 'review' ? 'bg-blue-500' : 
-                    isQuoteReady ? 'bg-green-500' : 'bg-gray-300'
+                <div className={`relative flex items-center p-3 rounded-md ${
+                  currentStep === 'review' 
+                    ? 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50 border border-gray-200'
+                }`}>
+                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
+                    currentStep === 'review' 
+                      ? 'bg-blue-500 text-white' 
+                      : isQuoteReady 
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-500'
                   }`}>
-                    {isQuoteReady ? <Check className="h-5 w-5" /> : '4'}
+                    {isQuoteReady ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span>4</span>
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium">Review & Submit</p>
-                    <p className="text-xs text-gray-600">
-                      {isQuoteReady ? 'Quote ready' : 'Complete previous steps'}
-                    </p>
+                    <h3 className="font-medium">Final Review</h3>
+                    <p className="text-xs text-gray-500">Review and save your quote</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           
-          {/* Quote Parameters Summary (always visible) */}
-          <div className="mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">Quote Preferences</CardTitle>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleEditQuote}
-                    className="flex items-center gap-2 text-xs h-8"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Treatment</p>
-                    <p className="font-medium">{quoteParams.treatment}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Travel Month</p>
-                    <p className="font-medium">{quoteParams.travelMonth}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Budget Range</p>
-                    <p className="font-medium">{quoteParams.budget}</p>
-                  </div>
-                </div>
-                
-                {treatmentItems.length > 0 && (
-                  <div className="flex justify-end mt-4">
-                    <div className="bg-blue-50 py-2 px-4 rounded-md">
-                      <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-gray-700">Estimated Istanbul Price:</span>
-                        <span className="font-bold">£{formatCurrency(Math.round(totalGBP * 0.35))}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 text-xs text-gray-500">
-                        <span>USD:</span>
-                        <span>${formatCurrency(Math.round(totalUSD * 0.35))}</span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Hotel stays often included in treatment packages depending on the cost of your treatment.
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Edit Quote Modal */}
-          <EditQuoteModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            initialParams={quoteParams}
-            onSave={handleSaveQuoteParams}
-          />
-          
-          {/* Step 1: Build Treatment Plan (conditionally displayed) */}
-          {currentStep === 'build-plan' && (
-            <>
-              {/* Show different layouts based on flow type */}
-              {(isSpecialOfferFlow || isPackageFlow) ? (
-                <div className="grid md:grid-cols-2 gap-8 mb-8">
-                  <div>
-                    {/* Treatment Guide - Educational Component */}
-                    <TreatmentGuide />
-                    
-                    {/* Treatment Plan Builder */}
-                    <div className="mb-8">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center text-xl font-bold">
-                            <Pencil className="mr-2 h-5 w-5 text-blue-500" />
-                            Build Your Treatment Plan
-                          </CardTitle>
-                          <CardDescription>
-                            Add all the treatments you're interested in
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <TreatmentPlanBuilder 
-                            initialTreatments={treatmentItems}
-                            onTreatmentsChange={handleTreatmentPlanChange}
-                          />
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                  
-                  {/* Quote Summary Panel - Styled like the screenshot */}
-                  <div>
-                    {treatmentItems.length > 0 ? (
-                      <div className="sticky top-24">
-                        <QuoteSummaryPanel 
-                          treatments={treatmentItems}
-                          specialOfferTitle={specialOffer?.title}
-                          discountValue={specialOffer?.discountValue}
-                          discountType={specialOffer?.discountType}
-                          clinicName={selectedClinic?.name}
-                          onContinue={() => {
-                            // If this is a special offer or package flow and we have a clinicId,
-                            // we can potentially skip patient info and go straight to select-clinic
-                            if ((isSpecialOfferFlow || isPackageFlow) && clinicId && searchParams.get('skipInfo') === 'true') {
-                              // Find the clinic
-                              const matchedClinic = clinics.find(c => c.id.toString() === clinicId);
-                              if (matchedClinic) {
-                                setSelectedClinic(matchedClinic);
-                                setCurrentStep('select-clinic');
-                              } else {
-                                setCurrentStep('patient-info');
-                              }
-                            } else {
-                              setCurrentStep('patient-info');
-                            }
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-center flex flex-col items-center justify-center min-h-[300px]">
-                        <div className="text-gray-400 mb-4">
-                          <Pencil className="h-12 w-12" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-700 mb-2">
-                          Build Your Treatment Plan
-                        </h3>
-                        <p className="text-gray-500 text-sm max-w-md">
-                          Add treatments from the panel on the left to see your customized Istanbul price estimate.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                // Original layout for normal flow
+          {/* Content based on current step */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left column - Main content */}
+            <div className="lg:col-span-2">
+              {/* Step 1: Build Plan */}
+              {currentStep === 'build-plan' && (
                 <>
-                  {/* Treatment Guide - Educational Component */}
-                  <TreatmentGuide />
-                  
-                  {/* Treatment Plan Builder */}
-                  <div className="mb-8">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center text-xl font-bold">
-                          <Pencil className="mr-2 h-5 w-5 text-blue-500" />
-                          Build Your Treatment Plan
-                        </CardTitle>
-                        <CardDescription>
-                          Add all the treatments you're interested in to get a comprehensive quote
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <TreatmentPlanBuilder 
-                          initialTreatments={treatmentItems}
-                          onTreatmentsChange={handleTreatmentPlanChange}
-                        />
-                        
-                        {treatmentItems.length > 0 && (
-                          <div className="mt-6">
-                            <div className="flex justify-between items-center">
-                              <div className="text-sm text-gray-600">
-                                Treatments added: {treatmentItems.length}
-                              </div>
-                              
-                              <Button 
-                                onClick={() => setCurrentStep('patient-info')}
-                                className="flex items-center gap-2"
-                              >
-                                Continue to Next Step
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </div>
+                  <Card className="mb-6">
+                    <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2">
+                      <div>
+                        <CardTitle className="text-xl">Build Your Treatment Plan</CardTitle>
+                        <p className="text-gray-500 text-sm">Select treatments to include in your quote</p>
+                      </div>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="mt-2 sm:mt-0 flex items-center gap-1"
+                        onClick={handleEditQuote}
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Edit Quote Preferences
+                      </Button>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 p-3 bg-blue-50 rounded-md">
+                        <div className="flex items-start gap-3">
+                          <div className="text-blue-500 mt-0.5">
+                            <Info className="h-5 w-5" />
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
+                          <div>
+                            <h3 className="font-medium text-blue-900">Your Quote Preferences</h3>
+                            <ul className="text-sm text-blue-700 space-y-1 mt-1">
+                              <li className="flex items-center gap-2">
+                                <span className="font-medium">Treatment:</span> {quoteParams.treatment}
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="font-medium">Travel Month:</span> {quoteParams.travelMonth}
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="font-medium">Budget:</span> {quoteParams.budget}
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="mt-3 sm:mt-0">
+                          <RefreshCcw className="h-5 w-5 text-blue-500" />
+                        </div>
+                      </div>
+                      
+                      <TreatmentPlanBuilder
+                        items={treatmentItems}
+                        setItems={setTreatmentItems}
+                        showUKComparison={true}
+                      />
+                      
+                      <div className="mt-6">
+                        <Button 
+                          onClick={() => {
+                            if (treatmentItems.length === 0) {
+                              toast({
+                                title: "Empty Plan",
+                                description: "Please add at least one treatment to your plan",
+                                variant: "destructive"
+                              });
+                              return;
+                            }
+                            setCurrentStep('patient-info');
+                          }}
+                          className="w-full sm:w-auto"
+                        >
+                          Continue to Patient Information
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </>
               )}
-            </>
-          )}
-          
-          {/* Step 1.5: Offer Confirmation (conditionally displayed) */}
-          {currentStep === 'offer-confirmation' && (
-            <>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-4">Confirm Your Selection</h2>
-                <p className="text-gray-700 mb-4">
-                  Please confirm your special offer or treatment package to continue with your quote.
-                </p>
-              </div>
               
-              <OfferConfirmationPage 
-                onConfirm={handleOfferConfirmation}
-                onBack={handleBackToTreatmentPlan}
-              />
-              
-              <div className="mt-8">
-                <FAQSection />
-              </div>
-            </>
-          )}
-          
-          {/* Step 2: Patient Information (conditionally displayed) */}
-          {currentStep === 'patient-info' && (
-            <>
-              <PatientInfoForm
-                initialData={patientInfo || {
-                  fullName: searchParams.get('name') || '',
-                  email: searchParams.get('email') || '',
-                  phone: searchParams.get('phone') || '',
-                  travelMonth: searchParams.get('travelMonth') || '',
-                }}
-                onSubmit={handlePatientInfoSubmit}
-              />
-              
-              <div className="flex justify-between">
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    // If this is a special offer or package flow, go back to the confirmation step
-                    if (isSpecialOfferFlow || isPackageFlow) {
-                      setCurrentStep('offer-confirmation');
-                    } else {
-                      setCurrentStep('build-plan');
-                    }
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  {isSpecialOfferFlow || isPackageFlow ? 'Back to Confirmation' : 'Back to Treatment Plan'}
-                </Button>
-              </div>
-            </>
-          )}
-          
-          {/* Step 3: Clinic Selection (conditionally displayed) */}
-          {currentStep === 'select-clinic' && (
-            <>
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-xl font-bold">
-                    <MapPin className="mr-2 h-5 w-5 text-blue-500" />
-                    Select Your Preferred Clinic
-                  </CardTitle>
-                  <CardDescription>
-                    Choose a clinic that best matches your needs and budget. {specialOffer && "Clinics with special offers are highlighted."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Special Offer Notification - Show if there's a special offer */}
-                    {specialOffer && (
-                      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                        <div className="flex items-start">
-                          <Sparkles className="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <h3 className="font-medium text-blue-700">Special Offer Applied</h3>
-                            <p className="text-sm text-blue-600">
-                              Your quote includes the "{specialOffer.title}" special offer from a participating clinic.
-                              This clinic is listed first in your results.
-                            </p>
+              {/* Step 2: Patient Info */}
+              {currentStep === 'patient-info' && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Patient Information</CardTitle>
+                    <p className="text-gray-500 text-sm">Provide your details so we can prepare your quote</p>
+                  </CardHeader>
+                  <CardContent>
+                    <form className="space-y-4" onSubmit={(e) => {
+                      e.preventDefault();
+                      setCurrentStep('select-clinic');
+                    }}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label htmlFor="fullName" className="text-sm font-medium">
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            id="fullName"
+                            value={patientInfo?.fullName || ''}
+                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, fullName: e.target.value }))}
+                            required
+                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="email" className="text-sm font-medium">
+                            Email Address *
+                          </label>
+                          <input
+                            type="email"
+                            id="email"
+                            value={patientInfo?.email || ''}
+                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, email: e.target.value }))}
+                            required
+                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="phone" className="text-sm font-medium">
+                            Phone Number *
+                          </label>
+                          <input
+                            type="tel"
+                            id="phone"
+                            value={patientInfo?.phone || ''}
+                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, phone: e.target.value }))}
+                            required
+                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="travelMonth" className="text-sm font-medium">
+                            Preferred Travel Month
+                          </label>
+                          <select
+                            id="travelMonth"
+                            value={patientInfo?.travelMonth || ''}
+                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, travelMonth: e.target.value }))}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Select a month</option>
+                            <option value="Flexible">Flexible</option>
+                            <option value="May 2025">May 2025</option>
+                            <option value="June 2025">June 2025</option>
+                            <option value="July 2025">July 2025</option>
+                            <option value="August 2025">August 2025</option>
+                            <option value="September 2025">September 2025</option>
+                            <option value="October 2025">October 2025</option>
+                            <option value="November 2025">November 2025</option>
+                            <option value="December 2025">December 2025</option>
+                          </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="departureCity" className="text-sm font-medium">
+                            Departure City/Country
+                          </label>
+                          <input
+                            type="text"
+                            id="departureCity"
+                            value={patientInfo?.departureCity || ''}
+                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, departureCity: e.target.value }))}
+                            placeholder="e.g., London, UK"
+                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="contactMethod" className="text-sm font-medium">
+                            Preferred Contact Method
+                          </label>
+                          <div className="flex gap-4 mt-1">
+                            <label className="flex items-center">
+                              <input
+                                type="radio"
+                                name="contactMethod"
+                                value="email"
+                                checked={patientInfo?.preferredContactMethod === 'email'}
+                                onChange={() => setPatientInfo(prev => ({ ...prev!, preferredContactMethod: 'email' }))}
+                                className="mr-2"
+                              />
+                              Email
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="radio"
+                                name="contactMethod"
+                                value="whatsapp"
+                                checked={patientInfo?.preferredContactMethod === 'whatsapp'}
+                                onChange={() => setPatientInfo(prev => ({ ...prev!, preferredContactMethod: 'whatsapp' }))}
+                                className="mr-2"
+                              />
+                              WhatsApp
+                            </label>
                           </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Do you have dental records?</label>
+                        <div className="flex flex-wrap gap-6 mt-1">
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={patientInfo?.hasXrays}
+                              onChange={(e) => setPatientInfo(prev => ({ ...prev!, hasXrays: e.target.checked }))}
+                              className="mr-2"
+                            />
+                            I have dental X-rays
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={patientInfo?.hasCtScan}
+                              onChange={(e) => setPatientInfo(prev => ({ ...prev!, hasCtScan: e.target.checked }))}
+                              className="mr-2"
+                            />
+                            I have CT Scan
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label htmlFor="additionalNotes" className="text-sm font-medium">
+                          Additional Notes or Questions
+                        </label>
+                        <textarea
+                          id="additionalNotes"
+                          value={patientInfo?.additionalNotes || ''}
+                          onChange={(e) => setPatientInfo(prev => ({ ...prev!, additionalNotes: e.target.value }))}
+                          rows={3}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Any specific questions or concerns you'd like to mention..."
+                        ></textarea>
+                      </div>
+                      
+                      <div className="flex flex-col md:flex-row gap-3 pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setCurrentStep('build-plan')}
+                        >
+                          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                        </Button>
+                        
+                        <Button type="submit">
+                          Continue to Select Clinic <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Step 3: Select Clinic */}
+              {currentStep === 'select-clinic' && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Select Your Preferred Clinic</CardTitle>
+                    <p className="text-gray-500 text-sm">Choose a dental clinic that best meets your needs</p>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Clinic filtering and sorting (simplified) */}
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <h3 className="font-medium mb-2">Filter & Sort Options</h3>
+                      <div className="flex flex-wrap gap-3">
+                        <Badge variant="outline" className="bg-white cursor-pointer">All Clinics</Badge>
+                        <Badge variant="outline" className="bg-white cursor-pointer">Premium</Badge>
+                        <Badge variant="outline" className="bg-white cursor-pointer">Mid-Range</Badge>
+                        <Badge variant="outline" className="bg-white cursor-pointer">Budget-Friendly</Badge>
+                      </div>
+                    </div>
+                    
+                    {/* Special offer notice if applicable */}
+                    {isSpecialOfferFlow && (
+                      <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-md flex items-start">
+                        <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                        <div>
+                          <h3 className="font-medium text-blue-800">Special Offer Selected</h3>
+                          <p className="text-sm text-blue-700">
+                            Your quote includes a special offer from a specific clinic. 
+                            We've highlighted this clinic at the top of the list.
+                          </p>
                         </div>
                       </div>
                     )}
                     
-                    {/* Clinic sorting options */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                      <p className="text-sm text-gray-700">Showing {clinics.length} available clinics for your treatment</p>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-gray-700">Sort by:</label>
-                        <select 
-                          className="text-sm border rounded-md px-2 py-1"
-                          onChange={(e) => {
-                            // Here we'd implement sorting logic
-                            const sortOption = e.target.value;
-                            let sortedClinics = [...clinics];
-                            
-                            if (sortOption === 'price-asc') {
-                              sortedClinics.sort((a, b) => a.priceGBP - b.priceGBP);
-                            } else if (sortOption === 'price-desc') {
-                              sortedClinics.sort((a, b) => b.priceGBP - a.priceGBP);
-                            } else if (sortOption === 'rating') {
-                              sortedClinics.sort((a, b) => b.rating - a.rating);
-                            } else if (sortOption === 'special-offers') {
-                              sortedClinics.sort((a, b) => {
-                                if (a.hasSpecialOffer && !b.hasSpecialOffer) return -1;
-                                if (!a.hasSpecialOffer && b.hasSpecialOffer) return 1;
-                                return 0;
-                              });
-                            }
-                            
-                            setClinics(sortedClinics);
-                          }}
-                        >
-                          <option value="special-offers">Special Offers First</option>
-                          <option value="price-asc">Price (Low to High)</option>
-                          <option value="price-desc">Price (High to Low)</option>
-                          <option value="rating">Rating</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    {/* Clinic list */}
+                    {/* Clinic selection */}
                     <div className="space-y-6">
                       {clinics.map((clinic) => (
                         <ClinicCard
                           key={clinic.id}
                           clinic={clinic}
                           isSelected={selectedClinic?.id === clinic.id}
-                          onSelect={() => handleClinicSelect(clinic)}
+                          onSelect={() => setSelectedClinic(clinic)}
                         />
                       ))}
                     </div>
                     
-                    {/* Navigation buttons */}
-                    <div className="flex justify-between mt-8">
+                    <div className="flex flex-col md:flex-row gap-3 mt-6">
                       <Button
                         variant="outline"
                         onClick={() => setCurrentStep('patient-info')}
-                        className="flex items-center gap-2"
                       >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Patient Info
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
                       </Button>
                       
                       <Button
-                        onClick={handleConfirmClinic}
-                        className="flex items-center gap-2"
-                        disabled={!selectedClinic}
+                        onClick={() => {
+                          if (!selectedClinic) {
+                            toast({
+                              title: "No Clinic Selected",
+                              description: "Please select a clinic to continue",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+                          setCurrentStep('review');
+                          setIsQuoteReady(true);
+                        }}
                       >
-                        Continue to Review
-                        <ChevronRight className="h-4 w-4" />
+                        Continue to Review <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-          
-          {/* Step 4: Review and Submit (conditionally displayed) */}
-          {currentStep === 'review' && (
-            <>
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-xl font-bold">
-                    <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-                    Your Quote is Ready
-                  </CardTitle>
-                  <CardDescription>
-                    Review your treatment plan and personal information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {/* Treatment Summary */}
-                    <div>
-                      <h3 className="font-semibold text-gray-700 mb-3">Treatment Summary</h3>
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        {treatmentItems.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Treatment</TableHead>
-                                <TableHead className="text-center">Qty</TableHead>
-                                <TableHead className="text-right">Price</TableHead>
-                                <TableHead className="text-right">Subtotal</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {treatmentItems.map((item) => (
-                                <TableRow key={item.id}>
-                                  <TableCell className="font-medium">{item.name}</TableCell>
-                                  <TableCell className="text-center">{item.quantity}</TableCell>
-                                  <TableCell className="text-right">£{item.priceGBP}</TableCell>
-                                  <TableCell className="text-right">£{item.subtotalGBP}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                            <TableFooter>
-                              <TableRow>
-                                <TableCell colSpan={3}>Total</TableCell>
-                                <TableCell className="text-right">£{formatCurrency(totalGBP)}</TableCell>
-                              </TableRow>
-                            </TableFooter>
-                          </Table>
-                        ) : (
-                          <p>No treatments added yet.</p>
-                        )}
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Step 4: Review */}
+              {currentStep === 'review' && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Review Your Quote</CardTitle>
+                    <p className="text-gray-500 text-sm">Review the details of your treatment plan</p>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Treatment Plan Review */}
+                    <div className="mb-6">
+                      <h3 className="font-medium text-lg mb-3">Treatment Plan</h3>
+                      <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
+                        <table className="w-full">
+                          <thead className="border-b border-gray-200">
+                            <tr>
+                              <th className="text-left py-2 text-sm font-medium text-gray-600">Treatment</th>
+                              <th className="text-center py-2 text-sm font-medium text-gray-600">Qty</th>
+                              <th className="text-right py-2 text-sm font-medium text-gray-600">Price</th>
+                              <th className="text-right py-2 text-sm font-medium text-gray-600">Subtotal</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {treatmentItems.map((item, index) => (
+                              <tr key={index} className="border-b border-gray-200 last:border-0">
+                                <td className="py-3 text-sm">
+                                  {item.name}
+                                  {item.specialOffer && (
+                                    <div className="mt-1 flex items-center">
+                                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                        <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
+                                        Special Offer: {item.specialOffer.title}
+                                      </Badge>
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="py-3 text-center text-sm">{item.quantity}</td>
+                                <td className="py-3 text-right text-sm">
+                                  {item.specialOffer ? (
+                                    <div>
+                                      <span className="line-through text-gray-400 mr-1">£{item.specialOffer.discountType === 'percentage' ? Math.round(item.priceGBP / (1 - item.specialOffer.discountValue / 100)) : item.priceGBP + item.specialOffer.discountValue}</span>
+                                      <span className="font-medium">£{item.priceGBP}</span>
+                                    </div>
+                                  ) : (
+                                    <span>£{item.priceGBP}</span>
+                                  )}
+                                </td>
+                                <td className="py-3 text-right text-sm font-medium">£{item.subtotalGBP}</td>
+                              </tr>
+                            ))}
+                            
+                            {/* Totals */}
+                            <tr className="bg-gray-50">
+                              <td colSpan={3} className="py-3 text-right font-medium">Total</td>
+                              <td className="py-3 text-right font-bold">£{formatCurrency(calculateTotalGBP())}</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                     
-                    {/* Selected Clinic Information */}
+                    {/* Clinic Details */}
                     {selectedClinic && (
-                      <div>
-                        <h3 className="font-semibold text-gray-700 mb-3">Selected Clinic</h3>
-                        <div className="bg-gray-50 p-4 rounded-md flex items-start gap-4">
-                          <img 
-                            src={selectedClinic.images[0]} 
-                            alt={selectedClinic.name} 
-                            className="w-20 h-20 object-cover rounded-md hidden md:block" 
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-bold text-lg">{selectedClinic.name}</h4>
-                              <TierBadge tier={selectedClinic.tier} />
-                              {selectedClinic.hasSpecialOffer && (
-                                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-                                  <Sparkles className="h-3 w-3 mr-1" /> Special Offer
-                                </Badge>
-                              )}
+                      <div className="mb-6">
+                        <h3 className="font-medium text-lg mb-3">Clinic Details</h3>
+                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200 flex">
+                          <div className="w-24 h-24 flex-shrink-0 mr-4 overflow-hidden rounded-md">
+                            <img 
+                              src={selectedClinic.images[0]} 
+                              alt={selectedClinic.name} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <h4 className="font-bold">{selectedClinic.name}</h4>
+                            <div className="flex items-center gap-1 mb-1">
+                              <MapPin className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm text-gray-600">{selectedClinic.location}</span>
                             </div>
-                            
-                            <div className="flex items-center text-gray-700 mb-2">
-                              <MapPin className="h-4 w-4 mr-1 text-gray-500" />
-                              <span className="text-sm">{selectedClinic.location}</span>
-                              <span className="mx-2">•</span>
+                            <div className="flex items-center mb-2">
                               <RatingStars rating={selectedClinic.rating} />
-                              <span className="ml-1 text-xs text-gray-500">({selectedClinic.reviewCount})</span>
+                              <span className="text-sm text-gray-500 ml-2">({selectedClinic.reviewCount} reviews)</span>
                             </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-                              <div>
-                                <p className="text-sm font-medium text-gray-500">Price</p>
-                                <p className="font-bold text-blue-600">£{selectedClinic.priceGBP}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-500">Guarantee</p>
-                                <p>{selectedClinic.guarantee}</p>
-                              </div>
-                            </div>
-                            
-                            {selectedClinic.hasSpecialOffer && selectedClinic.specialOfferDetails && (
-                              <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-100">
-                                <p className="text-sm font-medium text-blue-700">
-                                  {selectedClinic.specialOfferDetails.title} - 
-                                  {selectedClinic.specialOfferDetails.discountType === 'percentage' ? 
-                                    ` ${selectedClinic.specialOfferDetails.discountValue}% OFF` : 
-                                    ` £${selectedClinic.specialOfferDetails.discountValue} OFF`}
-                                </p>
-                              </div>
-                            )}
+                            <p className="text-sm text-gray-700">{selectedClinic.description}</p>
                           </div>
                         </div>
                       </div>
                     )}
                     
-                    {/* Patient Information */}
+                    {/* Patient Details */}
                     {patientInfo && (
-                      <div>
-                        <h3 className="font-semibold text-gray-700 mb-3">Your Information</h3>
-                        <div className="bg-gray-50 p-4 rounded-md">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Name</p>
-                              <p>{patientInfo.fullName}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Email</p>
-                              <p>{patientInfo.email}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Phone</p>
-                              <p>{patientInfo.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Travel Month</p>
-                              <p>{patientInfo.travelMonth || 'Not specified'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Departure City</p>
-                              <p>{patientInfo.departureCity || 'Not specified'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Contact Preference</p>
-                              <p className="capitalize">{patientInfo.preferredContactMethod}</p>
-                            </div>
+                      <div className="mb-6">
+                        <h3 className="font-medium text-lg mb-3">Patient Information</h3>
+                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                          <div>
+                            <p className="text-sm text-gray-500">Full Name</p>
+                            <p className="font-medium">{patientInfo.fullName}</p>
                           </div>
-                          
-                          <div className="mt-4">
-                            <p className="text-sm font-medium text-gray-500">Dental Records</p>
-                            <div className="flex flex-wrap gap-3 mt-1">
-                              <Badge variant={patientInfo.hasXrays ? "default" : "outline"}>
-                                {patientInfo.hasXrays ? 'Has X-Rays' : 'No X-Rays'}
-                              </Badge>
-                              <Badge variant={patientInfo.hasCtScan ? "default" : "outline"}>
-                                {patientInfo.hasCtScan ? 'Has CT Scan' : 'No CT Scan'}
-                              </Badge>
-                            </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Email</p>
+                            <p className="font-medium">{patientInfo.email}</p>
                           </div>
-                          
+                          <div>
+                            <p className="text-sm text-gray-500">Phone</p>
+                            <p className="font-medium">{patientInfo.phone}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Travel Month</p>
+                            <p className="font-medium">{patientInfo.travelMonth || quoteParams.travelMonth || 'Flexible'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Departure City</p>
+                            <p className="font-medium">{patientInfo.departureCity || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Dental Records</p>
+                            <p className="font-medium">
+                              {patientInfo.hasXrays ? 'X-rays available' : ''}
+                              {patientInfo.hasXrays && patientInfo.hasCtScan ? ', ' : ''}
+                              {patientInfo.hasCtScan ? 'CT Scan available' : ''}
+                              {!patientInfo.hasXrays && !patientInfo.hasCtScan ? 'None available' : ''}
+                            </p>
+                          </div>
                           {patientInfo.additionalNotes && (
-                            <div className="mt-4">
-                              <p className="text-sm font-medium text-gray-500">Additional Notes</p>
-                              <p className="text-sm mt-1">{patientInfo.additionalNotes}</p>
+                            <div className="col-span-2">
+                              <p className="text-sm text-gray-500">Additional Notes</p>
+                              <p className="font-medium">{patientInfo.additionalNotes}</p>
                             </div>
                           )}
                         </div>
                       </div>
                     )}
                     
-                    {/* Next Steps */}
-                    <div className="bg-blue-50 p-4 rounded-md">
-                      <h3 className="font-semibold text-blue-800 mb-2">Next Steps</h3>
-                      <ol className="space-y-2">
-                        <li className="flex items-start">
-                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
-                            <span className="text-xs">1</span>
-                          </div>
-                          <p className="text-blue-700">Our dental experts will review your treatment plan within 24 hours</p>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
-                            <span className="text-xs">2</span>
-                          </div>
-                          <p className="text-blue-700">You will receive a detailed quote from our partner clinics via email</p>
-                        </li>
-                        <li className="flex items-start">
-                          <div className="bg-blue-100 text-blue-800 rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0 mt-0.5 mr-2">
-                            <span className="text-xs">3</span>
-                          </div>
-                          <p className="text-blue-700">A dental advisor will contact you to discuss the options and answer questions</p>
-                        </li>
-                      </ol>
+                    {/* Actions */}
+                    <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentStep('select-clinic')}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                      </Button>
+                      
+                      <Button
+                        className="flex items-center"
+                        onClick={async () => {
+                          try {
+                            // Attempt to save the treatment plan
+                            const result = await saveTreatmentPlan();
+                            
+                            if (!result) {
+                              // Error handling is done in saveTreatmentPlan
+                              return;
+                            }
+                            
+                            // Clear session storage items
+                            sessionStorage.removeItem('activeSpecialOffer');
+                            
+                            // Reset context and redirect after successful save
+                            setTimeout(() => {
+                              // Reset context
+                              resetFlow();
+                              
+                              // Use the redirectUrl from API if available, otherwise use standard redirect
+                              const redirectPath = result.redirectUrl || `/client-portal?source=${source}&planId=${result.id}`;
+                              console.log(`Redirecting to: ${redirectPath}`);
+                              window.location.href = redirectPath;
+                            }, 1500);
+                          } catch (error) {
+                            console.error('Error saving treatment plan:', error);
+                            toast({
+                              title: "Error",
+                              description: "Failed to save your treatment plan. Please try again.",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Save Your {source === 'package' ? 'Package' : 'Treatment'} Plan
+                      </Button>
+                      
+                      {/* Download Quote button would go here */}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Supplementary information - Customer testimonials */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">What Our Patients Say</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-yellow-400">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 inline-block fill-current" />
+                          ))}
+                        </div>
+                        <span className="font-medium">5.0</span>
+                      </div>
+                      <p className="text-sm italic mb-3">
+                        "MyDentalFly made my dental trip to Istanbul so easy. The clinic was fantastic and I saved over £3,000 compared to UK prices!"
+                      </p>
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm mr-2">
+                          SJ
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Sarah J.</p>
+                          <p className="text-xs text-gray-500">London, UK</p>
+                        </div>
+                      </div>
                     </div>
                     
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <Button 
-                          variant="outline"
-                          onClick={() => setCurrentStep('build-plan')}
-                          className="flex items-center gap-2"
-                        >
-                          <Pencil className="h-4 w-4" />
-                          Edit Treatment Plan
-                        </Button>
-                        
-                        <Button 
-                          variant="outline"
-                          onClick={() => setCurrentStep('patient-info')}
-                          className="flex items-center gap-2"
-                        >
-                          <Pencil className="h-4 w-4" />
-                          Edit Information
-                        </Button>
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-yellow-400">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 inline-block fill-current" />
+                          ))}
+                        </div>
+                        <span className="font-medium">5.0</span>
                       </div>
-                      
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        {(fromSpecialOffer || isSpecialOfferFlow || isPackageFlow) ? (
-                          <Button 
-                            variant="default"
-                            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600"
-                            onClick={async () => {
-                              // Create a treatment plan and redirect to the patient portal
-                              toast({
-                                title: "Saving Treatment Plan",
-                                description: `Creating your ${source === 'package' ? 'package' : 'treatment'} plan...`,
-                              });
-                              
-                              try {
-                                // Prepare the treatment plan data
-                                const planData = {
-                                  title: source === 'package' 
-                                    ? `Package Plan from ${selectedClinic?.name || 'Clinic'}`
-                                    : `Treatment Plan from ${selectedClinic?.name || 'Clinic'}`,
-                                  clinicId: selectedClinic?.id || clinicId,
-                                  sourceType: source,
-                                  sourceId: source === 'package' ? packageId : offerId,
-                                  treatments: treatmentItems.map(item => ({
-                                    name: item.name,
-                                    quantity: item.quantity,
-                                    priceGBP: item.priceGBP,
-                                    priceUSD: item.priceUSD,
-                                    category: item.category
-                                  })),
-                                  patientInfo: {
-                                    ...patientInfo
-                                  }
-                                };
-                                
-                                // Call the appropriate API endpoint based on source
-                                let response;
-                                
-                                if (source === 'offer' && offerId) {
-                                  console.log(`Using unified treatment plan API for offer ${offerId}`);
-                                  response = await fetch(`/api/treatment-plans/from-offer`, {
-                                    method: 'POST', 
-                                    headers: {
-                                      'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                      offerId: offerId,
-                                      clinicId: selectedClinic?.id || clinicId,
-                                      patientInfo: patientInfo,
-                                      notes: 'Created from YourQuotePage special offer flow'
-                                    })
-                                  });
-                                } else if (source === 'package' && packageId) {
-                                  console.log(`Using unified treatment plan API for package ${packageId}`);
-                                  response = await fetch(`/api/treatment-plans/from-package`, {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                      packageId: packageId,
-                                      clinicId: selectedClinic?.id || clinicId,
-                                      patientInfo: patientInfo,
-                                      additionalTreatments: treatmentItems,
-                                      notes: 'Created from YourQuotePage package flow'
-                                    })
-                                  });
-                                } else {
-                                  // Standard treatment plan
-                                  console.log('Using standard treatment plan API');
-                                  response = await fetch('/api/treatment-plans', {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify(planData)
-                                  });
-                                }
-                                
-                                if (!response.ok) {
-                                  const errorText = await response.text();
-                                  console.error('Error response:', errorText);
-                                  throw new Error(`Failed to save treatment plan: ${errorText}`);
-                                }
-                                
-                                const result = await response.json();
-                                console.log('Treatment plan API response:', result);
-                                
-                                toast({
-                                  title: "Success!",
-                                  description: `Your ${source === 'package' ? 'package' : 'treatment'} plan has been saved.`,
-                                  variant: "default"
-                                });
-                                
-                                // Clear any pending offer/package data
-                                sessionStorage.removeItem('pendingSpecialOffer');
-                                sessionStorage.removeItem('processingSpecialOffer');
-                                sessionStorage.removeItem('activeSpecialOffer');
-                                
-                                // Reset context and redirect after successful save
-                                setTimeout(() => {
-                                  // Reset context
-                                  resetFlow();
-                                  
-                                  // Use the redirectUrl from API if available, otherwise use standard redirect
-                                  const redirectPath = result.redirectUrl || `/client-portal?source=${source}&planId=${result.id}`;
-                                  console.log(`Redirecting to: ${redirectPath}`);
-                                  window.location.href = redirectPath;
-                                }, 1500);
-                              } catch (error) {
-                                console.error('Error saving treatment plan:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to save your treatment plan. Please try again.",
-                                  variant: "destructive"
-                                });
-                              }
-                            }}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Save Your {source === 'package' ? 'Package' : 'Treatment'} Plan
-                          </Button>
-                        ) : (
-                          <>
-                            <Button 
-                              variant="default"
-                              className="flex items-center gap-2"
-                            >
-                              <Mail className="h-4 w-4" />
-                              Email Quote
-                            </Button>
-                            
-                            <Button 
-                              variant="default"
-                              className="flex items-center gap-2"
-                            >
-                              <Download className="h-4 w-4" />
-                              Download PDF
-                            </Button>
-                          </>
-                        )}
+                      <p className="text-sm italic mb-3">
+                        "The quality of care I received in Istanbul was better than anything I'd experienced before. My new smile looks amazing!"
+                      </p>
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm mr-2">
+                          DT
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">David T.</p>
+                          <p className="text-xs text-gray-500">Manchester, UK</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              {/* Call to Action */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
-                <div className="max-w-3xl mx-auto text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                    Ready to Get Started?
-                  </h2>
-                  
-                  <p className="text-blue-100 mb-6">
-                    Pay a £200 refundable deposit to secure your consultation and have our concierge team handle all your travel arrangements.
-                  </p>
-                  
-                  {totalGBP > 0 && (
-                    <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
-                      <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
-                      <p className="text-2xl font-bold">£{formatCurrency(Math.round(totalGBP * 0.35))}</p>
-                      <p className="text-sm text-blue-200">Final price confirmed after dental review, payment only in-person at clinic</p>
-                      <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col sm:flex-row justify-center gap-4">
-                    <Button 
-                      className="bg-white text-blue-700 hover:bg-blue-50"
-                      size="lg"
-                    >
-                      <CreditCard className="mr-2 h-5 w-5" />
-                      Pay £200 Deposit & Book Now
-                    </Button>
+              {/* FAQs */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Frequently Asked Questions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger className="text-base font-medium">How does dental tourism work?</AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Dental tourism allows you to receive high-quality dental care in another country at a fraction of the cost. With MyDentalFly, we handle all the logistics from clinic selection to transportation and accommodation arrangements, making your dental trip as comfortable as possible.
+                      </AccordionContent>
+                    </AccordionItem>
                     
-                    <Button 
-                      variant="outline"
-                      className="border-white text-white hover:bg-blue-700"
-                      size="lg"
-                    >
-                      <MessageCircle className="mr-2 h-5 w-5" />
-                      Speak to a Dental Advisor
-                    </Button>
-                  </div>
-                </div>
+                    <AccordionItem value="item-2">
+                      <AccordionTrigger className="text-base font-medium">Is the quality of treatment comparable to the UK?</AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        Yes! The clinics we partner with in Istanbul use the same or better materials and technologies as those in the UK. Many dentists are internationally trained and clinics maintain international certifications. The key difference is the significantly lower cost due to lower overhead expenses.
+                      </AccordionContent>
+                    </AccordionItem>
+                    
+                    <AccordionItem value="item-3">
+                      <AccordionTrigger className="text-base font-medium">How long will I need to stay in Istanbul?</AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        The duration of your stay depends on the treatments you need. Simple procedures may require just 3-4 days, while more complex treatments like full-mouth reconstructions typically need 7-10 days across two visits. Your quote will include a recommended stay duration.
+                      </AccordionContent>
+                    </AccordionItem>
+                    
+                    <AccordionItem value="item-4">
+                      <AccordionTrigger className="text-base font-medium">What happens if I need adjustments after returning home?</AccordionTrigger>
+                      <AccordionContent className="text-sm text-gray-600">
+                        All treatments come with guarantees ranging from 3 to 10 years. Minor adjustments can often be handled by your local dentist, but for significant issues, the clinics will cover the cost of any necessary return visits. MyDentalFly provides ongoing support even after you return home.
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Right column - Summary panel */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                <QuoteSummaryPanel
+                  treatmentItems={treatmentItems}
+                  clinic={selectedClinic}
+                  specialOffer={specialOffer}
+                  showSummary={treatmentItems.length > 0}
+                />
+                
+                <Card className="mt-6">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center">
+                      <HeartHandshake className="h-5 w-5 mr-2 text-blue-500" />
+                      How We Support You
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <div className="mr-2 mt-0.5 text-green-500">
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">Personal dental treatment coordinator</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="mr-2 mt-0.5 text-green-500">
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">Pre-travel consultation & planning</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="mr-2 mt-0.5 text-green-500">
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">Clinic-verified guarantees & aftercare</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="mr-2 mt-0.5 text-green-500">
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">Help with flights & accommodation</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="mr-2 mt-0.5 text-green-500">
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">Airport & clinic transfers</span>
+                      </li>
+                      <li className="flex items-start">
+                        <div className="mr-2 mt-0.5 text-green-500">
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm">24/7 support during your stay</span>
+                      </li>
+                    </ul>
+                    
+                    <div className="mt-4">
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex items-center justify-center" 
+                        size="sm"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Talk to a Coordinator
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Edit Quote Modal */}
+                {isEditModalOpen && (
+                  <EditQuoteModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    initialValues={quoteParams}
+                    onSave={handleSaveQuoteParams}
+                  />
+                )}
               </div>
-            </>
-          )}
-          
-          {/* FAQ Section */}
-          <FAQSection />
+            </div>
+          </div>
         </div>
       </main>
       
