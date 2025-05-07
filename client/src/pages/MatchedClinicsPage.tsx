@@ -29,10 +29,25 @@ import ClientPdfGenerator from '@/components/ClientPdfGenerator';
 
 interface TreatmentItem {
   id: string;
+  category: string;
   name: string;
   quantity: number;
+  priceGBP: number;
+  priceUSD?: number;
   subtotalGBP: number;
-  category: string;
+  subtotalUSD?: number;
+  guarantee?: string;
+  ukPriceGBP?: number;
+  ukPriceUSD?: number;
+  isPackage?: boolean;
+  packageId?: string;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
 }
 
 interface PatientInfo {
@@ -509,10 +524,22 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           <h2 className="font-semibold mb-3">Your Treatment Plan Summary</h2>
           <div className="space-y-1 mb-3">
             {treatmentPlan.map((treatment) => (
-              <div key={treatment.id} className="flex justify-between">
-                <span className="text-gray-700">
-                  {treatment.name} {treatment.quantity > 1 && `x${treatment.quantity}`}
-                </span>
+              <div key={treatment.id} className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-700">
+                    {treatment.name} {treatment.quantity > 1 && `x${treatment.quantity}`}
+                  </span>
+                  {treatment.isPackage && (
+                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">
+                      Package
+                    </Badge>
+                  )}
+                  {treatment.specialOffer && (
+                    <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
+                      Special Offer
+                    </Badge>
+                  )}
+                </div>
                 <span className="font-medium">£{treatment.subtotalGBP}</span>
               </div>
             ))}
