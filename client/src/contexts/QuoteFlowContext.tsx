@@ -83,19 +83,54 @@ export const useInitializeQuoteFlow = () => {
     const offerIdParam = urlParams.get('offerId');
     const packageIdParam = urlParams.get('packageId');
     const clinicIdParam = urlParams.get('clinicId');
+    const sourceParam = urlParams.get('source');
 
-    // Set the source based on parameters
-    if (offerIdParam) {
+    console.log('QuoteFlowContext: Initializing from URL params:', {
+      offerIdParam,
+      packageIdParam,
+      clinicIdParam,
+      sourceParam,
+      urlSearch: window.location.search
+    });
+
+    // Special case: sourceParam takes precedence if available
+    if (sourceParam === 'package' && packageIdParam) {
+      console.log('QuoteFlowContext: Setting package flow from source parameter');
+      setSource('package');
+      setPackageId(packageIdParam);
+      if (clinicIdParam) setClinicId(clinicIdParam);
+    } 
+    // Special case: sourceParam for special offer
+    else if (sourceParam === 'special_offer' && offerIdParam) {
+      console.log('QuoteFlowContext: Setting special offer flow from source parameter');
+      setSource('special_offer');
+      setOfferId(offerIdParam);
+      if (clinicIdParam) setClinicId(clinicIdParam);
+    }
+    // Regular parameter checks
+    else if (offerIdParam) {
+      console.log('QuoteFlowContext: Setting special offer flow from offerId parameter');
       setSource('special_offer');
       setOfferId(offerIdParam);
       if (clinicIdParam) setClinicId(clinicIdParam);
     } else if (packageIdParam) {
+      console.log('QuoteFlowContext: Setting package flow from packageId parameter');
       setSource('package');
       setPackageId(packageIdParam);
       if (clinicIdParam) setClinicId(clinicIdParam);
     } else {
+      console.log('QuoteFlowContext: Setting normal flow (no special parameters found)');
       setSource('normal');
     }
+    
+    // Check session storage as well
+    const pendingOffer = sessionStorage.getItem('pendingSpecialOffer');
+    const pendingPackage = sessionStorage.getItem('pendingPackage');
+    
+    console.log('QuoteFlowContext: Session storage check:', {
+      pendingOffer: pendingOffer ? 'exists' : 'not found',
+      pendingPackage: pendingPackage ? 'exists' : 'not found'
+    });
   };
 
   return { initializeFromUrlParams };

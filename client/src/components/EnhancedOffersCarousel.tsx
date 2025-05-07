@@ -511,8 +511,9 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       // Redirect directly to the quote flow without requiring login first
       console.log("Redirecting to quote page with offer details");
       
-      // Use the same format as OfferCard for consistency
-      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${offer.clinic_id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
+      // Fix the URL parameters to match what QuoteFlowContext is expecting
+      // Note that "offerId" is the key parameter the context looks for, not "specialOffer"
+      window.location.href = `/quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinic_id}&offerId=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
       return;
     }
   };
