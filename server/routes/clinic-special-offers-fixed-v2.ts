@@ -265,8 +265,21 @@ router.post('/apply', async (req, res) => {
       return res.status(400).json({ success: false, message: 'This special offer has expired' });
     }
     
-    // Apply the discount to the treatments
+    // Apply the discount to the treatments, but only apply to eligible treatments
     const discountedTreatments = treatments.map(treatment => {
+      // First determine if this treatment is eligible for the special offer
+      const treatmentName = treatment.name.toLowerCase().replace(/_/g, ' ').replace(/\./g, '');
+      const isEligible = offer.applicable_treatments.some(appTreatment => {
+        const normalizedAppTreatment = appTreatment.toLowerCase().replace(/_/g, ' ').replace(/\./g, '');
+        return treatmentName.includes(normalizedAppTreatment) || 
+               normalizedAppTreatment.includes(treatmentName);
+      });
+      
+      // If treatment is not eligible, return it unchanged
+      if (!isEligible) {
+        return treatment;
+      }
+      
       // Apply discount based on the offer type
       let discountedPrice = treatment.priceGBP;
       
