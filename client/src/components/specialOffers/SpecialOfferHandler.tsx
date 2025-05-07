@@ -60,10 +60,23 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
       
       if (isSpecialOfferFlow && specialOffer) {
         // Create a special offer treatment item
+        // Get additional parameters from URL to enhance special offer data
+        const urlParams = new URLSearchParams(window.location.search);
+        const treatmentNameFromUrl = urlParams.get('treatmentName') || urlParams.get('offerTitle');
+        const discountValueFromUrl = urlParams.get('discountValue');
+        const discountTypeFromUrl = urlParams.get('discountType');
+        
+        console.log("📋 Special offer parameters from URL:", {
+          treatmentNameFromUrl,
+          discountValueFromUrl,
+          discountTypeFromUrl
+        });
+        
         const specialOfferTreatment: TreatmentItem = {
           id: `special_offer_${Date.now()}`,
           category: 'special_offer',
-          name: `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`,
+          name: treatmentNameFromUrl || 
+                `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`,
           quantity: 1,
           priceGBP: 450, // Base price, will be discounted later
           priceUSD: 580, // Base price, will be discounted later
@@ -74,25 +87,37 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
           specialOffer: {
             id: specialOffer.id,
             title: specialOffer.title,
-            discountType: specialOffer.discountType,
-            discountValue: specialOffer.discountValue,
+            // Use URL params if available, otherwise fallback to specialOffer object
+            discountType: discountTypeFromUrl as 'percentage' | 'fixed_amount' || specialOffer.discountType,
+            discountValue: discountValueFromUrl ? parseFloat(discountValueFromUrl) : specialOffer.discountValue,
             clinicId: specialOffer.clinicId
           }
         };
         
+        // Use discount values from URL if available, otherwise from specialOffer object
+        const discountType = discountTypeFromUrl || specialOffer.discountType;
+        const discountValue = discountValueFromUrl ? parseFloat(discountValueFromUrl) : specialOffer.discountValue;
+        
         // Apply the discount based on type
-        if (specialOffer.discountType === 'percentage') {
-          const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+        if (discountType === 'percentage') {
+          const discountMultiplier = (100 - discountValue) / 100;
           specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
           specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
           specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
           specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        } else if (specialOffer.discountType === 'fixed_amount') {
-          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOffer.discountValue);
-          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert GBP to USD
+        } else if (discountType === 'fixed_amount' || discountType === 'fixed') {
+          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - discountValue);
+          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(discountValue * 1.28)); // Convert GBP to USD
           specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
           specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
         }
+        
+        console.log("📋 Applied discount to special offer:", {
+          discountType,
+          discountValue,
+          originalPriceGBP: 450,
+          discountedPriceGBP: specialOfferTreatment.priceGBP
+        });
         
         console.log("📋 SpecialOfferHandler adding special offer to treatment items:", specialOfferTreatment);
         onTreatmentsChange([...treatmentItems, specialOfferTreatment]);
