@@ -115,37 +115,54 @@ export function OfferCard({ offer }: OfferCardProps) {
       // IMPORTANT: Parameters must match exactly what the YourQuotePage expects
       console.log("Redirecting to quote page with offer:", offer);
       
-      // SIMPLIFIED APPROACH: Create a direct link with minimum parameters needed
-      const url = new URL('/your-quote', window.location.origin);
-      
-      // Log the complete offer object for debugging
-      console.log("OFFER DETAILS (DEBUGGING):", JSON.stringify(offer));
-      
-      // Minimal required parameters
-      url.searchParams.append('source', 'special_offer');
-      url.searchParams.append('offerTitle', offer.title);
-      
-      // Hard-code these values for Free Consultation Package 
-      if (offer.title.includes('Consultation') || offer.title.includes('consultation')) {
-        url.searchParams.append('treatment', 'Free Consultation');
-        url.searchParams.append('offerDiscount', '100');
-        url.searchParams.append('offerDiscountType', 'percentage');
-        url.searchParams.append('clinicId', 'dentakay-istanbul');
-      } else {
-        url.searchParams.append('treatment', 'Dental Implants');
-        url.searchParams.append('clinicId', offer.clinicId || 'dentakay-istanbul');
+      // FORCE SPECIAL URL FOR FREE CONSULTATION PACKAGE
+      // Use a completely separate approach for consultation packages
+      if (offer.title && (offer.title.includes('Consultation') || offer.title.includes('consultation'))) {
+        // Direct link to Free Consultation flow - ULTRA SIMPLIFIED
+        // This should bypass any issues with the other flows
+        const consultationUrl = new URL('/your-quote', window.location.origin);
         
-        // Only add discount if provided
-        if (offer.discountValue) {
-          url.searchParams.append('offerDiscount', offer.discountValue.toString());
-        }
-        if (offer.discountType) {
-          url.searchParams.append('offerDiscountType', offer.discountType);
-        }
+        // Fixed essential parameters for a free consultation - hardcoded for maximum reliability
+        consultationUrl.searchParams.append('source', 'special_offer');
+        consultationUrl.searchParams.append('specialOffer', 'true');
+        consultationUrl.searchParams.append('treatment', 'dental_implant_standard'); // Use a standard treatment
+        consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
+        consultationUrl.searchParams.append('clinicId', 'dentakay-istanbul');
+        consultationUrl.searchParams.append('offerId', offer.id);
+        consultationUrl.searchParams.append('offerDiscount', '100');
+        consultationUrl.searchParams.append('offerDiscountType', 'percentage');
+        consultationUrl.searchParams.append('step', 'start');
+        consultationUrl.searchParams.append('skipInfo', 'true');
+        
+        // Debug the URL
+        console.log("🔷 FREE CONSULTATION URL:", consultationUrl.toString());
+        
+        // Replace window location with the consultation URL
+        window.location.href = consultationUrl.toString();
+        return;
       }
       
-      // Always add the offer ID
+      // For non-consultation standard special offers:
+      const url = new URL('/your-quote', window.location.origin);
+      
+      // Log standard offer details
+      console.log("💎 STANDARD OFFER DETAILS:", JSON.stringify(offer));
+      
+      // Standard parameters
+      url.searchParams.append('source', 'special_offer');
+      url.searchParams.append('specialOffer', 'true');
+      url.searchParams.append('offerTitle', offer.title);
+      url.searchParams.append('treatment', 'Dental Implants');
+      url.searchParams.append('clinicId', offer.clinicId || 'dentakay-istanbul');
       url.searchParams.append('offerId', offer.id);
+      
+      // Add discount if provided
+      if (offer.discountValue) {
+        url.searchParams.append('offerDiscount', offer.discountValue.toString());
+      }
+      if (offer.discountType) {
+        url.searchParams.append('offerDiscountType', offer.discountType);
+      }
       
       // Flow control parameters
       url.searchParams.append('step', 'start');

@@ -40,7 +40,58 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
   // This effect ensures that when the quote flow indicates a special offer,
   // but the treatment items don't reflect it, we add the special offer to the list
   useEffect(() => {
-    console.log("🔍 SpecialOfferHandler checking for offers", {
+    // Check URL directly for Free Consultation Package
+    const urlParams = new URLSearchParams(window.location.search);
+    const offerTitle = urlParams.get('offerTitle');
+    const isFreeConsultationInUrl = offerTitle?.includes('Consultation') || offerTitle?.includes('consultation');
+    
+    console.log("⚡ SPECIAL OFFER HANDLER ACTIVATED ⚡");
+    console.log("Check for free consultation in URL:", { 
+      offerTitle, 
+      isFreeConsultationInUrl,
+      source: urlParams.get('source'),
+      specialOffer: urlParams.get('specialOffer')
+    });
+    
+    // INTERCEPT FREE CONSULTATION: Direct method to handle Free Consultation packages
+    if (isFreeConsultationInUrl && !treatmentItems.some(item => item.name?.includes('Consultation'))) {
+      console.log("🎯 DIRECT FREE CONSULTATION DETECTION - Creating treatment");
+      
+      // Create consultation treatment directly from URL params
+      const consultationTreatment: TreatmentItem = {
+        id: `direct_consultation_${Date.now()}`,
+        category: 'consultation',
+        name: offerTitle || 'Free Consultation Package',
+        quantity: 1,
+        priceGBP: 0, // Free = £0
+        priceUSD: 0, // Free = $0
+        subtotalGBP: 0,
+        subtotalUSD: 0,
+        guarantee: '30-day',
+        isSpecialOffer: true,
+        specialOffer: {
+          id: urlParams.get('offerId') || 'free-consultation',
+          title: offerTitle || 'Free Consultation Package',
+          discountType: 'percentage',
+          discountValue: 100,
+          clinicId: urlParams.get('clinicId') || 'dentakay-istanbul'
+        }
+      };
+      
+      console.log("🆓 Adding FREE CONSULTATION to treatment plan:", consultationTreatment);
+      onTreatmentsChange([...treatmentItems, consultationTreatment]);
+      
+      toast({
+        title: "Free Consultation Added",
+        description: "Your free consultation has been added to your treatment plan.",
+      });
+      
+      // Return early - we've handled this special case
+      return;
+    }
+    
+    // Standard flow logging  
+    console.log("🔍 SpecialOfferHandler checking for standard offers", {
       isSpecialOfferFlow,
       isPackageFlow,
       isPromoTokenFlow,
@@ -51,7 +102,7 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
       hasSpecialOfferItem: treatmentItems.some(item => item.isSpecialOffer || item.isPackage || item.promoToken)
     });
 
-    // Only run logic if we have a special offer type flow but no special offer items
+    // Only run standard logic if we have a special offer type flow but no special offer items
     if (
       (isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && 
       !treatmentItems.some(item => item.isSpecialOffer || item.isPackage || item.promoToken)
