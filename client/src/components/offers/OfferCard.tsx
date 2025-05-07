@@ -57,6 +57,13 @@ export function OfferCard({ offer }: OfferCardProps) {
     setClinicId 
   } = useQuoteFlow();
   
+  // Determine if this is a free consultation package
+  const isFreeConsultation = (
+    (offer.title?.includes('Free Consultation') || offer.title?.includes('free consultation')) ||
+    ((offer.title?.includes('Consultation') || offer.title?.includes('consultation')) && 
+     offer.discountType === 'percentage' && offer.discountValue === 100)
+  );
+  
   // Background image style with fallback
   const backgroundImage = offer.image 
     ? `url(${offer.image})`
@@ -81,12 +88,16 @@ export function OfferCard({ offer }: OfferCardProps) {
   // Function to create a quote from an offer via the API
   const createQuoteFromOffer = async (offerId: string, clinicId: string): Promise<QuoteResponse> => {
     try {
-      // Determine if this is a free consultation package
-      const isFreeConsultation = 
-        offer.title?.includes('Consultation') || 
-        offer.title?.includes('consultation');
+      // Use the component-level isFreeConsultation check
         
-      console.log(`Processing ${isFreeConsultation ? 'Free Consultation Package' : 'Standard Special Offer'}`);
+      console.log(`🔍 Processing offer:`, {
+        offerId,
+        clinicId,
+        title: offer.title,
+        isFreeConsultation,
+        discountType: offer.discountType, 
+        discountValue: offer.discountValue
+      });
       
       // For Free Consultation Package, try our dedicated endpoint first
       if (isFreeConsultation) {
@@ -417,6 +428,13 @@ export function OfferCard({ offer }: OfferCardProps) {
 
   const handleOfferClick = async () => {
     try {
+      console.log('🎯 OfferCard clicked:', {
+        offerId: offer.id, 
+        clinicId: offer.clinicId,
+        isFreeConsultation: isFreeConsultation,
+        title: offer.title
+      });
+      
       setIsProcessing(true);
       
       // Update the quote flow context
