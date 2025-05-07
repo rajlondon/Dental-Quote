@@ -596,7 +596,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         e.currentTarget.src = '/images/offers/default-offer.jpg';
                       }
                     }}
-                    importance="high" // Standard attribute for image priority
+                    loading="eager" // Eagerly load these important images
                   />
                 </div>
                 <div className="absolute top-4 left-4">
