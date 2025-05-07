@@ -84,7 +84,25 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                 <div className="flex flex-col">
                   {(treatment.isSpecialOffer || treatment.specialOffer) && (
                     <div className="mb-1">
-                      <span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10">Special Offer</span>
+                      <span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10 flex items-center">
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          width="10" 
+                          height="10" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          className="mr-1"
+                        >
+                          <path d="M12 3l1.2 2.8 2.8.3-2 2 .5 2.9-2.5-1.3-2.5 1.3.5-2.9-2-2 2.8-.3z"/>
+                          <path d="M5 9l.4 1 1 .1-.7.7.2 1-.9-.5-.9.5.2-1-.7-.7 1-.1z"/>
+                          <path d="M19 9l.4 1 1 .1-.7.7.2 1-.9-.5-.9.5.2-1-.7-.7 1-.1z"/>
+                        </svg>
+                        Special Offer
+                      </span>
                     </div>
                   )}
                   {treatment.isPackage && (
@@ -166,17 +184,39 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
 
       {/* Special offer or package specific content */}
       {isSpecialOfferFlow && specialOfferTitle && (
-        <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-md">
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 p-4 rounded-md shadow-sm">
           <div className="flex items-start">
-            <Sparkles className="h-5 w-5 text-blue-600 mr-2 mt-1" />
+            <div className="bg-white rounded-full p-1 border border-blue-200 shadow-sm mr-3 mt-1">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
             <div>
-              <h3 className="font-semibold text-blue-800">{specialOfferTitle}</h3>
-              <p className="text-blue-700 text-sm mt-1">
-                {discountType === 'percentage' 
-                  ? `Includes ${discountValue}% off your treatment price`
-                  : `Includes £${discountValue} off your treatment price`
-                }
-                {clinicName && ` at ${clinicName}`}
+              <h3 className="font-semibold text-blue-800 text-md">{specialOfferTitle}</h3>
+              <p className="text-blue-700 text-sm mt-1 flex items-center">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="14" 
+                  height="14" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="mr-1"
+                >
+                  <path d="M12 3l1.2 2.8 2.8.3-2 2 .5 2.9-2.5-1.3-2.5 1.3.5-2.9-2-2 2.8-.3z"/>
+                </svg>
+                <span className="font-medium">
+                  {discountType === 'percentage' 
+                    ? `Save ${discountValue}% off your treatment price`
+                    : `Save £${discountValue} off your treatment price`
+                  }
+                  {clinicName && ` at ${clinicName}`}
+                </span>
+              </p>
+              <p className="text-blue-600 text-xs mt-2 flex items-center">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                <span>Limited time offer - applied to your quote</span>
               </p>
             </div>
           </div>
