@@ -989,6 +989,7 @@ const YourQuotePage: React.FC = () => {
         subtotalGBP: 450,
         subtotalUSD: 580,
         guarantee: '5-year',
+        isSpecialOffer: true, // Add flag for consistent detection
         specialOffer: {
           id: specialOffer.id,
           title: specialOffer.title,

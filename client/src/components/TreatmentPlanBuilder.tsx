@@ -26,6 +26,7 @@ export interface TreatmentItem {
   ukPriceGBP?: number;
   ukPriceUSD?: number;
   isPackage?: boolean;
+  isSpecialOffer?: boolean; // Flag to easily identify special offers
   packageId?: string;
   specialOffer?: {
     id: string;
