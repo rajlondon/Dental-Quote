@@ -65,6 +65,15 @@ interface ClinicTreatmentPrice {
   pricePerUnit: number;
   subtotal: number;
   category: string;
+  isPackage?: boolean;
+  packageId?: string;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
 }
 
 const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
@@ -379,7 +388,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         quantity: treatment.quantity,
         pricePerUnit: clinicPricePerUnit,
         subtotal: clinicPricePerUnit * treatment.quantity,
-        category: treatment.category
+        category: treatment.category,
+        isPackage: treatment.isPackage,
+        packageId: treatment.packageId,
+        specialOffer: treatment.specialOffer
       };
     });
     
@@ -657,14 +669,26 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               {clinicTreatments.map((treatment, i) => (
                                 <div key={i} className="flex items-start justify-between">
                                   <div className="flex-1">
-                                    <span className="text-sm font-medium text-gray-700">
-                                      {treatment.treatmentName}
-                                    </span>
-                                    {treatment.quantity > 1 && (
-                                      <span className="text-sm text-gray-500 ml-1">
-                                        (x{treatment.quantity})
+                                    <div className="flex items-center flex-wrap gap-1">
+                                      <span className="text-sm font-medium text-gray-700">
+                                        {treatment.treatmentName}
                                       </span>
-                                    )}
+                                      {treatment.quantity > 1 && (
+                                        <span className="text-sm text-gray-500">
+                                          (x{treatment.quantity})
+                                        </span>
+                                      )}
+                                      {treatment.isPackage && (
+                                        <Badge className="ml-1 bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">
+                                          Package
+                                        </Badge>
+                                      )}
+                                      {treatment.specialOffer && (
+                                        <Badge className="ml-1 bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
+                                          Special Offer
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="text-right">
                                     <div className="text-sm font-medium">
