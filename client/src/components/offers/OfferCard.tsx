@@ -88,11 +88,53 @@ export function OfferCard({ offer }: OfferCardProps) {
         
       console.log(`Processing ${isFreeConsultation ? 'Free Consultation Package' : 'Standard Special Offer'}`);
       
-      // Special handling for Free Consultation Package
+      // For Free Consultation Package, try our dedicated endpoint first
       if (isFreeConsultation) {
-        console.log("🔶 FREE CONSULTATION PACKAGE DETECTED - Using direct token creation");
+        console.log("🔶 FREE CONSULTATION PACKAGE DETECTED - Using dedicated endpoint first");
         
-        // First, try to create a promo token if it doesn't exist
+        try {
+          // Use our special non-authenticated Free Consultation endpoint
+          const freeConsultationResponse = await apiRequest(
+            'POST',
+            '/api/v1/free-consultation',
+            {
+              offerId,
+              clinicId
+            }
+          );
+          
+          if (freeConsultationResponse.ok) {
+            console.log("✅ Successfully used free-consultation endpoint");
+            
+            const consultData = await freeConsultationResponse.json();
+            
+            if (consultData.treatmentPlanId && consultData.treatmentPlanUrl) {
+              // Add timestamp to prevent caching issues
+              const redirectUrl = new URL(consultData.treatmentPlanUrl, window.location.origin);
+              redirectUrl.searchParams.append('t', Date.now().toString());
+              
+              toast({
+                title: "Success",
+                description: "Free consultation added to your treatment plan"
+              });
+              
+              return {
+                quoteId: consultData.quoteId,
+                quoteUrl: redirectUrl.toString(),
+                treatmentPlanId: consultData.treatmentPlanId,
+                treatmentPlanUrl: redirectUrl.toString()
+              } as QuoteResponse;
+            }
+          } else {
+            console.log("⚠️ Free consultation endpoint failed, falling back to standard flow");
+          }
+        } catch (consultError) {
+          console.warn("Free consultation API failed, using fallback:", consultError);
+        }
+        
+        // If free consultation endpoint failed, try promo token creation as fallback
+        console.log("🔶 Falling back to token approach for free consultation");
+        
         try {
           // Check if token exists first or create a new one
           console.log("First checking if token already exists");

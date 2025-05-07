@@ -1261,20 +1261,20 @@ const YourQuotePage: React.FC = () => {
         };
         
         // For free consultation, ensure 100% discount
-        if (isFreeConsultation && specialOffer.title?.includes('Free')) {
+        if (isFreeConsultation && specialOffer.title?.includes('Free') && specialOfferTreatment.specialOffer) {
           console.log("📢 Handling Free Consultation Package - setting 100% discount");
           specialOfferTreatment.specialOffer.discountType = 'percentage';
           specialOfferTreatment.specialOffer.discountValue = 100;
         }
         
         // Apply the discount based on type
-        if (specialOfferTreatment.specialOffer.discountType === 'percentage') {
+        if (specialOfferTreatment.specialOffer?.discountType === 'percentage' && specialOfferTreatment.specialOffer?.discountValue !== undefined) {
           const discountMultiplier = (100 - specialOfferTreatment.specialOffer.discountValue) / 100;
           specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
           specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
           specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
           specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        } else if (specialOfferTreatment.specialOffer.discountType === 'fixed_amount') {
+        } else if (specialOfferTreatment.specialOffer?.discountType === 'fixed_amount' && specialOfferTreatment.specialOffer?.discountValue !== undefined) {
           specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOfferTreatment.specialOffer.discountValue);
           specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOfferTreatment.specialOffer.discountValue * 1.28)); // Convert GBP to USD
           specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
@@ -1299,6 +1299,8 @@ const YourQuotePage: React.FC = () => {
     
     // Create a ref to access TreatmentPlanBuilder methods
   const treatmentPlanBuilderRef = React.useRef<any>(null);
+  
+  // Let's update those remaining TypeScript errors elsewhere in the file before initializing treatments
   
   // Initialize treatments based on whether we have a special offer, package, or promo token
     // We discovered the source should be promo_token but isPromoTokenFlow isn't reflecting that
