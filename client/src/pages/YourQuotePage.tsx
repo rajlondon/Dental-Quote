@@ -987,6 +987,93 @@ const YourQuotePage: React.FC = () => {
   // Leverage the useInitializeQuoteFlow hook
   const { initializeFromUrlParams } = useInitializeQuoteFlow();
   
+  // Add dedicated effect to ensure special offers are added to treatment items
+  useEffect(() => {
+    // Only run this if we have a special offer, package or promo token but no treatment items yet
+    if ((isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && treatmentItems.length === 0) {
+      console.log("🔍 Special offer flow detected but no treatment items yet. Adding special offer to treatment items list.");
+      
+      if (isSpecialOfferFlow && specialOffer) {
+        // Create a special offer treatment item
+        const specialOfferTreatment: PlanTreatmentItem = {
+          id: `special_offer_${Date.now()}`,
+          category: 'special_offer',
+          name: `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Free Consultation'}`,
+          quantity: 1,
+          priceGBP: 0, // Free consultation
+          priceUSD: 0,
+          subtotalGBP: 0,
+          subtotalUSD: 0,
+          guarantee: 'N/A',
+          isSpecialOffer: true,
+          specialOffer: {
+            id: specialOffer.id,
+            title: specialOffer.title,
+            discountType: specialOffer.discountType,
+            discountValue: specialOffer.discountValue,
+            clinicId: specialOffer.clinicId
+          }
+        };
+        
+        console.log("📋 Adding special offer to treatment items:", specialOfferTreatment);
+        setTreatmentItems(current => [...current, specialOfferTreatment]);
+        
+        toast({
+          title: "Special Offer Added",
+          description: `${specialOffer.title} has been added to your treatment plan.`,
+        });
+      } else if (isPackageFlow && packageData) {
+        // Create a package treatment item
+        const packageTreatment: PlanTreatmentItem = {
+          id: `package_${Date.now()}`,
+          category: 'packages',
+          name: packageData.title || 'Treatment Package',
+          quantity: 1,
+          priceGBP: 1200, // Default price, would be fetched from API
+          priceUSD: 1550,
+          subtotalGBP: 1200,
+          subtotalUSD: 1550,
+          guarantee: '5-year',
+          isPackage: true,
+          packageId: packageData.id
+        };
+        
+        console.log("📋 Adding package to treatment items:", packageTreatment);
+        setTreatmentItems(current => [...current, packageTreatment]);
+        
+        toast({
+          title: "Package Added",
+          description: `${packageData.title} has been added to your treatment plan.`,
+        });
+      } else if (isPromoTokenFlow && promoToken) {
+        // Create a promo token treatment item
+        const promoTreatment: PlanTreatmentItem = {
+          id: `promo_${Date.now()}`,
+          category: promoType === 'package' ? 'packages' : 'special_offer',
+          name: `${promoType === 'package' ? 'Package' : 'Special Offer'}: ${searchParams.get('promoTitle') || 'Promotion'}`,
+          quantity: 1,
+          priceGBP: 0,
+          priceUSD: 0,
+          subtotalGBP: 0,
+          subtotalUSD: 0,
+          guarantee: 'N/A',
+          isSpecialOffer: promoType === 'special_offer',
+          isPackage: promoType === 'package',
+          promoToken: promoToken,
+          promoType: promoType
+        };
+        
+        console.log("📋 Adding promo token treatment to items:", promoTreatment);
+        setTreatmentItems(current => [...current, promoTreatment]);
+        
+        toast({
+          title: "Promotion Added",
+          description: `Your promotion has been added to your treatment plan.`,
+        });
+      }
+    }
+  }, [isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, specialOffer, packageData, promoToken, promoType, treatmentItems.length]);
+
   useEffect(() => {
     // Set page title
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
