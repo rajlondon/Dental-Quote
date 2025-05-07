@@ -118,38 +118,4 @@ router.post('/free-consultation', async (req, res) => {
   }
 });
 
-/**
- * Helper function to add a consultation treatment line directly to a quote
- */
-async function addConsultationTreatmentLine(quoteId: string, clinicId: string, patientId: number) {
-  try {
-    console.log(`Adding consultation treatment line to quote ${quoteId}`);
-    
-    // Create the treatment line
-    const treatmentLine = await db.insert(treatmentLines)
-      .values({
-        id: uuidv4(),
-        clinicId: parseInt(clinicId),
-        patientId: patientId,
-        quoteId: quoteId,
-        procedureCode: "CONSULTATION",
-        description: "Free initial dental consultation",
-        quantity: 1,
-        unitPrice: "0.00",
-        isPackage: false,
-        status: "draft",
-        patientNotes: "Special offer: Free consultation",
-        clinicNotes: "This is a complimentary consultation as part of a special offer",
-      })
-      .returning();
-      
-    console.log('Created treatment line:', treatmentLine);
-    
-    return treatmentLine;
-  } catch (error) {
-    console.error('Failed to add consultation treatment line:', error);
-    throw error;
-  }
-}
-
 export default router;
