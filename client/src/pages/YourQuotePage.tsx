@@ -364,18 +364,21 @@ const ClinicCard: React.FC<{
         </div>
       )}
       
-      {/* Promo token badge takes priority if this clinic has a promo */}
+      {/* Enhanced badge design with more attention-grabbing appearance */}
       {hasPromoForThisClinic ? (
-        <div className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/90 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
-          <Tag className="h-4 w-4 mr-1 text-white" />
+        <div className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/90 text-white px-4 py-2 text-sm font-bold z-10 rounded-br-lg shadow-md flex items-center">
+          <Tag className="h-4 w-4 mr-2 text-white" />
           {promoType === 'special_offer' ? 'Special Offer' : 
            promoType === 'package' ? 'Treatment Package' : 
            'Promotion'}
         </div>
       ) : shouldShowSpecialOffer && (
-        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
-          <Sparkles className="h-4 w-4 mr-1 text-yellow-300" />
-          Special Offer
+        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 text-white px-4 py-2 text-sm font-bold z-10 rounded-br-lg shadow-md flex items-center animate-pulse">
+          <Sparkles className="h-4 w-4 mr-2 text-yellow-300" />
+          <span className="relative">
+            Special Offer
+            <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-yellow-300"></span>
+          </span>
         </div>
       )}
       
@@ -444,21 +447,33 @@ const ClinicCard: React.FC<{
             <h4 className="font-bold text-lg mb-1">£{clinic.priceGBP}</h4>
             <p className="text-gray-500 text-sm mb-4">Base package from</p>
             
-            {/* Always show special offer info when in special offer flow */}
+            {/* Enhanced special offer section with more visibility and a CTA button */}
             {shouldShowSpecialOffer && (
-              <div className="bg-blue-50 p-2 rounded-md mb-4 border border-blue-100">
-                <div className="flex items-center mb-1">
-                  <Sparkles className="h-4 w-4 text-blue-500 mr-1" />
-                  <h5 className="font-semibold text-blue-700 text-sm">
-                    {clinic.specialOfferDetails?.title || "Special Offer Deal"}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-md mb-4 border-2 border-blue-200 shadow-sm">
+                <div className="flex items-center mb-2">
+                  <Sparkles className="h-5 w-5 text-blue-500 mr-2" />
+                  <h5 className="font-bold text-blue-700 text-sm">
+                    {clinic.specialOfferDetails?.title || "Special Offer"}
                   </h5>
                 </div>
                 
-                <p className="text-blue-600 text-xs">
+                <p className="text-blue-700 text-sm font-medium mb-2">
                   {clinic.specialOfferDetails?.discountType === 'percentage'
                     ? `${clinic.specialOfferDetails?.discountValue || 15}% discount on selected treatments` 
                     : `£${clinic.specialOfferDetails?.discountValue || 100} off selected treatments`}
                 </p>
+                
+                {/* Added CTA button for special offer */}
+                <button 
+                  className="w-full text-xs py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect();
+                  }}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Claim This Offer
+                </button>
               </div>
             )}
             
