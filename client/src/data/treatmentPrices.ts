@@ -92,9 +92,17 @@ export const ukPriceData: CountryPriceData = {
   }
 };
 
-// Calculate Istanbul price based on UK price (35% of UK price)
-export function calculateIstanbulPrice(ukPrice: number): number {
-  return Math.round(ukPrice * 0.35);
+// Calculate Istanbul price based on UK price
+// Different tiers of clinics have different pricing percentages
+export function calculateIstanbulPrice(ukPrice: number, tier: 'affordable' | 'mid' | 'premium' = 'mid'): number {
+  // Pricing factors based on clinic tier
+  const pricingFactors = {
+    'affordable': 0.30, // Affordable clinics at 30% of UK prices
+    'mid': 0.35,        // Mid-tier clinics at 35% of UK prices
+    'premium': 0.40     // Premium clinics at 40% of UK prices
+  };
+  
+  return Math.round(ukPrice * pricingFactors[tier]);
 }
 
 // Calculate savings amount and percentage
