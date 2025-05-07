@@ -9,8 +9,10 @@ import {
   Car,
   CalendarCheck,
   CheckCircle,
-  Sparkles
+  Sparkles,
+  Tag
 } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface QuoteSummaryPanelProps {
   treatments: {
@@ -21,6 +23,8 @@ interface QuoteSummaryPanelProps {
     isPackage?: boolean;
     isSpecialOffer?: boolean; // Flag to easily identify special offers
     packageId?: string;
+    promoToken?: string; // Added for promo token support
+    promoType?: 'special_offer' | 'package'; // Added for promo token support
     specialOffer?: {
       id: string;
       title: string;
@@ -46,7 +50,10 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
   discountType,
   clinicName
 }) => {
-  const { source, isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, promoType, quoteId } = useQuoteFlow();
+  const { source, isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, promoType, quoteId, promoToken } = useQuoteFlow();
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
   
   // Calculate total
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
@@ -82,8 +89,23 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
       {/* Treatments section - simplified for special offers */}
       {treatments.length > 0 && (
         <div className="mb-4">
+          {/* Display a promo token banner before treatments if applicable */}
+          {(promoToken || isPromoTokenFlow) && (
+            <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-md">
+              <div className="flex items-center">
+                <Tag className="h-4 w-4 text-blue-600 mr-2" />
+                <span className="text-blue-700 text-sm font-medium">
+                  Promotion: {promoTitle}
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 mt-1 ml-6">
+                Special pricing applied to your treatment plan
+              </p>
+            </div>
+          )}
+          
           {treatments.map((treatment, index) => (
-            <div key={index} className={`flex justify-between items-start py-2 border-b ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'border-primary/20 bg-primary/5' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100'}`}>
+            <div key={index} className={`flex justify-between items-start py-2 border-b ${(treatment.isSpecialOffer || treatment.specialOffer || treatment.promoToken) ? 'border-primary/20 bg-primary/5' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100'}`}>
               <div className="flex-1">
                 <div className="flex flex-col">
                   {(treatment.isSpecialOffer || treatment.specialOffer) && (
@@ -114,7 +136,17 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                       <span className="text-xs text-blue-700 font-medium px-2 py-0.5 rounded-full bg-blue-100">Treatment Package</span>
                     </div>
                   )}
-                  <span className={`font-medium ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
+                  {/* Show promo token badge on treatment if present */}
+                  {treatment.promoToken && (
+                    <div className="mb-1">
+                      <span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10 flex items-center">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {treatment.promoType === 'special_offer' ? 'Special Offer' : 
+                         treatment.promoType === 'package' ? 'Package' : 'Promotion'}
+                      </span>
+                    </div>
+                  )}
+                  <span className={`font-medium ${(treatment.isSpecialOffer || treatment.specialOffer || treatment.promoToken) ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
                     {treatment.name}
                   </span>
                   {treatment.quantity > 1 && (
@@ -123,6 +155,12 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                   {treatment.specialOffer && (
                     <span className="text-xs text-primary mt-1">
                       {treatment.specialOffer.title}
+                    </span>
+                  )}
+                  {/* Show promo title on treatment if present */}
+                  {treatment.promoToken && !treatment.specialOffer && (
+                    <span className="text-xs text-primary mt-1">
+                      {promoTitle}
                     </span>
                   )}
                 </div>
@@ -142,8 +180,16 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                         : `Save £${formatCurrency(treatment.specialOffer.discountValue)}`}
                     </span>
                   </>
-                ) : treatment.isSpecialOffer ? (
-                  <span className="font-bold text-primary">£{formatCurrency(treatment.priceGBP)}</span>
+                ) : treatment.isSpecialOffer || treatment.promoToken ? (
+                  <>
+                    <span className="font-bold text-primary">£{formatCurrency(treatment.priceGBP)}</span>
+                    {/* For promo token treatments, show a discount label */}
+                    {treatment.promoToken && (
+                      <span className="block text-xs text-primary mt-1">
+                        Special price applied
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <span className="font-medium">£{formatCurrency(treatment.subtotalGBP)}</span>
                 )}
