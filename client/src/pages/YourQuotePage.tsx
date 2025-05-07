@@ -1228,36 +1228,55 @@ const YourQuotePage: React.FC = () => {
       // Create and add the special offer as a treatment item if we don't have any items yet
       if (treatmentItems.length === 0) {
         console.log("📣 Creating and adding special offer treatment from specialOffer object:", specialOffer);
+        
+        // Determine if this is a Free Consultation Package
+        const isFreeConsultation = 
+          specialOffer.title?.includes('Consultation') || 
+          specialOffer.title?.includes('consultation') || 
+          specialOffer.applicableTreatment?.includes('Consultation');
+          
+        // Set appropriate starting price based on offer type
+        let basePriceGBP = isFreeConsultation ? 75 : 450; // Lower price for consultations
+        let basePriceUSD = isFreeConsultation ? 95 : 580;
+            
         const specialOfferTreatment: TreatmentItem = {
           id: `special_offer_${Date.now()}`,
-          category: 'special_offer',
-          name: specialOffer.title || specialOffer.applicableTreatment,
+          category: isFreeConsultation ? 'consultation' : 'special_offer',
+          name: specialOffer.title || specialOffer.applicableTreatment || 'Special Offer',
           quantity: 1,
-          priceGBP: 450, // Base price, will be discounted later
-          priceUSD: 580, // Base price, will be discounted later
-          subtotalGBP: 450,
-          subtotalUSD: 580,
-          guarantee: '5-year',
+          priceGBP: basePriceGBP,
+          priceUSD: basePriceUSD,
+          subtotalGBP: basePriceGBP,
+          subtotalUSD: basePriceUSD,
+          guarantee: isFreeConsultation ? '30-day' : '5-year',
           isSpecialOffer: true, // Add flag for consistent detection
           specialOffer: {
             id: specialOffer.id,
-            title: specialOffer.title,
-            discountType: specialOffer.discountType,
-            discountValue: specialOffer.discountValue,
-            clinicId: specialOffer.clinicId
+            title: specialOffer.title || 'Special Offer',
+            // Handle case where discount parameters may be missing
+            discountType: specialOffer.discountType || (isFreeConsultation ? 'percentage' : 'fixed_amount'),
+            discountValue: specialOffer.discountValue || (isFreeConsultation ? 100 : 50),
+            clinicId: specialOffer.clinicId || 'dentakay-istanbul'
           }
         };
         
+        // For free consultation, ensure 100% discount
+        if (isFreeConsultation && specialOffer.title?.includes('Free')) {
+          console.log("📢 Handling Free Consultation Package - setting 100% discount");
+          specialOfferTreatment.specialOffer.discountType = 'percentage';
+          specialOfferTreatment.specialOffer.discountValue = 100;
+        }
+        
         // Apply the discount based on type
-        if (specialOffer.discountType === 'percentage') {
-          const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+        if (specialOfferTreatment.specialOffer.discountType === 'percentage') {
+          const discountMultiplier = (100 - specialOfferTreatment.specialOffer.discountValue) / 100;
           specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
           specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
           specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
           specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        } else if (specialOffer.discountType === 'fixed_amount') {
-          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOffer.discountValue);
-          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert GBP to USD
+        } else if (specialOfferTreatment.specialOffer.discountType === 'fixed_amount') {
+          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOfferTreatment.specialOffer.discountValue);
+          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOfferTreatment.specialOffer.discountValue * 1.28)); // Convert GBP to USD
           specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
           specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
         }
@@ -1329,37 +1348,66 @@ const YourQuotePage: React.FC = () => {
     }
     else if (specialOffer) {
       console.log("📣 Creating treatment from special offer:", specialOffer);
+      
+      // Check for Free Consultation Package
+      const isFreeConsultation = 
+        specialOffer.title?.includes('Consultation') || 
+        specialOffer.title?.includes('consultation') || 
+        (searchParams.get('treatment')?.includes('Consultation'));
+        
+      console.log("🔎 Checking if this is a consultation offer:", {
+        isFreeConsultation,
+        title: specialOffer.title,
+        treatment: searchParams.get('treatment')
+      });
+      
+      // Set appropriate base price based on offer type
+      const basePriceGBP = isFreeConsultation ? 75 : 450;
+      const basePriceUSD = isFreeConsultation ? 95 : 580;
+      
       // Use our utility function to create a special offer treatment
       const specialOfferTreatment: TreatmentItem = {
         id: `special_offer_${Date.now()}`,
-        category: 'special_offer',
-        name: specialOffer.title || specialOffer.applicableTreatment, // Use title as main name
+        category: isFreeConsultation ? 'consultation' : 'special_offer',
+        name: specialOffer.title || specialOffer.applicableTreatment || 'Special Offer', // Use title as main name
         quantity: 1,
-        priceGBP: 450, // Base price, will be discounted later
-        priceUSD: 580, // Base price, will be discounted later
-        subtotalGBP: 450,
-        subtotalUSD: 580,
-        guarantee: '5-year',
+        priceGBP: basePriceGBP,
+        priceUSD: basePriceUSD,
+        subtotalGBP: basePriceGBP,
+        subtotalUSD: basePriceUSD,
+        guarantee: isFreeConsultation ? '30-day' : '5-year',
         isSpecialOffer: true, // Add flag for consistent detection
         specialOffer: {
           id: specialOffer.id,
-          title: specialOffer.title,
-          discountType: specialOffer.discountType,
-          discountValue: specialOffer.discountValue,
-          clinicId: specialOffer.clinicId
+          title: specialOffer.title || 'Special Offer',
+          discountType: specialOffer.discountType || (isFreeConsultation ? 'percentage' : 'fixed_amount'),
+          discountValue: specialOffer.discountValue || (isFreeConsultation ? 100 : 50),
+          clinicId: specialOffer.clinicId || 'dentakay-istanbul'
         }
       };
       
-      // Apply the discount based on type
-      if (specialOffer.discountType === 'percentage') {
-        const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+      // Force 100% discount for Free Consultation Package
+      if (isFreeConsultation && 
+         (specialOffer.title?.includes('Free') || searchParams.get('offerDiscount') === '100') &&
+         specialOfferTreatment.specialOffer) {
+        console.log("📢 Handling Free Consultation Package - setting 100% discount");
+        specialOfferTreatment.specialOffer.discountType = 'percentage';
+        specialOfferTreatment.specialOffer.discountValue = 100;
+      }
+      
+      // Apply the discount based on type and ensure specialOffer.discountType/Value are defined
+      const discountType = specialOfferTreatment.specialOffer?.discountType || 'percentage';
+      const discountValue = specialOfferTreatment.specialOffer?.discountValue || 0;
+      
+      if (discountType === 'percentage') {
+        const discountMultiplier = (100 - discountValue) / 100;
         specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
         specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
         specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
         specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-      } else if (specialOffer.discountType === 'fixed_amount') {
-        specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOffer.discountValue);
-        specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert GBP to USD
+      } else if (discountType === 'fixed_amount') {
+        specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - discountValue);
+        specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(discountValue * 1.28)); // Convert GBP to USD
         specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
         specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
       }

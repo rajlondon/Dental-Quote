@@ -140,7 +140,24 @@ export function OfferCard({ offer }: OfferCardProps) {
       }
       
       // Always include treatment parameter - critical for the YourQuotePage to create the special offer treatment item
-      url.searchParams.append('treatment', 'Dental Implants');
+      // Use the name of the offer itself as the treatment for free consultation packages
+      if (offer.title.includes('Consultation') || offer.title.includes('consultation')) {
+        url.searchParams.append('treatment', offer.title);
+        // For consultation packages, ensure we have a valid discountType and discountValue
+        if (!offer.discountType || !offer.discountValue) {
+          console.log("Adding default 100% discount for consultation package");
+          url.searchParams.append('offerDiscount', '100');
+          url.searchParams.append('offerDiscountType', 'percentage');
+        }
+      } else {
+        url.searchParams.append('treatment', 'Dental Implants');
+      }
+      
+      // Ensure clinic ID maps to an existing clinic in the system
+      if (offer.clinicId === '1' || !offer.clinicId) {
+        // Partner Clinic #1 might not exist, map to a known valid clinic ID
+        url.searchParams.set('clinicId', 'dentakay-istanbul'); 
+      }
       
       // Add timestamp to prevent caching
       url.searchParams.append('t', Date.now().toString());
