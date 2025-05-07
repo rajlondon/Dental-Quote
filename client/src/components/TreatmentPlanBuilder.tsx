@@ -28,6 +28,9 @@ export interface TreatmentItem {
   isPackage?: boolean;
   isSpecialOffer?: boolean; // Flag to easily identify special offers
   packageId?: string;
+  // For promo token integration
+  promoToken?: string;
+  promoType?: 'special_offer' | 'package';
   specialOffer?: {
     id: string;
     title: string;

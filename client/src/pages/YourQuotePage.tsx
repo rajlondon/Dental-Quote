@@ -1034,11 +1034,24 @@ const YourQuotePage: React.FC = () => {
       setClinicId(clinicIdFromUrl);
     }
     
+    // Handle promo token in URL if present
+    if (promoTokenFromUrl) {
+      console.log(`Setting promoToken to ${promoTokenFromUrl}`);
+      setPromoToken(promoTokenFromUrl);
+      
+      // Set promo type if available, default to 'special_offer' if not specified
+      const type = promoTypeFromUrl || 'special_offer';
+      console.log(`Setting promoType to ${type}`);
+      setPromoType(type as 'special_offer' | 'package');
+    }
+    
     console.log("QuoteFlowContext after sync:", {
       source: detectedSource,
       offerId: offerIdFromUrl || offerId,
       packageId: packageIdFromUrl || packageId,
-      clinicId: clinicIdFromUrl || clinicId
+      clinicId: clinicIdFromUrl || clinicId,
+      promoToken: promoTokenFromUrl,
+      promoType: promoTypeFromUrl
     });
     
     // If we have a special offer from URL params, store it in sessionStorage for persistence across page reloads
@@ -1098,8 +1111,44 @@ const YourQuotePage: React.FC = () => {
     // Create a ref to access TreatmentPlanBuilder methods
   const treatmentPlanBuilderRef = React.useRef<any>(null);
   
-  // Initialize treatments based on whether we have a special offer or package
-    if (specialOffer) {
+  // Initialize treatments based on whether we have a special offer, package, or promo token
+    if (promoTokenFromUrl && isPromoTokenFlow) {
+      console.log("Initializing treatment plan with promo token:", promoTokenFromUrl);
+      
+      // Fetch the promotion details from the token
+      const treatmentType = promoTypeFromUrl || 'special_offer';
+      const treatmentName = searchParams.get('treatmentName') || 'Dental Treatment';
+      const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
+      
+      // Create a promo treatment item
+      const promoTreatment: PlanTreatmentItem = {
+        id: `promo_${Date.now()}`,
+        category: treatmentType === 'special_offer' ? 'special_offer' : 'packages',
+        name: treatmentName,
+        quantity: 1,
+        priceGBP: 450, // Base price, will be adjusted after API fetch
+        priceUSD: 580, // Base price, will be adjusted after API fetch
+        subtotalGBP: 450,
+        subtotalUSD: 580,
+        guarantee: '5-year',
+        isSpecialOffer: treatmentType === 'special_offer',
+        isPackage: treatmentType === 'package',
+        // Add promo token data
+        promoToken: promoTokenFromUrl,
+        promoType: treatmentType as 'special_offer' | 'package'
+      };
+      
+      // Add the promo treatment to our treatment items
+      console.log("Setting promo token treatment:", promoTreatment);
+      setTreatmentItems([promoTreatment]);
+      
+      // Show welcome toast for promo
+      toast({
+        title: `${treatmentType === 'package' ? 'Treatment Package' : 'Special Offer'} Selected`,
+        description: `Your quote includes: ${promoTitle}`,
+      });
+    }
+    else if (specialOffer) {
       // Use our utility function to create a special offer treatment
       const specialOfferTreatment: PlanTreatmentItem = {
         id: `special_offer_${Date.now()}`,
@@ -1259,17 +1308,21 @@ const YourQuotePage: React.FC = () => {
               <p>Source: {source}</p>
               <p>Special Offer Flow: {isSpecialOfferFlow ? 'Yes' : 'No'}</p>
               <p>Package Flow: {isPackageFlow ? 'Yes' : 'No'}</p>
+              <p>Promo Token Flow: {isPromoTokenFlow ? 'Yes' : 'No'}</p>
               {offerId && <p>Offer ID: {offerId}</p>}
               {packageId && <p>Package ID: {packageId}</p>}
               {clinicId && <p>Clinic ID: {clinicId}</p>}
+              {promoToken && <p>Promo Token: {promoToken}</p>}
+              {promoType && <p>Promo Type: {promoType}</p>}
+              {quoteId && <p>Quote ID: {quoteId}</p>}
               {specialOffer && <p>Special Offer Title: {specialOffer.title}</p>}
               {packageData && <p>Package Title: {packageData.title}</p>}
               <p>URL Search: {window.location.search}</p>
             </div>
           </div>
 
-          {/* Special Offer or Package Banner - Now with stronger visual styling */}
-          {(isSpecialOfferFlow || isPackageFlow) && (
+          {/* Special Offer, Package, or Promo Token Banner - Now with stronger visual styling */}
+          {(isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && (
             <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg p-5 shadow-md text-white">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
@@ -1277,17 +1330,26 @@ const YourQuotePage: React.FC = () => {
                 </div>
                 <div className="ml-4">
                   <h2 className="font-bold text-xl">
-                    {isSpecialOfferFlow ? 'Special Offer Selected' : 'Treatment Package Selected'}
+                    {isSpecialOfferFlow ? 'Special Offer Selected' : 
+                     isPackageFlow ? 'Treatment Package Selected' : 
+                     'Promotion Applied'}
                   </h2>
                   <p className="text-white font-medium text-lg mt-2">
                     {isSpecialOfferFlow && offerId ? (
                       <>Your quote includes the special offer: <span className="font-bold underline">{specialOffer?.title || 'Special Offer'}</span></>
                     ) : isPackageFlow && packageId ? (
                       <>Your quote includes the package: <span className="font-bold underline">{packageData?.title || 'Treatment Package'}</span></>
+                    ) : isPromoTokenFlow && promoToken ? (
+                      <>Promotion token applied: <span className="font-bold underline">{searchParams.get('promoTitle') || 'Special Promotion'}</span></>
                     ) : (
                       <>We'll prepare your personalized treatment plan</>
                     )}
                   </p>
+                  {quoteId && (
+                    <p className="text-white bg-blue-700 px-2 py-1 rounded-md text-sm mt-2 inline-block">
+                      Quote ID: {quoteId}
+                    </p>
+                  )}
                   <p className="text-blue-100 mt-2">
                     Complete the dental quiz below to customize your treatment experience
                   </p>
