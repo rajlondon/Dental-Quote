@@ -46,6 +46,7 @@ import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
 import openaiRoutes from "./routes/openai-routes";
 import imageCacheRoutes from "./routes/image-cache-routes";
+import promoTokenRoutes from "./routes/promo-token-routes";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -323,6 +324,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register OpenAI routes for image generation
   app.use('/api/openai', openaiRoutes);
+  
+  // Register the promo token routes for special offers and package promotions
+  console.log('[DEBUG] Mounting promo-token-routes at /api/v1');
+  app.use('/api/v1', promoTokenRoutes);
   
   // Register image caching routes for handling Azure Blob Storage DALL-E images
   app.use(imageCacheRoutes);

@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { db } from '../db';
-import { eq, and, gte } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { promoTokens, quotes } from '@shared/schema';
 import { ensureAuthenticated } from '../middleware/auth';
 
@@ -44,19 +44,20 @@ router.post('/quotes/from-token', ensureAuthenticated, async (req, res) => {
     
     // 2. Create a new quote using the token data
     const userId = req.user!.id;
+    
+    // Parse the payload to ensure we have proper type safety
+    const payload = validToken.payload as Record<string, any>;
+    const offerId = validToken.promoType === 'special_offer' ? payload?.offerId : undefined;
+    const packageId = validToken.promoType === 'treatment_package' ? payload?.packageId : undefined;
+    
     const newQuote = await db.insert(quotes)
       .values({
         patientId: userId,
         clinicId: validToken.clinicId,
         promoToken: validToken.token,
         source: 'promo',
-        // Set specific fields based on promo type
-        ...(validToken.promoType === 'special_offer' && validToken.payload?.offerId 
-          ? { offerId: validToken.payload.offerId }
-          : {}),
-        ...(validToken.promoType === 'treatment_package' && validToken.payload?.packageId 
-          ? { packageId: validToken.payload.packageId }
-          : {})
+        offerId: offerId,
+        packageId: packageId
       })
       .returning();
     
@@ -73,11 +74,11 @@ router.post('/quotes/from-token', ensureAuthenticated, async (req, res) => {
     if (validToken.promoType === 'special_offer') {
       // Add the special offer bonus line if applicable
       // In a full implementation, you'd add the special offer line item to the quote here
-      console.log(`Created quote with special offer: ${validToken.payload?.offerId}`);
+      console.log(`Created quote with special offer: ${offerId}`);
     } else if (validToken.promoType === 'treatment_package') {
       // Add the package and remove any duplicate base treatments
       // In a full implementation, you'd add the package line items here
-      console.log(`Created quote with package: ${validToken.payload?.packageId}`);
+      console.log(`Created quote with package: ${packageId}`);
     }
     
     // 4. Return the newly created quote ID
