@@ -46,6 +46,7 @@ export default function ActiveOfferBadge({
                 sizeClasses[size],
                 className
               )}
+              data-active-offer-badge
             >
               <BadgePercent className={cn('h-3 w-3', size === 'lg' && 'h-4 w-4')} />
               Special Offer Applied
@@ -62,7 +63,7 @@ export default function ActiveOfferBadge({
   
   // For detailed display
   return (
-    <div className={cn('flex flex-col', className)}>
+    <div className={cn('flex flex-col', className)} data-active-offer-badge>
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 shadow-sm">
         <div className="flex items-start">
           <div className="mr-3 text-green-600 mt-1">
