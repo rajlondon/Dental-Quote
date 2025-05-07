@@ -53,8 +53,15 @@ async function testFreeConsultation() {
     if (response.ok) {
       console.log('✅ Free consultation endpoint responded successfully!');
       console.log('Response:', data);
-      console.log(`Generated quote ID: ${data.quoteId}`);
-      console.log(`Quote URL: ${data.quoteUrl}`);
+      
+      if (data.treatmentPlanId) {
+        console.log(`Generated treatment plan ID: ${data.treatmentPlanId}`);
+        console.log(`Treatment plan URL: ${data.treatmentPlanUrl}`);
+      }
+      
+      if (data.quoteId) {
+        console.log(`Generated quote ID: ${data.quoteId}`);
+      }
     } else {
       console.error('❌ Free consultation endpoint failed:', data);
     }
