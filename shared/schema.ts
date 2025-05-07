@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, primaryKey, json, bigint, foreignKey, date, decimal, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, primaryKey, json, jsonb, bigint, foreignKey, date, decimal, uuid, sql } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -195,6 +195,55 @@ export const verificationTokensRelations = relations(verificationTokens, ({ one 
   user: one(users, {
     fields: [verificationTokens.userId],
     references: [users.id],
+  }),
+}));
+
+// === PROMO TOKENS ===
+export const promoTokens = pgTable("promo_tokens", {
+  token: varchar("token", { length: 50 }).primaryKey(),
+  clinicId: varchar("clinic_id", { length: 50 }).notNull().references(() => clinics.id),
+  promoType: varchar("promo_type", { length: 20 }).notNull(),
+  payload: json("payload").notNull(), // { offerId: "..." } or { packageId: "...", discount: 800 }
+  validUntil: date("valid_until").notNull(),
+  displayOnHome: boolean("display_on_home").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const promoTokensRelations = relations(promoTokens, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [promoTokens.clinicId],
+    references: [clinics.id],
+  }),
+}));
+
+// Add promoToken field to quotes table
+export const quotes = pgTable("quotes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  patientId: integer("patient_id").notNull().references(() => users.id),
+  clinicId: varchar("clinic_id", { length: 50 }).notNull().references(() => clinics.id),
+  status: varchar("status", { length: 20 }).default("draft").notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0"),
+  currency: varchar("currency", { length: 3 }).default("GBP"),
+  promoToken: varchar("promo_token", { length: 50 }).references(() => promoTokens.token),
+  offerId: varchar("offer_id", { length: 50 }),
+  packageId: varchar("package_id", { length: 50 }),
+  source: varchar("source", { length: 20 }).default("normal"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const quotesRelations = relations(quotes, ({ one, many }) => ({
+  patient: one(users, {
+    fields: [quotes.patientId],
+    references: [users.id],
+  }),
+  clinic: one(clinics, {
+    fields: [quotes.clinicId],
+    references: [clinics.id],
+  }),
+  promoToken: one(promoTokens, {
+    fields: [quotes.promoToken],
+    references: [promoTokens.token],
   }),
 }));
 
