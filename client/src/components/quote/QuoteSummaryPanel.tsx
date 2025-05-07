@@ -19,6 +19,7 @@ interface QuoteSummaryPanelProps {
     quantity: number;
     subtotalGBP: number;
     isPackage?: boolean;
+    isSpecialOffer?: boolean; // Flag to easily identify special offers
     packageId?: string;
     specialOffer?: {
       id: string;
@@ -78,10 +79,10 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
       {treatments.length > 0 && (
         <div className="mb-4">
           {treatments.map((treatment, index) => (
-            <div key={index} className={`flex justify-between items-start py-2 border-b ${treatment.specialOffer ? 'border-primary/20 bg-primary/5' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100'}`}>
+            <div key={index} className={`flex justify-between items-start py-2 border-b ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'border-primary/20 bg-primary/5' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100'}`}>
               <div className="flex-1">
                 <div className="flex flex-col">
-                  {treatment.specialOffer && (
+                  {(treatment.isSpecialOffer || treatment.specialOffer) && (
                     <div className="mb-1">
                       <span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10">Special Offer</span>
                     </div>
@@ -91,7 +92,7 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                       <span className="text-xs text-blue-700 font-medium px-2 py-0.5 rounded-full bg-blue-100">Treatment Package</span>
                     </div>
                   )}
-                  <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
+                  <span className={`font-medium ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
                     {treatment.name}
                   </span>
                   {treatment.quantity > 1 && (
@@ -119,6 +120,8 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                         : `Save £${formatCurrency(treatment.specialOffer.discountValue)}`}
                     </span>
                   </>
+                ) : treatment.isSpecialOffer ? (
+                  <span className="font-bold text-primary">£{formatCurrency(treatment.priceGBP)}</span>
                 ) : (
                   <span className="font-medium">£{formatCurrency(treatment.subtotalGBP)}</span>
                 )}
