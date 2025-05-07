@@ -24,6 +24,17 @@ interface OfferCardProps {
   }
 }
 
+// Interface for the API response
+interface QuoteResponse {
+  quoteId: string;
+  quoteUrl: string;
+  treatmentPlanId?: string;
+  treatmentPlanUrl?: string;
+  offerId?: string;
+  clinicId?: string;
+  message?: string;
+}
+
 /**
  * OfferCard component that follows MVP spec
  * 
@@ -67,76 +78,6 @@ export function OfferCard({ offer }: OfferCardProps) {
     }
   };
   
-  const handleOfferClick = async () => {
-    try {
-      setIsProcessing(true);
-      
-      // Update the quote flow context
-      setSource('special_offer');
-      setOfferId(offer.id);
-      setClinicId(offer.clinicId);
-      
-      // If the user is not logged in, redirect to login with pending action
-      if (!user) {
-        console.log("User not authenticated, redirecting to login with pending offer action");
-        
-        // Store offer details for after login
-        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-        localStorage.setItem('pendingAction', JSON.stringify({
-          type: 'special_offer',
-          offerId: offer.id,
-          clinicId: offer.clinicId
-        }));
-        
-        // Notify user they need to login first
-        toast({
-          title: "Please log in first",
-          description: "Log in or create an account to access this special offer",
-        });
-        
-        // Redirect to auth page
-        window.location.href = '/auth';
-        return;
-      }
-      
-      // User is logged in, directly create a quote from the offer
-      console.log("User authenticated, creating quote from offer");
-      const response = await createQuoteFromOffer(offer.id, offer.clinicId);
-      
-      // Success is handled in createQuoteFromOffer function with proper redirection
-      // This code should never be reached in normal operation, but added as a safeguard
-      if (response?.quoteId && !window.location.href.includes('quote')) {
-        console.log("Quote created but no redirect occurred, manually redirecting");
-        
-        // If we have a quote URL, use it, otherwise construct a default one
-        const redirectUrl = response.quoteUrl || `/quote/wizard?quoteId=${response.quoteId}`;
-        window.location.href = redirectUrl;
-      }
-    } catch (error) {
-      console.error('Error processing special offer:', error);
-      
-      // Display error message and reset processing state
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process offer",
-        variant: "destructive"
-      });
-      
-      setIsProcessing(false);
-    }
-  };
-  
-  // Interface for the API response
-  interface QuoteResponse {
-    quoteId: string;
-    quoteUrl: string;
-    treatmentPlanId?: string;
-    treatmentPlanUrl?: string;
-    offerId?: string;
-    clinicId?: string;
-    message?: string;
-  }
-
   // Function to create a quote from an offer via the API
   const createQuoteFromOffer = async (offerId: string, clinicId: string): Promise<QuoteResponse> => {
     try {
@@ -292,12 +233,12 @@ export function OfferCard({ offer }: OfferCardProps) {
               throw new Error("All API endpoints failed");
             }
           }
-        } catch (err) {
-          if (err.message === "All API endpoints failed") {
-            throw err;
+        } catch (error: any) {
+          if (error.message === "All API endpoints failed") {
+            throw error;
           }
           
-          console.log("All standard endpoints failed, using legacy endpoints as last resort:", err);
+          console.log("All standard endpoints failed, using legacy endpoints as last resort:", error);
           
           // Try primary legacy endpoint as last resort
           response = await apiRequest(
@@ -365,10 +306,69 @@ export function OfferCard({ offer }: OfferCardProps) {
       } else {
         throw new Error('Invalid response from server - missing quoteId');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating quote from offer:', error);
       setIsProcessing(false);
       throw error;
+    }
+  };
+
+  const handleOfferClick = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Update the quote flow context
+      setSource('special_offer');
+      setOfferId(offer.id);
+      setClinicId(offer.clinicId);
+      
+      // If the user is not logged in, redirect to login with pending action
+      if (!user) {
+        console.log("User not authenticated, redirecting to login with pending offer action");
+        
+        // Store offer details for after login
+        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+        localStorage.setItem('pendingAction', JSON.stringify({
+          type: 'special_offer',
+          offerId: offer.id,
+          clinicId: offer.clinicId
+        }));
+        
+        // Notify user they need to login first
+        toast({
+          title: "Please log in first",
+          description: "Log in or create an account to access this special offer",
+        });
+        
+        // Redirect to auth page
+        window.location.href = '/auth';
+        return;
+      }
+      
+      // User is logged in, directly create a quote from the offer
+      console.log("User authenticated, creating quote from offer");
+      const response = await createQuoteFromOffer(offer.id, offer.clinicId);
+      
+      // Success is handled in createQuoteFromOffer function with proper redirection
+      // This code should never be reached in normal operation, but added as a safeguard
+      if (response?.quoteId && !window.location.href.includes('quote')) {
+        console.log("Quote created but no redirect occurred, manually redirecting");
+        
+        // If we have a quote URL, use it, otherwise construct a default one
+        const redirectUrl = response.quoteUrl || `/quote/wizard?quoteId=${response.quoteId}`;
+        window.location.href = redirectUrl;
+      }
+    } catch (error: any) {
+      console.error('Error processing special offer:', error);
+      
+      // Display error message and reset processing state
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process offer",
+        variant: "destructive"
+      });
+      
+      setIsProcessing(false);
     }
   };
   
