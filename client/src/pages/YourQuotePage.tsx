@@ -52,6 +52,7 @@ import {
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
+import SpecialOfferHandler from '@/components/specialOffers/SpecialOfferHandler';
 
 // Types
 interface ClinicInfo {

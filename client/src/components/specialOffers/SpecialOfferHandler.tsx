@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import { PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
+import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import { useToast } from '@/hooks/use-toast';
 
 interface SpecialOfferHandlerProps {
@@ -17,8 +17,8 @@ interface SpecialOfferHandlerProps {
     title: string;
     clinicId?: string;
   } | null;
-  treatmentItems: PlanTreatmentItem[];
-  onTreatmentsChange: (treatments: PlanTreatmentItem[]) => void;
+  treatmentItems: TreatmentItem[];
+  onTreatmentsChange: (treatments: TreatmentItem[]) => void;
 }
 
 const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
@@ -60,7 +60,7 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
       
       if (isSpecialOfferFlow && specialOffer) {
         // Create a special offer treatment item
-        const specialOfferTreatment: PlanTreatmentItem = {
+        const specialOfferTreatment: TreatmentItem = {
           id: `special_offer_${Date.now()}`,
           category: 'special_offer',
           name: `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`,
@@ -104,7 +104,7 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
       } 
       else if (isPackageFlow && packageData) {
         // Create a package treatment item
-        const packageTreatment: PlanTreatmentItem = {
+        const packageTreatment: TreatmentItem = {
           id: `package_${Date.now()}`,
           category: 'packages',
           name: packageData.title || 'Treatment Package',
@@ -133,7 +133,7 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         const promoTitle = urlParams.get('promoTitle') || 'Special Promotion';
         
         // Create a promo token treatment item
-        const promoTreatment: PlanTreatmentItem = {
+        const promoTreatment: TreatmentItem = {
           id: `promo_${Date.now()}`,
           category: promoType === 'package' ? 'packages' : 'special_offer',
           name: `${promoType === 'package' ? 'Package: ' : 'Special Offer: '}${promoTitle}`,
@@ -146,7 +146,7 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
           isSpecialOffer: promoType === 'special_offer',
           isPackage: promoType === 'package',
           promoToken: promoToken,
-          promoType: promoType as 'special_offer' | 'package'
+          promoType: promoType === 'special_offer' ? 'special_offer' : 'package'
         };
         
         console.log("📋 SpecialOfferHandler adding promo token treatment:", promoTreatment);
