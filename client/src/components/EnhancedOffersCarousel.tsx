@@ -88,29 +88,39 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Helper function to get image URL
+  // Helper function to get image URL with improved error handling
   const getImageUrl = useCallback((offer: SpecialOffer) => {
-    // Check if we have a cached URL for this offer
-    if (imageCache[offer.id]) {
-      return imageCache[offer.id];
-    }
-    
-    // If no banner image, use a default
-    if (!offer.banner_image) {
+    try {
+      // Check if we have a cached URL for this offer
+      if (imageCache[offer.id]) {
+        return imageCache[offer.id];
+      }
+      
+      // If no banner image, use a default
+      if (!offer.banner_image) {
+        return '/images/offers/default-offer.jpg';
+      }
+      
+      // Special case for "Premium Hotel Deal" which seems to have issues
+      if (offer.title === "Premium Hotel Deal") {
+        return '/images/offers/premium-hotel-deal.jpg';
+      }
+      
+      // For OpenAI images, use as is
+      if (offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net') || 
+          offer.banner_image.includes('openai.com')) {
+        return offer.banner_image;
+      }
+      
+      // For all other images, apply conservative cache busting (less aggressive)
+      const baseUrl = offer.banner_image.split('?')[0];
+      // Use a simpler method to avoid too many parameters
+      return `${baseUrl}?v=${imageRefreshKey}`;
+    } catch (error) {
+      console.error('Error getting image URL:', error);
+      // Return a safe default image in case of any error
       return '/images/offers/default-offer.jpg';
     }
-    
-    // For OpenAI images, use as is
-    if (offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net') || 
-        offer.banner_image.includes('openai.com')) {
-      return offer.banner_image;
-    }
-    
-    // For all other images, apply aggressive cache busting
-    const baseUrl = offer.banner_image.split('?')[0];
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    return `${baseUrl}?t=${timestamp}&r=${random}&v=${imageRefreshKey}`;
   }, [imageCache, imageRefreshKey]);
 
   // Helper to get badge styles based on promotion level
@@ -587,30 +597,37 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               <div className="md:w-1/2 h-64 md:h-[400px] relative overflow-hidden">
                 {/* Fixed size container to ensure consistent dimensions */}
                 <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                  {/* Use direct OpenAI URL for OpenAI-generated images */}
+                  {/* Improved image handling with better fallbacks */}
                   <img 
-                    src={offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net') 
-                      ? offer.banner_image // Use the actual OpenAI URL directly without modifications
-                      : getImageUrl(offer)} // Use normal URL handling for other images
-                    alt={offer.title}
+                    src={getImageUrl(offer)} // Use our updated getImageUrl function that handles special cases
+                    alt={offer.title || "Special Offer"}
                     className="w-full h-full object-cover object-center"
                     data-offer-id={offer.id}
                     data-refresh-key={imageRefreshKey}
+                    loading="eager" // Ensure images load eagerly
                     onLoad={(e) => {
-                      console.log(`✅ Successfully loaded image for offer ${offer.id}`);
-                      // Check if this is an OpenAI image
-                      if (offer.banner_image?.includes('oaidalleapiprodscus.blob.core.windows.net')) {
-                        console.log('👍 Successfully loaded OpenAI DALL-E image from Azure Blob Storage');
+                      // Success logging with less verbosity
+                      if (offer.title === "Premium Hotel Deal") {
+                        console.log(`✅ Successfully loaded image for Premium Hotel Deal`);
                       }
                     }}
                     onError={(e) => {
-                      console.error(`❌ Error loading image for offer ${offer.id}:`, e);
-                      console.log('🔍 Image URL that failed:', e.currentTarget.src);
+                      // Don't log the error object to prevent console clutter
+                      console.log(`🛑 Image loading failed for "${offer.title}". Using fallback.`);
                       
-                      // Fallback to a default image if loading fails
-                      e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
+                      // Use a specific fallback based on offer title
+                      if (offer.title === "Premium Hotel Deal") {
+                        e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
+                      } else if (offer.title === "Free Consultation Package") {
+                        e.currentTarget.src = '/images/offers/consultation.jpg';
+                      } else if (offer.title === "Luxury Airport Transfer") {
+                        e.currentTarget.src = '/images/offers/luxury-transport.jpg';
+                      } else {
+                        // Default fallback for any other offers
+                        e.currentTarget.src = '/images/offers/default-offer.jpg';
+                      }
                     }}
-                    crossOrigin="anonymous" // CrossOrigin attribute for CORS issues
+                    fetchPriority="high" // Modern browsers will prioritize loading
                   />
                 </div>
                 <div className="absolute top-4 left-4">
