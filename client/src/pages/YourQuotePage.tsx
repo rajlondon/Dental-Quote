@@ -136,7 +136,14 @@ const CLINIC_DATA: ClinicInfo[] = [
       transfers: true,
       consultation: true
     },
-    images: ['/images/clinics/istanbul-dental.jpg']
+    images: ['/images/clinics/istanbul-dental.jpg'],
+    hasSpecialOffer: true,
+    specialOfferDetails: {
+      id: "default_offer_1",
+      title: "Free Consultation Package",
+      discountValue: 100,
+      discountType: "percentage"
+    }
   },
   {
     id: 'dentgroup-istanbul',
@@ -158,7 +165,14 @@ const CLINIC_DATA: ClinicInfo[] = [
       consultation: true,
       cityTour: true
     },
-    images: ['/images/clinics/dentgroup.jpg']
+    images: ['/images/clinics/dentgroup.jpg'],
+    hasSpecialOffer: true,
+    specialOfferDetails: {
+      id: "default_offer_2",
+      title: "Premium Hotel Deal",
+      discountValue: 15,
+      discountType: "percentage"
+    }
   },
   {
     id: 'maltepe-dental-clinic',
