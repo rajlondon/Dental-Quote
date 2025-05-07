@@ -1,25 +1,18 @@
 import express from 'express';
-import { db } from '../db';
-import { specialOffers, clinics } from '@shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { sql } from 'drizzle-orm';
+import { SpecialOffer } from '@shared/specialOffers';
+import { specialOffers } from '../routes/special-offers-routes-fixed';
 
 const router = express.Router();
 
 // Helper function to safely check if a date is expired
-const isDateExpired = (validUntil: Date | string | null): boolean => {
-  if (!validUntil) return false; // No expiration date = not expired
+const isDateExpired = (dateStr: string | null | undefined): boolean => {
+  if (!dateStr) return false; // No expiration date = not expired
   
   const now = new Date().getTime();
-  const expiryDate = new Date(validUntil).getTime();
+  const expiryDate = new Date(dateStr).getTime();
   
   return expiryDate < now;
-};
-
-// Helper function to filter out expired offers
-const filterExpiredOffers = (offers: any[]): any[] => {
-  return offers.filter(offer => !isDateExpired(offer.validUntil));
 };
 
 /**
@@ -28,29 +21,21 @@ const filterExpiredOffers = (offers: any[]): any[] => {
  */
 router.get('/clinic/:clinicId', async (req, res) => {
   try {
-    const clinicId = parseInt(req.params.clinicId);
+    const { clinicId } = req.params;
     
-    if (isNaN(clinicId)) {
-      return res.status(400).json({ success: false, message: 'Invalid clinic ID' });
-    }
+    // Get offers from the in-memory storage
+    const clinicOffers = specialOffers.get(clinicId) || [];
     
-    // Get active special offers for the clinic
-    const offers = await db
-      .select()
-      .from(specialOffers)
-      .where(
-        and(
-          eq(specialOffers.clinicId, clinicId),
-          eq(specialOffers.isActive, true)
-        )
-      );
-      
-    // Filter out expired offers
-    const validOffers = filterExpiredOffers(offers);
-      
-    return res.json({ success: true, data: validOffers });
+    // Filter for active and non-expired offers
+    const activeOffers = clinicOffers.filter(
+      offer => offer.is_active && 
+               offer.admin_approved && 
+               !isDateExpired(offer.end_date)
+    );
+    
+    return res.json(activeOffers);
   } catch (error) {
-    console.error('Error fetching clinic special offers:', error);
+    console.error('Error fetching clinic offers:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -61,7 +46,7 @@ router.get('/clinic/:clinicId', async (req, res) => {
  * Body: { clinicId: number, treatments: Array<{ name: string, category: string, quantity: number }> }
  */
 const matchTreatmentsSchema = z.object({
-  clinicId: z.number().int().positive(),
+  clinicId: z.number().int().positive().or(z.string()),
   treatments: z.array(
     z.object({
       name: z.string(),
@@ -78,38 +63,29 @@ router.post('/match-treatments', async (req, res) => {
     const validatedData = matchTreatmentsSchema.parse(req.body);
     const { clinicId, treatments } = validatedData;
     
-    // Get all active special offers for the clinic
-    const offers = await db
-      .select()
-      .from(specialOffers)
-      .where(
-        and(
-          eq(specialOffers.clinicId, clinicId),
-          eq(specialOffers.isActive, true)
-        )
-      );
+    // Convert clinicId to string if it's a number
+    const clinicIdStr = typeof clinicId === 'number' ? clinicId.toString() : clinicId;
     
-    // Filter out expired offers
-    const validOffers = filterExpiredOffers(offers);
+    // Get offers from the in-memory storage
+    const clinicOffers = specialOffers.get(clinicIdStr) || [];
     
-    if (!validOffers || validOffers.length === 0) {
+    // Filter for active and non-expired offers
+    const validOffers = clinicOffers.filter(
+      offer => offer.is_active && 
+               offer.admin_approved && 
+               !isDateExpired(offer.end_date)
+    );
+    
+    // If no offers found, return an empty array
+    if (validOffers.length === 0) {
       return res.json({ 
         success: true, 
         data: { 
           matchedOffers: [],
-          message: 'No active special offers available for this clinic'
+          clinic: { id: clinicIdStr, name: `Clinic ${clinicIdStr}` },
+          message: 'No special offers available for this clinic at this time.'
         }
       });
-    }
-    
-    // Get the clinic details
-    const [clinic] = await db
-      .select()
-      .from(clinics)
-      .where(eq(clinics.id, clinicId));
-      
-    if (!clinic) {
-      return res.status(404).json({ success: false, message: 'Clinic not found' });
     }
     
     // Match offers with treatments
@@ -134,7 +110,7 @@ router.post('/match-treatments', async (req, res) => {
         ...offer,
         isMatched: isMatch,
         displayText: isMatch ? 
-          `Eligible for ${offer.title} (${offer.discountType === 'percentage' ? offer.discountValue + '%' : '£' + offer.discountValue} off)` : 
+          `Eligible for ${offer.title} (${offer.discount_type === 'percentage' ? offer.discount_value + '%' : '£' + offer.discount_value} off)` : 
           `Add ${offer.title} to your plan to qualify`
       };
     });
@@ -143,7 +119,7 @@ router.post('/match-treatments', async (req, res) => {
       success: true, 
       data: { 
         matchedOffers,
-        clinic,
+        clinic: { id: clinicIdStr, name: `Clinic ${clinicIdStr}` },
         message: matchedOffers.some(o => o.isMatched) ? 
           'You qualify for special offers! Apply them to save on your treatment.' : 
           'Add more treatments to qualify for special offers.'
@@ -188,22 +164,29 @@ router.post('/apply', async (req, res) => {
     const validatedData = applyOfferSchema.parse(req.body);
     const { specialOfferId, treatments, patientId, treatmentPlanId } = validatedData;
     
-    // Get the offer
-    const [offer] = await db
-      .select()
-      .from(specialOffers)
-      .where(eq(specialOffers.id, specialOfferId));
-      
-    if (!offer) {
+    // Find the offer in the in-memory storage
+    let foundOffer: SpecialOffer | undefined;
+    
+    for (const [clinicId, offers] of specialOffers.entries()) {
+      const offer = offers.find(o => o.id === specialOfferId);
+      if (offer) {
+        foundOffer = offer;
+        break;
+      }
+    }
+    
+    if (!foundOffer) {
       return res.status(404).json({ success: false, message: 'Special offer not found' });
     }
     
-    if (!offer.isActive) {
+    const offer = foundOffer;
+    
+    if (!offer.is_active) {
       return res.status(400).json({ success: false, message: 'This special offer is no longer active' });
     }
     
     // Check if offer is expired
-    if (isDateExpired(offer.validUntil)) {
+    if (isDateExpired(offer.end_date)) {
       return res.status(400).json({ success: false, message: 'This special offer has expired' });
     }
     
@@ -212,10 +195,10 @@ router.post('/apply', async (req, res) => {
       // Apply discount based on the offer type
       let discountedPrice = treatment.priceGBP;
       
-      if (offer.discountType === 'percentage') {
-        discountedPrice = treatment.priceGBP * (1 - (Number(offer.discountValue) / 100));
+      if (offer.discount_type === 'percentage') {
+        discountedPrice = treatment.priceGBP * (1 - (Number(offer.discount_value) / 100));
       } else {
-        discountedPrice = treatment.priceGBP - Number(offer.discountValue);
+        discountedPrice = treatment.priceGBP - Number(offer.discount_value);
       }
       
       // Ensure the price doesn't go below zero
@@ -250,8 +233,8 @@ router.post('/apply', async (req, res) => {
       data: {
         discountedTreatments,
         totalSavings,
-        message: `${offer.title} has been applied. You saved ${offer.discountType === 'percentage' ? 
-          offer.discountValue + '%' : 
+        message: `${offer.title} has been applied. You saved ${offer.discount_type === 'percentage' ? 
+          offer.discount_value + '%' : 
           '£' + totalSavings.toFixed(2)}`
       }
     });
