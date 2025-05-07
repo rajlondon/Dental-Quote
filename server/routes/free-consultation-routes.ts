@@ -33,7 +33,7 @@ router.post('/free-consultation', async (req, res) => {
     
     // Hard-coded patient ID for non-authenticated requests
     // In a full production environment, this would require authentication
-    const patientId = 2; // Default patient user
+    const patientId = 45; // Using valid patient ID from the database (patient@mydentalfly.com)
     
     // Create a treatment plan using raw SQL since we don't have the actual schema
     const treatmentPlanResult = await db.execute(sql`

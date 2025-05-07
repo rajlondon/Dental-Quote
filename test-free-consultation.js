@@ -44,7 +44,7 @@ async function testFreeConsultation() {
       },
       body: JSON.stringify({
         offerId: testOffer.id,
-        clinicId: testOffer.clinicId || "1" // Fallback to clinic ID 1 if not provided
+        clinicId: "1" // Use a valid clinic ID
       })
     });
     
