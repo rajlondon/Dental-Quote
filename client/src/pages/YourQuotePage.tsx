@@ -1048,20 +1048,23 @@ const YourQuotePage: React.FC = () => {
         });
       } else if (isPromoTokenFlow && promoToken) {
         // Create a promo token treatment item
+        // Handle null promoType by defaulting to 'special_offer'
+        const safePromoType = promoType === 'package' ? 'package' : 'special_offer';
+        
         const promoTreatment: PlanTreatmentItem = {
           id: `promo_${Date.now()}`,
-          category: promoType === 'package' ? 'packages' : 'special_offer',
-          name: `${promoType === 'package' ? 'Package' : 'Special Offer'}: ${searchParams.get('promoTitle') || 'Promotion'}`,
+          category: safePromoType === 'package' ? 'packages' : 'special_offer',
+          name: `${safePromoType === 'package' ? 'Package' : 'Special Offer'}: ${searchParams.get('promoTitle') || 'Promotion'}`,
           quantity: 1,
           priceGBP: 0,
           priceUSD: 0,
           subtotalGBP: 0,
           subtotalUSD: 0,
           guarantee: 'N/A',
-          isSpecialOffer: promoType === 'special_offer',
-          isPackage: promoType === 'package',
+          isSpecialOffer: safePromoType === 'special_offer',
+          isPackage: safePromoType === 'package',
           promoToken: promoToken,
-          promoType: promoType
+          promoType: safePromoType
         };
         
         console.log("📋 Adding promo token treatment to items:", promoTreatment);
