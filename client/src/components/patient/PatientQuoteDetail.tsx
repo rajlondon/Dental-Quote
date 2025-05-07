@@ -128,21 +128,27 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
     if (latestVersion && latestVersion.treatments) {
       // Use treatments from the latest version
       console.log('[DEBUG] Using treatments from latestVersion:', latestVersion.treatments);
-      treatments = latestVersion.treatments.map(t => ({
+      treatments = latestVersion.treatments.map((t: any) => ({
         name: t.name || 'Treatment',
         quantity: t.quantity || 1,
-        price: t.price || 0
+        price: t.price || 0,
+        isPackage: t.isPackage || false,
+        packageId: t.packageId || undefined,
+        specialOffer: t.specialOffer || undefined
       }));
       
       // Calculate the total price
-      totalPrice = treatments.reduce((sum, t) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
+      totalPrice = treatments.reduce((sum: number, t: any) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
     } else if (parsedQuoteData && parsedQuoteData.treatments) {
       // If we have parsed quote data with treatments, use that
       console.log('[DEBUG] Using treatments from parsedQuoteData:', parsedQuoteData.treatments);
       treatments = parsedQuoteData.treatments.map(t => ({
         name: t.name || 'Treatment',
         quantity: t.quantity || 1,
-        price: t.price || 0
+        price: t.price || 0,
+        isPackage: t.isPackage || false,
+        packageId: t.packageId || undefined,
+        specialOffer: t.specialOffer || undefined
       }));
       
       // Calculate the total price 
@@ -154,7 +160,10 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
         {
           name: quoteRequest.specificTreatment || quoteRequest.treatment || 'Dental Treatment',
           quantity: 1,
-          price: quoteRequest.estimatedPrice || 1500 // Default price if none available
+          price: quoteRequest.estimatedPrice || 1500, // Default price if none available
+          isPackage: quoteRequest.isPackage || false,
+          packageId: quoteRequest.packageId || undefined,
+          specialOffer: quoteRequest.specialOffer || undefined
         }
       ];
       totalPrice = quoteRequest.estimatedPrice || 1500; // Default price if none available
@@ -401,7 +410,19 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
               {quote.treatments && quote.treatments.map((treatment: QuoteTreatment, index: number) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {treatment.name}
+                    <div className="flex items-center gap-2">
+                      <span>{treatment.name}</span>
+                      {treatment.isPackage && (
+                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">
+                          Package
+                        </Badge>
+                      )}
+                      {treatment.specialOffer && (
+                        <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
+                          Special Offer
+                        </Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {treatment.quantity || 1}
