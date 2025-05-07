@@ -595,6 +595,9 @@ const YourQuotePage: React.FC = () => {
     buildUrl
   } = useQuoteFlow();
   
+  // Use our special offer tracking hook for consistent tracking
+  const { specialOffer: trackedOffer, hasActiveOffer, applySpecialOfferToTreatments } = useSpecialOfferTracking();
+  
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   
@@ -1765,6 +1768,13 @@ const YourQuotePage: React.FC = () => {
             </div>
           )}
           
+          {/* Display active special offer if present through our tracking system */}
+          {hasActiveOffer && trackedOffer && (
+            <div className="mb-6">
+              <ActiveOfferBadge showDetails={true} size="lg" />
+            </div>
+          )}
+          
           {/* Back button */}
           <div className="mb-6">
             <Button
@@ -2069,8 +2079,9 @@ const YourQuotePage: React.FC = () => {
                         onTreatmentsChange={setTreatmentItems}
                       />
                       
+                      {/* Apply special offer discounts from our tracking hook to treatments */}
                       <TreatmentPlanBuilder
-                        initialTreatments={treatmentItems}
+                        initialTreatments={hasActiveOffer ? applySpecialOfferToTreatments(treatmentItems) : treatmentItems}
                         onTreatmentsChange={setTreatmentItems}
                       />
                       
