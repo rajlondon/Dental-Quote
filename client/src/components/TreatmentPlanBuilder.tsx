@@ -392,6 +392,81 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     return treatment?.notes;
   };
   
+  // Add a special offer treatment
+  const addSpecialOfferTreatment = (treatmentName: string, specialOffer: any) => {
+    // Find the base treatment in our categories
+    let baseTreatment: any = null;
+    let baseCategory: string = '';
+    
+    // Search through all categories to find the treatment
+    for (const category of TREATMENT_CATEGORIES) {
+      const found = category.treatments.find(t => 
+        t.name.toLowerCase().includes(treatmentName.toLowerCase()) ||
+        treatmentName.toLowerCase().includes(t.name.toLowerCase())
+      );
+      
+      if (found) {
+        baseTreatment = found;
+        baseCategory = category.id;
+        break;
+      }
+    }
+    
+    // If no matching treatment found, use a default
+    if (!baseTreatment) {
+      baseTreatment = {
+        id: 'special_offer_default',
+        name: treatmentName || 'Special Offer Treatment',
+        priceGBP: 1000,
+        priceUSD: 1280,
+        guarantee: '2-year',
+      };
+      baseCategory = 'other';
+    }
+    
+    // Calculate price with discount
+    let priceGBP = Math.round(baseTreatment.priceGBP * 0.35); // Standard Istanbul pricing
+    let priceUSD = Math.round(baseTreatment.priceUSD * 0.35);
+    
+    // Apply discount
+    if (specialOffer.discountType === 'percentage') {
+      const discountMultiplier = (100 - specialOffer.discountValue) / 100;
+      priceGBP = Math.round(priceGBP * discountMultiplier);
+      priceUSD = Math.round(priceUSD * discountMultiplier);
+    } else if (specialOffer.discountType === 'fixed_amount') {
+      priceGBP = Math.max(0, priceGBP - specialOffer.discountValue);
+      priceUSD = Math.max(0, priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert to USD
+    }
+    
+    // Create treatment item
+    const newTreatment: TreatmentItem = {
+      id: `special_offer_${Date.now()}`,
+      category: baseCategory,
+      name: `${baseTreatment.name} (Special Offer)`,
+      quantity: 1,
+      priceGBP,
+      priceUSD,
+      subtotalGBP: priceGBP,
+      subtotalUSD: priceUSD,
+      guarantee: baseTreatment.guarantee,
+      ukPriceGBP: baseTreatment.priceGBP,
+      ukPriceUSD: baseTreatment.priceUSD,
+      isSpecialOffer: true,
+      specialOffer: {
+        id: specialOffer.id,
+        title: specialOffer.title,
+        discountType: specialOffer.discountType,
+        discountValue: specialOffer.discountValue,
+        clinicId: specialOffer.clinicId
+      }
+    };
+    
+    // Add to treatments list
+    setTreatments([...treatments, newTreatment]);
+    
+    return newTreatment;
+  };
+  
   // New direct add treatment without modal
   const handleDirectAddTreatment = (treatment: any, categoryId: string) => {
     // Check if treatment is already in the list
