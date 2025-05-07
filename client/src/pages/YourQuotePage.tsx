@@ -795,12 +795,23 @@ const YourQuotePage: React.FC = () => {
     // Start with our clinic data
     let clinicsList = [...CLINIC_DATA];
     
-    // If there's a special offer, sort clinics to prioritize the one with the offer
-    if (specialOffer && specialOffer.clinicId) {
+    // If there's a special offer, add it to the appropriate clinic or fallback to first clinic
+    if (specialOffer) {
+      console.log("🎯 Applying special offer to clinics:", specialOffer);
+      
+      // Determine which clinic should get the special offer
+      const clinicId = specialOffer.clinicId || '1';  // Fallback to first clinic if not specified
+      const targetClinicExists = clinicsList.some(c => c.id === clinicId);
+      
+      if (!targetClinicExists) {
+        console.warn(`⚠️ Clinic ID ${clinicId} for special offer doesn't exist, using first clinic`);
+      }
+      
+      // Sort clinics to prioritize the one with the offer
       clinicsList = clinicsList.sort((a, b) => {
         // Put the clinic with the special offer first
-        if (a.id === specialOffer.clinicId) return -1;
-        if (b.id === specialOffer.clinicId) return 1;
+        if (a.id === clinicId) return -1;
+        if (b.id === clinicId) return 1;
         
         // Then sort by tier (premium first)
         if (a.tier === 'premium' && b.tier !== 'premium') return -1;
@@ -812,7 +823,8 @@ const YourQuotePage: React.FC = () => {
       
       // Add special offer indicator to the relevant clinic
       clinicsList = clinicsList.map(clinic => {
-        if (clinic.id === specialOffer.clinicId) {
+        if (clinic.id === clinicId) {
+          console.log(`✅ Adding special offer "${specialOffer.title}" to clinic: ${clinic.name}`);
           return {
             ...clinic,
             hasSpecialOffer: true,
@@ -827,7 +839,7 @@ const YourQuotePage: React.FC = () => {
         return clinic;
       });
       
-      console.log(`Prioritized clinic ${specialOffer.clinicId} for special offer: ${specialOffer.title}`);
+      console.log(`Prioritized clinic ${clinicId} for special offer: ${specialOffer.title}`);
     } else {
       // Regular sorting by tier and then price
       clinicsList = clinicsList.sort((a, b) => {
@@ -999,15 +1011,24 @@ const YourQuotePage: React.FC = () => {
   // Leverage the useInitializeQuoteFlow hook
   const { initializeFromUrlParams } = useInitializeQuoteFlow();
   
+  // Debug the clinic cards to see if hasSpecialOffer is set
+  useEffect(() => {
+    // Check if any clinics have special offers
+    const clinicsWithOffers = clinics.filter(c => c.hasSpecialOffer);
+    console.log(`🏥 Clinics with special offers: ${clinicsWithOffers.length}`, 
+      clinicsWithOffers.map(c => `${c.name} (${c.specialOfferDetails?.title})`));
+  }, [clinics]);
+  
   // Add dedicated effect to ensure special offers are added to treatment items
   useEffect(() => {
     // Ensure we're properly logging what's happening
     console.log("🔄 Treatment items check on YourQuotePage:", {
       treatmentItemsCount: treatmentItems.length,
       isSpecialOfferFlow,
-      isPackageFlow,
+      isPackageFlow, 
       isPromoTokenFlow,
       specialOfferExists: !!specialOffer,
+      specialOfferDetails: specialOffer,
       packageDataExists: !!packageData
     });
     
