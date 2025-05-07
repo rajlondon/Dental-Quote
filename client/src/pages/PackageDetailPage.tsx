@@ -57,39 +57,65 @@ const PackageDetailPage = () => {
   
   // Handle booking a package
   const handleBookPackage = async () => {
-    // Check if user is logged in
-    if (!user) {
-      // Use the public booking redirect flow instead of directly showing an error
-      toast({
-        title: "Login Required",
-        description: "Please login or register to book this package",
-      });
-      
-      // Since the original endpoint is for GET (redirect), we should continue to use it
-      // The public endpoint will redirect to login with booking parameters
-      window.location.href = `/api/public/book-package/${id}`;
-      return;
-    }
-    
-    // Check if user is a patient
-    if (user.role !== "patient") {
-      toast({
-        title: "Patient Account Required",
-        description: "Only patients can book treatment packages",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       setIsBooking(true);
-      
-      // Call the API to book the package with the internal ID
-      const result = await bookPackage.mutateAsync(internalPackageId);
-      
-      // Redirect to patient portal with the newly booked treatment
-      if (result.success) {
-        setLocation("/patient/portal");
+  
+      // Check if user is logged in
+      if (user) {
+        // User is logged in, proceed with direct booking
+        if (user.role !== "patient") {
+          toast({
+            title: "Patient Account Required",
+            description: "Only patients can book treatment packages",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Call the API to book the package with the internal ID
+        const result = await bookPackage.mutateAsync(internalPackageId);
+        
+        // Redirect to patient portal with the newly booked treatment
+        if (result.success) {
+          setLocation("/patient/portal");
+        }
+      } else {
+        // If user is not logged in, save package details for later and redirect
+        // to the quote flow directly (similar to OfferCard and EnhancedOffersCarousel)
+        if (mockedPackageData && actualPackageData) {
+          // Prepare package data for session storage
+          const packageData = {
+            id: internalPackageId,
+            title: actualPackageData.name,
+            clinicId: actualPackageData.clinicId || "1",
+            basePrice: Number(actualPackageData.price) || 0,
+            currency: actualPackageData.currency || "USD"
+          };
+          
+          // Save to session storage for later retrieval
+          sessionStorage.setItem('pendingPackage', JSON.stringify(packageData));
+          sessionStorage.setItem('processingPackage', internalPackageId);
+          
+          toast({
+            title: "Package Selected",
+            description: `${actualPackageData.name} will be applied to your quote.`,
+            variant: "default",
+          });
+          
+          // Redirect directly to the quote flow without requiring login first
+          // Use the same format as PackageCard for consistency
+          window.location.href = `/quote?step=start&skipInfo=true&clinicId=${packageData.clinicId}&packageId=${internalPackageId}&source=package`;
+          return;
+        } else {
+          // Fallback to the old redirect method if package data is missing
+          toast({
+            title: "Package Selected",
+            description: "Proceeding to quote creation...",
+          });
+          
+          window.location.href = `/api/public/book-package/${id}`;
+          return;
+        }
       }
     } catch (error) {
       console.error("Error booking package:", error);
