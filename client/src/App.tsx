@@ -195,6 +195,58 @@ function Router() {
       <Route path="/account-settings" component={AccountSettingsPage} />
       <Route path="/my-profile" component={ProfilePage} />
       <Route path="/dental-advice" component={DentalAdvicePage} />
+      
+      {/* Test route for matched clinics page with special offers */}
+      <Route path="/test-clinics">
+        {() => {
+          const MatchedClinicsPage = React.lazy(() => import("@/pages/MatchedClinicsPage"));
+          // Sample treatment items
+          const sampleTreatments = [
+            {
+              id: "treatment1",
+              category: "implants",
+              name: "Dental Implant",
+              quantity: 2,
+              priceGBP: 1200,
+              priceUSD: 1560,
+              subtotalGBP: 2400,
+              subtotalUSD: 3120,
+              guarantee: "5-year"
+            },
+            {
+              id: "treatment2",
+              category: "cosmetic",
+              name: "Porcelain Veneers",
+              quantity: 4,
+              priceGBP: 350,
+              priceUSD: 455,
+              subtotalGBP: 1400,
+              subtotalUSD: 1820,
+              guarantee: "3-year"
+            }
+          ];
+          
+          // Sample patient info
+          const samplePatient = {
+            fullName: "John Doe",
+            email: "john.doe@example.com",
+            phone: "+44 7700 900123",
+            hasXrays: true,
+            hasCtScan: false,
+            hasDentalPhotos: true,
+            preferredContactMethod: "email",
+            travelMonth: "August",
+            departureCity: "London",
+            additionalNotesForClinic: "Looking for a comfortable experience with minimal pain."
+          };
+          
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinics...</div>}>
+              <MatchedClinicsPage treatmentItems={sampleTreatments} patientInfo={samplePatient} totalGBP={3800} />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/verify-email" component={VerifyEmailPage} />
