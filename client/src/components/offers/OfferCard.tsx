@@ -62,41 +62,48 @@ export function OfferCard({ offer }: OfferCardProps) {
     try {
       setIsProcessing(true);
       
-      // If user is not logged in, redirect to login page with special offer info
-      if (!user) {
-        // Save offer details for post-login processing
-        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-        sessionStorage.setItem('processingSpecialOffer', offer.id);
-        
-        // Redirect to login page
-        setLocation('/portal-login');
+      // Update the quote flow context
+      setSource('special_offer');
+      setOfferId(offer.id);
+      setClinicId(offer.clinicId);
+      
+      // If the user is already logged in, try to create a treatment plan directly
+      if (user) {
+        try {
+          // User is logged in, directly create a quote from the offer
+          const response = await createQuoteFromOffer(offer.id, offer.clinicId);
+          
+          // Check if quote was created successfully and response contains the required fields
+          if (response?.quoteId) {
+            toast({
+              title: "Success",
+              description: `${offer.title} added to your quote`,
+              variant: "default",
+            });
+            
+            // Handle redirection to the quote URL - this should now happen in the createQuoteFromOffer function
+            // If this code is ever reached, use this as a fallback
+            if (!window.location.href.includes('quote-flow')) {
+              window.location.href = response.quoteUrl;
+            }
+          } else {
+            throw new Error('Failed to create quote from offer');
+          }
+        } catch (err) {
+          // Rethrow to be caught by outer catch block
+          throw err;
+        }
         return;
       }
       
-      try {
-        // User is logged in, directly create a quote from the offer
-        const response = await createQuoteFromOffer(offer.id, offer.clinicId);
-        
-        // Check if quote was created successfully and response contains the required fields
-        if (response?.quoteId) {
-          toast({
-            title: "Success",
-            description: `${offer.title} added to your quote`,
-            variant: "default",
-          });
-          
-          // Handle redirection to the quote URL - this should now happen in the createQuoteFromOffer function
-          // If this code is ever reached, use this as a fallback
-          if (!window.location.href.includes('quote-flow')) {
-            window.location.href = response.quoteUrl;
-          }
-        } else {
-          throw new Error('Failed to create quote from offer');
-        }
-      } catch (err) {
-        // Rethrow to be caught by outer catch block
-        throw err;
-      }
+      // If user is not logged in, save offer details for later
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+      sessionStorage.setItem('processingSpecialOffer', offer.id);
+      
+      // Proceed to the quote flow directly (will handle login as part of the flow)
+      // Use skipInfo=true to bypass initial patient info page if they select "create account"
+      window.location.href = `/quote-flow?step=start&skipInfo=true&clinicId=${offer.clinicId}&specialOfferId=${offer.id}`;
+      return;
       
     } catch (error) {
       console.error('Error processing special offer:', error);
