@@ -56,6 +56,8 @@ import { AppError, catchAsync } from "./middleware/error-handler";
 // Import the canonical v1 API routes
 import treatmentLinesRouter from "./routes/v1/treatment-lines";
 import { treatmentPlansRoutes } from "./routes/v1";
+// Import special Free Consultation Routes for unauthenticated flow
+import freeConsultationRoutes from "./routes/free-consultation-routes";
 // Import security middleware
 import { 
   csrfProtection, 
@@ -328,6 +330,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register the promo token routes for special offers and package promotions
   console.log('[DEBUG] Mounting promo-token-routes at /api/v1');
   app.use('/api/v1', promoTokenRoutes);
+  
+  // Register special Free Consultation routes that don't require authentication
+  console.log('[DEBUG] Mounting special free-consultation-routes at /api/v1');
+  app.use('/api/v1', freeConsultationRoutes);
   
   // Register image caching routes for handling Azure Blob Storage DALL-E images
   app.use(imageCacheRoutes);
