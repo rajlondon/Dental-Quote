@@ -583,21 +583,28 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       onMouseLeave={handleMouseLeave}
     >
       <div className="container mx-auto px-4">
-        <div className="flex flex-wrap items-center justify-between mb-8">
-          <div className="mb-4 md:mb-0">
-            <h2 className="text-3xl font-bold bg-gradient-to-br from-primary to-blue-700 bg-clip-text text-transparent">
-              Special Offers
-            </h2>
-            <p className="text-gray-600 mt-2 max-w-2xl">
-              Exclusive deals from our premium partner clinics to make your dental journey more affordable.
-            </p>
+        <div className="text-center mb-10">
+          <div className="inline-block mb-3 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full px-4 py-1.5 shadow-sm">
+            <span className="text-indigo-700 font-medium text-sm flex items-center">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Exclusive Savings
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="rounded-full" 
-              onClick={() => {
+          <h2 className="text-4xl font-bold bg-gradient-to-br from-primary to-indigo-600 bg-clip-text text-transparent mb-4">
+            Special Offers
+          </h2>
+          <p className="text-gray-600 mx-auto max-w-2xl">
+            Exclusive deals from our premium partner clinics to make your dental journey more affordable. 
+            Limited time offers with significant savings on premium treatments.
+          </p>
+        </div>
+        
+        <div className="flex items-center justify-end gap-2 mb-6">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full" 
+            onClick={() => {
                 // Manual refresh button
                 setImageRefreshKey(Date.now());
                 setImageCache({});
@@ -697,11 +704,31 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               <div className="md:w-1/2 p-6 md:p-8 flex flex-col">
                 <div className="mb-2">
                   {offer.discount_value && (
-                    <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 mb-2">
-                      <Tag className="w-3.5 h-3.5 mr-1" />
-                      {offer.discount_type === 'percentage'
-                        ? `${offer.discount_value}% OFF`
-                        : `$${offer.discount_value} OFF`}
+                    <div className="relative inline-block">
+                      <div className="absolute -right-1 -top-1 w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                        <span className="text-white text-xs font-bold">!</span>
+                      </div>
+                      <div className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white mb-2 shadow-sm">
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          width="16" 
+                          height="16" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          className="mr-2"
+                        >
+                          <path d="M12 3l1.2 2.8 2.8.3-2 2 .5 2.9-2.5-1.3-2.5 1.3.5-2.9-2-2 2.8-.3z"/>
+                        </svg>
+                        {offer.discount_type === 'percentage'
+                          ? `SAVE ${offer.discount_value}%`
+                          : offer.discount_type === 'fixed_amount' && offer.treatment_price_gbp
+                            ? `SAVE £${offer.discount_value}`
+                            : `SPECIAL OFFER`}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -709,22 +736,70 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{offer.title}</h3>
                 <p className="text-gray-600 mb-4">{offer.description}</p>
                 
-                {/* Display price information */}
+                {/* Display price information with discount calculation */}
                 {(offer.treatment_price_gbp || offer.treatment_price_usd) && (
-                  <div className="flex gap-2 mb-4 items-center">
-                    <span className="font-semibold text-gray-700">Price:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {offer.treatment_price_gbp && (
-                        <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
-                          £{offer.treatment_price_gbp}
-                        </Badge>
-                      )}
-                      {offer.treatment_price_usd && (
-                        <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
-                          ${offer.treatment_price_usd}
-                        </Badge>
-                      )}
-                    </div>
+                  <div className="mb-4">
+                    <span className="font-semibold text-gray-700 mr-2">Price:</span>
+                    
+                    {/* Handle discount display */}
+                    {offer.discount_value && offer.discount_type ? (
+                      <div className="mt-2 flex gap-4">
+                        {/* GBP Price with discount */}
+                        {offer.treatment_price_gbp && (
+                          <div className="flex flex-col">
+                            <div className="flex items-center">
+                              <span className="line-through text-gray-500 mr-2">£{offer.treatment_price_gbp}</span>
+                              <Badge className="bg-green-100 border-green-200 text-green-800 font-medium">
+                                £{offer.discount_type === 'percentage'
+                                  ? Math.round(offer.treatment_price_gbp * (1 - offer.discount_value / 100))
+                                  : Math.max(0, offer.treatment_price_gbp - offer.discount_value)
+                                }
+                              </Badge>
+                            </div>
+                            <span className="text-xs text-green-600 mt-1">
+                              {offer.discount_type === 'percentage'
+                                ? `Save ${offer.discount_value}%`
+                                : `Save £${offer.discount_value}`
+                              }
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* USD Price with discount */}
+                        {offer.treatment_price_usd && (
+                          <div className="flex flex-col">
+                            <div className="flex items-center">
+                              <span className="line-through text-gray-500 mr-2">${offer.treatment_price_usd}</span>
+                              <Badge className="bg-green-100 border-green-200 text-green-800 font-medium">
+                                ${offer.discount_type === 'percentage'
+                                  ? Math.round(offer.treatment_price_usd * (1 - offer.discount_value / 100))
+                                  : Math.max(0, offer.treatment_price_usd - Math.round(offer.discount_value * 1.28))
+                                }
+                              </Badge>
+                            </div>
+                            <span className="text-xs text-green-600 mt-1">
+                              {offer.discount_type === 'percentage'
+                                ? `Save ${offer.discount_value}%`
+                                : `Save $${Math.round(offer.discount_value * 1.28)}`
+                              }
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 items-center">
+                        {offer.treatment_price_gbp && (
+                          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                            £{offer.treatment_price_gbp}
+                          </Badge>
+                        )}
+                        {offer.treatment_price_usd && (
+                          <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+                            ${offer.treatment_price_usd}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 
