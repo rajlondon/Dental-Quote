@@ -489,22 +489,19 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       console.log("Redirecting to quote flow with special offer context");
       setLocation('/quote');
     } else {
-      console.log("User not authenticated, saving offer info for after login");
+      console.log("User not authenticated, proceeding directly to quote flow");
       
       // Check if we're already processing this offer to avoid duplicate redirects
       const processingOffer = sessionStorage.getItem('processingSpecialOffer');
       if (processingOffer === standardizedOfferData.id) {
-        console.log('Already processing this offer, not setting pendingSpecialOffer again');
+        console.log('Already processing this offer');
         
-        // Notify user they need to login with existing data
+        // Notify user and continue to quote flow
         toast({
-          title: "Login Required",
-          description: "Please create an account or login to request this special offer",
+          title: "Processing Offer",
+          description: "Please wait while we prepare your quote",
           variant: "default",
         });
-        
-        // Redirect to login page
-        setTimeout(() => setLocation('/portal-login'), 100);
         return;
       }
       
@@ -512,29 +509,24 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       sessionStorage.removeItem('pendingSpecialOffer');
       sessionStorage.removeItem('processingSpecialOffer');
       
-      // Save the standardized offer data to sessionStorage for retrieval after login
-      // This maintains backward compatibility with existing code
+      // Save the standardized offer data to sessionStorage for retrieval during quote flow
       console.log("Saving pendingSpecialOffer:", standardizedOfferData);
       sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
       sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
       
-      // Notify user they need to login
+      // Notify user about processing the offer
       toast({
-        title: "Login Required",
-        description: "Please create an account or login to request this special offer",
+        title: "Special Offer Selected",
+        description: `${offer.title} will be applied to your quote.`,
         variant: "default",
       });
       
-      // Save to toast message to confirm selection persisted
-      toast({
-        title: "Selection Saved",
-        description: "Your special offer selection will be applied after login",
-        variant: "default",
-      });
+      // Redirect directly to the quote flow without requiring login first
+      console.log("Redirecting to quote page with offer details");
       
-      // Redirect to login page
-      console.log("Redirecting to portal login page");
-      setLocation('/portal-login');
+      // Use the same format as OfferCard for consistency
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${offer.clinic_id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
+      return;
     }
   };
 
