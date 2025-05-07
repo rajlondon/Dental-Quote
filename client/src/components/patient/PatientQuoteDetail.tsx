@@ -16,6 +16,15 @@ type QuoteTreatment = {
   name: string;
   quantity?: number;
   price?: number;
+  isPackage?: boolean;
+  packageId?: string;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
 };
 
 // Quote shape for type safety
