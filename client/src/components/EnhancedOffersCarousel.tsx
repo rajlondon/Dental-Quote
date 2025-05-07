@@ -487,25 +487,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       
       // Redirect to the quote flow page with the offer context
       console.log("Redirecting to quote flow with special offer context");
-      setLocation('/quote');
+      // Use window.location.href instead of setLocation to ensure the redirect happens
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${offer.clinic_id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
     } else {
       console.log("User not authenticated, proceeding directly to quote flow");
       
-      // Check if we're already processing this offer to avoid duplicate redirects
-      const processingOffer = sessionStorage.getItem('processingSpecialOffer');
-      if (processingOffer === standardizedOfferData.id) {
-        console.log('Already processing this offer');
-        
-        // Notify user and continue to quote flow
-        toast({
-          title: "Processing Offer",
-          description: "Please wait while we prepare your quote",
-          variant: "default",
-        });
-        return;
-      }
-      
-      // Clear any existing offer data first
+      // Clear any existing offer data first (always clear it regardless of being processed)
       sessionStorage.removeItem('pendingSpecialOffer');
       sessionStorage.removeItem('processingSpecialOffer');
       
