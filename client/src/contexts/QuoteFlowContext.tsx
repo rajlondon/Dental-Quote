@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Define the possible entry sources as per the design document
-export type EntrySource = 'normal' | 'special_offer' | 'package';
+export type EntrySource = 'normal' | 'special_offer' | 'package' | 'promo_token';
 
 // Define the context data structure
 interface QuoteFlowContextType {
@@ -13,9 +13,14 @@ interface QuoteFlowContextType {
   setPackageId: (id: string | null) => void;
   clinicId: string | null;
   setClinicId: (id: string | null) => void;
+  promoToken: string | null;
+  setPromoToken: (token: string | null) => void;
+  promoType: string | null;
+  setPromoType: (type: string | null) => void;
   isSpecialOfferFlow: boolean;
   isPackageFlow: boolean;
   isNormalFlow: boolean;
+  isPromoTokenFlow: boolean;
   resetFlow: () => void;
 }
 
@@ -28,11 +33,14 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [offerId, setOfferId] = useState<string | null>(null);
   const [packageId, setPackageId] = useState<string | null>(null);
   const [clinicId, setClinicId] = useState<string | null>(null);
+  const [promoToken, setPromoToken] = useState<string | null>(null);
+  const [promoType, setPromoType] = useState<string | null>(null);
 
   // Helper properties for easier flow checks
   const isSpecialOfferFlow = source === 'special_offer';
   const isPackageFlow = source === 'package';
   const isNormalFlow = source === 'normal';
+  const isPromoTokenFlow = source === 'promo_token';
 
   // Reset the flow to default state
   const resetFlow = () => {
@@ -40,6 +48,8 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
     setOfferId(null);
     setPackageId(null);
     setClinicId(null);
+    setPromoToken(null);
+    setPromoType(null);
   };
 
   return (
@@ -53,9 +63,14 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
         setPackageId,
         clinicId,
         setClinicId,
+        promoToken,
+        setPromoToken,
+        promoType,
+        setPromoType,
         isSpecialOfferFlow,
         isPackageFlow,
         isNormalFlow,
+        isPromoTokenFlow,
         resetFlow
       }}
     >
@@ -75,7 +90,14 @@ export const useQuoteFlow = (): QuoteFlowContextType => {
 
 // Utility hook to initialize the flow from URL parameters
 export const useInitializeQuoteFlow = () => {
-  const { setSource, setOfferId, setPackageId, setClinicId } = useQuoteFlow();
+  const { 
+    setSource, 
+    setOfferId, 
+    setPackageId, 
+    setClinicId,
+    setPromoToken,
+    setPromoType
+  } = useQuoteFlow();
 
   const initializeFromUrlParams = () => {
     // Get URL parameters
@@ -84,17 +106,38 @@ export const useInitializeQuoteFlow = () => {
     const packageIdParam = urlParams.get('packageId');
     const clinicIdParam = urlParams.get('clinicId');
     const sourceParam = urlParams.get('source');
+    const promoTokenParam = urlParams.get('promoToken');
+    const promoTypeParam = urlParams.get('promoType');
 
     console.log('QuoteFlowContext: Initializing from URL params:', {
       offerIdParam,
       packageIdParam,
       clinicIdParam,
       sourceParam,
+      promoTokenParam,
+      promoTypeParam,
       urlSearch: window.location.search
     });
 
+    // First check for promo token flow
+    if (sourceParam === 'promo_token' && promoTokenParam) {
+      console.log('QuoteFlowContext: Setting promo token flow from source parameter');
+      setSource('promo_token');
+      setPromoToken(promoTokenParam);
+      if (promoTypeParam) setPromoType(promoTypeParam);
+      
+      // Some promo tokens may also include clinic ID
+      if (clinicIdParam) setClinicId(clinicIdParam);
+      
+      // If the promo type indicates what kind of promotion it is, we can also set the specific IDs
+      if (promoTypeParam === 'special_offer' && offerIdParam) {
+        setOfferId(offerIdParam);
+      } else if (promoTypeParam === 'package' && packageIdParam) {
+        setPackageId(packageIdParam);
+      }
+    }
     // Special case: sourceParam takes precedence if available
-    if (sourceParam === 'package' && packageIdParam) {
+    else if (sourceParam === 'package' && packageIdParam) {
       console.log('QuoteFlowContext: Setting package flow from source parameter');
       setSource('package');
       setPackageId(packageIdParam);
@@ -118,6 +161,14 @@ export const useInitializeQuoteFlow = () => {
       setSource('package');
       setPackageId(packageIdParam);
       if (clinicIdParam) setClinicId(clinicIdParam);
+    }
+    // Check for standalone promo token without source parameter
+    else if (promoTokenParam) {
+      console.log('QuoteFlowContext: Setting promo token flow from token parameter');
+      setSource('promo_token');
+      setPromoToken(promoTokenParam);
+      if (promoTypeParam) setPromoType(promoTypeParam);
+      if (clinicIdParam) setClinicId(clinicIdParam);
     } else {
       console.log('QuoteFlowContext: Setting normal flow (no special parameters found)');
       setSource('normal');
@@ -126,11 +177,32 @@ export const useInitializeQuoteFlow = () => {
     // Check session storage as well
     const pendingOffer = sessionStorage.getItem('pendingSpecialOffer');
     const pendingPackage = sessionStorage.getItem('pendingPackage');
+    const pendingPromoToken = sessionStorage.getItem('pendingPromoToken');
     
     console.log('QuoteFlowContext: Session storage check:', {
       pendingOffer: pendingOffer ? 'exists' : 'not found',
-      pendingPackage: pendingPackage ? 'exists' : 'not found'
+      pendingPackage: pendingPackage ? 'exists' : 'not found',
+      pendingPromoToken: pendingPromoToken ? 'exists' : 'not found'
     });
+
+    // If we have a pending promo token in session storage, use it
+    if (pendingPromoToken && !promoTokenParam) {
+      try {
+        const promoData = JSON.parse(pendingPromoToken);
+        console.log('QuoteFlowContext: Found pending promo token data:', promoData);
+        
+        // Extract data from stored promo data
+        setSource('promo_token');
+        setPromoToken(promoData.token);
+        if (promoData.type) setPromoType(promoData.type);
+        if (promoData.clinicId) setClinicId(promoData.clinicId);
+        
+        // Clear the pending token data
+        sessionStorage.removeItem('pendingPromoToken');
+      } catch (err) {
+        console.error('Error parsing pendingPromoToken:', err);
+      }
+    }
   };
 
   return { initializeFromUrlParams };
