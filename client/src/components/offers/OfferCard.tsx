@@ -55,9 +55,16 @@ export function OfferCard({ offer }: OfferCardProps) {
   const formatDiscount = () => {
     if (!offer.discountType || !offer.discountValue) return null;
     
-    return offer.discountType === 'percentage'
-      ? `${offer.discountValue}% OFF`
-      : `$${offer.discountValue} OFF`;
+    if (offer.discountType === 'percentage') {
+      return `${offer.discountValue}% OFF`;
+    } else {
+      // For fixed discounts, show both currencies if we have treatment prices
+      if (offer.treatmentPriceGBP && offer.treatmentPriceUSD) {
+        return `£${offer.discountValue} / $${Math.round(offer.discountValue * 1.28)} OFF`;
+      } else {
+        return `£${offer.discountValue} OFF`;
+      }
+    }
   };
   
   const handleOfferClick = async () => {
@@ -263,17 +270,56 @@ export function OfferCard({ offer }: OfferCardProps) {
           {offer.description || "Exclusive special offer for dental treatment. Limited time only."}
         </p>
         {(offer.treatmentPriceGBP || offer.treatmentPriceUSD) && (
-          <div className="mt-2 flex justify-between text-sm">
-            <span className="font-medium">Price:</span>
-            <span>
-              {offer.treatmentPriceGBP && (
-                <span className="font-medium">£{offer.treatmentPriceGBP}</span>
-              )}
-              {offer.treatmentPriceGBP && offer.treatmentPriceUSD && " / "}
-              {offer.treatmentPriceUSD && (
-                <span className="font-medium">${offer.treatmentPriceUSD}</span>
-              )}
-            </span>
+          <div className="mt-3 border-t border-gray-100 pt-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="font-medium">Price:</span>
+              <div className="text-right">
+                {offer.discountType && offer.discountValue ? (
+                  <>
+                    {/* If discount exists, show original and discounted price */}
+                    {offer.treatmentPriceGBP && (
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 line-through text-xs">
+                          £{offer.treatmentPriceGBP}
+                        </span>
+                        <span className="font-bold text-green-600">
+                          {offer.discountType === 'percentage' ? (
+                            `£${Math.round(offer.treatmentPriceGBP * (1 - offer.discountValue/100))}`
+                          ) : (
+                            `£${Math.max(0, offer.treatmentPriceGBP - offer.discountValue)}`
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {offer.treatmentPriceUSD && (
+                      <div className="flex flex-col mt-1">
+                        <span className="text-gray-500 line-through text-xs">
+                          ${offer.treatmentPriceUSD}
+                        </span>
+                        <span className="font-bold text-green-600">
+                          {offer.discountType === 'percentage' ? (
+                            `$${Math.round(offer.treatmentPriceUSD * (1 - offer.discountValue/100))}`
+                          ) : (
+                            `$${Math.max(0, offer.treatmentPriceUSD - Math.round(offer.discountValue * 1.28))}`
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Regular price display without discount */}
+                    {offer.treatmentPriceGBP && (
+                      <span className="font-medium">£{offer.treatmentPriceGBP}</span>
+                    )}
+                    {offer.treatmentPriceGBP && offer.treatmentPriceUSD && " / "}
+                    {offer.treatmentPriceUSD && (
+                      <span className="font-medium">${offer.treatmentPriceUSD}</span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </CardContent>

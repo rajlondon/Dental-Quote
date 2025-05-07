@@ -422,8 +422,28 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                         </Badge>
                       )}
                       {(treatment.isSpecialOffer || treatment.specialOffer) && (
-                        <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 flex items-center">
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            width="12" 
+                            height="12" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            className="mr-1"
+                          >
+                            <path d="M12 3l1.2 2.8 2.8.3-2 2 .5 2.9-2.5-1.3-2.5 1.3.5-2.9-2-2 2.8-.3z"/>
+                            <path d="M19 9l.4 1 1 .1-.7.7.2 1-.9-.5-.9.5.2-1-.7-.7 1-.1z"/>
+                            <path d="M5 9l.4 1 1 .1-.7.7.2 1-.9-.5-.9.5.2-1-.7-.7 1-.1z"/>
+                          </svg>
                           {treatment.specialOffer?.title || "Special Offer"}
+                          {treatment.specialOffer?.discountType === 'percentage' && 
+                            ` (${treatment.specialOffer.discountValue}% off)`}
+                          {treatment.specialOffer?.discountType === 'fixed_amount' && 
+                            ` (£${treatment.specialOffer.discountValue} off)`}
                         </Badge>
                       )}
                     </div>
