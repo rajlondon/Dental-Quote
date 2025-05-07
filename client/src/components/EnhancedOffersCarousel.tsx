@@ -401,40 +401,93 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
   // Handle user actions when they request a quote for a special offer
   const handleRequestQuote = (offer: SpecialOffer) => {
-    // Prepare standardized offer data for handoff to quote flow
-    const standardizedOfferData = {
+    console.log('Handling quote request for special offer:', offer);
+    
+    // First, prepare complete offer data with all possible fields
+    const offerData = {
       id: offer.id,
-      title: offer.title,
-      clinicId: offer.clinic_id,
+      title: offer.title || 'Special Offer',
+      clinic_id: offer.clinic_id || '',
+      clinicId: offer.clinic_id || '',
+      applicable_treatments: offer.applicable_treatments || ['Dental Implants'],
+      applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants',
+      discount_value: offer.discount_value || 0,
       discountValue: offer.discount_value || 0,
+      discount_type: offer.discount_type || 'percentage',
       discountType: offer.discount_type || 'percentage',
-      applicableTreatment: (offer.applicable_treatments && offer.applicable_treatments.length > 0)
-        ? offer.applicable_treatments[0]
-        : 'dental-implants'
+      treatment_price_gbp: offer.treatment_price_gbp,
+      treatment_price_usd: offer.treatment_price_usd,
+      description: offer.description
     };
     
-    // Always clear any existing offer data first
+    // Always clear all existing offer data first to prevent conflicts
     sessionStorage.removeItem('pendingSpecialOffer');
     sessionStorage.removeItem('processingSpecialOffer');
+    sessionStorage.removeItem('activeSpecialOffer');
+    localStorage.removeItem('selectedSpecialOffer');
     
-    // Store the offer data
-    console.log("Saving pendingSpecialOffer:", standardizedOfferData);
-    sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-    sessionStorage.setItem('processingSpecialOffer', standardizedOfferData.id);
+    // Store data in multiple locations using different formats for maximum compatibility
+    try {
+      // Save to sessionStorage with multiple keys for different components
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
+      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+      sessionStorage.setItem('processingSpecialOffer', offerData.id);
+      localStorage.setItem('selectedSpecialOffer', JSON.stringify(offerData));
+      
+      // Also save in the treatment plan format for the TreatmentPlanBuilder
+      sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
+        id: `offer-${offer.id}`,
+        offerId: offer.id,
+        clinicId: offer.clinic_id,
+        treatments: [{
+          treatmentType: 'special-offer',
+          category: 'Special Offer',
+          name: offer.title,
+          offerId: offer.id,
+          clinicId: offer.clinic_id,
+          applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants'
+        }]
+      }));
+      
+      console.log('Successfully stored offer data in multiple storage locations');
+    } catch (error) {
+      console.error('Error storing offer data:', error);
+    }
     
-    // Notify user about processing the offer
+    // Notify user with clear messaging
     toast({
       title: "Special Offer Selected",
       description: `${offer.title} will be applied to your quote.`,
       variant: "default",
     });
     
-    // Redirect to the quote flow with parameters
+    // Log navigation for debugging
     console.log("Redirecting to quote page with offer details");
     
-    // Fix the URL parameters to match what QuoteFlowContext is expecting
-    // Use both offerId and specialOffer parameters to ensure compatibility
-    window.location.href = `/quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinic_id}&offerId=${offer.id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
+    // Build a comprehensive query string for maximum compatibility
+    const queryParams = new URLSearchParams({
+      // Parameters for QuoteFlowContext
+      source: 'special_offer',
+      offerId: offer.id,
+      specialOffer: offer.id,  // Legacy parameter
+      offerTitle: offer.title || '',
+      clinicId: offer.clinic_id || '',
+      treatment: offer.applicable_treatments?.[0] || 'Dental Implants',
+      
+      // Control flow parameters
+      step: 'start',
+      skipInfo: 'true',
+      
+      // Include discount information
+      offerDiscount: String(offer.discount_value || 0),
+      offerDiscountType: offer.discount_type || 'percentage',
+      
+      // Add a timestamp to prevent caching issues
+      t: Date.now().toString()
+    }).toString();
+    
+    // Use window.location.href for a full page load to ensure clean state
+    window.location.href = `/your-quote?${queryParams}`;
   };
 
   // Generate navigation dots
@@ -596,7 +649,6 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         e.currentTarget.src = '/images/offers/default-offer.jpg';
                       }
                     }}
-                    loading="eager" // Eagerly load these important images
                   />
                 </div>
                 <div className="absolute top-4 left-4">

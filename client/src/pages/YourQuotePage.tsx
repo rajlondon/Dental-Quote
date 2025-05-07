@@ -723,9 +723,9 @@ const YourQuotePage: React.FC = () => {
         console.log("Found pendingTreatmentPlan in sessionStorage:", planData);
         
         // Check if this is a package-based treatment plan
-        if (planData.packageId || (planData.treatments && planData.treatments.some(t => t.packageId))) {
-          const packageId = planData.packageId || planData.treatments.find(t => t.packageId)?.packageId;
-          const packageTitle = planData.treatments?.find(t => t.packageId)?.name || 'Treatment Package';
+        if (planData.packageId || (planData.treatments && planData.treatments.some((t: any) => t.packageId))) {
+          const packageId = planData.packageId || planData.treatments.find((t: any) => t.packageId)?.packageId;
+          const packageTitle = planData.treatments?.find((t: any) => t.packageId)?.name || 'Treatment Package';
           
           console.log("Found package info in treatment plan:", { packageId, packageTitle });
           
