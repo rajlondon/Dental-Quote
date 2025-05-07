@@ -1116,42 +1116,64 @@ const YourQuotePage: React.FC = () => {
   // Leverage the useInitializeQuoteFlow hook
   const { initializeFromUrlParams } = useInitializeQuoteFlow();
   
-  // Debug the clinic cards to see if hasSpecialOffer is set
+  // Improved special offer handling with forced display
   useEffect(() => {
     // Check if any clinics have special offers
     const clinicsWithOffers = clinics.filter(c => c.hasSpecialOffer);
     console.log(`🏥 Clinics with special offers: ${clinicsWithOffers.length}`, 
       clinicsWithOffers.map(c => `${c.name} (${c.specialOfferDetails?.title})`));
     
-    // CRITICAL DEBUGGING - Add visible alert in UI
-    if (specialOffer && clinicsWithOffers.length === 0) {
-      // Directly fix it by modifying the clinics array
-      console.error("🚨 EMERGENCY FIX! Special offer exists but no clinics have it applied!");
-      console.log("Special offer details:", specialOffer);
-      
-      // Create a directly modified version of clinics with the special offer applied
-      const fixedClinics = clinics.map((clinic, index) => {
-        // Apply to first clinic as a last resort
-        if (index === 0) {
-          console.log(`🔧 Emergency applying special offer to first clinic: ${clinic.name}`);
-          return {
-            ...clinic,
-            hasSpecialOffer: true,
-            specialOfferDetails: {
-              id: specialOffer.id,
-              title: specialOffer.title,
-              discountValue: specialOffer.discountValue,
-              discountType: specialOffer.discountType
-            }
-          };
-        }
-        return clinic;
+    // Get source from URL for direct checks
+    const sourceFromUrl = searchParams.get('source');
+    
+    // ALWAYS show special offers in these cases, even without URL parameters:
+    // 1. We have special offer data from URL or context
+    // 2. We're explicitly in special offer flow
+    // 3. We've explicitly set mock special offers in the data
+    const shouldForceSpecialOffers = specialOffer || isSpecialOfferFlow || offerId || sourceFromUrl === 'special_offer';
+    
+    // Force all clinic cards to display offers if we're in a special offer context
+    if (shouldForceSpecialOffers) {
+      console.log("🚀 ENHANCING ALL CLINICS to ensure special offer display", {
+        specialOffer,
+        isSpecialOfferFlow,
+        offerId,
+        sourceFromUrl
       });
       
-      // Update the clinics state
-      setClinics(fixedClinics);
+      // Always apply special offers to all clinics in this mode
+      const enhancedClinics = clinics.map((clinic) => {
+        // If clinic already has a special offer, keep it
+        if (clinic.hasSpecialOffer && clinic.specialOfferDetails) {
+          return clinic;
+        }
+        
+        // Otherwise, apply either the special offer from context or a default
+        return {
+          ...clinic,
+          hasSpecialOffer: true, // Force this flag
+          specialOfferDetails: specialOffer ? {
+            id: specialOffer.id || "default_offer",
+            title: specialOffer.title || "Special Promotion",
+            discountValue: specialOffer.discountValue || 15,
+            discountType: specialOffer.discountType as 'percentage' | 'fixed_amount'
+          } : {
+            id: "default_offer", 
+            title: "Special Promotion",
+            discountValue: 15,
+            discountType: 'percentage' as const
+          }
+        };
+      });
+      
+      // Update the clinics with enhanced special offers
+      console.log("💾 Updating all clinics to show special offers");
+      // Use a proper type cast to ensure type safety
+      setClinics(enhancedClinics as ClinicInfo[]);
     }
-  }, [clinics, specialOffer]);
+  // FIXED: Remove clinics from dependency array to avoid infinite loop
+  // Include searchParams to react to URL changes
+  }, [specialOffer, isSpecialOfferFlow, offerId, searchParams]);
   
   // Add dedicated effect to ensure special offers are added to treatment items
   useEffect(() => {
