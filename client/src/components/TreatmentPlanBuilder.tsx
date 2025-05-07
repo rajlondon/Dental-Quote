@@ -1543,7 +1543,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
                 
                 return (
-                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-primary/5 border-primary/20' : ''}>
+                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-primary/5 border-primary/20' : treatment.isPackage ? 'bg-blue-50 border-blue-200' : ''}>
                     <TableCell>
                       <div>
                         {treatment.specialOffer && (
@@ -1558,7 +1558,15 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             </div>
                           </div>
                         )}
-                        <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : ''}`}>
+                        {treatment.isPackage && (
+                          <div className="relative mb-2">
+                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center w-fit px-2 py-0.5 border border-blue-200">
+                              <Check className="h-3 w-3 mr-1" />
+                              Treatment Package
+                            </Badge>
+                          </div>
+                        )}
+                        <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
                           {treatment.name}
                         </span>
                         {treatment.specialOffer && (

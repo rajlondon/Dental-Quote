@@ -18,6 +18,15 @@ interface QuoteSummaryPanelProps {
     priceGBP: number;
     quantity: number;
     subtotalGBP: number;
+    isPackage?: boolean;
+    packageId?: string;
+    specialOffer?: {
+      id: string;
+      title: string;
+      discountType: 'percentage' | 'fixed_amount';
+      discountValue: number;
+      clinicId: string;
+    };
   }[];
   onContinue: () => void;
   onBack?: () => void;
@@ -69,15 +78,50 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
       {treatments.length > 0 && (
         <div className="mb-4">
           {treatments.map((treatment, index) => (
-            <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+            <div key={index} className={`flex justify-between items-start py-2 border-b ${treatment.specialOffer ? 'border-primary/20 bg-primary/5' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100'}`}>
               <div className="flex-1">
-                <span className="font-medium">{treatment.name}</span>
-                {treatment.quantity > 1 && (
-                  <span className="text-gray-500 ml-1">x{treatment.quantity}</span>
-                )}
+                <div className="flex flex-col">
+                  {treatment.specialOffer && (
+                    <div className="mb-1">
+                      <span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10">Special Offer</span>
+                    </div>
+                  )}
+                  {treatment.isPackage && (
+                    <div className="mb-1">
+                      <span className="text-xs text-blue-700 font-medium px-2 py-0.5 rounded-full bg-blue-100">Treatment Package</span>
+                    </div>
+                  )}
+                  <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
+                    {treatment.name}
+                  </span>
+                  {treatment.quantity > 1 && (
+                    <span className="text-gray-500 text-sm">x{treatment.quantity}</span>
+                  )}
+                  {treatment.specialOffer && (
+                    <span className="text-xs text-primary mt-1">
+                      {treatment.specialOffer.title}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="text-right">
-                <span className="font-medium">£{formatCurrency(treatment.subtotalGBP)}</span>
+                {treatment.specialOffer ? (
+                  <>
+                    <div className="flex items-center justify-end gap-2">
+                      <span className="line-through text-sm text-gray-500">
+                        £{formatCurrency(Math.round(treatment.priceGBP * (100 / (100 - (treatment.specialOffer.discountType === 'percentage' ? treatment.specialOffer.discountValue : 0)))))}
+                      </span>
+                      <span className="font-bold text-primary">£{formatCurrency(treatment.priceGBP)}</span>
+                    </div>
+                    <span className="block text-xs text-primary mt-1">
+                      {treatment.specialOffer.discountType === 'percentage' 
+                        ? `Save ${treatment.specialOffer.discountValue}%` 
+                        : `Save £${formatCurrency(treatment.specialOffer.discountValue)}`}
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-medium">£{formatCurrency(treatment.subtotalGBP)}</span>
+                )}
               </div>
             </div>
           ))}
