@@ -17,6 +17,7 @@ type QuoteTreatment = {
   quantity?: number;
   price?: number;
   isPackage?: boolean;
+  isSpecialOffer?: boolean; // Flag to easily identify special offers
   packageId?: string;
   specialOffer?: {
     id: string;
@@ -133,6 +134,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
         quantity: t.quantity || 1,
         price: t.price || 0,
         isPackage: t.isPackage || false,
+        isSpecialOffer: !!t.specialOffer, // Set flag based on specialOffer existence
         packageId: t.packageId || undefined,
         specialOffer: t.specialOffer || undefined
       }));
