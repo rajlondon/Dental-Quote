@@ -6,10 +6,11 @@ import { apiRequest } from '@/lib/queryClient';
 import { formatDate } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigation } from '@/hooks/use-navigation';
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit } from 'lucide-react';
+import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit, Gift } from 'lucide-react';
 
 // Define the treatment type
 type QuoteTreatment = {
@@ -56,9 +57,13 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { navigateToRoute } = useNavigation();
+  const { source, promoType, offerId, packageId, clinicId } = useQuoteFlow();
 
   // Format the quote ID as needed
   const formattedQuoteId = typeof quoteId === 'string' ? quoteId : quoteId.toString();
+  
+  // Determine if this quote is from a special flow
+  const isPromotionalQuote = source === 'special_offer' || source === 'package' || source === 'promo_token';
   
   // Fetch the quote details
   const { 
@@ -352,6 +357,29 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Promotional banner for quotes from special sources */}
+      {isPromotionalQuote && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center">
+            <Gift className="h-5 w-5 text-blue-600 mr-3" />
+            <div>
+              <h3 className="font-semibold text-blue-800">
+                {source === 'special_offer' && 'Special Offer Applied'}
+                {source === 'package' && 'Package Deal Applied'}
+                {source === 'promo_token' && 'Promotional Quote'}
+              </h3>
+              <p className="text-sm text-blue-700">
+                {source === 'special_offer' && 'This quote includes special offer pricing and benefits.'}
+                {source === 'package' && 'This quote includes package deal pricing and benefits.'}
+                {source === 'promo_token' && promoType === 'special_offer' && 'This quote includes special offer pricing and benefits.'}
+                {source === 'promo_token' && promoType === 'package' && 'This quote includes package deal pricing and benefits.'}
+                {source === 'promo_token' && !promoType && 'This quote includes promotional pricing and benefits.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Back button and title */}
       <div className="flex items-center justify-between">
         <Button 
