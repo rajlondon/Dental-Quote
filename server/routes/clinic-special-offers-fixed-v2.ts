@@ -97,14 +97,38 @@ router.post('/match-treatments', async (req, res) => {
     
     // Check each offer to see if it's applicable to the patient's treatments
     const matchedOffers = validOffers.map(offer => {
-      // Simplified matching logic - replace with your actual business logic
-      // Here we're just checking if any treatment name contains any words from the offer title
-      const offerKeywords = offer.title.toLowerCase().split(' ');
+      // More robust matching logic
+      // Check if any of the applicable treatments in the offer match the treatment names
+      let isMatch = false;
       
-      const isMatch = offerKeywords.some((keyword: string) => 
-        treatmentNames.some(name => name.includes(keyword)) || 
-        treatmentCategories.some(category => category.includes(keyword))
-      );
+      // First check if the treatment names match any of the applicable treatments in the offer
+      if (offer.applicable_treatments && offer.applicable_treatments.length > 0) {
+        console.log(`Checking offer "${offer.title}" with applicable treatments:`, offer.applicable_treatments);
+        console.log(`Against treatment names:`, treatmentNames);
+        
+        isMatch = offer.applicable_treatments.some(applicableTreatment => {
+          const appTreatLower = applicableTreatment.toLowerCase();
+          return treatmentNames.some(name => {
+            const nameLower = name.toLowerCase();
+            const nameMatch = nameLower.includes(appTreatLower);
+            const appMatch = appTreatLower.includes(nameLower);
+            console.log(`Comparing "${nameLower}" with "${appTreatLower}": nameMatch=${nameMatch}, appMatch=${appMatch}`);
+            return nameMatch || appMatch;
+          });
+        });
+        
+        console.log(`Match result for "${offer.title}": ${isMatch}`);
+      }
+      
+      // If no match found, try matching with keywords from the offer title
+      if (!isMatch) {
+        const offerKeywords = offer.title.toLowerCase().split(' ');
+        
+        isMatch = offerKeywords.some((keyword: string) => 
+          treatmentNames.some(name => name.toLowerCase().includes(keyword)) || 
+          treatmentCategories.some(category => category && category.toLowerCase().includes(keyword))
+        );
+      }
       
       return {
         ...offer,
@@ -167,8 +191,10 @@ router.post('/apply', async (req, res) => {
     // Find the offer in the in-memory storage
     let foundOffer: SpecialOffer | undefined;
     
-    for (const [clinicId, offers] of specialOffers.entries()) {
-      const offer = offers.find(o => o.id === specialOfferId);
+    // Convert entries to array to avoid iterator issues
+    const entries = Array.from(specialOffers.entries());
+    for (const [clinicId, offers] of entries) {
+      const offer = offers.find((o: SpecialOffer) => o.id === specialOfferId);
       if (offer) {
         foundOffer = offer;
         break;
