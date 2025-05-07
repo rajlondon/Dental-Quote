@@ -25,6 +25,8 @@ export interface TreatmentItem {
   guarantee?: string;
   ukPriceGBP?: number;
   ukPriceUSD?: number;
+  isPackage?: boolean;
+  packageId?: string;
   specialOffer?: {
     id: string;
     title: string;

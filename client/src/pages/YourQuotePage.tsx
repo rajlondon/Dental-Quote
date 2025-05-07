@@ -1368,9 +1368,8 @@ const YourQuotePage: React.FC = () => {
                       </div>
                       
                       <TreatmentPlanBuilder
-                        items={treatmentItems}
-                        setItems={setTreatmentItems}
-                        showUKComparison={true}
+                        initialTreatments={treatmentItems}
+                        onTreatmentsChange={setTreatmentItems}
                       />
                       
                       <div className="mt-6">
