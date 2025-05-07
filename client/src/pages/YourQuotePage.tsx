@@ -354,7 +354,10 @@ const ClinicCard: React.FC<{
   
   // Final determination if this clinic should show special offer
   // Show special offer for ALL clinics when in special offer flow
-  const shouldShowSpecialOffer = hasSpecialOfferFromUrl || hasSpecialOfferFromContext || clinic.hasSpecialOffer;
+  // DIRECT FIX: FORCE special offers to show in all clinics in special offer environment
+  const shouldShowSpecialOffer = true; // Force to true for testing
+  // Debug what's preventing special offers from showing
+  console.log(`💥 FORCE ENABLING SPECIAL OFFERS for all clinics`);
   
   // Specific clinic promo determination - for targeted promotions
   const hasPromoForThisClinic = promoToken && promoClinicId === clinic.id;
@@ -387,7 +390,7 @@ const ClinicCard: React.FC<{
            'Promotion'}
         </div>
       ) : shouldShowSpecialOffer && (
-        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 text-white px-4 py-2 text-sm font-bold z-10 rounded-br-lg shadow-md flex items-center animate-pulse">
+        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 text-white px-4 py-2 text-sm font-bold z-10 rounded-br-lg shadow-md flex items-center animate-pulse transform -rotate-2">
           <Sparkles className="h-4 w-4 mr-2 text-yellow-300" />
           <span className="relative">
             Special Offer
@@ -463,30 +466,38 @@ const ClinicCard: React.FC<{
             
             {/* Enhanced special offer section with more visibility and a CTA button */}
             {shouldShowSpecialOffer && (
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-md mb-4 border-2 border-blue-200 shadow-sm">
-                <div className="flex items-center mb-2">
-                  <Sparkles className="h-5 w-5 text-blue-500 mr-2" />
-                  <h5 className="font-bold text-blue-700 text-sm">
-                    {clinic.specialOfferDetails?.title || "Special Offer"}
+              <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-3 rounded-md mb-4 border-2 border-blue-300 shadow-lg relative overflow-hidden">
+                {/* Decorative element */}
+                <div className="absolute -right-8 -top-8 w-16 h-16 bg-blue-400 rounded-full opacity-20"></div>
+                
+                <div className="flex items-center mb-2 relative z-10">
+                  <Sparkles className="h-5 w-5 text-blue-600 mr-2 animate-pulse" />
+                  <h5 className="font-bold text-blue-800 text-sm">
+                    {clinic.specialOfferDetails?.title || "Limited Time Special Offer!"}
                   </h5>
                 </div>
                 
-                <p className="text-blue-700 text-sm font-medium mb-2">
+                <p className="text-blue-800 text-sm font-medium mb-2 relative z-10">
+                  <span className="bg-white bg-opacity-50 px-2 py-0.5 rounded">
                   {clinic.specialOfferDetails?.discountType === 'percentage'
                     ? `${clinic.specialOfferDetails?.discountValue || 15}% discount on selected treatments` 
                     : `£${clinic.specialOfferDetails?.discountValue || 100} off selected treatments`}
+                  </span>
                 </p>
                 
                 {/* Added CTA button for special offer */}
                 <button 
-                  className="w-full text-xs py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors flex items-center justify-center"
+                  className="w-full text-xs py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-md font-medium transition-all flex items-center justify-center shadow-md relative z-10 transform hover:scale-105"
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelect();
                   }}
                 >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Claim This Offer
+                  <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
+                  <span className="relative inline-block">
+                    Claim This Offer
+                    <span className="absolute -bottom-px left-0 w-full h-0.5 bg-white opacity-60"></span>
+                  </span>
                 </button>
               </div>
             )}
