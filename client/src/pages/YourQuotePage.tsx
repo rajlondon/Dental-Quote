@@ -301,43 +301,62 @@ const ClinicCard: React.FC<{
 }> = ({ clinic, isSelected, onSelect }) => {
   // Get promo information from context - this is the proper way to get the values
   const { 
+    source,
+    offerId,
     promoToken, 
     promoType, 
+    isSpecialOfferFlow,
     isPromoTokenFlow,
     clinicId: promoClinicId 
   } = useQuoteFlow();
   
-  const searchParams = new URLSearchParams(window.location.search);
-  const promoTitle = searchParams.get('promoTitle') || searchParams.get('offerTitle') || 'Special Promotion';
+  // Get all URL parameters to check for special offer indicators
+  const urlParams = new URLSearchParams(window.location.search);
+  const specialOfferIdFromUrl = urlParams.get('specialOffer') || urlParams.get('offerId');
+  const sourceFromUrl = urlParams.get('source');
+  const isSpecialOfferSource = sourceFromUrl === 'special_offer';
   
-  // Show promotion badge if this clinic is the one specified in the context
-  // This uses the clinicId from the context which is properly initialized from URL params
+  // Enhanced special offer detection:
+  // 1. Check URL directly (most reliable)
+  // 2. Check context source
+  // 3. Check clinic hasSpecialOffer property 
+  const hasSpecialOfferFromUrl = specialOfferIdFromUrl !== null || isSpecialOfferSource;
+  const hasSpecialOfferFromContext = isSpecialOfferFlow && offerId !== null;
+  
+  // Log all detection methods to help debug
+  console.log(`ClinicCard for ${clinic.name} with ID: ${clinic.id}`, {
+    hasSpecialOfferFromUrl,
+    hasSpecialOfferFromContext,
+    hasSpecialOfferDirectly: clinic.hasSpecialOffer,
+    isSpecialOfferFlow,
+    specialOfferIdFromUrl,
+    sourceFromUrl,
+    offerId
+  });
+  
+  // Final determination if this clinic should show special offer
+  // Show special offer for ALL clinics when in special offer flow
+  const shouldShowSpecialOffer = hasSpecialOfferFromUrl || hasSpecialOfferFromContext || clinic.hasSpecialOffer;
+  
+  // Specific clinic promo determination - for targeted promotions
   const hasPromoForThisClinic = promoToken && promoClinicId === clinic.id;
   
-  // Get query parameters for the current URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const isOfferUrl = urlParams.has('specialOffer') || urlParams.has('offerId');
+  // For offer display
+  const promoTitle = urlParams.get('promoTitle') || urlParams.get('offerTitle') || 'Special Promotion';
   
   return (
     <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
       isSelected 
         ? 'border-blue-500 shadow-lg' 
-        : hasPromoForThisClinic
-          ? 'border-primary shadow-md' 
-        : clinic.hasSpecialOffer || isOfferUrl
-          ? 'border-blue-300 shadow-md' 
-          : 'border-gray-200'
+        : shouldShowSpecialOffer
+          ? 'border-blue-300 shadow-md' // Apply blue border to all clinics in special offer flow
+          : hasPromoForThisClinic
+            ? 'border-primary shadow-md' 
+            : 'border-gray-200'
     }`}>
       {isSelected && (
         <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 text-sm font-semibold z-10 rounded-bl-md">
           Selected
-        </div>
-      )}
-      
-      {/* Show offer badge for ALL clinics when coming from an offer URL */}
-      {(clinic.hasSpecialOffer || isOfferUrl) && (
-        <div className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md">
-          Special Offer
         </div>
       )}
       
@@ -349,7 +368,7 @@ const ClinicCard: React.FC<{
            promoType === 'package' ? 'Treatment Package' : 
            'Promotion'}
         </div>
-      ) : clinic.hasSpecialOffer && (
+      ) : shouldShowSpecialOffer && (
         <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
           <Sparkles className="h-4 w-4 mr-1 text-yellow-300" />
           Special Offer
@@ -422,7 +441,7 @@ const ClinicCard: React.FC<{
             <p className="text-gray-500 text-sm mb-4">Base package from</p>
             
             {/* Always show special offer info when in special offer flow */}
-            {(clinic.hasSpecialOffer || isOfferUrl) && (
+            {shouldShowSpecialOffer && (
               <div className="bg-blue-50 p-2 rounded-md mb-4 border border-blue-100">
                 <div className="flex items-center mb-1">
                   <Sparkles className="h-4 w-4 text-blue-500 mr-1" />
