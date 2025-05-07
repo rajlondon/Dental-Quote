@@ -303,9 +303,21 @@ router.post('/apply', async (req, res) => {
       };
     });
     
-    // Calculate the total savings
+    // Calculate the total savings by checking for specialOfferApplied property
     const totalSavings = discountedTreatments.reduce(
-      (sum, t) => sum + (t.originalPriceGBP - t.priceGBP), 
+      (sum, t) => {
+        // Only treatments with special offers applied will have specialOfferApplied = true
+        if ('specialOfferApplied' in t && t.specialOfferApplied === true) {
+          // TypeScript needs a type assertion here
+          const discountedTreatment = t as {
+            originalPriceGBP: number;
+            priceGBP: number;
+            specialOfferApplied: boolean;
+          };
+          return sum + (discountedTreatment.originalPriceGBP - discountedTreatment.priceGBP);
+        }
+        return sum;
+      }, 
       0
     );
     
