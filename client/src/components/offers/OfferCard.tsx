@@ -208,17 +208,28 @@ export function OfferCard({ offer }: OfferCardProps) {
               // This is our absolute last resort fallback for free consultation
               // Using special token in location.href and returning a mock response
               
-              const consultationUrl = new URL('/your-quote', window.location.origin);
+              // Build a URL that directly integrates with the new v2 flows
+              // This is our last resort fallback URL for when both token-based approaches fail
+              const consultationUrl = new URL('/quote', window.location.origin);
+              
+              // Required parameters for the consultation flow
               consultationUrl.searchParams.append('source', 'special_offer');
-              consultationUrl.searchParams.append('specialOffer', 'true');
-              consultationUrl.searchParams.append('treatment', 'Consultation');
-              consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
-              consultationUrl.searchParams.append('clinicId', clinicId);
-              consultationUrl.searchParams.append('offerId', offerId);
-              consultationUrl.searchParams.append('offerDiscount', '100');
-              consultationUrl.searchParams.append('offerDiscountType', 'percentage');
+              consultationUrl.searchParams.append('treatment', 'consultation');
               consultationUrl.searchParams.append('step', 'start');
               consultationUrl.searchParams.append('skipInfo', 'true');
+              
+              // Special offer data
+              consultationUrl.searchParams.append('specialOffer', 'true');
+              consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
+              consultationUrl.searchParams.append('offerDiscount', '100');
+              consultationUrl.searchParams.append('offerDiscountType', 'percentage');
+              
+              // Clinic data
+              consultationUrl.searchParams.append('clinicId', clinicId);
+              consultationUrl.searchParams.append('offerId', offerId);
+              
+              // Add timestamp to prevent caching issues
+              consultationUrl.searchParams.append('t', Date.now().toString());
               
               console.log("🔷 Fallback URL:", consultationUrl.toString());
               
