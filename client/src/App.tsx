@@ -142,9 +142,10 @@ function Router() {
         {() => <Redirect to="/your-quote" />}
       </Route>
       
-      {/* Route for the dental quiz workflow */}
+      {/* We no longer need a separate route for the dental quiz workflow as it's handled by YourQuotePage */}
+      {/* Keeping this for backward compatibility but redirecting to the main quote path */}
       <Route path="/quote-flow">
-        {() => <YourQuotePage />}
+        {() => <Redirect to="/quote" />}
       </Route>
       
       {/* Route for special offer confirmation */}
