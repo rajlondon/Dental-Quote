@@ -22,12 +22,12 @@ export const specialOffers = new Map<string, SpecialOffer[]>();
 const sampleOffers: SpecialOffer[] = [
   {
     id: "ac36590b-b0dc-434e-ba74-d42ab2485e81", // Use fixed ID for testing with refresh script
-    clinic_id: "1",  // Clinic 1
+    clinic_id: "1",  // Clinic 1 - DentGroup Istanbul
     title: "Free Consultation Package",
     description: "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
     discount_type: "percentage",
     discount_value: 100, // 100% off on consultation
-    applicable_treatments: ["Dental Implants", "Veneers", "Full Mouth Reconstruction"],
+    applicable_treatments: ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
     promo_code: "FREECONSULT",
@@ -40,16 +40,19 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
+    admin_reviewed_at: new Date().toISOString(),
+    // Added price data
+    treatment_price_gbp: 75,
+    treatment_price_usd: 95
   },
   {
     id: "134cdb0f-e783-47f5-a502-70e3960f7246", // Use fixed ID for testing with refresh script
-    clinic_id: "2", // Clinic 2
+    clinic_id: "2", // Clinic 2 - Istanbul Dental Care
     title: "Premium Hotel Deal",
     description: "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
     discount_type: "percentage",
     discount_value: 20,
-    applicable_treatments: ["All Treatments"],
+    applicable_treatments: ["dental_implant_standard", "porcelain_veneers", "dental_crowns"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
     promo_code: "LUXHOTEL20",
@@ -62,16 +65,19 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
+    admin_reviewed_at: new Date().toISOString(),
+    // Added price data
+    treatment_price_gbp: 250,
+    treatment_price_usd: 325
   },
   {
     id: "3e6a315d-9d9f-4b56-97da-4b3d4b4b5367", // Use fixed ID for testing with refresh script
-    clinic_id: "3", // Clinic 3
+    clinic_id: "3", // Clinic 3 - Maltepe Dental Clinic
     title: "Dental Implant + Crown Bundle",
     description: "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
     discount_type: "percentage",
     discount_value: 30,
-    applicable_treatments: ["Dental Implants", "Crowns"],
+    applicable_treatments: ["dental_implant_standard", "dental_crowns"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(),
     promo_code: "IMPLANTCROWN30",
@@ -84,16 +90,19 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
+    admin_reviewed_at: new Date().toISOString(),
+    // Added price data
+    treatment_price_gbp: 1200,
+    treatment_price_usd: 1550
   },
   {
     id: "72e65d76-4cd5-4fd2-9323-8c35f3a9b9f0", // Use fixed ID for testing with refresh script
-    clinic_id: "4", // Clinic 4
+    clinic_id: "4", // Clinic 4 - Dentakay Istanbul
     title: "Luxury Airport Transfer",
     description: "Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.",
     discount_type: "fixed_amount",
     discount_value: 80,
-    applicable_treatments: ["Full Mouth Reconstruction", "Hollywood Smile", "All-on-4 Implants"],
+    applicable_treatments: ["full_mouth_reconstruction", "hollywood_smile", "all_on_4_implants"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 4)).toISOString(),
     promo_code: "LUXTRAVEL",
@@ -106,7 +115,10 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
+    admin_reviewed_at: new Date().toISOString(),
+    // Added price data
+    treatment_price_gbp: 180,
+    treatment_price_usd: 230
   },
   {
     id: "a9f87e54-3c21-4f89-bc6d-1c2a1dfb76e9", // Use fixed ID for testing with refresh script
@@ -128,7 +140,10 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString()
+    admin_reviewed_at: new Date().toISOString(),
+    // Added price data
+    treatment_price_gbp: 150,
+    treatment_price_usd: 195
   }
 ];
 

@@ -19,6 +19,8 @@ interface OfferCardProps {
     clinicName?: string;
     discountType?: 'percentage' | 'fixed';
     discountValue?: number;
+    treatmentPriceGBP?: number;  // Added price in GBP
+    treatmentPriceUSD?: number;  // Added price in USD
   }
 }
 
@@ -257,9 +259,23 @@ export function OfferCard({ offer }: OfferCardProps) {
       </CardHeader>
       
       <CardContent className="flex-grow">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 mb-2">
           {offer.description || "Exclusive special offer for dental treatment. Limited time only."}
         </p>
+        {(offer.treatmentPriceGBP || offer.treatmentPriceUSD) && (
+          <div className="mt-2 flex justify-between text-sm">
+            <span className="font-medium">Price:</span>
+            <span>
+              {offer.treatmentPriceGBP && (
+                <span className="font-medium">£{offer.treatmentPriceGBP}</span>
+              )}
+              {offer.treatmentPriceGBP && offer.treatmentPriceUSD && " / "}
+              {offer.treatmentPriceUSD && (
+                <span className="font-medium">${offer.treatmentPriceUSD}</span>
+              )}
+            </span>
+          </div>
+        )}
       </CardContent>
       
       <CardFooter>

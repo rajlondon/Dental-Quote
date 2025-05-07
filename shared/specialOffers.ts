@@ -28,6 +28,10 @@ export const specialOfferSchema = z.object({
   promotion_level: z.enum(['standard', 'featured', 'premium']),
   homepage_display: z.boolean().default(false),
   
+  // Price data for related treatment
+  treatment_price_gbp: z.number().positive().optional(),
+  treatment_price_usd: z.number().positive().optional(),
+  
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
   admin_reviewed_at: z.string().datetime().optional(),
