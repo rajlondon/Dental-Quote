@@ -38,7 +38,7 @@ import bookingRoutes from "./routes/booking-routes";
 import appointmentRoutes from "./routes/appointment-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
-import clinicSpecialOffersRoutes from "./routes/clinic-special-offers-fixed";
+import clinicSpecialOffersRoutes from "./routes/clinic-special-offers-fixed-v2";
 import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
 import offersRoutes from "./routes/offers-routes"; // Add our new offers routes
 import offerStartRoutes from "./routes/offer-start-routes"; // Add the offer start API routes
