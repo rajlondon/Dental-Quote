@@ -207,7 +207,8 @@ router.post('/apply', async (req, res) => {
     if (offer.validUntil) {
       const now = new Date();
       const offerDate = new Date(offer.validUntil);
-      if (offerDate < now) {
+      // Compare dates manually rather than using direct comparison
+      if (offerDate.getTime() < now.getTime()) {
         return res.status(400).json({ success: false, message: 'This special offer has expired' });
       }
     }
