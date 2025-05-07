@@ -1281,17 +1281,25 @@ const YourQuotePage: React.FC = () => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   
+  // Leverage the useInitializeQuoteFlow hook
+  const { initializeFromUrlParams } = useInitializeQuoteFlow();
+  
   useEffect(() => {
-    // In a real implementation, we would parse query parameters here
-    // and fetch real data from an API
+    // Set page title
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
     
-    // Sync QuoteFlowContext with URL parameters if they exist
-    const offerIdFromUrl = searchParams.get('specialOffer');
-    const clinicIdFromUrl = searchParams.get('clinicId');
+    console.log("🔄 Initializing YourQuotePage with URL parameters");
+    
+    // Parse URL parameters
+    const offerIdFromUrl = searchParams.get('specialOffer') || searchParams.get('offerId');
     const packageIdFromUrl = searchParams.get('packageId');
+    const clinicIdFromUrl = searchParams.get('clinicId');
     const sourceTypeFromUrl = searchParams.get('source');
 
+    // First, initialize the QuoteFlowContext using our utility
+    initializeFromUrlParams();
+    
+    // Then add additional processing for this specific page
     // Determine the source type from URL parameters or use existing context
     // Priority: explicit source parameter > specialOffer/packageId parameters > existing context
     let detectedSource = source; // Default to existing context value
