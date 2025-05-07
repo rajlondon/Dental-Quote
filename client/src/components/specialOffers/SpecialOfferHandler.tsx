@@ -66,7 +66,8 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         // Look for all possible parameter name variations
         const treatmentNameFromUrl = urlParams.get('offerTitle') || 
                                     urlParams.get('treatmentName') || 
-                                    urlParams.get('promoTitle');
+                                    urlParams.get('promoTitle') ||
+                                    urlParams.get('treatment');
                                     
         const discountValueFromUrl = urlParams.get('offerDiscount') || 
                                     urlParams.get('discountValue');
@@ -80,16 +81,82 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
           discountTypeFromUrl
         });
         
+        // Check if this is a Free Consultation Package
+        const isFreeConsultation = 
+          (treatmentNameFromUrl && (
+            treatmentNameFromUrl.includes('Consultation') ||
+            treatmentNameFromUrl.includes('consultation') ||
+            treatmentNameFromUrl === 'Free Consultation'
+          )) ||
+          (specialOffer.title && (
+            specialOffer.title.includes('Consultation') || 
+            specialOffer.title.includes('consultation')
+          ));
+          
+        console.log("🔎 SpecialOfferHandler checking if this is a Free Consultation:", {
+          isFreeConsultation,
+          treatment: treatmentNameFromUrl,
+          title: specialOffer.title
+        });
+        
+        // Set base prices based on offer type
+        let basePriceGBP = isFreeConsultation ? 75 : 450;
+        let basePriceUSD = isFreeConsultation ? 95 : 580;
+        
+        // SPECIAL HANDLING FOR FREE CONSULTATION PACKAGE
+        if (isFreeConsultation) {
+          console.log("🆓 Creating free consultation package item");
+          
+          // Create the treatment with consultation-specific values
+          const consultationTreatment: TreatmentItem = {
+            id: `consultation_${Date.now()}`,
+            category: 'consultation',
+            name: treatmentNameFromUrl || specialOffer.title || 'Free Consultation',
+            quantity: 1,
+            priceGBP: basePriceGBP,
+            priceUSD: basePriceUSD,
+            subtotalGBP: basePriceGBP,
+            subtotalUSD: basePriceUSD,
+            guarantee: '30-day',
+            isSpecialOffer: true,
+            specialOffer: {
+              id: specialOffer.id,
+              title: specialOffer.title || 'Free Consultation Package',
+              discountType: 'percentage',
+              discountValue: 100, // Force 100% discount for free consultation
+              clinicId: specialOffer.clinicId || 'dentakay-istanbul' // Use a fallback clinic
+            }
+          };
+          
+          // Set price to 0 for free consultation
+          consultationTreatment.priceGBP = 0;
+          consultationTreatment.priceUSD = 0;
+          consultationTreatment.subtotalGBP = 0;
+          consultationTreatment.subtotalUSD = 0;
+          
+          console.log("📋 SpecialOfferHandler adding free consultation to treatment items:", consultationTreatment);
+          onTreatmentsChange([...treatmentItems, consultationTreatment]);
+          
+          toast({
+            title: "Free Consultation Added",
+            description: `Your free consultation has been added to your treatment plan.`,
+          });
+          
+          // Early return since we've handled this special case
+          return;
+        }
+        
+        // Standard special offer treatment (not free consultation)
         const specialOfferTreatment: TreatmentItem = {
           id: `special_offer_${Date.now()}`,
           category: 'special_offer',
           name: treatmentNameFromUrl || 
                 `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`,
           quantity: 1,
-          priceGBP: 450, // Base price, will be discounted later
-          priceUSD: 580, // Base price, will be discounted later
-          subtotalGBP: 450,
-          subtotalUSD: 580,
+          priceGBP: basePriceGBP,
+          priceUSD: basePriceUSD,
+          subtotalGBP: basePriceGBP,
+          subtotalUSD: basePriceUSD,
           guarantee: '5-year',
           isSpecialOffer: true,
           specialOffer: {
@@ -98,7 +165,7 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
             // Use URL params if available, otherwise fallback to specialOffer object
             discountType: discountTypeFromUrl as 'percentage' | 'fixed_amount' || specialOffer.discountType,
             discountValue: discountValueFromUrl ? parseFloat(discountValueFromUrl) : specialOffer.discountValue,
-            clinicId: specialOffer.clinicId
+            clinicId: specialOffer.clinicId || 'dentakay-istanbul'
           }
         };
         

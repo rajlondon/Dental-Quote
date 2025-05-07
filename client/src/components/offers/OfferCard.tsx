@@ -115,49 +115,41 @@ export function OfferCard({ offer }: OfferCardProps) {
       // IMPORTANT: Parameters must match exactly what the YourQuotePage expects
       console.log("Redirecting to quote page with offer:", offer);
       
-      // Ensure exact parameter names matching what YourQuotePage.tsx looks for
+      // SIMPLIFIED APPROACH: Create a direct link with minimum parameters needed
       const url = new URL('/your-quote', window.location.origin);
       
-      // Required parameters used by QuoteFlowContext
+      // Log the complete offer object for debugging
+      console.log("OFFER DETAILS (DEBUGGING):", JSON.stringify(offer));
+      
+      // Minimal required parameters
       url.searchParams.append('source', 'special_offer');
-      url.searchParams.append('offerId', offer.id);
-      url.searchParams.append('specialOffer', offer.id);
-      url.searchParams.append('clinicId', offer.clinicId);
-      
-      // User flow parameters
-      url.searchParams.append('step', 'start');
-      url.searchParams.append('skipInfo', 'true');
-      
-      // Special offer details
       url.searchParams.append('offerTitle', offer.title);
       
-      // Make sure discount parameters are correctly named to match what SpecialOfferHandler.tsx expects
-      if (offer.discountValue) {
-        url.searchParams.append('offerDiscount', offer.discountValue.toString());
-      }
-      if (offer.discountType) {
-        url.searchParams.append('offerDiscountType', offer.discountType);
-      }
-      
-      // Always include treatment parameter - critical for the YourQuotePage to create the special offer treatment item
-      // Use the name of the offer itself as the treatment for free consultation packages
+      // Hard-code these values for Free Consultation Package 
       if (offer.title.includes('Consultation') || offer.title.includes('consultation')) {
-        url.searchParams.append('treatment', offer.title);
-        // For consultation packages, ensure we have a valid discountType and discountValue
-        if (!offer.discountType || !offer.discountValue) {
-          console.log("Adding default 100% discount for consultation package");
-          url.searchParams.append('offerDiscount', '100');
-          url.searchParams.append('offerDiscountType', 'percentage');
-        }
+        url.searchParams.append('treatment', 'Free Consultation');
+        url.searchParams.append('offerDiscount', '100');
+        url.searchParams.append('offerDiscountType', 'percentage');
+        url.searchParams.append('clinicId', 'dentakay-istanbul');
       } else {
         url.searchParams.append('treatment', 'Dental Implants');
+        url.searchParams.append('clinicId', offer.clinicId || 'dentakay-istanbul');
+        
+        // Only add discount if provided
+        if (offer.discountValue) {
+          url.searchParams.append('offerDiscount', offer.discountValue.toString());
+        }
+        if (offer.discountType) {
+          url.searchParams.append('offerDiscountType', offer.discountType);
+        }
       }
       
-      // Ensure clinic ID maps to an existing clinic in the system
-      if (offer.clinicId === '1' || !offer.clinicId) {
-        // Partner Clinic #1 might not exist, map to a known valid clinic ID
-        url.searchParams.set('clinicId', 'dentakay-istanbul'); 
-      }
+      // Always add the offer ID
+      url.searchParams.append('offerId', offer.id);
+      
+      // Flow control parameters
+      url.searchParams.append('step', 'start');
+      url.searchParams.append('skipInfo', 'true');
       
       // Add timestamp to prevent caching
       url.searchParams.append('t', Date.now().toString());
