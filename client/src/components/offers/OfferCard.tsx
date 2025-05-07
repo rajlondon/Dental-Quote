@@ -76,112 +76,52 @@ export function OfferCard({ offer }: OfferCardProps) {
       setOfferId(offer.id);
       setClinicId(offer.clinicId);
       
-      // If the user is already logged in, try to create a treatment plan directly
-      if (user) {
-        try {
-          // User is logged in, directly create a quote from the offer
-          const response = await createQuoteFromOffer(offer.id, offer.clinicId);
-          
-          // Check if quote was created successfully and response contains the required fields
-          if (response?.quoteId) {
-            toast({
-              title: "Success",
-              description: `${offer.title} added to your quote`,
-              variant: "default",
-            });
-            
-            // Handle redirection to the quote URL - this should now happen in the createQuoteFromOffer function
-            // If this code is ever reached, use this as a fallback
-            if (!window.location.href.includes('quote-flow')) {
-              window.location.href = response.quoteUrl;
-            }
-          } else {
-            throw new Error('Failed to create quote from offer');
-          }
-        } catch (err) {
-          // Rethrow to be caught by outer catch block
-          throw err;
-        }
+      // If the user is not logged in, redirect to login with pending action
+      if (!user) {
+        console.log("User not authenticated, redirecting to login with pending offer action");
+        
+        // Store offer details for after login
+        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+        localStorage.setItem('pendingAction', JSON.stringify({
+          type: 'special_offer',
+          offerId: offer.id,
+          clinicId: offer.clinicId
+        }));
+        
+        // Notify user they need to login first
+        toast({
+          title: "Please log in first",
+          description: "Log in or create an account to access this special offer",
+        });
+        
+        // Redirect to auth page
+        window.location.href = '/auth';
         return;
       }
       
-      // If user is not logged in, save offer details for later
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-      sessionStorage.setItem('processingSpecialOffer', offer.id);
+      // User is logged in, directly create a quote from the offer
+      console.log("User authenticated, creating quote from offer");
+      const response = await createQuoteFromOffer(offer.id, offer.clinicId);
       
-      // Proceed to the quote flow directly (will handle login as part of the flow)
-      // Use skipInfo=true to bypass initial patient info page if they select "create account"
-      
-      // IMPORTANT: Parameters must match exactly what the YourQuotePage expects
-      console.log("Redirecting to quote page with offer:", offer);
-      
-      // FORCE SPECIAL URL FOR FREE CONSULTATION PACKAGE
-      // Use a completely separate approach for consultation packages
-      if (offer.title && (offer.title.includes('Consultation') || offer.title.includes('consultation'))) {
-        // Direct link to Free Consultation flow - ULTRA SIMPLIFIED
-        // This should bypass any issues with the other flows
-        const consultationUrl = new URL('/your-quote', window.location.origin);
+      // Success is handled in createQuoteFromOffer function with proper redirection
+      // This code should never be reached in normal operation, but added as a safeguard
+      if (response?.quoteId && !window.location.href.includes('quote')) {
+        console.log("Quote created but no redirect occurred, manually redirecting");
         
-        // Fixed essential parameters for a free consultation - hardcoded for maximum reliability
-        consultationUrl.searchParams.append('source', 'special_offer');
-        consultationUrl.searchParams.append('specialOffer', 'true');
-        consultationUrl.searchParams.append('treatment', 'dental_implant_standard'); // Use a standard treatment
-        consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
-        consultationUrl.searchParams.append('clinicId', 'dentakay-istanbul');
-        consultationUrl.searchParams.append('offerId', offer.id);
-        consultationUrl.searchParams.append('offerDiscount', '100');
-        consultationUrl.searchParams.append('offerDiscountType', 'percentage');
-        consultationUrl.searchParams.append('step', 'start');
-        consultationUrl.searchParams.append('skipInfo', 'true');
-        
-        // Debug the URL
-        console.log("🔷 FREE CONSULTATION URL:", consultationUrl.toString());
-        
-        // Replace window location with the consultation URL
-        window.location.href = consultationUrl.toString();
-        return;
+        // If we have a quote URL, use it, otherwise construct a default one
+        const redirectUrl = response.quoteUrl || `/quote/wizard?quoteId=${response.quoteId}`;
+        window.location.href = redirectUrl;
       }
-      
-      // For non-consultation standard special offers:
-      const url = new URL('/your-quote', window.location.origin);
-      
-      // Log standard offer details
-      console.log("💎 STANDARD OFFER DETAILS:", JSON.stringify(offer));
-      
-      // Standard parameters
-      url.searchParams.append('source', 'special_offer');
-      url.searchParams.append('specialOffer', 'true');
-      url.searchParams.append('offerTitle', offer.title);
-      url.searchParams.append('treatment', 'Dental Implants');
-      url.searchParams.append('clinicId', offer.clinicId || 'dentakay-istanbul');
-      url.searchParams.append('offerId', offer.id);
-      
-      // Add discount if provided
-      if (offer.discountValue) {
-        url.searchParams.append('offerDiscount', offer.discountValue.toString());
-      }
-      if (offer.discountType) {
-        url.searchParams.append('offerDiscountType', offer.discountType);
-      }
-      
-      // Flow control parameters
-      url.searchParams.append('step', 'start');
-      url.searchParams.append('skipInfo', 'true');
-      
-      // Add timestamp to prevent caching
-      url.searchParams.append('t', Date.now().toString());
-      
-      console.log("Redirecting to URL:", url.toString());
-      window.location.href = url.toString();
-      return;
-      
     } catch (error) {
       console.error('Error processing special offer:', error);
+      
+      // Display error message and reset processing state
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to process offer",
         variant: "destructive"
       });
+      
       setIsProcessing(false);
     }
   };
@@ -200,6 +140,62 @@ export function OfferCard({ offer }: OfferCardProps) {
   // Function to create a quote from an offer via the API
   const createQuoteFromOffer = async (offerId: string, clinicId: string): Promise<QuoteResponse> => {
     try {
+      // Determine if this is a free consultation package
+      const isFreeConsultation = 
+        offer.title?.includes('Consultation') || 
+        offer.title?.includes('consultation');
+        
+      console.log(`Processing ${isFreeConsultation ? 'Free Consultation Package' : 'Standard Special Offer'}`);
+      
+      // Special handling for Free Consultation Package
+      if (isFreeConsultation) {
+        console.log("🔶 FREE CONSULTATION PACKAGE DETECTED - Using direct token creation");
+        
+        // First, try to create a promo token if it doesn't exist
+        try {
+          // Check if token exists first or create a new one
+          console.log("First checking if token already exists");
+          
+          const tokenCheckResponse = await apiRequest(
+            'GET',
+            `/api/v1/promo-tokens/check/${offerId}`
+          );
+          
+          if (!tokenCheckResponse.ok) {
+            console.log("Token does not exist, creating a new one");
+            
+            const createTokenResponse = await apiRequest(
+              'POST',
+              '/api/v1/promo-tokens',
+              {
+                clinicId: clinicId,
+                promoType: 'special_offer',
+                token: `special_${offerId}`,
+                payload: {
+                  offerId: offerId,
+                  title: 'Free Consultation Package',
+                  discountType: 'percentage',
+                  discountValue: 100,
+                  applicableTreatment: 'Consultation'
+                },
+                displayOnHome: true,
+                validUntil: '2026-12-31' // Long-lived token
+              }
+            );
+            
+            if (!createTokenResponse.ok) {
+              console.warn("Failed to create token, but continuing with flow");
+            } else {
+              console.log("Successfully created promo token for free consultation");
+            }
+          } else {
+            console.log("Token already exists, proceeding with quote creation");
+          }
+        } catch (tokenErr) {
+          console.warn("Token creation failed, but continuing with flow:", tokenErr);
+        }
+      }
+      
       let response;
       
       // Try each endpoint in order until one succeeds
@@ -216,58 +212,103 @@ export function OfferCard({ offer }: OfferCardProps) {
         );
         
         if (response.ok) {
-          console.log("Successfully used promo token endpoint");
+          console.log("✅ Successfully used promo token endpoint");
         } else {
           throw new Error("Promo token endpoint returned error status");
         }
       } catch (err) {
-        console.log("Promo token endpoint failed, trying treatment-plans endpoint:", err);
+        console.log("Promo token endpoint failed, using fallback unified endpoint:", err);
         
         try {
-          // Try our new unified endpoint (implemented in treatment-offer-integration.ts)
+          // Try our new unified endpoint
           console.log("Attempting to use treatment plans from-offer endpoint");
+          
+          // For Free Consultation Package, include special metadata
+          const payload = isFreeConsultation 
+            ? { 
+                offerId, 
+                clinicId, 
+                notes: "Free Consultation Package",
+                specialOffer: {
+                  id: offerId,
+                  title: 'Free Consultation Package',
+                  discountType: 'percentage' as 'percentage',
+                  discountValue: 100,
+                  clinicId: clinicId,
+                  applicableTreatment: 'Consultation'
+                }
+              } 
+            : { 
+                offerId, 
+                clinicId, 
+                notes: "Selected from special offers",
+                specialOffer: {
+                  id: offerId,
+                  title: offer.title,
+                  discountType: offer.discountType,
+                  discountValue: offer.discountValue,
+                  clinicId: clinicId
+                }
+              };
+          
           response = await apiRequest(
             'POST', 
             `/api/treatment-plans/from-offer`,
-            { offerId, clinicId, notes: "Selected from special offers" }
+            payload
           );
           
           if (response.ok) {
-            console.log("Successfully used treatment-plans/from-offer endpoint");
+            console.log("✅ Successfully used treatment-plans/from-offer endpoint");
           } else {
-            throw new Error("New treatment-plans/from-offer endpoint returned error status");
+            // Last fallback - use direct URL approach for Free Consultation
+            if (isFreeConsultation) {
+              console.log("⚠️ All API endpoints failed, using direct quote URL fallback");
+              
+              // This is our absolute last resort fallback for free consultation
+              // Using special token in location.href and returning a mock response
+              
+              const consultationUrl = new URL('/your-quote', window.location.origin);
+              consultationUrl.searchParams.append('source', 'special_offer');
+              consultationUrl.searchParams.append('specialOffer', 'true');
+              consultationUrl.searchParams.append('treatment', 'Consultation');
+              consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
+              consultationUrl.searchParams.append('clinicId', clinicId);
+              consultationUrl.searchParams.append('offerId', offerId);
+              consultationUrl.searchParams.append('offerDiscount', '100');
+              consultationUrl.searchParams.append('offerDiscountType', 'percentage');
+              consultationUrl.searchParams.append('step', 'start');
+              consultationUrl.searchParams.append('skipInfo', 'true');
+              
+              console.log("🔷 Fallback URL:", consultationUrl.toString());
+              
+              // Redirect directly and return a mock response to satisfy the promise
+              window.location.href = consultationUrl.toString();
+              
+              return {
+                quoteId: 'direct_url_fallback',
+                quoteUrl: consultationUrl.toString()
+              } as QuoteResponse;
+            } else {
+              throw new Error("All API endpoints failed");
+            }
           }
         } catch (err) {
-          console.log("New endpoint failed, trying legacy endpoints:", err);
-          
-          try {
-            // Try the primary legacy endpoint
-            console.log("Attempting first legacy endpoint for offer");
-            response = await apiRequest(
-              'POST', 
-              `/api/v1/offers/${offerId}/start`,
-              { clinicId }
-            );
-            
-            if (response.ok) {
-              console.log("Successfully used primary offer endpoint");
-            } else {
-              throw new Error("Primary offer endpoint returned error status");
-            }
-          } catch (secondErr) {
-            console.log("Primary legacy endpoint failed, trying last fallback:", secondErr);
-            
-            // Try the last fallback endpoint if all else fails
-            console.log("Attempting final fallback endpoint for offer");
-            response = await apiRequest(
-              'POST', 
-              `/api/offers/${offerId}/start`,
-              { clinicId }
-            );
+          if (err.message === "All API endpoints failed") {
+            throw err;
           }
+          
+          console.log("All standard endpoints failed, using legacy endpoints as last resort:", err);
+          
+          // Try primary legacy endpoint as last resort
+          response = await apiRequest(
+            'POST', 
+            `/api/v1/offers/${offerId}/start`,
+            { clinicId }
+          );
         }
       }
       
+      // Process successful response
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create quote from offer');
@@ -276,18 +317,39 @@ export function OfferCard({ offer }: OfferCardProps) {
       const data = await response.json();
       
       // Check if we have a quote ID and URL to redirect to
-      if (data.quoteId && data.quoteUrl) {
+      if (data.quoteId) {
+        // Generate the redirect URL if not provided
+        if (!data.quoteUrl) {
+          data.quoteUrl = `/quote/wizard?quoteId=${data.quoteId}`;
+        }
+        
         // Check if user needs to go through the dental quiz first (new users)
-        // Make sure we're using the correct API path
         const userData = await apiRequest('GET', '/api/auth/user');
         const userProfile = await userData.json();
         
-        if (userProfile && userProfile.user && !userProfile.user.profileComplete) {
-          // Store the pending quote ID for after quiz completion
+        // For Free Consultation, skip quiz and go directly to quote
+        if (isFreeConsultation || (userProfile?.user && userProfile.user.profileComplete)) {
+          // Direct path for free consultation or completed profile
+          toast({
+            title: "Success",
+            description: isFreeConsultation 
+              ? "Free consultation added to your quote" 
+              : "Special offer applied to your quote"
+          });
+          
+          // Clear any processing state
+          sessionStorage.removeItem('processingSpecialOffer');
+          sessionStorage.removeItem('pendingSpecialOffer');
+          
+          // Redirect to the quote directly
+          window.location.href = data.quoteUrl;
+          return data as QuoteResponse;
+        } else {
+          // New users need to complete profile first
           localStorage.setItem('pendingQuoteAfterQuiz', JSON.stringify({
             quoteId: data.quoteId,
             quoteUrl: data.quoteUrl,
-            clinicId: offer.clinicId,
+            clinicId: clinicId,
             offerTitle: offer.title
           }));
           
@@ -296,23 +358,12 @@ export function OfferCard({ offer }: OfferCardProps) {
             description: "Please answer a few questions about your dental needs first.",
           });
           
-          // Redirect to the quiz flow, but skip info page since we have basic info
-          window.location.href = '/quote?step=dental-quiz&skipInfo=true&clinicId=' + offer.clinicId;
-          return data as QuoteResponse;
-        } else {
-          // If user has already completed profile, proceed to quote directly
-          toast({
-            title: "Success",
-            description: "Special offer applied to your quote"
-          });
-          
-          // Clear processing state from session storage
-          sessionStorage.removeItem('processingSpecialOffer');
-          
+          // Redirect to the quiz flow
+          window.location.href = '/quote?step=dental-quiz&skipInfo=true&clinicId=' + clinicId;
           return data as QuoteResponse;
         }
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error('Invalid response from server - missing quoteId');
       }
     } catch (error) {
       console.error('Error creating quote from offer:', error);
