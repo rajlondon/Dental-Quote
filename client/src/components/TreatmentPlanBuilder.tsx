@@ -1544,10 +1544,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
                 
                 return (
-                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-primary/5 border-primary/20' : treatment.isPackage ? 'bg-blue-50 border-blue-200' : ''}>
+                  <TableRow key={treatment.id} className={(treatment.isSpecialOffer || treatment.specialOffer) ? 'bg-primary/5 border-primary/20' : treatment.isPackage ? 'bg-blue-50 border-blue-200' : ''}>
                     <TableCell>
                       <div>
-                        {treatment.specialOffer && (
+                        {(treatment.isSpecialOffer || treatment.specialOffer) && (
                           <div className="relative mb-2">
                             <Badge className="bg-primary/10 text-primary hover:bg-primary/15 flex items-center w-fit px-2 py-0.5 border border-primary/20">
                               <Sparkles className="h-3 w-3 mr-1" />
@@ -1567,7 +1567,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             </Badge>
                           </div>
                         )}
-                        <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
+                        <span className={`font-medium ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
                           {treatment.name}
                         </span>
                         {treatment.specialOffer && (
@@ -1641,6 +1641,18 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                                 {treatment.specialOffer.discountType === 'percentage' 
                                   ? `Save ${treatment.specialOffer.discountValue}%` 
                                   : `Save £${treatment.specialOffer.discountValue}`}
+                              </Badge>
+                            </div>
+                          </>
+                        ) : treatment.isSpecialOffer ? (
+                          <>
+                            <span className="font-bold text-primary">£{treatment.priceGBP}</span>
+                            <span className="block text-xs text-gray-500">
+                              ${treatment.priceUSD}
+                            </span>
+                            <div className="flex justify-end items-center mt-1">
+                              <Badge className="text-xs h-5 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20">
+                                Special Offer
                               </Badge>
                             </div>
                           </>

@@ -1070,7 +1070,9 @@ const YourQuotePage: React.FC = () => {
         priceUSD: 580, // Default price, would be determined by API in real app
         subtotalGBP: 450,
         subtotalUSD: 580,
-        guarantee: '5-year'
+        guarantee: '5-year',
+        isSpecialOffer: false, // Explicitly mark as not a special offer for consistency
+        isPackage: false // Explicitly mark as not a package for consistency
       };
       
       setTreatmentItems([initialTreatment]);
