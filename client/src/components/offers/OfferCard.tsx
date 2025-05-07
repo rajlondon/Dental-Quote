@@ -62,32 +62,41 @@ export function OfferCard({ offer }: OfferCardProps) {
     try {
       setIsProcessing(true);
       
-      // Set context data to track this flow
-      setSource('special_offer');
-      setOfferId(offer.id);
-      setClinicId(offer.clinicId);
-      
-      // Ensure flow data is also saved to session storage for login recovery
-      // This maintains compatibility with existing code
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-      sessionStorage.setItem('processingSpecialOffer', offer.id);
-      
       // If user is not logged in, redirect to login page with special offer info
       if (!user) {
+        // Save offer details for post-login processing
+        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+        sessionStorage.setItem('processingSpecialOffer', offer.id);
+        
         // Redirect to login page
         setLocation('/portal-login');
         return;
       }
       
-      // User is logged in, we should redirect to the offer confirmation page
-      toast({
-        title: "Special Offer Selected",
-        description: `Please confirm ${offer.title}`,
-        variant: "default",
-      });
-      
-      // Redirect to confirmation page with context already set
-      setLocation('/offer-confirmation');
+      try {
+        // User is logged in, directly create a quote from the offer
+        const response = await createQuoteFromOffer(offer.id, offer.clinicId);
+        
+        // Check if quote was created successfully and response contains the required fields
+        if (response?.quoteId) {
+          toast({
+            title: "Success",
+            description: `${offer.title} added to your quote`,
+            variant: "default",
+          });
+          
+          // Handle redirection to the quote URL - this should now happen in the createQuoteFromOffer function
+          // If this code is ever reached, use this as a fallback
+          if (!window.location.href.includes('quote-flow')) {
+            window.location.href = response.quoteUrl;
+          }
+        } else {
+          throw new Error('Failed to create quote from offer');
+        }
+      } catch (err) {
+        // Rethrow to be caught by outer catch block
+        throw err;
+      }
       
     } catch (error) {
       console.error('Error processing special offer:', error);
@@ -100,8 +109,19 @@ export function OfferCard({ offer }: OfferCardProps) {
     }
   };
   
+  // Interface for the API response
+  interface QuoteResponse {
+    quoteId: string;
+    quoteUrl: string;
+    treatmentPlanId?: string;
+    treatmentPlanUrl?: string;
+    offerId?: string;
+    clinicId?: string;
+    message?: string;
+  }
+
   // Function to create a quote from an offer via the API
-  const createQuoteFromOffer = async (offerId: string, clinicId: string) => {
+  const createQuoteFromOffer = async (offerId: string, clinicId: string): Promise<QuoteResponse> => {
     try {
       let response;
       
@@ -180,6 +200,7 @@ export function OfferCard({ offer }: OfferCardProps) {
           
           // Redirect to the quiz flow, but skip info page since we have basic info
           window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + offer.clinicId;
+          return data as QuoteResponse;
         } else {
           // If user has already completed profile, proceed to quote directly
           toast({
@@ -190,8 +211,7 @@ export function OfferCard({ offer }: OfferCardProps) {
           // Clear processing state from session storage
           sessionStorage.removeItem('processingSpecialOffer');
           
-          // Redirect to the quote review page
-          window.location.href = data.quoteUrl;
+          return data as QuoteResponse;
         }
       } else {
         throw new Error('Invalid response from server');

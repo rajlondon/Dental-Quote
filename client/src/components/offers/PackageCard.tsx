@@ -64,32 +64,41 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
     try {
       setIsProcessing(true);
       
-      // Set context data to track this flow
-      setSource('package');
-      setPackageId(pkg.id);
-      setClinicId(pkg.clinicId);
-      
-      // Ensure flow data is also saved to session storage for login recovery
-      // This maintains compatibility with existing code
-      sessionStorage.setItem('pendingPackage', JSON.stringify(pkg));
-      sessionStorage.setItem('processingPackage', pkg.id);
-      
       // If user is not logged in, redirect to login page with package info
       if (!user) {
+        // Save package details for post-login processing
+        sessionStorage.setItem('pendingPackage', JSON.stringify(pkg));
+        sessionStorage.setItem('processingPackage', pkg.id);
+        
         // Redirect to login page
         setLocation('/portal-login');
         return;
       }
       
-      // User is logged in, we should redirect to the offer confirmation page
-      toast({
-        title: "Treatment Package Selected",
-        description: `Please confirm ${pkg.title}`,
-        variant: "default",
-      });
-      
-      // Redirect to confirmation page with context already set
-      setLocation('/offer-confirmation');
+      try {
+        // User is logged in, directly create a quote from the package
+        const response = await createQuoteFromPackage(pkg.id, pkg.clinicId);
+        
+        // Check if quote was created successfully and contains required fields
+        if (response?.quoteId) {
+          toast({
+            title: "Success",
+            description: `${pkg.title} added to your quote`,
+            variant: "default",
+          });
+          
+          // Handle redirection to the quote URL - this should now happen in the createQuoteFromPackage function
+          // If this code is ever reached, use this as a fallback
+          if (!window.location.href.includes('quote-flow')) {
+            window.location.href = response.quoteUrl;
+          }
+        } else {
+          throw new Error('Failed to create quote from package');
+        }
+      } catch (err) {
+        // Rethrow to be caught by outer catch block
+        throw err;
+      }
       
     } catch (error) {
       console.error('Error processing treatment package:', error);
@@ -102,8 +111,19 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
     }
   };
   
+  // Interface for the API response
+  interface QuoteResponse {
+    quoteId: string;
+    quoteUrl: string;
+    treatmentPlanId?: string;
+    treatmentPlanUrl?: string;
+    packageId?: string;
+    clinicId?: string;
+    message?: string;
+  }
+
   // Function to create a quote from a package via the API
-  const createQuoteFromPackage = async (packageId: string, clinicId: string) => {
+  const createQuoteFromPackage = async (packageId: string, clinicId: string): Promise<QuoteResponse> => {
     try {
       // Try each endpoint in order until one succeeds
       let response;
@@ -180,6 +200,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
           
           // Redirect to the quiz flow, but skip info page since we have basic info
           window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + pkg.clinicId;
+          return data as QuoteResponse;
         } else {
           // If user has already completed profile, proceed to quote directly
           toast({
@@ -190,8 +211,7 @@ export function PackageCard({ package: pkg }: PackageCardProps) {
           // Clear processing state from session storage
           sessionStorage.removeItem('processingPackage');
           
-          // Redirect to the quote review page
-          window.location.href = data.quoteUrl;
+          return data as QuoteResponse;
         }
       } else {
         throw new Error('Invalid response from server');
