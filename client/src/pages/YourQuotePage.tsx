@@ -137,6 +137,7 @@ const CLINIC_DATA: ClinicInfo[] = [
       consultation: true
     },
     images: ['/images/clinics/istanbul-dental.jpg'],
+    // IMPORTANT: Force this to be true for all clinics
     hasSpecialOffer: true,
     specialOfferDetails: {
       id: "default_offer_1",
@@ -194,7 +195,15 @@ const CLINIC_DATA: ClinicInfo[] = [
       consultation: true,
       cityTour: true
     },
-    images: ['/images/clinics/maltepe.jpg']
+    images: ['/images/clinics/maltepe.jpg'],
+    // Add special offer details to this clinic
+    hasSpecialOffer: true,
+    specialOfferDetails: {
+      id: "default_offer_3",
+      title: "Dental Implant + Crown Bundle",
+      discountValue: 20,
+      discountType: "percentage"
+    }
   },
   {
     id: 'dentakay-clinic',
@@ -216,7 +225,15 @@ const CLINIC_DATA: ClinicInfo[] = [
       consultation: true,
       cityTour: true
     },
-    images: ['/images/clinics/dentakay.jpg']
+    images: ['/images/clinics/dentakay.jpg'],
+    // Add special offer details to this clinic
+    hasSpecialOffer: true,
+    specialOfferDetails: {
+      id: "default_offer_4",
+      title: "Luxury Airport Transfer",
+      discountValue: 120,
+      discountType: "fixed_amount" 
+    }
   },
   {
     id: 'crown-dental',
@@ -237,7 +254,15 @@ const CLINIC_DATA: ClinicInfo[] = [
       transfers: true,
       consultation: true
     },
-    images: ['/images/clinics/crown.jpg']
+    images: ['/images/clinics/crown.jpg'],
+    // Add special offer details to this clinic
+    hasSpecialOffer: true,
+    specialOfferDetails: {
+      id: "default_offer_5",
+      title: "Free Hotel Stay",
+      discountValue: 25,
+      discountType: "percentage"
+    }
   }
 ];
 
