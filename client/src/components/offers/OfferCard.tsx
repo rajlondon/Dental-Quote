@@ -102,7 +102,7 @@ export function OfferCard({ offer }: OfferCardProps) {
       
       // Proceed to the quote flow directly (will handle login as part of the flow)
       // Use skipInfo=true to bypass initial patient info page if they select "create account"
-      window.location.href = `/quote-flow?step=start&skipInfo=true&clinicId=${offer.clinicId}&specialOfferId=${offer.id}`;
+      window.location.href = `/quote?step=start&skipInfo=true&clinicId=${offer.clinicId}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}`;
       return;
       
     } catch (error) {
@@ -206,7 +206,7 @@ export function OfferCard({ offer }: OfferCardProps) {
           });
           
           // Redirect to the quiz flow, but skip info page since we have basic info
-          window.location.href = '/quote-flow?step=dental-quiz&skipInfo=true&clinicId=' + offer.clinicId;
+          window.location.href = '/quote?step=dental-quiz&skipInfo=true&clinicId=' + offer.clinicId;
           return data as QuoteResponse;
         } else {
           // If user has already completed profile, proceed to quote directly
