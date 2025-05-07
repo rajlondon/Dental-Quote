@@ -1934,10 +1934,17 @@ const YourQuotePage: React.FC = () => {
             <div className="lg:col-span-1">
               <div className="sticky top-24">
                 <QuoteSummaryPanel
-                  treatmentItems={treatmentItems}
-                  clinic={selectedClinic}
-                  specialOffer={specialOffer}
-                  showSummary={treatmentItems.length > 0}
+                  treatments={treatmentItems.map(item => ({
+                    name: item.name,
+                    priceGBP: item.priceGBP,
+                    quantity: item.quantity,
+                    subtotalGBP: item.subtotalGBP
+                  }))}
+                  onContinue={() => {}} 
+                  specialOfferTitle={specialOffer?.title}
+                  discountValue={specialOffer?.discountValue}
+                  discountType={specialOffer?.discountType}
+                  clinicName={selectedClinic?.name}
                 />
                 
                 <Card className="mt-6">
@@ -2005,7 +2012,7 @@ const YourQuotePage: React.FC = () => {
                   <EditQuoteModal
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
-                    initialValues={quoteParams}
+                    initialParams={quoteParams}
                     onSave={handleSaveQuoteParams}
                   />
                 )}
