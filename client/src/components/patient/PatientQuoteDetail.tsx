@@ -142,7 +142,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
     } else if (parsedQuoteData && parsedQuoteData.treatments) {
       // If we have parsed quote data with treatments, use that
       console.log('[DEBUG] Using treatments from parsedQuoteData:', parsedQuoteData.treatments);
-      treatments = parsedQuoteData.treatments.map(t => ({
+      treatments = parsedQuoteData.treatments.map((t: any) => ({
         name: t.name || 'Treatment',
         quantity: t.quantity || 1,
         price: t.price || 0,
@@ -152,7 +152,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
       }));
       
       // Calculate the total price 
-      totalPrice = treatments.reduce((sum, t) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
+      totalPrice = treatments.reduce((sum: number, t: any) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
     } else {
       // Use a default treatment based on the request
       console.log('[DEBUG] Using default treatment based on quoteRequest');
