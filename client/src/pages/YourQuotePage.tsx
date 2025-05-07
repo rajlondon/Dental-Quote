@@ -985,9 +985,12 @@ const YourQuotePage: React.FC = () => {
       });
     }
     
-    // Initialize treatments based on whether we have a special offer or package
+    // Create a ref to access TreatmentPlanBuilder methods
+  const treatmentPlanBuilderRef = React.useRef<any>(null);
+  
+  // Initialize treatments based on whether we have a special offer or package
     if (specialOffer) {
-      // Create a treatment item from the special offer
+      // Use our utility function to create a special offer treatment
       const specialOfferTreatment: PlanTreatmentItem = {
         id: `special_offer_${Date.now()}`,
         category: 'special_offer',
@@ -1022,6 +1025,8 @@ const YourQuotePage: React.FC = () => {
         specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
       }
       
+      // Add the special offer treatment to our treatment items
+      console.log("Setting special offer treatment:", specialOfferTreatment);
       setTreatmentItems([specialOfferTreatment]);
     }
     // Initialize with package data if available
