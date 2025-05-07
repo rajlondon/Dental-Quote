@@ -1001,6 +1001,16 @@ const YourQuotePage: React.FC = () => {
   
   // Add dedicated effect to ensure special offers are added to treatment items
   useEffect(() => {
+    // Ensure we're properly logging what's happening
+    console.log("🔄 Treatment items check on YourQuotePage:", {
+      treatmentItemsCount: treatmentItems.length,
+      isSpecialOfferFlow,
+      isPackageFlow,
+      isPromoTokenFlow,
+      specialOfferExists: !!specialOffer,
+      packageDataExists: !!packageData
+    });
+    
     // Only run this if we have a special offer, package or promo token but no treatment items yet
     if ((isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && treatmentItems.length === 0) {
       console.log("🔍 Special offer flow detected but no treatment items yet. Adding special offer to treatment items list.");
@@ -1093,7 +1103,14 @@ const YourQuotePage: React.FC = () => {
     // Set page title
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
     
-    console.log("🔄 Initializing YourQuotePage with URL parameters");
+    console.log("🔄 Initializing YourQuotePage with URL parameters:", window.location.search);
+    
+    // Log all URL parameters for debugging
+    const urlParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      urlParams[key] = value;
+    });
+    console.log("All URL parameters for debugging:", urlParams);
     
     // Parse URL parameters
     const offerIdFromUrl = searchParams.get('specialOffer') || searchParams.get('offerId');
