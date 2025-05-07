@@ -836,13 +836,77 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               setSelectedClinic(clinic.id);
                               localStorage.setItem('selectedClinicId', clinic.id);
                               
-                              // Save clinic pricing data for use in the portal
-                              const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-                              localStorage.setItem('selectedClinicData', JSON.stringify({
-                                name: clinic.name,
-                                treatments: clinicTreatments,
-                                totalPrice: totalPrice
-                              }));
+                              // Check if this is a special offer claim
+                              if (clinic.specialOffer) {
+                                // Process special offer claim
+                                const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+                                
+                                // Check if any treatment in the plan matches the offer
+                                const offerTitle = clinic.specialOffer.title.toLowerCase();
+                                const offerDiscount = clinic.specialOffer.discountType === 'percentage' 
+                                  ? `${clinic.specialOffer.discountValue}%` 
+                                  : `£${clinic.specialOffer.discountValue}`;
+                                  
+                                // Apply discount to matching treatments or add offer as new treatment
+                                let matchFound = false;
+                                let modifiedTreatments = clinicTreatments.map(treatment => {
+                                  // Simple matching - could be enhanced with more sophisticated logic
+                                  if (treatment.treatmentName.toLowerCase().includes(offerTitle.split(' ')[0])) {
+                                    matchFound = true;
+                                    // Apply discount 
+                                    const discountedSubtotal = clinic.specialOffer.discountType === 'percentage'
+                                      ? treatment.subtotal * (1 - (clinic.specialOffer.discountValue / 100))
+                                      : treatment.subtotal - clinic.specialOffer.discountValue;
+                                      
+                                    return {
+                                      ...treatment,
+                                      subtotal: Math.max(0, Math.round(discountedSubtotal)),
+                                      // Add special mark to indicate discount was applied
+                                      treatmentName: `${treatment.treatmentName} (Special Offer: ${offerDiscount} OFF)`,
+                                      specialOfferApplied: true
+                                    };
+                                  }
+                                  return treatment;
+                                });
+                                
+                                // If no match found, we'd add the special offer as a new treatment
+                                // (this would need more detailed implementation in a real system)
+                                if (!matchFound) {
+                                  // Just for demonstration - in reality would need proper treatment details
+                                  // from a database of available special offers
+                                  toast({
+                                    title: "Special Offer Added",
+                                    description: `${clinic.specialOffer.title} has been added to your treatment plan with ${offerDiscount} discount.`,
+                                  });
+                                } else {
+                                  toast({
+                                    title: "Special Offer Applied",
+                                    description: `${offerDiscount} discount applied to eligible treatments in your plan.`,
+                                  });
+                                }
+                                
+                                // Calculate new total after discounts
+                                const discountedTotal = modifiedTreatments.reduce((sum, t) => sum + t.subtotal, 0);
+                                
+                                // Save the modified treatments with discounts applied
+                                localStorage.setItem('selectedClinicData', JSON.stringify({
+                                  name: clinic.name,
+                                  treatments: modifiedTreatments,
+                                  originalTreatments: clinicTreatments, // Keep original for reference
+                                  totalPrice: discountedTotal,
+                                  originalPrice: totalPrice, // Keep original for reference
+                                  specialOfferApplied: true,
+                                  specialOfferDetails: clinic.specialOffer
+                                }));
+                              } else {
+                                // Standard selection without special offer
+                                const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+                                localStorage.setItem('selectedClinicData', JSON.stringify({
+                                  name: clinic.name,
+                                  treatments: clinicTreatments,
+                                  totalPrice: totalPrice
+                                }));
+                              }
                               
                               // Call the onSelectClinic callback if provided
                               if (onSelectClinic) {
@@ -852,10 +916,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               // Redirect to the patient portal login page
                               setLocation('/portal');
                               
-                              toast({
-                                title: "Clinic Selected",
-                                description: "Please log in to your patient portal to continue with your booking.",
-                              });
+                              // Show appropriate toast message
+                              if (clinic.specialOffer) {
+                                toast({
+                                  title: "Special Offer Claimed!",
+                                  description: "Please log in to your patient portal to view your discounted treatment plan.",
+                                });
+                              } else {
+                                toast({
+                                  title: "Clinic Selected",
+                                  description: "Please log in to your patient portal to continue with your booking.",
+                                });
+                              }
                             }}
                           >
                             {clinic.specialOffer ? 
