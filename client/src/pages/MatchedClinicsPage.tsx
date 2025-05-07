@@ -243,6 +243,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         veneers: '5 years',
         crowns: '5 years',
         fillings: '2 years'
+      },
+      // Force special offers for ALL clinics
+      hasSpecialOffer: true,
+      specialOffer: {
+        id: "premium_offer_1",
+        title: "VIP Treatment Package",
+        discountType: "percentage",
+        discountValue: 20,
+        clinicId: "dentspa"
       }
     },
     {
@@ -285,6 +294,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         veneers: '3 years',
         crowns: '3 years',
         fillings: '1 year'
+      },
+      // Force special offers for ALL clinics
+      hasSpecialOffer: true,
+      specialOffer: {
+        id: "standard_offer_1",
+        title: "Free Hotel Stay",
+        discountType: "fixed_amount",
+        discountValue: 250,
+        clinicId: "beyazada"
       }
     },
     {
@@ -331,6 +349,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         veneers: '10 years',
         crowns: '10 years',
         fillings: '3 years'
+      },
+      // Force special offers for ALL clinics
+      hasSpecialOffer: true,
+      specialOffer: {
+        id: "premium_offer_2",
+        title: "Luxury Spa Treatment",
+        discountType: "percentage",
+        discountValue: 15,
+        clinicId: "maltepe"
       }
     },
     {
