@@ -2,7 +2,7 @@
  * Test script for the updated Free Consultation endpoint and URL redirection
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 async function testFreeconsultations() {
   try {
