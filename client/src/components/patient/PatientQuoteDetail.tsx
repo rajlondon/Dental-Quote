@@ -149,6 +149,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
         quantity: t.quantity || 1,
         price: t.price || 0,
         isPackage: t.isPackage || false,
+        isSpecialOffer: !!t.specialOffer, // Set flag based on specialOffer existence
         packageId: t.packageId || undefined,
         specialOffer: t.specialOffer || undefined
       }));
@@ -164,6 +165,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
           quantity: 1,
           price: quoteRequest.estimatedPrice || 1500, // Default price if none available
           isPackage: quoteRequest.isPackage || false,
+          isSpecialOffer: !!quoteRequest.specialOffer, // Set flag based on specialOffer existence
           packageId: quoteRequest.packageId || undefined,
           specialOffer: quoteRequest.specialOffer || undefined
         }
@@ -419,9 +421,9 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                           Package
                         </Badge>
                       )}
-                      {treatment.specialOffer && (
+                      {(treatment.isSpecialOffer || treatment.specialOffer) && (
                         <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
-                          Special Offer
+                          {treatment.specialOffer?.title || "Special Offer"}
                         </Badge>
                       )}
                     </div>
