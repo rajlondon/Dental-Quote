@@ -475,8 +475,12 @@ const YourQuotePage: React.FC = () => {
     offerId, setOfferId,
     packageId, setPackageId,
     clinicId, setClinicId,
-    isSpecialOfferFlow, isPackageFlow,
-    resetFlow
+    promoToken, setPromoToken,
+    promoType, setPromoType,
+    isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow,
+    quoteId, setQuoteId,
+    resetFlow,
+    buildUrl
   } = useQuoteFlow();
   
   // Parse URL query parameters
@@ -983,13 +987,21 @@ const YourQuotePage: React.FC = () => {
     
     // Then add additional processing for this specific page
     // Determine the source type from URL parameters or use existing context
-    // Priority: explicit source parameter > specialOffer/packageId parameters > existing context
+    // Priority: explicit source parameter > specialOffer/packageId/promoToken parameters > existing context
     let detectedSource = source; // Default to existing context value
     
-    if (sourceTypeFromUrl && ['special_offer', 'package', 'normal'].includes(sourceTypeFromUrl)) {
+    // Check for promo token in the URL
+    const promoTokenFromUrl = searchParams.get('promoToken');
+    const promoTypeFromUrl = searchParams.get('promoType');
+    
+    if (sourceTypeFromUrl && ['special_offer', 'package', 'promo_token', 'normal'].includes(sourceTypeFromUrl)) {
       // Explicit source parameter has highest priority
-      detectedSource = sourceTypeFromUrl as 'special_offer' | 'package' | 'normal';
+      detectedSource = sourceTypeFromUrl as 'special_offer' | 'package' | 'promo_token' | 'normal';
       console.log(`Source explicitly specified in URL: ${detectedSource}`);
+    } else if (promoTokenFromUrl) {
+      // Promo token indicates a promo_token source
+      detectedSource = 'promo_token';
+      console.log(`Source determined from promoToken parameter: ${detectedSource}`);
     } else if (offerIdFromUrl) {
       // Special offer ID parameter indicates special_offer source
       detectedSource = 'special_offer';
