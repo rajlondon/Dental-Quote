@@ -614,15 +614,20 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
   // Always have userQuotes as an array
   const safeUserQuotes = Array.isArray(userQuotes) ? userQuotes : [];
   
-  // Special offers handling: Save pending offers to user account instead of just clearing
+  // Special offers and packages handling: Save pending items to user account instead of just clearing
   useEffect(() => {
     // Only proceed if we have a logged in user
     if (!user?.id) return;
     
-    // Check if we have a pending special offer to save
+    // Check if we have a pending special offer or package to save
     const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
     const processingOffer = sessionStorage.getItem('processingSpecialOffer');
     const activeOffer = sessionStorage.getItem('activeSpecialOffer');
+    
+    // Check for pending package data
+    const pendingPackageData = sessionStorage.getItem('pendingPackage');
+    const processingPackage = sessionStorage.getItem('processingPackage');
+    const activePackage = sessionStorage.getItem('activePackage');
     
     const saveSpecialOfferToAccount = async (offerData: string) => {
       try {
@@ -710,11 +715,113 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       }
     };
     
+    // Function to handle saving a package to the user's account
+    const savePackageToAccount = async (packageData: string) => {
+      try {
+        // Parse the package data
+        const pkg = JSON.parse(packageData);
+        console.log("Processing treatment package:", pkg);
+        
+        // Create a treatment plan from the package through the proper API endpoint
+        let treatmentPlanId = null;
+        try {
+          const createPlanResponse = await apiRequest(
+            'POST', 
+            '/api/treatment-plans/from-package',
+            { 
+              packageId: pkg.id,
+              clinicId: pkg.clinicId || pkg.clinic_id || null
+            }
+          );
+          
+          const createPlanResult = await createPlanResponse.json();
+          
+          if (createPlanResult.success && createPlanResult.treatmentPlanId) {
+            treatmentPlanId = createPlanResult.treatmentPlanId;
+            console.log("Successfully created treatment plan from package:", treatmentPlanId);
+            
+            toast({
+              title: "Treatment Package Applied",
+              description: "Your treatment plan has been created with the selected package.",
+              variant: "default"
+            });
+            
+            // Redirect to the treatment plan page after a short delay
+            setTimeout(() => {
+              setActiveSection('treatment_plan');
+              if (treatmentPlanId) {
+                // Provide the ID as a URL parameter for direct access
+                setLocation(`/patient/treatment-plans/${treatmentPlanId}`);
+              }
+            }, 1500);
+            
+            return; // Exit early since we're already handling the redirect
+          } else {
+            console.warn("Failed to create treatment plan from package, falling back to save-only:", createPlanResult.message);
+          }
+        } catch (planError) {
+          console.error("Error creating treatment plan from package:", planError);
+        }
+        
+        // Fallback: Just save a reference to the package in the user's account if creating a plan failed
+        // If this endpoint doesn't exist, the catch block will handle the error
+        try {
+          const response = await fetch('/api/packages/save-to-account', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              packageId: pkg.id,
+              clinicId: parseInt(pkg.clinicId || pkg.clinic_id) || null,
+              packageDetails: pkg,
+            }),
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            toast({
+              title: "Treatment Package Saved",
+              description: "We've saved this treatment package to your account for future reference.",
+              variant: "default"
+            });
+          } else {
+            console.error("Failed to save package:", result.message);
+            toast({
+              title: "Couldn't Save Package",
+              description: "There was an issue saving this package to your account. You can try again later.",
+              variant: "destructive"
+            });
+          }
+        } catch (saveError) {
+          console.error("Error saving package to account:", saveError);
+          toast({
+            title: "Error",
+            description: "There was an error saving the package to your account.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error processing treatment package:", error);
+        toast({
+          title: "Error",
+          description: "There was an error processing your treatment package.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    // Process any pending offers
     if (pendingOfferData) {
       console.log("📋 Patient portal loaded - saving pending special offer to user account");
-      
-      // Save the pending offer to the user's account
       saveSpecialOfferToAccount(pendingOfferData);
+    }
+    
+    // Process any pending packages
+    if (pendingPackageData) {
+      console.log("📋 Patient portal loaded - saving pending treatment package to user account");
+      savePackageToAccount(pendingPackageData);
     }
     
     // Always clear session storage to prevent redirect loops
@@ -725,6 +832,16 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       sessionStorage.removeItem('pendingSpecialOffer');
       sessionStorage.removeItem('processingSpecialOffer');
       sessionStorage.removeItem('activeSpecialOffer');
+    }
+    
+    // Clean up package-related session storage
+    if (pendingPackageData || processingPackage || activePackage) {
+      console.log("🧹 Cleaning up package session storage");
+      
+      // Remove all package related data from session storage
+      sessionStorage.removeItem('pendingPackage');
+      sessionStorage.removeItem('processingPackage');
+      sessionStorage.removeItem('activePackage');
     }
   }, [toast, user?.id]);
 
@@ -769,6 +886,11 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
     sessionStorage.removeItem('pendingSpecialOffer');
     sessionStorage.removeItem('processingSpecialOffer');
     sessionStorage.removeItem('activeSpecialOffer');
+    
+    // Clear all package data when logging out
+    sessionStorage.removeItem('pendingPackage');
+    sessionStorage.removeItem('processingPackage');
+    sessionStorage.removeItem('activePackage');
     
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
