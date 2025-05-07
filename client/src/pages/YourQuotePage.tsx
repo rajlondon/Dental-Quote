@@ -1100,8 +1100,15 @@ const YourQuotePage: React.FC = () => {
       totalGBP: calculateTotalGBP(),
       totalUSD: calculateTotalUSD(),
       source: source,
-      offerId: offerId,
-      packageId: packageId
+      offerId: offerId || (hasActiveOffer && trackedOffer ? trackedOffer.id : null),
+      packageId: packageId,
+      specialOffer: hasActiveOffer && trackedOffer ? {
+        id: trackedOffer.id,
+        title: trackedOffer.title,
+        discountType: trackedOffer.discountType,
+        discountValue: trackedOffer.discountValue,
+        clinicId: trackedOffer.clinicId
+      } : null
     };
     
     try {

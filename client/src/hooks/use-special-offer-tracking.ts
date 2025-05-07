@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import { TreatmentItem } from '@/services/specialOfferService';
+import { TreatmentItem as ServiceTreatmentItem } from '@/services/specialOfferService';
+import { TreatmentItem as BuilderTreatmentItem } from '@/components/TreatmentPlanBuilder';
 
 export interface SpecialOfferDetails {
   id: string;
@@ -102,7 +103,7 @@ export function useSpecialOfferTracking() {
   /**
    * Apply special offer to treatments
    */
-  const applySpecialOfferToTreatments = (treatments: TreatmentItem[]): TreatmentItem[] => {
+  const applySpecialOfferToTreatments = (treatments: BuilderTreatmentItem[]): BuilderTreatmentItem[] => {
     if (!specialOffer) return treatments;
     
     console.log("Applying special offer to treatments:", specialOffer);
@@ -126,14 +127,20 @@ export function useSpecialOfferTracking() {
           discountedPrice = Math.max(0, treatment.priceGBP - specialOffer.discountValue);
         }
         
+        const newPrice = discountedPrice;
+        const newSubtotalGBP = newPrice * treatment.quantity;
+        const newSubtotalUSD = Math.round(newSubtotalGBP * 1.29); // Estimate USD price
+        
         return {
           ...treatment,
           originalPriceGBP: treatment.priceGBP,
-          priceGBP: discountedPrice,
+          priceGBP: newPrice,
+          subtotalGBP: newSubtotalGBP,
+          subtotalUSD: newSubtotalUSD,
           specialOfferApplied: true,
           specialOfferId: specialOffer.id,
           specialOfferTitle: specialOffer.title,
-          discountAmount: treatment.priceGBP - discountedPrice
+          discountAmount: treatment.priceGBP - newPrice
         };
       }
       
