@@ -46,7 +46,7 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
   discountType,
   clinicName
 }) => {
-  const { source, isSpecialOfferFlow, isPackageFlow } = useQuoteFlow();
+  const { source, isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, promoType, quoteId } = useQuoteFlow();
   
   // Calculate total
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
@@ -64,11 +64,15 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-5">
-      {/* Special offer or package badge - only show if applicable */}
-      {(isSpecialOfferFlow || isPackageFlow) && (
+      {/* Special offer, package, or promo token badge - only show if applicable */}
+      {(isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && (
         <div className="mb-4 inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
           <Sparkles className="w-4 h-4" />
-          {isSpecialOfferFlow ? 'Special Offer' : 'Treatment Package'}
+          {isSpecialOfferFlow && 'Special Offer'}
+          {isPackageFlow && 'Treatment Package'}
+          {isPromoTokenFlow && promoType === 'special_offer' && 'Special Offer'}
+          {isPromoTokenFlow && promoType === 'package' && 'Treatment Package'}
+          {isPromoTokenFlow && !promoType && 'Promotional Offer'}
         </div>
       )}
       
@@ -182,8 +186,8 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
         </p>
       </div>
 
-      {/* Special offer or package specific content */}
-      {isSpecialOfferFlow && specialOfferTitle && (
+      {/* Special offer specific content */}
+      {(isSpecialOfferFlow || (isPromoTokenFlow && promoType === 'special_offer')) && specialOfferTitle && (
         <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 p-4 rounded-md shadow-sm">
           <div className="flex items-start">
             <div className="bg-white rounded-full p-1 border border-blue-200 shadow-sm mr-3 mt-1">
@@ -218,12 +222,19 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                 <CheckCircle className="h-3 w-3 mr-1" />
                 <span>Limited time offer - applied to your quote</span>
               </p>
+              {quoteId && (
+                <p className="text-blue-600 text-xs mt-2 flex items-center">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  <span>Quote ID: {quoteId.substring(0, 8)}... is linked to this offer</span>
+                </p>
+              )}
             </div>
           </div>
         </div>
       )}
       
-      {isPackageFlow && (
+      {/* Package specific content */}
+      {(isPackageFlow || (isPromoTokenFlow && promoType === 'package')) && (
         <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-md">
           <h3 className="font-semibold text-blue-800 mb-2">Your All-Inclusive Package Includes:</h3>
           <div className="space-y-2">
@@ -238,6 +249,35 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
             <div className="flex items-center">
               <CalendarCheck className="h-4 w-4 text-blue-600 mr-2" />
               <span className="text-blue-700 text-sm">Free consultation</span>
+            </div>
+          </div>
+          {quoteId && (
+            <p className="text-blue-600 text-xs mt-3 flex items-center">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              <span>Quote ID: {quoteId.substring(0, 8)}... is linked to this package</span>
+            </p>
+          )}
+        </div>
+      )}
+      
+      {/* Generic promo token content - if not special offer or package */}
+      {isPromoTokenFlow && !promoType && (
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 p-4 rounded-md shadow-sm">
+          <div className="flex items-start">
+            <div className="bg-white rounded-full p-1 border border-blue-200 shadow-sm mr-3 mt-1">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-blue-800 text-md">Promotional Offer Applied</h3>
+              <p className="text-blue-700 text-sm mt-1">
+                This quote includes promotional pricing and benefits.
+              </p>
+              {quoteId && (
+                <p className="text-blue-600 text-xs mt-2 flex items-center">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  <span>Quote ID: {quoteId.substring(0, 8)}... is linked to this promotion</span>
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -278,7 +318,7 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
           onClick={onContinue}
           className="flex items-center gap-2 ml-auto"
         >
-          {isSpecialOfferFlow || isPackageFlow ? (
+          {isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow ? (
             <>
               Get My Personalised Quote
               <ArrowRight className="h-4 w-4" />
@@ -293,9 +333,11 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
       </div>
       
       {/* Footer text */}
-      {(isSpecialOfferFlow || isPackageFlow) && (
+      {(isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && (
         <p className="text-center text-gray-500 text-xs mt-4">
-          See clinics, packages, and complete your booking with a refundable £200 deposit.
+          {quoteId ? 
+            'Your quote is already saved and ready for review.' :
+            'See clinics, packages, and complete your booking with a refundable £200 deposit.'}
         </p>
       )}
     </div>
