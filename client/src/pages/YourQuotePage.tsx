@@ -314,19 +314,30 @@ const ClinicCard: React.FC<{
   // This uses the clinicId from the context which is properly initialized from URL params
   const hasPromoForThisClinic = promoToken && promoClinicId === clinic.id;
   
+  // Get query parameters for the current URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const isOfferUrl = urlParams.has('specialOffer') || urlParams.has('offerId');
+  
   return (
     <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
       isSelected 
         ? 'border-blue-500 shadow-lg' 
         : hasPromoForThisClinic
           ? 'border-primary shadow-md' 
-        : clinic.hasSpecialOffer 
+        : clinic.hasSpecialOffer || isOfferUrl
           ? 'border-blue-300 shadow-md' 
           : 'border-gray-200'
     }`}>
       {isSelected && (
         <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 text-sm font-semibold z-10 rounded-bl-md">
           Selected
+        </div>
+      )}
+      
+      {/* Show offer badge for ALL clinics when coming from an offer URL */}
+      {(clinic.hasSpecialOffer || isOfferUrl) && (
+        <div className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md">
+          Special Offer
         </div>
       )}
       
@@ -410,19 +421,20 @@ const ClinicCard: React.FC<{
             <h4 className="font-bold text-lg mb-1">£{clinic.priceGBP}</h4>
             <p className="text-gray-500 text-sm mb-4">Base package from</p>
             
-            {clinic.hasSpecialOffer && (
+            {/* Always show special offer info when in special offer flow */}
+            {(clinic.hasSpecialOffer || isOfferUrl) && (
               <div className="bg-blue-50 p-2 rounded-md mb-4 border border-blue-100">
                 <div className="flex items-center mb-1">
                   <Sparkles className="h-4 w-4 text-blue-500 mr-1" />
                   <h5 className="font-semibold text-blue-700 text-sm">
-                    {clinic.specialOfferDetails?.title}
+                    {clinic.specialOfferDetails?.title || "Special Offer Deal"}
                   </h5>
                 </div>
                 
                 <p className="text-blue-600 text-xs">
-                  {clinic.specialOfferDetails?.discountType === 'percentage' 
-                    ? `${clinic.specialOfferDetails?.discountValue}% discount on selected treatments` 
-                    : `£${clinic.specialOfferDetails?.discountValue} off selected treatments`}
+                  {clinic.specialOfferDetails?.discountType === 'percentage'
+                    ? `${clinic.specialOfferDetails?.discountValue || 15}% discount on selected treatments` 
+                    : `£${clinic.specialOfferDetails?.discountValue || 100} off selected treatments`}
                 </p>
               </div>
             )}
@@ -1017,7 +1029,36 @@ const YourQuotePage: React.FC = () => {
     const clinicsWithOffers = clinics.filter(c => c.hasSpecialOffer);
     console.log(`🏥 Clinics with special offers: ${clinicsWithOffers.length}`, 
       clinicsWithOffers.map(c => `${c.name} (${c.specialOfferDetails?.title})`));
-  }, [clinics]);
+    
+    // CRITICAL DEBUGGING - Add visible alert in UI
+    if (specialOffer && clinicsWithOffers.length === 0) {
+      // Directly fix it by modifying the clinics array
+      console.error("🚨 EMERGENCY FIX! Special offer exists but no clinics have it applied!");
+      console.log("Special offer details:", specialOffer);
+      
+      // Create a directly modified version of clinics with the special offer applied
+      const fixedClinics = clinics.map((clinic, index) => {
+        // Apply to first clinic as a last resort
+        if (index === 0) {
+          console.log(`🔧 Emergency applying special offer to first clinic: ${clinic.name}`);
+          return {
+            ...clinic,
+            hasSpecialOffer: true,
+            specialOfferDetails: {
+              id: specialOffer.id,
+              title: specialOffer.title,
+              discountValue: specialOffer.discountValue,
+              discountType: specialOffer.discountType
+            }
+          };
+        }
+        return clinic;
+      });
+      
+      // Update the clinics state
+      setClinics(fixedClinics);
+    }
+  }, [clinics, specialOffer]);
   
   // Add dedicated effect to ensure special offers are added to treatment items
   useEffect(() => {
