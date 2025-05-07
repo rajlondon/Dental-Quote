@@ -132,21 +132,23 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         const treatmentName = urlParams.get('treatmentName') || 'Dental Treatment';
         const promoTitle = urlParams.get('promoTitle') || 'Special Promotion';
         
-        // Create a promo token treatment item
+        // Create a promo token treatment item with safe promoType handling
+        const safePromoType = promoType === 'package' ? 'package' : 'special_offer';
+        
         const promoTreatment: TreatmentItem = {
           id: `promo_${Date.now()}`,
-          category: promoType === 'package' ? 'packages' : 'special_offer',
-          name: `${promoType === 'package' ? 'Package: ' : 'Special Offer: '}${promoTitle}`,
+          category: safePromoType === 'package' ? 'packages' : 'special_offer',
+          name: `${safePromoType === 'package' ? 'Package: ' : 'Special Offer: '}${promoTitle}`,
           quantity: 1,
           priceGBP: 450, // Base price
           priceUSD: 580, // Base price
           subtotalGBP: 450,
           subtotalUSD: 580,
           guarantee: '5-year',
-          isSpecialOffer: promoType === 'special_offer',
-          isPackage: promoType === 'package',
+          isSpecialOffer: safePromoType === 'special_offer',
+          isPackage: safePromoType === 'package',
           promoToken: promoToken,
-          promoType: promoType === 'special_offer' ? 'special_offer' : 'package'
+          promoType: safePromoType
         };
         
         console.log("📋 SpecialOfferHandler adding promo token treatment:", promoTreatment);
