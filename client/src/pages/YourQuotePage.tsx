@@ -46,7 +46,8 @@ import {
   CheckCircle,
   HeartHandshake,
   Pencil,
-  Tag
+  Tag,
+  Package
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
@@ -314,14 +315,20 @@ const ClinicCard: React.FC<{
   isSelected: boolean,
   onSelect: () => void 
 }> = ({ clinic, isSelected, onSelect }) => {
-  // Get promo information from context
-  const { promoToken, promoType, isPromoTokenFlow } = useQuoteFlow();
-  const searchParams = new URLSearchParams(window.location.search);
-  const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
+  // Get promo information from context - this is the proper way to get the values
+  const { 
+    promoToken, 
+    promoType, 
+    isPromoTokenFlow,
+    clinicId: promoClinicId 
+  } = useQuoteFlow();
   
-  // Show promotion badge if this clinic is the one specified in clinicId URL param
-  const clinicIdParam = searchParams.get('clinicId');
-  const hasPromoForThisClinic = promoToken && clinicIdParam === clinic.id;
+  const searchParams = new URLSearchParams(window.location.search);
+  const promoTitle = searchParams.get('promoTitle') || searchParams.get('offerTitle') || 'Special Promotion';
+  
+  // Show promotion badge if this clinic is the one specified in the context
+  // This uses the clinicId from the context which is properly initialized from URL params
+  const hasPromoForThisClinic = promoToken && promoClinicId === clinic.id;
   
   return (
     <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
@@ -1312,11 +1319,11 @@ const YourQuotePage: React.FC = () => {
                   <h3 className="font-semibold">
                     {promoType === 'special_offer' ? 'Special Offer' : 
                      promoType === 'package' ? 'Treatment Package' : 
-                     'Promotion'}: {searchParams.get('promoTitle') || 'Exclusive Promotion'}
+                     'Promotion'}: {searchParams.get('promoTitle') || searchParams.get('offerTitle') || 'Exclusive Promotion'}
                   </h3>
                   <p className="text-sm opacity-90">
                     {promoType === 'special_offer' 
-                      ? `${searchParams.get('discountValue') || ''}% off selected treatments` 
+                      ? `${searchParams.get('offerDiscount') || searchParams.get('discountValue') || ''}% off selected treatments` 
                       : promoType === 'package' 
                         ? 'Complete treatment package with special benefits' 
                         : 'Limited time offer - Continue to claim your offer'}
@@ -1383,12 +1390,18 @@ const YourQuotePage: React.FC = () => {
             <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg p-5 shadow-md text-white">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-1">
-                  <Sparkles className="h-7 w-7 text-yellow-300" />
+                  {promoType === 'package' ? (
+                    <Package className="h-7 w-7 text-yellow-300" />
+                  ) : (
+                    <Sparkles className="h-7 w-7 text-yellow-300" />
+                  )}
                 </div>
                 <div className="ml-4">
                   <h2 className="font-bold text-xl">
                     {isSpecialOfferFlow ? 'Special Offer Selected' : 
                      isPackageFlow ? 'Treatment Package Selected' : 
+                     promoToken && promoType === 'special_offer' ? 'Special Offer Applied' :
+                     promoToken && promoType === 'package' ? 'Treatment Package Applied' :
                      promoToken ? 'Promotion Applied' : 
                      'Promotion Applied'}
                   </h2>
@@ -1398,7 +1411,7 @@ const YourQuotePage: React.FC = () => {
                     ) : isPackageFlow && packageId ? (
                       <>Your quote includes the package: <span className="font-bold underline">{packageData?.title || 'Treatment Package'}</span></>
                     ) : promoToken ? (
-                      <>Promotion token applied: <span className="font-bold underline">{searchParams.get('promoTitle') || 'Special Promotion'}</span></>
+                      <>Promotion token applied: <span className="font-bold underline">{searchParams.get('promoTitle') || searchParams.get('offerTitle') || 'Special Promotion'}</span></>
                     ) : (
                       <>We'll prepare your personalized treatment plan</>
                     )}
