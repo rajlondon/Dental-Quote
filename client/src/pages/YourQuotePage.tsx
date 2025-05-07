@@ -483,9 +483,11 @@ const YourQuotePage: React.FC = () => {
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
     console.log("Initializing YourQuotePage with URL params:", window.location.search);
     
-    // First check URL parameters
-    const offerIdFromUrl = searchParams.get('specialOffer');
-    console.log("Special offer ID from URL:", offerIdFromUrl);
+    // First check URL parameters - look for both offerId and specialOffer parameters
+    const offerIdFromUrl = searchParams.get('offerId') || searchParams.get('specialOffer');
+    console.log("Special offer ID from URL:", offerIdFromUrl, 
+      "offerId param:", searchParams.get('offerId'),
+      "specialOffer param:", searchParams.get('specialOffer'));
     
     // If there's a special offer ID in the URL parameters, create a special offer object
     if (offerIdFromUrl) {

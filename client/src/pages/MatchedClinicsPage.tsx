@@ -355,7 +355,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     const clinic = clinicsData.find(c => c.id === clinicId);
-    const priceFactor = clinic?.priceFactor || 0.35; // Default to 35% if clinic not found
+    
+    // Get pricing factor based on clinic tier
+    let priceFactor = 0.35; // Default mid-tier
+    if (clinic) {
+      if (clinic.tier === 'premium') {
+        priceFactor = 0.40;
+      } else if (clinic.tier === 'affordable') {
+        priceFactor = 0.30;
+      } else {
+        // 'standard' or 'mid' tier
+        priceFactor = 0.35;
+      }
+    }
     
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
       const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
