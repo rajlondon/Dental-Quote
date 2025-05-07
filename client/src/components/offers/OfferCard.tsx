@@ -144,46 +144,67 @@ export function OfferCard({ offer }: OfferCardProps) {
       
       // Try each endpoint in order until one succeeds
       try {
-        // First try our new unified endpoint (implemented in treatment-offer-integration.ts)
-        console.log("Attempting to use treatment plans from-offer endpoint");
+        // First try our promo token endpoint for special offers
+        console.log("Attempting to use promo token endpoint");
         response = await apiRequest(
-          'POST', 
-          `/api/treatment-plans/from-offer`,
-          { offerId, clinicId, notes: "Selected from special offers" }
+          'POST',
+          `/api/v1/quotes/from-token`,
+          { 
+            token: `special_${offerId}`, // Using a consistent token format for special offers
+            promoType: 'special_offer'
+          }
         );
         
         if (response.ok) {
-          console.log("Successfully used treatment-plans/from-offer endpoint");
+          console.log("Successfully used promo token endpoint");
         } else {
-          throw new Error("New treatment-plans/from-offer endpoint returned error status");
+          throw new Error("Promo token endpoint returned error status");
         }
       } catch (err) {
-        console.log("New endpoint failed, trying legacy endpoints:", err);
+        console.log("Promo token endpoint failed, trying treatment-plans endpoint:", err);
         
         try {
-          // Try the primary legacy endpoint
-          console.log("Attempting first legacy endpoint for offer");
+          // Try our new unified endpoint (implemented in treatment-offer-integration.ts)
+          console.log("Attempting to use treatment plans from-offer endpoint");
           response = await apiRequest(
             'POST', 
-            `/api/v1/offers/${offerId}/start`,
-            { clinicId }
+            `/api/treatment-plans/from-offer`,
+            { offerId, clinicId, notes: "Selected from special offers" }
           );
           
           if (response.ok) {
-            console.log("Successfully used primary offer endpoint");
+            console.log("Successfully used treatment-plans/from-offer endpoint");
           } else {
-            throw new Error("Primary offer endpoint returned error status");
+            throw new Error("New treatment-plans/from-offer endpoint returned error status");
           }
-        } catch (secondErr) {
-          console.log("Primary legacy endpoint failed, trying last fallback:", secondErr);
+        } catch (err) {
+          console.log("New endpoint failed, trying legacy endpoints:", err);
           
-          // Try the last fallback endpoint if all else fails
-          console.log("Attempting final fallback endpoint for offer");
-          response = await apiRequest(
-            'POST', 
-            `/api/offers/${offerId}/start`,
-            { clinicId }
-          );
+          try {
+            // Try the primary legacy endpoint
+            console.log("Attempting first legacy endpoint for offer");
+            response = await apiRequest(
+              'POST', 
+              `/api/v1/offers/${offerId}/start`,
+              { clinicId }
+            );
+            
+            if (response.ok) {
+              console.log("Successfully used primary offer endpoint");
+            } else {
+              throw new Error("Primary offer endpoint returned error status");
+            }
+          } catch (secondErr) {
+            console.log("Primary legacy endpoint failed, trying last fallback:", secondErr);
+            
+            // Try the last fallback endpoint if all else fails
+            console.log("Attempting final fallback endpoint for offer");
+            response = await apiRequest(
+              'POST', 
+              `/api/offers/${offerId}/start`,
+              { clinicId }
+            );
+          }
         }
       }
       
