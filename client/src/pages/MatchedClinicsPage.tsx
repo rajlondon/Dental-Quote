@@ -494,11 +494,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             ))}
           </div>
           <div className="flex justify-between pt-2 border-t font-semibold">
-            <span>Estimated Istanbul Price:</span>
-            <span>£{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.35)}</span>
+            <span>Estimated Istanbul Price Range:</span>
+            <span>
+              £{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.30)} - 
+              £{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.40)}
+            </span>
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Hotel stays often included in treatment packages depending on the cost of your treatment.
+            Price varies by clinic tier (affordable, mid, or premium). Hotel stays often included in packages.
           </div>
         </div>
       </div>
