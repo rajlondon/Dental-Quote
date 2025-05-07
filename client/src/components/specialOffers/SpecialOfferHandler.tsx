@@ -62,9 +62,17 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         // Create a special offer treatment item
         // Get additional parameters from URL to enhance special offer data
         const urlParams = new URLSearchParams(window.location.search);
-        const treatmentNameFromUrl = urlParams.get('treatmentName') || urlParams.get('offerTitle');
-        const discountValueFromUrl = urlParams.get('discountValue');
-        const discountTypeFromUrl = urlParams.get('discountType');
+        
+        // Look for all possible parameter name variations
+        const treatmentNameFromUrl = urlParams.get('offerTitle') || 
+                                    urlParams.get('treatmentName') || 
+                                    urlParams.get('promoTitle');
+                                    
+        const discountValueFromUrl = urlParams.get('offerDiscount') || 
+                                    urlParams.get('discountValue');
+                                    
+        const discountTypeFromUrl = urlParams.get('offerDiscountType') || 
+                                   urlParams.get('discountType');
         
         console.log("📋 Special offer parameters from URL:", {
           treatmentNameFromUrl,

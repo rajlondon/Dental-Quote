@@ -112,9 +112,38 @@ export function OfferCard({ offer }: OfferCardProps) {
       // Proceed to the quote flow directly (will handle login as part of the flow)
       // Use skipInfo=true to bypass initial patient info page if they select "create account"
       
-      // Add both offerId and specialOffer parameters for maximum compatibility 
-      // Include treatment name and discount information for better treatment creation
-      window.location.href = `/your-quote?step=start&skipInfo=true&source=special_offer&clinicId=${offer.clinicId}&offerId=${offer.id}&specialOffer=${offer.id}&offerTitle=${encodeURIComponent(offer.title)}&treatmentName=${encodeURIComponent(offer.title)}&discountValue=${offer.discountValue || ''}&discountType=${offer.discountType || ''}`;
+      // IMPORTANT: Parameters must match exactly what the YourQuotePage expects
+      console.log("Redirecting to quote page with offer:", offer);
+      
+      // Ensure exact parameter names matching what YourQuotePage.tsx looks for
+      const url = new URL('/your-quote', window.location.origin);
+      
+      // Required parameters used by QuoteFlowContext
+      url.searchParams.append('source', 'special_offer');
+      url.searchParams.append('offerId', offer.id);
+      url.searchParams.append('specialOffer', offer.id);
+      url.searchParams.append('clinicId', offer.clinicId);
+      
+      // User flow parameters
+      url.searchParams.append('step', 'start');
+      url.searchParams.append('skipInfo', 'true');
+      
+      // Special offer details
+      url.searchParams.append('offerTitle', offer.title);
+      
+      // Make sure discount parameters are correctly named to match what SpecialOfferHandler.tsx expects
+      if (offer.discountValue) {
+        url.searchParams.append('offerDiscount', offer.discountValue.toString());
+      }
+      if (offer.discountType) {
+        url.searchParams.append('offerDiscountType', offer.discountType);
+      }
+      
+      // Add timestamp to prevent caching
+      url.searchParams.append('t', Date.now().toString());
+      
+      console.log("Redirecting to URL:", url.toString());
+      window.location.href = url.toString();
       return;
       
     } catch (error) {

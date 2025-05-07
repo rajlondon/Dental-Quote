@@ -516,17 +516,42 @@ const YourQuotePage: React.FC = () => {
     if (offerIdFromUrl) {
       console.log("Special offer parameters found in URL:");
       console.log("- Title:", searchParams.get('offerTitle'));
-      console.log("- Clinic ID:", searchParams.get('offerClinic') || searchParams.get('clinicId'));
+      console.log("- Clinic ID:", searchParams.get('clinicId') || searchParams.get('offerClinic'));
       console.log("- Discount Value:", searchParams.get('offerDiscount'));
       console.log("- Discount Type:", searchParams.get('offerDiscountType'));
       console.log("- Treatment:", searchParams.get('treatment'));
       
+      // Log all URL parameters for debugging
+      console.log("All URL parameters for debugging:", 
+        Object.fromEntries([...searchParams.entries()]));
+      
+      // Ensure consistent parameter parsing with proper error handling
+      let discountValue = 0;
+      try {
+        const discountStr = searchParams.get('offerDiscount');
+        if (discountStr) {
+          discountValue = parseInt(discountStr);
+          if (isNaN(discountValue)) {
+            console.warn(`Invalid discount value "${discountStr}", defaulting to 0`);
+            discountValue = 0;
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing discount value:", e);
+      }
+      
+      // Ensure we have the correct discount type (percentage or fixed_amount)
+      const rawDiscountType = searchParams.get('offerDiscountType') || 'percentage';
+      const discountType = (rawDiscountType === 'fixed' || rawDiscountType === 'fixed_amount') 
+        ? 'fixed_amount' 
+        : 'percentage';
+      
       const offerData = {
         id: offerIdFromUrl,
         title: searchParams.get('offerTitle') || 'Special Offer',
-        clinicId: searchParams.get('offerClinic') || searchParams.get('clinicId') || '',
-        discountValue: parseInt(searchParams.get('offerDiscount') || '0'),
-        discountType: (searchParams.get('offerDiscountType') || 'percentage') as 'percentage' | 'fixed_amount',
+        clinicId: searchParams.get('clinicId') || searchParams.get('offerClinic') || '',
+        discountValue,
+        discountType: discountType as 'percentage' | 'fixed_amount',
         applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
       };
       
