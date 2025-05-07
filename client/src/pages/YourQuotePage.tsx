@@ -45,7 +45,8 @@ import {
   MessageCircle,
   CheckCircle,
   HeartHandshake,
-  Pencil
+  Pencil,
+  Tag
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
@@ -313,11 +314,21 @@ const ClinicCard: React.FC<{
   isSelected: boolean,
   onSelect: () => void 
 }> = ({ clinic, isSelected, onSelect }) => {
+  // Get promo information from context
+  const { promoToken, promoType, isPromoTokenFlow } = useQuoteFlow();
+  const searchParams = new URLSearchParams(window.location.search);
+  const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
+  
+  // Show promotion badge if this clinic is the one specified in clinicId URL param
+  const clinicIdParam = searchParams.get('clinicId');
+  const hasPromoForThisClinic = promoToken && clinicIdParam === clinic.id;
   
   return (
     <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
       isSelected 
         ? 'border-blue-500 shadow-lg' 
+        : hasPromoForThisClinic
+          ? 'border-primary shadow-md' 
         : clinic.hasSpecialOffer 
           ? 'border-blue-300 shadow-md' 
           : 'border-gray-200'
@@ -328,7 +339,15 @@ const ClinicCard: React.FC<{
         </div>
       )}
       
-      {clinic.hasSpecialOffer && (
+      {/* Promo token badge takes priority if this clinic has a promo */}
+      {hasPromoForThisClinic ? (
+        <div className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/90 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
+          <Tag className="h-4 w-4 mr-1 text-white" />
+          {promoType === 'special_offer' ? 'Special Offer' : 
+           promoType === 'package' ? 'Treatment Package' : 
+           'Promotion'}
+        </div>
+      ) : clinic.hasSpecialOffer && (
         <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
           <Sparkles className="h-4 w-4 mr-1 text-yellow-300" />
           Special Offer
@@ -1284,6 +1303,34 @@ const YourQuotePage: React.FC = () => {
       
       <main className="min-h-screen bg-gray-50 pt-24 pb-12">
         <div className="container mx-auto px-4">
+          {/* Promo token banner - displayed if we have a valid promo token */}
+          {isPromoTokenFlow && promoToken && (
+            <div className="mb-6 bg-gradient-to-r from-primary to-primary/90 text-white p-4 rounded-lg shadow-md flex items-center justify-between">
+              <div className="flex items-center">
+                <Tag className="h-5 w-5 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold">
+                    {promoType === 'special_offer' ? 'Special Offer' : 
+                     promoType === 'package' ? 'Treatment Package' : 
+                     'Promotion'}: {searchParams.get('promoTitle') || 'Exclusive Promotion'}
+                  </h3>
+                  <p className="text-sm opacity-90">
+                    {promoType === 'special_offer' 
+                      ? `${searchParams.get('discountValue') || ''}% off selected treatments` 
+                      : promoType === 'package' 
+                        ? 'Complete treatment package with special benefits' 
+                        : 'Limited time offer - Continue to claim your offer'}
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0">
+                <Badge variant="outline" className="bg-white/20 hover:bg-white/30 border-none text-white">
+                  Promo: {promoToken}
+                </Badge>
+              </div>
+            </div>
+          )}
+          
           {/* Back button */}
           <div className="mb-6">
             <Button
