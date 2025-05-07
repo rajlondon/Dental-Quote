@@ -50,7 +50,7 @@ import {
   Package
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
+import TreatmentPlanBuilder, { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
 import SpecialOfferHandler from '@/components/specialOffers/SpecialOfferHandler';
 
@@ -92,24 +92,7 @@ interface QuoteParams {
   budget: string;
 }
 
-interface TreatmentItem {
-  treatment: string;
-  priceGBP: number;
-  priceUSD: number;
-  quantity: number;
-  subtotalGBP: number;
-  subtotalUSD: number;
-  guarantee: string;
-  isSpecialOffer?: boolean;
-  isPackage?: boolean;
-  specialOffer?: {
-    id: string;
-    title: string;
-    discountType: 'percentage' | 'fixed_amount';
-    discountValue: number;
-    clinicId: string;
-  };
-}
+// We're now using the TreatmentItem interface imported from TreatmentPlanBuilder
 
 interface PatientInfo {
   fullName: string;
@@ -832,7 +815,7 @@ const YourQuotePage: React.FC = () => {
   const [selectedClinic, setSelectedClinic] = useState<ClinicInfo | null>(null);
   
   // Treatment Plan Builder State
-  const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
+  const [treatmentItems, setTreatmentItems] = useState<TreatmentItem[]>([]);
   
   // Patient Info State
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
@@ -996,7 +979,7 @@ const YourQuotePage: React.FC = () => {
       
       if (isSpecialOfferFlow && specialOffer) {
         // Create a special offer treatment item
-        const specialOfferTreatment: PlanTreatmentItem = {
+        const specialOfferTreatment: TreatmentItem = {
           id: `special_offer_${Date.now()}`,
           category: 'special_offer',
           name: `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Free Consultation'}`,
@@ -1025,7 +1008,7 @@ const YourQuotePage: React.FC = () => {
         });
       } else if (isPackageFlow && packageData) {
         // Create a package treatment item
-        const packageTreatment: PlanTreatmentItem = {
+        const packageTreatment: TreatmentItem = {
           id: `package_${Date.now()}`,
           category: 'packages',
           name: packageData.title || 'Treatment Package',
@@ -1051,7 +1034,7 @@ const YourQuotePage: React.FC = () => {
         // Handle null promoType by defaulting to 'special_offer'
         const safePromoType = promoType === 'package' ? 'package' : 'special_offer';
         
-        const promoTreatment: PlanTreatmentItem = {
+        const promoTreatment: TreatmentItem = {
           id: `promo_${Date.now()}`,
           category: safePromoType === 'package' ? 'packages' : 'special_offer',
           name: `${safePromoType === 'package' ? 'Package' : 'Special Offer'}: ${searchParams.get('promoTitle') || 'Promotion'}`,
@@ -1247,7 +1230,7 @@ const YourQuotePage: React.FC = () => {
       const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
       
       // Create a promo treatment item
-      const promoTreatment: PlanTreatmentItem = {
+      const promoTreatment: TreatmentItem = {
         id: `promo_${Date.now()}`,
         category: treatmentType === 'special_offer' ? 'special_offer' : 'packages',
         name: treatmentName,
@@ -1276,7 +1259,7 @@ const YourQuotePage: React.FC = () => {
     }
     else if (specialOffer) {
       // Use our utility function to create a special offer treatment
-      const specialOfferTreatment: PlanTreatmentItem = {
+      const specialOfferTreatment: TreatmentItem = {
         id: `special_offer_${Date.now()}`,
         category: 'special_offer',
         name: specialOffer.applicableTreatment,
@@ -1319,7 +1302,7 @@ const YourQuotePage: React.FC = () => {
       console.log("Initializing treatment plan with package data:", packageData);
       
       // Create a package treatment item
-      const packageTreatment: PlanTreatmentItem = {
+      const packageTreatment: TreatmentItem = {
         id: `package_${Date.now()}`,
         category: 'packages',
         name: packageData.title || 'Treatment Package',
@@ -1360,7 +1343,7 @@ const YourQuotePage: React.FC = () => {
     }
     // Initialize with a default treatment if the user came from selecting a specific treatment
     else if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
-      const initialTreatment: PlanTreatmentItem = {
+      const initialTreatment: TreatmentItem = {
         id: `default_${Date.now()}`,
         category: 'implants', // Default category, would be determined by mapping in real app
         name: quoteParams.treatment,
