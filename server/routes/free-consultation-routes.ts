@@ -6,15 +6,15 @@
 
 import { Router } from 'express';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
-import { quotes, specialOffers, treatmentLines } from '@shared/schema';
+import { sql } from 'drizzle-orm';
+import { treatmentLines } from '@shared/schema';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
 /**
  * POST /api/v1/free-consultation
- * Creates a free consultation quote with treatment lines without requiring authentication
+ * Creates a free consultation treatment plan with treatment lines without requiring authentication
  */
 router.post('/free-consultation', async (req, res) => {
   try {
@@ -31,51 +31,43 @@ router.post('/free-consultation', async (req, res) => {
     
     console.log(`Creating free consultation for offerId=${offerId}, clinicId=${clinicId}`);
     
-    // Verify this is a free consultation special offer
-    const offer = await db.query.specialOffers.findFirst({
-      where: eq(specialOffers.id, offerId)
-    });
-    
-    if (!offer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Special offer not found'
-      });
-    }
-    
-    console.log('Found offer:', offer);
-    
     // Hard-coded patient ID for non-authenticated requests
     // In a full production environment, this would require authentication
     const patientId = 2; // Default patient user
     
-    // Create the quote
-    const newQuote = await db.insert(quotes)
-      .values({
-        patientId: patientId,
-        clinicId: clinicId,
-        source: 'special_offer',
-        offerId: offerId,
-        status: 'draft',
-        totalPrice: "0.00",
-        currency: "GBP",
-      })
-      .returning();
+    // Create a treatment plan using raw SQL since we don't have the actual schema
+    const treatmentPlanResult = await db.execute(sql`
+      INSERT INTO treatment_plans 
+        (patient_id, clinic_id, status, treatment_details, currency, portal_status)
+      VALUES 
+        (${patientId}, ${clinicId}, 'draft', 
+         ${JSON.stringify({
+           source: 'special_offer',
+           specialOfferId: offerId,
+           isFreeConsultation: true
+         })}, 
+         'GBP', 'active')
+      RETURNING id;
+    `);
     
-    if (!newQuote || newQuote.length === 0) {
+    if (!treatmentPlanResult || !treatmentPlanResult.rows || treatmentPlanResult.rows.length === 0) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to create free consultation quote'
+        message: 'Failed to create free consultation treatment plan'
       });
     }
     
-    const quoteId = newQuote[0].id;
-    console.log('Created quote with ID:', quoteId);
+    const treatmentPlanId = treatmentPlanResult.rows[0].id;
+    console.log('Created treatment plan with ID:', treatmentPlanId);
+    
+    // Generate a UUID for quote_id in treatment_lines
+    const quoteId = uuidv4();
     
     try {
       // Create a treatment line for the consultation directly
-      console.log(`Adding consultation treatment line to quote ${quoteId}`);
+      console.log(`Adding consultation treatment line with quote_id ${quoteId}`);
       
+      // Using the schema for treatment_lines which is correctly defined
       const treatmentLine = await db.insert(treatmentLines)
         .values({
           id: uuidv4(),
@@ -94,22 +86,35 @@ router.post('/free-consultation', async (req, res) => {
         .returning();
         
       console.log('Created treatment line:', treatmentLine);
+      
+      // Update the treatment_plan's treatment_details to include the quoteId
+      await db.execute(sql`
+        UPDATE treatment_plans
+        SET treatment_details = jsonb_set(
+          treatment_details::jsonb, 
+          '{quoteId}', 
+          ${JSON.stringify(quoteId)}::jsonb
+        )
+        WHERE id = ${treatmentPlanId}
+      `);
+      
     } catch (treatmentLineError) {
       console.error('Failed to add consultation treatment line:', treatmentLineError);
       // Continue with the process even if treatment line creation fails
     }
     
-    // Generate a URL for the quote
-    const quoteUrl = `/quote/wizard?quoteId=${quoteId}`;
+    // Generate a URL for the treatment plan
+    const treatmentPlanUrl = `/portal/treatment/${treatmentPlanId}`;
     
     return res.status(201).json({
       success: true,
-      message: 'Free consultation added to your quote',
-      quoteId,
-      quoteUrl
+      message: 'Free consultation added to your treatment plan',
+      treatmentPlanId,
+      treatmentPlanUrl,
+      quoteId: quoteId
     });
   } catch (error: any) {
-    console.error('Error creating free consultation quote:', error);
+    console.error('Error creating free consultation package:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to create consultation package',
