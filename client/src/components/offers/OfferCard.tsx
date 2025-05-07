@@ -201,45 +201,87 @@ export function OfferCard({ offer }: OfferCardProps) {
           if (response.ok) {
             console.log("✅ Successfully used treatment-plans/from-offer endpoint");
           } else {
-            // Last fallback - use direct URL approach for Free Consultation
+            // Last fallback - use our dedicated Free Consultation API endpoint
             if (isFreeConsultation) {
-              console.log("⚠️ All API endpoints failed, using direct quote URL fallback");
+              console.log("⚠️ Previous API endpoints failed, trying dedicated Free Consultation API");
               
-              // This is our absolute last resort fallback for free consultation
-              // Using special token in location.href and returning a mock response
-              
-              // Build a URL that directly integrates with the new v2 flows
-              // This is our last resort fallback URL for when both token-based approaches fail
-              const consultationUrl = new URL('/quote', window.location.origin);
-              
-              // Required parameters for the consultation flow
-              consultationUrl.searchParams.append('source', 'special_offer');
-              consultationUrl.searchParams.append('treatment', 'consultation');
-              consultationUrl.searchParams.append('step', 'start');
-              consultationUrl.searchParams.append('skipInfo', 'true');
-              
-              // Special offer data
-              consultationUrl.searchParams.append('specialOffer', 'true');
-              consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
-              consultationUrl.searchParams.append('offerDiscount', '100');
-              consultationUrl.searchParams.append('offerDiscountType', 'percentage');
-              
-              // Clinic data
-              consultationUrl.searchParams.append('clinicId', clinicId);
-              consultationUrl.searchParams.append('offerId', offerId);
-              
-              // Add timestamp to prevent caching issues
-              consultationUrl.searchParams.append('t', Date.now().toString());
-              
-              console.log("🔷 Fallback URL:", consultationUrl.toString());
-              
-              // Redirect directly and return a mock response to satisfy the promise
-              window.location.href = consultationUrl.toString();
-              
-              return {
-                quoteId: 'direct_url_fallback',
-                quoteUrl: consultationUrl.toString()
-              } as QuoteResponse;
+              try {
+                // Use our special non-authenticated Free Consultation endpoint
+                const freeConsultationResponse = await apiRequest(
+                  'POST',
+                  '/api/v1/free-consultation',
+                  {
+                    offerId,
+                    clinicId
+                  }
+                );
+                
+                if (!freeConsultationResponse.ok) {
+                  throw new Error("Free consultation endpoint returned error status");
+                }
+                
+                console.log("✅ Successfully used free-consultation endpoint");
+                
+                const consultData = await freeConsultationResponse.json();
+                
+                if (consultData.quoteId && consultData.quoteUrl) {
+                  // Add timestamp to prevent caching issues
+                  const quoteUrl = new URL(consultData.quoteUrl, window.location.origin);
+                  quoteUrl.searchParams.append('t', Date.now().toString());
+                  
+                  // Redirect directly
+                  window.location.href = quoteUrl.toString();
+                  
+                  toast({
+                    title: "Success",
+                    description: "Free consultation added to your quote"
+                  });
+                  
+                  return {
+                    quoteId: consultData.quoteId,
+                    quoteUrl: quoteUrl.toString()
+                  } as QuoteResponse;
+                }
+                
+                throw new Error("Invalid response from consultation endpoint");
+              } catch (consultError) {
+                console.error("Free consultation API failed:", consultError);
+                
+                // If all else fails, use the direct URL approach as absolute last resort
+                console.log("⚠️ All API endpoints failed, using direct quote URL fallback");
+                
+                // Build a URL that directly integrates with the v2 flows as last resort
+                const consultationUrl = new URL('/quote', window.location.origin);
+                
+                // Required parameters for the consultation flow
+                consultationUrl.searchParams.append('source', 'special_offer');
+                consultationUrl.searchParams.append('treatment', 'consultation');
+                consultationUrl.searchParams.append('step', 'start');
+                consultationUrl.searchParams.append('skipInfo', 'true');
+                
+                // Special offer data
+                consultationUrl.searchParams.append('specialOffer', 'true');
+                consultationUrl.searchParams.append('offerTitle', 'Free Consultation Package');
+                consultationUrl.searchParams.append('offerDiscount', '100');
+                consultationUrl.searchParams.append('offerDiscountType', 'percentage');
+                
+                // Clinic data
+                consultationUrl.searchParams.append('clinicId', clinicId);
+                consultationUrl.searchParams.append('offerId', offerId);
+                
+                // Add timestamp to prevent caching issues
+                consultationUrl.searchParams.append('t', Date.now().toString());
+                
+                console.log("🔷 Absolute last resort fallback URL:", consultationUrl.toString());
+                
+                // Redirect directly and return a mock response to satisfy the promise
+                window.location.href = consultationUrl.toString();
+                
+                return {
+                  quoteId: 'direct_url_fallback',
+                  quoteUrl: consultationUrl.toString()
+                } as QuoteResponse;
+              }
             } else {
               throw new Error("All API endpoints failed");
             }
