@@ -94,27 +94,47 @@ async function testSpecialOfferTreatmentDisplay() {
       source: "special_offer"
     };
     
-    // Step 3: Save the test quote
-    const saveQuoteResponse = await axios.post(`${QUOTE_URL}/test/create`, testQuote, config);
-    const savedQuote = saveQuoteResponse.data;
+    // Step 3: First get user's quotes
+    const userQuotesResponse = await axios.get(`${BASE_URL}/api/quotes/user`, config);
+    const userQuotes = userQuotesResponse.data.data || [];
     
-    console.log(`✅ Test quote created with ID: ${savedQuote.id || savedQuote.quoteId}`);
+    console.log(`📋 Found ${userQuotes.length} existing quotes for user`);
     
-    // Step 4: Verify the test quote can be retrieved and displays properly
-    if (savedQuote.id) {
-      console.log(`🔍 Fetching quote with ID: ${savedQuote.id} to verify display`);
-      const quoteResponse = await axios.get(`${QUOTE_URL}/${savedQuote.id}`, config);
-      const fetchedQuote = quoteResponse.data;
-      
-      // Verify special offer data is present
-      assert(fetchedQuote.treatments.some(t => t.specialOffer), 'No treatment has special offer data');
-      
-      console.log('✅ Special offer treatments display test completed successfully');
+    if (userQuotes.length === 0) {
+      console.log('❌ No existing quotes found for testing');
+      throw new Error('User has no quotes to test with');
     }
+    
+    // Get the first quote to update
+    const targetQuote = userQuotes[0];
+    console.log(`🔍 Selected existing quote with ID: ${targetQuote.id} for testing`);
+    
+    // Step 4: Update the quote with special offer data 
+    const updateResponse = await axios.patch(
+      `${BASE_URL}/api/quotes/${targetQuote.id}`, 
+      {
+        treatments: testQuote.treatments,
+        source: "special_offer"
+      }, 
+      config
+    );
+    
+    const updatedQuote = updateResponse.data;
+    console.log(`✅ Quote updated with special offer: ${updatedQuote.id || updatedQuote.quoteId}`);
+    
+    // Step 5: Verify the updated quote can be retrieved and displays properly
+    console.log(`🔍 Fetching quote with ID: ${targetQuote.id} to verify display`);
+    const quoteResponse = await axios.get(`${BASE_URL}/api/quotes/${targetQuote.id}`, config);
+    const fetchedQuote = quoteResponse.data;
+    
+    // Verify special offer data is present
+    assert(fetchedQuote.treatments.some(t => t.specialOffer), 'No treatment has special offer data');
+    
+    console.log('✅ Special offer treatments display test completed successfully');
     
     return {
       success: true,
-      quoteId: savedQuote.id || null,
+      quoteId: targetQuote.id || null,
       message: 'Special offer treatment display test passed successfully'
     };
     
