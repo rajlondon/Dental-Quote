@@ -154,17 +154,26 @@ export default function SingleClinicCard({ clinic, badge, onSelect, totalPrice }
                 
                 {/* Special Offer Details */}
                 {clinic.specialOffer && (
-                  <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                     <div className="flex items-center gap-2 text-blue-700 font-medium">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-badge-percent"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m15 9-6 6"/><path d="M9 9h.01"/><path d="M15 15h.01"/></svg>
-                      <span>{clinic.specialOffer.title}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M22 9.5C21.4 11.4 19.5 12.5 17.5 12.5H13.5C12.7 12.5 12 13.2 12 14C12 14.8 12.7 15.5 13.5 15.5H19C20.1 15.5 21 16.4 21 17.5C21 18.6 20.1 19.5 19 19.5H5C3.9 19.5 3 18.6 3 17.5C3 16.4 3.9 15.5 5 15.5H10.5C12.4 15.5 14 13.9 14 12C14 10.1 12.4 8.5 10.5 8.5H6.5C5.5 8.5 4.6 7.9 4.2 7C3.7 6.2 3.9 5.2 4.6 4.6L6 3.5"></path><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path></svg>
+                      <span className="text-blue-800 font-semibold">SPECIAL OFFER</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1">{clinic.specialOffer.description}</p>
-                    <div className="mt-2 flex items-center text-xs text-blue-800 gap-1.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+                    
+                    <div className="mt-2 p-2 bg-white rounded border border-blue-100">
+                      <p className="text-xs text-blue-800 mb-1 font-medium">{clinic.specialOffer.title}</p>
+                      <p className="text-xs text-gray-600">{clinic.specialOffer.description || 'Special offer from this clinic includes premium benefits with your selected treatments.'}</p>
+                    </div>
+                    
+                    <div className="mt-2 flex items-center text-xs font-medium text-green-700 gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
                       {clinic.specialOffer.discountType === 'percentage' 
                         ? `${clinic.specialOffer.discountValue}% discount on selected treatments` 
                         : `£${clinic.specialOffer.discountValue} off your total`}
+                    </div>
+                    
+                    <div className="flex justify-end mt-2">
+                      <span className="text-xs text-blue-600 italic">Added as £0.00 line item</span>
                     </div>
                   </div>
                 )}

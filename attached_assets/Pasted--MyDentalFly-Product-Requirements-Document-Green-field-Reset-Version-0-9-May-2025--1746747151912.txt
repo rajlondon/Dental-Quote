@@ -1,0 +1,197 @@
+# MyDentalFly – Product Requirements Document (Green‑field Reset)
+
+*Version 0.9  — May 2025*
+
+---
+
+## 1  Purpose & Vision
+
+Dental care is increasingly unaffordable in the UK/EU; patients travel abroad (Istanbul, etc.) to save 50‑70 %. MyDentalFly is a **dual‑sided marketplace + concierge platform** that:
+
+* lets patients generate instant, apples‑to‑apples quotes from vetted clinics, with transparent pricing and optional travel bundles;
+* gives clinics a lead‑gen back‑office and unified messaging/payment portal;
+* differentiates through **Special Offers** (bonuses) and **Treatment Packages** (discounted bundles) surfaced right on the home page.
+
+Goal in 12 months: **1 000 paid bookings**, £5 M GMV, 25 partner clinics in 3 cities.
+
+---
+
+## 2  Personas
+
+| Persona                           | Needs                                                                                     | Pain Today                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Exploring Patient** (UK, 35‑55) | Understand true cost difference, feel safe, one place to manage trip                      | Fragmented info, fear of hidden costs, spammy clinic DMs |
+| **Decision‑Stage Patient**        | Lock a deal quickly, minimal form‑filling                                                 | Each clinic forces re‑typing medical history             |
+| **Clinic Owner**                  | Fill chair time, receive qualified leads w/ X‑rays, manage comms & deposits in one portal | WhatsApp chaos, no‑shows                                 |
+| **Admin Ops**                     | Vet clinics, approve promos, resolve disputes                                             | Manual Google Sheets                                     |
+
+---
+
+## 3  High‑Level Features
+
+### 3.1  Patient Portal
+
+* 6‑step Quote Wizard (concerns → chart → info → treatments → budget → clinic results)
+* Draft Quote viewer, treatment‑plan editor
+* Secure chat w/ chosen clinic
+* Deposit & invoice payments (Stripe Connect)
+
+### 3.2  Clinic Portal
+
+* Lead inbox (quote + X‑rays)
+* Editable treatment plan → send back to patient
+* Special Offer & Package manager (set price/bonus, max redemptions, expiry)
+* Calendar sync & task reminders
+
+### 3.3  Admin Portal
+
+* Clinic onboarding workflow (Docs upload, CQC check)
+* Offer/Package approval queue
+* Content CMS (blogs, FAQs, city guides)
+* Analytics dashboard (quotes, bookings, CAC, conversion by promo)
+
+---
+
+## 4  Special Offers & Treatment Packages (USP)
+
+| Concept                                 | Data Model                                                           | UX Placement                                                                    |
+| --------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Special Offer** (bonus)               | `offers` table<br>payload ➜ `bonusLine { description, unitPrice=0 }` | Home hero carousel;<br>badge on single‑clinic card;<br>£0 line in plan          |
+| **Treatment Package** (discount bundle) | `packages` table<br>`items[]`, `discountPct`                         | Home Packages rail;<br>price strike‑through in summary;<br>locked lines in plan |
+| **Promo Token**                         | `promos` table (joins offer/package + clinic)                        | Generated per card; POST `/quotes/from‑promo`                                   |
+
+Rules:
+
+* One promo per quote (`promoId` on `quotes`).
+* Promo locks clinicId → Results page shows ONLY that clinic.
+* Package logic removes duplicate base treatments & inserts discounted lines.
+* Bonus offers add zero‑price line; no price change.
+
+---
+
+## 5  System Architecture (v1.1)
+
+```mermaid
+flowchart TD
+  client[React+Vite SPA] -->|REST| api(Supabase Edge Functions)
+  api --> db[(Postgres/Supabase)]
+  api --> stripe[(Stripe Connect)]
+  api --> mailjet[(Mailjet)]
+  client <-->|WS| supaRT(Supabase Realtime)
+```
+
+* **Auth**: Supabase email+password ± magic link
+* **Row‑Level Security** on `quotes`, `quote_lines`, `messages`
+
+---
+
+## 6  Detailed Data Model (delta only)
+
+```sql
+-- treatments (master price list)
+CREATE TABLE treatments (
+  code text PRIMARY KEY,
+  description text,
+  base_price_gbp int,
+  base_price_usd int
+);
+-- packages
+CREATE TABLE packages (
+  id text PRIMARY KEY,
+  clinic_id text REFERENCES clinics(id),
+  title text,
+  discount_pct int,
+  items jsonb,         -- ['IMPLANT×6','CROWN×6']
+  expires date
+);
+-- offers
+CREATE TABLE offers (
+  id text PRIMARY KEY,
+  clinic_id text REFERENCES clinics(id),
+  title text,
+  bonus_line jsonb,    -- {description, unit_price}
+  expires date
+);
+-- promos (featured homepage slots)
+CREATE TABLE promos (
+  id text PRIMARY KEY,
+  clinic_id text,
+  kind text,           -- 'offer' | 'package'
+  ref_id text,         -- offers.id or packages.id
+  title text,
+  payload jsonb,
+  valid_until date
+);
+ALTER TABLE quotes ADD COLUMN promo_id text REFERENCES promos(id);
+ALTER TABLE quote_lines ADD COLUMN base_price_gbp int;  -- original
+ALTER TABLE quote_lines ADD COLUMN is_locked boolean DEFAULT false;
+```
+
+---
+
+## 7  Key Flows
+
+### 7.1  Normal Quote (no promo)
+
+1. User hits **Header ▶ Get Quote**.
+2. Completes wizard → clinic grid (multi‑city).
+3. Picks clinic → portal review.
+
+### 7.2  Special Offer / Package Flow
+
+1. Home page → clicks card → `POST /quotes/from-promo` → returns `quoteId`.
+2. Wizard loads Step 1 with `?quoteId` in URL.
+3. Info step is still shown (prefilled if returning user).
+4. Results page sees `promoId` → shows **one clinic** with badge.
+5. Review page shows bonus or discounted package lines (locked).
+6. Upon account creation / login, quote.userId updated.
+
+### 7.3  Clinic Workflow
+
+* Clinic portal lists new quote with `promoId` badge.
+* Cannot remove `is_locked` lines but can add extras.
+* Sends final plan; triggers Stripe deposit link.
+
+---
+
+## 8  MVP Scope (4 sprints)
+
+| Sprint | Deliverable                                                          |
+| ------ | -------------------------------------------------------------------- |
+| 1      | Core schema + `quotes/from-promo` + seed script + Postman tests      |
+| 2      | Wizard URL propagation, Results page filter, Review discount display |
+| 3      | Clinic portal read‑only treatment plan + lock logic                  |
+| 4      | Payment (Stripe), email notifications, admin promo approvals         |
+
+Out of scope for MVP: multi‑city expansion, financing options, AI X‑ray parsing.
+
+---
+
+## 9  Non‑Functional Requirements
+
+* TTFB < 500 ms for API calls.
+* P99 wizard step complete < 2 s on 3G.
+* GDPR compliant; delete patient data upon request within 30 days.
+
+---
+
+## 10  Success Metrics
+
+| Metric                       | Target 90 days post‑launch |
+| ---------------------------- | -------------------------- |
+| Quote wizard completion rate | ≥ 35 %                     |
+| Promo click → booking rate   | ≥ 8 %                      |
+| Average GMV per booking      | £4 000                     |
+| Clinic NPS                   | 60+                        |
+
+---
+
+## 11  Open Questions
+
+1. Do we support stacking a promo bonus on top of a package discount? (current design: **no**, one promo per quote)
+2. How are flight/hotel vouchers delivered—via clinic or via MyDentalFly? (affects bonus line payload)
+3. Refund policy when patient cancels after deposit—who eats the promo cost?
+
+---
+
+*Prepared by ChatGPT PRD generator, based on conversation up to May 2025.*
