@@ -7,6 +7,7 @@ import {
   Award,
   BadgePercent,
   Check,
+  ChevronDown,
   Columns,
   FileCheck,
   Gem,
@@ -45,6 +46,15 @@ interface SpecialOfferDetails {
   expiryDate?: string;
   termsAndConditions?: string;
 }
+
+// Helper function to check if there are applicable treatments in a special offer
+const hasApplicableTreatments = (offer: SpecialOfferDetails | undefined): boolean => {
+  if (!offer) return false;
+  return (
+    (offer.applicableTreatments && offer.applicableTreatments.length > 0) || 
+    Boolean(offer.applicableTreatment)
+  );
+};
 
 interface TreatmentItem {
   id: string;
@@ -877,12 +887,25 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && clinic.specialOffer && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {/* Show eligible treatments if available */}
-                            {(clinic.specialOffer.applicableTreatments?.length > 0 || clinic.specialOffer.applicableTreatment) && (
-                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                            {hasApplicableTreatments(clinic.specialOffer) && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold hover:bg-white/30"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedOfferDetails(
+                                    expandedOfferDetails === clinic.id ? null : clinic.id
+                                  );
+                                }}
+                              >
                                 {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 ? 
                                   `${clinic.specialOffer.applicableTreatments.length} eligible treatments` : 
                                   clinic.specialOffer.applicableTreatment ? `For: ${clinic.specialOffer.applicableTreatment}` : ''}
-                              </span>
+                                <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
+                                  expandedOfferDetails === clinic.id ? 'rotate-180' : ''
+                                }`} />
+                              </Button>
                             )}
                             
                             {/* Show expiry date if available */}
@@ -907,7 +930,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         {/* Show applicable treatments for non-active clinic special offer when expanded */}
                         {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && 
                           clinic.specialOffer && 
-                          (clinic.specialOffer.applicableTreatments?.length > 0 || clinic.specialOffer.applicableTreatment) && (
+                          expandedOfferDetails === clinic.id &&
+                          hasApplicableTreatments(clinic.specialOffer) && (
                           <div className="mt-2 bg-white/10 p-2 rounded">
                             <ApplicableTreatmentsList 
                               specialOffer={clinic.specialOffer as SpecialOfferDetails} 
@@ -1082,18 +1106,56 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         <div className="flex flex-wrap justify-between items-center">
                           {/* Special offer callout - only when clinic has a special offer */}
                           {clinic.specialOffer && (
-                            <div className="flex items-center mr-4">
-                              <div className="text-red-500">
-                                <Sparkles className="h-5 w-5 animate-pulse" />
+                            <div className="w-full mb-3">
+                              <div className="flex items-center">
+                                <div className="text-red-500">
+                                  <Sparkles className="h-5 w-5 animate-pulse" />
+                                </div>
+                                <div className="ml-2">
+                                  <p className="text-sm font-semibold text-red-600">
+                                    Claim this special offer now!
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    Limited-time promotion
+                                  </p>
+                                </div>
                               </div>
-                              <div className="ml-2">
-                                <p className="text-sm font-semibold text-red-600">
-                                  Claim this special offer now!
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Limited-time promotion
-                                </p>
-                              </div>
+                              
+                              {/* Show offer description */}
+                              {clinic.specialOffer.description && (
+                                <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded text-xs">
+                                  <p className="text-gray-700">{clinic.specialOffer.description}</p>
+                                  
+                                  {/* Button to toggle eligible treatments list */}
+                                  {hasApplicableTreatments(clinic.specialOffer) && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="mt-2 text-xs h-7 bg-white"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedOfferDetails(
+                                          expandedOfferDetails === clinic.id ? null : clinic.id
+                                        );
+                                      }}
+                                    >
+                                      {expandedOfferDetails === clinic.id ? 'Hide eligible treatments' : 'View eligible treatments'}
+                                      <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
+                                        expandedOfferDetails === clinic.id ? 'rotate-180' : ''
+                                      }`} />
+                                    </Button>
+                                  )}
+                                  
+                                  {/* Show treatments list when expanded */}
+                                  {expandedOfferDetails === clinic.id && (
+                                    <div className="mt-2 p-2 bg-white/80 rounded">
+                                      <ApplicableTreatmentsList 
+                                        specialOffer={clinic.specialOffer as SpecialOfferDetails}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                           
