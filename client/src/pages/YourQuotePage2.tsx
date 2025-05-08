@@ -180,6 +180,20 @@ const FAQSection: React.FC = () => {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  // QuoteFlow and SpecialOffer context
+  const { 
+    isSpecialOfferFlow, 
+    isPackageFlow, 
+    isPromoTokenFlow, 
+    promoType, 
+    quoteId 
+  } = useQuoteFlow();
+  const { 
+    specialOffer, 
+    hasActiveOffer,
+    applySpecialOfferToTreatments
+  } = useSpecialOfferTracking();
+  
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   
@@ -378,7 +392,7 @@ const YourQuotePage: React.FC = () => {
                       <CardTitle className="text-2xl">Cost Comparison Summary</CardTitle>
                       
                       {/* Special offer badge */}
-                      {searchParams.get('source') === 'special_offer' && (
+                      {isSpecialOfferFlow && (
                         <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md 
                         flex items-center shadow-sm transform rotate-2 mr-2">
                           <Sparkles className="h-3 w-3 mr-1" />
@@ -387,10 +401,18 @@ const YourQuotePage: React.FC = () => {
                       )}
                       
                       {/* Package badge */}
-                      {searchParams.get('source') === 'package' && (
+                      {isPackageFlow && (
                         <div className="bg-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm transform rotate-2 mr-2">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Package Deal
+                        </div>
+                      )}
+                      
+                      {/* Promo token badge */}
+                      {isPromoTokenFlow && !isSpecialOfferFlow && !isPackageFlow && (
+                        <div className="bg-primary text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm transform rotate-2 mr-2">
+                          <Tag className="h-3 w-3 mr-1" />
+                          Promotional Offer
                         </div>
                       )}
                     </div>
@@ -400,7 +422,7 @@ const YourQuotePage: React.FC = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 {/* Special offer alert - only shown when applicable */}
-                {searchParams.get('source') === 'special_offer' && searchParams.get('offerTitle') && (
+                {isSpecialOfferFlow && specialOffer && (
                   <div className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4 rounded-md shadow-sm">
                     <div className="flex items-start">
                       <div className="bg-white rounded-full p-1 border border-green-200 shadow-sm mr-3 mt-1">
@@ -408,35 +430,41 @@ const YourQuotePage: React.FC = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-green-800 text-md">{searchParams.get('offerTitle')}</h3>
-                          {searchParams.get('offerDiscount') && (
+                          <h3 className="font-semibold text-green-800 text-md">{specialOffer.title}</h3>
+                          {specialOffer.discountValue > 0 && (
                             <div className="bg-green-600 text-white text-xs py-1 px-2 rounded-md font-medium">
-                              {searchParams.get('offerDiscountType') === 'percentage'
-                                ? `${searchParams.get('offerDiscount')}% OFF`
-                                : `£${searchParams.get('offerDiscount')} OFF`}
+                              {specialOffer.discountType === 'percentage'
+                                ? `${specialOffer.discountValue}% OFF`
+                                : `£${specialOffer.discountValue} OFF`}
                             </div>
                           )}
                         </div>
                         <p className="text-green-700 text-sm mt-2 flex items-center">
                           <Tag className="h-4 w-4 mr-1 text-green-600" />
                           <span className="font-medium">
-                            {searchParams.get('offerDiscountType') === 'percentage'
-                              ? `Save ${searchParams.get('offerDiscount')}% off eligible treatments`
-                              : `Save £${searchParams.get('offerDiscount')} off eligible treatments`}
-                            {searchParams.get('offerClinic') && ` at Clinic ID ${searchParams.get('offerClinic')}`}
+                            {specialOffer.discountType === 'percentage'
+                              ? `Save ${specialOffer.discountValue}% off eligible treatments`
+                              : `Save £${specialOffer.discountValue} off eligible treatments`}
+                            {specialOffer.clinicId && ` at Clinic ${specialOffer.clinicId}`}
                           </span>
                         </p>
                         <p className="text-green-700 text-xs mt-2 flex items-center">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           <span>Limited time offer - automatically applied to your quote</span>
                         </p>
+                        {quoteId && (
+                          <p className="text-blue-600 text-xs mt-2 flex items-center">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            <span>Quote ID: {quoteId.substring(0, 8)}... is linked to this offer</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
                 )}
                 
                 {/* Package alert - only shown when applicable */}
-                {searchParams.get('source') === 'package' && (
+                {isPackageFlow && (
                   <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-md">
                     <h3 className="font-semibold text-blue-800 mb-2">Your All-Inclusive Package Includes:</h3>
                     <div className="space-y-2">
@@ -469,29 +497,38 @@ const YourQuotePage: React.FC = () => {
                     </CardContent>
                   </Card>
                   
-                  <Card className={searchParams.get('source') === 'special_offer' 
+                  <Card className={isSpecialOfferFlow 
                     ? "bg-gradient-to-r from-green-50 to-blue-50 border-green-200 shadow-sm" 
                     : "bg-green-50 border-green-100"}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base font-medium text-green-700">
-                        {searchParams.get('source') === 'special_offer' 
+                        {isSpecialOfferFlow 
                           ? "Your Discounted Istanbul Price" 
                           : "Estimated Istanbul Price"}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {searchParams.get('source') === 'special_offer' && searchParams.get('offerDiscount') ? (
+                      {isSpecialOfferFlow && specialOffer && specialOffer.discountValue > 0 ? (
                         <>
                           <div className="flex items-center space-x-2">
+                            {/* Calculate the original price before discount */}
                             <p className="text-sm text-gray-500 line-through">
-                              £{formatCurrency(Math.round(totalGBP * (1 + (Number(searchParams.get('offerDiscount')) / 100))))}
+                              {specialOffer.discountType === 'percentage' ? (
+                                `£${formatCurrency(Math.round(totalGBP * (1 + (specialOffer.discountValue / 100))))}`
+                              ) : (
+                                `£${formatCurrency(Math.round(totalGBP + specialOffer.discountValue))}`
+                              )}
                             </p>
                             <p className="text-2xl font-bold text-green-700">
                               £{formatCurrency(Math.round(totalGBP))}
                             </p>
                           </div>
                           <p className="text-sm text-green-600 mt-1 font-medium">
-                            Save up to {searchParams.get('offerDiscount')}% with this special offer
+                            {specialOffer.discountType === 'percentage' ? (
+                              `Save up to ${specialOffer.discountValue}% with this special offer`
+                            ) : (
+                              `Save up to £${specialOffer.discountValue} with this special offer`
+                            )}
                           </p>
                         </>
                       ) : (
@@ -683,17 +720,48 @@ const YourQuotePage: React.FC = () => {
                     <CardTitle className="flex items-center text-xl font-bold">
                       <Pencil className="mr-2 h-5 w-5 text-blue-500" />
                       Build Your Treatment Plan
+                      
+                      {/* Show badge when special offer is active */}
+                      {isSpecialOfferFlow && specialOffer && (
+                        <div className="ml-auto flex items-center">
+                          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {specialOffer.title}
+                          </div>
+                        </div>
+                      )}
                     </CardTitle>
                     <CardDescription>
                       Add all the treatments you're interested in to get a comprehensive quote
+                      {isSpecialOfferFlow && specialOffer && specialOffer.discountValue > 0 && (
+                        <span className="ml-2 text-green-600 font-medium">
+                          {specialOffer.discountType === 'percentage' 
+                            ? `(${specialOffer.discountValue}% discount applied)` 
+                            : `(£${specialOffer.discountValue} discount applied)`}
+                        </span>
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <StepByStepTreatmentBuilder 
                       initialTreatments={treatmentItems}
-                      onTreatmentsChange={handleTreatmentPlanChange}
+                      onTreatmentsChange={(treatments) => {
+                        // Apply any special offer discounts if applicable
+                        if (isSpecialOfferFlow && specialOffer && applySpecialOfferToTreatments) {
+                          const discountedTreatments = applySpecialOfferToTreatments(treatments);
+                          handleTreatmentPlanChange(discountedTreatments);
+                        } else {
+                          handleTreatmentPlanChange(treatments);
+                        }
+                      }}
                       onComplete={(dentalChartData, treatments) => {
-                        handleTreatmentPlanChange(treatments);
+                        // Apply any special offer discounts if applicable
+                        if (isSpecialOfferFlow && specialOffer && applySpecialOfferToTreatments) {
+                          const discountedTreatments = applySpecialOfferToTreatments(treatments);
+                          handleTreatmentPlanChange(discountedTreatments);
+                        } else {
+                          handleTreatmentPlanChange(treatments);
+                        }
                         setCurrentStep('patient-info');
                         // Scroll to the patient info section
                         window.scrollTo({ top: 0, behavior: 'smooth' });
