@@ -107,44 +107,80 @@ export function useSpecialOfferTracking() {
     if (!specialOffer) return treatments;
     
     console.log("Applying special offer to treatments:", specialOffer);
+    console.log("Original treatments:", treatments);
     
     return treatments.map(treatment => {
+      // For safety, ensure treatment has all required properties
+      const safetyTreatment = {
+        ...treatment,
+        priceGBP: treatment.priceGBP || 0,
+        quantity: treatment.quantity || 1,
+        subtotalGBP: treatment.subtotalGBP || treatment.priceGBP || 0,
+        subtotalUSD: treatment.subtotalUSD || Math.round((treatment.priceGBP || 0) * 1.29)
+      };
+      
       // Check if this treatment matches the applicable treatment
-      // (Note: we could enhance this with our string normalization logic from the backend)
+      // Use a more flexible matching system with multiple conditions
+      const treatmentName = (safetyTreatment.name || '').toLowerCase();
+      const applicableTreatment = (specialOffer.applicableTreatment || '').toLowerCase();
+      
+      // Enhanced matching logic with multiple conditions
       const isMatch = 
-        specialOffer.applicableTreatment &&
-        (treatment.name.toLowerCase().includes(specialOffer.applicableTreatment.toLowerCase()) ||
-         (specialOffer.applicableTreatment.toLowerCase().includes('consultation') && 
-          treatment.name.toLowerCase().includes('consultation')));
+        // Case 1: Direct match by name
+        treatmentName.includes(applicableTreatment) ||
+        
+        // Case 2: Consultation special offers should apply to any consultation
+        (applicableTreatment.includes('consultation') && treatmentName.includes('consultation')) ||
+        
+        // Case 3: Implant offers should apply to implant treatments
+        (applicableTreatment.includes('implant') && treatmentName.includes('implant')) ||
+        
+        // Case 4: Special offers that don't specify a treatment should apply to all
+        !specialOffer.applicableTreatment ||
+        
+        // Case 5: "Bundle" offers should apply to the primary treatment
+        (applicableTreatment.includes('bundle') && 
+         (treatmentName.includes('implant') || 
+          treatmentName.includes('crown') || 
+          treatmentName.includes('veneer')));
       
       if (isMatch) {
+        console.log(`Applying special offer to treatment: ${safetyTreatment.name}`);
+        
         // Calculate discounted price
-        let discountedPrice = treatment.priceGBP;
+        let discountedPrice = safetyTreatment.priceGBP;
+        let originalPrice = safetyTreatment.priceGBP;
         
         if (specialOffer.discountType === 'percentage') {
-          discountedPrice = Math.round(treatment.priceGBP * (1 - (specialOffer.discountValue / 100)));
+          discountedPrice = Math.round(originalPrice * (1 - (specialOffer.discountValue / 100)));
         } else if (specialOffer.discountType === 'fixed_amount') {
-          discountedPrice = Math.max(0, treatment.priceGBP - specialOffer.discountValue);
+          discountedPrice = Math.max(0, originalPrice - specialOffer.discountValue);
         }
         
+        // Calculate new subtotals based on the discounted price
         const newPrice = discountedPrice;
-        const newSubtotalGBP = newPrice * treatment.quantity;
+        const newSubtotalGBP = newPrice * safetyTreatment.quantity;
         const newSubtotalUSD = Math.round(newSubtotalGBP * 1.29); // Estimate USD price
+        const discountAmount = originalPrice - newPrice;
+        
+        console.log(`Price calculation: ${originalPrice} -> ${newPrice} (saved ${discountAmount})`);
         
         return {
-          ...treatment,
-          originalPriceGBP: treatment.priceGBP,
+          ...safetyTreatment,
+          originalPriceGBP: originalPrice,
           priceGBP: newPrice,
           subtotalGBP: newSubtotalGBP,
           subtotalUSD: newSubtotalUSD,
           specialOfferApplied: true,
           specialOfferId: specialOffer.id,
           specialOfferTitle: specialOffer.title,
-          discountAmount: treatment.priceGBP - newPrice
+          discountType: specialOffer.discountType,
+          discountValue: specialOffer.discountValue,
+          discountAmount: discountAmount
         };
       }
       
-      return treatment;
+      return safetyTreatment;
     });
   };
   

@@ -617,6 +617,44 @@ const YourQuotePage: React.FC = () => {
       "offerId param:", searchParams.get('offerId'),
       "specialOffer param:", searchParams.get('specialOffer'));
     
+    // Log all URL parameters for debugging
+    const urlParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      urlParams[key] = value;
+    });
+    console.log("All URL parameters for debugging:", urlParams);
+    
+    // NEW: First check QuoteFlowContext - if we have offerId there, use it
+    const quoteFlowOfferId = offerId || searchParams.get('offerId');
+    console.log("Quote flow offerId:", quoteFlowOfferId, "isSpecialOfferFlow:", isSpecialOfferFlow);
+    
+    // If source=special_offer is already set in QuoteFlowContext, prioritize that
+    if (source === 'special_offer' && quoteFlowOfferId) {
+      console.log("Using special offer from QuoteFlowContext:", quoteFlowOfferId);
+      
+      // Check for corresponding sessionStorage data
+      const storedActiveOffer = sessionStorage.getItem('activeSpecialOffer');
+      if (storedActiveOffer) {
+        try {
+          const offerData = JSON.parse(storedActiveOffer);
+          console.log("Found matching activeSpecialOffer in sessionStorage:", offerData);
+          
+          if (offerData.id === quoteFlowOfferId) {
+            return {
+              id: offerData.id,
+              title: offerData.title,
+              clinicId: offerData.clinicId || clinicId || '1',
+              discountValue: offerData.discountValue || offerData.discount_value || 0,
+              discountType: offerData.discountType || offerData.discount_type || 'percentage',
+              applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
+            };
+          }
+        } catch (error) {
+          console.error("Error parsing activeSpecialOffer from sessionStorage:", error);
+        }
+      }
+    }
+    
     // If there's a special offer ID in the URL parameters, create a special offer object
     if (offerIdFromUrl) {
       console.log("Special offer parameters found in URL:");
@@ -625,13 +663,6 @@ const YourQuotePage: React.FC = () => {
       console.log("- Discount Value:", searchParams.get('offerDiscount'));
       console.log("- Discount Type:", searchParams.get('offerDiscountType'));
       console.log("- Treatment:", searchParams.get('treatment'));
-      
-      // Log all URL parameters for debugging
-      const urlParams: Record<string, string> = {};
-      searchParams.forEach((value, key) => {
-        urlParams[key] = value;
-      });
-      console.log("All URL parameters for debugging:", urlParams);
       
       // Ensure consistent parameter parsing with proper error handling
       let discountValue = 0;
@@ -665,8 +696,20 @@ const YourQuotePage: React.FC = () => {
       
       console.log("Created special offer data from URL params:", offerData);
       
-      // Always save to sessionStorage for persistence in future navigation
+      // Update both storage locations for maximum reliability
       sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
+      
+      // Also set the QuoteFlowContext values
+      if (setSource && source !== 'special_offer') {
+        setSource('special_offer');
+      }
+      if (setOfferId && !offerId) {
+        setOfferId(offerIdFromUrl);
+      }
+      if (setClinicId && !clinicId && offerData.clinicId) {
+        setClinicId(offerData.clinicId);
+      }
       
       return offerData;
     }
@@ -677,13 +720,25 @@ const YourQuotePage: React.FC = () => {
       try {
         const offerData = JSON.parse(storedOffer);
         console.log("Retrieved special offer from sessionStorage:", offerData);
+        
+        // Ensure QuoteFlowContext is updated with these values
+        if (setSource && source !== 'special_offer') {
+          setSource('special_offer');
+        }
+        if (setOfferId && !offerId) {
+          setOfferId(offerData.id);
+        }
+        if (setClinicId && !clinicId && offerData.clinicId) {
+          setClinicId(offerData.clinicId);
+        }
+        
         return {
           id: offerData.id,
           title: offerData.title,
-          clinicId: offerData.clinicId,
-          discountValue: offerData.discountValue || 0,
-          discountType: offerData.discountType || 'percentage',
-          applicableTreatment: offerData.applicableTreatment || 'Dental Implants'
+          clinicId: offerData.clinicId || clinicId || '1',
+          discountValue: offerData.discountValue || offerData.discount_value || 0,
+          discountType: offerData.discountType || offerData.discount_type || 'percentage',
+          applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
         };
       } catch (error) {
         console.error("Error parsing special offer from sessionStorage:", error);
@@ -696,6 +751,17 @@ const YourQuotePage: React.FC = () => {
       try {
         const offerData = JSON.parse(pendingOfferData);
         console.log("Found pendingSpecialOffer in sessionStorage:", offerData);
+        
+        // Ensure QuoteFlowContext is updated with these values
+        if (setSource && source !== 'special_offer') {
+          setSource('special_offer');
+        }
+        if (setOfferId && !offerId) {
+          setOfferId(offerData.id);
+        }
+        if (setClinicId && !clinicId && offerData.clinicId) {
+          setClinicId(offerData.clinicId);
+        }
         
         // Convert to the right format
         const formattedOffer = {

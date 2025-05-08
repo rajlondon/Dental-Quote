@@ -222,39 +222,38 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
 
       {/* Special offer specific content */}
       {(isSpecialOfferFlow || (isPromoTokenFlow && promoType === 'special_offer')) && specialOfferTitle && (
-        <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 p-4 rounded-md shadow-sm">
+        <div 
+          className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4 rounded-md shadow-sm" 
+          data-special-offer-summary
+          data-offer-id={offerId}
+        >
           <div className="flex items-start">
-            <div className="bg-white rounded-full p-1 border border-blue-200 shadow-sm mr-3 mt-1">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <div className="bg-white rounded-full p-1 border border-green-200 shadow-sm mr-3 mt-1">
+              <Sparkles className="h-5 w-5 text-green-600" />
             </div>
-            <div>
-              <h3 className="font-semibold text-blue-800 text-md">{specialOfferTitle}</h3>
-              <p className="text-blue-700 text-sm mt-1 flex items-center">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="14" 
-                  height="14" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  className="mr-1"
-                >
-                  <path d="M12 3l1.2 2.8 2.8.3-2 2 .5 2.9-2.5-1.3-2.5 1.3.5-2.9-2-2 2.8-.3z"/>
-                </svg>
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <h3 className="font-semibold text-green-800 text-md">{specialOfferTitle}</h3>
+                {discountValue && (
+                  <div className="bg-green-600 text-white text-xs py-1 px-2 rounded-md font-medium">
+                    {discountType === 'percentage' 
+                      ? `${discountValue}% OFF` 
+                      : `£${discountValue} OFF`}
+                  </div>
+                )}
+              </div>
+              <p className="text-green-700 text-sm mt-2 flex items-center">
+                <Tag className="h-4 w-4 mr-1 text-green-600" />
                 <span className="font-medium">
                   {discountType === 'percentage' 
-                    ? `Save ${discountValue}% off your treatment price`
-                    : `Save £${discountValue} off your treatment price`
-                  }
+                    ? `Save ${discountValue}% off eligible treatments` 
+                    : `Save £${discountValue} off eligible treatments`}
                   {clinicName && ` at ${clinicName}`}
                 </span>
               </p>
-              <p className="text-blue-600 text-xs mt-2 flex items-center">
+              <p className="text-green-700 text-xs mt-2 flex items-center">
                 <CheckCircle className="h-3 w-3 mr-1" />
-                <span>Limited time offer - applied to your quote</span>
+                <span>Limited time offer - automatically applied to your quote</span>
               </p>
               {quoteId && (
                 <p className="text-blue-600 text-xs mt-2 flex items-center">

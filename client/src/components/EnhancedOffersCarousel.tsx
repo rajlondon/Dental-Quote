@@ -403,7 +403,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const handleRequestQuote = (offer: SpecialOffer) => {
     console.log('Handling quote request for special offer:', offer);
     
-    // First, prepare complete offer data with all possible fields
+    // First, prepare complete offer data with all possible fields in normalized format
+    // This ensures consistent data structure across all components and storage methods
     const offerData = {
       id: offer.id,
       title: offer.title || 'Special Offer',
@@ -417,10 +418,14 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       discountType: offer.discount_type || 'percentage',
       treatment_price_gbp: offer.treatment_price_gbp,
       treatment_price_usd: offer.treatment_price_usd,
-      description: offer.description
+      description: offer.description,
+      // Include additional metadata for debugging
+      timestamp: Date.now(),
+      source: 'homepage_carousel'
     };
     
     // Always clear all existing offer data first to prevent conflicts
+    // This ensures a clean state before adding our new offer data
     sessionStorage.removeItem('pendingSpecialOffer');
     sessionStorage.removeItem('processingSpecialOffer');
     sessionStorage.removeItem('activeSpecialOffer');
@@ -429,23 +434,40 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     // Store data in multiple locations using different formats for maximum compatibility
     try {
       // Save to sessionStorage with multiple keys for different components
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
-      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
+      // pendingSpecialOffer - used during quote flow initialization
+      // activeSpecialOffer - used by useSpecialOfferTracking hook
+      // processingSpecialOffer - simple ID reference for lightweight checks
+      const serializedOfferData = JSON.stringify(offerData);
+      sessionStorage.setItem('pendingSpecialOffer', serializedOfferData);
+      sessionStorage.setItem('activeSpecialOffer', serializedOfferData);
       sessionStorage.setItem('processingSpecialOffer', offerData.id);
-      localStorage.setItem('selectedSpecialOffer', JSON.stringify(offerData));
+      localStorage.setItem('selectedSpecialOffer', serializedOfferData);
       
       // Also save in the treatment plan format for the TreatmentPlanBuilder
+      // This ensures compatibility with components that expect treatment plan data
       sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
         id: `offer-${offer.id}`,
         offerId: offer.id,
         clinicId: offer.clinic_id,
+        specialOffer: {
+          id: offer.id,
+          title: offer.title,
+          discountType: offer.discount_type || 'percentage',
+          discountValue: offer.discount_value || 0
+        },
         treatments: [{
           treatmentType: 'special-offer',
           category: 'Special Offer',
           name: offer.title,
           offerId: offer.id,
           clinicId: offer.clinic_id,
-          applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants'
+          applicableTreatment: offer.applicable_treatments?.[0] || 'Dental Implants',
+          // Add special offer details to treatment for direct access
+          specialOfferApplied: true,
+          specialOfferId: offer.id,
+          specialOfferTitle: offer.title,
+          discountType: offer.discount_type || 'percentage',
+          discountValue: offer.discount_value || 0
         }]
       }));
       
@@ -465,6 +487,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     console.log("Redirecting to quote page with offer details");
     
     // Build a comprehensive query string for maximum compatibility
+    // Include all possible parameters that might be used by different components
     const queryParams = new URLSearchParams({
       // Parameters for QuoteFlowContext
       source: 'special_offer',
@@ -472,6 +495,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       specialOffer: offer.id,  // Legacy parameter
       offerTitle: offer.title || '',
       clinicId: offer.clinic_id || '',
+      offerClinic: offer.clinic_id || '', // Alternate format
       treatment: offer.applicable_treatments?.[0] || 'Dental Implants',
       
       // Control flow parameters
@@ -482,8 +506,9 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       offerDiscount: String(offer.discount_value || 0),
       offerDiscountType: offer.discount_type || 'percentage',
       
-      // Add a timestamp to prevent caching issues
-      t: Date.now().toString()
+      // Add timestamp and tracking parameters
+      t: Date.now().toString(),
+      origin: 'homepage_carousel'
     }).toString();
     
     // Use window.location.href for a full page load to ensure clean state
