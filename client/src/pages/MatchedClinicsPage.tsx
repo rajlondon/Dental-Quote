@@ -678,6 +678,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </Button>
                           
                           <WhatsAppButton 
+                            phoneNumber="447123456789" // Default international format
                             message={`I'm interested in dental treatment at ${clinic.name} - my quote total is £${totalPrice.toFixed(2)}`}
                             className="flex-1"
                           />
