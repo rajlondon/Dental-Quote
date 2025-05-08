@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ClientPdfGenerator from '@/components/ClientPdfGenerator';
+import ApplicableTreatmentsList from '@/components/specialOffers/ApplicableTreatmentsList';
 
 // Enhanced special offer interface with all required metadata
 interface SpecialOfferDetails {
@@ -94,13 +95,7 @@ interface ClinicTreatmentPrice {
   category: string;
   isPackage?: boolean;
   packageId?: string;
-  specialOffer?: {
-    id: string;
-    title: string;
-    discountType: 'percentage' | 'fixed_amount';
-    discountValue: number;
-    clinicId: string;
-  };
+  specialOffer?: SpecialOfferDetails;
 }
 
 const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
@@ -860,9 +855,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </span>
                             
                             {/* Show eligible treatments if available */}
-                            {specialOffer?.applicableTreatments && specialOffer.applicableTreatments.length > 0 && (
+                            {(specialOffer?.applicableTreatments || specialOffer?.applicableTreatment) && (
                               <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
-                                {specialOffer.applicableTreatments.length} eligible treatments
+                                {specialOffer.applicableTreatments && specialOffer.applicableTreatments.length > 0 ? 
+                                  `${specialOffer.applicableTreatments.length} eligible treatments` : 
+                                  `For: ${specialOffer.applicableTreatment}`}
                               </span>
                             )}
                             
@@ -879,9 +876,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && clinic.specialOffer && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {/* Show eligible treatments if available */}
-                            {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 && (
+                            {(clinic.specialOffer.applicableTreatments || clinic.specialOffer.applicableTreatment) && (
                               <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
-                                {clinic.specialOffer.applicableTreatments.length} eligible treatments
+                                {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 ? 
+                                  `${clinic.specialOffer.applicableTreatments.length} eligible treatments` : 
+                                  `For: ${clinic.specialOffer.applicableTreatment}`}
                               </span>
                             )}
                             

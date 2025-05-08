@@ -10,6 +10,10 @@ export interface SpecialOfferDetails {
   discountValue: number;
   clinicId: string;
   applicableTreatment?: string;
+  applicableTreatments?: string[];
+  description?: string;
+  expiryDate?: string;
+  termsAndConditions?: string;
 }
 
 /**
@@ -122,11 +126,24 @@ export function useSpecialOfferTracking() {
       // Check if this treatment matches the applicable treatment
       // Use a more flexible matching system with multiple conditions
       const treatmentName = (safetyTreatment.name || '').toLowerCase();
+      const treatmentId = (safetyTreatment.id || '').toLowerCase();
       const applicableTreatment = (specialOffer.applicableTreatment || '').toLowerCase();
       
+      // Check for a match in the applicableTreatments array if it exists
+      const isInApplicableTreatmentsArray = specialOffer.applicableTreatments && 
+        specialOffer.applicableTreatments.length > 0 && 
+        specialOffer.applicableTreatments.some(t => {
+          const treatmentPattern = t.toLowerCase();
+          return treatmentId === treatmentPattern || 
+                 treatmentName.includes(treatmentPattern);
+        });
+        
       // Enhanced matching logic with multiple conditions
       const isMatch = 
-        // Case 1: Direct match by name
+        // Case 0: Treatment ID is in the applicable treatments array
+        isInApplicableTreatmentsArray ||
+        
+        // Case 1: Direct match by name with the legacy applicableTreatment field
         treatmentName.includes(applicableTreatment) ||
         
         // Case 2: Consultation special offers should apply to any consultation
@@ -136,7 +153,7 @@ export function useSpecialOfferTracking() {
         (applicableTreatment.includes('implant') && treatmentName.includes('implant')) ||
         
         // Case 4: Special offers that don't specify a treatment should apply to all
-        !specialOffer.applicableTreatment ||
+        (!specialOffer.applicableTreatment && (!specialOffer.applicableTreatments || specialOffer.applicableTreatments.length === 0)) ||
         
         // Case 5: "Bundle" offers should apply to the primary treatment
         (applicableTreatment.includes('bundle') && 
