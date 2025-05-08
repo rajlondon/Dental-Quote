@@ -218,7 +218,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               body: JSON.stringify({
                 promoToken,
                 clinicId,
-                treatmentItems: treatmentPlan
+                treatmentItems: treatmentItems || treatmentPlan
               })
             })
             .then(response => response.json())

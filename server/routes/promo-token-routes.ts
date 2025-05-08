@@ -288,14 +288,29 @@ router.post('/quotes/from-promo', async (req, res) => {
     `;
     
     const now = new Date();
-    // Use requestedClinicId from the request body
-    const clinicIdString = typeof requestedClinicId === 'number' 
-      ? requestedClinicId.toString() 
-      : requestedClinicId;
+    // Map clinic ID string to numeric ID for database
+    let clinicIdNumber = 1;  // Default to 1
+    
+    // Map clinic ID string to the proper numeric ID
+    if (requestedClinicId === 'dentspa') {
+      clinicIdNumber = 1;
+    } else if (requestedClinicId === 'beyazada') {
+      clinicIdNumber = 2;
+    } else if (requestedClinicId === 'maltepe') {
+      clinicIdNumber = 3;
+    } else if (requestedClinicId === 'dentalharmony') {
+      clinicIdNumber = 4;
+    } else if (requestedClinicId === 'smiledesigners') {
+      clinicIdNumber = 5;
+    } else if (typeof requestedClinicId === 'number') {
+      clinicIdNumber = requestedClinicId;
+    }
+    
+    console.log(`Mapping clinic ID ${requestedClinicId} to numeric ID ${clinicIdNumber}`);
     
     const queryParams = [
       patientId, 
-      clinicIdString, 
+      clinicIdNumber, 
       'draft', 
       'promo_token', 
       promoToken,
@@ -374,7 +389,7 @@ router.post('/quotes/from-promo', async (req, res) => {
         `;
         
         const lineParams = [
-          clinicIdString, 
+          clinicIdNumber, 
           patientId, 
           quoteId, 
           procedureCode, 
@@ -422,7 +437,7 @@ router.post('/quotes/from-promo', async (req, res) => {
         `;
         
         const bonusParams = [
-          clinicIdString, 
+          clinicIdNumber, 
           patientId, 
           quoteId, 
           'BONUS', 
