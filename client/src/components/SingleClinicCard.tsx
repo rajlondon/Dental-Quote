@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star } from 'lucide-react';
-import WhatsAppButton from './WhatsAppButton';
 
 interface SingleClinicCardProps {
   clinic: any;
@@ -107,7 +106,7 @@ export default function SingleClinicCard({ clinic, badge, onSelect, totalPrice }
                 )}
               </div>
               
-              {/* Action Buttons */}
+              {/* Action Button */}
               <div className="space-y-2">
                 {onSelect && (
                   <button 
@@ -116,15 +115,6 @@ export default function SingleClinicCard({ clinic, badge, onSelect, totalPrice }
                   >
                     Select This Clinic
                   </button>
-                )}
-                
-                {/* WhatsApp Button */}
-                {clinic.whatsAppNumber && (
-                  <WhatsAppButton 
-                    phoneNumber={clinic.whatsAppNumber}
-                    message={`Hello, I'm interested in your ${badge} promotional deal at ${clinic.name}. Could you please provide more information?`}
-                    className="w-full"
-                  />
                 )}
               </div>
             </div>
