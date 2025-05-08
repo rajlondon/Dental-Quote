@@ -899,9 +899,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   );
                                 }}
                               >
-                                {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 ? 
-                                  `${clinic.specialOffer.applicableTreatments.length} eligible treatments` : 
-                                  clinic.specialOffer.applicableTreatment ? `For: ${clinic.specialOffer.applicableTreatment}` : ''}
+                                {clinic.specialOffer.discountType === 'percentage' 
+                                  ? `${clinic.specialOffer.discountValue}% off ` 
+                                  : `£${clinic.specialOffer.discountValue} off `}
+                                {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 
+                                  ? `${clinic.specialOffer.applicableTreatments.length} treatments` 
+                                  : clinic.specialOffer.applicableTreatment 
+                                    ? clinic.specialOffer.applicableTreatment.replace(/_/g, ' ') 
+                                    : 'eligible treatments'}
                                 <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
                                   expandedOfferDetails === clinic.id ? 'rotate-180' : ''
                                 }`} />
@@ -1139,7 +1144,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         );
                                       }}
                                     >
-                                      {expandedOfferDetails === clinic.id ? 'Hide eligible treatments' : 'View eligible treatments'}
+                                      {expandedOfferDetails === clinic.id 
+                                        ? 'Hide eligible treatments' 
+                                        : `View ${clinic.specialOffer.discountType === 'percentage' 
+                                            ? `${clinic.specialOffer.discountValue}% off` 
+                                            : `£${clinic.specialOffer.discountValue} off`} details`
+                                      }
                                       <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
                                         expandedOfferDetails === clinic.id ? 'rotate-180' : ''
                                       }`} />
