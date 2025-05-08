@@ -823,6 +823,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             {tierInfo.label}
                           </Badge>
                         </div>
+                        
+                        {/* Special offer badge */}
+                        {clinic.hasSpecialOffer && clinic.specialOffer && (
+                          <div className="absolute top-2 left-2">
+                            <Badge 
+                              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md flex items-center animate-pulse"
+                            >
+                              <Sparkles className="h-3.5 w-3.5 mr-1 text-yellow-300" />
+                              Special Offer
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                       
                       <h2 className="text-xl font-bold mb-1">{clinic.name}</h2>
@@ -899,6 +911,23 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <div className="text-3xl font-bold text-blue-700">£{totalPrice.toFixed(2)}</div>
                           <div className="text-sm text-green-600">Save {Math.round((1 - (totalPrice / totalGBP)) * 100)}% vs UK prices</div>
                         </div>
+                        
+                        {/* Special offer details */}
+                        {clinic.hasSpecialOffer && clinic.specialOffer && (
+                          <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                            <div className="flex items-center gap-2 text-blue-700 font-medium">
+                              <BadgePercent className="h-4 w-4" />
+                              <span>{clinic.specialOffer.title}</span>
+                            </div>
+                            <p className="text-xs text-blue-600 mt-1">{clinic.specialOffer.description}</p>
+                            <div className="mt-2 flex items-center text-xs text-blue-800 gap-1.5">
+                              <Tag className="h-3 w-3" />
+                              {clinic.specialOffer.discountType === 'percentage' 
+                                ? `${clinic.specialOffer.discountValue}% discount on selected treatments` 
+                                : `£${clinic.specialOffer.discountValue} off your total`}
+                            </div>
+                          </div>
+                        )}
                         
                         <div className="space-y-2 mb-4">
                           <div className="text-sm flex items-center justify-between">
@@ -986,10 +1015,25 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               const savings = ukSubtotal - treatment.subtotal;
                               const savingsPercent = Math.round((savings / ukSubtotal) * 100);
                               
+                              // Check if this treatment has a special offer through matching applicable treatments
+                              const hasSpecialOffer = clinic.specialOffer && clinic.specialOffer.applicableTreatments &&
+                                clinic.specialOffer.applicableTreatments.some(t => 
+                                  t.toLowerCase() === treatment.originalName.toLowerCase() ||
+                                  t.toLowerCase().includes(treatment.originalName.toLowerCase())
+                                );
+                                
                               return (
-                                <tr key={idx} className="border-b border-gray-100">
+                                <tr key={idx} className={`border-b ${hasSpecialOffer ? 'bg-blue-50/50' : 'border-gray-100'}`}>
                                   <td className="py-2 px-4 text-sm">
-                                    <div className="font-medium">{treatment.treatmentName}</div>
+                                    <div className="flex items-center">
+                                      <div className="font-medium">{treatment.treatmentName}</div>
+                                      {hasSpecialOffer && (
+                                        <Badge className="ml-2 bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center px-1.5 border border-blue-200">
+                                          <Sparkles className="h-3 w-3 mr-1" />
+                                          Special Offer
+                                        </Badge>
+                                      )}
+                                    </div>
                                     <div className="text-xs text-gray-500">{treatment.category}</div>
                                   </td>
                                   <td className="py-2 px-4 text-sm text-center">{treatment.quantity}</td>
@@ -998,8 +1042,20 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <div className="text-xs text-gray-500">£{ukSubtotal.toFixed(2)} total</div>
                                   </td>
                                   <td className="py-2 px-4 text-sm text-right">
-                                    <div className="font-medium text-blue-700">£{treatment.pricePerUnit.toFixed(2)}/unit</div>
-                                    <div className="text-xs text-blue-700">£{treatment.subtotal.toFixed(2)} total</div>
+                                    {hasSpecialOffer ? (
+                                      <>
+                                        <div className="font-medium text-blue-700 flex items-center justify-end">
+                                          <span className="line-through text-gray-400 mr-1">£{(ukPricePerUnit * 0.4).toFixed(2)}</span>
+                                          <span>£{treatment.pricePerUnit.toFixed(2)}</span>
+                                        </div>
+                                        <div className="text-xs text-blue-700">£{treatment.subtotal.toFixed(2)} total</div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="font-medium text-blue-700">£{treatment.pricePerUnit.toFixed(2)}/unit</div>
+                                        <div className="text-xs text-blue-700">£{treatment.subtotal.toFixed(2)} total</div>
+                                      </>
+                                    )}
                                   </td>
                                   <td className="py-2 px-4 text-sm text-right">
                                     <div className="font-medium text-green-600">£{savings.toFixed(2)}</div>
@@ -1051,6 +1107,56 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 ))}
                               </div>
                             </>
+                          )}
+                          
+                          {/* Special Offer section */}
+                          {clinic.hasSpecialOffer && clinic.specialOffer && (
+                            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                              <h4 className="font-medium mb-2 flex items-center text-blue-800">
+                                <BadgePercent className="h-4 w-4 mr-1" />
+                                Special Offer
+                              </h4>
+                              
+                              <div className="mb-2">
+                                <div className="font-semibold text-blue-700">{clinic.specialOffer.title}</div>
+                                <p className="text-sm text-blue-600 mt-1">{clinic.specialOffer.description}</p>
+                              </div>
+                              
+                              <div className="text-xs space-y-1">
+                                <div className="flex items-start gap-1">
+                                  <Tag className="h-3 w-3 mt-0.5 text-blue-700" />
+                                  <span>
+                                    {clinic.specialOffer.discountType === 'percentage' 
+                                      ? `${clinic.specialOffer.discountValue}% discount` 
+                                      : `£${clinic.specialOffer.discountValue} off`}
+                                  </span>
+                                </div>
+                                
+                                {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 && (
+                                  <div className="flex items-start gap-1">
+                                    <Target className="h-3 w-3 mt-0.5 text-blue-700" />
+                                    <span>
+                                      Applicable to: {clinic.specialOffer.applicableTreatments.slice(0, 3).join(', ')}
+                                      {clinic.specialOffer.applicableTreatments.length > 3 && '...'}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {clinic.specialOffer.expiryDate && (
+                                  <div className="flex items-start gap-1">
+                                    <Calendar className="h-3 w-3 mt-0.5 text-blue-700" />
+                                    <span>Expires: {new Date(clinic.specialOffer.expiryDate).toLocaleDateString()}</span>
+                                  </div>
+                                )}
+                                
+                                {clinic.specialOffer.termsAndConditions && (
+                                  <div className="flex items-start gap-1">
+                                    <FileText className="h-3 w-3 mt-0.5 text-blue-700" />
+                                    <span>Terms: {clinic.specialOffer.termsAndConditions}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
                         
