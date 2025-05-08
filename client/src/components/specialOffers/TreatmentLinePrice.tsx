@@ -7,6 +7,7 @@ interface TreatmentLinePriceProps {
   unitPriceGBP?: number | undefined;
   isSpecialOffer?: boolean;
   hasSpecialOffer?: boolean;
+  specialOfferText?: string;
 }
 
 /**
@@ -18,7 +19,8 @@ const TreatmentLinePrice: React.FC<TreatmentLinePriceProps> = ({
   basePriceGBP,
   unitPriceGBP,
   isSpecialOffer = false,
-  hasSpecialOffer = false
+  hasSpecialOffer = false,
+  specialOfferText
 }) => {
   // If this is a special offer with different prices
   if ((isSpecialOffer || hasSpecialOffer) && basePriceGBP && basePriceGBP !== price) {
@@ -27,6 +29,21 @@ const TreatmentLinePrice: React.FC<TreatmentLinePriceProps> = ({
         originalPrice={basePriceGBP}
         discountedPrice={price}
         showPercentage={true}
+        isSpecialOffer={isSpecialOffer || hasSpecialOffer}
+        specialOfferText={specialOfferText}
+      />
+    );
+  }
+  
+  // Special offer with no visible price difference (equal prices or missing original price)
+  // We still want to show it's part of a special offer
+  if (isSpecialOffer || hasSpecialOffer) {
+    return (
+      <DiscountedPriceDisplay 
+        discountedPrice={price}
+        showPercentage={false}
+        isSpecialOffer={true}
+        specialOfferText={specialOfferText || 'Promotional Price'}
       />
     );
   }

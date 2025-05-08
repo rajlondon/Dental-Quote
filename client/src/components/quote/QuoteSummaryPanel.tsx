@@ -157,28 +157,40 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
                 {treatment.specialOffer ? (
                   <div className="relative">
                     <div className="mb-1 bg-green-50 border border-green-100 rounded-md px-2 py-1 text-right">
-                      <span className="line-through text-sm text-gray-500 block">
-                        £{formatCurrency(Math.round(treatment.priceGBP * (100 / (100 - (treatment.specialOffer.discountType === 'percentage' ? treatment.specialOffer.discountValue : 0)))))}
-                      </span>
+                      {treatment.specialOffer.discountValue > 0 && (
+                        <span className="line-through text-sm text-gray-500 block">
+                          £{formatCurrency(Math.round(treatment.priceGBP * (100 / (100 - (treatment.specialOffer.discountType === 'percentage' ? treatment.specialOffer.discountValue : 0)))))}
+                        </span>
+                      )}
                       <span className="font-bold text-green-700 text-lg">£{formatCurrency(treatment.priceGBP)}</span>
                       <div className="absolute -top-2 -right-1 bg-green-600 text-white text-xs font-bold py-0.5 px-1.5 rounded shadow-sm transform rotate-3">
-                        {treatment.specialOffer.discountType === 'percentage' 
-                          ? `-${treatment.specialOffer.discountValue}%` 
-                          : `-£${formatCurrency(treatment.specialOffer.discountValue)}`}
+                        {treatment.specialOffer.discountValue > 0 ? (
+                          treatment.specialOffer.discountType === 'percentage' 
+                            ? `-${treatment.specialOffer.discountValue}%` 
+                            : `-£${formatCurrency(treatment.specialOffer.discountValue)}`
+                        ) : (
+                          'Special Offer'
+                        )}
                       </div>
                     </div>
+                    {treatment.specialOffer.discountValue === 0 && (
+                      <span className="text-xs text-blue-600 block text-right">
+                        Promotional price applied
+                      </span>
+                    )}
                   </div>
                 ) : treatment.isSpecialOffer || treatment.promoToken ? (
                   <div className="relative">
                     <div className="mb-1 bg-blue-50 border border-blue-100 rounded-md px-2 py-1 text-right">
                       <span className="font-bold text-blue-700 text-lg">£{formatCurrency(treatment.priceGBP)}</span>
-                      {/* For promo token treatments, show a discount label */}
-                      {treatment.promoToken && (
-                        <div className="absolute -top-2 -right-1 bg-blue-600 text-white text-xs font-bold py-0.5 px-1.5 rounded shadow-sm transform rotate-3">
-                          Special Price
-                        </div>
-                      )}
+                      {/* Always show promotional badge */}
+                      <div className="absolute -top-2 -right-1 bg-blue-600 text-white text-xs font-bold py-0.5 px-1.5 rounded shadow-sm transform rotate-3">
+                        Special Price
+                      </div>
                     </div>
+                    <span className="text-xs text-blue-600 block text-right">
+                      Promotional price applied
+                    </span>
                   </div>
                 ) : (
                   <span className="font-medium">£{formatCurrency(treatment.subtotalGBP)}</span>
@@ -223,7 +235,7 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
       </div>
 
       {/* Special offer specific content */}
-      {(isSpecialOfferFlow || (isPromoTokenFlow && promoType === 'special_offer')) && specialOfferTitle && (
+      {(isSpecialOfferFlow || (isPromoTokenFlow && promoType === 'special_offer')) && (
         <div 
           className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4 rounded-md shadow-sm" 
           data-special-offer-summary
@@ -235,21 +247,28 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
-                <h3 className="font-semibold text-green-800 text-md">{specialOfferTitle}</h3>
-                {discountValue && (
-                  <div className="bg-green-600 text-white text-xs py-1 px-2 rounded-md font-medium">
-                    {discountType === 'percentage' 
+                <h3 className="font-semibold text-green-800 text-md">{specialOfferTitle || 'Special Offer'}</h3>
+                {/* Always show a discount badge - even if value is 0, showing "Special Offer" text instead */}
+                <div className="bg-green-600 text-white text-xs py-1 px-2 rounded-md font-medium">
+                  {discountValue && discountValue > 0 ? (
+                    discountType === 'percentage' 
                       ? `${discountValue}% OFF` 
-                      : `£${discountValue} OFF`}
-                  </div>
-                )}
+                      : `£${discountValue} OFF`
+                  ) : (
+                    'SPECIAL OFFER'
+                  )}
+                </div>
               </div>
               <p className="text-green-700 text-sm mt-2 flex items-center">
                 <Tag className="h-4 w-4 mr-1 text-green-600" />
                 <span className="font-medium">
-                  {discountType === 'percentage' 
-                    ? `Save ${discountValue}% off eligible treatments` 
-                    : `Save £${discountValue} off eligible treatments`}
+                  {discountValue && discountValue > 0 ? (
+                    discountType === 'percentage' 
+                      ? `Save ${discountValue}% off eligible treatments` 
+                      : `Save £${discountValue} off eligible treatments`
+                  ) : (
+                    'Special promotional pricing on eligible treatments'
+                  )}
                   {clinicName && ` at ${clinicName}`}
                 </span>
               </p>
