@@ -7,7 +7,7 @@ import { formatDate } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigation } from '@/hooks/use-navigation';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import DiscountedPriceDisplay from '@/components/specialOffers/DiscountedPriceDisplay';
+import TreatmentLinePrice from '@/components/specialOffers/TreatmentLinePrice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -493,32 +493,14 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                     {treatment.quantity || 1}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    {/* Show discounted price with original price strikethrough if there's a special offer */}
-                    {treatment.isSpecialOffer || treatment.specialOffer ? (
-                      <div className="flex flex-col items-end">
-                        {/* Original price with strikethrough */}
-                        {treatment.basePriceGBP && treatment.basePriceGBP !== treatment.price && (
-                          <span className="text-gray-400 line-through text-xs">
-                            £{treatment.basePriceGBP}
-                          </span>
-                        )}
-                        {/* Discounted price */}
-                        <span className="text-green-600 font-semibold">
-                          £{treatment.price || 0}
-                        </span>
-                        {/* Calculate and show discount percentage */}
-                        {treatment.basePriceGBP && treatment.basePriceGBP > treatment.price && (
-                          <span className="text-xs text-green-600">
-                            {Math.round(((treatment.basePriceGBP - treatment.price) / treatment.basePriceGBP) * 100)}% off
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      /* Regular price without special formatting */
-                      <span className="text-gray-600">
-                        £{treatment.price || 0}
-                      </span>
-                    )}
+                    {/* Use the TreatmentLinePrice component to handle all price display cases */}
+                    <TreatmentLinePrice 
+                      price={treatment.price}
+                      basePriceGBP={treatment.basePriceGBP}
+                      unitPriceGBP={treatment.unitPriceGBP}
+                      isSpecialOffer={treatment.isSpecialOffer}
+                      hasSpecialOffer={!!treatment.specialOffer}
+                    />
                   </td>
                 </tr>
               ))}
