@@ -304,7 +304,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE id = $1
       `;
       
-      const result = await storage.db.$client.query(checkQuery, [quoteId]);
+      // Use the imported db directly rather than accessing through storage
+      const { pool } = require('./db'); 
+      const result = await pool.query(checkQuery, [quoteId]);
       
       if (!result.rows || result.rows.length === 0) {
         return res.status(404).json({
@@ -338,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         RETURNING id
       `;
       
-      const updateResult = await storage.db.$client.query(updateQuery, [user.id, quoteId]);
+      const updateResult = await pool.query(updateQuery, [user.id, quoteId]);
       
       if (!updateResult.rows || updateResult.rows.length === 0) {
         return res.status(403).json({
