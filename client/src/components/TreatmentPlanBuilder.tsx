@@ -523,8 +523,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     
     // If no special offer, just add the treatment as is
     setTreatments([...treatments, treatmentItem]);
-    
-    setTreatments([...treatments, newTreatment]);
   };
   
   // Check if a treatment is already in the list
