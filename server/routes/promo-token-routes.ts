@@ -7,8 +7,15 @@
 
 import { Router } from 'express';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
-import { promoTokens, quotes } from '@shared/schema';
+import { eq, sql } from 'drizzle-orm';
+import { 
+  promoTokens, 
+  quotes, 
+  specialOffers, 
+  treatmentLines, 
+  treatmentPackages,
+  standardizedTreatments
+} from '@shared/schema';
 import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
@@ -198,6 +205,214 @@ router.post('/quotes/from-token', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to process promotional token',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/quotes/from-promo
+ * Creates a new quote directly from a promotional code or token
+ * This endpoint aligns with the new spec document requirements
+ */
+router.post('/quotes/from-promo', async (req, res) => {
+  const { promoCode, patientId } = req.body;
+  
+  if (!promoCode) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required promotional code'
+    });
+  }
+  
+  try {
+    // 1. Check if the promo code refers to a token or a special offer code
+    const promoToken = await db.query.promoTokens.findFirst({
+      where: eq(promoTokens.token, promoCode)
+    });
+    
+    // Get the user ID - either the authenticated user, provided patientId, or fallback to demo user
+    const userId = req.user?.id || patientId || 2; // Fallback to user ID 2 for demo
+    
+    let clinicId: number | string;
+    let offerId: string | undefined;
+    let packageId: string | undefined;
+    let source = 'promo_code';
+    
+    if (promoToken) {
+      // This is a formal promo token
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if token is expired
+      if (promoToken.validUntil < today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Promotional token has expired'
+        });
+      }
+      
+      // Extract details from token
+      clinicId = promoToken.clinicId;
+      const payload = promoToken.payload as Record<string, any>;
+      
+      if (promoToken.promoType === 'special_offer') {
+        offerId = payload?.offerId;
+      } else if (promoToken.promoType === 'treatment_package') {
+        packageId = payload?.packageId;
+      }
+      
+      // Mark this as coming from a token
+      source = 'promo_token';
+      
+    } else {
+      // Check if it's a special offer promo code directly
+      const specialOffer = await db.query.specialOffers.findFirst({
+        where: eq(specialOffers.promoCode, promoCode)
+      });
+      
+      if (!specialOffer) {
+        return res.status(404).json({
+          success: false,
+          message: 'Invalid promotion code'
+        });
+      }
+      
+      // Check if the offer is active
+      if (!specialOffer.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'This promotional offer is no longer active'
+        });
+      }
+      
+      // Check if the offer has reached max uses (if applicable)
+      if (specialOffer.maxUses && specialOffer.usedCount >= specialOffer.maxUses) {
+        return res.status(400).json({
+          success: false,
+          message: 'This promotional offer has reached its maximum number of uses'
+        });
+      }
+      
+      clinicId = specialOffer.clinicId;
+      offerId = specialOffer.id;
+    }
+    
+    // 2. Create a new quote
+    console.log(`Creating quote for userId=${userId}, clinicId=${clinicId}, offerId=${offerId}, packageId=${packageId}`);
+    
+    const newQuote = await db.insert(quotes)
+      .values({
+        patientId: userId,
+        clinicId,
+        promoToken: promoCode,
+        source,
+        offerId,
+        packageId
+      })
+      .returning();
+    
+    if (!newQuote || newQuote.length === 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create quote from promotion'
+      });
+    }
+    
+    const quoteId = newQuote[0].id;
+    
+    // 3. If it's a special offer with a direct code, increment the usage count
+    if (source === 'promo_code' && offerId) {
+      await db.update(specialOffers)
+        .set({
+          usedCount: db.sql`${specialOffers.usedCount} + 1`
+        })
+        .where(eq(specialOffers.id, offerId));
+    }
+    
+    // 4. Process treatment lines based on the promotion type
+    if (offerId) {
+      // For special offers - find the offer details
+      const offer = await db.query.specialOffers.findFirst({
+        where: eq(specialOffers.id, offerId)
+      });
+      
+      if (offer && offer.bonus) {
+        // Add bonus items to the quote if applicable
+        const bonusItem = offer.bonus as { description: string, unitPrice: number };
+        
+        // Add the special offer bonus line
+        await db.insert(treatmentLines)
+          .values({
+            clinicId,
+            patientId: userId,
+            quoteId,
+            procedureCode: 'SPECIAL_OFFER_BONUS',
+            description: bonusItem.description,
+            quantity: 1,
+            unitPrice: bonusItem.unitPrice,
+            status: 'draft'
+          });
+        
+        console.log(`Added special offer bonus to quote: ${bonusItem.description}`);
+      }
+    } else if (packageId) {
+      // For packages - find the package details
+      const pkg = await db.query.treatmentPackages.findFirst({
+        where: eq(treatmentPackages.id, packageId)
+      });
+      
+      if (pkg) {
+        // Add the treatments from the package
+        const packageItems = pkg.items as string[];
+        
+        // For each treatment code in the package
+        for (const treatmentCode of packageItems) {
+          // Look up the standardized treatment (if implemented)
+          const stdTreatment = await db.query.standardizedTreatments.findFirst({
+            where: eq(standardizedTreatments.code, treatmentCode)
+          });
+          
+          if (stdTreatment) {
+            // Calculate discounted price
+            const discountedPrice = stdTreatment.basePriceGBP * (1 - (pkg.discountPct / 100));
+            
+            // Add the treatment line
+            await db.insert(treatmentLines)
+              .values({
+                clinicId,
+                patientId: userId,
+                quoteId,
+                procedureCode: stdTreatment.code,
+                description: stdTreatment.description,
+                quantity: 1,
+                unitPrice: discountedPrice,
+                isPackage: true,
+                packageId,
+                status: 'draft'
+              });
+            
+            console.log(`Added package treatment to quote: ${stdTreatment.description}`);
+          }
+        }
+      }
+    }
+    
+    // Generate a URL for the quote wizard
+    const quoteUrl = `/quote/wizard?quoteId=${quoteId}`;
+    
+    // 5. Return the newly created quote ID and URL
+    return res.status(201).json({
+      success: true,
+      message: 'Quote created successfully from promotion',
+      quoteId,
+      quoteUrl
+    });
+    
+  } catch (error: any) {
+    console.error('Error processing promotion code:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process promotional code',
       error: error.message
     });
   }

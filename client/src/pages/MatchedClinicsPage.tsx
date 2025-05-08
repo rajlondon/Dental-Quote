@@ -908,9 +908,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   : `£${clinic.specialOffer.discountValue} off `}
                                 {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 
                                   ? `${clinic.specialOffer.applicableTreatments.length} treatments` 
-                                  : clinic.specialOffer.applicableTreatment 
-                                    ? clinic.specialOffer.applicableTreatment.replace(/_/g, ' ') 
-                                    : 'eligible treatments'}
+                                  : 'eligible treatments'}
                                 <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
                                   expandedOfferDetails === clinic.id ? 'rotate-180' : ''
                                 }`} />
