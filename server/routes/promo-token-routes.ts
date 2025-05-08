@@ -231,13 +231,14 @@ router.post('/quotes/from-promo', async (req, res) => {
     let clinicId, packageId, offerId, descriptions, prices;
     if (promoCode === 'IMPLANTPKG20') {
       // This is a package promo code
-      packageId = 'pkg-001';
+      // Generate a proper UUID for the package ID
+      packageId = 'e1b2f8a3-d4c5-6b7a-8e9f-0a1b2c3d4e5f'; // Using a UUID format
       clinicId = 1;
       descriptions = ['Dental Implant', 'Crown', 'X-Ray Scan'];
       prices = [800, 300, 50]; // Already discounted prices
     } else if (promoCode === 'FREECONSULT') {
       // This is a special offer promo code
-      offerId = 'offer-001';
+      offerId = 'f6e5d4c3-b2a1-0f9e-8d7c-6b5a4e3f2d1c'; // Using a UUID format
       clinicId = 2;
       descriptions = ['Free Dental Consultation'];
       prices = [0]; // Free
@@ -249,48 +250,75 @@ router.post('/quotes/from-promo', async (req, res) => {
     }
     
     // Patient ID - use default for testing purposes
-    const userId = 45;
+    const patientId = 45;
     
-    // 3. Create a new quote
-    // Use snake_case for all database columns to match the actual schema
-    const [newQuote] = await db.insert(quotes)
-      .values({
-        patient_id: userId,
-        clinic_id: clinicId,
-        status: 'draft',
-        source: 'promo_code'
-      })
-      .returning();
-      
-    if (!newQuote) {
+    // 3. Create a new quote using direct SQL
+    console.log("Inserting quote with patient_id:", patientId);
+    
+    // Use the raw pool connection for direct SQL
+    const pool = db.$client;
+    const insertQuoteQuery = `
+      INSERT INTO quotes (patient_id, clinic_id, status, source, created_at, updated_at) 
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+    
+    const now = new Date();
+    const queryParams = [patientId, clinicId.toString(), 'draft', 'promo_code', now, now];
+    console.log("SQL query parameters:", queryParams);
+    
+    const quoteResult = await pool.query(insertQuoteQuery, queryParams);
+    console.log("Quote insert result:", JSON.stringify(quoteResult.rows));
+    
+    if (!quoteResult.rows || quoteResult.rows.length === 0) {
       return res.status(500).json({
         success: false,
         message: 'Failed to create quote from promotion'
       });
     }
     
+    const newQuote = quoteResult.rows[0];
     const quoteId = newQuote.id;
     console.log(`Created quote ID ${quoteId} from promo code ${promoCode}`);
     
     // 4. Add treatment lines to the quote
     for (let i = 0; i < descriptions.length; i++) {
-      const treatmentLine = {
-        clinic_id: clinicId,
-        patient_id: userId,
-        quote_id: quoteId,
-        procedure_code: (packageId ? 'PKG' : 'PROMO') + i,  // Generate a procedure code
-        description: descriptions[i],
-        quantity: 1,
-        unit_price: prices[i],
-        base_price_gbp: packageId ? prices[i] * 1.25 : prices[i], // 25% more for original price if package
-        is_package: packageId ? true : false,
-        status: 'draft',
-        is_locked: true,
-        package_id: packageId || null
-      };
-      
-      await db.insert(treatmentLines).values(treatmentLine);
-      console.log(`Added treatment line: ${descriptions[i]} to quote ${quoteId}`);
+      try {
+        const procedureCode = (packageId ? 'PKG' : 'PROMO') + i;
+        const description = descriptions[i];
+        const unitPrice = prices[i];
+        const basePriceGBP = packageId ? prices[i] * 1.25 : prices[i]; // 25% more for original price if package
+        const isPackage = packageId ? true : false;
+        
+        // Use direct SQL insert with the pool
+        const insertLineQuery = `
+          INSERT INTO treatment_lines (
+            clinic_id, patient_id, quote_id, procedure_code, description, 
+            quantity, unit_price, base_price_gbp, is_package, status, 
+            is_locked, package_id, created_at, updated_at
+          ) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          RETURNING id
+        `;
+        
+        const lineParams = [
+          clinicId.toString(), patientId, quoteId, procedureCode, description,
+          1, unitPrice, basePriceGBP, isPackage, 'draft',
+          true, packageId || null, now, now
+        ];
+        
+        console.log(`Adding treatment line "${description}" with params:`, lineParams);
+        
+        const lineResult = await pool.query(insertLineQuery, lineParams);
+        
+        if (lineResult.rows && lineResult.rows.length > 0) {
+          console.log(`Added treatment line: ${description} to quote ${quoteId} with ID ${lineResult.rows[0].id}`);
+        } else {
+          console.log(`Failed to add treatment line: ${description}`);
+        }
+      } catch (lineError) {
+        console.error(`Error adding treatment line ${descriptions[i]}:`, lineError);
+      }
     }
     
     // 5. Generate a URL for the quote wizard
