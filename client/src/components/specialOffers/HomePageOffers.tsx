@@ -1,23 +1,41 @@
 import React, { useState, useEffect } from 'react';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import SpecialOfferCard from './SpecialOfferCard';
 import { apiRequest } from '@/lib/queryClient';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 interface HomePageOffersProps {
   className?: string;
 }
 
+const SpecialOfferSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  discount_type: z.string(),
+  discount_value: z.number(),
+  applicable_treatments: z.array(z.string()),
+  start_date: z.string(),
+  end_date: z.string(),
+  promo_code: z.string(),
+  terms_conditions: z.string(),
+  banner_image: z.string().optional(),
+  treatment_price_gbp: z.number().optional(),
+});
+
+type SpecialOffer = z.infer<typeof SpecialOfferSchema>;
+
 const HomePageOffers: React.FC<HomePageOffersProps> = ({ className = '' }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   const [autoPlay, setAutoPlay] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
 
   // Fetch special offers
-  const { data: offers = [], isLoading, error } = useQuery({
+  const { data: offers = [], isLoading, error } = useQuery<SpecialOffer[]>({
     queryKey: ['/api/special-offers/homepage'],
     // Default queryFn is already set up in the app
   });
@@ -33,7 +51,7 @@ const HomePageOffers: React.FC<HomePageOffersProps> = ({ className = '' }) => {
       
       if (data.success && data.quoteId) {
         // Redirect to the quote wizard or detail page
-        navigate(data.quoteUrl || `/quote/wizard?quoteId=${data.quoteId}`);
+        setLocation(data.quoteUrl || `/quote/wizard?quoteId=${data.quoteId}`);
       }
     } catch (error) {
       console.error('Error applying promo code:', error);
@@ -83,10 +101,12 @@ const HomePageOffers: React.FC<HomePageOffersProps> = ({ className = '' }) => {
     return null; // Don't show anything if no offers
   }
 
-  const visibleOffers = [];
+  const visibleOffers: SpecialOffer[] = [];
   for (let i = 0; i < itemsPerPage; i++) {
-    const index = (currentIndex + i) % offers.length;
-    visibleOffers.push(offers[index]);
+    if (offers.length > 0) {
+      const index = (currentIndex + i) % offers.length;
+      visibleOffers.push(offers[index]);
+    }
   }
 
   return (
