@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigation } from '@/hooks/use-navigation';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
+import DiscountedPriceDisplay from '@/components/specialOffers/DiscountedPriceDisplay';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -17,8 +18,11 @@ type QuoteTreatment = {
   name: string;
   quantity?: number;
   price?: number;
+  basePriceGBP?: number; // Original price before discount
+  unitPriceGBP?: number; // Discounted price
   isPackage?: boolean;
   isSpecialOffer?: boolean; // Flag to easily identify special offers
+  isLocked?: boolean; // Flag to indicate if the treatment is locked (part of a package)
   packageId?: string;
   specialOffer?: {
     id: string;
@@ -138,8 +142,11 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
         name: t.name || 'Treatment',
         quantity: t.quantity || 1,
         price: t.price || 0,
+        basePriceGBP: t.basePriceGBP || t.price || 0,
+        unitPriceGBP: t.unitPriceGBP || t.price || 0,
         isPackage: t.isPackage || false,
         isSpecialOffer: !!t.specialOffer, // Set flag based on specialOffer existence
+        isLocked: t.isLocked || false,
         packageId: t.packageId || undefined,
         specialOffer: t.specialOffer || undefined
       }));
@@ -153,8 +160,11 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
         name: t.name || 'Treatment',
         quantity: t.quantity || 1,
         price: t.price || 0,
+        basePriceGBP: t.basePriceGBP || t.price || 0,
+        unitPriceGBP: t.unitPriceGBP || t.price || 0,
         isPackage: t.isPackage || false,
         isSpecialOffer: !!t.specialOffer, // Set flag based on specialOffer existence
+        isLocked: t.isLocked || false,
         packageId: t.packageId || undefined,
         specialOffer: t.specialOffer || undefined
       }));
@@ -169,8 +179,11 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
           name: quoteRequest.specificTreatment || quoteRequest.treatment || 'Dental Treatment',
           quantity: 1,
           price: quoteRequest.estimatedPrice || 1500, // Default price if none available
+          basePriceGBP: quoteRequest.basePriceGBP || quoteRequest.estimatedPrice || 1500,
+          unitPriceGBP: quoteRequest.unitPriceGBP || quoteRequest.estimatedPrice || 1500,
           isPackage: quoteRequest.isPackage || false,
           isSpecialOffer: !!quoteRequest.specialOffer, // Set flag based on specialOffer existence
+          isLocked: quoteRequest.isLocked || false,
           packageId: quoteRequest.packageId || undefined,
           specialOffer: quoteRequest.specialOffer || undefined
         }
@@ -479,8 +492,33 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {treatment.quantity || 1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                    £{treatment.price || 0}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                    {/* Show discounted price with original price strikethrough if there's a special offer */}
+                    {treatment.isSpecialOffer || treatment.specialOffer ? (
+                      <div className="flex flex-col items-end">
+                        {/* Original price with strikethrough */}
+                        {treatment.basePriceGBP && treatment.basePriceGBP !== treatment.price && (
+                          <span className="text-gray-400 line-through text-xs">
+                            £{treatment.basePriceGBP}
+                          </span>
+                        )}
+                        {/* Discounted price */}
+                        <span className="text-green-600 font-semibold">
+                          £{treatment.price || 0}
+                        </span>
+                        {/* Calculate and show discount percentage */}
+                        {treatment.basePriceGBP && treatment.basePriceGBP > treatment.price && (
+                          <span className="text-xs text-green-600">
+                            {Math.round(((treatment.basePriceGBP - treatment.price) / treatment.basePriceGBP) * 100)}% off
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      /* Regular price without special formatting */
+                      <span className="text-gray-600">
+                        £{treatment.price || 0}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
