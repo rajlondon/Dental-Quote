@@ -42,6 +42,7 @@ import clinicSpecialOffersRoutes from "./routes/clinic-special-offers-fixed-v2";
 import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
 import offersRoutes from "./routes/offers-routes"; // Add our new offers routes
 import offerStartRoutes from "./routes/offer-start-routes"; // Add the offer start API routes
+import { appliedOffersRouter } from "./routes/applied-offers"; // Add applied offers tracking
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
@@ -318,6 +319,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the new offer start routes for special offers and packages
   app.use('/api/v1', offerStartRoutes);
+  
+  // Register the applied offers tracking API
+  app.use('/api/applied-offers', appliedOffersRouter);
   
   // Also register the LEGACY offer endpoint at the root for backward compatibility
   app.use('/api', treatmentOfferIntegration);
