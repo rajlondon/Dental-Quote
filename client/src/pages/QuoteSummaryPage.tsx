@@ -67,9 +67,55 @@ const QuoteSummaryPage: React.FC = () => {
     setLocation('/patient-portal');
   };
 
-  // Continue to quote editing
-  const editQuote = () => {
-    setLocation(`/patient/quotes/${quoteId}/edit`);
+  // Continue to quote editing - use a different approach to avoid permission issues
+  const editQuote = async () => {
+    try {
+      // First try to authenticate the user if not already logged in
+      const authResponse = await fetch('/api/auth/user');
+      const authData = await authResponse.json();
+      
+      if (!authData.success || !authData.user) {
+        // If not authenticated, redirect to login first
+        toast({
+          title: 'Login Required',
+          description: 'Please log in to edit your quote',
+        });
+        localStorage.setItem('redirect_after_login', `/your-quote?quoteId=${quoteId}`);
+        setLocation('/portal-login');
+        return;
+      }
+      
+      // If authenticated, check if we need to claim this quote for the user
+      const claimResponse = await fetch(`/api/quotes/${quoteId}/claim`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          patientId: authData.user.id
+        }),
+      });
+      
+      if (claimResponse.ok) {
+        // Successfully claimed (or was already owned by the user)
+        setLocation(`/patient/quotes/${quoteId}/edit`);
+      } else {
+        // Fallback to the patient portal
+        toast({
+          title: 'Access Issue',
+          description: 'Could not access quote directly. Redirecting to patient portal.',
+        });
+        localStorage.setItem('viewQuoteId', quoteId || '');
+        setLocation('/patient-portal');
+      }
+    } catch (err) {
+      console.error('Error claiming quote:', err);
+      toast({
+        title: 'Error',
+        description: 'Could not edit quote. Please try again later.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Download the quote

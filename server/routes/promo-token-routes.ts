@@ -475,9 +475,9 @@ async function handlePromoQuote(params: any, res: any) {
           INSERT INTO treatment_lines (
             clinic_id, patient_id, quote_id, procedure_code, description, 
             quantity, unit_price, base_price_gbp, is_package, status, 
-            is_locked, package_id, is_discounted, created_at, updated_at
+            is_locked, package_id, created_at, updated_at
           ) 
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
           RETURNING id
         `;
         
@@ -494,7 +494,6 @@ async function handlePromoQuote(params: any, res: any) {
           'draft',
           true, // Locked because it's part of a promotion
           packageId || null, 
-          isItemDiscounted,
           now, 
           now
         ];
@@ -523,9 +522,9 @@ async function handlePromoQuote(params: any, res: any) {
           INSERT INTO treatment_lines (
             clinic_id, patient_id, quote_id, procedure_code, description, 
             quantity, unit_price, base_price_gbp, is_package, status, 
-            is_locked, is_bonus, is_discounted, created_at, updated_at
+            is_locked, is_bonus, created_at, updated_at
           ) 
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
           RETURNING id
         `;
         
@@ -542,7 +541,6 @@ async function handlePromoQuote(params: any, res: any) {
           'draft',
           true, 
           true, // This is a bonus line
-          true, // It is discounted (it's a pure discount)
           now, 
           now
         ];
