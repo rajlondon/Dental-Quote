@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { CalendarClock, CheckCircle2, InfoIcon, ShoppingBag, Tag } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { formatDate } from '@/lib/utils';
 
 interface SpecialOfferCardProps {
@@ -33,14 +33,14 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   onClick,
   compact = false 
 }) => {
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
 
   const handleUseOffer = () => {
     if (onClick) {
       onClick(offer.promo_code);
     } else {
       // Default behavior - redirect to quote page with promo code
-      navigate(`/your-quote?promoCode=${offer.promo_code}`);
+      setLocation(`/your-quote?promoCode=${offer.promo_code}`);
     }
   };
   
