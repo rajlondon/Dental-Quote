@@ -115,12 +115,9 @@ export const appliedOfferService = {
     let discountValue = offer.discountValue ? 
       (typeof offer.discountValue === 'string' ? parseFloat(offer.discountValue) : offer.discountValue) : 0;
     
-    // Handle specific treatments if that metadata is available from the offer
-    // Check available metadata fields based on schema
-    const applicableTreatments = offer.applicableTreatments || 
-                               (offer.metadata && typeof offer.metadata === 'object' && 
-                               'applicableTreatments' in offer.metadata ? 
-                               offer.metadata.applicableTreatments : null);
+    // Handle specific treatments
+    // This is now directly on the specialOffer object rather than in metadata
+    const applicableTreatments = offer.applicableTreatments || null;
     
     const appliesTo = applicableTreatments ? 'specific_treatments' : 'all';
     
