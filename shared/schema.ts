@@ -1125,3 +1125,28 @@ export const treatmentLinesRelations = relations(treatmentLines, ({ one }) => ({
     relationName: "patient_treatment_lines",
   }),
 }));
+
+// === STANDARDIZED TREATMENTS ===
+// Base table for standardized treatment codes and pricing
+export const standardizedTreatments = pgTable("standardized_treatments", {
+  code: text("code").primaryKey(),
+  description: text("description").notNull(),
+  basePriceGBP: integer("base_price_gbp").notNull(),
+  basePriceUSD: integer("base_price_usd").notNull(),
+  category: varchar("category", { length: 50 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertStandardizedTreatmentSchema = createInsertSchema(standardizedTreatments)
+  .omit({
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export type StandardizedTreatment = typeof standardizedTreatments.$inferSelect;
+export type InsertStandardizedTreatment = z.infer<typeof insertStandardizedTreatmentSchema>;
+
+// Update existing treatmentPackages and specialOffers tables to align with spec
+// We'll enhance these existing tables rather than creating new ones
