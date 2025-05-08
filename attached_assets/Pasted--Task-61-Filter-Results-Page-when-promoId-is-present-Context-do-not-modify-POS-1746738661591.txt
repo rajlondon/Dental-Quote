@@ -1,0 +1,83 @@
+# Task #61  – Filter Results Page when `promoId` is present
+
+### Context (do **not** modify)
+
+* `POST /api/v1/quotes/from‑promo` works; a sample call returns:
+
+  ```json
+  {
+    "quoteId": "q_123",
+    "promoId": "PKG_IMPLANT_6",
+    "clinicId": "cl_istanbul123"
+  }
+  ```
+* `quote_lines` already contain discounted package lines (or a £0 bonus line) with `basePriceGBP`, `unitPriceGBP`, and `isLocked`.
+* Wizard URL is called as `/wizard/start?quoteId=q_123` and every step keeps that param.
+* **Problem**: on the “choose clinic” step the UI still renders all clinics and their default offers instead of just the promo clinic.
+
+### Goal
+
+When `quote.promoId` is not null **show exactly one clinic card**—the clinic attached to the quote—and decorate it with the promo title.
+
+---
+
+## Files to touch (only these)
+
+| File                                                                                                             | Purpose                                                                   |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `client/src/pages/QuoteResultsPage.tsx` *(in some repos this is `MatchedClinicsPage.tsx` — choose the existing)* | Add early‑exit path when `quote.promoId` exists                           |
+| `client/src/components/SingleClinicCard.tsx` *(create if absent)*                                                | Lightweight wrapper that renders a normal `ClinicCard` plus a promo badge |
+
+---
+
+## Implementation steps
+
+1. **Import the current quote**
+
+   ```tsx
+   import { useQuote } from "@/contexts/QuoteFlowContext";
+   ```
+2. **Early‑exit render**
+
+   ```tsx
+   const { quote } = useQuote();
+   if (quote?.promoId) {
+     const clinic = clinics.find(c => c.id === quote.clinicId);
+     return (
+       <SingleClinicCard
+         clinic={clinic}
+         badge={quote.promo?.title || 'Promo applied'}
+       />
+     );
+   }
+   // existing multi‑clinic grid below
+   ```
+3. **SingleClinicCard** (reuse existing `ClinicCard` styles):
+
+   ```tsx
+   export default function SingleClinicCard({ clinic, badge }) {
+     return (
+       <div className="mb-8">
+         <ClinicCard clinic={clinic} />
+         <span className="inline-block mt-2 rounded bg-emerald-100 px-2 py-1 text-sm font-semibold text-emerald-700">
+           {badge}
+         </span>
+       </div>
+     );
+   }
+   ```
+
+Do **not** change any other files.
+
+---
+
+## Quick QA (please run & paste outputs)
+
+```bash
+# 1. Create promo quote
+echo "curl -sX POST /api/v1/quotes/from-promo -d '{\"promoId\":\"PKG_IMPLANT_6\"}'" > /dev/null
+# 2. Open /wizard/start?quoteId=q_123 in browser
+#    • Should render ONE clinic card with promo badge
+```
+
+If QA passes, special‑offer / package flow is visually complete.
