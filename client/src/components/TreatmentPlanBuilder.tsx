@@ -331,6 +331,17 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
   
+  // Apply special offers to treatments whenever the treatment list or special offer changes
+  useEffect(() => {
+    if (hasActiveOffer && treatments.length > 0) {
+      // Apply special offer discounts to eligible treatments
+      const updatedTreatments = applySpecialOfferToTreatments(treatments);
+      if (JSON.stringify(updatedTreatments) !== JSON.stringify(treatments)) {
+        setTreatments(updatedTreatments);
+      }
+    }
+  }, [hasActiveOffer, specialOffer, treatments, applySpecialOfferToTreatments]);
+
   // Update parent component when treatments change
   useEffect(() => {
     if (onTreatmentsChange) {
