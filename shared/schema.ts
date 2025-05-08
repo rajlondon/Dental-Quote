@@ -368,9 +368,28 @@ export const specialOffers = pgTable("special_offers", {
   clinicId: integer("clinic_id").references(() => clinics.id),
   discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
   discountType: varchar("discount_type", { length: 20 }).default("percentage"), // percentage or fixed_amount
+  termsAndConditions: text("terms_and_conditions"),
+  applicableTreatments: json("applicable_treatments").$type<string[]>().default([]),
+  minTreatmentCount: integer("min_treatment_count").default(1),
+  maxDiscountAmount: decimal("max_discount_amount", { precision: 10, scale: 2 }),
+  
+  // Images and display properties
   imageUrl: varchar("image_url", { length: 255 }),
+  badgeText: varchar("badge_text", { length: 50 }),
+  displayOnHomepage: boolean("display_on_homepage").default(true),
+  featured: boolean("featured").default(false),
+  sortOrder: integer("sort_order").default(0),
+  
+  // Approval and activity status
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, approved, rejected
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   validUntil: timestamp("valid_until"),
   isActive: boolean("is_active").default(true),
+  
+  // Tracking
+  createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -392,6 +411,16 @@ export const specialOffersRelations = relations(specialOffers, ({ one, many }) =
     fields: [specialOffers.clinicId],
     references: [clinics.id],
   }),
+  creator: one(users, {
+    fields: [specialOffers.createdBy],
+    references: [users.id],
+    relationName: "special_offer_creator"
+  }),
+  approver: one(users, {
+    fields: [specialOffers.approvedBy],
+    references: [users.id],
+    relationName: "special_offer_approver"
+  }),
   treatmentPlans: many(treatmentPlans)
 }));
 
@@ -400,11 +429,41 @@ export const treatmentPackages = pgTable("treatment_packages", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   clinicId: integer("clinic_id").references(() => clinics.id),
+  
+  // Pricing
   priceGBP: decimal("price_gbp", { precision: 10, scale: 2 }),
   priceUSD: decimal("price_usd", { precision: 10, scale: 2 }),
+  originalPriceGBP: decimal("original_price_gbp", { precision: 10, scale: 2 }),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }),
+  
+  // Package content
+  treatments: json("treatments").$type<{
+    treatmentType: string;
+    count: number;
+    details?: string;
+  }[]>().default([]),
+  includedServices: json("included_services").$type<string[]>().default([]),
+  
+  // Display properties
   imageUrl: varchar("image_url", { length: 255 }),
-  treatments: json("treatments").default([]),
+  badgeText: varchar("badge_text", { length: 50 }),
+  displayOnHomepage: boolean("display_on_homepage").default(true),
+  featured: boolean("featured").default(false),
+  sortOrder: integer("sort_order").default(0),
+  
+  // Approval and activity status
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, approved, rejected
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
+  
+  // Validity
+  validFrom: timestamp("valid_from"),
+  validUntil: timestamp("valid_until"),
   isActive: boolean("is_active").default(true),
+  
+  // Tracking
+  createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -426,9 +485,75 @@ export const treatmentPackagesRelations = relations(treatmentPackages, ({ one, m
     fields: [treatmentPackages.clinicId],
     references: [clinics.id],
   }),
+  creator: one(users, {
+    fields: [treatmentPackages.createdBy],
+    references: [users.id],
+    relationName: "package_creator"
+  }),
+  approver: one(users, {
+    fields: [treatmentPackages.approvedBy],
+    references: [users.id],
+    relationName: "package_approver"
+  }),
   treatmentPlans: many(treatmentPlans)
 }));
 
+// Applied Special Offers - tracks when a special offer is applied to treatments
+export const appliedSpecialOffers = pgTable("applied_special_offers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  specialOfferId: uuid("special_offer_id").notNull().references(() => specialOffers.id),
+  treatmentPlanId: integer("treatment_plan_id").notNull().references(() => treatmentPlans.id),
+  patientId: integer("patient_id").notNull().references(() => users.id),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  
+  // Discount details
+  discountType: varchar("discount_type", { length: 20 }).notNull(), // percentage, fixed_amount
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }).notNull(),
+  discountedPrice: decimal("discounted_price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("GBP").notNull(),
+  
+  // What treatments did this apply to?
+  appliedToTreatments: json("applied_to_treatments").$type<string[]>(),
+  
+  // Where did the offer come from?
+  originatingPage: varchar("originating_page", { length: 100 }), // home, results, clinic_profile
+  
+  // Tracking
+  appliedAt: timestamp("applied_at").defaultNow().notNull(),
+  usageStatus: varchar("usage_status", { length: 20 }).default("active").notNull(), // active, expired, cancelled
+  convertedToBooking: boolean("converted_to_booking").default(false),
+  bookingId: integer("booking_id").references(() => bookings.id),
+  
+  // Notes about usage
+  notes: text("notes"),
+});
+
+// Relations for applied special offers
+export const appliedSpecialOffersRelations = relations(appliedSpecialOffers, ({ one }) => ({
+  specialOffer: one(specialOffers, {
+    fields: [appliedSpecialOffers.specialOfferId],
+    references: [specialOffers.id],
+  }),
+  treatmentPlan: one(treatmentPlans, {
+    fields: [appliedSpecialOffers.treatmentPlanId],
+    references: [treatmentPlans.id],
+  }),
+  patient: one(users, {
+    fields: [appliedSpecialOffers.patientId],
+    references: [users.id],
+  }),
+  clinic: one(clinics, {
+    fields: [appliedSpecialOffers.clinicId],
+    references: [clinics.id],
+  }),
+  booking: one(bookings, {
+    fields: [appliedSpecialOffers.bookingId],
+    references: [bookings.id],
+  }),
+}));
+
+// Add special offer tracking to treatments table
 export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many }) => ({
   patient: one(users, {
     fields: [treatmentPlans.patientId],
@@ -458,6 +583,7 @@ export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many })
   }),
   files: many(files, { relationName: "treatment_plan_files" }),
   booking: many(bookings),
+  appliedOffers: many(appliedSpecialOffers),
 }));
 
 // === BOOKINGS ===
