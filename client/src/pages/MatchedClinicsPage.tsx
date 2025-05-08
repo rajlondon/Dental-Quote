@@ -171,18 +171,79 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     if (clinic) {
       const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
       
+      // Store relevant data in localStorage for the quote flow
       localStorage.setItem('selectedClinicData', JSON.stringify({
+        id: clinic.id,
         name: clinic.name,
         treatments: clinicTreatments,
         totalPrice: totalPrice
       }));
       
+      // Store promo information if applicable
+      if (isPromoTokenFlow && promoToken) {
+        localStorage.setItem('promoToken', promoToken);
+        localStorage.setItem('promoFlow', JSON.stringify({
+          source: source,
+          clinicId: clinicId,
+          promoToken: promoToken
+        }));
+      }
+      
+      // If we have a special offer, store that too
+      if (clinic.specialOffer) {
+        localStorage.setItem('appliedSpecialOffer', JSON.stringify(clinic.specialOffer));
+      }
+      
+      // Store the treatment items too so they're available in the portal
+      const urlParams = new URLSearchParams(window.location.search);
+      const treatmentItemsParam = urlParams.get('treatmentItems');
+      if (treatmentItemsParam) {
+        localStorage.setItem('treatmentItems', treatmentItemsParam);
+      }
+      
       // If a callback is provided, use it
       if (onSelectClinic) {
         onSelectClinic(clinicId);
       } else {
-        // Otherwise navigate to the quote summary page
-        setLocation('/quote-summary');
+        // Otherwise navigate to the quote summary page or patient portal
+        if (isPromoTokenFlow) {
+          // In promo flow, create a draft quote and navigate to patient portal
+          try {
+            // Create draft quote via API
+            fetch('/api/v1/quotes/from-promo', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                promoToken,
+                clinicId,
+                treatmentItems: treatmentPlan
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success && data.quoteId) {
+                // Navigate to patient portal with the quote ID
+                setLocation(`/patient/quotes/${data.quoteId}`);
+              } else {
+                // Fallback to quote summary page
+                setLocation('/quote-summary');
+              }
+            })
+            .catch(error => {
+              console.error('Error creating quote from promo:', error);
+              // Fallback to quote summary page
+              setLocation('/quote-summary');
+            });
+          } catch (error) {
+            console.error('Error in promo quote creation:', error);
+            setLocation('/quote-summary');
+          }
+        } else {
+          // Regular flow - go to quote summary
+          setLocation('/quote-summary');
+        }
       }
     }
   };
