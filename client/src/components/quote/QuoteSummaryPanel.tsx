@@ -105,17 +105,17 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
           )}
           
           {treatments.map((treatment, index) => (
-            <div key={index} className={`flex justify-between items-start py-2 border-b ${(treatment.isSpecialOffer || treatment.specialOffer || treatment.promoToken) ? 'border-primary/20 bg-primary/5' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100'}`}>
+            <div key={index} className={`flex justify-between items-start py-3 px-2 mb-2 border rounded-md ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'border-green-200 bg-gradient-to-r from-green-50 to-blue-50 shadow-sm' : treatment.promoToken ? 'border-blue-200 bg-blue-50/50 shadow-sm' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100 bg-white'}`}>
               <div className="flex-1">
                 <div className="flex flex-col">
                   {(treatment.isSpecialOffer || treatment.specialOffer) && (
                     <div className="mb-1">
-                      <span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10 flex items-center">
-                        <Sparkles className="h-3 w-3 mr-1" />
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gradient-to-r from-green-100 to-blue-100 text-blue-700 border border-blue-200 flex items-center shadow-sm inline-block">
+                        <Sparkles className="h-3 w-3 mr-1 text-green-600" />
                         {treatment.specialOffer ? treatment.specialOffer.title : "Special Offer"}
                       </span>
                       {treatment.specialOffer && (
-                        <span className="text-xs text-primary mt-1 block">
+                        <span className="text-xs text-green-600 mt-1 block font-medium">
                           {treatment.specialOffer.discountType === 'percentage' 
                             ? `${treatment.specialOffer.discountValue}% discount applied` 
                             : `£${treatment.specialOffer.discountValue} discount applied`}
@@ -155,29 +155,31 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
               </div>
               <div className="text-right">
                 {treatment.specialOffer ? (
-                  <>
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="line-through text-sm text-gray-500">
+                  <div className="relative">
+                    <div className="mb-1 bg-green-50 border border-green-100 rounded-md px-2 py-1 text-right">
+                      <span className="line-through text-sm text-gray-500 block">
                         £{formatCurrency(Math.round(treatment.priceGBP * (100 / (100 - (treatment.specialOffer.discountType === 'percentage' ? treatment.specialOffer.discountValue : 0)))))}
                       </span>
-                      <span className="font-bold text-primary">£{formatCurrency(treatment.priceGBP)}</span>
+                      <span className="font-bold text-green-700 text-lg">£{formatCurrency(treatment.priceGBP)}</span>
+                      <div className="absolute -top-2 -right-1 bg-green-600 text-white text-xs font-bold py-0.5 px-1.5 rounded shadow-sm transform rotate-3">
+                        {treatment.specialOffer.discountType === 'percentage' 
+                          ? `-${treatment.specialOffer.discountValue}%` 
+                          : `-£${formatCurrency(treatment.specialOffer.discountValue)}`}
+                      </div>
                     </div>
-                    <span className="block text-xs text-primary mt-1">
-                      {treatment.specialOffer.discountType === 'percentage' 
-                        ? `Save ${treatment.specialOffer.discountValue}%` 
-                        : `Save £${formatCurrency(treatment.specialOffer.discountValue)}`}
-                    </span>
-                  </>
+                  </div>
                 ) : treatment.isSpecialOffer || treatment.promoToken ? (
-                  <>
-                    <span className="font-bold text-primary">£{formatCurrency(treatment.priceGBP)}</span>
-                    {/* For promo token treatments, show a discount label */}
-                    {treatment.promoToken && (
-                      <span className="block text-xs text-primary mt-1">
-                        Special price applied
-                      </span>
-                    )}
-                  </>
+                  <div className="relative">
+                    <div className="mb-1 bg-blue-50 border border-blue-100 rounded-md px-2 py-1 text-right">
+                      <span className="font-bold text-blue-700 text-lg">£{formatCurrency(treatment.priceGBP)}</span>
+                      {/* For promo token treatments, show a discount label */}
+                      {treatment.promoToken && (
+                        <div className="absolute -top-2 -right-1 bg-blue-600 text-white text-xs font-bold py-0.5 px-1.5 rounded shadow-sm transform rotate-3">
+                          Special Price
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   <span className="font-medium">£{formatCurrency(treatment.subtotalGBP)}</span>
                 )}
