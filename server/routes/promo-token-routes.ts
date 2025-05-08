@@ -350,7 +350,9 @@ router.post('/quotes/from-promo', async (req, res) => {
             description: bonusItem.description,
             quantity: 1,
             unitPrice: bonusItem.unitPrice,
-            status: 'draft'
+            basePriceGBP: null, // Bonus lines can have null base price
+            status: 'draft',
+            isLocked: true // Lock bonus lines
           });
         
         console.log(`Added special offer bonus to quote: ${bonusItem.description}`);
