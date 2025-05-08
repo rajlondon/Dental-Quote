@@ -184,6 +184,7 @@ export function useSpecialOfferTracking() {
         
         return {
           ...safetyTreatment,
+          basePriceGBP: originalPrice, // Store original price for display
           originalPriceGBP: originalPrice,
           priceGBP: newPrice,
           subtotalGBP: newSubtotalGBP,
@@ -193,7 +194,8 @@ export function useSpecialOfferTracking() {
           specialOfferTitle: specialOffer.title,
           discountType: specialOffer.discountType,
           discountValue: specialOffer.discountValue,
-          discountAmount: discountAmount
+          discountAmount: discountAmount,
+          isLocked: specialOffer.applicableTreatment?.includes('package') || false // Lock package items
         };
       }
       
