@@ -78,6 +78,18 @@ export default function SingleClinicCard({ clinic, badge, onSelect, totalPrice }
                   }}
                 />
                 
+                {/* Special offer badge with animation */}
+                {clinic.specialOffer && (
+                  <div className="absolute top-2 left-2 animate-pulse">
+                    <Badge 
+                      className="bg-blue-600 text-white border-none shadow-lg px-3 py-1 flex items-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                      Special Offer
+                    </Badge>
+                  </div>
+                )}
+                
                 {/* Small badge in the corner to indicate tier */}
                 <div className="absolute top-2 right-2">
                   <Badge 
@@ -132,12 +144,45 @@ export default function SingleClinicCard({ clinic, badge, onSelect, totalPrice }
             {/* Price and Action */}
             <div className="md:col-span-1 flex flex-col justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 mb-2">YOUR PACKAGE PRICE</h3>
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">YOUR PRICE AT THIS CLINIC</h3>
                 <div className="mb-2">
                   <p className="text-3xl font-bold text-blue-700">
                     £{totalPrice ? totalPrice.toFixed(2) : calculateClinicPrice(clinic).toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-500">Includes all selected treatments</p>
+                  <p className="text-sm text-green-600">Save up to 70% vs UK prices</p>
+                </div>
+                
+                {/* Special Offer Details */}
+                {clinic.specialOffer && (
+                  <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center gap-2 text-blue-700 font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-badge-percent"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m15 9-6 6"/><path d="M9 9h.01"/><path d="M15 15h.01"/></svg>
+                      <span>{clinic.specialOffer.title}</span>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">{clinic.specialOffer.description}</p>
+                    <div className="mt-2 flex items-center text-xs text-blue-800 gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+                      {clinic.specialOffer.discountType === 'percentage' 
+                        ? `${clinic.specialOffer.discountValue}% discount on selected treatments` 
+                        : `£${clinic.specialOffer.discountValue} off your total`}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Tracking data - treatment details */}
+                <div className="space-y-2 mb-4">
+                  <div className="text-sm flex items-center justify-between">
+                    <span className="text-gray-600">Your treatments:</span>
+                    <span className="font-medium">1 items</span>
+                  </div>
+                  <div className="text-sm flex items-center justify-between">
+                    <span className="text-gray-600">Treatment duration:</span>
+                    <span className="font-medium">3-5 days</span>
+                  </div>
+                  <div className="text-sm flex items-center justify-between">
+                    <span className="text-gray-600">Accommodation:</span>
+                    <span className="font-medium">{clinic.tier === 'premium' ? 'Included' : clinic.tier === 'standard' ? 'Discounted' : 'Available'}</span>
+                  </div>
                 </div>
                 
                 {/* Guarantees Quick View */}
