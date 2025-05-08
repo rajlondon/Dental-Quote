@@ -232,11 +232,40 @@ export function useSpecialOfferTracking() {
     // through the resetFlow method when actually resetting the flow
   };
   
+  /**
+   * Calculate the discounted lines for treatment display
+   * Returns treatments with properly formatted pricing display
+   */
+  const getDiscountedLines = (treatments: BuilderTreatmentItem[]) => {
+    return treatments.map(treatment => {
+      // Skip if there's no basePriceGBP or the unitPrice isn't less than basePrice
+      if (!treatment.basePriceGBP || treatment.priceGBP >= treatment.basePriceGBP) {
+        return treatment;
+      }
+      
+      // Calculate discount percentage for display
+      const discountPercent = Math.round(
+        ((treatment.basePriceGBP - treatment.priceGBP) / treatment.basePriceGBP) * 100
+      );
+      
+      return {
+        ...treatment,
+        // Flag as having a discount for UI rendering
+        hasDiscount: true,
+        // Add display properties for the UI
+        discountPercent,
+        originalPrice: treatment.basePriceGBP,
+        discountedPrice: treatment.priceGBP
+      };
+    });
+  };
+
   return {
     specialOffer,
     setSpecialOffer: setActiveSpecialOffer,
     clearSpecialOffer,
     applySpecialOfferToTreatments,
+    getDiscountedLines,
     hasActiveOffer: !!specialOffer,
     isSpecialOfferFlow
   };
