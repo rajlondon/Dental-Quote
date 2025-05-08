@@ -139,6 +139,14 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
+      <Route path="/quote-summary" component={() => {
+        const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote summary...</div>}>
+            <QuoteSummaryPage />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote">
         {() => <Redirect to="/your-quote" />}
       </Route>
