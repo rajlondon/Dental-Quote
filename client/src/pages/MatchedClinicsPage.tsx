@@ -1170,7 +1170,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           )}
                           
                           <Button 
-                            className={`md:w-auto ${clinic.specialOffer ? 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold shadow-lg' : ''}`}
+                            className="md:w-auto"
                             onClick={() => {
                               // Save the selected clinic in localStorage
                               setSelectedClinic(clinic.id);
@@ -1270,16 +1270,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               }
                             }}
                           >
-                            {clinic.specialOffer ? 
-                              <>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Claim This Offer
-                              </> : 
-                              <>
-                                <Heart className="mr-2 h-4 w-4" />
-                                Select This Clinic
-                              </>
-                            }
+                            <>
+                              <Heart className="mr-2 h-4 w-4" />
+                              Select This Clinic
+                            </>
                           </Button>
                         </div>
                       </div>
