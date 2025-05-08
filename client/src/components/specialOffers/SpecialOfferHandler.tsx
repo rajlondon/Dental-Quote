@@ -69,6 +69,10 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         subtotalUSD: 0,
         guarantee: '30-day',
         isSpecialOffer: true,
+        isLocked: true,
+        isBonus: true,
+        hasDiscount: true,
+        discountPercent: 100,
         specialOffer: {
           id: urlParams.get('offerId') || 'free-consultation',
           title: offerTitle || 'Free Consultation Package',
@@ -164,12 +168,19 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
             category: 'consultation',
             name: treatmentNameFromUrl || specialOffer.title || 'Free Consultation',
             quantity: 1,
-            priceGBP: basePriceGBP,
-            priceUSD: basePriceUSD,
-            subtotalGBP: basePriceGBP,
-            subtotalUSD: basePriceUSD,
+            priceGBP: 0, // Always 0 for free consultation
+            priceUSD: 0, // Always 0 for free consultation
+            subtotalGBP: 0,
+            subtotalUSD: 0,
             guarantee: '30-day',
             isSpecialOffer: true,
+            isLocked: true, // Lock this treatment as it's part of a special offer
+            basePriceGBP: basePriceGBP, // Store original price for display
+            basePriceUSD: basePriceUSD, // Store original price for display
+            hasDiscount: true, // Flag for UI rendering
+            discountPercent: 100, // 100% discount
+            originalPrice: basePriceGBP, // For display purposes
+            discountedPrice: 0, // For display purposes
             specialOffer: {
               id: specialOffer.id,
               title: specialOffer.title || 'Free Consultation Package',
@@ -179,17 +190,11 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
             }
           };
           
-          // Set price to 0 for free consultation
-          consultationTreatment.priceGBP = 0;
-          consultationTreatment.priceUSD = 0;
-          consultationTreatment.subtotalGBP = 0;
-          consultationTreatment.subtotalUSD = 0;
-          
           console.log("📋 SpecialOfferHandler adding free consultation to treatment items:", consultationTreatment);
           onTreatmentsChange([...treatmentItems, consultationTreatment]);
           
           toast({
-            title: "Free Consultation Added",
+            title: "Special Offer Added",
             description: `Your free consultation has been added to your treatment plan.`,
           });
           
@@ -198,18 +203,36 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         }
         
         // Standard special offer treatment (not free consultation)
+        // Use discount values from URL if available, otherwise from specialOffer object
+        const discountType = discountTypeFromUrl || specialOffer.discountType;
+        const discountValue = discountValueFromUrl ? parseFloat(discountValueFromUrl) : specialOffer.discountValue;
+        
+        // According to tech spec, special offers should be added as £0.00 bonus line items
+        // Create special offer treatment per tech spec as a £0.00 line item
+        const specialOfferName = treatmentNameFromUrl || 
+          `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`;
+        
+        // According to tech spec section 6 (PromoEngine.ts)
+        // For 'offer' type, we create a bonus line item with unitPriceGbp: 0
         const specialOfferTreatment: TreatmentItem = {
           id: `special_offer_${Date.now()}`,
           category: 'special_offer',
-          name: treatmentNameFromUrl || 
-                `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Dental Treatment'}`,
+          name: specialOfferName,
           quantity: 1,
-          priceGBP: basePriceGBP,
-          priceUSD: basePriceUSD,
-          subtotalGBP: basePriceGBP,
-          subtotalUSD: basePriceUSD,
+          priceGBP: 0,  // Special offers are £0.00 line items per tech spec
+          priceUSD: 0,  // Special offers are $0.00 line items per tech spec
+          subtotalGBP: 0,
+          subtotalUSD: 0,
           guarantee: '5-year',
           isSpecialOffer: true,
+          isLocked: true, // Lock this treatment as it's part of a special offer
+          isBonus: true,  // Mark as bonus item per tech spec
+          basePriceGBP: basePriceGBP, // Store original price for display/reference
+          basePriceUSD: basePriceUSD, // Store original price for display/reference
+          hasDiscount: true, // Flag for UI rendering
+          discountPercent: discountType === 'percentage' ? discountValue : Math.round((discountValue / basePriceGBP) * 100),
+          originalPrice: basePriceGBP, // For display purposes
+          discountedPrice: 0, // Always 0 for special offers
           specialOffer: {
             id: specialOffer.id,
             title: specialOffer.title,
@@ -219,24 +242,6 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
             clinicId: specialOffer.clinicId || 'dentakay-istanbul'
           }
         };
-        
-        // Use discount values from URL if available, otherwise from specialOffer object
-        const discountType = discountTypeFromUrl || specialOffer.discountType;
-        const discountValue = discountValueFromUrl ? parseFloat(discountValueFromUrl) : specialOffer.discountValue;
-        
-        // Apply the discount based on type
-        if (discountType === 'percentage') {
-          const discountMultiplier = (100 - discountValue) / 100;
-          specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
-          specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
-          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
-          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        } else if (discountType === 'fixed_amount' || discountType === 'fixed') {
-          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - discountValue);
-          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(discountValue * 1.28)); // Convert GBP to USD
-          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
-          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        }
         
         console.log("📋 Applied discount to special offer:", {
           discountType,
@@ -282,25 +287,64 @@ const SpecialOfferHandler: React.FC<SpecialOfferHandlerProps> = ({
         const urlParams = new URLSearchParams(window.location.search);
         const treatmentName = urlParams.get('treatmentName') || 'Dental Treatment';
         const promoTitle = urlParams.get('promoTitle') || 'Special Promotion';
+        const discountTypeFromUrl = urlParams.get('discountType') || 'percentage';
+        const discountValueFromUrl = urlParams.get('discountValue') || '20';
         
         // Create a promo token treatment item with safe promoType handling
         const safePromoType = promoType === 'package' ? 'package' : 'special_offer';
         
-        const promoTreatment: TreatmentItem = {
-          id: `promo_${Date.now()}`,
-          category: safePromoType === 'package' ? 'packages' : 'special_offer',
-          name: `${safePromoType === 'package' ? 'Package: ' : 'Special Offer: '}${promoTitle}`,
-          quantity: 1,
-          priceGBP: 450, // Base price
-          priceUSD: 580, // Base price
-          subtotalGBP: 450,
-          subtotalUSD: 580,
-          guarantee: '5-year',
-          isSpecialOffer: safePromoType === 'special_offer',
-          isPackage: safePromoType === 'package',
-          promoToken: promoToken,
-          promoType: safePromoType
-        };
+        // Base price for the promo
+        const basePriceGBP = 450;
+        const basePriceUSD = 580;
+        
+        let promoTreatment: TreatmentItem;
+        
+        // For special offers, create a £0.00 line item per tech spec
+        if (safePromoType === 'special_offer') {
+          promoTreatment = {
+            id: `promo_${Date.now()}`,
+            category: 'special_offer',
+            name: `Special Offer: ${promoTitle}`,
+            quantity: 1,
+            priceGBP: 0,  // Special offers are £0.00 line items
+            priceUSD: 0,  // Special offers are $0.00 line items
+            subtotalGBP: 0,
+            subtotalUSD: 0,
+            guarantee: '5-year',
+            isSpecialOffer: true,
+            isLocked: true, // Lock this treatment as it's part of a special offer
+            isBonus: true,  // Mark as bonus item per tech spec
+            hasDiscount: true, // Flag for UI rendering
+            discountPercent: parseFloat(discountValueFromUrl), // Use discountValue from URL
+            specialOffer: {
+              id: promoToken, // Use token as ID
+              title: promoTitle,
+              discountType: discountTypeFromUrl as 'percentage' | 'fixed_amount',
+              discountValue: parseFloat(discountValueFromUrl),
+              clinicId: urlParams.get('clinicId') || '1'
+            },
+            promoToken: promoToken,
+            promoType: safePromoType
+          };
+        } 
+        // For packages, create a regular line item (not £0.00)
+        else {
+          promoTreatment = {
+            id: `promo_${Date.now()}`,
+            category: 'packages',
+            name: `Package: ${promoTitle}`,
+            quantity: 1,
+            priceGBP: basePriceGBP, 
+            priceUSD: basePriceUSD,
+            subtotalGBP: basePriceGBP,
+            subtotalUSD: basePriceUSD,
+            guarantee: '5-year',
+            isPackage: true,
+            isLocked: true,
+            promoToken: promoToken,
+            promoType: safePromoType
+          };
+        }
         
         console.log("📋 SpecialOfferHandler adding promo token treatment:", promoTreatment);
         onTreatmentsChange([...treatmentItems, promoTreatment]);
