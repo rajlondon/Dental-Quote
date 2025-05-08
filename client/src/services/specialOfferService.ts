@@ -13,14 +13,18 @@ export interface SpecialOffer {
   id: string;
   title: string;
   description: string;
-  clinicId: number;
+  clinicId: number | string; // Support both number and string IDs for clinics
   discountValue: number;
   discountType: 'percentage' | 'fixed_amount';
   imageUrl?: string;
   validUntil?: string;
+  expiryDate?: string; // Alternative name for validUntil
   isActive: boolean;
   isMatched?: boolean;
   displayText?: string;
+  applicableTreatment?: string;
+  applicableTreatments?: string[]; // Support arrays of treatment IDs
+  termsAndConditions?: string;
 }
 
 export interface MatchedOffersResponse {
