@@ -452,6 +452,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
+              {/* Regular treatments section */}
               {quote.treatments && quote.treatments.map((treatment: QuoteTreatment, index: number) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -510,6 +511,75 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                   </td>
                 </tr>
               ))}
+
+              {/* Special Offers Section - Always displayed as separate row */}
+              {quote.treatments && quote.treatments.some(t => t.specialOffer || t.isSpecialOffer) && (
+                <>
+                  {/* Separator row */}
+                  <tr className="bg-gray-100">
+                    <td colSpan={3} className="px-6 py-2 text-xs font-semibold text-gray-500 uppercase">
+                      Special Offers Applied
+                    </td>
+                  </tr>
+                  
+                  {/* Special offer items */}
+                  {quote.treatments
+                    .filter(t => t.specialOffer || t.isSpecialOffer)
+                    .map((treatment, index) => {
+                      const specialOfferTitle = treatment.specialOffer?.title || "Special Offer";
+                      const discountType = treatment.specialOffer?.discountType || 'percentage';
+                      const discountValue = treatment.specialOffer?.discountValue || 0;
+                      const clinicCode = treatment.specialOffer?.clinicId ? `CL${treatment.specialOffer.clinicId}` : '';
+                      
+                      return (
+                        <tr key={`offer-${index}`} className="bg-green-50 border-t border-b border-green-100">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">
+                            <div className="flex items-center gap-2">
+                              <Gift className="h-4 w-4 text-green-600" />
+                              <span>{specialOfferTitle}</span>
+                              {clinicCode && (
+                                <span className="text-xs text-gray-500">
+                                  Code: {clinicCode}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-green-700">
+                            1
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-green-700 font-medium">
+                            {discountValue > 0 ? (
+                              discountType === 'percentage' ? 
+                                `${discountValue}% off` : 
+                                `£${discountValue} off`
+                            ) : (
+                              'Special Price'
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  }
+                </>
+              )}
+
+              {/* Promotional token section if present */}
+              {isPromotionalQuote && !quote.treatments?.some(t => t.specialOffer) && (
+                <tr className="bg-blue-50 border-t border-b border-blue-100">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">
+                    <div className="flex items-center gap-2">
+                      <Gift className="h-4 w-4 text-blue-600" />
+                      <span>Promotional Price</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
+                    1
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-700 font-medium">
+                    Special Price
+                  </td>
+                </tr>
+              )}
             </tbody>
             <tfoot className="bg-gray-50">
               <tr>

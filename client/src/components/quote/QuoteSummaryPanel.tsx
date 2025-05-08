@@ -104,6 +104,7 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
             </div>
           )}
           
+          {/* Regular Treatments */}
           {treatments.map((treatment, index) => (
             <div key={index} className={`flex justify-between items-start py-3 px-2 mb-2 border rounded-md ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'border-green-200 bg-gradient-to-r from-green-50 to-blue-50 shadow-sm' : treatment.promoToken ? 'border-blue-200 bg-blue-50/50 shadow-sm' : treatment.isPackage ? 'border-blue-100 bg-blue-50' : 'border-gray-100 bg-white'}`}>
               <div className="flex-1">
@@ -198,6 +199,101 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
               </div>
             </div>
           ))}
+          
+          {/* Special Offers Section */}
+          {treatments.some(t => t.specialOffer || t.isSpecialOffer) && (
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                Special Offers Applied
+              </h4>
+              
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-2 px-3 text-left font-medium text-gray-500">Special Offer</th>
+                    <th className="py-2 px-3 text-center font-medium text-gray-500">Quantity</th>
+                    <th className="py-2 px-3 text-right font-medium text-gray-500">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {treatments
+                    .filter(t => t.specialOffer || t.isSpecialOffer)
+                    .map((treatment, index) => {
+                      const specialOfferTitle = treatment.specialOffer?.title || "Special Offer";
+                      const discountType = treatment.specialOffer?.discountType || 'percentage';
+                      const discountValue = treatment.specialOffer?.discountValue || 0;
+                      const clinicCode = treatment.specialOffer?.clinicId ? `CL${treatment.specialOffer.clinicId}` : '';
+                      
+                      return (
+                        <tr key={`offer-${index}`} className="bg-green-50 border-b border-green-100">
+                          <td className="py-3 px-3 text-sm">
+                            <div className="flex items-center">
+                              <Gift className="h-4 w-4 text-green-600 mr-2" />
+                              <div>
+                                <span className="font-medium text-green-800">{specialOfferTitle}</span>
+                                {clinicCode && (
+                                  <span className="text-xs text-gray-500 block">
+                                    Code: {clinicCode}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-center text-green-700">
+                            1
+                          </td>
+                          <td className="py-3 px-3 text-right font-medium text-green-700">
+                            {discountValue > 0 ? (
+                              discountType === 'percentage' ? 
+                                `${discountValue}% off` : 
+                                `£${discountValue} off`
+                            ) : (
+                              'Special Price'
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  }
+                </tbody>
+              </table>
+            </div>
+          )}
+          
+          {/* Promotional Token Section */}
+          {isPromotionalQuote && !treatments.some(t => t.specialOffer) && (
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                Promotional Offer
+              </h4>
+              
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-2 px-3 text-left font-medium text-gray-500">Special Offer</th>
+                    <th className="py-2 px-3 text-center font-medium text-gray-500">Quantity</th>
+                    <th className="py-2 px-3 text-right font-medium text-gray-500">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="bg-blue-50 border-b border-blue-100">
+                    <td className="py-3 px-3 text-sm">
+                      <div className="flex items-center">
+                        <Gift className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="font-medium text-blue-800">Promotional Discount</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center text-blue-700">
+                      1
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium text-blue-700">
+                      Special Price
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
       
