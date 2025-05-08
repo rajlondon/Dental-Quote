@@ -375,27 +375,29 @@ router.post('/quotes/from-promo', async (req, res) => {
           });
           
           if (stdTreatment) {
-            // Calculate discounted price
-            const discountedPrice = stdTreatment.basePriceGBP * (1 - (pkg.discountPct / 100));
+            // Calculate discounted price - ensure values are numbers and handle both camelCase and snake_case
+            const basePriceGBP = parseFloat(((stdTreatment as any).base_price_gbp || (stdTreatment as any).basePriceGBP || 0).toString());
+            const discountPct = parseFloat(((pkg as any).discount_pct || (pkg as any).discountPct || 0).toString());
+            const discountedPrice = basePriceGBP * (1 - (discountPct / 100));
             
             // Add the treatment line
             await db.insert(treatmentLines)
               .values({
-                clinicId,
-                patientId: userId,
-                quoteId,
-                procedureCode: stdTreatment.code,
-                description: stdTreatment.description,
+                clinic_id: clinicId,
+                patient_id: userId,
+                quote_id: quoteId,
+                procedure_code: stdTreatment.code,
+                description: (stdTreatment as any).name || stdTreatment.description, // Use name if available, fall back to description
                 quantity: 1,
-                basePriceGBP: stdTreatment.basePriceGBP, // Store the original base price
-                unitPrice: discountedPrice,
-                isPackage: true,
-                packageId,
+                base_price_gbp: basePriceGBP, // Use the raw column name
+                unit_price: discountedPrice,
+                is_package: true,
+                package_id: packageId,
                 status: 'draft',
-                isLocked: true // Lock package items
+                is_locked: true // Lock package items
               });
             
-            console.log(`Added package treatment to quote: ${stdTreatment.description}`);
+            console.log(`Added package treatment to quote: ${(stdTreatment as any).name || stdTreatment.description}`);
           }
         }
       }
