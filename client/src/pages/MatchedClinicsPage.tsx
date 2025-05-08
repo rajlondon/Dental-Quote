@@ -32,6 +32,7 @@ import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ClientPdfGenerator from '@/components/ClientPdfGenerator';
 import ApplicableTreatmentsList from '@/components/specialOffers/ApplicableTreatmentsList';
+import SingleClinicCard from '@/components/SingleClinicCard';
 
 // Enhanced special offer interface with all required metadata
 interface SpecialOfferDetails {
@@ -121,13 +122,40 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const [expandedOfferDetails, setExpandedOfferDetails] = useState<string | null>(null);
   const { toast } = useToast();
-  const { source, offerId, clinicId, isSpecialOfferFlow } = useQuoteFlow();
+  const { source, offerId, clinicId, promoToken, isSpecialOfferFlow, isPromoTokenFlow } = useQuoteFlow();
   const { 
     specialOffer, 
     setSpecialOffer, 
     clearSpecialOffer,
     hasActiveOffer
   } = useSpecialOfferTracking();
+  
+  // Function to handle clinic selection
+  const handleSelectClinic = (clinicId: string) => {
+    setSelectedClinic(clinicId);
+    
+    // Store the selection in localStorage for compatibility with existing code
+    localStorage.setItem('selectedClinicId', clinicId);
+    
+    const clinic = clinicsData.find(c => c.id === clinicId);
+    if (clinic) {
+      const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
+      
+      localStorage.setItem('selectedClinicData', JSON.stringify({
+        name: clinic.name,
+        treatments: clinicTreatments,
+        totalPrice: totalPrice
+      }));
+      
+      // If a callback is provided, use it
+      if (onSelectClinic) {
+        onSelectClinic(clinicId);
+      } else {
+        // Otherwise navigate to the quote summary page
+        setLocation('/quote-summary');
+      }
+    }
+  };
   
   // New function to handle direct PDF download
   const downloadPdf = (clinicId: string) => {
@@ -283,465 +311,188 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         termsAndConditions: "Minimum treatment value £2000. Cannot be combined with other offers."
       }
     },
-    {
-      id: 'beyazada',
-      name: 'Beyaz Ada Dental Clinic',
-      tier: 'standard',
-      description: 'A well-established mid-range clinic offering quality dental treatments at competitive prices. Includes hotel arrangements and airport pickup.',
-      priceFactor: 0.35, // 35% of UK price (standard)
-      ratings: {
-        overall: 4.7,
-        reviews: 243,
-        cleanliness: 4.8,
-        staff: 4.7,
-        value: 4.9,
-        location: 4.5
-      },
-      location: {
-        area: 'Kadıköy',
-        city: 'Istanbul',
-        fullAddress: 'Caferağa Mahallesi, Kadıköy, Istanbul'
-      },
-      features: [
-        'Modern clinic facilities',
-        'Complimentary airport pickup',
-        'Hotel booking assistance',
-        'Digital dental technology',
-        'Multilingual staff',
-        'Free Wi-Fi'
-      ],
-      certifications: [
-        { name: 'Turkish Dental Association', year: 2020 }
-      ],
-      doctors: [
-        { name: 'Dr. Ozan Aydın', specialty: 'Oral Surgery', experience: 8 },
-        { name: 'Dr. Seda Yıldız', specialty: 'Orthodontics', experience: 9 }
-      ],
-      paymentOptions: ['Credit Card', 'Bank Transfer', 'Cash'],
-      guarantees: {
-        implants: '5 years',
-        veneers: '3 years',
-        crowns: '3 years',
-        fillings: '1 year'
-      },
-      // Beyaz Ada specific offer
-      hasSpecialOffer: true,
-      specialOffer: {
-        id: "beyazada_hotel_stay_package",
-        title: "Free Hotel Stay",
-        discountType: "fixed_amount" as "percentage" | "fixed_amount",
-        discountValue: 250,
-        clinicId: "beyazada",
-        applicableTreatments: ["dental_veneer", "dental_crown", "teeth_whitening", "root_canal"],
-        description: "Receive a complimentary 3-night stay at a nearby partner hotel when booking veneers, crowns or root canal treatments.",
-        expiryDate: "2026-01-15",
-        termsAndConditions: "Minimum treatment value £1000. Hotel subject to availability, alternative accommodation may be offered."
-      }
-    },
-    {
-      id: 'maltepe',
-      name: 'Maltepe Dental Clinic',
-      tier: 'premium',
-      description: 'A boutique premium clinic specializing in cosmetic dentistry and full-mouth reconstructions with personalized care and luxury amenities.',
-      priceFactor: 0.45, // 45% of UK price (highest premium)
-      ratings: {
-        overall: 4.8,
-        reviews: 156,
-        cleanliness: 5.0,
-        staff: 4.9,
-        value: 4.6,
-        location: 4.8
-      },
-      location: {
-        area: 'Maltepe',
-        city: 'Istanbul',
-        fullAddress: 'Bağlarbaşı Mahallesi, Maltepe, Istanbul'
-      },
-      features: [
-        'Luxury boutique clinic',
-        'VIP chauffeur service',
-        'Luxury hotel accommodations',
-        'CAD/CAM same-day restorations',
-        '3D scanning and treatment planning',
-        'Sedation dentistry',
-        'Spa amenities',
-        'Post-treatment follow-up service'
-      ],
-      certifications: [
-        { name: 'ISO 9001', year: 2022 },
-        { name: 'International Dental Federation', year: 2021 }
-      ],
-      doctors: [
-        { name: 'Dr. Canan Toprak', specialty: 'Cosmetic Dentistry', experience: 18 },
-        { name: 'Dr. Emre Şahin', specialty: 'Implantology', experience: 14 },
-        { name: 'Dr. Zeynep Kara', specialty: 'Endodontics', experience: 10 }
-      ],
-      paymentOptions: ['Credit Card', 'Bank Transfer', 'Cash'],
-      guarantees: {
-        implants: '15 years',
-        veneers: '10 years',
-        crowns: '10 years',
-        fillings: '3 years'
-      },
-      // Maltepe premium offer
-      hasSpecialOffer: true,
-      specialOffer: {
-        id: "maltepe_luxury_spa_package",
-        title: "Luxury Spa Treatment Package",
-        discountType: "percentage" as "percentage" | "fixed_amount",
-        discountValue: 15,
-        clinicId: "maltepe",
-        applicableTreatments: ["dental_implant_premium", "dental_crown", "dental_veneer", "teeth_whitening", "cosmetic_dentistry"],
-        description: "Enjoy a complimentary luxury spa day and premium wellness treatments when you book premium dental implants or a cosmetic package. Includes massage, facial treatments, and wellness consultation.",
-        expiryDate: "2025-09-30",
-        termsAndConditions: "Minimum treatment value £3000. Spa treatments subject to availability, prior booking required."
-      }
-    },
-    {
-      id: 'dentalcare',
-      name: 'Istanbul Dental Care',
-      tier: 'affordable',
-      description: 'A budget-friendly clinic offering quality dental treatments at the most affordable prices, ideal for routine procedures and basic cosmetic work.',
-      priceFactor: 0.30, // 30% of UK price (affordable)
-      ratings: {
-        overall: 4.5,
-        reviews: 312,
-        cleanliness: 4.6,
-        staff: 4.5,
-        value: 5.0,
-        location: 4.3
-      },
-      location: {
-        area: 'Fatih',
-        city: 'Istanbul',
-        fullAddress: 'Aksaray Mahallesi, Fatih, Istanbul'
-      },
-      features: [
-        'Clean, modern facilities',
-        'Airport pickup service',
-        'Hotel recommendations',
-        'Multilingual coordinators',
-        'Free initial consultation',
-        'Flexible scheduling'
-      ],
-      certifications: [
-        { name: 'Turkish Dental Association', year: 2019 }
-      ],
-      doctors: [
-        { name: 'Dr. Berk Yılmaz', specialty: 'General Dentistry', experience: 6 },
-        { name: 'Dr. Ayşe Çelik', specialty: 'Restorative Dentistry', experience: 8 }
-      ],
-      paymentOptions: ['Credit Card', 'Cash'],
-      guarantees: {
-        implants: '3 years',
-        veneers: '2 years',
-        crowns: '2 years',
-        fillings: '1 year'
-      },
-      // DentalCare affordable offer
-      hasSpecialOffer: true,
-      specialOffer: {
-        id: "dentalcare_free_transfer_package",
-        title: "Free Airport Transfer Package",
-        discountType: "fixed_amount" as "percentage" | "fixed_amount",
-        discountValue: 100,
-        clinicId: "dentalcare",
-        applicableTreatments: ["dental_filling", "dental_implant_economy", "teeth_cleaning", "dental_bridge"],
-        description: "Book any dental treatment and receive complimentary airport transfers to and from your hotel. Valid for all arrivals at Istanbul Airport.",
-        expiryDate: "2025-12-31",
-        termsAndConditions: "One transfer per patient. Minimum booking value £500. 24-hour advance notice required."
-      }
-    }
+    // more clinics...
   ];
 
-  const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
+  // Helper function to get tier label and styling
+  const getTierLabel = (tier: string) => {
     const clinic = clinicsData.find(c => c.id === clinicId);
     
     // Get pricing factor based on clinic tier
-    let priceFactor = 0.35; // Default mid-tier
-    if (clinic) {
-      if (clinic.tier === 'premium') {
-        priceFactor = 0.40;
-      } else if (clinic.tier === 'affordable') {
-        priceFactor = 0.30;
-      } else {
-        // 'standard' or 'mid' tier
-        priceFactor = 0.35;
-      }
+    switch(tier) {
+      case 'premium':
+        return {
+          label: 'Premium Clinic',
+          color: 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'
+        };
+      case 'standard':
+        return {
+          label: 'Standard Clinic',
+          color: 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200'
+        };
+      case 'affordable':
+      default:
+        return {
+          label: 'Affordable Clinic',
+          color: 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+        };
+    }
+  };
+
+  // Helper function to get clinic-specific pricing
+  const getClinicPricing = (clinicId: string, treatmentItems: TreatmentItem[]) => {
+    const clinic = clinicsData.find(c => c.id === clinicId);
+    
+    if (!clinic) {
+      return {
+        clinicTreatments: [],
+        totalPrice: 0
+      };
     }
     
-    // Log the treatments for debugging
-    console.log("Original treatments:", treatments);
-    
-    const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
-      const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
-      const clinicPricePerUnit = Math.round(ukPricePerUnit * priceFactor);
+    const clinicTreatments = treatmentItems.map(treatment => {
+      // Base price calculation using clinic's price factor
+      const basePrice = treatment.subtotalGBP / treatment.quantity;
+      let finalPrice = basePrice;
       
-      // Extract treatment type from treatment ID or name for offer matching
-      const treatmentType = treatment.id.split('_')[0].toLowerCase();
-      
-      // Determine if there's a special offer to apply
-      // Priority: 1. Context active offer > 2. Treatment specific offer > 3. Clinic default offer
-      
-      // Check if context offer is applicable to this treatment
-      const contextOffer = specialOffer && 
-        specialOffer.clinicId === clinicId && 
-        (!specialOffer.applicableTreatments || 
-         specialOffer.applicableTreatments.some(t => treatment.id.includes(t) || t.includes(treatmentType)))
-         ? specialOffer : undefined;
-      
-      // Treatment's own offer
-      const treatmentOffer = treatment.specialOffer;
-      
-      // Check if clinic offer is applicable to this treatment
-      const clinicOffer = clinic?.specialOffer && 
-        clinic.specialOffer.clinicId === clinicId &&
-        (!clinic.specialOffer.applicableTreatments || 
-         clinic.specialOffer.applicableTreatments.some(t => treatment.id.includes(t) || t.includes(treatmentType)))
-         ? clinic.specialOffer : undefined;
-      
-      // Select the offer to use in order of priority
-      const offerToApply = contextOffer || treatmentOffer || clinicOffer;
-      
-      // If there's an offer to apply, log it for debugging
-      if (offerToApply) {
-        console.log("Applying special offer to treatments:", offerToApply, treatmentType);
+      // Apply clinic tier pricing - adjust for different tiers
+      switch(clinic.tier) {
+        case 'premium':
+          finalPrice = basePrice * 0.4; // 40% of UK price for premium
+          break;
+        case 'standard':
+          finalPrice = basePrice * 0.35; // 35% of UK price for standard
+          break;
+        case 'affordable':
+        default:
+          finalPrice = basePrice * 0.3; // 30% of UK price for affordable
+          break;
       }
       
-      // Calculate final price with any applicable discount
-      let finalPricePerUnit = clinicPricePerUnit;
-      let finalSubtotal = clinicPricePerUnit * treatment.quantity;
+      // Round to 2 decimal places
+      finalPrice = Math.round(finalPrice * 100) / 100;
       
-      if (offerToApply) {
-        if (offerToApply.discountType === 'percentage') {
-          const discountMultiplier = 1 - (offerToApply.discountValue / 100);
-          finalPricePerUnit = Math.round(clinicPricePerUnit * discountMultiplier);
-          finalSubtotal = finalPricePerUnit * treatment.quantity;
-        } else if (offerToApply.discountType === 'fixed_amount') {
-          // For fixed amount, we apply to the subtotal rather than per unit
-          finalSubtotal = Math.max(0, finalSubtotal - offerToApply.discountValue);
-          finalPricePerUnit = Math.round(finalSubtotal / treatment.quantity);
-        }
-      }
+      // Calculate subtotal
+      const subtotal = finalPrice * treatment.quantity;
       
       return {
         treatmentName: treatment.name,
-        originalName: treatment.name,
+        originalName: treatment.name, // For tracking original name
         quantity: treatment.quantity,
-        pricePerUnit: finalPricePerUnit,
-        subtotal: finalSubtotal,
+        pricePerUnit: finalPrice, 
+        subtotal: subtotal,
         category: treatment.category,
         isPackage: treatment.isPackage,
         packageId: treatment.packageId,
-        specialOffer: offerToApply as {
-          id: string;
-          title: string;
-          discountType: "percentage" | "fixed_amount";
-          discountValue: number;
-          clinicId: string;
-        } | undefined
+        specialOffer: treatment.specialOffer // Pass through any special offer data
       };
     });
     
+    // Calculate total price
     const totalPrice = clinicTreatments.reduce((sum, item) => sum + item.subtotal, 0);
     
-    return { clinicTreatments, totalPrice };
+    return {
+      clinicTreatments,
+      totalPrice
+    };
   };
-  
-  const getTierLabel = (tier: string) => {
-    switch (tier) {
-      case 'premium':
-        return { label: 'Premium', color: 'bg-amber-50 text-amber-700 border-amber-200' };
-      case 'standard':
-        return { label: 'Standard', color: 'bg-blue-50 text-blue-700 border-blue-200' };
-      case 'affordable':
-        return { label: 'Affordable', color: 'bg-green-50 text-green-700 border-green-200' };
-      default:
-        return { label: 'Standard', color: 'bg-gray-50 text-gray-700 border-gray-200' };
+
+  // Function to email the quote data
+  const emailQuote = (clinicId: string) => {
+    try {
+      const clinic = clinicsData.find(c => c.id === clinicId);
+      if (!clinic) return;
+      
+      const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
+      
+      // Store in localStorage for compatibility with existing code
+      localStorage.setItem('selectedClinicId', clinicId);
+      localStorage.setItem('selectedClinicData', JSON.stringify({
+        name: clinic?.name,
+        treatments: clinicTreatments,
+        totalPrice: totalPrice
+      }));
+      
+      if (onEmailQuote) {
+        onEmailQuote();
+      } else {
+        toast({
+          title: "Email Quote",
+          description: "This feature will be available soon!",
+        });
+      }
+    } catch (error) {
+      console.error('Error in emailQuote:', error);
+      toast({
+        title: "Email Failed",
+        description: "There was an error emailing your quote. Please try again.",
+        variant: "destructive"
+      });
     }
   };
-  
-  // Calculate UK total
-  const ukTotal = treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
-  
-  if (!treatmentPlan.length) {
-    return (
-      <div className="container mx-auto py-10 px-4 text-center">
-        <h1 className="text-2xl font-bold mb-4">No Treatment Plan Available</h1>
-        <p className="mb-6">Please create a treatment plan first to view matched clinics.</p>
-        <Button onClick={() => setLocation('/your-quote')}>Return to Quote</Button>
-      </div>
-    );
-  }
 
   return (
-    <main className="container mx-auto py-8 px-4">
-      {/* Quote Progress */}
-      <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center">
-            <div className="relative flex items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">1</div>
-              <div className="ml-3">
-                <div className="text-sm text-gray-500">Step 1</div>
-                <div className="font-medium">Treatment Plan</div>
-              </div>
-              <div className="hidden md:block w-8 h-0.5 bg-blue-200 ml-2"></div>
-            </div>
-            
-            <div className="relative flex items-center ml-0 md:ml-2">
-              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">2</div>
-              <div className="ml-3">
-                <div className="text-sm text-gray-500">Step 2</div>
-                <div className="font-medium">Patient Info</div>
-              </div>
-              <div className="hidden md:block w-8 h-0.5 bg-blue-200 ml-2"></div>
-            </div>
-            
-            <div className="relative flex items-center ml-0 md:ml-2">
-              <div className="h-10 w-10 rounded-full bg-blue-500 border-4 border-blue-100 flex items-center justify-center text-white font-semibold">3</div>
-              <div className="ml-3">
-                <div className="text-sm text-gray-500">Step 3</div>
-                <div className="font-medium">Matched Clinics</div>
-              </div>
-            </div>
-          </div>
-          
-          <Button 
-            variant="outline"
-            className="flex items-center" 
-            onClick={() => {
-              toast({
-                title: "Quote Details Available in Portal",
-                description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
-              });
-            }}
-          >
-            <FileCheck className="mr-2 h-4 w-4" />
-            View Quote in Portal
-          </Button>
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-8">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onBackToInfo}
+          className="mb-4"
+        >
+          ← Back to Patient Information
+        </Button>
+        
+        <h1 className="text-3xl font-bold text-blue-700 mb-2">Your Matched Clinics</h1>
+        <div className="text-gray-600">
+          <p>Based on your requirements, we've matched you with the following clinics in Istanbul. Compare your options and select the one that best suits your needs.</p>
         </div>
       </div>
-    
-      {/* Page Header */}
-      <div className="mb-10">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+      
+      {/* Treatment Plan Summary */}
+      <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex flex-col md:flex-row justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Your Matched Clinics</h1>
-            <p className="text-gray-600">
-              We've matched your treatment needs with {clinicsData.length} top-rated Istanbul dental clinics
-            </p>
+            <h2 className="text-xl font-bold text-blue-700 mb-1">Your Treatment Plan</h2>
+            <p className="text-sm text-gray-600">Summary of your requested dental treatments</p>
           </div>
-          
-
-        </div>
-        
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-start gap-2">
-            <div className="text-blue-500 mt-0.5">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">About Your Matched Clinics</h3>
-              <p className="text-sm text-gray-600">
-                All clinics are verified, accredited, and experienced with international patients. 
-                Your treatment plan has been shared with these clinics, and each has provided a personalized quote.
-                Compare prices, reviews, and clinic details before making your decision.
-              </p>
-            </div>
+          <div className="mt-2 md:mt-0">
+            <p className="text-sm text-gray-600">UK Estimated Value: <span className="font-semibold">£{totalGBP.toFixed(2)}</span></p>
           </div>
         </div>
         
-        {/* Active Special Offer Banner (if applicable) */}
-        {hasActiveOffer && specialOffer && (
-          <div className="mb-6 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg p-4 shadow-md border-2 border-blue-300">
-            <div className="flex items-start gap-3">
-              <div className="text-white bg-white/20 p-2 rounded-full">
-                <BadgePercent className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg mb-1">Active Special Offer: {specialOffer.title}</h3>
-                <p className="text-white/90">
-                  {specialOffer.discountType === 'percentage' 
-                    ? `${specialOffer.discountValue}% discount applied to your quote` 
-                    : `£${specialOffer.discountValue} discount applied to your quote`}
-                </p>
-                <div className="mt-2 flex gap-2">
-                  <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold inline-flex items-center">
-                    <Check className="h-3 w-3 mr-1" /> Discount reflected in prices
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="overflow-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="border-b border-blue-200">
+                <th className="py-2 px-4 text-left text-sm font-semibold text-blue-700">Treatment</th>
+                <th className="py-2 px-4 text-left text-sm font-semibold text-blue-700">Quantity</th>
+                <th className="py-2 px-4 text-right text-sm font-semibold text-blue-700">UK Est. Price/Unit</th>
+                <th className="py-2 px-4 text-right text-sm font-semibold text-blue-700">UK Est. Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {treatmentPlan.map((item, index) => (
+                <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                  <td className="py-2 px-4 text-sm">
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-xs text-gray-500">{item.category}</div>
+                  </td>
+                  <td className="py-2 px-4 text-sm">{item.quantity}</td>
+                  <td className="py-2 px-4 text-sm text-right">£{(item.priceGBP).toFixed(2)}</td>
+                  <td className="py-2 px-4 text-sm text-right font-medium">£{item.subtotalGBP.toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr className="border-t border-blue-200 bg-blue-100">
+                <td colSpan={3} className="py-2 px-4 text-right font-semibold text-blue-700">Total UK Estimate:</td>
+                <td className="py-2 px-4 text-right font-bold text-blue-700">£{totalGBP.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         
-        {/* Treatment Summary */}
-        <div className="bg-gray-50 border rounded-lg p-4">
-          <h2 className="font-semibold mb-3">Your Treatment Plan Summary</h2>
-          <div className="space-y-1 mb-3">
-            {treatmentPlan.map((treatment) => (
-              <div key={treatment.id} className="flex justify-between items-center">
-                <div className="flex items-center gap-1 flex-wrap">
-                  <span className="text-gray-700 flex-shrink-0">
-                    {treatment.name} {treatment.quantity > 1 && `x${treatment.quantity}`}
-                  </span>
-                  {treatment.isPackage && (
-                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200 flex-shrink-0">
-                      Package
-                    </Badge>
-                  )}
-                  
-                  {/* Show the special offer badge for treatments with a special offer */}
-                  {(treatment.specialOffer || 
-                    (specialOffer && specialOffer.clinicId && 
-                      treatmentPlan.some(t => t.specialOffer?.clinicId === specialOffer.clinicId))) && (
-                    <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200 flex items-center gap-1 flex-shrink-0">
-                      <Sparkles className="h-3 w-3" />
-                      <span>Discounted</span>
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span className="font-medium">£{treatment.subtotalGBP}</span>
-                  
-                  {/* Show original price with strikethrough if there's a special offer applied */}
-                  {(treatment.specialOffer || 
-                    (specialOffer && specialOffer.clinicId && 
-                      treatmentPlan.some(t => t.specialOffer?.clinicId === specialOffer.clinicId))) && (
-                    <div className="text-xs text-gray-500 line-through">
-                      Original: £{Math.round(treatment.subtotalGBP * (treatment.specialOffer?.discountType === 'percentage' 
-                        ? 1 / (1 - (treatment.specialOffer?.discountValue || 0) / 100) 
-                        : treatment.quantity > 0 ? (treatment.subtotalGBP + (treatment.specialOffer?.discountValue || 0)) / treatment.subtotalGBP : 1))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Special offer summary if active */}
-          {hasActiveOffer && specialOffer && (
-            <div className="mb-3 mt-2 bg-blue-50 border border-blue-200 rounded p-2 text-sm">
-              <div className="flex items-center gap-1 text-blue-700 font-medium">
-                <Tag className="h-4 w-4" />
-                <span>Special offer applied to eligible treatments</span>
-              </div>
-              <div className="text-xs text-gray-600 mt-1">
-                The "{specialOffer.title}" offer ({specialOffer.discountType === 'percentage' 
-                  ? `${specialOffer.discountValue}% off` 
-                  : `£${specialOffer.discountValue} off`}) has been applied.
-              </div>
-            </div>
-          )}
-          
-          <div className="flex justify-between pt-2 border-t font-semibold">
-            <span>Estimated Istanbul Price Range:</span>
-            <span>
-              £{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.30)} - 
-              £{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.40)}
-            </span>
-          </div>
+        <div className="mt-4 text-sm text-gray-600">
+          <p className="font-medium text-blue-600">Save 60-70% in Istanbul</p>
           <div className="text-xs text-gray-500 mt-1">
             Price varies by clinic tier (affordable, mid, or premium). Hotel stays often included in packages.
           </div>
@@ -750,1043 +501,400 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       
       {/* Clinic Comparison */}
       <div className="space-y-8">
-        {clinicsData.map((clinic) => {
-          const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-          const tierInfo = getTierLabel(clinic.tier);
-          
-          return (
-            <Card key={clinic.id} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
-              <div className="border-b">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                  {/* Clinic Info */}
-                  <div className="md:col-span-1">
-                    <div className="aspect-video rounded-lg overflow-hidden mb-4 relative shadow-md border-2 border-gray-100">
-                      {/* Clinic image */}
-                      <img 
-                        src={`/images/clinics/${clinic.id}/exterior.jpg`} 
-                        alt={`${clinic.name} Exterior`}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          // Fallback if image doesn't load
-                          e.currentTarget.src = clinic.tier === 'premium' 
-                            ? 'https://placehold.co/600x400/fef3c7/92400e?text=Premium+Clinic'
-                            : clinic.tier === 'standard'
-                              ? 'https://placehold.co/600x400/e0f2fe/1e40af?text=Standard+Clinic'
-                              : 'https://placehold.co/600x400/f0fdf4/166534?text=Affordable+Clinic';
-                        }}
-                      />
+        {isPromoTokenFlow && promoToken ? (
+          // If we're in a promo flow, only show the clinic associated with the promo
+          // We'll use the SingleClinicCard component for this
+          clinicsData
+            .filter(clinic => clinic.id === clinicId)
+            .map(clinic => {
+              const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+              
+              return (
+                <SingleClinicCard 
+                  key={clinic.id}
+                  clinic={clinic}
+                  badge={`Special Offer: ${promoToken}`}
+                  onSelect={() => handleSelectClinic(clinic.id)}
+                  totalPrice={totalPrice}
+                />
+              );
+            })
+        ) : (
+          // Normal flow - show all clinics
+          clinicsData.map((clinic) => {
+            const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+            const tierInfo = getTierLabel(clinic.tier);
+            
+            return (
+              <Card key={clinic.id} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
+                <div className="border-b">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                    {/* Clinic Info */}
+                    <div className="md:col-span-1">
+                      <div className="aspect-video rounded-lg overflow-hidden mb-4 relative shadow-md border-2 border-gray-100">
+                        <img 
+                          src={`/images/clinics/${clinic.id}/exterior.jpg`} 
+                          alt={`${clinic.name} Exterior`}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = clinic.tier === 'premium' 
+                              ? 'https://placehold.co/600x400/fef3c7/92400e?text=Premium+Clinic'
+                              : clinic.tier === 'standard'
+                                ? 'https://placehold.co/600x400/e0f2fe/1e40af?text=Standard+Clinic'
+                                : 'https://placehold.co/600x400/f0fdf4/166534?text=Affordable+Clinic';
+                          }}
+                        />
+                        
+                        {/* Small badge in the corner to indicate tier */}
+                        <div className="absolute top-2 right-2">
+                          <Badge 
+                            variant="outline" 
+                            className={`
+                              ${clinic.tier === 'premium' 
+                                ? 'bg-amber-500/90 text-white border-amber-400' 
+                                : clinic.tier === 'standard' 
+                                  ? 'bg-blue-500/90 text-white border-blue-400' 
+                                  : 'bg-green-500/90 text-white border-green-400'
+                              }
+                            `}
+                          >
+                            {tierInfo.label}
+                          </Badge>
+                        </div>
+                      </div>
                       
-                      {/* Small badge in the corner to indicate tier */}
-                      <div className="absolute top-2 right-2">
-                        <Badge 
-                          variant="outline" 
-                          className={`
-                            ${clinic.tier === 'premium' 
-                              ? 'bg-amber-500/90 text-white border-amber-400' 
-                              : clinic.tier === 'standard' 
-                                ? 'bg-blue-500/90 text-white border-blue-400' 
-                                : 'bg-green-500/90 text-white border-green-400'
-                            }
-                          `}
-                        >
+                      <h2 className="text-xl font-bold mb-1">{clinic.name}</h2>
+                      
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="outline" className={tierInfo.color}>
                           {tierInfo.label}
                         </Badge>
+                        
+                        <div className="flex items-center">
+                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <span className="ml-1 text-sm font-medium">{clinic.ratings.overall}</span>
+                          <span className="ml-1 text-xs text-gray-500">({clinic.ratings.reviews})</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2 text-sm text-gray-700 mb-3">
+                        <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                        <span>{clinic.location.area}, {clinic.location.city}</span>
                       </div>
                     </div>
                     
-                    <h2 className="text-xl font-bold mb-1">{clinic.name}</h2>
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className={tierInfo.color}>
-                        {tierInfo.label}
-                      </Badge>
+                    {/* Clinic Features */}
+                    <div className="md:col-span-1">
+                      <h3 className="text-sm font-semibold text-gray-500 mb-3">CLINIC HIGHLIGHTS</h3>
+                      <ul className="space-y-2">
+                        {clinic.features.slice(0, 5).map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <div className="rounded-full bg-green-100 p-1 mt-0.5">
+                              <svg className="h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-sm">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                       
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        <span className="ml-1 text-sm font-medium">{clinic.ratings.overall}</span>
-                        <span className="ml-1 text-xs text-gray-500">({clinic.ratings.reviews})</span>
+                      <div className="mt-4">
+                        <h3 className="text-sm font-semibold text-gray-500 mb-2">GUARANTEES</h3>
+                        <ul className="space-y-1">
+                          <li className="text-sm flex items-center gap-1">
+                            <ShieldCheck className="h-4 w-4 text-blue-500" />
+                            <span>Implants: {clinic.guarantees.implants}</span>
+                          </li>
+                          <li className="text-sm flex items-center gap-1">
+                            <ShieldCheck className="h-4 w-4 text-blue-500" />
+                            <span>Crowns: {clinic.guarantees.crowns}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <h3 className="text-sm font-semibold text-gray-500 mb-2">CERTIFICATIONS</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {clinic.certifications.map((cert, idx) => (
+                            <Badge key={idx} variant="outline" className="bg-gray-100">
+                              {cert.name} ({cert.year})
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-start gap-2 text-sm text-gray-700 mb-3">
-                      <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                      <span>{clinic.location.area}, {clinic.location.city}</span>
-                    </div>
-                    
-                    {/* Enhanced special offer banner with detailed information - only showing one offer per clinic */}
-                    {/* Priority: Show active/selected offer first, then clinic's default offer */}
-                    {(() => {
-                      // Determine which single offer to show (priority order)
-                      const activeOffer = specialOffer && specialOffer.clinicId === clinic.id ? specialOffer : null;
-                      const clinicOffer = clinic.specialOffer;
+                    {/* Price and Select */}
+                    <div className="md:col-span-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-500 mb-3">YOUR PRICE AT THIS CLINIC</h3>
+                        <div className="mb-2">
+                          <div className="text-3xl font-bold text-blue-700">£{totalPrice.toFixed(2)}</div>
+                          <div className="text-sm text-green-600">Save {Math.round((1 - (totalPrice / totalGBP)) * 100)}% vs UK prices</div>
+                        </div>
+                        
+                        <div className="space-y-2 mb-4">
+                          <div className="text-sm flex items-center justify-between">
+                            <span className="text-gray-600">Your treatments:</span>
+                            <span className="font-medium">{clinicTreatments.length} items</span>
+                          </div>
+                          <div className="text-sm flex items-center justify-between">
+                            <span className="text-gray-600">Treatment duration:</span>
+                            <span className="font-medium">3-5 days</span>
+                          </div>
+                          <div className="text-sm flex items-center justify-between">
+                            <span className="text-gray-600">Accommodation:</span>
+                            <span className="font-medium">{clinic.tier === 'premium' ? 'Included' : clinic.tier === 'standard' ? 'Discounted' : 'Available'}</span>
+                          </div>
+                        </div>
+                      </div>
                       
-                      // Only show one offer - priority to active offer
-                      const offerToShow = activeOffer || clinicOffer;
-                      
-                      if (!offerToShow) return null;
-                      
-                      return (
-                        <div className={`mb-4 p-3 ${activeOffer ? 
-                          'bg-gradient-to-r from-purple-600 to-blue-500 border-2 border-blue-300' : 
-                          'bg-gradient-to-r from-red-500 to-orange-500'} 
-                          text-white rounded-md shadow-md ${activeOffer ? '' : 'animate-pulse'}`}
+                      <div className="space-y-2">
+                        <Button 
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => handleSelectClinic(clinic.id)}
                         >
-                          <div className="flex items-center gap-2">
-                            {activeOffer ? (
-                              <Tag className="h-5 w-5" />
-                            ) : (
-                              <Sparkles className="h-5 w-5" />
-                            )}
-                            <h3 className="font-bold text-white">
-                              {activeOffer ? 'APPLIED SPECIAL OFFER!' : 'LIMITED TIME SPECIAL OFFER!'}
-                            </h3>
-                          </div>
-                          
-                          {/* Display the title and discount value */}
-                          <p className="mt-1 font-medium text-white">
-                            {offerToShow.title}
-                            {offerToShow.discountType === 'percentage' ? 
-                              ` - Save ${offerToShow.discountValue}%!` : 
-                              ` - Save £${offerToShow.discountValue}!`
-                            }
-                          </p>
-                          
-                          {/* Display offer description if available */}
-                          {offerToShow.description && (
-                            <p className="mt-1 text-sm text-white/90">
-                              {offerToShow.description}
-                            </p>
-                          )}
-                      
+                          Select This Clinic
+                        </Button>
                         
-                        {/* Status badges for active offers */}
-                        {hasActiveOffer && specialOffer?.clinicId === clinic.id && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
-                              Active offer
-                            </span>
-                            <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
-                              Discount applied
-                            </span>
-                            
-                            {/* Show eligible treatments if available */}
-                            {(specialOffer?.applicableTreatments || specialOffer?.applicableTreatment) && (
-                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
-                                {specialOffer.applicableTreatments && specialOffer.applicableTreatments.length > 0 ? 
-                                  `${specialOffer.applicableTreatments.length} eligible treatments` : 
-                                  `For: ${specialOffer.applicableTreatment}`}
-                              </span>
-                            )}
-                            
-                            {/* Show expiry date if available */}
-                            {specialOffer?.expiryDate && (
-                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
-                                Expires: {new Date(specialOffer.expiryDate).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* For non-active offers, show metadata badges */}
-                        {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && clinic.specialOffer && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {/* Show eligible treatments if available */}
-                            {hasApplicableTreatments(clinic.specialOffer) && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold hover:bg-white/30"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedOfferDetails(
-                                    expandedOfferDetails === clinic.id ? null : clinic.id
-                                  );
-                                }}
-                              >
-                                {clinic.specialOffer.discountType === 'percentage' 
-                                  ? `${clinic.specialOffer.discountValue}% off ` 
-                                  : `£${clinic.specialOffer.discountValue} off `}
-                                {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 
-                                  ? `${clinic.specialOffer.applicableTreatments.length} treatments` 
-                                  : 'eligible treatments'}
-                                <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
-                                  expandedOfferDetails === clinic.id ? 'rotate-180' : ''
-                                }`} />
-                              </Button>
-                            )}
-                            
-                            {/* Show expiry date if available */}
-                            {clinic.specialOffer.expiryDate && (
-                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
-                                Expires: {new Date(clinic.specialOffer.expiryDate).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Show applicable treatments list for active special offer */}
-                        {hasActiveOffer && specialOffer?.clinicId === clinic.id && (
-                          <div className="mt-2 bg-white/10 p-2 rounded">
-                            <ApplicableTreatmentsList 
-                              specialOffer={specialOffer} 
-                              className="text-white" 
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Show applicable treatments for non-active clinic special offer when expanded */}
-                        {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && 
-                          clinic.specialOffer && 
-                          expandedOfferDetails === clinic.id &&
-                          hasApplicableTreatments(clinic.specialOffer) && (
-                          <div className="mt-2 bg-white/10 p-2 rounded">
-                            <ApplicableTreatmentsList 
-                              specialOffer={clinic.specialOffer as SpecialOfferDetails} 
-                              className="text-white" 
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Show terms and conditions in small text */}
-                        {((specialOffer && specialOffer.clinicId === clinic.id && specialOffer.termsAndConditions) || 
-                           (clinic.specialOffer?.termsAndConditions)) && (
-                          <p className="mt-2 text-xs text-white/80 italic">
-                            {specialOffer && specialOffer.clinicId === clinic.id ? 
-                              `Terms: ${specialOffer.termsAndConditions}` : 
-                              `Terms: ${clinic.specialOffer?.termsAndConditions}`}
-                          </p>
-                        )}
-                      </div>
-                      );
-                    })()}
-                    
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                      {clinic.description}
-                    </p>
-                    
-                    <div className="space-y-3 mb-4">
-                      {clinic.certifications && clinic.certifications.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <Award className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
-                          <div>
-                            <span className="text-sm font-medium">Certifications</span>
-                            <div className="text-xs text-gray-600 flex flex-wrap gap-1 mt-1">
-                              {clinic.certifications.map((cert, i) => (
-                                <Badge key={i} variant="outline" className="font-normal">
-                                  {cert.name}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {clinic.doctors && clinic.doctors.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <User className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
-                          <div>
-                            <span className="text-sm font-medium">Lead Dentists</span>
-                            <div className="text-xs text-gray-600 mt-1">
-                              {clinic.doctors.slice(0, 2).map((doctor, i) => (
-                                <div key={i} className="mb-1">
-                                  {doctor.name} - {doctor.specialty} ({doctor.experience} yrs)
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {clinic.features && clinic.features.length > 0 && (
-                        <div className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                          <div>
-                            <span className="text-sm font-medium">Clinic Features</span>
-                            <div className="text-xs text-gray-600 mt-1">
-                              <div className="grid grid-cols-1 gap-1">
-                                {clinic.features.slice(0, 3).map((feature, i) => (
-                                  <div key={i} className="flex items-center">
-                                    <Check className="h-3 w-3 text-green-500 mr-1 shrink-0" />
-                                    <span>{feature}</span>
-                                  </div>
-                                ))}
-                                {clinic.features.length > 3 && (
-                                  <div className="text-blue-600 text-xs">+{clinic.features.length - 3} more features</div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Quote Details */}
-                  <div className="md:col-span-2">
-                    <div className="flex flex-col h-full">
-                      <h3 className="text-lg font-semibold mb-4">Your Personalized Treatment Quote</h3>
-                      
-                      <div className="overflow-hidden mb-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <div className="mb-3">
-                            <h4 className="font-medium mb-2">Treatment Details</h4>
-                            <div className="space-y-2">
-                              {clinicTreatments.map((treatment, i) => (
-                                <div key={i} className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center flex-wrap gap-1">
-                                      <span className="text-sm font-medium text-gray-700">
-                                        {treatment.treatmentName}
-                                      </span>
-                                      {treatment.quantity > 1 && (
-                                        <span className="text-sm text-gray-500">
-                                          (x{treatment.quantity})
-                                        </span>
-                                      )}
-                                      {treatment.isPackage && (
-                                        <Badge className="ml-1 bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">
-                                          Package
-                                        </Badge>
-                                      )}
-                                      {treatment.specialOffer && (
-                                        <Badge className="ml-1 bg-red-100 text-red-800 border-red-200 hover:bg-red-200 flex items-center gap-1">
-                                          <Sparkles className="h-3 w-3" />
-                                          <span>
-                                            {treatment.specialOffer.discountType === 'percentage' 
-                                              ? `${treatment.specialOffer.discountValue}% Off` 
-                                              : `£${treatment.specialOffer.discountValue} Off`}
-                                          </span>
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-sm font-medium">
-                                      £{treatment.subtotal}
-                                    </div>
-                                    
-                                    {/* Show original price with strikethrough if special offer is applied */}
-                                    {treatment.specialOffer && (
-                                      <div className="text-xs text-gray-500 line-through">
-                                        Was: £{Math.round(treatment.subtotal * (treatment.specialOffer.discountType === 'percentage'
-                                          ? 1 / (1 - (treatment.specialOffer.discountValue || 0) / 100)
-                                          : ((treatment.subtotal + (treatment.specialOffer.discountValue || 0)) / treatment.subtotal)))}
-                                      </div>
-                                    )}
-                                    
-                                    {treatment.quantity > 1 && (
-                                      <div className="text-xs text-gray-500">
-                                        £{treatment.pricePerUnit} each
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="border-t pt-3 mb-3">
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">Treatment Total:</span>
-                              <span className="font-medium">£{totalPrice}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-3">
-                            <div className="flex justify-between mb-2">
-                              <span className="text-sm font-medium text-blue-700">UK Cost Comparison:</span>
-                              <span className="text-sm font-medium text-blue-700">£{ukTotal}</span>
-                            </div>
-                            <div className="flex justify-between text-green-600 font-medium">
-                              <span>Your Savings:</span>
-                              <span>£{ukTotal - totalPrice} ({Math.round((ukTotal - totalPrice) / ukTotal * 100)}%)</span>
-                            </div>
-                          </div>
-                          
-                          <div className="text-xs text-gray-500 mb-2">
-                            <p>* Final quote will be confirmed after clinic review of your dental records</p>
-                            <p>* Hotel stays often included in treatment packages depending on the cost of your treatment</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-auto">
-                        <div className="flex flex-wrap justify-between items-center">
-                          {/* Special offer callout - only when clinic has a special offer */}
-                          {clinic.specialOffer && (
-                            <div className="w-full mb-3">
-                              <div className="flex items-center">
-                                <div className="text-red-500">
-                                  <Sparkles className="h-5 w-5 animate-pulse" />
-                                </div>
-                                <div className="ml-2">
-                                  <p className="text-sm font-semibold text-red-600">
-                                    Special offer available!
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    Limited-time promotion
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Show offer description */}
-                              {clinic.specialOffer.description && (
-                                <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded text-xs">
-                                  <p className="text-gray-700">{clinic.specialOffer.description}</p>
-                                  
-                                  {/* Button to toggle eligible treatments list */}
-                                  {hasApplicableTreatments(clinic.specialOffer) && (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      className="mt-2 text-xs h-7 bg-white"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setExpandedOfferDetails(
-                                          expandedOfferDetails === clinic.id ? null : clinic.id
-                                        );
-                                      }}
-                                    >
-                                      {expandedOfferDetails === clinic.id 
-                                        ? 'Hide eligible treatments' 
-                                        : `View ${clinic.specialOffer.discountType === 'percentage' 
-                                            ? `${clinic.specialOffer.discountValue}% off` 
-                                            : `£${clinic.specialOffer.discountValue} off`} details`
-                                      }
-                                      <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${
-                                        expandedOfferDetails === clinic.id ? 'rotate-180' : ''
-                                      }`} />
-                                    </Button>
-                                  )}
-                                  
-                                  {/* Show treatments list when expanded */}
-                                  {expandedOfferDetails === clinic.id && (
-                                    <div className="mt-2 p-2 bg-white/80 rounded">
-                                      <ApplicableTreatmentsList 
-                                        specialOffer={clinic.specialOffer as SpecialOfferDetails}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => downloadPdf(clinic.id)}
+                          >
+                            <FileCheck className="h-4 w-4 mr-1" /> PDF
+                          </Button>
                           
                           <Button 
-                            className="md:w-auto"
-                            onClick={() => {
-                              // Save the selected clinic in localStorage
-                              setSelectedClinic(clinic.id);
-                              localStorage.setItem('selectedClinicId', clinic.id);
-                              
-                              // Check if this is a special offer claim
-                              if (clinic.specialOffer) {
-                                // Process special offer claim
-                                const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-                                
-                                // Check if any treatment in the plan matches the offer
-                                const offerTitle = clinic.specialOffer.title.toLowerCase();
-                                const offerDiscount = clinic.specialOffer.discountType === 'percentage' 
-                                  ? `${clinic.specialOffer.discountValue}%` 
-                                  : `£${clinic.specialOffer.discountValue}`;
-                                  
-                                // Apply discount to matching treatments or add offer as new treatment
-                                let matchFound = false;
-                                let modifiedTreatments = clinicTreatments.map(treatment => {
-                                  // Simple matching - could be enhanced with more sophisticated logic
-                                  if (treatment.treatmentName.toLowerCase().includes(offerTitle.split(' ')[0])) {
-                                    matchFound = true;
-                                    // Apply discount 
-                                    const discountedSubtotal = clinic.specialOffer.discountType === 'percentage'
-                                      ? treatment.subtotal * (1 - (clinic.specialOffer.discountValue / 100))
-                                      : treatment.subtotal - clinic.specialOffer.discountValue;
-                                      
-                                    return {
-                                      ...treatment,
-                                      subtotal: Math.max(0, Math.round(discountedSubtotal)),
-                                      // Add special mark to indicate discount was applied
-                                      treatmentName: `${treatment.treatmentName} (Special Offer: ${offerDiscount} OFF)`,
-                                      specialOfferApplied: true
-                                    };
-                                  }
-                                  return treatment;
-                                });
-                                
-                                // If no match found, we'd add the special offer as a new treatment
-                                // (this would need more detailed implementation in a real system)
-                                if (!matchFound) {
-                                  // Just for demonstration - in reality would need proper treatment details
-                                  // from a database of available special offers
-                                  toast({
-                                    title: "Special Offer Added",
-                                    description: `${clinic.specialOffer.title} has been added to your treatment plan with ${offerDiscount} discount.`,
-                                  });
-                                } else {
-                                  toast({
-                                    title: "Special Offer Applied",
-                                    description: `${offerDiscount} discount applied to eligible treatments in your plan.`,
-                                  });
-                                }
-                                
-                                // Calculate new total after discounts
-                                const discountedTotal = modifiedTreatments.reduce((sum, t) => sum + t.subtotal, 0);
-                                
-                                // Save the modified treatments with discounts applied
-                                localStorage.setItem('selectedClinicData', JSON.stringify({
-                                  name: clinic.name,
-                                  treatments: modifiedTreatments,
-                                  originalTreatments: clinicTreatments, // Keep original for reference
-                                  totalPrice: discountedTotal,
-                                  originalPrice: totalPrice, // Keep original for reference
-                                  specialOfferApplied: true,
-                                  specialOfferDetails: clinic.specialOffer
-                                }));
-                              } else {
-                                // Standard selection without special offer
-                                const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-                                localStorage.setItem('selectedClinicData', JSON.stringify({
-                                  name: clinic.name,
-                                  treatments: clinicTreatments,
-                                  totalPrice: totalPrice
-                                }));
-                              }
-                              
-                              // Call the onSelectClinic callback if provided
-                              if (onSelectClinic) {
-                                onSelectClinic(clinic.id);
-                              }
-                              
-                              // Redirect to the patient portal login page
-                              setLocation('/portal');
-                              
-                              // Show appropriate toast message
-                              if (clinic.specialOffer) {
-                                toast({
-                                  title: "Clinic Selected with Special Offer",
-                                  description: "Please log in to your patient portal to view your discounted treatment plan.",
-                                });
-                              } else {
-                                toast({
-                                  title: "Clinic Selected",
-                                  description: "Please log in to your patient portal to continue with your booking.",
-                                });
-                              }
-                            }}
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => emailQuote(clinic.id)}
                           >
-                            <>
-                              <Heart className="mr-2 h-4 w-4" />
-                              Select This Clinic
-                            </>
+                            <Mail className="h-4 w-4 mr-1" /> Email
                           </Button>
+                          
+                          <WhatsAppButton 
+                            message={`I'm interested in dental treatment at ${clinic.name} - my quote total is £${totalPrice.toFixed(2)}`}
+                            className="flex-1"
+                          />
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Detailed Info Tabs */}
-              {clinic.ratings && clinic.doctors && (
+                
+                {/* Detailed Treatment Comparison */}
                 <div className="p-6">
-                  <Tabs defaultValue="ratings">
-                    <TabsList className="mb-4 flex flex-wrap">
-                      <TabsTrigger value="ratings">Clinic Ratings</TabsTrigger>
-                      <TabsTrigger value="doctors">Doctors & Staff</TabsTrigger>
-                      <TabsTrigger value="amenities">Amenities</TabsTrigger>
-                      <TabsTrigger value="before-after">Before & After</TabsTrigger>
-                      <TabsTrigger value="videos">Videos</TabsTrigger>
-                      <TabsTrigger value="reviews">More Reviews</TabsTrigger>
+                  <Tabs defaultValue="treatments">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="treatments">Treatments & Pricing</TabsTrigger>
+                      <TabsTrigger value="details">Clinic Details</TabsTrigger>
+                      <TabsTrigger value="reviews">Patient Reviews</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="ratings">
+                    <TabsContent value="treatments" className="space-y-4">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full border-collapse">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="py-2 px-4 text-left text-sm font-semibold text-gray-700">Treatment</th>
+                              <th className="py-2 px-4 text-center text-sm font-semibold text-gray-700">Qty</th>
+                              <th className="py-2 px-4 text-right text-sm font-semibold text-gray-700">UK Price</th>
+                              <th className="py-2 px-4 text-right text-sm font-semibold text-gray-700">{clinic.name} Price</th>
+                              <th className="py-2 px-4 text-right text-sm font-semibold text-gray-700">You Save</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {clinicTreatments.map((treatment, idx) => {
+                              // Find corresponding UK price info from original treatments
+                              const originalTreatment = treatmentPlan.find(t => t.name === treatment.originalName);
+                              if (!originalTreatment) return null;
+                              
+                              const ukPricePerUnit = originalTreatment.priceGBP;
+                              const ukSubtotal = originalTreatment.subtotalGBP;
+                              const savings = ukSubtotal - treatment.subtotal;
+                              const savingsPercent = Math.round((savings / ukSubtotal) * 100);
+                              
+                              return (
+                                <tr key={idx} className="border-b border-gray-100">
+                                  <td className="py-2 px-4 text-sm">
+                                    <div className="font-medium">{treatment.treatmentName}</div>
+                                    <div className="text-xs text-gray-500">{treatment.category}</div>
+                                  </td>
+                                  <td className="py-2 px-4 text-sm text-center">{treatment.quantity}</td>
+                                  <td className="py-2 px-4 text-sm text-right">
+                                    <div>£{ukPricePerUnit.toFixed(2)}/unit</div>
+                                    <div className="text-xs text-gray-500">£{ukSubtotal.toFixed(2)} total</div>
+                                  </td>
+                                  <td className="py-2 px-4 text-sm text-right">
+                                    <div className="font-medium text-blue-700">£{treatment.pricePerUnit.toFixed(2)}/unit</div>
+                                    <div className="text-xs text-blue-700">£{treatment.subtotal.toFixed(2)} total</div>
+                                  </td>
+                                  <td className="py-2 px-4 text-sm text-right">
+                                    <div className="font-medium text-green-600">£{savings.toFixed(2)}</div>
+                                    <div className="text-xs text-green-600">{savingsPercent}% off</div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            <tr className="bg-blue-50">
+                              <td colSpan={2} className="py-2 px-4 text-sm font-semibold">Total</td>
+                              <td className="py-2 px-4 text-sm text-right font-semibold">£{totalGBP.toFixed(2)}</td>
+                              <td className="py-2 px-4 text-sm text-right font-bold text-blue-700">£{totalPrice.toFixed(2)}</td>
+                              <td className="py-2 px-4 text-sm text-right font-bold text-green-600">
+                                £{(totalGBP - totalPrice).toFixed(2)} ({Math.round((1 - (totalPrice / totalGBP)) * 100)}%)
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="details">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Patient Ratings</h4>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Overall</span>
-                              <div className="flex items-center">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                      key={i} 
-                                      className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.overall) 
-                                          ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.overall 
-                                            ? 'text-yellow-500 fill-yellow-500 opacity-50' 
-                                            : 'text-gray-300'
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.overall}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Cleanliness</span>
-                              <div className="flex items-center">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                      key={i} 
-                                      className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.cleanliness) 
-                                          ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.cleanliness 
-                                            ? 'text-yellow-500 fill-yellow-500 opacity-50' 
-                                            : 'text-gray-300'
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.cleanliness}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Staff</span>
-                              <div className="flex items-center">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                      key={i} 
-                                      className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.staff) 
-                                          ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.staff 
-                                            ? 'text-yellow-500 fill-yellow-500 opacity-50' 
-                                            : 'text-gray-300'
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.staff}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Value</span>
-                              <div className="flex items-center">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                      key={i} 
-                                      className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.value) 
-                                          ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.value 
-                                            ? 'text-yellow-500 fill-yellow-500 opacity-50' 
-                                            : 'text-gray-300'
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.value}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Location</span>
-                              <div className="flex items-center">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                      key={i} 
-                                      className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.location) 
-                                          ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.location 
-                                            ? 'text-yellow-500 fill-yellow-500 opacity-50' 
-                                            : 'text-gray-300'
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.location}</span>
-                              </div>
-                            </div>
-                          </div>
+                        {/* About section */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">About {clinic.name}</h3>
+                          <p className="text-sm text-gray-600 mb-4">{clinic.description}</p>
                           
-                          <div className="mt-4 pt-4 border-t">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">Total Reviews</span>
-                              <span className="font-medium">{clinic.ratings.reviews}</span>
-                            </div>
+                          <h4 className="font-medium mb-2">Our Dentists</h4>
+                          <ul className="space-y-2 mb-4">
+                            {clinic.doctors.map((doctor, idx) => (
+                              <li key={idx} className="text-sm">
+                                <span className="font-medium">{doctor.name}</span>
+                                <span className="text-gray-600"> - {doctor.specialty}, {doctor.experience} years exp.</span>
+                              </li>
+                            ))}
+                          </ul>
+                          
+                          <h4 className="font-medium mb-2">Payment Options</h4>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {clinic.paymentOptions.map((option, idx) => (
+                              <Badge key={idx} variant="outline">{option}</Badge>
+                            ))}
                           </div>
                         </div>
                         
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Patient Testimonials</h4>
-                          <div className="space-y-4">
-                            <div className="border-l-4 border-blue-200 pl-3 py-1">
-                              <p className="text-sm italic mb-1">
-                                "I had a fantastic experience at {clinic.name}. The staff was professional, and my treatment was pain-free. The hotel accommodation was superb!"
-                              </p>
-                              <div className="text-xs text-gray-500 flex items-center">
-                                <div className="flex mr-2">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                                  ))}
-                                </div>
-                                <span>Rebecca, UK</span>
-                              </div>
-                            </div>
-                            
-                            <div className="border-l-4 border-blue-200 pl-3 py-1">
-                              <p className="text-sm italic mb-1">
-                                "The quality of dental work at {clinic.name} is exceptional and at a fraction of UK prices. I'm so pleased with the results!"
-                              </p>
-                              <div className="text-xs text-gray-500 flex items-center">
-                                <div className="flex mr-2">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className={`h-3 w-3 ${i < 4 ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
-                                  ))}
-                                </div>
-                                <span>Michael, UK</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="doctors">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Lead Dentists</h4>
-                          <div className="space-y-4">
-                            {clinic.doctors && Array.isArray(clinic.doctors) ? 
-                              clinic.doctors.map((doctor, i) => (
-                                <div key={i} className="flex items-start gap-3">
-                                  <div className="rounded-full bg-blue-100 p-2">
-                                    <User className="h-6 w-6 text-blue-500" />
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">{doctor.name}</div>
-                                    <div className="text-sm text-gray-500">{doctor.specialty}</div>
-                                    <div className="text-xs text-gray-500">{doctor.experience} years experience</div>
-                                  </div>
-                                </div>
-                              )) : 
-                              <div className="flex items-start gap-2">
-                                <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                <span>Experienced, international team of dentists</span>
-                              </div>
-                            }
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Clinic Features</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {clinic.features && Array.isArray(clinic.features) ? 
-                              clinic.features.map((feature, i) => (
-                                <div key={i} className="flex items-start gap-2">
-                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                  <span className="text-sm">{feature}</span>
-                                </div>
-                              )) : 
-                              <>
-                                <div className="flex items-start gap-2">
-                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                  <span className="text-sm">Digital X-ray equipment</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                  <span className="text-sm">Multilingual staff</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                                  <span className="text-sm">Airport transfer service</span>
-                                </div>
-                              </>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="amenities">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Clinic Amenities</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm">Free WiFi</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm">Refreshments</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm">Comfortable waiting area</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm">TV entertainment</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm">Air conditioning</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm">Private consultation rooms</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Treatment Guarantees</h4>
-                          <div className="space-y-3">
-                            {clinic.guarantees ? (
-                              <>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Dental Implants</span>
-                                  <span className="text-sm font-medium">{clinic.guarantees.implants} guarantee</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Veneers</span>
-                                  <span className="text-sm font-medium">{clinic.guarantees.veneers} guarantee</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Crowns</span>
-                                  <span className="text-sm font-medium">{clinic.guarantees.crowns} guarantee</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Fillings</span>
-                                  <span className="text-sm font-medium">{clinic.guarantees.fillings} guarantee</span>
-                                </div>
-                              </>
-                            ) : (
-                              <p className="text-sm text-gray-600">
-                                All treatments come with a minimum 1-year guarantee. Premium treatments like implants include longer guarantees.
-                              </p>
-                            )}
-                            <div className="text-sm text-gray-600 pt-3 border-t mt-3">
-                              <p>A detailed guarantee certificate will be provided with your treatment package.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="before-after">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Dental Implants</h4>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
+                        {/* What's included section */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">What's Included</h3>
+                          <ul className="space-y-2 mb-4">
+                            <li className="flex items-start gap-2">
+                              <Check className="h-5 w-5 text-green-500 shrink-0" />
                               <div>
-                                <div className="text-xs font-medium mb-1 text-gray-500">Before</div>
-                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                  <div className="text-center px-3">
-                                    <div className="text-gray-400 mb-2">
-                                      <span className="text-xs">Missing teeth image</span>
-                                    </div>
-                                    <span className="text-xs text-blue-500">Before treatment</span>
-                                  </div>
-                                </div>
+                                <span className="font-medium">Free consultation</span>
+                                <p className="text-sm text-gray-600">Initial exam and treatment planning</p>
                               </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Check className="h-5 w-5 text-green-500 shrink-0" />
                               <div>
-                                <div className="text-xs font-medium mb-1 text-gray-500">After</div>
-                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                  <div className="text-center px-3">
-                                    <div className="text-gray-400 mb-2">
-                                      <span className="text-xs">Dental implants image</span>
-                                    </div>
-                                    <span className="text-xs text-blue-500">After treatment</span>
-                                  </div>
-                                </div>
+                                <span className="font-medium">Free panoramic X-ray</span>
+                                <p className="text-sm text-gray-600">Comprehensive diagnostic imaging</p>
                               </div>
-                            </div>
-                            <div className="text-sm">
-                              <p>Dental implants treatment result, 3 months after surgery.</p>
-                              <p className="text-xs text-gray-500 mt-1">Patient reported improved chewing ability and confidence.</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Veneers & Crowns</h4>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Check className="h-5 w-5 text-green-500 shrink-0" />
                               <div>
-                                <div className="text-xs font-medium mb-1 text-gray-500">Before</div>
-                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                  <div className="text-center px-3">
-                                    <div className="text-gray-400 mb-2">
-                                      <span className="text-xs">Discolored teeth image</span>
-                                    </div>
-                                    <span className="text-xs text-blue-500">Before treatment</span>
-                                  </div>
-                                </div>
+                                <span className="font-medium">{clinic.tier === 'premium' ? 'VIP airport transfer' : 'Airport pickup'}</span>
+                                <p className="text-sm text-gray-600">From Istanbul Airport to your accommodation</p>
                               </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Check className="h-5 w-5 text-green-500 shrink-0" />
                               <div>
-                                <div className="text-xs font-medium mb-1 text-gray-500">After</div>
-                                <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                                  <div className="text-center px-3">
-                                    <div className="text-gray-400 mb-2">
-                                      <span className="text-xs">Veneers image</span>
-                                    </div>
-                                    <span className="text-xs text-blue-500">After treatment</span>
-                                  </div>
-                                </div>
+                                <span className="font-medium">{clinic.tier === 'premium' ? 'Luxury accommodation' : clinic.tier === 'standard' ? 'Hotel arrangements' : 'Accommodation assistance'}</span>
+                                <p className="text-sm text-gray-600">
+                                  {clinic.tier === 'premium' 
+                                    ? '5-star hotel stay included in package' 
+                                    : clinic.tier === 'standard' 
+                                      ? 'Discounted rates at partner hotels' 
+                                      : 'Help finding suitable accommodation'}
+                                </p>
                               </div>
-                            </div>
-                            <div className="text-sm">
-                              <p>Complete smile makeover with porcelain veneers.</p>
-                              <p className="text-xs text-gray-500 mt-1">Treatment completed in just 5 days during patient's stay in Istanbul.</p>
-                            </div>
-                          </div>
+                            </li>
+                          </ul>
                         </div>
-                      </div>
-                      
-                      <div className="mt-4 text-center">
-                        <Button variant="outline" size="sm">
-                          View More Before & After Cases
-                        </Button>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="videos">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Clinic Tour</h4>
-                          <div className="space-y-4">
-                            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                              <div className="text-center px-6 py-8">
-                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                  <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-blue-500 border-b-8 border-b-transparent ml-1"></div>
-                                </div>
-                                <div className="text-gray-500 mb-2">
-                                  <span className="text-sm">Clinic Tour Video</span>
-                                </div>
-                                <span className="text-xs text-blue-500">Click to play</span>
-                              </div>
-                            </div>
-                            <div className="text-sm">
-                              <p>Take a virtual tour of our state-of-the-art dental facility in Istanbul.</p>
-                              <p className="text-xs text-gray-500 mt-1">See our treatment rooms, waiting areas, and meet our staff.</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg p-4 border">
-                          <h4 className="font-medium mb-3">Patient Testimonial Video</h4>
-                          <div className="space-y-4">
-                            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                              <div className="text-center px-6 py-8">
-                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                  <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-blue-500 border-b-8 border-b-transparent ml-1"></div>
-                                </div>
-                                <div className="text-gray-500 mb-2">
-                                  <span className="text-sm">UK Patient Review</span>
-                                </div>
-                                <span className="text-xs text-blue-500">Click to play</span>
-                              </div>
-                            </div>
-                            <div className="text-sm">
-                              <p>Hear from Sarah from Manchester about her dental treatment experience.</p>
-                              <p className="text-xs text-gray-500 mt-1">Full smile makeover with dental implants and veneers.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 text-center">
-                        <Button variant="outline" size="sm">
-                          View More Videos
-                        </Button>
                       </div>
                     </TabsContent>
                     
                     <TabsContent value="reviews">
-                      <div className="bg-white rounded-lg p-6 border mb-6">
-                        <h4 className="font-medium mb-4">Patient Reviews</h4>
-                        <div className="space-y-6">
-                          <div className="border-b pb-5">
-                            <div className="flex items-start gap-4">
-                              <div className="rounded-full bg-blue-100 p-2 mt-1">
-                                <User className="h-6 w-6 text-blue-500" />
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <h3 className="font-semibold mb-2">Overall Rating</h3>
+                            <div className="flex items-center mb-4">
+                              <div className="text-3xl font-bold text-blue-700 mr-2">{clinic.ratings.overall}</div>
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`h-5 w-5 ${i < Math.round(clinic.ratings.overall) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                ))}
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center mb-1">
-                                  <div className="font-medium mr-2">James W.</div>
-                                  <div className="text-xs text-gray-500">London, UK</div>
-                                  <div className="flex ml-auto">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                                    ))}
-                                  </div>
-                                </div>
-                                <p className="text-sm mb-2">
-                                  "I was extremely nervous about getting dental work abroad, but the entire experience exceeded my expectations. From airport pickup to the final check-up, everything was professional and well-organized. My dental implants look and feel completely natural."
-                                </p>
-                                <div className="text-xs text-gray-500">Treatment: Dental Implants • April 2025</div>
-                              </div>
+                              <div className="ml-2 text-sm text-gray-600">({clinic.ratings.reviews} reviews)</div>
                             </div>
-                          </div>
-                          
-                          <div className="border-b pb-5">
-                            <div className="flex items-start gap-4">
-                              <div className="rounded-full bg-blue-100 p-2 mt-1">
-                                <User className="h-6 w-6 text-blue-500" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center mb-1">
-                                  <div className="font-medium mr-2">Emma T.</div>
-                                  <div className="text-xs text-gray-500">Manchester, UK</div>
-                                  <div className="flex ml-auto">
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Cleanliness</span>
+                                <div className="flex items-center">
+                                  <div className="flex">
                                     {[...Array(5)].map((_, i) => (
-                                      <Star key={i} className={`h-3 w-3 ${i < 4 ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                      <Star key={i} className={`h-3 w-3 ${i < Math.round(clinic.ratings.cleanliness) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
                                     ))}
                                   </div>
+                                  <span className="ml-1 text-xs">{clinic.ratings.cleanliness}</span>
                                 </div>
-                                <p className="text-sm mb-2">
-                                  "I saved over £8,000 compared to UK prices for my veneers. The quality is excellent, and the hotel accommodation was lovely. The clinic was modern with state-of-the-art equipment. My only minor issue was sometimes communication was a bit difficult with some staff."
-                                </p>
-                                <div className="text-xs text-gray-500">Treatment: Veneers • March 2025</div>
                               </div>
-                            </div>
-                          </div>
-                          
-                          <div className="border-b pb-5">
-                            <div className="flex items-start gap-4">
-                              <div className="rounded-full bg-blue-100 p-2 mt-1">
-                                <User className="h-6 w-6 text-blue-500" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center mb-1">
-                                  <div className="font-medium mr-2">Robert M.</div>
-                                  <div className="text-xs text-gray-500">Edinburgh, UK</div>
-                                  <div className="flex ml-auto">
+                              
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Staff</span>
+                                <div className="flex items-center">
+                                  <div className="flex">
                                     {[...Array(5)].map((_, i) => (
-                                      <Star key={i} className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                                      <Star key={i} className={`h-3 w-3 ${i < Math.round(clinic.ratings.staff) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
                                     ))}
                                   </div>
+                                  <span className="ml-1 text-xs">{clinic.ratings.staff}</span>
                                 </div>
-                                <p className="text-sm mb-2">
-                                  "The entire experience was superb from start to finish. My dentist was extremely knowledgeable and took time to explain every procedure. I combined my treatment with a mini holiday in Istanbul which was fantastic. The clinic arranged all my transfers and accommodation."
-                                </p>
-                                <div className="text-xs text-gray-500">Treatment: Full Mouth Restoration • February 2025</div>
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Value</span>
+                                <div className="flex items-center">
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`h-3 w-3 ${i < Math.round(clinic.ratings.value) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                    ))}
+                                  </div>
+                                  <span className="ml-1 text-xs">{clinic.ratings.value}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Location</span>
+                                <div className="flex items-center">
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} className={`h-3 w-3 ${i < Math.round(clinic.ratings.location) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                    ))}
+                                  </div>
+                                  <span className="ml-1 text-xs">{clinic.ratings.location}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
                           
                           <div>
-                            <div className="flex items-start gap-4">
-                              <div className="rounded-full bg-blue-100 p-2 mt-1">
-                                <User className="h-6 w-6 text-blue-500" />
-                              </div>
-                              <div className="flex-1">
+                            <h3 className="font-semibold mb-2">Recent Reviews</h3>
+                            <div className="space-y-4">
+                              <div className="p-3 bg-gray-50 rounded-lg">
                                 <div className="flex items-center mb-1">
-                                  <div className="font-medium mr-2">Sophia L.</div>
-                                  <div className="text-xs text-gray-500">Bristol, UK</div>
+                                  <div className="font-medium mr-2">Sarah T.</div>
+                                  <div className="text-xs text-gray-500">London, UK</div>
                                   <div className="flex ml-auto">
                                     {[...Array(5)].map((_, i) => (
                                       <Star key={i} className={`h-3 w-3 ${i < 5 ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
@@ -1794,47 +902,44 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   </div>
                                 </div>
                                 <p className="text-sm mb-2">
-                                  "I was initially worried about language barriers, but the clinic staff spoke excellent English. My treatment was completed faster than expected, and the results are amazing. The aftercare service has been great too - they follow up regularly to check how I'm doing."
+                                  "I couldn't be happier with my experience at this clinic. The dentists were professional and the results exceeded my expectations. The hotel accommodation and transfers made everything so convenient."
                                 </p>
-                                <div className="text-xs text-gray-500">Treatment: Crowns & Root Canal • January 2025</div>
+                                <div className="text-xs text-gray-500">Visited for: Veneers and teeth whitening</div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div className="mt-6 text-center">
-                          <Button variant="outline" size="sm">
-                            Load More Reviews
-                          </Button>
                         </div>
                       </div>
                     </TabsContent>
                   </Tabs>
                 </div>
-              )}
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })
+        )}
       </div>
       
       {/* Bottom Action Bar */}
       <div className="mt-10 border-t pt-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-sm text-gray-600">
-            <p>
-              Need help choosing the right clinic? Our dental tourism specialists are here to help.
-            </p>
+            <p>Need more information or have questions about treatment options?</p>
+            <p>Our patient coordinators are here to help.</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="outline" onClick={() => setLocation('/your-quote')} className="w-full sm:w-auto">
-              Back to Quote
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={onBackToInfo}>
+              ← Back to Patient Information
             </Button>
-
+            
+            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+              <Mail className="h-4 w-4 mr-2" />
+              Request Consultation
+            </Button>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 
