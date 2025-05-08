@@ -10,7 +10,8 @@ import {
   CalendarCheck,
   CheckCircle,
   Sparkles,
-  Tag
+  Tag,
+  Gift
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
@@ -54,6 +55,9 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
   const [location] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
+  
+  // Define a flag to check if this is a promotional quote for any type
+  const isPromotionalQuote = isPromoTokenFlow || promoToken !== undefined;
   
   // Calculate total
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
