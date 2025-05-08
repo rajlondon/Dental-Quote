@@ -813,47 +813,51 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       <span>{clinic.location.area}, {clinic.location.city}</span>
                     </div>
                     
-                    {/* Enhanced special offer banner with detailed information */}
-                    {(clinic.specialOffer || (specialOffer && specialOffer.clinicId === clinic.id)) && (
-                      <div className={`mb-4 p-3 ${(hasActiveOffer && specialOffer?.clinicId === clinic.id) ? 
-                        'bg-gradient-to-r from-purple-600 to-blue-500 border-2 border-blue-300' : 
-                        'bg-gradient-to-r from-red-500 to-orange-500'} 
-                        text-white rounded-md shadow-md ${(hasActiveOffer && specialOffer?.clinicId === clinic.id) ? '' : 'animate-pulse'}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {hasActiveOffer && specialOffer?.clinicId === clinic.id ? (
-                            <Tag className="h-5 w-5" />
-                          ) : (
-                            <Sparkles className="h-5 w-5" />
-                          )}
-                          <h3 className="font-bold text-white">
-                            {hasActiveOffer && specialOffer?.clinicId === clinic.id ? 
-                              'APPLIED SPECIAL OFFER!' : 
-                              'LIMITED TIME SPECIAL OFFER!'}
-                          </h3>
-                        </div>
-                        
-                        {/* Display the title and discount value */}
-                        <p className="mt-1 font-medium text-white">
-                          {specialOffer && specialOffer.clinicId === clinic.id ? specialOffer.title : clinic.specialOffer?.title}
-                          {specialOffer && specialOffer.clinicId === clinic.id ? 
-                            (specialOffer.discountType === 'percentage' ? 
-                              ` - Save ${specialOffer.discountValue}%!` : 
-                              ` - Save £${specialOffer.discountValue}!`) :
-                            (clinic.specialOffer?.discountType === 'percentage' ? 
-                              ` - Save ${clinic.specialOffer?.discountValue}%!` : 
-                              ` - Save £${clinic.specialOffer?.discountValue}!`)
-                          }
-                        </p>
-                        
-                        {/* Display offer description if available */}
-                        {((specialOffer && specialOffer.clinicId === clinic.id && specialOffer.description) || 
-                           (clinic.specialOffer?.description)) && (
-                          <p className="mt-1 text-sm text-white/90">
-                            {specialOffer && specialOffer.clinicId === clinic.id ? 
-                              specialOffer.description : clinic.specialOffer?.description}
+                    {/* Enhanced special offer banner with detailed information - only showing one offer per clinic */}
+                    {/* Priority: Show active/selected offer first, then clinic's default offer */}
+                    {(() => {
+                      // Determine which single offer to show (priority order)
+                      const activeOffer = specialOffer && specialOffer.clinicId === clinic.id ? specialOffer : null;
+                      const clinicOffer = clinic.specialOffer;
+                      
+                      // Only show one offer - priority to active offer
+                      const offerToShow = activeOffer || clinicOffer;
+                      
+                      if (!offerToShow) return null;
+                      
+                      return (
+                        <div className={`mb-4 p-3 ${activeOffer ? 
+                          'bg-gradient-to-r from-purple-600 to-blue-500 border-2 border-blue-300' : 
+                          'bg-gradient-to-r from-red-500 to-orange-500'} 
+                          text-white rounded-md shadow-md ${activeOffer ? '' : 'animate-pulse'}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {activeOffer ? (
+                              <Tag className="h-5 w-5" />
+                            ) : (
+                              <Sparkles className="h-5 w-5" />
+                            )}
+                            <h3 className="font-bold text-white">
+                              {activeOffer ? 'APPLIED SPECIAL OFFER!' : 'LIMITED TIME SPECIAL OFFER!'}
+                            </h3>
+                          </div>
+                          
+                          {/* Display the title and discount value */}
+                          <p className="mt-1 font-medium text-white">
+                            {offerToShow.title}
+                            {offerToShow.discountType === 'percentage' ? 
+                              ` - Save ${offerToShow.discountValue}%!` : 
+                              ` - Save £${offerToShow.discountValue}!`
+                            }
                           </p>
-                        )}
+                          
+                          {/* Display offer description if available */}
+                          {offerToShow.description && (
+                            <p className="mt-1 text-sm text-white/90">
+                              {offerToShow.description}
+                            </p>
+                          )}
+                      
                         
                         {/* Status badges for active offers */}
                         {hasActiveOffer && specialOffer?.clinicId === clinic.id && (
@@ -955,7 +959,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </p>
                         )}
                       </div>
-                    )}
+                      );
+                    })()}
                     
                     <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                       {clinic.description}
@@ -1118,7 +1123,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 </div>
                                 <div className="ml-2">
                                   <p className="text-sm font-semibold text-red-600">
-                                    Claim this special offer now!
+                                    Special offer available!
                                   </p>
                                   <p className="text-xs text-gray-500">
                                     Limited-time promotion
@@ -1259,7 +1264,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               // Show appropriate toast message
                               if (clinic.specialOffer) {
                                 toast({
-                                  title: "Special Offer Claimed!",
+                                  title: "Clinic Selected with Special Offer",
                                   description: "Please log in to your patient portal to view your discounted treatment plan.",
                                 });
                               } else {
