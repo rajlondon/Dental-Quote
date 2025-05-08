@@ -6,10 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Award,
   BadgePercent,
+  Calendar,
   Check,
   ChevronDown,
   Columns,
   FileCheck,
+  FileText,
   Gem,
   Heart,
   HeartPulse,
