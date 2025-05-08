@@ -106,11 +106,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const { toast } = useToast();
-  const { quoteData } = useQuoteFlow();
+  const { source, offerId, clinicId, isSpecialOfferFlow } = useQuoteFlow();
   const { 
-    activeSpecialOffer, 
-    applySpecialOffer, 
-    removeSpecialOffer 
+    specialOffer, 
+    setSpecialOffer, 
+    clearSpecialOffer,
+    hasActiveOffer
   } = useSpecialOfferTracking();
   
   // New function to handle direct PDF download
@@ -442,16 +443,41 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
       const clinicPricePerUnit = Math.round(ukPricePerUnit * priceFactor);
       
+      // Determine if there's a special offer to apply
+      // Priority: 1. Context active offer > 2. Treatment specific offer > 3. Clinic default offer
+      const contextOffer = specialOffer && specialOffer.clinicId === clinicId ? specialOffer : undefined;
+      const treatmentOffer = treatment.specialOffer;
+      const clinicOffer = clinic?.specialOffer && clinic.specialOffer.clinicId === clinicId ? clinic.specialOffer : undefined;
+      
+      // Select the offer to use in order of priority
+      const offerToApply = contextOffer || treatmentOffer || clinicOffer;
+      
+      // Calculate final price with any applicable discount
+      let finalPricePerUnit = clinicPricePerUnit;
+      let finalSubtotal = clinicPricePerUnit * treatment.quantity;
+      
+      if (offerToApply) {
+        if (offerToApply.discountType === 'percentage') {
+          const discountMultiplier = 1 - (offerToApply.discountValue / 100);
+          finalPricePerUnit = Math.round(clinicPricePerUnit * discountMultiplier);
+          finalSubtotal = finalPricePerUnit * treatment.quantity;
+        } else if (offerToApply.discountType === 'fixed_amount') {
+          // For fixed amount, we apply to the subtotal rather than per unit
+          finalSubtotal = Math.max(0, finalSubtotal - offerToApply.discountValue);
+          finalPricePerUnit = Math.round(finalSubtotal / treatment.quantity);
+        }
+      }
+      
       return {
         treatmentName: treatment.name,
         originalName: treatment.name,
         quantity: treatment.quantity,
-        pricePerUnit: clinicPricePerUnit,
-        subtotal: clinicPricePerUnit * treatment.quantity,
+        pricePerUnit: finalPricePerUnit,
+        subtotal: finalSubtotal,
         category: treatment.category,
         isPackage: treatment.isPackage,
         packageId: treatment.packageId,
-        specialOffer: treatment.specialOffer
+        specialOffer: offerToApply
       };
     });
     
@@ -668,19 +694,46 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                     </div>
                     
                     {/* Eye-catching special offer banner */}
-                    {clinic.specialOffer && (
-                      <div className="mb-4 p-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-md shadow-md animate-pulse">
+                    {(clinic.specialOffer || (specialOffer && specialOffer.clinicId === clinic.id)) && (
+                      <div className={`mb-4 p-3 ${(hasActiveOffer && specialOffer?.clinicId === clinic.id) ? 
+                        'bg-gradient-to-r from-purple-600 to-blue-500 border-2 border-blue-300' : 
+                        'bg-gradient-to-r from-red-500 to-orange-500'} 
+                        text-white rounded-md shadow-md ${(hasActiveOffer && specialOffer?.clinicId === clinic.id) ? '' : 'animate-pulse'}`}
+                      >
                         <div className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5" />
-                          <h3 className="font-bold text-white">LIMITED TIME SPECIAL OFFER!</h3>
+                          {hasActiveOffer && specialOffer?.clinicId === clinic.id ? (
+                            <Tag className="h-5 w-5" />
+                          ) : (
+                            <Sparkles className="h-5 w-5" />
+                          )}
+                          <h3 className="font-bold text-white">
+                            {hasActiveOffer && specialOffer?.clinicId === clinic.id ? 
+                              'APPLIED SPECIAL OFFER!' : 
+                              'LIMITED TIME SPECIAL OFFER!'}
+                          </h3>
                         </div>
                         <p className="mt-1 font-medium text-white">
-                          {clinic.specialOffer.title}
-                          {clinic.specialOffer.discountType === 'percentage' && 
-                            ` - Save ${clinic.specialOffer.discountValue}%!`}
-                          {clinic.specialOffer.discountType === 'fixed_amount' && 
-                            ` - Save £${clinic.specialOffer.discountValue}!`}
+                          {specialOffer && specialOffer.clinicId === clinic.id ? specialOffer.title : clinic.specialOffer?.title}
+                          {specialOffer && specialOffer.clinicId === clinic.id ? 
+                            (specialOffer.discountType === 'percentage' ? 
+                              ` - Save ${specialOffer.discountValue}%!` : 
+                              ` - Save £${specialOffer.discountValue}!`) :
+                            (clinic.specialOffer?.discountType === 'percentage' ? 
+                              ` - Save ${clinic.specialOffer?.discountValue}%!` : 
+                              ` - Save £${clinic.specialOffer?.discountValue}!`)
+                          }
                         </p>
+                        
+                        {hasActiveOffer && specialOffer?.clinicId === clinic.id && (
+                          <div className="mt-2 flex gap-2">
+                            <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                              Active offer
+                            </span>
+                            <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                              Discount applied
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                     
