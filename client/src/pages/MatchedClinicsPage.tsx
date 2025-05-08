@@ -109,6 +109,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 }) => {
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
+  const [expandedOfferDetails, setExpandedOfferDetails] = useState<string | null>(null);
   const { toast } = useToast();
   const { source, offerId, clinicId, isSpecialOfferFlow } = useQuoteFlow();
   const { 
@@ -876,11 +877,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && clinic.specialOffer && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {/* Show eligible treatments if available */}
-                            {(clinic.specialOffer.applicableTreatments || clinic.specialOffer.applicableTreatment) && (
+                            {(clinic.specialOffer.applicableTreatments?.length > 0 || clinic.specialOffer.applicableTreatment) && (
                               <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
                                 {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 ? 
                                   `${clinic.specialOffer.applicableTreatments.length} eligible treatments` : 
-                                  `For: ${clinic.specialOffer.applicableTreatment}`}
+                                  clinic.specialOffer.applicableTreatment ? `For: ${clinic.specialOffer.applicableTreatment}` : ''}
                               </span>
                             )}
                             
@@ -890,6 +891,28 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 Expires: {new Date(clinic.specialOffer.expiryDate).toLocaleDateString()}
                               </span>
                             )}
+                          </div>
+                        )}
+                        
+                        {/* Show applicable treatments list for active special offer */}
+                        {hasActiveOffer && specialOffer?.clinicId === clinic.id && (
+                          <div className="mt-2 bg-white/10 p-2 rounded">
+                            <ApplicableTreatmentsList 
+                              specialOffer={specialOffer} 
+                              className="text-white" 
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Show applicable treatments for non-active clinic special offer when expanded */}
+                        {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && 
+                          clinic.specialOffer && 
+                          (clinic.specialOffer.applicableTreatments?.length > 0 || clinic.specialOffer.applicableTreatment) && (
+                          <div className="mt-2 bg-white/10 p-2 rounded">
+                            <ApplicableTreatmentsList 
+                              specialOffer={clinic.specialOffer as SpecialOfferDetails} 
+                              className="text-white" 
+                            />
                           </div>
                         )}
                         
@@ -996,7 +1019,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                       {treatment.specialOffer && (
                                         <Badge className="ml-1 bg-red-100 text-red-800 border-red-200 hover:bg-red-200 flex items-center gap-1">
                                           <Sparkles className="h-3 w-3" />
-                                          <span>Discounted</span>
+                                          <span>
+                                            {treatment.specialOffer.discountType === 'percentage' 
+                                              ? `${treatment.specialOffer.discountValue}% Off` 
+                                              : `£${treatment.specialOffer.discountValue} Off`}
+                                          </span>
                                         </Badge>
                                       )}
                                     </div>
