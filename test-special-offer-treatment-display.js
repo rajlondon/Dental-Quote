@@ -3,8 +3,8 @@
  * with clinic reference codes
  */
 
-const axios = require('axios');
-const { strict: assert } = require('assert');
+import axios from 'axios';
+import { strict as assert } from 'assert';
 
 const BASE_URL = 'http://localhost:5000';
 const AUTH_URL = `${BASE_URL}/api/auth/login`;
@@ -14,8 +14,8 @@ const QUOTE_URL = `${BASE_URL}/api/patient/quotes`;
 async function getAuthenticatedSession() {
   // Get patient credentials
   const credentials = {
-    email: 'patient@example.com',
-    password: 'password123'
+    email: 'patient@mydentalfly.com',
+    password: 'Patient123!'
   };
 
   try {
