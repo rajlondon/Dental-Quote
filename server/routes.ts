@@ -364,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Special handler for UUID quotes from promo flow
-  app.get('/api/quotes/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/quotes/:id', isAuthenticated, async (req, res, next) => {
     try {
       const quoteId = req.params.id;
       const user = req.user!;
@@ -374,126 +374,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!isUuid) {
         // Pass through to the regular quote routes handler
-        return quoteRoutes(req, res);
+        return quoteRoutes(req, res, (err) => {
+          if (err) next(err);
+        });
       }
       
       console.log(`[DEBUG] Handling UUID-format quote request: ${quoteId}`);
       
-      // Use direct SQL query to get the quote and treatment lines
-      const quoteQuery = `
-        SELECT q.*, c.name as clinic_name, c.city as clinic_city, c.country as clinic_country
-        FROM quotes q
-        LEFT JOIN clinics c ON q.clinic_id = c.id
-        WHERE q.id = $1
-      `;
+      // Import database pool directly
+      const { pool } = await import('./db');
       
-      const quoteResult = await storage.db.$client.query(quoteQuery, [quoteId]);
+      // Get a client from the pool
+      const client = await pool.connect();
       
-      if (!quoteResult.rows || quoteResult.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "Quote not found"
-        });
-      }
-      
-      const quote = quoteResult.rows[0];
-      console.log(`[DEBUG] Found UUID quote: ${quote.id}, PatientId: ${quote.patient_id}, Status: ${quote.status}`);
-      
-      // Check permissions based on role
-      if (user.role === "patient" && quote.patient_id !== user.id) {
-        console.log(`[ERROR] Permission denied - patient ${user.id} trying to access quote ${quoteId} belonging to patient ${quote.patient_id}`);
+      try {
+        // Use direct SQL query to get the quote and treatment lines
+        const quoteQuery = `
+          SELECT q.*, c.name as clinic_name, c.city as clinic_city, c.country as clinic_country
+          FROM quotes q
+          LEFT JOIN clinics c ON q.clinic_id = c.id
+          WHERE q.id = $1
+        `;
         
-        // If this is a promo token quote, attempt to claim it
-        if (quote.source === 'promo_token') {
-          console.log(`[INFO] Promo token quote - attempting to claim it for patient ${user.id}`);
+        const quoteResult = await client.query(quoteQuery, [quoteId]);
+        
+        if (!quoteResult.rows || quoteResult.rows.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "Quote not found"
+          });
+        }
+        
+        const quote = quoteResult.rows[0];
+        console.log(`[DEBUG] Found UUID quote: ${quote.id}, PatientId: ${quote.patient_id}, Status: ${quote.status}`);
+        
+        // Check permissions based on role
+        if (user.role === "patient" && quote.patient_id !== user.id) {
+          console.log(`[ERROR] Permission denied - patient ${user.id} trying to access quote ${quoteId} belonging to patient ${quote.patient_id}`);
           
-          const updateQuery = `
-            UPDATE quotes SET patient_id = $1
-            WHERE id = $2 AND source = 'promo_token'
-            RETURNING id
-          `;
-          
-          const updateResult = await storage.db.$client.query(updateQuery, [user.id, quoteId]);
-          
-          if (updateResult.rows && updateResult.rows.length > 0) {
-            console.log(`[SUCCESS] Quote ${quoteId} claimed successfully by patient ${user.id}`);
-            // Quote is now claimed, continue with fetching treatment lines
+          // If this is a promo token quote, attempt to claim it
+          if (quote.source === 'promo_token') {
+            console.log(`[INFO] Promo token quote - attempting to claim it for patient ${user.id}`);
+            
+            const updateQuery = `
+              UPDATE quotes SET patient_id = $1
+              WHERE id = $2 AND source = 'promo_token'
+              RETURNING id
+            `;
+            
+            const updateResult = await client.query(updateQuery, [user.id, quoteId]);
+            
+            if (updateResult.rows && updateResult.rows.length > 0) {
+              console.log(`[SUCCESS] Quote ${quoteId} claimed successfully by patient ${user.id}`);
+              // Quote is now claimed, continue with fetching treatment lines
+            } else {
+              // Failed to claim
+              return res.status(403).json({
+                success: false,
+                message: "You don't have permission to access this quote"
+              });
+            }
           } else {
-            // Failed to claim
+            // Not a promo quote, deny access
             return res.status(403).json({
               success: false,
               message: "You don't have permission to access this quote"
             });
           }
-        } else {
-          // Not a promo quote, deny access
-          return res.status(403).json({
-            success: false,
-            message: "You don't have permission to access this quote"
-          });
         }
+        
+        if (user.role === "clinic_staff") {
+          if (!user.clinicId || quote.clinic_id !== user.clinicId) {
+            console.log(`[ERROR] Permission denied - clinic staff ${user.id} from clinic ${user.clinicId} trying to access quote ${quoteId} assigned to clinic ${quote.clinic_id}`);
+            return res.status(403).json({
+              success: false,
+              message: "This quote is not assigned to your clinic"
+            });
+          }
+        }
+        
+        // Get treatment lines
+        const treatmentLinesQuery = `
+          SELECT * FROM treatment_lines WHERE quote_id = $1
+        `;
+        
+        const linesResult = await client.query(treatmentLinesQuery, [quoteId]);
+        const treatmentLines = linesResult.rows || [];
+        
+        console.log(`[DEBUG] Found ${treatmentLines.length} treatment lines for quote ${quoteId}`);
+        
+        // Transform the quote data to match client expectations
+        const transformedQuote = {
+          id: quote.id,
+          clinicId: quote.clinic_id,
+          clinicName: quote.clinic_name,
+          patientId: quote.patient_id,
+          status: quote.status,
+          source: quote.source,
+          promoToken: quote.promo_token,
+          offerId: quote.offer_id,
+          packageId: quote.package_id,
+          totalPrice: quote.total_price,
+          currency: quote.currency,
+          createdAt: quote.created_at,
+          updatedAt: quote.updated_at,
+          treatmentLines: treatmentLines.map(line => ({
+            id: line.id,
+            quoteId: line.quote_id,
+            procedureCode: line.procedure_code,
+            description: line.description,
+            quantity: line.quantity,
+            unitPrice: line.unit_price,
+            basePriceGBP: line.base_price_gbp,
+            isPackage: line.is_package,
+            isLocked: line.is_locked,
+            status: line.status,
+            clinicId: line.clinic_id,
+            patientId: line.patient_id,
+            packageId: line.package_id,
+            createdAt: line.created_at,
+            updatedAt: line.updated_at
+          }))
+        };
+        
+        return res.json({
+          success: true,
+          data: {
+            quote: transformedQuote
+          }
+        });
+      } finally {
+        // Always release the client back to the pool
+        client.release();
       }
-      
-      if (user.role === "clinic_staff") {
-        if (!user.clinicId || quote.clinic_id !== user.clinicId) {
-          console.log(`[ERROR] Permission denied - clinic staff ${user.id} from clinic ${user.clinicId} trying to access quote ${quoteId} assigned to clinic ${quote.clinic_id}`);
-          return res.status(403).json({
-            success: false,
-            message: "This quote is not assigned to your clinic"
-          });
-        }
-      }
-      
-      // Get treatment lines
-      const treatmentLinesQuery = `
-        SELECT * FROM treatment_lines WHERE quote_id = $1
-      `;
-      
-      const linesResult = await storage.db.$client.query(treatmentLinesQuery, [quoteId]);
-      const treatmentLines = linesResult.rows || [];
-      
-      console.log(`[DEBUG] Found ${treatmentLines.length} treatment lines for quote ${quoteId}`);
-      
-      // Transform the quote data to match client expectations
-      const transformedQuote = {
-        id: quote.id,
-        clinicId: quote.clinic_id,
-        clinicName: quote.clinic_name,
-        patientId: quote.patient_id,
-        status: quote.status,
-        source: quote.source,
-        promoToken: quote.promo_token,
-        offerId: quote.offer_id,
-        packageId: quote.package_id,
-        totalPrice: quote.total_price,
-        currency: quote.currency,
-        createdAt: quote.created_at,
-        updatedAt: quote.updated_at,
-        treatmentLines: treatmentLines.map(line => ({
-          id: line.id,
-          quoteId: line.quote_id,
-          procedureCode: line.procedure_code,
-          description: line.description,
-          quantity: line.quantity,
-          unitPrice: line.unit_price,
-          basePriceGBP: line.base_price_gbp,
-          isPackage: line.is_package,
-          isLocked: line.is_locked,
-          status: line.status,
-          clinicId: line.clinic_id,
-          patientId: line.patient_id,
-          packageId: line.package_id,
-          createdAt: line.created_at,
-          updatedAt: line.updated_at
-        }))
-      };
-      
-      return res.json({
-        success: true,
-        data: {
-          quote: transformedQuote
-        }
-      });
     } catch (error) {
       console.error('[ERROR] Error in UUID quote handler:', error);
       return res.status(500).json({
