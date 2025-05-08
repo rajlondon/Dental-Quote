@@ -231,8 +231,8 @@ router.post('/quotes/from-promo', async (req, res) => {
       where: eq(promoTokens.token, promoCode)
     });
     
-    // Get the user ID - either the authenticated user, provided patientId, or fallback to demo user
-    const userId = req.user?.id || patientId || 2; // Fallback to user ID 2 for demo
+    // Get the user ID - either the authenticated user, provided patientId, or fallback to a test patient user
+    const userId = req.user?.id || patientId || 45; // Fallback to patient user ID 45
     
     let clinicId: number | string;
     let offerId: string | undefined;
