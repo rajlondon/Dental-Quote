@@ -2,6 +2,9 @@
  * Test script for promotional offer clinic filtering
  * This script demonstrates how to navigate directly to the results page
  * with a promotional code to filter the results to a specific clinic
+ * 
+ * To use this file as a module script, we include the .mjs extension
+ * in the name when running it: node test-promo-filtering.mjs
  */
 import express from 'express';
 const app = express();
