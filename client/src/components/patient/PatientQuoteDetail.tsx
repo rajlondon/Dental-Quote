@@ -500,6 +500,12 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                       unitPriceGBP={treatment.unitPriceGBP}
                       isSpecialOffer={treatment.isSpecialOffer}
                       hasSpecialOffer={!!treatment.specialOffer}
+                      specialOfferText={treatment.specialOffer?.title 
+                        ? `${treatment.specialOffer.title} Applied` 
+                        : isPromotionalQuote 
+                          ? 'Promotional Price'
+                          : 'Special Offer Applied'
+                      }
                     />
                   </td>
                 </tr>

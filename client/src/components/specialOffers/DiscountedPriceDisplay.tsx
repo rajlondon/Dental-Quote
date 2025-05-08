@@ -6,6 +6,8 @@ interface DiscountedPriceDisplayProps {
   currency?: string;
   showPercentage?: boolean;
   className?: string;
+  isSpecialOffer?: boolean;  // Added to force special offer display
+  specialOfferText?: string; // Added for custom text on special offer with 0 discount
 }
 
 /**
@@ -17,7 +19,9 @@ const DiscountedPriceDisplay: React.FC<DiscountedPriceDisplayProps> = ({
   discountedPrice,
   currency = '£',
   showPercentage = true,
-  className = ''
+  className = '',
+  isSpecialOffer = false,
+  specialOfferText = 'Special Offer Applied'
 }) => {
   // Only show original price if it's valid and different from discounted price
   const hasDiscount = originalPrice && originalPrice > discountedPrice;
@@ -26,6 +30,9 @@ const DiscountedPriceDisplay: React.FC<DiscountedPriceDisplayProps> = ({
   const discountPercentage = hasDiscount
     ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
     : 0;
+    
+  // For special offers with no visible discount, still show it's applied
+  const isPromotionalPrice = isSpecialOffer || hasDiscount;
   
   return (
     <div className={`flex flex-col items-end ${className}`}>
@@ -37,14 +44,21 @@ const DiscountedPriceDisplay: React.FC<DiscountedPriceDisplayProps> = ({
       )}
       
       {/* Discounted price */}
-      <span className={hasDiscount ? "text-green-600 font-semibold" : "text-gray-600"}>
+      <span className={isPromotionalPrice ? "text-green-600 font-semibold" : "text-gray-600"}>
         {currency}{discountedPrice}
       </span>
       
-      {/* Discount percentage */}
+      {/* Discount percentage or special offer text */}
       {hasDiscount && showPercentage && discountPercentage > 0 && (
         <span className="text-xs text-green-600">
           {discountPercentage}% off
+        </span>
+      )}
+      
+      {/* When it's a special offer with no visible discount, still show that it's a special offer */}
+      {isSpecialOffer && !hasDiscount && (
+        <span className="text-xs text-blue-600 whitespace-nowrap">
+          {specialOfferText}
         </span>
       )}
     </div>
