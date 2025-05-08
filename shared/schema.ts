@@ -373,6 +373,12 @@ export const specialOffers = pgTable("special_offers", {
   minTreatmentCount: integer("min_treatment_count").default(1),
   maxDiscountAmount: decimal("max_discount_amount", { precision: 10, scale: 2 }),
   
+  // New fields from spec document
+  promoCode: varchar("promo_code", { length: 30 }).unique(),
+  usedCount: integer("used_count").default(0),
+  maxUses: integer("max_uses"),
+  bonus: json("bonus").$type<{ description: string, unitPrice: number }>(),
+  
   // Images and display properties
   imageUrl: varchar("image_url", { length: 255 }),
   badgeText: varchar("badge_text", { length: 50 }),
@@ -435,6 +441,13 @@ export const treatmentPackages = pgTable("treatment_packages", {
   priceUSD: decimal("price_usd", { precision: 10, scale: 2 }),
   originalPriceGBP: decimal("original_price_gbp", { precision: 10, scale: 2 }),
   discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }),
+  
+  // New fields from spec document
+  discountPct: decimal("discount_pct", { precision: 5, scale: 2 }).default("0.00"),
+  items: json("items").$type<string[]>().default([]),
+  promoCode: varchar("promo_code", { length: 30 }).unique(),
+  usedCount: integer("used_count").default(0),
+  maxUses: integer("max_uses"),
   
   // Package content
   treatments: json("treatments").$type<{
