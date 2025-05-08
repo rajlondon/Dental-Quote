@@ -20,7 +20,8 @@ const QuoteSummaryPage: React.FC = () => {
 
   // Get quote ID from localStorage (set by MatchedClinicsPage)
   const quoteId = localStorage.getItem('generatedQuoteId');
-  const clinicName = localStorage.getItem('selectedClinicName');
+  const clinicName = localStorage.getItem('selectedClinicName') || 'Selected Clinic';
+  const promoToken = localStorage.getItem('promoToken');
 
   useEffect(() => {
     // If no quoteId is available, show an error
