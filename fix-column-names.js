@@ -245,6 +245,72 @@ try {
         ADD COLUMN admin_reviewed_at TIMESTAMP;
         RAISE NOTICE 'Added admin_reviewed_at column';
       END IF;
+      
+      -- Add valid_until field if it doesn't exist (alias for end_date)
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'valid_until'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN valid_until TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days');
+        RAISE NOTICE 'Added valid_until column';
+      END IF;
+      
+      -- Add commission_percentage field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'commission_percentage'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN commission_percentage INTEGER;
+        RAISE NOTICE 'Added commission_percentage column';
+      END IF;
+      
+      -- Add promotion_level field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'promotion_level'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN promotion_level VARCHAR(50);
+        RAISE NOTICE 'Added promotion_level column';
+      END IF;
+      
+      -- Add homepage_display field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'homepage_display'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN homepage_display BOOLEAN DEFAULT TRUE;
+        RAISE NOTICE 'Added homepage_display column';
+      END IF;
+      
+      -- Add banner_image field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'banner_image'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN banner_image VARCHAR(255);
+        RAISE NOTICE 'Added banner_image column';
+      END IF;
+      
+      -- Add admin_approved field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'admin_approved'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN admin_approved BOOLEAN DEFAULT FALSE;
+        RAISE NOTICE 'Added admin_approved column';
+      END IF;
     END $$;
   `;
 
