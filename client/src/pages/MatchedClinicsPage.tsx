@@ -158,7 +158,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         console.error("Error parsing treatment items from URL:", error);
       }
     }
-  }, []);
+  }, [initializeFromUrlParams, treatmentItems.length]);
   
   // Function to handle clinic selection
   const handleSelectClinic = (clinicId: string) => {
@@ -519,8 +519,6 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   // Helper function to get tier label and styling
   const getTierLabel = (tier: string) => {
-    const clinic = clinicsData.find(c => c.id === clinicId);
-    
     // Get pricing factor based on clinic tier
     switch(tier) {
       case 'premium':
@@ -802,30 +800,34 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         ))}
                       </ul>
                       
-                      <div className="mt-4">
-                        <h3 className="text-sm font-semibold text-gray-500 mb-2">GUARANTEES</h3>
-                        <ul className="space-y-1">
-                          <li className="text-sm flex items-center gap-1">
-                            <ShieldCheck className="h-4 w-4 text-blue-500" />
-                            <span>Implants: {clinic.guarantees.implants}</span>
-                          </li>
-                          <li className="text-sm flex items-center gap-1">
-                            <ShieldCheck className="h-4 w-4 text-blue-500" />
-                            <span>Crowns: {clinic.guarantees.crowns}</span>
-                          </li>
-                        </ul>
-                      </div>
-                      
-                      <div className="mt-4">
-                        <h3 className="text-sm font-semibold text-gray-500 mb-2">CERTIFICATIONS</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {clinic.certifications.map((cert, idx) => (
-                            <Badge key={idx} variant="outline" className="bg-gray-100">
-                              {cert.name} ({cert.year})
-                            </Badge>
-                          ))}
+                      {clinic.guarantees && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-semibold text-gray-500 mb-2">GUARANTEES</h3>
+                          <ul className="space-y-1">
+                            <li className="text-sm flex items-center gap-1">
+                              <ShieldCheck className="h-4 w-4 text-blue-500" />
+                              <span>Implants: {clinic.guarantees.implants}</span>
+                            </li>
+                            <li className="text-sm flex items-center gap-1">
+                              <ShieldCheck className="h-4 w-4 text-blue-500" />
+                              <span>Crowns: {clinic.guarantees.crowns}</span>
+                            </li>
+                          </ul>
                         </div>
-                      </div>
+                      )}
+                      
+                      {clinic.certifications && clinic.certifications.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-semibold text-gray-500 mb-2">CERTIFICATIONS</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {clinic.certifications.map((cert, idx) => (
+                              <Badge key={idx} variant="outline" className="bg-gray-100">
+                                {cert.name} ({cert.year})
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Price and Select */}
@@ -965,22 +967,30 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <h3 className="text-lg font-semibold mb-2">About {clinic.name}</h3>
                           <p className="text-sm text-gray-600 mb-4">{clinic.description}</p>
                           
-                          <h4 className="font-medium mb-2">Our Dentists</h4>
-                          <ul className="space-y-2 mb-4">
-                            {clinic.doctors.map((doctor, idx) => (
-                              <li key={idx} className="text-sm">
-                                <span className="font-medium">{doctor.name}</span>
-                                <span className="text-gray-600"> - {doctor.specialty}, {doctor.experience} years exp.</span>
-                              </li>
-                            ))}
-                          </ul>
+                          {clinic.doctors && clinic.doctors.length > 0 && (
+                            <>
+                              <h4 className="font-medium mb-2">Our Dentists</h4>
+                              <ul className="space-y-2 mb-4">
+                                {clinic.doctors.map((doctor, idx) => (
+                                  <li key={idx} className="text-sm">
+                                    <span className="font-medium">{doctor.name}</span>
+                                    <span className="text-gray-600"> - {doctor.specialty}, {doctor.experience} years exp.</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
                           
-                          <h4 className="font-medium mb-2">Payment Options</h4>
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {clinic.paymentOptions.map((option, idx) => (
-                              <Badge key={idx} variant="outline">{option}</Badge>
-                            ))}
-                          </div>
+                          {clinic.paymentOptions && clinic.paymentOptions.length > 0 && (
+                            <>
+                              <h4 className="font-medium mb-2">Payment Options</h4>
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                {clinic.paymentOptions.map((option, idx) => (
+                                  <Badge key={idx} variant="outline">{option}</Badge>
+                                ))}
+                              </div>
+                            </>
+                          )}
                         </div>
                         
                         {/* What's included section */}
