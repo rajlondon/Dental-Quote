@@ -26,9 +26,11 @@ export interface TreatmentItem {
   guarantee?: string;
   ukPriceGBP?: number;
   ukPriceUSD?: number;
+  basePriceUSD?: number; // Original base price in USD before discount
   isPackage?: boolean;
   isSpecialOffer?: boolean; // Flag to easily identify special offers
   isLocked?: boolean; // Flag for locked items (packages, bonus items)
+  isBonus?: boolean; // Flag for bonus items (special offers)
   packageId?: string;
   // For discount display
   basePriceGBP?: number; // Original base price before discount
