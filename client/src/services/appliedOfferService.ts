@@ -1,4 +1,38 @@
-import { AppliedSpecialOffer, SpecialOffer, TreatmentPlan } from "@shared/schema";
+import { SpecialOffer, TreatmentPlan } from "@shared/schema";
+
+// Define the applied special offer type based on our database schema
+export interface AppliedSpecialOffer {
+  id: string;
+  specialOfferId: string;
+  treatmentPlanId: number;
+  patientId: number;
+  clinicId: number;
+  discountType: string;
+  discountValue: number | string;
+  originalPrice: number;
+  discountedPrice: number;
+  currency: string;
+  appliedToTreatments?: string[];
+  originatingPage?: string;
+  appliedAt: Date;
+  usageStatus: string;
+  convertedToBooking?: boolean;
+  bookingId?: number;
+  
+  // Optional related entities
+  offer?: SpecialOffer;
+  patient?: {
+    id: number;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  clinic?: {
+    id: number;
+    name?: string;
+    city?: string;
+  };
+}
 import { apiRequest } from "@/lib/queryClient";
 
 // Service for handling applied special offers
@@ -71,17 +105,30 @@ export const appliedOfferService = {
     discountType: string;
     discountValue: number;
   } {
-    let originalPrice = treatmentPlan.totalCost || 0;
+    // Get the estimated total cost from the treatment plan
+    let originalPrice = treatmentPlan.estimatedTotalCost ? 
+      parseFloat(treatmentPlan.estimatedTotalCost.toString()) : 0;
+    
     let discountAmount = 0;
     let discountType = offer.discountType || "percentage";
-    let discountValue = offer.discountValue || 0;
+    // Handle discountValue that might be a string or number
+    let discountValue = offer.discountValue ? 
+      (typeof offer.discountValue === 'string' ? parseFloat(offer.discountValue) : offer.discountValue) : 0;
     
-    // If applies to specific treatments only
-    if (offer.appliesTo === "specific_treatments" && appliedToTreatments && appliedToTreatments.length > 0) {
-      // Need to calculate total price of only the treatments in appliedToTreatments
-      // This would require treatment details from the treatment plan
-      // For now, we'll use a simplified approach
-      originalPrice = treatmentPlan.totalCost || 0;
+    // Handle specific treatments if that metadata is available from the offer
+    // Check available metadata fields based on schema
+    const applicableTreatments = offer.applicableTreatments || 
+                               (offer.metadata && typeof offer.metadata === 'object' && 
+                               'applicableTreatments' in offer.metadata ? 
+                               offer.metadata.applicableTreatments : null);
+    
+    const appliesTo = applicableTreatments ? 'specific_treatments' : 'all';
+    
+    if (appliesTo === "specific_treatments" && appliedToTreatments && appliedToTreatments.length > 0) {
+      // Calculate based only on applicable treatments
+      // For now we'll use a simplified approach
+      originalPrice = treatmentPlan.estimatedTotalCost ? 
+        parseFloat(treatmentPlan.estimatedTotalCost.toString()) : 0;
     }
 
     if (discountType === "percentage") {
@@ -100,7 +147,7 @@ export const appliedOfferService = {
       originalPrice,
       discountAmount,
       discountType,
-      discountValue
+      discountValue: typeof discountValue === 'number' ? discountValue : parseFloat(discountValue) || 0
     };
   }
 };
