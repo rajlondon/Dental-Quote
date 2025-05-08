@@ -260,7 +260,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       specialOffer: {
         id: "premium_offer_1",
         title: "VIP Treatment Package",
-        discountType: "percentage",
+        discountType: "percentage" as "percentage" | "fixed_amount",
         discountValue: 20,
         clinicId: "dentspa"
       }
@@ -311,7 +311,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       specialOffer: {
         id: "standard_offer_1",
         title: "Free Hotel Stay",
-        discountType: "fixed_amount",
+        discountType: "fixed_amount" as "percentage" | "fixed_amount",
         discountValue: 250,
         clinicId: "beyazada"
       }
@@ -366,7 +366,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       specialOffer: {
         id: "premium_offer_2",
         title: "Luxury Spa Treatment",
-        discountType: "percentage",
+        discountType: "percentage" as "percentage" | "fixed_amount",
         discountValue: 15,
         clinicId: "maltepe"
       }
@@ -417,7 +417,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       specialOffer: {
         id: "affordable_offer_1",
         title: "Free Airport Transfer",
-        discountType: "fixed_amount",
+        discountType: "fixed_amount" as "percentage" | "fixed_amount",
         discountValue: 100,
         clinicId: "dentalcare"
       }
@@ -478,7 +478,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         category: treatment.category,
         isPackage: treatment.isPackage,
         packageId: treatment.packageId,
-        specialOffer: offerToApply
+        specialOffer: offerToApply as {
+          id: string;
+          title: string;
+          discountType: "percentage" | "fixed_amount";
+          discountValue: number;
+          clinicId: string;
+        } | undefined
       };
     });
     
@@ -650,8 +656,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       treatmentPlan.some(t => t.specialOffer?.clinicId === specialOffer.clinicId))) && (
                     <div className="text-xs text-gray-500 line-through">
                       Original: £{Math.round(treatment.subtotalGBP * (treatment.specialOffer?.discountType === 'percentage' 
-                        ? 1 / (1 - treatment.specialOffer.discountValue / 100) 
-                        : treatment.quantity > 0 ? (treatment.subtotalGBP + treatment.specialOffer?.discountValue) / treatment.subtotalGBP : 1))}
+                        ? 1 / (1 - (treatment.specialOffer?.discountValue || 0) / 100) 
+                        : treatment.quantity > 0 ? (treatment.subtotalGBP + (treatment.specialOffer?.discountValue || 0)) / treatment.subtotalGBP : 1))}
                     </div>
                   )}
                 </div>
@@ -901,8 +907,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     {treatment.specialOffer && (
                                       <div className="text-xs text-gray-500 line-through">
                                         Was: £{Math.round(treatment.subtotal * (treatment.specialOffer.discountType === 'percentage'
-                                          ? 1 / (1 - treatment.specialOffer.discountValue / 100)
-                                          : (treatment.subtotal + treatment.specialOffer.discountValue) / treatment.subtotal))}
+                                          ? 1 / (1 - (treatment.specialOffer.discountValue || 0) / 100)
+                                          : ((treatment.subtotal + (treatment.specialOffer.discountValue || 0)) / treatment.subtotal)))}
                                       </div>
                                     )}
                                     
