@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Promotional Code Test Links</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+      h1 { color: #2563eb; }
+      .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .link { display: block; margin: 10px 0; padding: 10px; background: #e0f2fe; text-decoration: none; color: #0369a1; border-radius: 5px; }
+      .link:hover { background: #bae6fd; }
+      .desc { color: #555; margin-bottom: 10px; }
+      h2 { color: #0c4a6e; margin-top: 25px; }
+    </style>
+  </head>
+  <body>
+    <h1>Promotional Code Test Links</h1>
+    <p>Click on any of the links below to test the filtering feature with different promotional codes.</p>
+    
+    <div class="card">
+      <h3>DENTSPA20</h3>
+      <div class="desc">DentSpa 20% off special offer</div>
+      <div>Clinic ID: <strong>dentspa</strong></div>
+      <a class="link" href="/matched-clinics?source=promo_token&clinicId=dentspa&promoToken=DENTSPA20&treatmentItems=[{%22id%22:%22dental_implant_standard%22,%22name%22:%22Dental%20Implant%22,%22quantity%22:2,%22priceGBP%22:1800,%22subtotalGBP%22:3600,%22category%22:%22Implants%22},{%22id%22:%22dental_crown%22,%22name%22:%22Dental%20Crown%22,%22quantity%22:2,%22priceGBP%22:600,%22subtotalGBP%22:1200,%22category%22:%22Cosmetic%22},{%22id%22:%22teeth_whitening%22,%22name%22:%22Teeth%20Whitening%22,%22quantity%22:1,%22priceGBP%22:350,%22subtotalGBP%22:350,%22category%22:%22Cosmetic%22}]">
+        Test with DENTSPA20 promo code →
+      </a>
+    </div>
+    
+    <div class="card">
+      <h3>BEYAZ250</h3>
+      <div class="desc">Beyaz Ada £250 discount offer</div>
+      <div>Clinic ID: <strong>beyazada</strong></div>
+      <a class="link" href="/matched-clinics?source=promo_token&clinicId=beyazada&promoToken=BEYAZ250&treatmentItems=[{%22id%22:%22dental_implant_standard%22,%22name%22:%22Dental%20Implant%22,%22quantity%22:2,%22priceGBP%22:1800,%22subtotalGBP%22:3600,%22category%22:%22Implants%22},{%22id%22:%22dental_crown%22,%22name%22:%22Dental%20Crown%22,%22quantity%22:2,%22priceGBP%22:600,%22subtotalGBP%22:1200,%22category%22:%22Cosmetic%22},{%22id%22:%22teeth_whitening%22,%22name%22:%22Teeth%20Whitening%22,%22quantity%22:1,%22priceGBP%22:350,%22subtotalGBP%22:350,%22category%22:%22Cosmetic%22}]">
+        Test with BEYAZ250 promo code →
+      </a>
+    </div>
+    
+    <div class="card">
+      <h3>MALTEPE15</h3>
+      <div class="desc">Maltepe 15% discount + Spa package</div>
+      <div>Clinic ID: <strong>maltepe</strong></div>
+      <a class="link" href="/matched-clinics?source=promo_token&clinicId=maltepe&promoToken=MALTEPE15&treatmentItems=[{%22id%22:%22dental_implant_standard%22,%22name%22:%22Dental%20Implant%22,%22quantity%22:2,%22priceGBP%22:1800,%22subtotalGBP%22:3600,%22category%22:%22Implants%22},{%22id%22:%22dental_crown%22,%22name%22:%22Dental%20Crown%22,%22quantity%22:2,%22priceGBP%22:600,%22subtotalGBP%22:1200,%22category%22:%22Cosmetic%22},{%22id%22:%22teeth_whitening%22,%22name%22:%22Teeth%20Whitening%22,%22quantity%22:1,%22priceGBP%22:350,%22subtotalGBP%22:350,%22category%22:%22Cosmetic%22}]">
+        Test with MALTEPE15 promo code →
+      </a>
+    </div>
+    
+    <h2>Control Test (No Promo)</h2>
+    <div class="card">
+      <h3>Standard Comparison View</h3>
+      <div class="desc">Test the regular view with all clinics displayed</div>
+      <a class="link" href="/matched-clinics?source=promo_token&treatmentItems=[{%22id%22:%22dental_implant_standard%22,%22name%22:%22Dental%20Implant%22,%22quantity%22:2,%22priceGBP%22:1800,%22subtotalGBP%22:3600,%22category%22:%22Implants%22},{%22id%22:%22dental_crown%22,%22name%22:%22Dental%20Crown%22,%22quantity%22:2,%22priceGBP%22:600,%22subtotalGBP%22:1200,%22category%22:%22Cosmetic%22},{%22id%22:%22teeth_whitening%22,%22name%22:%22Teeth%20Whitening%22,%22quantity%22:1,%22priceGBP%22:350,%22subtotalGBP%22:350,%22category%22:%22Cosmetic%22}]">
+        Test without promo code →
+      </a>
+    </div>
+  </body>
+</html>
