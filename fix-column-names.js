@@ -168,6 +168,83 @@ try {
         ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
         RAISE NOTICE 'Added is_active column';
       END IF;
+      
+      -- Add approved_at field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'approved_at'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN approved_at TIMESTAMP;
+        RAISE NOTICE 'Added approved_at column';
+      END IF;
+      
+      -- Add created_at field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'created_at'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+        RAISE NOTICE 'Added created_at column';
+      END IF;
+      
+      -- Add updated_at field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'updated_at'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+        RAISE NOTICE 'Added updated_at column';
+      END IF;
+      
+      -- Add start_date field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'start_date'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+        RAISE NOTICE 'Added start_date column';
+      END IF;
+      
+      -- Add end_date field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'end_date'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN end_date TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days');
+        RAISE NOTICE 'Added end_date column';
+      END IF;
+      
+      -- Add rejection_reason field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'rejection_reason'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN rejection_reason TEXT;
+        RAISE NOTICE 'Added rejection_reason column';
+      END IF;
+      
+      -- Add admin_reviewed_at field if it doesn't exist
+      IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'special_offers' 
+        AND column_name = 'admin_reviewed_at'
+      ) THEN
+        ALTER TABLE special_offers 
+        ADD COLUMN admin_reviewed_at TIMESTAMP;
+        RAISE NOTICE 'Added admin_reviewed_at column';
+      END IF;
     END $$;
   `;
 
