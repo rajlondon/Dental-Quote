@@ -21,10 +21,13 @@ import {
   Target,
   User,
   Zap,
+  Tag,
 } from 'lucide-react';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
+import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ClientPdfGenerator from '@/components/ClientPdfGenerator';
 
 interface TreatmentItem {
@@ -103,6 +106,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const { toast } = useToast();
+  const { quoteData } = useQuoteFlow();
+  const { 
+    activeSpecialOffer, 
+    applySpecialOffer, 
+    removeSpecialOffer 
+  } = useSpecialOfferTracking();
   
   // New function to handle direct PDF download
   const downloadPdf = (clinicId: string) => {
