@@ -282,6 +282,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add quote claim route to handle promotional flow permissions
+  app.post('/api/quotes/:id/claim', isAuthenticated, async (req, res) => {
+    try {
+      const quoteId = req.params.id;
+      const user = req.user!;
+      
+      console.log(`[DEBUG] Attempting to claim quote ${quoteId} for user ${user.id}`);
+      
+      // Skip if not a patient 
+      if (user.role !== 'patient') {
+        return res.status(403).json({
+          success: false,
+          message: "Only patients can claim quotes"
+        });
+      }
+      
+      // Use direct SQL query to check if quote exists and is from a promo token
+      const checkQuery = `
+        SELECT patient_id, source, promo_token FROM quotes 
+        WHERE id = $1
+      `;
+      
+      const result = await storage.db.$client.query(checkQuery, [quoteId]);
+      
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Quote not found"
+        });
+      }
+      
+      const quote = result.rows[0];
+      
+      // Only allow claiming promo token quotes
+      if (quote.source !== 'promo_token') {
+        return res.status(403).json({
+          success: false,
+          message: "Only promotional quotes can be claimed" 
+        });
+      }
+      
+      // Check if quote is already claimed by this user
+      if (quote.patient_id === user.id) {
+        return res.status(200).json({
+          success: true,
+          message: "Quote already belongs to you"
+        });
+      }
+      
+      // Update the quote to belong to the current user
+      const updateQuery = `
+        UPDATE quotes SET patient_id = $1
+        WHERE id = $2 AND source = 'promo_token'
+        RETURNING id
+      `;
+      
+      const updateResult = await storage.db.$client.query(updateQuery, [user.id, quoteId]);
+      
+      if (!updateResult.rows || updateResult.rows.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: "Failed to claim quote"
+        });
+      }
+      
+      console.log(`[SUCCESS] User ${user.id} successfully claimed quote ${quoteId}`);
+      
+      return res.status(200).json({
+        success: true,
+        message: "Quote successfully claimed",
+        quoteId
+      });
+    } catch (error) {
+      console.error('[ERROR] Error claiming quote:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error while claiming quote"
+      });
+    }
+  });
+
   // Register the rest of the quote routes 
   app.use('/api/quotes', quoteRoutes);
   
