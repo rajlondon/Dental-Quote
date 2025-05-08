@@ -50,7 +50,7 @@ const QuoteSummaryPanel: React.FC<QuoteSummaryPanelProps> = ({
   discountType,
   clinicName
 }) => {
-  const { source, isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, promoType, quoteId, promoToken } = useQuoteFlow();
+  const { source, isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, promoType, quoteId, promoToken, offerId } = useQuoteFlow();
   const [location] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
