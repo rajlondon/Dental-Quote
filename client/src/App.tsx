@@ -197,7 +197,7 @@ function Router() {
       <Route path="/my-profile" component={ProfilePage} />
       <Route path="/dental-advice" component={DentalAdvicePage} />
       
-      {/* Test route for matched clinics page with special offers */}
+      {/* Test route for matched clinics page with sample data */}
       <Route path="/test-clinics">
         {() => {
           const MatchedClinicsPage = React.lazy(() => import("@/pages/MatchedClinicsPage"));
@@ -244,6 +244,20 @@ function Router() {
           return (
             <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinics...</div>}>
               <MatchedClinicsPage treatmentItems={sampleTreatments} patientInfo={samplePatient} totalGBP={3800} />
+            </React.Suspense>
+          );
+        }}
+      </Route>
+      
+      {/* Main route for matched clinics page including promotional code handling */}
+      <Route path="/matched-clinics">
+        {() => {
+          const MatchedClinicsPage = React.lazy(() => import("@/pages/MatchedClinicsPage"));
+          
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinics...</div>}>
+              {/* The component will handle parsing URL parameters */}
+              <MatchedClinicsPage />
             </React.Suspense>
           );
         }}

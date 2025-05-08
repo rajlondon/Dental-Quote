@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import {
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
-import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
+import { useQuoteFlow, useInitializeQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ClientPdfGenerator from '@/components/ClientPdfGenerator';
 import ApplicableTreatmentsList from '@/components/specialOffers/ApplicableTreatmentsList';
