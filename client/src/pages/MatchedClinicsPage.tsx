@@ -31,6 +31,20 @@ import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ClientPdfGenerator from '@/components/ClientPdfGenerator';
 
+// Enhanced special offer interface with all required metadata
+interface SpecialOfferDetails {
+  id: string;
+  title: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  clinicId: string;
+  applicableTreatments?: string[];
+  applicableTreatment?: string; // For backward compatibility
+  description?: string;
+  expiryDate?: string;
+  termsAndConditions?: string;
+}
+
 interface TreatmentItem {
   id: string;
   category: string;
@@ -45,13 +59,7 @@ interface TreatmentItem {
   ukPriceUSD?: number;
   isPackage?: boolean;
   packageId?: string;
-  specialOffer?: {
-    id: string;
-    title: string;
-    discountType: 'percentage' | 'fixed_amount';
-    discountValue: number;
-    clinicId: string;
-  };
+  specialOffer?: SpecialOfferDetails;
 }
 
 interface PatientInfo {
@@ -799,7 +807,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       <span>{clinic.location.area}, {clinic.location.city}</span>
                     </div>
                     
-                    {/* Eye-catching special offer banner */}
+                    {/* Enhanced special offer banner with detailed information */}
                     {(clinic.specialOffer || (specialOffer && specialOffer.clinicId === clinic.id)) && (
                       <div className={`mb-4 p-3 ${(hasActiveOffer && specialOffer?.clinicId === clinic.id) ? 
                         'bg-gradient-to-r from-purple-600 to-blue-500 border-2 border-blue-300' : 
@@ -818,6 +826,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               'LIMITED TIME SPECIAL OFFER!'}
                           </h3>
                         </div>
+                        
+                        {/* Display the title and discount value */}
                         <p className="mt-1 font-medium text-white">
                           {specialOffer && specialOffer.clinicId === clinic.id ? specialOffer.title : clinic.specialOffer?.title}
                           {specialOffer && specialOffer.clinicId === clinic.id ? 
@@ -830,15 +840,68 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           }
                         </p>
                         
+                        {/* Display offer description if available */}
+                        {((specialOffer && specialOffer.clinicId === clinic.id && specialOffer.description) || 
+                           (clinic.specialOffer?.description)) && (
+                          <p className="mt-1 text-sm text-white/90">
+                            {specialOffer && specialOffer.clinicId === clinic.id ? 
+                              specialOffer.description : clinic.specialOffer?.description}
+                          </p>
+                        )}
+                        
+                        {/* Status badges for active offers */}
                         {hasActiveOffer && specialOffer?.clinicId === clinic.id && (
-                          <div className="mt-2 flex gap-2">
+                          <div className="mt-2 flex flex-wrap gap-2">
                             <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
                               Active offer
                             </span>
                             <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
                               Discount applied
                             </span>
+                            
+                            {/* Show eligible treatments if available */}
+                            {specialOffer?.applicableTreatments && specialOffer.applicableTreatments.length > 0 && (
+                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                                {specialOffer.applicableTreatments.length} eligible treatments
+                              </span>
+                            )}
+                            
+                            {/* Show expiry date if available */}
+                            {specialOffer?.expiryDate && (
+                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                                Expires: {new Date(specialOffer.expiryDate).toLocaleDateString()}
+                              </span>
+                            )}
                           </div>
+                        )}
+                        
+                        {/* For non-active offers, show metadata badges */}
+                        {(!hasActiveOffer || specialOffer?.clinicId !== clinic.id) && clinic.specialOffer && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {/* Show eligible treatments if available */}
+                            {clinic.specialOffer.applicableTreatments && clinic.specialOffer.applicableTreatments.length > 0 && (
+                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                                {clinic.specialOffer.applicableTreatments.length} eligible treatments
+                              </span>
+                            )}
+                            
+                            {/* Show expiry date if available */}
+                            {clinic.specialOffer.expiryDate && (
+                              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                                Expires: {new Date(clinic.specialOffer.expiryDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Show terms and conditions in small text */}
+                        {((specialOffer && specialOffer.clinicId === clinic.id && specialOffer.termsAndConditions) || 
+                           (clinic.specialOffer?.termsAndConditions)) && (
+                          <p className="mt-2 text-xs text-white/80 italic">
+                            {specialOffer && specialOffer.clinicId === clinic.id ? 
+                              `Terms: ${specialOffer.termsAndConditions}` : 
+                              `Terms: ${clinic.specialOffer?.termsAndConditions}`}
+                          </p>
                         )}
                       </div>
                     )}
