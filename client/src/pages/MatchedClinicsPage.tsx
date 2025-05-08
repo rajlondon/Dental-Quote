@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Award,
+  BadgePercent,
   Check,
   Columns,
   FileCheck,
@@ -590,31 +591,89 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
         </div>
         
+        {/* Active Special Offer Banner (if applicable) */}
+        {hasActiveOffer && specialOffer && (
+          <div className="mb-6 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg p-4 shadow-md border-2 border-blue-300">
+            <div className="flex items-start gap-3">
+              <div className="text-white bg-white/20 p-2 rounded-full">
+                <BadgePercent className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg mb-1">Active Special Offer: {specialOffer.title}</h3>
+                <p className="text-white/90">
+                  {specialOffer.discountType === 'percentage' 
+                    ? `${specialOffer.discountValue}% discount applied to your quote` 
+                    : `£${specialOffer.discountValue} discount applied to your quote`}
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <span className="bg-white text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold inline-flex items-center">
+                    <Check className="h-3 w-3 mr-1" /> Discount reflected in prices
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Treatment Summary */}
         <div className="bg-gray-50 border rounded-lg p-4">
           <h2 className="font-semibold mb-3">Your Treatment Plan Summary</h2>
           <div className="space-y-1 mb-3">
             {treatmentPlan.map((treatment) => (
               <div key={treatment.id} className="flex justify-between items-center">
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-700">
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span className="text-gray-700 flex-shrink-0">
                     {treatment.name} {treatment.quantity > 1 && `x${treatment.quantity}`}
                   </span>
                   {treatment.isPackage && (
-                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">
+                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200 flex-shrink-0">
                       Package
                     </Badge>
                   )}
-                  {treatment.specialOffer && (
-                    <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
-                      Special Offer
+                  
+                  {/* Show the special offer badge for treatments with a special offer */}
+                  {(treatment.specialOffer || 
+                    (specialOffer && specialOffer.clinicId && 
+                      treatmentPlan.some(t => t.specialOffer?.clinicId === specialOffer.clinicId))) && (
+                    <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200 flex items-center gap-1 flex-shrink-0">
+                      <Sparkles className="h-3 w-3" />
+                      <span>Discounted</span>
                     </Badge>
                   )}
                 </div>
-                <span className="font-medium">£{treatment.subtotalGBP}</span>
+                <div className="text-right">
+                  <span className="font-medium">£{treatment.subtotalGBP}</span>
+                  
+                  {/* Show original price with strikethrough if there's a special offer applied */}
+                  {(treatment.specialOffer || 
+                    (specialOffer && specialOffer.clinicId && 
+                      treatmentPlan.some(t => t.specialOffer?.clinicId === specialOffer.clinicId))) && (
+                    <div className="text-xs text-gray-500 line-through">
+                      Original: £{Math.round(treatment.subtotalGBP * (treatment.specialOffer?.discountType === 'percentage' 
+                        ? 1 / (1 - treatment.specialOffer.discountValue / 100) 
+                        : treatment.quantity > 0 ? (treatment.subtotalGBP + treatment.specialOffer?.discountValue) / treatment.subtotalGBP : 1))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
+          
+          {/* Special offer summary if active */}
+          {hasActiveOffer && specialOffer && (
+            <div className="mb-3 mt-2 bg-blue-50 border border-blue-200 rounded p-2 text-sm">
+              <div className="flex items-center gap-1 text-blue-700 font-medium">
+                <Tag className="h-4 w-4" />
+                <span>Special offer applied to eligible treatments</span>
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                The "{specialOffer.title}" offer ({specialOffer.discountType === 'percentage' 
+                  ? `${specialOffer.discountValue}% off` 
+                  : `£${specialOffer.discountValue} off`}) has been applied.
+              </div>
+            </div>
+          )}
+          
           <div className="flex justify-between pt-2 border-t font-semibold">
             <span>Estimated Istanbul Price Range:</span>
             <span>
@@ -826,8 +885,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         </Badge>
                                       )}
                                       {treatment.specialOffer && (
-                                        <Badge className="ml-1 bg-red-100 text-red-800 border-red-200 hover:bg-red-200">
-                                          Special Offer
+                                        <Badge className="ml-1 bg-red-100 text-red-800 border-red-200 hover:bg-red-200 flex items-center gap-1">
+                                          <Sparkles className="h-3 w-3" />
+                                          <span>Discounted</span>
                                         </Badge>
                                       )}
                                     </div>
@@ -836,6 +896,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <div className="text-sm font-medium">
                                       £{treatment.subtotal}
                                     </div>
+                                    
+                                    {/* Show original price with strikethrough if special offer is applied */}
+                                    {treatment.specialOffer && (
+                                      <div className="text-xs text-gray-500 line-through">
+                                        Was: £{Math.round(treatment.subtotal * (treatment.specialOffer.discountType === 'percentage'
+                                          ? 1 / (1 - treatment.specialOffer.discountValue / 100)
+                                          : (treatment.subtotal + treatment.specialOffer.discountValue) / treatment.subtotal))}
+                                      </div>
+                                    )}
+                                    
                                     {treatment.quantity > 1 && (
                                       <div className="text-xs text-gray-500">
                                         £{treatment.pricePerUnit} each
