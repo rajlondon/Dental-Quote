@@ -200,6 +200,78 @@ async function handlePromoQuote(params: any, res: any) {
       });
     }
     
+    // Check if the promo token exists in the database
+    try {
+      const tokenExists = await db.query.promoTokens.findFirst({
+        where: eq(promoTokens.token, promoToken)
+      });
+      
+      if (!tokenExists) {
+        console.log(`Promo token ${promoToken} not found in database. Adding it now...`);
+        
+        // Map clinic ID string to numeric ID for database
+        let clinicIdNumber = 1;  // Default to 1
+        
+        // Map clinic ID string to the proper numeric ID
+        if (requestedClinicId === 'dentspa') {
+          clinicIdNumber = 1;
+        } else if (requestedClinicId === 'beyazada') {
+          clinicIdNumber = 2;
+        } else if (requestedClinicId === 'maltepe') {
+          clinicIdNumber = 3;
+        } else if (requestedClinicId === 'dentalharmony') {
+          clinicIdNumber = 4;
+        } else if (requestedClinicId === 'smiledesigners') {
+          clinicIdNumber = 5;
+        } else if (typeof requestedClinicId === 'number') {
+          clinicIdNumber = requestedClinicId;
+        } else if (typeof requestedClinicId === 'string' && !isNaN(parseInt(requestedClinicId))) {
+          clinicIdNumber = parseInt(requestedClinicId);
+        }
+        
+        // Determine discount type and amount based on token
+        let promoType = 'percentage_discount';
+        let discountAmount = 0;
+        let discountPercentage = 0;
+        
+        if (promoToken === 'BEYAZ250') {
+          promoType = 'fixed_amount_discount';
+          discountAmount = 250;
+        } else if (promoToken === 'DENTSPA20') {
+          promoType = 'percentage_discount';
+          discountPercentage = 20;
+        } else if (promoToken.startsWith('PKG')) {
+          promoType = 'package';
+        } else if (promoToken.startsWith('PROMO')) {
+          promoType = 'special_offer';
+        }
+        
+        // Create payload JSON
+        const payload = {
+          discount_percentage: discountPercentage,
+          discount_amount: discountAmount,
+          description: `Promotional discount for ${promoToken}`,
+          terms: "Valid for limited time only"
+        };
+        
+        // Add token to database
+        await db.insert(promoTokens).values({
+          token: promoToken,
+          promoType,
+          clinicId: String(clinicIdNumber), // Convert to string as schema expects varchar
+          displayOnHome: true,
+          createdAt: new Date(),
+          validUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
+          payload
+        });
+        
+        console.log(`Added promo token ${promoToken} to database`);
+      }
+    } catch (tokenError) {
+      console.error(`Error checking/creating promo token:`, tokenError);
+      // Continue with the process even if token creation fails
+    }
+    
     // Handle the case where treatmentItems might be a JSON string (from GET query)
     let treatmentItems;
     if (typeof rawTreatmentItems === 'string') {
