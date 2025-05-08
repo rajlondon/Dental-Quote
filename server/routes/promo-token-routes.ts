@@ -254,16 +254,34 @@ async function handlePromoQuote(params: any, res: any) {
           terms: "Valid for limited time only"
         };
         
-        // Add token to database
-        await db.insert(promoTokens).values({
-          token: promoToken,
+        // Use direct SQL to add token to database to bypass schema issues
+        const insertTokenQuery = `
+          INSERT INTO promo_tokens (token, clinic_id, promo_type, payload, valid_until, display_on_home, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (token) DO UPDATE
+          SET clinic_id = $2, promo_type = $3, payload = $4, valid_until = $5, display_on_home = $6
+          RETURNING token
+        `;
+        
+        const tokenPayload = JSON.stringify(payload);
+        const validUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days from now
+        
+        const tokenParams = [
+          promoToken,
+          clinicIdNumber,
           promoType,
-          clinicId: String(clinicIdNumber), // Convert to string as schema expects varchar
-          displayOnHome: true,
-          createdAt: new Date(),
-          validUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
-          payload
-        });
+          tokenPayload,
+          validUntil,
+          true, // display_on_home
+          new Date() // created_at
+        ];
+        
+        try {
+          const tokenResult = await db.$client.query(insertTokenQuery, tokenParams);
+          console.log(`Added promo token ${promoToken} to database using direct SQL`);
+        } catch (directSqlError) {
+          console.error(`Error adding token with direct SQL:`, directSqlError);
+        }
         
         console.log(`Added promo token ${promoToken} to database`);
       }
