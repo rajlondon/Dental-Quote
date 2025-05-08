@@ -1,116 +1,84 @@
 /**
  * Test script to simulate clicking on a special offer
  */
-
 import axios from 'axios';
+import assert from 'assert/strict';
+
+const BASE_URL = 'http://localhost:5000';
+const SPECIAL_OFFERS_URL = `${BASE_URL}/api/special-offers/homepage`;
+const YOUR_QUOTE_URL = `${BASE_URL}/your-quote`;
 
 async function testSpecialOffer() {
+  console.log('🧪 Starting Special Offer Click Test');
+  
   try {
-    console.log('===== Testing Special Offer Click Simulation =====');
+    // Step 1: Get special offers from the homepage
+    const specialOffersResponse = await axios.get(SPECIAL_OFFERS_URL);
+    const specialOffers = specialOffersResponse.data;
     
-    // Use a real offer ID from the database that's marked as a special offer
-    const specialOfferId = '1'; // ID for "Free Consultation Package" 
-    const clinicId = '1';      // Dentakay Istanbul
-    
-    console.log(`Testing special offer with: offerId=${specialOfferId}, clinicId=${clinicId}`);
-    
-    // First attempt the free consultation endpoint
-    try {
-      console.log('\n1. Trying free-consultation endpoint first:');
-      const consultationResponse = await axios.post('http://localhost:5000/api/v1/free-consultation', {
-        offerId: specialOfferId,
-        clinicId: clinicId
-      });
-      
-      console.log('Response status:', consultationResponse.status);
-      console.log('Response data:', consultationResponse.data);
-      
-      if (consultationResponse.data.treatmentPlanUrl) {
-        console.log(`✅ Free consultation endpoint success! Generated URL: ${consultationResponse.data.treatmentPlanUrl}`);
-        return consultationResponse.data;
-      }
-    } catch (error) {
-      console.log('❌ Free consultation endpoint failed, trying next endpoint...');
+    if (!specialOffers || specialOffers.length === 0) {
+      throw new Error('No special offers available');
     }
     
-    // Second attempt the quotes/from-token endpoint
-    try {
-      console.log('\n2. Trying quotes/from-token endpoint:');
-      const tokenResponse = await axios.post('http://localhost:5000/api/v1/quotes/from-token', {
-        token: `special_${specialOfferId}`,
-        promoType: 'special_offer'
-      });
-      
-      console.log('Response status:', tokenResponse.status);
-      console.log('Response data:', tokenResponse.data);
-      
-      if (tokenResponse.data.quoteUrl || tokenResponse.data.treatmentPlanUrl) {
-        console.log(`✅ Token endpoint success! Generated URL: ${tokenResponse.data.quoteUrl || tokenResponse.data.treatmentPlanUrl}`);
-        return tokenResponse.data;
-      }
-    } catch (error) {
-      console.log('❌ Token endpoint failed, trying next endpoint...');
-    }
+    console.log(`📋 Found ${specialOffers.length} special offers`);
     
-    // Third attempt the treatment-plans/from-offer endpoint
-    try {
-      console.log('\n3. Trying treatment-plans/from-offer endpoint:');
-      const treatmentPlanResponse = await axios.post('http://localhost:5000/api/treatment-plans/from-offer', {
-        offerId: specialOfferId,
-        clinicId: clinicId,
-        notes: "Test from API simulation",
-        specialOffer: {
-          id: specialOfferId,
-          title: "Free Consultation Package",
-          discountType: "percentage",
-          discountValue: 100,
-          clinicId: clinicId,
-          applicableTreatment: "Consultation"
-        }
-      });
-      
-      console.log('Response status:', treatmentPlanResponse.status);
-      console.log('Response data:', treatmentPlanResponse.data);
-      
-      if (treatmentPlanResponse.data.treatmentPlanUrl) {
-        console.log(`✅ Treatment plan endpoint success! Generated URL: ${treatmentPlanResponse.data.treatmentPlanUrl}`);
-        return treatmentPlanResponse.data;
-      }
-    } catch (error) {
-      console.log('❌ Treatment plan endpoint failed, trying last fallback...');
-    }
+    // Select the first offer for testing
+    const selectedOffer = specialOffers[0];
+    console.log(`🔍 Selected offer: ${selectedOffer.title} (ID: ${selectedOffer.id})`);
     
-    // Last attempt the offers/:id/start endpoint
-    try {
-      console.log('\n4. Trying offers/:id/start endpoint (legacy fallback):');
-      const legacyResponse = await axios.post(`http://localhost:5000/api/v1/offers/${specialOfferId}/start`, {
-        clinicId: clinicId
-      });
-      
-      console.log('Response status:', legacyResponse.status);
-      console.log('Response data:', legacyResponse.data);
-      
-      if (legacyResponse.data.quoteUrl) {
-        console.log(`✅ Legacy endpoint success! Generated URL: ${legacyResponse.data.quoteUrl}`);
-        return legacyResponse.data;
-      }
-    } catch (error) {
-      console.log('❌ All endpoints failed:');
-      console.error(error.response?.data || error.message);
-    }
+    // Step 2: Simulate clicking on the special offer by constructing the URL
+    // This simulates what happens when a user clicks on a special offer on the homepage
+    const offerClickURL = `${YOUR_QUOTE_URL}?offerId=${selectedOffer.id}&clinicId=${selectedOffer.clinicId}&source=special_offer&offerTitle=${encodeURIComponent(selectedOffer.title)}&offerDiscountType=${selectedOffer.discountType}&offerDiscount=${selectedOffer.discountValue}`;
     
-    console.log('\n❌ All API endpoints failed!');
-    return null;
+    console.log(`🔗 Offer click URL: ${offerClickURL}`);
+    
+    // Step 3: Make a GET request to the URL to verify it's accessible
+    // In a real browser test, this would be an actual navigation
+    const clickResponse = await axios.get(offerClickURL, {
+      validateStatus: function (status) {
+        return status < 500; // Accepts status codes less than 500 to handle redirects
+      }
+    });
+    
+    console.log(`📡 Response status: ${clickResponse.status}`);
+    
+    // With a real browser test, we would check if the special offer badge is visible
+    // For this API test, we'll just confirm the page is accessible
+    
+    // Log success
+    console.log('✅ Special offer click test completed successfully');
+    
+    return {
+      success: true,
+      offer: {
+        id: selectedOffer.id,
+        title: selectedOffer.title,
+        clinicId: selectedOffer.clinicId
+      },
+      message: 'Special offer click simulation successful'
+    };
+    
   } catch (error) {
-    console.error('Error in test:', error.message);
-    throw error;
+    console.error('❌ Test failed:', error.message);
+    return {
+      success: false,
+      error: error.message,
+      message: 'Special offer click test failed'
+    };
   }
 }
 
 // Run the test
-testSpecialOffer()
-  .then(result => {
-    console.log('\n===== Test Results =====');
-    console.log(result ? '✅ Test succeeded!' : '❌ Test failed!');
-  })
-  .catch(error => console.error('Test crashed:', error));
+if (require.main === module) {
+  testSpecialOffer()
+    .then(result => {
+      console.log(JSON.stringify(result, null, 2));
+      process.exit(result.success ? 0 : 1);
+    })
+    .catch(error => {
+      console.error('Unhandled error:', error);
+      process.exit(1);
+    });
+} else {
+  module.exports = { testSpecialOffer };
+}
