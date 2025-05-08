@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star } from 'lucide-react';
@@ -8,6 +8,46 @@ interface SingleClinicCardProps {
   badge: string;
   onSelect?: () => void;
   totalPrice?: number;
+}
+
+/**
+ * Helper function to calculate clinic price based on treatment items
+ */
+function calculateClinicPrice(clinic: any): number {
+  try {
+    // Try to get treatment items from URL or localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const treatmentItemsParam = urlParams.get('treatmentItems');
+    
+    if (treatmentItemsParam) {
+      // Parse the treatment items from URL
+      const treatmentItems = JSON.parse(decodeURIComponent(treatmentItemsParam));
+      if (Array.isArray(treatmentItems) && treatmentItems.length > 0) {
+        // Apply clinic's price factor to each treatment
+        const priceFactor = clinic.priceFactor || 0.4; // Default to 0.4 (40%) if not specified
+        const totalPrice = treatmentItems.reduce((total, item) => {
+          return total + (item.subtotalGBP * priceFactor);
+        }, 0);
+        
+        // Apply any special offer discounts
+        if (clinic.specialOffer && clinic.specialOffer.discountType) {
+          if (clinic.specialOffer.discountType === 'percentage') {
+            return totalPrice * (1 - (clinic.specialOffer.discountValue / 100));
+          } else if (clinic.specialOffer.discountType === 'fixed_amount') {
+            return Math.max(0, totalPrice - clinic.specialOffer.discountValue);
+          }
+        }
+        
+        return totalPrice;
+      }
+    }
+    
+    // Fallback: return a default price or access clinic.totalPrice
+    return clinic.totalPrice || 5150;
+  } catch (error) {
+    console.error('Error calculating clinic price:', error);
+    return 0;
+  }
 }
 
 /**
@@ -94,7 +134,9 @@ export default function SingleClinicCard({ clinic, badge, onSelect, totalPrice }
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 mb-2">YOUR PACKAGE PRICE</h3>
                 <div className="mb-2">
-                  <p className="text-3xl font-bold text-blue-700">£{totalPrice?.toFixed(2) || (clinic.totalPrice?.toFixed(2) || '0.00')}</p>
+                  <p className="text-3xl font-bold text-blue-700">
+                    £{totalPrice ? totalPrice.toFixed(2) : calculateClinicPrice(clinic).toFixed(2)}
+                  </p>
                   <p className="text-sm text-gray-500">Includes all selected treatments</p>
                 </div>
                 
