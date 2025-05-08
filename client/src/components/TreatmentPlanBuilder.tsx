@@ -28,7 +28,14 @@ export interface TreatmentItem {
   ukPriceUSD?: number;
   isPackage?: boolean;
   isSpecialOffer?: boolean; // Flag to easily identify special offers
+  isLocked?: boolean; // Flag for locked items (packages, bonus items)
   packageId?: string;
+  // For discount display
+  basePriceGBP?: number; // Original base price before discount
+  hasDiscount?: boolean; // Flag for UI rendering
+  discountPercent?: number; // Calculated discount percentage
+  originalPrice?: number; // For display purposes
+  discountedPrice?: number; // For display purposes
   // For promo token integration
   promoToken?: string;
   promoType?: 'special_offer' | 'package';
@@ -324,12 +331,16 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     specialOffer, 
     hasActiveOffer, 
     isSpecialOfferFlow,
-    applySpecialOfferToTreatments
+    applySpecialOfferToTreatments,
+    getDiscountedLines
   } = useSpecialOfferTracking();
   
-  // Calculate totals
+  // Calculate totals based on unit price (already discounted), not base price
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
+  
+  // Process treatments with discount formatting for display
+  const processedTreatments = hasActiveOffer ? getDiscountedLines(treatments) : treatments;
   
   // Apply special offers to treatments whenever the treatment list or special offer changes
   useEffect(() => {
@@ -1649,7 +1660,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {treatments.map((treatment) => {
+              {processedTreatments.map((treatment) => {
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
                 
                 return (
@@ -1734,7 +1745,24 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </TableCell>
                     <TableCell className="text-right">
                       <div>
-                        {treatment.specialOffer ? (
+                        {treatment.hasDiscount ? (
+                          <>
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="line-through text-sm text-gray-500">
+                                £{Math.round(treatment.originalPrice || 0)}
+                              </span>
+                              <span className="font-bold text-primary">£{treatment.priceGBP}</span>
+                            </div>
+                            <span className="block text-xs text-gray-500">
+                              ${treatment.priceUSD}
+                            </span>
+                            <div className="flex justify-end items-center mt-1">
+                              <Badge className="text-xs h-5 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20">
+                                Save {treatment.discountPercent}%
+                              </Badge>
+                            </div>
+                          </>
+                        ) : treatment.specialOffer ? (
                           <>
                             <div className="flex items-center justify-end gap-2">
                               <span className="line-through text-sm text-gray-500">

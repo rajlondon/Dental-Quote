@@ -387,10 +387,12 @@ router.post('/quotes/from-promo', async (req, res) => {
                 procedureCode: stdTreatment.code,
                 description: stdTreatment.description,
                 quantity: 1,
+                basePriceGBP: stdTreatment.basePriceGBP, // Store the original base price
                 unitPrice: discountedPrice,
                 isPackage: true,
                 packageId,
-                status: 'draft'
+                status: 'draft',
+                isLocked: true // Lock package items
               });
             
             console.log(`Added package treatment to quote: ${stdTreatment.description}`);
