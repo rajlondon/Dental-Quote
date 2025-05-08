@@ -123,12 +123,42 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [expandedOfferDetails, setExpandedOfferDetails] = useState<string | null>(null);
   const { toast } = useToast();
   const { source, offerId, clinicId, promoToken, isSpecialOfferFlow, isPromoTokenFlow } = useQuoteFlow();
+  const { initializeFromUrlParams } = useInitializeQuoteFlow();
   const { 
     specialOffer, 
     setSpecialOffer, 
     clearSpecialOffer,
     hasActiveOffer
   } = useSpecialOfferTracking();
+  
+  // Initialize the quote flow context from URL parameters when the component mounts
+  useEffect(() => {
+    console.log("MatchedClinicsPage: Initializing from URL parameters");
+    initializeFromUrlParams();
+    // Parse treatment items from URL if they exist and we don't have any
+    if (treatmentItems.length === 0) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const treatmentItemsParam = urlParams.get('treatmentItems');
+        
+        if (treatmentItemsParam) {
+          console.log("Found treatment items in URL", treatmentItemsParam);
+          const parsedTreatmentItems = JSON.parse(decodeURIComponent(treatmentItemsParam));
+          
+          // Do something with the parsed treatment items if needed
+          console.log("Parsed treatment items:", parsedTreatmentItems);
+          
+          // You might want to store these in state or context
+          if (Array.isArray(parsedTreatmentItems)) {
+            // treatmentPlan is defined below
+            // This is just to note we could use the parsed items
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing treatment items from URL:", error);
+      }
+    }
+  }, []);
   
   // Function to handle clinic selection
   const handleSelectClinic = (clinicId: string) => {
@@ -297,6 +327,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         crowns: '5 years',
         fillings: '2 years'
       },
+      whatsAppNumber: '+905551234567',
       // Specific special offer for DentSpa
       hasSpecialOffer: true,
       specialOffer: {
@@ -311,7 +342,179 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         termsAndConditions: "Minimum treatment value £2000. Cannot be combined with other offers."
       }
     },
-    // more clinics...
+    {
+      id: 'beyazada',
+      name: 'Beyaz Ada Dental Clinic',
+      tier: 'standard',
+      description: 'A well-established clinic with modern facilities and experienced dentists specializing in cosmetic dentistry and dental implants. Affordable prices with excellent results.',
+      priceFactor: 0.35, // 35% of UK price (standard experience)
+      ratings: {
+        overall: 4.7,
+        reviews: 152,
+        cleanliness: 4.8,
+        staff: 4.7,
+        value: 4.9,
+        location: 4.5
+      },
+      location: {
+        area: 'Beşiktaş',
+        city: 'Istanbul',
+        fullAddress: 'Barbaros Bulvarı, Beşiktaş, Istanbul'
+      },
+      features: [
+        'Modern facility',
+        'Airport transfers available',
+        '4-star hotel accommodation option',
+        'English-speaking staff',
+        'Digital imaging',
+        'Comfortable waiting area',
+        'Sedation options available'
+      ],
+      certifications: [
+        { name: 'ISO 9001', year: 2022 }
+      ],
+      doctors: [
+        { name: 'Dr. Hasan Çelik', specialty: 'Implantology', experience: 12 },
+        { name: 'Dr. Zeynep Acar', specialty: 'Cosmetic Dentistry', experience: 10 }
+      ],
+      paymentOptions: ['Credit Card', 'Bank Transfer', 'Cash'],
+      guarantees: {
+        implants: '7 years',
+        veneers: '5 years',
+        crowns: '5 years',
+        fillings: '2 years'
+      },
+      whatsAppNumber: '+905559876543',
+      // Special offer for Beyaz Ada
+      hasSpecialOffer: true,
+      specialOffer: {
+        id: "beyazada_fixed_discount",
+        title: "£250 Off Treatment",
+        discountType: "fixed_amount" as "percentage" | "fixed_amount",
+        discountValue: 250,
+        clinicId: "beyazada",
+        applicableTreatments: ["dental_implant_standard", "dental_crown", "teeth_whitening", "dental_bridge"],
+        description: "Receive a £250 discount on your total treatment plan when booking through our platform.",
+        expiryDate: "2025-12-31",
+        termsAndConditions: "Minimum treatment value £1500. Cannot be combined with other offers."
+      }
+    },
+    {
+      id: 'maltepe',
+      name: 'Maltepe Dental Clinic',
+      tier: 'affordable',
+      description: 'Affordable dental care with good quality services. Perfect for budget-conscious travelers seeking essential dental treatments.',
+      priceFactor: 0.3, // 30% of UK price (affordable experience)
+      ratings: {
+        overall: 4.5,
+        reviews: 115,
+        cleanliness: 4.6,
+        staff: 4.4,
+        value: 4.9,
+        location: 4.3
+      },
+      location: {
+        area: 'Maltepe',
+        city: 'Istanbul',
+        fullAddress: 'Bagdat Caddesi, Maltepe, Istanbul'
+      },
+      features: [
+        'Clean, professional facility',
+        'Public transport accessible',
+        'Affordable hotel recommendations',
+        'Basic English spoken',
+        'Standard dental equipment',
+        'Cost-effective treatments'
+      ],
+      certifications: [
+        { name: 'Local Health Authority Certified', year: 2023 }
+      ],
+      doctors: [
+        { name: 'Dr. Osman Yıldız', specialty: 'General Dentistry', experience: 8 },
+        { name: 'Dr. Ayşe Güneş', specialty: 'Restorative Dentistry', experience: 6 }
+      ],
+      paymentOptions: ['Cash', 'Credit Card'],
+      guarantees: {
+        implants: '5 years',
+        veneers: '3 years',
+        crowns: '3 years',
+        fillings: '1 year'
+      },
+      whatsAppNumber: '+905551112233',
+      // Special offer for Maltepe
+      hasSpecialOffer: true,
+      specialOffer: {
+        id: "maltepe_combo_deal",
+        title: "15% Off + Spa Package",
+        discountType: "percentage" as "percentage" | "fixed_amount",
+        discountValue: 15,
+        clinicId: "maltepe",
+        applicableTreatments: ["dental_implant_standard", "dental_crown", "root_canal"],
+        description: "Get 15% off your treatment plus a complimentary spa day at our partner facility.",
+        expiryDate: "2025-10-31",
+        termsAndConditions: "Minimum treatment value £1000. Spa voucher valid for 3 months after treatment."
+      }
+    },
+    // Additional clinics for comparison
+    {
+      id: 'dentalharmony',
+      name: 'Dental Harmony Istanbul',
+      tier: 'premium',
+      description: 'Specializing in complex cases and full mouth rehabilitation with premium care and advanced technology.',
+      priceFactor: 0.45,
+      ratings: {
+        overall: 4.8,
+        reviews: 143,
+        cleanliness: 4.9,
+        staff: 4.8,
+        value: 4.6,
+        location: 4.8
+      },
+      location: {
+        area: 'Levent',
+        city: 'Istanbul',
+        fullAddress: 'Büyükdere Caddesi, Levent, Istanbul'
+      },
+      features: [
+        'Cutting-edge digital equipment',
+        'Luxury VIP transfers',
+        '5-star hotel partnerships',
+        'Multilingual staff',
+        'CBCT scanning on-site',
+        'Relaxation area'
+      ],
+      whatsAppNumber: '+905557778899',
+      hasSpecialOffer: false
+    },
+    {
+      id: 'smiledesigners',
+      name: 'Smile Designers Turkey',
+      tier: 'standard',
+      description: 'Focused on cosmetic dentistry and smile makeovers with good value for money and quality results.',
+      priceFactor: 0.35,
+      ratings: {
+        overall: 4.6,
+        reviews: 128,
+        cleanliness: 4.7,
+        staff: 4.6,
+        value: 4.7,
+        location: 4.5
+      },
+      location: {
+        area: 'Kadıköy',
+        city: 'Istanbul',
+        fullAddress: 'Bağdat Caddesi, Kadıköy, Istanbul'
+      },
+      features: [
+        'Digital smile design',
+        'Airport transfers',
+        '4-star accommodation options',
+        'English-speaking staff',
+        'Painless injection techniques'
+      ],
+      whatsAppNumber: '+905554443322',
+      hasSpecialOffer: false
+    }
   ];
 
   // Helper function to get tier label and styling
