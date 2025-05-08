@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Promotional Code Test</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+      h1 { color: #0066cc; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .title { color: #333; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+      .description { color: #666; margin-bottom: 15px; }
+      .button { display: inline-block; background: #0066cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; }
+      .button:hover { background: #0055aa; }
+    </style>
+  </head>
+  <body>
+    <h1>Promotional Code Direct Test Links</h1>
+    <p>This page contains direct test links for the promotional code system. Click any link to test the flow.</p>
+    
+    <div class="card">
+      <div class="title">DentSpa Promotion (20% off)</div>
+      <div class="description">Tests the DentSpa clinic's 20% discount promotional code with sample treatment items.</div>
+      <a class="button" href="/api/v1/quotes/from-promo?promoToken=DENTSPA20&clinicId=1" target="_blank">
+        Test API Endpoint Directly
+      </a>
+    </div>
+    
+    <div class="card">
+      <div class="title">Beyaz Ada Promotion (£250 off)</div>
+      <div class="description">Tests the Beyaz Ada clinic's fixed £250 discount promotional code with sample treatment items.</div>
+      <a class="button" href="/api/v1/quotes/from-promo?promoToken=BEYAZ250&clinicId=2" target="_blank">
+        Test API Endpoint Directly
+      </a>
+    </div>
+    
+    <div class="card">
+      <div class="title">Maltepe Promotion (15% off + Spa Package)</div>
+      <div class="description">Tests the Maltepe clinic's 15% discount promotional code with sample treatment items.</div>
+      <a class="button" href="/api/v1/quotes/from-promo?promoToken=MALTEPE15&clinicId=3" target="_blank">
+        Test API Endpoint Directly
+      </a>
+    </div>
+    
+    <div class="card">
+      <div class="title">Full UI Flow: DentSpa Promotion</div>
+      <div class="description">Tests the full UI flow for the DentSpa promotion, including clinic filtering.</div>
+      <a class="button" href="/matched-clinics?source=promo_token&clinicId=dentspa&promoToken=DENTSPA20&treatmentItems=[{%22id%22:%22dental_implant_standard%22,%22name%22:%22Dental%20Implant%22,%22quantity%22:2,%22priceGBP%22:1800,%22subtotalGBP%22:3600,%22category%22:%22Implants%22},{%22id%22:%22dental_crown%22,%22name%22:%22Dental%20Crown%22,%22quantity%22:2,%22priceGBP%22:600,%22subtotalGBP%22:1200,%22category%22:%22Cosmetic%22},{%22id%22:%22teeth_whitening%22,%22name%22:%22Teeth%20Whitening%22,%22quantity%22:1,%22priceGBP%22:350,%22subtotalGBP%22:350,%22category%22:%22Cosmetic%22}]">
+        Test Full UI Flow
+      </a>
+    </div>
+  </body>
+</html>

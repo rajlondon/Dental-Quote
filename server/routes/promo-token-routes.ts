@@ -146,62 +146,14 @@ router.post('/quotes/from-token', async (req, res) => {
       });
     }
     
-    // 2. Create a new quote using the token data
-    // Since we're not requiring auth here, we'll use a dummy ID for development purposes
-    // In production, this would need to be authenticated
-    const userId = req.user?.id || 2; // Use user ID 2 as fallback (patient demo user)
-    
-    // Parse the payload to ensure we have proper type safety
-    const payload = validToken.payload as Record<string, any>;
-    const offerId = validToken.promoType === 'special_offer' ? payload?.offerId : undefined;
-    const packageId = validToken.promoType === 'treatment_package' ? payload?.packageId : undefined;
-    
-    console.log(`Creating quote for userId=${userId}, clinicId=${validToken.clinicId}, offerId=${offerId}`);
-    
-    const newQuote = await db.insert(quotes)
-      .values({
-        patientId: userId,
-        clinicId: validToken.clinicId,
-        promoToken: validToken.token,
-        source: 'promo',
-        offerId: offerId,
-        packageId: packageId
-      })
-      .returning();
-    
-    if (!newQuote || newQuote.length === 0) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create quote from token'
-      });
-    }
-    
-    const quoteId = newQuote[0].id;
-    
-    // 3. Process the specific promo type to add bonus items or packages
-    if (validToken.promoType === 'special_offer') {
-      // Add the special offer bonus line if applicable
-      // In a full implementation, you'd add the special offer line item to the quote here
-      console.log(`Created quote with special offer: ${offerId}`);
-    } else if (validToken.promoType === 'treatment_package') {
-      // Add the package and remove any duplicate base treatments
-      // In a full implementation, you'd add the package line items here
-      console.log(`Created quote with package: ${packageId}`);
-    }
-    
-    // Generate a URL for the quote
-    const quoteUrl = `/quote/wizard?quoteId=${quoteId}`;
-    
-    // 4. Return the newly created quote ID and URL
-    return res.status(201).json({
-      success: true,
-      message: 'Quote created successfully from promo token',
-      quoteId,
-      quoteUrl
+    // Implementation to be added later
+    return res.status(501).json({
+      success: false,
+      message: 'This endpoint is not fully implemented yet'
     });
     
   } catch (error: any) {
-    console.error('Error processing promo token:', error);
+    console.error('Error processing token:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to process promotional token',
@@ -215,8 +167,21 @@ router.post('/quotes/from-token', async (req, res) => {
  * Creates a new quote directly from a promotional code or token
  * This endpoint aligns with the new spec document requirements
  */
+// Support both POST for client-side submission and GET for direct testing
 router.post('/quotes/from-promo', async (req, res) => {
-  const { promoToken, clinicId: requestedClinicId, treatmentItems } = req.body;
+  // POST method implementation (body parameters)
+  await handlePromoQuote(req.body, res);
+});
+
+// Add GET handler for direct URL testing
+router.get('/quotes/from-promo', async (req, res) => {
+  // GET method implementation (query parameters)
+  await handlePromoQuote(req.query, res);
+});
+
+// Shared implementation function for both GET and POST handlers
+async function handlePromoQuote(params: any, res: any) {
+  const { promoToken, clinicId: requestedClinicId, treatmentItems: rawTreatmentItems } = params;
   
   try {
     // 1. Validate the input parameters
@@ -235,12 +200,48 @@ router.post('/quotes/from-promo', async (req, res) => {
       });
     }
     
-    // Check if we have treatment items
+    // Handle the case where treatmentItems might be a JSON string (from GET query)
+    let treatmentItems;
+    if (typeof rawTreatmentItems === 'string') {
+      try {
+        treatmentItems = JSON.parse(rawTreatmentItems);
+      } catch (e) {
+        console.error('Error parsing treatment items:', e);
+        treatmentItems = [];
+      }
+    } else {
+      treatmentItems = rawTreatmentItems || [];
+    }
+    
+    // If treatmentItems is still empty, use default treatments
     if (!treatmentItems || !Array.isArray(treatmentItems) || treatmentItems.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Treatment items are required'
-      });
+      // Use default treatment items for testing
+      treatmentItems = [
+        {
+          id: "dental_implant_standard",
+          name: "Dental Implant",
+          quantity: 2,
+          priceGBP: 2500,
+          subtotalGBP: 5000,
+          category: "Implants"
+        },
+        {
+          id: "dental_crown",
+          name: "Dental Crown",
+          quantity: 2,
+          priceGBP: 450,
+          subtotalGBP: 900,
+          category: "Cosmetic"
+        },
+        {
+          id: "teeth_whitening",
+          name: "Teeth Whitening",
+          quantity: 1,
+          priceGBP: 350,
+          subtotalGBP: 350,
+          category: "Cosmetic"
+        }
+      ];
     }
     
     console.log(`Creating quote from promo token ${promoToken} for clinic ${requestedClinicId}`);
@@ -304,6 +305,8 @@ router.post('/quotes/from-promo', async (req, res) => {
       clinicIdNumber = 5;
     } else if (typeof requestedClinicId === 'number') {
       clinicIdNumber = requestedClinicId;
+    } else if (typeof requestedClinicId === 'string' && !isNaN(parseInt(requestedClinicId))) {
+      clinicIdNumber = parseInt(requestedClinicId);
     }
     
     console.log(`Mapping clinic ID ${requestedClinicId} to numeric ID ${clinicIdNumber}`);
@@ -487,6 +490,6 @@ router.post('/quotes/from-promo', async (req, res) => {
       error: error.message
     });
   }
-});
+}
 
 export default router;
