@@ -255,14 +255,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         crowns: '5 years',
         fillings: '2 years'
       },
-      // Force special offers for ALL clinics
+      // Specific special offer for DentSpa
       hasSpecialOffer: true,
       specialOffer: {
-        id: "premium_offer_1",
+        id: "dentspa_premium_vip_package",
         title: "VIP Treatment Package",
         discountType: "percentage" as "percentage" | "fixed_amount",
         discountValue: 20,
-        clinicId: "dentspa"
+        clinicId: "dentspa",
+        applicableTreatments: ["dental_implant_standard", "dental_crown", "teeth_whitening"],
+        description: "Enjoy a 20% discount on implants, crowns, and whitening treatments along with our luxury VIP package including extended hotel stay and premium transfers.",
+        expiryDate: "2025-12-31",
+        termsAndConditions: "Minimum treatment value £2000. Cannot be combined with other offers."
       }
     },
     {
@@ -306,14 +310,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         crowns: '3 years',
         fillings: '1 year'
       },
-      // Force special offers for ALL clinics
+      // Beyaz Ada specific offer
       hasSpecialOffer: true,
       specialOffer: {
-        id: "standard_offer_1",
+        id: "beyazada_hotel_stay_package",
         title: "Free Hotel Stay",
         discountType: "fixed_amount" as "percentage" | "fixed_amount",
         discountValue: 250,
-        clinicId: "beyazada"
+        clinicId: "beyazada",
+        applicableTreatments: ["dental_veneer", "dental_crown", "teeth_whitening", "root_canal"],
+        description: "Receive a complimentary 3-night stay at a nearby partner hotel when booking veneers, crowns or root canal treatments.",
+        expiryDate: "2026-01-15",
+        termsAndConditions: "Minimum treatment value £1000. Hotel subject to availability, alternative accommodation may be offered."
       }
     },
     {
@@ -361,14 +369,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         crowns: '10 years',
         fillings: '3 years'
       },
-      // Force special offers for ALL clinics
+      // Maltepe premium offer
       hasSpecialOffer: true,
       specialOffer: {
-        id: "premium_offer_2",
-        title: "Luxury Spa Treatment",
+        id: "maltepe_luxury_spa_package",
+        title: "Luxury Spa Treatment Package",
         discountType: "percentage" as "percentage" | "fixed_amount",
         discountValue: 15,
-        clinicId: "maltepe"
+        clinicId: "maltepe",
+        applicableTreatments: ["dental_implant_premium", "dental_crown", "dental_veneer", "teeth_whitening", "cosmetic_dentistry"],
+        description: "Enjoy a complimentary luxury spa day and premium wellness treatments when you book premium dental implants or a cosmetic package. Includes massage, facial treatments, and wellness consultation.",
+        expiryDate: "2025-09-30",
+        termsAndConditions: "Minimum treatment value £3000. Spa treatments subject to availability, prior booking required."
       }
     },
     {
@@ -412,14 +424,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         crowns: '2 years',
         fillings: '1 year'
       },
-      // Force special offers for ALL clinics
+      // DentalCare affordable offer
       hasSpecialOffer: true,
       specialOffer: {
-        id: "affordable_offer_1",
-        title: "Free Airport Transfer",
+        id: "dentalcare_free_transfer_package",
+        title: "Free Airport Transfer Package",
         discountType: "fixed_amount" as "percentage" | "fixed_amount",
         discountValue: 100,
-        clinicId: "dentalcare"
+        clinicId: "dentalcare",
+        applicableTreatments: ["dental_filling", "dental_implant_economy", "teeth_cleaning", "dental_bridge"],
+        description: "Book any dental treatment and receive complimentary airport transfers to and from your hotel. Valid for all arrivals at Istanbul Airport.",
+        expiryDate: "2025-12-31",
+        termsAndConditions: "One transfer per patient. Minimum booking value £500. 24-hour advance notice required."
       }
     }
   ];
@@ -440,18 +456,43 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     }
     
+    // Log the treatments for debugging
+    console.log("Original treatments:", treatments);
+    
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
       const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
       const clinicPricePerUnit = Math.round(ukPricePerUnit * priceFactor);
       
+      // Extract treatment type from treatment ID or name for offer matching
+      const treatmentType = treatment.id.split('_')[0].toLowerCase();
+      
       // Determine if there's a special offer to apply
       // Priority: 1. Context active offer > 2. Treatment specific offer > 3. Clinic default offer
-      const contextOffer = specialOffer && specialOffer.clinicId === clinicId ? specialOffer : undefined;
+      
+      // Check if context offer is applicable to this treatment
+      const contextOffer = specialOffer && 
+        specialOffer.clinicId === clinicId && 
+        (!specialOffer.applicableTreatments || 
+         specialOffer.applicableTreatments.some(t => treatment.id.includes(t) || t.includes(treatmentType)))
+         ? specialOffer : undefined;
+      
+      // Treatment's own offer
       const treatmentOffer = treatment.specialOffer;
-      const clinicOffer = clinic?.specialOffer && clinic.specialOffer.clinicId === clinicId ? clinic.specialOffer : undefined;
+      
+      // Check if clinic offer is applicable to this treatment
+      const clinicOffer = clinic?.specialOffer && 
+        clinic.specialOffer.clinicId === clinicId &&
+        (!clinic.specialOffer.applicableTreatments || 
+         clinic.specialOffer.applicableTreatments.some(t => treatment.id.includes(t) || t.includes(treatmentType)))
+         ? clinic.specialOffer : undefined;
       
       // Select the offer to use in order of priority
       const offerToApply = contextOffer || treatmentOffer || clinicOffer;
+      
+      // If there's an offer to apply, log it for debugging
+      if (offerToApply) {
+        console.log("Applying special offer to treatments:", offerToApply, treatmentType);
+      }
       
       // Calculate final price with any applicable discount
       let finalPricePerUnit = clinicPricePerUnit;
