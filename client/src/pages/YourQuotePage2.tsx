@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
+import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -46,7 +48,9 @@ import {
   MessageCircle,
   CheckCircle,
   Pencil,
-  User
+  User,
+  Tag,
+  CalendarCheck
 } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import StepByStepTreatmentBuilder from '@/components/StepByStepTreatmentBuilder';
@@ -369,13 +373,89 @@ const YourQuotePage: React.FC = () => {
                   <div className="p-2 rounded-full bg-green-50">
                     <Sparkles className="h-6 w-6 text-green-500" />
                   </div>
-                  <div>
-                    <CardTitle className="text-2xl">Cost Comparison Summary</CardTitle>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-2xl">Cost Comparison Summary</CardTitle>
+                      
+                      {/* Special offer badge */}
+                      {searchParams.get('source') === 'special_offer' && (
+                        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md 
+                        flex items-center shadow-sm transform rotate-2 mr-2">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Special Offer Applied
+                        </div>
+                      )}
+                      
+                      {/* Package badge */}
+                      {searchParams.get('source') === 'package' && (
+                        <div className="bg-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm transform rotate-2 mr-2">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Package Deal
+                        </div>
+                      )}
+                    </div>
                     <CardDescription>See how much you could save compared to UK dental treatments</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
+                {/* Special offer alert - only shown when applicable */}
+                {searchParams.get('source') === 'special_offer' && searchParams.get('offerTitle') && (
+                  <div className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4 rounded-md shadow-sm">
+                    <div className="flex items-start">
+                      <div className="bg-white rounded-full p-1 border border-green-200 shadow-sm mr-3 mt-1">
+                        <Sparkles className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-green-800 text-md">{searchParams.get('offerTitle')}</h3>
+                          {searchParams.get('offerDiscount') && (
+                            <div className="bg-green-600 text-white text-xs py-1 px-2 rounded-md font-medium">
+                              {searchParams.get('offerDiscountType') === 'percentage'
+                                ? `${searchParams.get('offerDiscount')}% OFF`
+                                : `£${searchParams.get('offerDiscount')} OFF`}
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-green-700 text-sm mt-2 flex items-center">
+                          <Tag className="h-4 w-4 mr-1 text-green-600" />
+                          <span className="font-medium">
+                            {searchParams.get('offerDiscountType') === 'percentage'
+                              ? `Save ${searchParams.get('offerDiscount')}% off eligible treatments`
+                              : `Save £${searchParams.get('offerDiscount')} off eligible treatments`}
+                            {searchParams.get('offerClinic') && ` at Clinic ID ${searchParams.get('offerClinic')}`}
+                          </span>
+                        </p>
+                        <p className="text-green-700 text-xs mt-2 flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          <span>Limited time offer - automatically applied to your quote</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Package alert - only shown when applicable */}
+                {searchParams.get('source') === 'package' && (
+                  <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-md">
+                    <h3 className="font-semibold text-blue-800 mb-2">Your All-Inclusive Package Includes:</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Hotel className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="text-blue-700 text-sm">Hotel accommodation</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Car className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="text-blue-700 text-sm">Airport transfers</span>
+                      </div>
+                      <div className="flex items-center">
+                        <CalendarCheck className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="text-blue-700 text-sm">Free consultation</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
@@ -389,15 +469,39 @@ const YourQuotePage: React.FC = () => {
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-green-50 border-green-100">
+                  <Card className={searchParams.get('source') === 'special_offer' 
+                    ? "bg-gradient-to-r from-green-50 to-blue-50 border-green-200 shadow-sm" 
+                    : "bg-green-50 border-green-100"}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-medium text-green-700">Estimated Istanbul Price</CardTitle>
+                      <CardTitle className="text-base font-medium text-green-700">
+                        {searchParams.get('source') === 'special_offer' 
+                          ? "Your Discounted Istanbul Price" 
+                          : "Estimated Istanbul Price"}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold text-green-700">
-                        £{formatCurrency(Math.round(totalGBP))}
-                      </p>
-                      <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
+                      {searchParams.get('source') === 'special_offer' && searchParams.get('offerDiscount') ? (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm text-gray-500 line-through">
+                              £{formatCurrency(Math.round(totalGBP * (1 + (Number(searchParams.get('offerDiscount')) / 100))))}
+                            </p>
+                            <p className="text-2xl font-bold text-green-700">
+                              £{formatCurrency(Math.round(totalGBP))}
+                            </p>
+                          </div>
+                          <p className="text-sm text-green-600 mt-1 font-medium">
+                            Save up to {searchParams.get('offerDiscount')}% with this special offer
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold text-green-700">
+                            £{formatCurrency(Math.round(totalGBP))}
+                          </p>
+                          <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
+                        </>
+                      )}
                       <p className="text-xs text-green-600 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                     </CardContent>
                   </Card>
