@@ -1,0 +1,262 @@
+# MyDentalFly – Technical Specification (MVP v1.0)
+
+*Last updated — May 9 2025*
+
+---
+
+## 0  Overview
+
+* **Stack** ⇢ TypeScript / React (Vite) front‑end · Node 18 / Express back‑end · Supabase (Postgres + Storage + Auth) · Stripe · Nix/PNPM on Replit for dev & staging.
+* **Modules** ⇢ Gateway (API) · Clinic OMS · Quote Engine · Patient Portal · Admin Back‑office · Notification Service. All share a single Postgres (Supabase) via row‑level security.
+* **Core concept** ⇢ Every user interaction revolves around a **Quote** row. Optional `promoId` binds Special Offers / Packages, steering UI and price logic.
+
+---
+
+## 1  Repository Layout
+
+```
+/ (monorepo)
+ ├── client/             # React front‑end (Vite + PNPM workspaces)
+ │   ├── src/
+ │   │   ├── pages/      # Route‑level components (wizard, portals)
+ │   │   ├── components/ # Shared UI + shadcn wrappers
+ │   │   ├── hooks/      # React hooks (auth, quote, promo)
+ │   │   └── lib/        # Utilities (currency, form, promoUtils)
+ │   └── vite.config.ts
+ ├── server/             # Express  + Drizzle ORM
+ │   ├── routes/         # v1/ public; internal/ admin ops
+ │   ├── services/       # PromoEngine, PaymentService, Notification
+ │   └── index.ts        # Entrypoint (loads env & mounts routes)
+ ├── shared/             # Single source of types & DB schema
+ │   ├── schema.ts       # Drizzle table defs
+ │   └── types.ts
+ ├── scripts/            # seed.ts, migrate.ts, cron jobs
+ ├── prisma/ or drizzle/ # SQL migrations (optional)
+ ├── .replit / replit.nix
+ └── README.md
+```
+
+---
+
+## 2  Key Libraries & Rationale
+
+| Area     | Package                  | Reason                                 |
+| -------- | ------------------------ | -------------------------------------- |
+| UI       | **React 18**             | Dev velocity, ecosystem                |
+|          | **Vite**                 | Fast HMR on Replit & local             |
+|          | **shadcn/ui + Tailwind** | Accessible, themeable components       |
+|          | **lucide-react**         | Feather‑style icon set                 |
+| Forms    | **react‑hook‑form**      | Wizard & portal forms                  |
+| State    | **zustand**              | Lightweight global store (quote cache) |
+| Routing  | **wouter**               | 2 kB, Replit‑friendly (no SSR)         |
+| HTTP     | **ky**                   | Tiny fetch wrapper with retry          |
+| Backend  | **Express v4**           | Ubiquitous; easy to mount on Replit    |
+|          | **Drizzle ORM**          | Type‑safe SQL, Postgres‑first          |
+| Auth     | **@supabase/auth‑js**    | Email/magic‑link & JWT                 |
+| Storage  | **Supabase Storage**     | X‑ray uploads, doc attach              |
+| Payments | **stripe**               | Deposits & escrow                      |
+| E‑mail   | **@sendgrid/mail**       | Transactional notifications            |
+
+---
+
+## 3  Database Schema (simplified)
+
+```mermaid
+erDiagram
+    users ||--o{ quotes : own
+    clinics ||--o{ quotes : receives
+    promos ||--o{ quotes : binds
+    quotes ||--|{ quote_lines : contains
+    treatments ||--o{ quote_lines : reference
+
+    users {
+      uuid id PK
+      text full_name
+      text email
+      timestamp created_at
+    }
+    clinics {
+      text id PK
+      text name
+      text city
+      jsonb contact
+    }
+    promos {
+      text id PK
+      text clinic_id FK
+      text kind   "offer | package"
+      jsonb payload
+      date expires
+    }
+    treatments {
+      text code PK
+      text description
+      int base_price_gbp
+      int base_price_usd
+    }
+    quotes {
+      uuid id PK
+      uuid user_id FK
+      text clinic_id FK
+      text promo_id  FK nullable
+      text status    "draft | pendingClinic | booked"
+      timestamp created_at
+    }
+    quote_lines {
+      uuid id PK
+      uuid quote_id FK
+      text treatment_code FK nullable
+      text description
+      int qty
+      int base_price_gbp
+      int unit_price_gbp
+      bool is_bonus default false
+      bool is_locked default false
+    }
+```
+
+*All server pricing originates from `treatments.base_price_gbp` + promo discounts; clients never compute.*
+
+---
+
+## 4  API Surface (v1)
+
+### Auth (Supabase handles)
+
+* `POST /auth/signup` · `POST /auth/signin` · Magic‑link.
+
+### Quotes & Promos
+
+| Method & Path                          | Payload                                                | Notes                                                       |
+| -------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
+| **POST /api/v1/quotes**                | `{ source:"normal", visitorEmail?, city, concerns[] }` | Creates empty draft; wizard fills lines later.              |
+| **POST /api/v1/quotes/from-promo**     | `{ promoId, visitorEmail? }`                           | Creates quote, injects package/bonus lines, locks clinicId. |
+| **GET  /api/v1/quotes/\:id**           | –                                                      | Returns header incl. `promoId` & `clinicId`.                |
+| **GET  /api/v1/quotes/\:id/lines**     | –                                                      | Row‑level security ensures only owner/clinic.               |
+| **PATCH /api/v1/quote-lines/\:lineId** | `{ qty }`                                              | Forbidden if `is_locked=true`.                              |
+
+### Content
+
+* `GET /api/v1/promos/homepage` – 4 featured promos with hero images.
+* `GET /api/v1/packages` – searchable list (for Package page).
+
+---
+
+## 5  Front‑End Data Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User (browser)
+    participant FE as React Front‑end
+    participant BE as Express API
+    participant DB as Supabase
+
+    %% Special Offer click
+    U->>FE: click OfferCard (promoId)
+    FE->>BE: POST /quotes/from-promo {promoId}
+    BE->>DB: insert quotes + lines
+    BE-->>FE: {quoteId}
+    FE->>FE: navigate /wizard/start?quoteId
+
+    %% Wizard steps (context keeps quoteId)
+    U->>FE: Next
+    FE->>BE: GET /quotes/:id
+    BE-->>FE: quote {promoId, clinicId}
+    FE->>FE: if promoId skip clinic grid
+    U->>FE: Select clinic (pre‑selected)
+    FE->>BE: PATCH quote status pendingClinic
+    BE-->>FE: 200 OK
+
+    FE->>U: Portal Review (bonus lines locked)
+```
+
+---
+
+## 6  Promo Engine Logic (server/services/PromoEngine.ts)
+
+```ts
+export async function applyPromo(promoId: string, quoteId: string) {
+  const promo = await db.promos.find(promoId);
+  if (!promo || promo.expires < new Date()) throw new Error('Invalid promo');
+
+  // lock clinic
+  await db.quotes.update({ id: quoteId }).set({
+    clinicId: promo.clinicId,
+    promoId: promo.id,
+  });
+
+  if (promo.kind === 'package') {
+    const { items, discountPct } = promo.payload;
+    for (const item of items as string[]) {
+      const [code, qtyStr] = item.split('×');
+      const base = await db.treatments.find(code);
+      const price = Math.round(base.base_price_gbp * (1 - discountPct / 100));
+      await db.quote_lines.insert({
+        quoteId,
+        treatmentCode: code,
+        description: base.description,
+        qty: Number(qtyStr),
+        basePriceGbp: base.base_price_gbp,
+        unitPriceGbp: price,
+        isLocked: true,
+      });
+    }
+  } else if (promo.kind === 'offer') {
+    const { bonusLine } = promo.payload;
+    await db.quote_lines.insert({
+      quoteId,
+      description: bonusLine.description,
+      qty: 1,
+      basePriceGbp: null,
+      unitPriceGbp: 0,
+      isBonus: true,
+      isLocked: true,
+    });
+  }
+}
+```
+
+---
+
+## 7  Wizard & Portal Rules
+
+| Rule                                 | Implementation                                                    |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| Persist `quoteId`                    | `QuoteFlowContext` reads from URL; `nextStep()` appends it.       |
+| Skip clinic grid when promo          | QuoteResultsPage: `if(quote.promoId) return <SingleClinicCard …>` |
+| Disallow edit/delete on locked lines | Buttons hidden if `line.isLocked`.                                |
+| Strike‑through original price        | `<del>£{basePrice}</del>` when `basePrice > unitPrice`.           |
+
+---
+
+## 8  CI / CD (Replit)
+
+1. **PR triggers** run `pnpm lint && pnpm test` (Vitest).
+2. `db:migrate` script executes Drizzle migrations using SUPABASE\_SERVICE\_ROLE.
+3. Build front‑end (`vite build`) ➜ `/dist`.
+4. Nix shell bundles Node 18 runtime and starts `node server/index.js`.
+5. Always‑On staging repl (`staging.<username>.repl.co`) autodeployed from `main`.
+   Production repl tags `vX.Y.Z`.
+
+---
+
+## 9  Security & Compliance
+
+* **Row‑level security**: every query filtered by `auth.uid()` (Supabase).
+* **GDPR**: Data residency EU West, S3‑compatible storage with AES‑256.
+* **PCI**: All payments via Stripe Checkout → no card data hits servers.
+* **PHI / medical**: no diagnostic images stored; only voluntary X‑ray attachments.
+
+---
+
+## 10  Open Questions
+
+1. Final discount rounding rules (£ → nearest £5?).
+2. Aftercare upsell model (post‑op visits in UK?).
+3. Clinic SLA for responding to `pendingClinic` quotes.
+4. Multi‑city expansion—split promos table by city or keep single?
+5. Real‑time chat: Supabase realtime vs Stream Chat.
+
+---
+
+*End of Technical Specification – MVP v1.0*
