@@ -319,6 +319,14 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   
+  // Get the active special offer if there is one
+  const { 
+    specialOffer, 
+    hasActiveOffer, 
+    isSpecialOfferFlow,
+    applySpecialOfferToTreatments
+  } = useSpecialOfferTracking();
+  
   // Calculate totals
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
@@ -488,20 +496,33 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     const istanbulPriceGBP = Math.round(treatment.priceGBP * 0.35);
     const istanbulPriceUSD = Math.round(treatment.priceUSD * 0.35);
     
-    // Add new treatment with Istanbul prices
-    const newTreatment: TreatmentItem = {
+    // Create basic treatment object
+    const treatmentItem: TreatmentItem = {
       id: `${treatment.id}_${Date.now()}`, // Unique ID
       category: categoryId,
       name: treatment.name,
       quantity: 1,
-      priceGBP: istanbulPriceGBP, // Use Istanbul price
-      priceUSD: istanbulPriceUSD, // Use Istanbul price
-      subtotalGBP: istanbulPriceGBP, // Use Istanbul price
-      subtotalUSD: istanbulPriceUSD, // Use Istanbul price
+      priceGBP: istanbulPriceGBP,
+      priceUSD: istanbulPriceUSD,
+      subtotalGBP: istanbulPriceGBP,
+      subtotalUSD: istanbulPriceUSD,
       guarantee: treatment.guarantee,
       ukPriceGBP: treatment.priceGBP, // Store original UK price for comparison
       ukPriceUSD: treatment.priceUSD,
     };
+    
+    // Process special offers if available
+    if (hasActiveOffer && specialOffer) {
+      // Apply any special offers to the treatment
+      const treatedItems = applySpecialOfferToTreatments([treatmentItem]);
+      
+      // Add the (potentially modified) treatment to the list
+      setTreatments([...treatments, treatedItems[0]]);
+      return;
+    }
+    
+    // If no special offer, just add the treatment as is
+    setTreatments([...treatments, treatmentItem]);
     
     setTreatments([...treatments, newTreatment]);
   };
