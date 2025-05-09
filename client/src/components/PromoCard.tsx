@@ -38,7 +38,8 @@ export function PromoCard({
   
   const handlePromoClick = () => {
     setPromoSlug(slug);
-    navigate('/your-quote?promo=' + slug);
+    // Properly encode the promo slug for URL
+    navigate('/your-quote?promo=' + encodeURIComponent(slug));
   };
   
   const formatTimeRemaining = (endDateStr: string) => {
