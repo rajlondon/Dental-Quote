@@ -180,7 +180,8 @@ class SpecialOffersService {
       const discountType = (urlParams.get('offerDiscountType') || urlParams.get('discountType') || 'percentage') as 'percentage' | 'fixed_amount';
       const discountValue = parseFloat(urlParams.get('offerDiscount') || urlParams.get('discountValue') || '0');
       const clinicId = urlParams.get('clinicId') || urlParams.get('offerClinic') || '1';
-      const applicableTreatment = urlParams.get('applicableTreatment');
+      const applicableTreatmentParam = urlParams.get('applicableTreatment');
+      const applicableTreatment = applicableTreatmentParam === null ? undefined : applicableTreatmentParam;
       
       return {
         id: offerId,
@@ -188,7 +189,7 @@ class SpecialOffersService {
         discountType,
         discountValue,
         clinicId,
-        applicableTreatment: applicableTreatment
+        applicableTreatment: applicableTreatment || undefined
       };
     }
     

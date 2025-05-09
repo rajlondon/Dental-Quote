@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TreatmentItem, TreatmentCategory } from '@/components/TreatmentPlanBuilder';
-import { treatmentCategoriesData } from '@/data/treatment-categories';
+import { treatmentCategoriesData } from '@/data/treatment-categories-data';
 import { useSpecialOffers } from '@/hooks/use-special-offers';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,7 @@ interface EnhancedTreatmentPlanBuilderProps {
   initialTreatments?: TreatmentItem[];
   onTreatmentsChange?: (treatments: TreatmentItem[]) => void;
   hideHeader?: boolean;
+  treatmentCategoriesData?: typeof treatmentCategoriesData;
 }
 
 const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> = ({
