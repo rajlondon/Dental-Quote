@@ -4,11 +4,15 @@ import { ensureAuthenticated, ensureRole } from "../../../../middleware/auth";
 import { insertPromoSchema, insertPromoItemSchema, insertPromoClinicSchema } from "@shared/schema";
 import { z } from "zod";
 import tokenRoutes from "./tokens";
+import validateRoutes from "./validate";
 
 const router = Router();
 
 // Mount token routes
 router.use("/tokens", tokenRoutes);
+
+// Mount validate route
+router.use("/validate", validateRoutes);
 
 /**
  * Create a new promo with items and clinic associations
