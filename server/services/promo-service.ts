@@ -69,7 +69,7 @@ export class PromoService {
       if (promoClinicsWithId.length > 0) {
         await db
           .insert(promoClinics)
-          .values(promoClinicsWithId);
+          .values(promoClinicsWithId as any);
       }
     }
 
@@ -210,7 +210,7 @@ export class PromoService {
 
     const newItems = await db
       .insert(promoItems)
-      .values(itemsWithPromoId)
+      .values(itemsWithPromoId as any)
       .returning();
 
     return newItems;
@@ -243,7 +243,7 @@ export class PromoService {
 
     const newClinics = await db
       .insert(promoClinics)
-      .values(clinicsWithPromoId)
+      .values(clinicsWithPromoId as any)
       .returning();
 
     return newClinics;
