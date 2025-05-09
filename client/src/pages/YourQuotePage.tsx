@@ -8,7 +8,6 @@ import ScrollToTop from '@/components/ScrollToTop';
 import { useQuoteFlow, useInitializeQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
-import { PromoRibbon } from '@/pages/QuoteBuilder/PromoRibbon';
 import { usePromoStore } from '@/features/promo/usePromoStore';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,7 +57,7 @@ import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import EnhancedTreatmentPlanBuilder from '@/components/EnhancedTreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
 import SpecialOfferHandler from '@/components/specialOffers/SpecialOfferHandler';
-import PromoRibbon from '@/pages/QuoteBuilder/PromoRibbon';
+import { PromoRibbon } from '@/pages/QuoteBuilder/PromoRibbon';
 
 // Types
 interface ClinicInfo {

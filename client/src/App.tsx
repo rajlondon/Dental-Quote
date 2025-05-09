@@ -59,7 +59,7 @@ import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
-import YourQuotePage from "@/pages/YourQuotePage2";
+import YourQuotePage from "@/pages/YourQuotePage";
 import DentalImplantsPage from "@/pages/DentalImplantsPage";
 import VeneersPage from "@/pages/VeneersPage";
 import HollywoodSmilePage from "@/pages/HollywoodSmilePage";
