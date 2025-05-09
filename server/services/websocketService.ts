@@ -99,13 +99,13 @@ export class WebSocketService {
       
       ws.on('close', () => {
         // Remove client on disconnect
-        for (const [id, client] of this.clients.entries()) {
+        // Convert Map entries to Array to avoid downlevelIteration issues
+        Array.from(this.clients.entries()).forEach(([id, client]) => {
           if (client.ws === ws) {
             this.clients.delete(id);
             console.log(`Client ${id} disconnected`);
-            break;
           }
-        }
+        });
       });
       
       // Send a welcome message
