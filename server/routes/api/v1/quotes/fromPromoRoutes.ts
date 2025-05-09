@@ -49,13 +49,13 @@ fromPromoRouter.post('/', catchAsync(async (req: Request, res: Response) => {
 
   const { token, visitorEmail } = validation.data;
 
-  // First, check if the token exists in the special_offers table
-  const [specialOffer] = await db
+  // First, check if the token exists in the promo_tokens table
+  const [promoToken] = await db
     .select()
-    .from(specialOffers)
-    .where(eq(specialOffers.promoToken, token));
+    .from(schema.promoTokens)
+    .where(eq(schema.promoTokens.token, token));
 
-  if (!specialOffer) {
+  if (!promoToken) {
     return res.status(404).json({
       success: false,
       message: 'Promotion token not found',
@@ -75,7 +75,7 @@ fromPromoRouter.post('/', catchAsync(async (req: Request, res: Response) => {
       updatedAt: timestamp,
       totalGBP: 0, // Will be calculated later when treatments are added
       totalUSD: 0, // Will be calculated later when treatments are added
-      clinicId: specialOffer.clinicId, // Associate with the clinic from the special offer
+      clinicId: promoToken.clinicId, // Associate with the clinic from the promo token
       patientEmail: visitorEmail || null, // Store the visitor email if provided
       promoToken: token, // Store the promo token used
     });
@@ -83,31 +83,17 @@ fromPromoRouter.post('/', catchAsync(async (req: Request, res: Response) => {
     // For initial implementation, just create an empty quote
     // Later versions will add default treatments based on the promo type
 
-    // Create a notification about the quote creation if email is provided
-    if (visitorEmail) {
-      await db.insert(notifications).values({
-        id: uuidv4(),
-        type: 'quote_created',
-        recipientEmail: visitorEmail,
-        subject: 'Your Special Offer Quote',
-        content: `Your quote has been created with promotion "${specialOffer.title}". You can view it in the patient portal.`,
-        status: 'pending',
-        createdAt: timestamp,
-        metadata: JSON.stringify({
-          quoteId,
-          promoToken: token,
-          offerTitle: specialOffer.title,
-        }),
-      });
-    }
+    // For promo tokens, we won't create notifications here
+    // Notifications will be handled by the patient portal when the patient logs in
+    // This is because we need to associate the notification with a user account
 
     // Return the quote ID
     return res.status(201).json({
       success: true,
       quoteId,
       message: 'Quote created successfully',
-      clinicId: specialOffer.clinicId,
-      offerTitle: specialOffer.title,
+      clinicId: promoToken.clinicId,
+      promoType: promoToken.promoType,
     });
   } catch (error) {
     console.error('Error creating quote from promo token:', error);
