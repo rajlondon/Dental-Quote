@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import quotesRoutes from './quotes';
+import quotesRouter from './quotes';
 
-const router = Router();
+const v1Router = Router();
 
-// Mount the routes
-router.use('/quotes', quotesRoutes);
+// Mount all v1 route groups
+v1Router.use('/quotes', quotesRouter);
 
-export default router;
+export default v1Router;

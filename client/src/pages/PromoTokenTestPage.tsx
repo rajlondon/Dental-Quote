@@ -104,12 +104,12 @@ const PromoTokenTestPage: React.FC = () => {
             </div>
           ) : generatedQuoteId ? (
             <div className="space-y-4">
-              <Alert variant="success" className="bg-green-50 border-green-200">
-                <AlertTitle className="text-green-800">Quote Created Successfully!</AlertTitle>
-                <AlertDescription className="text-green-700">
+              <div className="rounded-md bg-green-50 border border-green-200 p-4">
+                <h3 className="text-lg font-semibold text-green-800">Quote Created Successfully!</h3>
+                <p className="text-green-700">
                   Your quote has been created with the following details:
-                </AlertDescription>
-              </Alert>
+                </p>
+              </div>
               
               <div className="rounded-md bg-slate-50 p-4">
                 <div className="space-y-2">

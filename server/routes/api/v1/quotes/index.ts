@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import fromPromoRoutes from './fromPromoRoutes';
+import fromPromoRouter from './fromPromoRoutes';
 
-const router = Router();
+const quotesRouter = Router();
 
 // Mount the routes
-router.use(fromPromoRoutes);
+quotesRouter.use('/from-promo', fromPromoRouter);
 
-export default router;
+export default quotesRouter;
