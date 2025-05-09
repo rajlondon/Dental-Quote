@@ -556,8 +556,9 @@ const PortalLoginPage: React.FC = () => {
             // Store indicator for ongoing navigation
             sessionStorage.setItem('clinic_portal_redirect_timestamp', Date.now().toString());
             
-            // Direct navigation bypassing React Router
-            window.location.href = '/clinic-portal';
+            // Direct navigation to the unguarded clinic portal route instead
+            console.log('🔄 Redirecting to direct clinic portal access route');
+            window.location.href = '/clinic-direct';
           } catch (navError) {
             console.error("Error during clinic portal navigation:", navError);
             // Fallback to react router

@@ -470,6 +470,15 @@ function Router() {
       </Route>
       
       {/* Original clinic portal route with special guard to prevent refresh issues */}
+      {/* Direct clinic portal access route for debugging - NO AUTH CHECKING */}
+      <Route path="/clinic-direct">
+        {() => (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic portal...</div>}>
+            <ClinicPortalPage disableAutoRefresh={true} />
+          </React.Suspense>
+        )}
+      </Route>
+
       <Route path="/clinic-portal">
         {() => (
           <ClinicGuard>
