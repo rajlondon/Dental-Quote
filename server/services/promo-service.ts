@@ -44,7 +44,7 @@ export class PromoService {
       .values(promoDataWithEnums)
       .returning();
 
-    // Insert associated items
+    // Insert associated items one by one to avoid array insertion issues
     if (promoItems.length > 0) {
       const promoItemsWithId = promoItems.map(item => ({
         ...item,
@@ -52,24 +52,46 @@ export class PromoService {
         itemType: item.itemType as any
       }));
       
-      if (promoItemsWithId.length > 0) {
+      // Process items individually to avoid type issues
+      for (const item of promoItemsWithId) {
         await db
-          .insert(promoItems)
-          .values(promoItemsWithId);
+          .execute(sql`INSERT INTO ${promoItems} ${sql.raw(
+            `(id, promo_id, item_type, item_code, qty, created_at, updated_at)`
+          )} VALUES ${sql.raw(
+            `(
+              uuid_generate_v4(),
+              ${item.promoId},
+              ${item.itemType},
+              ${item.itemCode},
+              ${item.qty || 1},
+              NOW(),
+              NOW()
+            )`
+          )}`);
       }
     }
 
-    // Insert associated clinics
+    // Insert associated clinics one by one to avoid array insertion issues
     if (promoClinics.length > 0) {
       const promoClinicsWithId = promoClinics.map(clinic => ({
         ...clinic,
         promoId: newPromo.id
       }));
       
-      if (promoClinicsWithId.length > 0) {
+      // Process clinics individually to avoid type issues
+      for (const clinic of promoClinicsWithId) {
         await db
-          .insert(promoClinics)
-          .values(promoClinicsWithId);
+          .execute(sql`INSERT INTO ${promoClinics} ${sql.raw(
+            `(id, promo_id, clinic_id, created_at, updated_at)`
+          )} VALUES ${sql.raw(
+            `(
+              uuid_generate_v4(),
+              ${clinic.promoId},
+              ${clinic.clinicId},
+              NOW(),
+              NOW()
+            )`
+          )}`);
       }
     }
 
@@ -208,10 +230,16 @@ export class PromoService {
       itemType: item.itemType as any
     }));
 
-    const newItems = await db
-      .insert(promoItems)
-      .values(itemsWithPromoId)
-      .returning();
+    // Process items individually to avoid array insertion issues
+    const newItems = [];
+    for (const item of itemsWithPromoId) {
+      const [newItem] = await db
+        .insert(promoItems)
+        .values(item)
+        .returning();
+      
+      newItems.push(newItem);
+    }
 
     return newItems;
   }
@@ -241,10 +269,16 @@ export class PromoService {
       clinicId
     }));
 
-    const newClinics = await db
-      .insert(promoClinics)
-      .values(clinicsWithPromoId)
-      .returning();
+    // Process clinics individually to avoid array insertion issues
+    const newClinics = [];
+    for (const clinic of clinicsWithPromoId) {
+      const [newClinic] = await db
+        .insert(promoClinics)
+        .values(clinic)
+        .returning();
+      
+      newClinics.push(newClinic);
+    }
 
     return newClinics;
   }
