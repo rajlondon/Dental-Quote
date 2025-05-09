@@ -1097,7 +1097,7 @@ const YourQuotePage: React.FC = () => {
         // Create a treatment item based on the fetched promo
         const promoTreatment: TreatmentItem = {
           id: `promo_${Date.now()}`,
-          category: promoData.data.promoType === 'special_offer' ? 'special_offer' : 'packages',
+          category: promoData.data.promoType === PromoType.OFFER ? 'special_offer' : 'packages',
           name: promoData.data.title,
           quantity: 1,
           priceGBP: 450, // Base price, will be adjusted after discount calculation
@@ -1105,19 +1105,19 @@ const YourQuotePage: React.FC = () => {
           subtotalGBP: 450,
           subtotalUSD: 580,
           guarantee: '5-year',
-          isSpecialOffer: promoData.data.promoType === 'special_offer',
-          isPackage: promoData.data.promoType === 'package',
+          isSpecialOffer: promoData.data.promoType === PromoType.OFFER,
+          isPackage: promoData.data.promoType === PromoType.PACKAGE,
           promoToken: activePromoSlug || undefined,
-          promoType: promoData.data.promoType === 'special_offer' ? 'special_offer' : 'package'
+          promoType: promoData.data.promoType === PromoType.OFFER ? 'special_offer' : 'package'
         };
         
         // Apply discount if available
         if (promoData.data.discountValue > 0) {
-          if (promoData.data.discountType === 'percent') {
+          if (promoData.data.discountType === DiscountType.PERCENT) {
             const discountMultiplier = (100 - promoData.data.discountValue) / 100;
             promoTreatment.priceGBP = Math.round(promoTreatment.priceGBP * discountMultiplier);
             promoTreatment.priceUSD = Math.round(promoTreatment.priceUSD * discountMultiplier);
-          } else if (promoData.data.discountType === 'fixed') {
+          } else if (promoData.data.discountType === DiscountType.FIXED) {
             promoTreatment.priceGBP = Math.max(0, promoTreatment.priceGBP - promoData.data.discountValue);
             promoTreatment.priceUSD = Math.max(0, promoTreatment.priceUSD - Math.round(promoData.data.discountValue * 1.28));
           }
@@ -1131,7 +1131,7 @@ const YourQuotePage: React.FC = () => {
         
         // Show welcome toast for the promo
         toast({
-          title: `${promoData.data.promoType === 'package' ? 'Treatment Package' : 'Special Offer'} Selected`,
+          title: `${promoData.data.promoType === PromoType.PACKAGE ? 'Treatment Package' : 'Special Offer'} Selected`,
           description: `Your quote includes: ${promoData.data.title}`,
         });
         
