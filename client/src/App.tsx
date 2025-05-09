@@ -13,6 +13,7 @@ import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
 import { ErrorBoundary, NavigationErrorBoundary } from "@/components/error-boundary";
 import { NavigationProvider, useNavigation } from "@/hooks/use-navigation";
 import { PageTransitionProvider, PageTransitionLoader } from "@/components/ui/page-transition-loader";
+import PromoDetector from "@/components/PromoDetector";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
@@ -112,8 +113,11 @@ import { Suspense } from "react";
 
 function Router() {
   return (
-    <Switch>
-      {/* Public Routes */}
+    <>
+      {/* Add PromoDetector to handle URL parameters */}
+      <PromoDetector />
+      <Switch>
+        {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/home" component={Home} />
       <Route path="/index">
@@ -560,6 +564,7 @@ function Router() {
       
       <Route component={NotFoundPage} />
     </Switch>
+    </>
   );
 }
 

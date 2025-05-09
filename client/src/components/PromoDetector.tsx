@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import useSpecialOfferDetection from '@/hooks/use-special-offer-detection';
-import usePackageDetection from '@/hooks/use-package-detection';
+import { useLocation } from 'wouter';
+import { useSpecialOfferDetection } from '@/hooks/use-special-offer-detection';
+import { usePackageDetection } from '@/hooks/use-package-detection';
 import { usePromoStore } from '@/features/promo/usePromoStore';
 
 /**
@@ -11,8 +11,12 @@ import { usePromoStore } from '@/features/promo/usePromoStore';
  */
 export const PromoDetector: React.FC = () => {
   // Router hooks (only safe to use inside a Router component)
-  const { search } = useLocation();
-  const [searchParams] = useSearchParams();
+  const [location] = useLocation();
+  
+  // Create searchParams from the current URL
+  const searchParams = new URLSearchParams(
+    typeof window !== 'undefined' ? window.location.search : ''
+  );
   
   // Our custom hooks
   const specialOfferHook = useSpecialOfferDetection();
@@ -32,7 +36,7 @@ export const PromoDetector: React.FC = () => {
     if (promoSlug) {
       setPromoSlug(promoSlug);
     }
-  }, [search, searchParams, specialOfferHook, packageHook, setPromoSlug]);
+  }, [location, specialOfferHook, packageHook, setPromoSlug]);
 
   // This component doesn't render anything visible
   return null;
