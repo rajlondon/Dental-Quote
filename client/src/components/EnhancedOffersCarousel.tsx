@@ -73,6 +73,7 @@ const EnhancedOffersCarousel: React.FC<EnhancedOffersCarouselProps> = ({
                     discountValue={promo.discountValue}
                     heroImageUrl={promo.heroImageUrl}
                     endDate={promo.endDate}
+                    clinicId={promo.clinics && promo.clinics.length > 0 ? promo.clinics[0].clinicId : undefined}
                   />
                 </div>
               </CarouselItem>
