@@ -1,9 +1,10 @@
-import { Router } from 'express';
-import quotesRouter from './quotes';
+import { Router } from "express";
+import quotes from "./quotes";
+import promos from "./promos";
 
-const v1Router = Router();
+const router = Router();
 
-// Mount all v1 route groups
-v1Router.use('/quotes', quotesRouter);
+router.use("/quotes", quotes);
+router.use("/promos", promos);
 
-export default v1Router;
+export default router;
