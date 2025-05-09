@@ -529,23 +529,24 @@ const YourQuotePage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   {/* Treatment selection panel */}
-                  <QuoteTreatmentSelectionPanel 
-                    selectedTreatments={treatmentPlan}
-                    onTreatmentsChange={setTreatmentPlan}
-                    specialOfferId={specialOffer?.id}
-                    className="mb-6"
-                  />
+                  <div className="mb-6">
+                    <QuoteTreatmentSelectionPanel 
+                      selectedTreatments={treatmentPlan}
+                      onTreatmentsChange={setTreatmentPlan}
+                      specialOfferId={specialOffer?.id}
+                    />
+                  </div>
                   
                   {/* Treatment plan builder */}
                   <div className="mt-8">
                     <h3 className="mb-4 text-lg font-semibold">Your Treatment Plan</h3>
                     <EnhancedTreatmentPlanBuilder 
-                      treatments={treatmentPlan}
-                      setTreatments={setTreatmentPlan}
-                      specialOffer={specialOffer}
-                      promoData={promoData}
-                      isSpecialOfferFlow={isSpecialOfferFlow}
-                      isPromoTokenFlow={!!promoToken}
+                      initialTreatments={treatmentPlan}
+                      onTreatmentsChange={setTreatmentPlan}
+                      specialOfferId={specialOffer?.id}
+                      specialOfferData={specialOffer || undefined}
+                      packageId={packageDetails?.id}
+                      packageData={packageDetails || undefined}
                     />
                   </div>
                 </CardContent>
@@ -790,7 +791,7 @@ const YourQuotePage: React.FC = () => {
       <Footer />
       <ScrollToTop />
       
-      <Confetti active={showConfetti} />
+      <Confetti run={showConfetti} />
     </div>
   );
 };
