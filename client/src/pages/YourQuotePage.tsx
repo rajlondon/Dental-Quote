@@ -1116,11 +1116,11 @@ const YourQuotePage: React.FC = () => {
         
         // Apply discount if available
         if (promoData.data.discountValue > 0) {
-          if (promoData.data.discountType === 'percent') {
+          if (promoData.data.discountType === "percent" || promoData.data.discountType === "percentage") {
             const discountMultiplier = (100 - promoData.data.discountValue) / 100;
             promoTreatment.priceGBP = Math.round(promoTreatment.priceGBP * discountMultiplier);
             promoTreatment.priceUSD = Math.round(promoTreatment.priceUSD * discountMultiplier);
-          } else if (promoData.data.discountType === 'fixed') {
+          } else if (promoData.data.discountType === "fixed" || promoData.data.discountType === "fixed_amount") {
             promoTreatment.priceGBP = Math.max(0, promoTreatment.priceGBP - promoData.data.discountValue);
             promoTreatment.priceUSD = Math.max(0, promoTreatment.priceUSD - Math.round(promoData.data.discountValue * 1.28));
           }
@@ -1134,7 +1134,7 @@ const YourQuotePage: React.FC = () => {
         
         // Show welcome toast for the promo
         toast({
-          title: `${promoData.data.promoType === 'package' ? 'Treatment Package' : 'Special Offer'} Selected`,
+          title: `${promoData.data.promoType === "package" || promoData.data.promoType === PromoType.PACKAGE ? 'Treatment Package' : 'Special Offer'} Selected`,
           description: `Your quote includes: ${promoData.data.title}`,
         });
         
