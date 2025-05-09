@@ -53,36 +53,71 @@ export class WebSocketService {
   // Setup heartbeat to keep connections alive with improved error handling
   private setupHeartbeat() {
     const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+    const INACTIVE_TIMEOUT = 120000; // 2 minutes (time after which to consider connection inactive)
     
-    // Send ping every 30 seconds to prevent connections from timing out
+    // Track last ping response time for each client
+    const lastPongTimes = new Map<string, number>();
+    
+    // Set up the ping interval
     setInterval(() => {
-      // Use Array.from to convert the Map entries to avoid MapIterator issues
-      Array.from(this.clients.entries()).forEach(([clientId, client]) => {
-        try {
-          if (client.ws.readyState === WebSocket.OPEN) {
-            // Use noop function for callback to handle potential errors
-            client.ws.ping(() => {
-              // Ping successful, client is responsive
-              console.log(`Heartbeat ping successful for client ${clientId} (${client.type})`);
-            });
-          } else if (client.ws.readyState === WebSocket.CLOSED || client.ws.readyState === WebSocket.CLOSING) {
-            // Remove dead connections to prevent memory leaks
-            console.log(`Removing dead WebSocket connection for ${clientId} (${client.type})`);
-            this.clients.delete(clientId);
-          }
-        } catch (error) {
-          console.error(`Error during WebSocket heartbeat for client ${clientId}:`, error);
-          // Clean up broken connections
+      try {
+        // Log current state
+        console.log(`WebSocket heartbeat: ${this.getClientCount()} active connections`);
+        const now = Date.now();
+        
+        // Use Array.from to convert the Map entries to avoid MapIterator issues
+        Array.from(this.clients.entries()).forEach(([clientId, client]) => {
           try {
-            this.clients.delete(clientId);
-          } catch (cleanupError) {
-            console.error(`Error removing dead client ${clientId}:`, cleanupError);
+            // Check for stale connections (no pong received in 2 minutes)
+            const lastPongTime = lastPongTimes.get(clientId) || now;
+            const timeSinceLastPong = now - lastPongTime;
+            
+            if (timeSinceLastPong > INACTIVE_TIMEOUT) {
+              console.warn(`Client ${clientId} (${client.type}) has been unresponsive for ${Math.floor(timeSinceLastPong/1000)}s. Terminating connection.`);
+              try {
+                // Force close and cleanup the connection
+                if (client.ws.readyState !== WebSocket.CLOSED) {
+                  client.ws.close(1000, "Connection timeout - no response to ping");
+                }
+                this.clients.delete(clientId);
+                lastPongTimes.delete(clientId);
+              } catch (terminateError) {
+                console.error(`Error terminating unresponsive client ${clientId}:`, terminateError);
+              }
+              return; // Skip to next client
+            }
+            
+            // Only ping open connections
+            if (client.ws.readyState === WebSocket.OPEN) {
+              // Set up pong handler for this specific client
+              client.ws.once('pong', () => {
+                // Update last pong time on response
+                lastPongTimes.set(clientId, Date.now());
+                console.log(`Heartbeat ping successful for client ${clientId} (${client.type})`);
+              });
+              
+              // Send the ping
+              client.ws.ping();
+            } else if (client.ws.readyState === WebSocket.CLOSED || client.ws.readyState === WebSocket.CLOSING) {
+              // Remove dead connections to prevent memory leaks
+              console.log(`Removing dead WebSocket connection for ${clientId} (${client.type})`);
+              this.clients.delete(clientId);
+              lastPongTimes.delete(clientId);
+            }
+          } catch (error) {
+            console.error(`Error during WebSocket heartbeat for client ${clientId}:`, error);
+            // Clean up broken connections
+            try {
+              this.clients.delete(clientId);
+              lastPongTimes.delete(clientId);
+            } catch (cleanupError) {
+              console.error(`Error removing dead client ${clientId}:`, cleanupError);
+            }
           }
-        }
-      });
-      
-      // Log active connections count for monitoring
-      console.log(`WebSocket heartbeat: ${this.getClientCount()} active connections`);
+        });
+      } catch (error) {
+        console.error("Fatal error in heartbeat system:", error);
+      }
     }, HEARTBEAT_INTERVAL);
   }
   
@@ -99,50 +134,100 @@ export class WebSocketService {
   
   // Static method to broadcast to all connected clients
   public static broadcastToAll(data: any): void {
-    if (!WebSocketService.instance) {
-      console.error('WebSocketService not initialized yet');
-      return;
-    }
-    
-    const message = JSON.stringify(data);
-    let clientCount = 0;
-    
-    // Use Array.from to convert Map values to array to avoid MapIterator issues
-    Array.from(WebSocketService.instance.clients.values()).forEach(client => {
-      try {
-        if (client.ws.readyState === WebSocket.OPEN) {
-          client.ws.send(message);
-          clientCount++;
-        }
-      } catch (error) {
-        console.error(`Error broadcasting to client ${client.id}:`, error);
+    try {
+      if (!WebSocketService.instance) {
+        console.error('WebSocketService not initialized yet');
+        return;
       }
-    });
-    
-    console.log(`Broadcast message sent to ${clientCount} clients:`, data.type);
+      
+      // Use the instance method
+      WebSocketService.instance.broadcast(data);
+    } catch (error) {
+      console.error('Error in static broadcastToAll method:', error);
+    }
   }
   
   private setupEventHandlers() {
     this.wss.on('connection', (ws: WebSocket) => {
-      ws.on('message', (message: string) => this.handleMessage(ws, message));
+      // Set a unique identifier for this connection
+      const connectionId = `ws-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      (ws as any).connectionId = connectionId;
+      console.log(`New WebSocket connection established: ${connectionId}`);
       
-      ws.on('close', () => {
+      // Handle messages with error catching
+      ws.on('message', (message: string) => {
+        try {
+          this.handleMessage(ws, message);
+        } catch (error) {
+          console.error(`Error processing WebSocket message for ${connectionId}:`, error);
+          // Send error response
+          this.sendErrorResponse(ws, "Internal server error while processing message");
+        }
+      });
+      
+      // Handle connection closing
+      ws.on('close', (code: number, reason: string) => {
         // Remove client on disconnect
         // Convert Map entries to Array to avoid downlevelIteration issues
+        let clientId = "unknown";
         Array.from(this.clients.entries()).forEach(([id, client]) => {
           if (client.ws === ws) {
             this.clients.delete(id);
-            console.log(`Client ${id} disconnected`);
+            clientId = id;
+            console.log(`Client ${id} disconnected with code ${code}, reason: ${reason || 'No reason'}`);
           }
         });
+        
+        // If code 1006 (abnormal closure), log more details for debugging
+        if (code === 1006) {
+          console.warn(`Abnormal WebSocket closure (1006) for client ${clientId}. This may indicate network issues.`);
+        }
       });
       
-      // Send a welcome message
-      ws.send(JSON.stringify({
-        type: 'connection',
-        message: 'Connected to MyDentalFly synchronization service',
-      }));
+      // Handle errors
+      ws.on('error', (error) => {
+        console.error(`WebSocket error for connection ${connectionId}:`, error);
+        
+        // Try to determine client ID
+        let clientId = "unknown";
+        try {
+          Array.from(this.clients.entries()).forEach(([id, client]) => {
+            if (client.ws === ws) {
+              clientId = id;
+            }
+          });
+          
+          // Log detailed error information
+          console.error(`WebSocket error for client ${clientId}:`, error);
+        } catch (cleanupError) {
+          console.error(`Error identifying client during error handling:`, cleanupError);
+        }
+      });
+      
+      // Send a welcome message with enhanced error handling
+      try {
+        ws.send(JSON.stringify({
+          type: 'connection',
+          message: 'Connected to MyDentalFly synchronization service',
+        }));
+      } catch (error) {
+        console.error(`Failed to send welcome message to new connection ${connectionId}:`, error);
+      }
     });
+  }
+  
+  // Helper for sending error responses
+  private sendErrorResponse(ws: WebSocket, message: string) {
+    try {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'error',
+          message
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to send error response:', error);
+    }
   }
   
   private handleMessage(ws: WebSocket, message: string) {
@@ -183,16 +268,44 @@ export class WebSocketService {
   }
   
   private registerClient(ws: WebSocket, id: string, type: 'patient' | 'clinic' | 'admin') {
-    const newClient: Client = { ws, id, type };
-    this.clients.set(id, newClient);
-    
-    console.log(`New ${type} client registered with ID: ${id}`);
-    
-    // Notify client of successful registration
-    ws.send(JSON.stringify({
-      type: 'registered',
-      message: `Registered as ${type} with ID: ${id}`,
-    }));
+    try {
+      // Remove any existing client with this ID to avoid duplicates
+      if (this.clients.has(id)) {
+        const existingClient = this.clients.get(id);
+        
+        if (existingClient && existingClient.ws !== ws && 
+            existingClient.ws.readyState === WebSocket.OPEN) {
+          try {
+            console.log(`Closing existing connection for user ${id} before creating new one`);
+            existingClient.ws.close(1000, "User connected from another device/tab");
+          } catch (error) {
+            console.error(`Error closing existing connection for user ${id}:`, error);
+          }
+        }
+      }
+      
+      // Create the new client entry
+      const newClient: Client = { ws, id, type };
+      this.clients.set(id, newClient);
+      
+      console.log(`New ${type} client registered with ID: ${id}`);
+      
+      // Notify client of successful registration with error handling
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'registered',
+          message: `Registered as ${type} with ID: ${id}`,
+        }));
+      } else {
+        console.error(`Cannot send registration confirmation to client ${id} - connection not open (state: ${ws.readyState})`);
+        // Remove the client if the connection is not open
+        if (ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          this.clients.delete(id);
+        }
+      }
+    } catch (error) {
+      console.error(`Error registering client ${id}:`, error);
+    }
   }
   
   private syncAppointmentData(data: Message) {
@@ -285,57 +398,73 @@ export class WebSocketService {
     }
   }
   
-  // Broadcast to all clients of a specific type
+  // Broadcast to all clients of a specific type with enhanced error handling
   public broadcast(message: any, targetType?: 'patient' | 'clinic' | 'admin') {
-    const payload = JSON.stringify(message);
-    let clientCount = 0;
-    
-    // Use Array.from to convert Map values to array to avoid MapIterator issues
-    Array.from(this.clients.values()).forEach(client => {
-      try {
-        if (
-          client.ws.readyState === WebSocket.OPEN && 
-          (!targetType || client.type === targetType)
-        ) {
-          client.ws.send(payload);
-          clientCount++;
+    try {
+      // Early validation of the message format
+      const payload = JSON.stringify(message);
+      let clientCount = 0;
+      let errorCount = 0;
+      
+      // Create array from clients map to avoid iterator issues
+      const clientArray = Array.from(this.clients.entries());
+      
+      for (const [id, client] of clientArray) {
+        try {
+          // Only send to open connections and matching client types
+          if (
+            client.ws.readyState === WebSocket.OPEN && 
+            (!targetType || client.type === targetType)
+          ) {
+            client.ws.send(payload);
+            clientCount++;
+          }
+        } catch (error) {
+          errorCount++;
+          console.error(`Error broadcasting to client ${id} (${client.type}):`, error);
+          
+          // Try to close the broken connection
+          try {
+            if (client.ws.readyState !== WebSocket.CLOSED) {
+              client.ws.close(1011, "Internal server error");
+            }
+            // Remove the client from the pool
+            this.clients.delete(id);
+          } catch (cleanupError) {
+            console.error(`Error cleaning up broken client connection ${id}:`, cleanupError);
+          }
         }
-      } catch (error) {
-        console.error(`Error broadcasting to client ${client.id}:`, error);
       }
-    });
-    
-    console.log(`Broadcast message sent to ${clientCount} clients of type ${targetType || 'any'}`);
+      
+      if (errorCount > 0) {
+        console.warn(`⚠️ Broadcast encountered ${errorCount} errors out of ${clientArray.length} total clients`);
+      }
+      
+      console.log(`✅ Broadcast message (type: ${message.type || 'unknown'}) sent to ${clientCount} clients of type ${targetType || 'any'}`);
+    } catch (error) {
+      console.error(`❌ Fatal error in broadcast operation:`, error);
+    }
   }
   
   // Broadcast special offer image updates to all connected clients
   public broadcastSpecialOfferImageRefresh(offerId: string, imageUrl: string) {
     console.log(`📢 Broadcasting special offer image refresh for offer ${offerId}`);
     
-    const message = {
-      type: 'special_offer_image_refreshed',
-      offerId,
-      imageUrl,
-      timestamp: Date.now(),
-    };
-    
-    const payload = JSON.stringify(message);
-    let clientCount = 0;
-    
-    // Use Array.from to convert Map values to array to avoid MapIterator issues
-    Array.from(this.clients.values()).forEach(client => {
-      try {
-        if (client.ws.readyState === WebSocket.OPEN) {
-          client.ws.send(payload);
-          clientCount++;
-        }
-      } catch (error) {
-        console.error(`Error sending image refresh to client ${client.id}:`, error);
-      }
-    });
-    
-    console.log(`📊 Sent image refresh notification to ${clientCount} connected clients`);
-    return clientCount;
+    try {
+      const message = {
+        type: 'special_offer_image_refreshed',
+        offerId,
+        imageUrl,
+        timestamp: Date.now(),
+      };
+      
+      // Use the enhanced broadcast method to handle errors properly
+      this.broadcast(message);
+      return this.getClientCount();
+    } catch (error) {
+      console.error(`❌ Error broadcasting special offer image refresh:`, error);
+      return 0;
+    }
   }
 }
 
