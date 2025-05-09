@@ -18,11 +18,7 @@
     "book_now": "Book Now",
     "account": "Account" 
   },
-  "quote": {
-    "treatments": {
-      "title": "Select Your Treatments"
-    }
-  },
+  "quote.treatments.title": "Select Your Treatments",
   "language": {
     "changing": "Changing language...",
     "select": "Select language"
