@@ -196,25 +196,24 @@ const YourQuotePage: React.FC = () => {
   } = usePromoStore();
   
   // Use our new hooks for special offers and packages
-  const { offerData, setOfferData } = useSpecialOfferDetection({
-    source,
-    setSource,
-    promoId: offerId,
-    setPromoId: setOfferId,
-    clinicId,
-    setClinicId,
-    isPromoFlow: isSpecialOfferFlow
-  });
+  const { 
+    specialOffer, 
+    setSpecialOffer,
+    initFromSearchParams,
+    clearSpecialOffer,
+    applySpecialOfferToTreatments,
+    getDiscountedLines,
+    hasActiveOffer,
+    isEligibleForDiscount,
+    applyDiscount
+  } = useSpecialOfferDetection();
   
-  const { packageData, setPackageData } = usePackageDetection({
-    source,
-    setSource,
-    packageId,
-    setPackageId,
-    clinicId,
-    setClinicId,
-    isPackageFlow
-  });
+  // Use packageDetection hook
+  const { 
+    packageDetails,
+    setPackageDetails,
+    hasActivePackage
+  } = usePackageDetection();
   
   // Fetch promo data by slug if needed - must be called unconditionally
   const { data: promoData, isLoading: isLoadingPromo } = usePromoBySlug(activePromoSlug);
@@ -308,8 +307,8 @@ const YourQuotePage: React.FC = () => {
     document.title = `Quote for ${quoteParams.treatment} | MyDentalFly`;
     
     // Track special offer view if present
-    if (offerData && !isLoadingPromo && trackOffer) {
-      trackOffer(offerData.id, 'view');
+    if (specialOffer && !isLoadingPromo && trackOffer) {
+      trackOffer(specialOffer.id, 'view');
     }
     
   }, [
@@ -327,11 +326,11 @@ const YourQuotePage: React.FC = () => {
   // Create treatment items based on context flow
   const createInitialTreatmentItem = useCallback(() => {
     // If special offer is active, create a special offer treatment
-    if (offerData) {
+    if (specialOffer) {
       console.log("Creating special offer treatment item");
       return {
         treatmentType: 'special-offer',
-        name: `${offerData.title} - Special Offer`,
+        name: `${specialOffer.title} - Special Offer`,
         quantity: 1,
         priceGBP: 0,
         priceUSD: 0,
@@ -340,28 +339,28 @@ const YourQuotePage: React.FC = () => {
         guarantee: '30-day',
         isSpecialOffer: true,
         specialOffer: {
-          id: offerData.id,
-          title: offerData.title,
-          discountType: offerData.discountType,
-          discountValue: offerData.discountValue,
-          clinicId: offerData.clinicId || ''
+          id: specialOffer.id,
+          title: specialOffer.title,
+          discountType: specialOffer.discountType,
+          discountValue: specialOffer.discountValue,
+          clinicId: specialOffer.clinicId || ''
         }
       };
     }
     
     // If package is active, create a package treatment
-    if (packageData) {
+    if (packageDetails) {
       console.log("Creating package treatment item");
       return {
         treatmentType: 'treatment-package',
-        name: packageData.title,
+        name: packageDetails.title,
         quantity: 1,
         priceGBP: 0, // Will be populated from API
         priceUSD: 0, // Will be populated from API
         subtotalGBP: 0,
         subtotalUSD: 0,
         guarantee: '30-day',
-        packageId: packageData.id
+        packageId: packageDetails.id
       };
     }
     
@@ -392,7 +391,7 @@ const YourQuotePage: React.FC = () => {
       subtotalUSD: 0,
       guarantee: '30-day'
     };
-  }, [offerData, packageData, promoToken, promoType, quoteParams.treatment]);
+  }, [specialOffer, packageDetails, promoToken, promoType, quoteParams.treatment]);
   
   // Initialize treatment plan on component mount
   useEffect(() => {
@@ -486,18 +485,18 @@ const YourQuotePage: React.FC = () => {
       <Navbar />
       <main className="flex-grow">
         {/* Promo ribbon - shown conditionally based on active promo */}
-        {(activePromoSlug || offerData || promoToken) && (
+        {(activePromoSlug || specialOffer || promoToken) && (
           <PromoRibbon 
             title={
               promoData?.name || 
-              offerData?.title || 
+              specialOffer?.title || 
               (promoToken ? `${promoType === PromoType.DISCOUNT ? 'Discount' : 'Bonus'} Promo` : null) || 
               'Special Offer'
             }
             description={
               promoData?.description || 
-              (offerData ? 
-                `${offerData.discountValue}% off ${offerData.applicableTreatment || 'selected treatments'}` : 
+              (specialOffer ? 
+                `${specialOffer.discountValue}% off ${specialOffer.applicableTreatment || 'selected treatments'}` : 
                 'Limited time offer for your dental treatment')
             }
             onClear={handleClearPromo}
@@ -542,7 +541,7 @@ const YourQuotePage: React.FC = () => {
                     <EnhancedTreatmentPlanBuilder 
                       treatments={treatmentPlan}
                       setTreatments={setTreatmentPlan}
-                      specialOffer={offerData}
+                      specialOffer={specialOffer}
                       promoData={promoData}
                       isSpecialOfferFlow={isSpecialOfferFlow}
                       isPromoTokenFlow={!!promoToken}
