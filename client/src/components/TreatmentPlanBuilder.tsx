@@ -315,13 +315,17 @@ interface TreatmentPlanBuilderProps {
   initialTreatments?: TreatmentItem[];
   onTreatmentsChange?: (treatments: TreatmentItem[]) => void;
   hideHeader?: boolean; // Add option to hide the "Build Your Treatment Plan" header
+  treatmentCategoriesData?: TreatmentCategory[]; // Custom categories data for testing
 }
 
 const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({ 
   initialTreatments = [], 
   onTreatmentsChange,
-  hideHeader = false
+  hideHeader = false,
+  treatmentCategoriesData
 }) => {
+  // Use custom treatment categories if provided, otherwise use the default
+  const categories = treatmentCategoriesData || TREATMENT_CATEGORIES;
   const [treatments, setTreatments] = useState<TreatmentItem[]>(initialTreatments);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
@@ -363,7 +367,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   }, [treatments, onTreatmentsChange]);
   
   // Get available treatments for the selected category
-  const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
+  const availableTreatments = categories.find(cat => cat.id === selectedCategory)?.treatments || [];
   
   // Get the selected treatment details
   const treatmentDetails = availableTreatments.find(t => t.id === selectedTreatment);
@@ -421,7 +425,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
   // Find treatment notes for display
   const getTreatmentNote = (categoryId: string, treatmentId: string) => {
-    const category = TREATMENT_CATEGORIES.find(cat => cat.id === categoryId);
+    const category = categories.find(cat => cat.id === categoryId);
     if (!category) return null;
     
     const treatment = category.treatments.find(t => t.id === treatmentId);
@@ -435,7 +439,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     let baseCategory: string = '';
     
     // Search through all categories to find the treatment
-    for (const category of TREATMENT_CATEGORIES) {
+    for (const category of categories) {
       const found = category.treatments.find(t => 
         t.name.toLowerCase().includes(treatmentName.toLowerCase()) ||
         treatmentName.toLowerCase().includes(t.name.toLowerCase())
@@ -619,7 +623,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </TooltipProvider>
               </div>
               <div className="space-y-3">
-                {TREATMENT_CATEGORIES.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
+                {categories.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
                   <div key={treatment.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="pt-0.5">
