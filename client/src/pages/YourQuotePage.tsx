@@ -1470,6 +1470,26 @@ const YourQuotePage: React.FC = () => {
     }
   }, [isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, specialOffer, packageData, promoToken, promoType, treatmentItems.length]);
 
+  // Handle auto-selection of clinic based on promo data
+  React.useEffect(() => {
+    // Skip if already have a selected clinic
+    if (selectedClinic) return;
+    
+    // Check if we have a stored clinic ID from promo selection
+    const storedPromoClinicId = sessionStorage.getItem('promoSelectedClinicId');
+    if (storedPromoClinicId && clinics.length > 0) {
+      console.log(`Looking for clinic with ID: ${storedPromoClinicId} in clinics list`);
+      const matchingClinic = clinics.find(c => c.id === storedPromoClinicId);
+      if (matchingClinic) {
+        console.log(`Auto-selecting clinic from promo: ${matchingClinic.name}`);
+        setSelectedClinic(matchingClinic);
+        
+        // Clear the stored ID to prevent re-selection on future page loads
+        sessionStorage.removeItem('promoSelectedClinicId');
+      }
+    }
+  }, [clinics, selectedClinic]);
+
   useEffect(() => {
     // Set page title
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";

@@ -19,6 +19,7 @@ interface PromoCardProps {
   heroImageUrl?: string;
   endDate: string;
   className?: string;
+  clinicId?: string; // Add clinic ID for auto-selection
 }
 
 export function PromoCard({
@@ -32,12 +33,21 @@ export function PromoCard({
   heroImageUrl,
   endDate,
   className = '',
+  clinicId,
 }: PromoCardProps) {
   const [location, navigate] = useLocation();
   const { setPromoSlug } = usePromoStore();
   
   const handlePromoClick = () => {
+    // Store promo slug in store for persistence
     setPromoSlug(slug);
+    
+    // Store clinic ID in sessionStorage for auto-selection on the quote page
+    if (clinicId) {
+      console.log(`Storing clinic ID ${clinicId} for auto-selection`);
+      sessionStorage.setItem('promoSelectedClinicId', clinicId);
+    }
+    
     // Properly encode the promo slug for URL
     navigate('/your-quote?promo=' + encodeURIComponent(slug));
   };
