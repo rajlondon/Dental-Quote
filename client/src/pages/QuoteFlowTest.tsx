@@ -25,9 +25,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'wouter';
-import { TreatmentItem, TreatmentPlanBuilder } from '@/components/TreatmentPlanBuilder';
-import { EnhancedTreatmentPlanBuilder } from '@/components/EnhancedTreatmentPlanBuilder';
+import { useLocation } from 'wouter';
+import TreatmentPlanBuilder, { TreatmentItem } from '@/components/TreatmentPlanBuilder';
+import EnhancedTreatmentPlanBuilder from '@/components/EnhancedTreatmentPlanBuilder';
 import { treatmentCategoriesData } from '@/data/treatment-categories-data';
 import specialOffersService, { SpecialOffer, Package, PromoToken } from '@/services/SpecialOffersService';
 import { useSpecialOffers } from '@/hooks/use-special-offers';
@@ -37,7 +37,7 @@ import { useSpecialOffers } from '@/hooks/use-special-offers';
  */
 const QuoteFlowTest: React.FC = () => {
   const { toast } = useToast();
-  const [navigate, setLocation] = useNavigate();
+  const [, setLocation] = useLocation();
   
   // State for treatment plans
   const [originalTreatments, setOriginalTreatments] = useState<TreatmentItem[]>([]);
