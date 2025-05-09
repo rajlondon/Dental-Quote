@@ -1,5 +1,6 @@
 import { db } from "../db";
 import { enhancedPromoTokens, promoClinics, promoItems, promos } from "@shared/schema";
+import { sql } from "drizzle-orm";
 import type { 
   Promo, 
   InsertPromo, 
@@ -233,15 +234,28 @@ export class PromoService {
     // Process items individually to avoid array insertion issues
     const newItems = [];
     for (const item of itemsWithPromoId) {
-      const [newItem] = await db
-        .insert(promoItems)
-        .values(item)
-        .returning();
+      // Use raw SQL to avoid type issues
+      const result = await db
+        .execute(sql`INSERT INTO ${promoItems} ${sql.raw(
+          `(id, promo_id, item_type, item_code, qty, created_at, updated_at)`
+        )} VALUES ${sql.raw(
+          `(
+            uuid_generate_v4(),
+            ${item.promoId},
+            ${item.itemType},
+            ${item.itemCode},
+            ${item.qty || 1},
+            NOW(),
+            NOW()
+          )`
+        )} RETURNING *`);
       
+      // Extract the first item from the result and convert to proper type
+      const newItem = result.rows[0] as unknown as PromoItem;
       newItems.push(newItem);
     }
 
-    return newItems;
+    return newItems as PromoItem[];
   }
 
   /**
@@ -272,15 +286,26 @@ export class PromoService {
     // Process clinics individually to avoid array insertion issues
     const newClinics = [];
     for (const clinic of clinicsWithPromoId) {
-      const [newClinic] = await db
-        .insert(promoClinics)
-        .values(clinic)
-        .returning();
+      // Use raw SQL to avoid type issues
+      const result = await db
+        .execute(sql`INSERT INTO ${promoClinics} ${sql.raw(
+          `(id, promo_id, clinic_id, created_at, updated_at)`
+        )} VALUES ${sql.raw(
+          `(
+            uuid_generate_v4(),
+            ${clinic.promoId},
+            ${clinic.clinicId},
+            NOW(),
+            NOW()
+          )`
+        )} RETURNING *`);
       
+      // Extract the first item from the result and convert to proper type
+      const newClinic = result.rows[0] as unknown as PromoClinic;
       newClinics.push(newClinic);
     }
 
-    return newClinics;
+    return newClinics as PromoClinic[];
   }
 
   /**
