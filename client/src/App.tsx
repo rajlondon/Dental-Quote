@@ -168,6 +168,18 @@ function Router() {
           );
         }}
       </Route>
+      
+      {/* Test route for quote flow enhancements */}
+      <Route path="/quote-flow-test">
+        {() => {
+          const QuoteFlowTest = React.lazy(() => import("@/pages/QuoteFlowTest"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading test environment...</div>}>
+              <QuoteFlowTest />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       <Route path="/booking" component={BookingPage} />
       {/* Create separate routes for clinic pages with enhanced routing and diagnostics */}
       <Route path="/clinic/:id" component={ClinicRouter} />
