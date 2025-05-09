@@ -1,0 +1,79 @@
+Nice momentum! At this point you’re down to “red-squiggle cleanup and missing-component scaffolding.”
+Here’s a tight game-plan that keeps the build green the whole way.
+
+1 Fix the remaining TypeScript errors first
+A clean compile is the cheapest regression test you can have—stub components won’t help if npm run build still bombs.
+
+Typical error	Quick fix
+“Property ‘xyz’ does not exist on PromoState”	Extend the interface in promoTypes.ts:
+`export interface PromoState { slug?: string; discount?: number; discountType?: 'PERCENT'
+Enum vs string mismatch (EntrySource)	Declare the enum and cast once:
+export enum EntrySource { WEB='WEB', EMAIL='EMAIL', UTM='UTM' }
+const src = params.get('utm') as EntrySource ?? EntrySource.WEB;
+Missing props on Confetti	In Confetti.tsx:
+export interface ConfettiProps { active: boolean; onComplete?: () => void }
+and update usage accordingly.
+useCallback dependency warnings	Make sure every external reference (e.g. promoSlug) is listed; if derivable, move the derivation inside the callback to avoid unnecessary deps.
+
+🔹 Tip: run
+
+bash
+Copy
+Edit
+pnpm ts-prune | grep -v node_modules
+to spot any dead types / imports you forgot to delete during refactor.
+
+2 Create stub versions of the missing UI components
+Do this after TypeScript is green so you can tell real errors from “component not found”.
+
+bash
+Copy
+Edit
+client/src/components/
+  ├─ ClinicCard.tsx
+  ├─ TreatmentPlanCard.tsx
+  └─ QuoteFormFooter.tsx
+Each stub can be 5–10 lines for now:
+
+tsx
+Copy
+Edit
+const ClinicCard: React.FC<{ clinic: Clinic }> = ({ clinic }) => (
+  <div className="rounded-xl shadow p-4">
+    <h3>{clinic.name}</h3>
+    <p>{clinic.city}</p>
+  </div>
+);
+export default ClinicCard;
+That keeps the app rendering while you flesh them out later.
+
+3 Run an end-to-end compile & smoke-test
+bash
+Copy
+Edit
+pnpm lint          # ESLint should pass
+pnpm test          # Jest unit tests
+pnpm dev           # Manual browser test – quote flow
+No red console errors → commit → push.
+
+4 Next micro-sprint (once compile is clean)
+Flesh out ClinicCard to include promo badge / price strike-through.
+
+Move the QuoteFormFooter total/discount summary there (easier layout control).
+
+Wire TreatmentPlanCard inside the patient portal with the same promo info (DRY).
+
+Suggested message to the Replit agent
+sql
+Copy
+Edit
+Focus on TypeScript cleanup first:
+
+1. Resolve all remaining TS errors in YourQuotePage and related types.
+2. Once `pnpm tsc --noEmit` passes, scaffold minimal components:
+   • ClinicCard
+   • TreatmentPlanCard
+   • QuoteFormFooter
+   (just export functional stubs that accept their expected props)
+
+Commit after the build is green, then we’ll flesh out UI details.
