@@ -1,11 +1,11 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, MapPin, Star } from 'lucide-react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { MapPin } from 'lucide-react';
 
-interface ClinicInfo {
+interface Clinic {
   id: string;
   name: string;
   tier: 'affordable' | 'mid' | 'premium';
@@ -26,7 +26,6 @@ interface ClinicInfo {
     cityTour?: boolean;
   };
   images: string[];
-  // Special offer fields
   hasSpecialOffer?: boolean;
   specialOfferDetails?: {
     id: string;
@@ -37,119 +36,65 @@ interface ClinicInfo {
 }
 
 interface ClinicCardProps {
-  clinic: ClinicInfo;
+  clinic: Clinic;
+  onSelect?: (clinic: Clinic) => void;
   isSelected?: boolean;
-  onSelect?: () => void;
-  onWhatsApp?: () => void;
   className?: string;
 }
 
-const ClinicCard: React.FC<ClinicCardProps> = ({
-  clinic,
-  isSelected = false,
+const ClinicCard: React.FC<ClinicCardProps> = ({ 
+  clinic, 
   onSelect,
-  onWhatsApp,
+  isSelected = false, 
   className = ''
 }) => {
-  // Determine tier badge color
-  const getTierBadgeVariant = () => {
-    switch (clinic.tier) {
-      case 'premium': return 'default';
-      case 'mid': return 'secondary';
-      case 'affordable': return 'outline';
-      default: return 'default';
+  const handleSelect = () => {
+    if (onSelect) {
+      onSelect(clinic);
     }
   };
-  
-  // Get the first image or a placeholder
-  const mainImage = clinic.images && clinic.images.length > 0 
-    ? clinic.images[0] 
-    : '/images/clinics/placeholder.jpg';
-  
+
   return (
-    <Card className={`overflow-hidden h-full transition-all ${isSelected ? 'border-primary shadow-md' : ''} ${className}`}>
+    <Card className={`overflow-hidden ${isSelected ? 'border-primary border-2' : ''} ${className}`}>
       <CardHeader className="p-0">
         <AspectRatio ratio={16/9}>
           <img 
-            src={mainImage} 
-            alt={`${clinic.name} clinic`} 
+            src={clinic.images[0] || `/images/clinics/${clinic.tier}-clinic-1.jpg`}
+            alt={clinic.name} 
             className="object-cover w-full h-full"
-            onError={(e) => {
-              // Fallback image on error
-              const target = e.target as HTMLImageElement;
-              target.src = '/images/clinics/placeholder.jpg';
-            }}
           />
           {clinic.hasSpecialOffer && (
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-green-600">Special Offer</Badge>
+            <div className="absolute top-0 right-0 bg-primary text-white px-2 py-1 text-xs font-semibold">
+              Special Offer
             </div>
           )}
         </AspectRatio>
       </CardHeader>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <CardTitle className="text-lg">{clinic.name}</CardTitle>
-          <Badge variant={getTierBadgeVariant()}>
-            {clinic.tier.charAt(0).toUpperCase() + clinic.tier.slice(1)}
-          </Badge>
+          <h3 className="text-lg font-semibold">{clinic.name}</h3>
+          <Badge>{clinic.tier === 'premium' ? 'Premium' : clinic.tier === 'mid' ? 'Standard' : 'Affordable'}</Badge>
         </div>
-        
         <div className="flex items-center mb-2 text-sm">
-          <MapPin className="w-4 h-4 mr-1 text-muted-foreground" />
+          <MapPin className="w-4 h-4 mr-1" />
           <span>{clinic.location}</span>
         </div>
-        
         <div className="flex items-center mb-4 text-sm">
           <span className="flex items-center mr-2">
-            <Star className="w-4 h-4 mr-1 text-yellow-400 fill-current" />
-            {clinic.rating.toFixed(1)}
+            <svg className="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            {clinic.rating}
           </span>
-          <span className="text-muted-foreground">({clinic.reviewCount} reviews)</span>
+          <span>({clinic.reviewCount} reviews)</span>
         </div>
-        
-        <CardDescription className="mb-4 line-clamp-3">
-          {clinic.description}
-        </CardDescription>
-        
-        {clinic.features && clinic.features.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
-            {clinic.features.map((feature, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {feature}
-              </Badge>
-            ))}
-          </div>
-        )}
+        <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{clinic.description}</p>
+        <div className="flex justify-between">
+          <Button onClick={handleSelect} variant={isSelected ? "secondary" : "default"}>
+            {isSelected ? 'Selected' : 'Select Clinic'}
+          </Button>
+        </div>
       </CardContent>
-      <CardFooter className="px-4 py-3 border-t flex justify-between">
-        {onSelect && (
-          <Button 
-            onClick={onSelect} 
-            variant={isSelected ? "secondary" : "default"}
-            className="mr-2 flex-1"
-          >
-            {isSelected ? (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Selected
-              </>
-            ) : (
-              'Select Clinic'
-            )}
-          </Button>
-        )}
-        
-        {onWhatsApp && (
-          <Button 
-            onClick={onWhatsApp}
-            variant="outline" 
-            className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700"
-          >
-            WhatsApp
-          </Button>
-        )}
-      </CardFooter>
     </Card>
   );
 };
