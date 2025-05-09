@@ -79,18 +79,18 @@ export const usePromoStore = create<PromoState>()(
       storage: {
         getItem: (name) => {
           if (typeof window === 'undefined') return null;
-          const str = localStorage.getItem(name);
+          const str = sessionStorage.getItem(name); // Use sessionStorage instead of localStorage
           if (!str) return null;
           return JSON.parse(str);
         },
         setItem: (name, value) => {
           if (typeof window !== 'undefined') {
-            localStorage.setItem(name, JSON.stringify(value));
+            sessionStorage.setItem(name, JSON.stringify(value)); // Use sessionStorage for session persistence
           }
         },
         removeItem: (name) => {
           if (typeof window !== 'undefined') {
-            localStorage.removeItem(name);
+            sessionStorage.removeItem(name);
           }
         }
       }

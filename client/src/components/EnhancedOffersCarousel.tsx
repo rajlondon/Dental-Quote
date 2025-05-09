@@ -78,8 +78,8 @@ const EnhancedOffersCarousel: React.FC<EnhancedOffersCarouselProps> = ({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden sm:flex" />
-          <CarouselNext className="hidden sm:flex" />
+          <CarouselPrevious className="left-2 sm:left-4 bg-white/80 hover:bg-white border border-gray-200" />
+          <CarouselNext className="right-2 sm:right-4 bg-white/80 hover:bg-white border border-gray-200" />
         </Carousel>
       </div>
     </section>
