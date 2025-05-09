@@ -12,9 +12,10 @@ export function PromoRibbon() {
   const { activePromoSlug, promoData, clearPromo } = usePromoStore();
   
   // Fetch promo data if we have a slug but not the data
-  const { isLoading, error } = usePromoBySlug(
+  const promoQuery = usePromoBySlug(
     activePromoSlug && !promoData ? activePromoSlug : null
   );
+  const { isLoading, error } = promoQuery;
   
   if (isLoading) {
     return (

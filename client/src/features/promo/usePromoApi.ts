@@ -1,8 +1,9 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { usePromoStore } from './usePromoStore';
-import { PromoType, DiscountType } from '@shared/schema';
+import { DiscountType, PromoType } from '@shared/schema';
 
+// API response types
 export interface PromoAPIResponse {
   success: boolean;
   data: {
@@ -30,7 +31,13 @@ export interface PromoAPIResponse {
   };
 }
 
+export interface PromoListResponse {
+  success: boolean;
+  data: PromoAPIResponse['data'][];
+}
+
 export interface PromoValidationPayload {
+  promoSlug: string;
   treatments: Array<{
     code: string;
     qty: number;
@@ -49,113 +56,101 @@ export interface PromoValidationResponse {
   };
 }
 
-// Fetch active promotions, optionally filtered by city
+/**
+ * Hook to fetch all active promotions
+ * Optional city filter to get promos for a specific area
+ */
 export const useActivePromos = (city?: string) => {
-  const queryKey = city ? ['promos', 'active', city] : ['promos', 'active'];
-  
-  return useQuery({
-    queryKey,
+  return useQuery<PromoListResponse>({
+    queryKey: ['/api/v1/promos', city],
     queryFn: async () => {
-      const url = city 
-        ? `/api/v1/promos?isActive=true&city=${encodeURIComponent(city)}`
-        : '/api/v1/promos?isActive=true';
+      const params = new URLSearchParams();
+      if (city) params.append('city', city);
       
-      const response = await apiRequest('GET', url);
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch active promotions');
-      }
+      const response = await apiRequest(
+        'GET', 
+        `/api/v1/promos?${params.toString()}`
+      );
       
       return response.json();
     }
   });
 };
 
-// Fetch a promotion by slug
+/**
+ * Hook to fetch a specific promotion by slug
+ * Sets the promotion in the store if found
+ */
 export const usePromoBySlug = (slug: string | null) => {
-  const { setPromoData, setValidationStatus, setError } = usePromoStore();
+  const { setPromoData, setApiState } = usePromoStore();
   
-  return useQuery({
-    queryKey: ['promo', slug],
+  const query = useQuery<PromoAPIResponse>({
+    queryKey: ['/api/v1/promos/by-slug', slug],
     queryFn: async () => {
-      if (!slug) throw new Error('No promotion slug provided');
+      if (!slug) throw new Error('Promo slug is required');
       
-      const response = await apiRequest('GET', `/api/v1/promos/by-slug/${slug}`);
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch promotion details');
+      try {
+        const response = await apiRequest(
+          'GET',
+          `/api/v1/promos/by-slug/${slug}`
+        );
+        
+        const result: PromoAPIResponse = await response.json();
+        
+        // Store the promo data in the global store
+        if (result.success && result.data) {
+          setPromoData(result.data);
+        }
+        
+        return result;
+      } catch (error) {
+        // Handle the error here and update the store
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch promotion';
+        setApiState('error', errorMessage, false);
+        throw error;
       }
-      
-      const result: PromoAPIResponse = await response.json();
-      
-      // Process the data for the store
-      const promoData = {
-        ...result.data,
-        startDate: new Date(result.data.startDate),
-        endDate: new Date(result.data.endDate),
-        clinicIds: result.data.clinics.map(c => c.clinicId)
-      };
-      
-      // Update the store
-      setPromoData(promoData);
-      setValidationStatus(true);
-      
-      return result;
     },
     enabled: !!slug,
-    onError: (error) => {
-      setError(error instanceof Error ? error.message : 'Failed to fetch promotion');
-      setValidationStatus(false);
-    }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
+  
+  return query;
 };
 
-// Validate a promotion against the current quote
+/**
+ * Hook for validating promotions against the current selection
+ * Returns the discount amount, subtotal, and total
+ */
 export const useValidatePromo = () => {
-  return useMutation({
-    mutationFn: async ({ 
-      slug, 
-      payload 
-    }: { 
-      slug: string, 
-      payload: PromoValidationPayload 
-    }): Promise<PromoValidationResponse> => {
-      const response = await apiRequest('POST', `/api/v1/promos/validate`, {
-        promoSlug: slug,
-        ...payload
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to validate promotion');
-      }
+  return useMutation<PromoValidationResponse, Error, PromoValidationPayload>({
+    mutationFn: async (payload: PromoValidationPayload) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/v1/promos/validate',
+        payload
+      );
       
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate any relevant queries
-      queryClient.invalidateQueries({ queryKey: ['quote'] });
+      // Invalidate any queries that depend on the promotion data
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/promos'] });
     }
   });
 };
 
-// Calculate discount based on promo rules (client-side version for display)
+/**
+ * Helper function to calculate discount based on type and value
+ */
 export const calculateDiscount = (
-  subtotal: number, 
-  promo: { 
-    discountType: DiscountType, 
-    discountValue: number 
-  }
+  amount: number, 
+  discountType: DiscountType, 
+  discountValue: number
 ): number => {
-  if (!promo) return 0;
-  
-  if (promo.discountType === DiscountType.PERCENT) {
-    return (subtotal * promo.discountValue) / 100;
-  } else if (promo.discountType === DiscountType.FIXED) {
-    return Math.min(subtotal, promo.discountValue); // Can't discount more than the subtotal
+  if (discountType === DiscountType.PERCENT) {
+    return (amount * Number(discountValue)) / 100;
+  } else {
+    return Math.min(amount, Number(discountValue));
   }
-  
-  return 0;
 };
