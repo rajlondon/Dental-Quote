@@ -486,18 +486,18 @@ const YourQuotePage: React.FC = () => {
       <Navbar />
       <main className="flex-grow">
         {/* Promo ribbon - shown conditionally based on active promo */}
-        {(activePromoSlug || specialOffer || promoToken) && (
+        {(activePromoSlug || offerData || promoToken) && (
           <PromoRibbon 
             title={
               promoData?.name || 
-              specialOffer?.title || 
+              offerData?.title || 
               (promoToken ? `${promoType === PromoType.DISCOUNT ? 'Discount' : 'Bonus'} Promo` : null) || 
               'Special Offer'
             }
             description={
               promoData?.description || 
-              (specialOffer ? 
-                `${specialOffer.discountValue}% off ${specialOffer.applicableTreatment}` : 
+              (offerData ? 
+                `${offerData.discountValue}% off ${offerData.applicableTreatment || 'selected treatments'}` : 
                 'Limited time offer for your dental treatment')
             }
             onClear={handleClearPromo}
@@ -542,7 +542,7 @@ const YourQuotePage: React.FC = () => {
                     <EnhancedTreatmentPlanBuilder 
                       treatments={treatmentPlan}
                       setTreatments={setTreatmentPlan}
-                      specialOffer={specialOffer}
+                      specialOffer={offerData}
                       promoData={promoData}
                       isSpecialOfferFlow={isSpecialOfferFlow}
                       isPromoTokenFlow={!!promoToken}
