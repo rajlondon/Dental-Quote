@@ -27,7 +27,7 @@ interface PromoData {
   }>;
 }
 
-// Store state interface
+// Store state interface with additional properties
 interface PromoState {
   // Active promo tracking
   activePromoSlug: string | null;
@@ -36,6 +36,14 @@ interface PromoState {
   // API state
   isLoading: boolean;
   error: string | null;
+  
+  // Promo token specific properties
+  promoToken: string | null; 
+  setPromoToken: (token: string | null) => void;
+  promoType: PromoType | null;
+  setPromoType: (type: PromoType | null) => void;
+  hasActivePromo: boolean;
+  trackedPromo: string | null;
   
   // Actions
   setPromoSlug: (slug: string) => void;
@@ -46,12 +54,20 @@ interface PromoState {
 
 export const usePromoStore = create<PromoState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       activePromoSlug: null,
       promoData: null,
       isLoading: false,
       error: null,
+      promoToken: null,
+      promoType: null,
+      trackedPromo: null,
+      
+      // Computed property
+      get hasActivePromo() {
+        return !!get().promoData || !!get().promoToken;
+      },
       
       // Actions
       setPromoSlug: (slug: string) => set({
@@ -62,9 +78,21 @@ export const usePromoStore = create<PromoState>()(
         promoData: data
       }),
       
+      setPromoToken: (token: string | null) => set({
+        promoToken: token,
+        trackedPromo: token ? 'token' : get().trackedPromo
+      }),
+      
+      setPromoType: (type: PromoType | null) => set({
+        promoType: type
+      }),
+      
       clearPromo: () => set({
         activePromoSlug: null,
         promoData: null,
+        promoToken: null,
+        promoType: null,
+        trackedPromo: null,
         isLoading: false,
         error: null
       }),
