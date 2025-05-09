@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TreatmentItem, TreatmentCategory, TREATMENT_CATEGORIES } from '@/components/TreatmentPlanBuilder';
+import { TreatmentItem, TreatmentCategory } from '@/components/TreatmentPlanBuilder';
+import { treatmentCategoriesData } from '@/data/treatment-categories';
 import { useSpecialOffers } from '@/hooks/use-special-offers';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -47,10 +48,10 @@ const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> 
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
   
   // Get available treatments for the selected category
-  const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
+  const availableTreatments = treatmentCategoriesData.find((cat: TreatmentCategory) => cat.id === selectedCategory)?.treatments || [];
   
   // Get the selected treatment details
-  const treatmentDetails = availableTreatments.find(t => t.id === selectedTreatment);
+  const treatmentDetails = availableTreatments.find((t: {id: string}) => t.id === selectedTreatment);
   
   // Process special offers whenever treatments change
   useEffect(() => {
@@ -202,7 +203,7 @@ const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> 
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TREATMENT_CATEGORIES.map(category => (
+                  {treatmentCategoriesData.map((category: TreatmentCategory) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
