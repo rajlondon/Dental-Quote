@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CalendarIcon, PlusCircle, Edit, Trash2, AlertTriangle, CheckCircle, XCircle, Package } from 'lucide-react';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSelect } from '../../components/ui/multi-select';
 
 // Types
 interface TreatmentPackage {
@@ -344,8 +344,8 @@ export function TreatmentPackageManager() {
   };
 
   // Filter packages by status
-  const activePackages = packages?.filter(pkg => pkg.isActive) || [];
-  const inactivePackages = packages?.filter(pkg => !pkg.isActive) || [];
+  const activePackages = Array.isArray(packages) ? packages.filter(pkg => pkg.isActive) : [];
+  const inactivePackages = Array.isArray(packages) ? packages.filter(pkg => !pkg.isActive) : [];
 
   // Format treatment items for display
   const formatTreatmentList = (items: PackageItem[]) => {
@@ -353,7 +353,7 @@ export function TreatmentPackageManager() {
     
     const treatmentItems = items.filter(item => item.itemType === "TREATMENT");
     return treatmentItems.map(item => {
-      const treatment = treatments?.find(t => t.code === item.itemCode);
+      const treatment = Array.isArray(treatments) ? treatments.find((t: any) => t.code === item.itemCode) : null;
       return `${treatment?.name || item.itemCode} (${item.qty})`;
     }).join(", ");
   };
@@ -366,7 +366,7 @@ export function TreatmentPackageManager() {
     if (extraItems.length === 0) return "No extras included";
     
     return extraItems.map(item => {
-      const extra = extras?.find(e => e.code === item.itemCode);
+      const extra = Array.isArray(extras) ? extras.find((e: any) => e.code === item.itemCode) : null;
       return `${extra?.name || item.itemCode} (${item.qty})`;
     }).join(", ");
   };
