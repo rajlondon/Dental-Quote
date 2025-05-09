@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useCallback } from 'react';
 
 interface PackageDetails {
   id: string;
@@ -46,19 +45,18 @@ interface TreatmentItem {
  * methods to apply package treatments to the treatment list
  */
 export const usePackageDetection = () => {
-  const [searchParams] = useSearchParams();
   const [packageDetails, setPackageDetails] = useState<PackageDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Parse URL parameters on mount
-  useEffect(() => {
-    const packageId = searchParams.get('packageId');
+  // Initialize from URL parameters - call this from a component inside Router context
+  const initFromSearchParams = useCallback((params: URLSearchParams) => {
+    const packageId = params.get('packageId');
     
     if (packageId) {
       fetchPackageDetails(packageId);
     }
-  }, [searchParams]);
+  }, []);
 
   // Fetch package details from API
   const fetchPackageDetails = useCallback(async (packageId: string) => {
@@ -149,6 +147,7 @@ export const usePackageDetection = () => {
     error,
     clearPackage,
     fetchPackageDetails,
+    initFromSearchParams,
     applyPackageToTreatments,
     packageToTreatmentItems,
     getPackageSavings,
