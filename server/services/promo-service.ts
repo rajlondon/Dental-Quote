@@ -48,12 +48,15 @@ export class PromoService {
     if (promoItems.length > 0) {
       const promoItemsWithId = promoItems.map(item => ({
         ...item,
-        promoId: newPromo.id
+        promoId: newPromo.id,
+        itemType: item.itemType as any
       }));
       
-      await db
-        .insert(promoItems)
-        .values(promoItemsWithId);
+      if (promoItemsWithId.length > 0) {
+        await db
+          .insert(promoItems)
+          .values(promoItemsWithId);
+      }
     }
 
     // Insert associated clinics
@@ -63,9 +66,11 @@ export class PromoService {
         promoId: newPromo.id
       }));
       
-      await db
-        .insert(promoClinics)
-        .values(promoClinicsWithId);
+      if (promoClinicsWithId.length > 0) {
+        await db
+          .insert(promoClinics)
+          .values(promoClinicsWithId);
+      }
     }
 
     return newPromo;
@@ -83,12 +88,17 @@ export class PromoService {
       delete promoData.slug;
     }
 
+    // Convert string enums to proper enum types
+    const promoDataWithEnums = {
+      ...promoData,
+      promoType: promoData.promoType as any,
+      discountType: promoData.discountType as any,
+      updatedAt: new Date()
+    };
+
     const [updatedPromo] = await db
       .update(promos)
-      .set({
-        ...promoData,
-        updatedAt: new Date()
-      })
+      .set(promoDataWithEnums)
       .where(eq(promos.id, promoId))
       .returning();
 
@@ -105,7 +115,7 @@ export class PromoService {
       .delete(promos)
       .where(eq(promos.id, promoId));
 
-    return result.rowCount > 0;
+    return result.rowCount != null && result.rowCount > 0;
   }
 
   /**
@@ -194,7 +204,8 @@ export class PromoService {
   async addPromoItems(promoId: string, items: InsertPromoItem[]): Promise<PromoItem[]> {
     const itemsWithPromoId = items.map(item => ({
       ...item,
-      promoId
+      promoId,
+      itemType: item.itemType as any
     }));
 
     const newItems = await db
@@ -218,7 +229,7 @@ export class PromoService {
         )
       );
 
-    return result.rowCount > 0;
+    return result.rowCount != null && result.rowCount > 0;
   }
 
   /**
@@ -251,7 +262,7 @@ export class PromoService {
         )
       );
 
-    return result.rowCount > 0;
+    return result.rowCount != null && result.rowCount > 0;
   }
 
   /**
@@ -325,7 +336,7 @@ export class PromoService {
       .set({ used: true })
       .where(eq(enhancedPromoTokens.token, tokenStr));
 
-    return result.rowCount > 0;
+    return result.rowCount != null && result.rowCount > 0;
   }
 
   // Helper methods
