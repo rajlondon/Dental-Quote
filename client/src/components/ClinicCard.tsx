@@ -1,100 +1,158 @@
 import React from 'react';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { MapPin } from 'lucide-react';
-
-interface Clinic {
-  id: string;
-  name: string;
-  tier: 'affordable' | 'mid' | 'premium';
-  priceGBP: number;
-  priceUSD: number;
-  location: string;
-  rating: number;
-  reviewCount: number;
-  guarantee: string;
-  materials: string[];
-  conciergeType: 'mydentalfly' | 'clinic';
-  features: string[];
-  description: string;
-  packages: {
-    hotel?: boolean;
-    transfers?: boolean;
-    consultation?: boolean;
-    cityTour?: boolean;
-  };
-  images: string[];
-  hasSpecialOffer?: boolean;
-  specialOfferDetails?: {
-    id: string;
-    title: string;
-    discountValue: number;
-    discountType: 'percentage' | 'fixed_amount';
-  };
-}
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Star, MapPin, Clock, Award, Stethoscope } from 'lucide-react';
 
 interface ClinicCardProps {
-  clinic: Clinic;
-  onSelect?: (clinic: Clinic) => void;
+  clinic: {
+    id: string;
+    name: string;
+    location: string;
+    rating: number;
+    reviewCount: number;
+    specialties: string[];
+    yearsExperience?: number;
+    imageUrl?: string;
+    isPromoted?: boolean;
+    isPartner?: boolean;
+    waitTime?: string;
+  };
   isSelected?: boolean;
+  onSelect?: (id: string) => void;
   className?: string;
 }
 
-const ClinicCard: React.FC<ClinicCardProps> = ({ 
-  clinic, 
+/**
+ * A card component for displaying clinic information
+ */
+const ClinicCard: React.FC<ClinicCardProps> = ({
+  clinic,
+  isSelected = false,
   onSelect,
-  isSelected = false, 
-  className = ''
+  className = '',
 }) => {
-  const handleSelect = () => {
+  const {
+    id,
+    name,
+    location,
+    rating,
+    reviewCount,
+    specialties,
+    yearsExperience,
+    imageUrl,
+    isPromoted,
+    isPartner,
+    waitTime,
+  } = clinic;
+
+  const handleClick = () => {
     if (onSelect) {
-      onSelect(clinic);
+      onSelect(id);
     }
   };
 
+  // Convert rating to stars
+  const renderStars = () => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={`star-${i}`} className="h-4 w-4 fill-yellow-400 text-yellow-400" />);
+    }
+
+    if (hasHalfStar) {
+      stars.push(
+        <Star
+          key="half-star"
+          className="h-4 w-4 fill-yellow-400 text-yellow-400"
+          style={{ clipPath: 'inset(0 50% 0 0)' }}
+        />
+      );
+    }
+
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<Star key={`empty-star-${i}`} className="h-4 w-4 text-gray-300" />);
+    }
+
+    return stars;
+  };
+
   return (
-    <Card className={`overflow-hidden ${isSelected ? 'border-primary border-2' : ''} ${className}`}>
-      <CardHeader className="p-0">
-        <AspectRatio ratio={16/9}>
-          <img 
-            src={clinic.images[0] || `/images/clinics/${clinic.tier}-clinic-1.jpg`}
-            alt={clinic.name} 
-            className="object-cover w-full h-full"
-          />
-          {clinic.hasSpecialOffer && (
-            <div className="absolute top-0 right-0 bg-primary text-white px-2 py-1 text-xs font-semibold">
-              Special Offer
+    <Card 
+      className={`
+        w-full transition-all duration-200 hover:shadow-md 
+        ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}
+        ${className}
+      `}
+      onClick={handleClick}
+    >
+      <CardHeader className="relative pb-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-xl font-bold">{name}</CardTitle>
+            <div className="flex items-center mt-1">
+              <MapPin className="h-4 w-4 text-muted-foreground mr-1" />
+              <CardDescription>{location}</CardDescription>
+            </div>
+          </div>
+          
+          {imageUrl && (
+            <div className="h-16 w-16 rounded-md overflow-hidden">
+              <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
             </div>
           )}
-        </AspectRatio>
+        </div>
+        
+        {(isPromoted || isPartner) && (
+          <div className="absolute top-3 right-3">
+            {isPromoted && <Badge variant="default">Featured</Badge>}
+            {isPartner && <Badge variant="outline" className="ml-2">Partner</Badge>}
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold">{clinic.name}</h3>
-          <Badge>{clinic.tier === 'premium' ? 'Premium' : clinic.tier === 'mid' ? 'Standard' : 'Affordable'}</Badge>
-        </div>
-        <div className="flex items-center mb-2 text-sm">
-          <MapPin className="w-4 h-4 mr-1" />
-          <span>{clinic.location}</span>
-        </div>
-        <div className="flex items-center mb-4 text-sm">
-          <span className="flex items-center mr-2">
-            <svg className="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            {clinic.rating}
+      
+      <CardContent className="pb-2">
+        <div className="flex items-center mb-2">
+          <div className="flex mr-2">
+            {renderStars()}
+          </div>
+          <span className="text-sm">
+            {rating.toFixed(1)} ({reviewCount} reviews)
           </span>
-          <span>({clinic.reviewCount} reviews)</span>
         </div>
-        <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{clinic.description}</p>
-        <div className="flex justify-between">
-          <Button onClick={handleSelect} variant={isSelected ? "secondary" : "default"}>
-            {isSelected ? 'Selected' : 'Select Clinic'}
-          </Button>
+        
+        <div className="flex flex-wrap gap-2 mt-3">
+          {specialties.slice(0, 3).map((specialty, index) => (
+            <Badge key={index} variant="secondary" className="flex items-center">
+              <Stethoscope className="h-3 w-3 mr-1" />
+              {specialty}
+            </Badge>
+          ))}
+          {specialties.length > 3 && (
+            <Badge variant="outline">+{specialties.length - 3} more</Badge>
+          )}
         </div>
       </CardContent>
+      
+      <CardFooter className="flex justify-between pt-2">
+        <div className="flex items-center text-sm">
+          {yearsExperience && (
+            <div className="flex items-center mr-4">
+              <Award className="h-4 w-4 text-muted-foreground mr-1" />
+              <span>{yearsExperience}+ years exp.</span>
+            </div>
+          )}
+          
+          {waitTime && (
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 text-muted-foreground mr-1" />
+              <span>{waitTime} wait time</span>
+            </div>
+          )}
+        </div>
+      </CardFooter>
     </Card>
   );
 };
