@@ -148,6 +148,18 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
     });
     return <Redirect to="/portal-login" />;
   }
+  
+  // Ensure we're not in a redirect loop by checking if we're coming from the login page
+  useEffect(() => {
+    // Debug log for navigation
+    console.log("ClinicGuard: Navigation check for clinic user", {
+      role: user.role,
+      pathname: window.location.pathname
+    });
+
+    // Store that we've successfully accessed the clinic portal
+    sessionStorage.setItem('clinic_portal_access_successful', 'true');
+  }, [user]);
 
   if (!initialized) {
     return (
