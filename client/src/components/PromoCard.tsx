@@ -86,6 +86,10 @@ export function PromoCard({
             src={heroImageUrl} 
             alt={title}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = '/images/placeholder-treatment.jpg';
+            }}
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center">
