@@ -109,36 +109,6 @@ router.delete("/:id", ensureRole("admin"), async (req, res) => {
 });
 
 /**
- * Get a promo by ID
- * GET /api/v1/promos/:id
- * Public access
- */
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const promo = await promoService.getPromoById(id);
-
-    if (!promo) {
-      return res.status(404).json({
-        success: false,
-        message: "Promotion not found"
-      });
-    }
-
-    res.json({
-      success: true,
-      data: promo
-    });
-  } catch (error) {
-    console.error("Failed to get promo:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve promotion"
-    });
-  }
-});
-
-/**
  * Get a promo by slug
  * GET /api/v1/promos/by-slug/:slug
  * Public access
@@ -169,26 +139,31 @@ router.get("/by-slug/:slug", async (req, res) => {
 });
 
 /**
- * Get all active promos
- * GET /api/v1/promos?page=1&limit=10
+ * Get a promo by ID
+ * GET /api/v1/promos/:id
  * Public access
  */
-router.get("/", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const { id } = req.params;
+    const promo = await promoService.getPromoById(id);
 
-    const promos = await promoService.getActivePromos(page, limit);
+    if (!promo) {
+      return res.status(404).json({
+        success: false,
+        message: "Promotion not found"
+      });
+    }
 
     res.json({
       success: true,
-      data: promos
+      data: promo
     });
   } catch (error) {
-    console.error("Failed to get active promos:", error);
+    console.error("Failed to get promo:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to retrieve promotions"
+      message: "Failed to retrieve promotion"
     });
   }
 });
@@ -212,6 +187,31 @@ router.get("/by-clinic/:clinicId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve promotions for clinic"
+    });
+  }
+});
+
+/**
+ * Get all active promos
+ * GET /api/v1/promos?page=1&limit=10
+ * Public access
+ */
+router.get("/", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const promos = await promoService.getActivePromos(page, limit);
+
+    res.json({
+      success: true,
+      data: promos
+    });
+  } catch (error) {
+    console.error("Failed to get active promos:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve promotions"
     });
   }
 });

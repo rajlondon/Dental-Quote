@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link } from 'wouter';
-import { useNavigate } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { DiscountType, PromoType } from '@shared/schema';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
