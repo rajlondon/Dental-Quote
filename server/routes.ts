@@ -1279,6 +1279,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
   
+  // Add WebSocket health endpoint for monitoring
+  app.get("/ws-health", (req, res) => {
+    const clientCount = wsService.getClientCount();
+    return res.json({ 
+      status: "ok", 
+      clients: clientCount,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Add WebSocket ping test endpoint
+  app.get("/ws-ping", (req, res) => {
+    if (!wsService) {
+      return res.status(503).json({ status: "error", message: "WebSocket service not initialized" });
+    }
+    
+    // Send a ping to all connected clients
+    wsService.broadcast({ type: "ping", timestamp: Date.now() });
+    
+    return res.json({ 
+      status: "ok", 
+      message: "Ping sent to all connected clients",
+      clients: wsService.getClientCount(),
+      timestamp: new Date().toISOString()
+    });
+  });
+  
   // Create email notification service
   const emailService = createEmailNotificationService();
   

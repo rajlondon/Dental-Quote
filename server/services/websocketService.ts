@@ -28,14 +28,49 @@ export class WebSocketService {
   
   constructor(server: Server) {
     // Initialize WebSocket server on a specific path to avoid conflict with Vite HMR
-    this.wss = new WebSocketServer({ server, path: '/ws' });
+    // Add heartbeat settings to prevent disconnections
+    this.wss = new WebSocketServer({ 
+      server, 
+      path: '/ws',
+      // Increase these values to handle slow connections
+      clientTracking: true,
+      // These would be passed to socket.io if we were using it
+      // pingTimeout: 60000,
+      // pingInterval: 25000,
+    });
     
     this.setupEventHandlers();
+    
+    // Setup ping interval to keep connections alive
+    this.setupHeartbeat();
     
     // Store the instance for static access
     WebSocketService.instance = this;
     
-    console.log('WebSocket service initialized');
+    console.log('WebSocket service initialized with improved heartbeat settings');
+  }
+  
+  // Setup heartbeat to keep connections alive
+  private setupHeartbeat() {
+    // Send ping every 30 seconds to prevent connections from timing out
+    setInterval(() => {
+      this.clients.forEach(client => {
+        if (client.ws.readyState === WebSocket.OPEN) {
+          client.ws.ping(() => {});
+        }
+      });
+    }, 30000);
+  }
+  
+  // Get client count for health checks
+  public getClientCount(): number {
+    let activeCount = 0;
+    this.clients.forEach(client => {
+      if (client.ws.readyState === WebSocket.OPEN) {
+        activeCount++;
+      }
+    });
+    return activeCount;
   }
   
   // Static method to broadcast to all connected clients
