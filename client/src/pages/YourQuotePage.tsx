@@ -613,7 +613,10 @@ const YourQuotePage: React.FC = () => {
   });
   
   // Get the active promo slug and setPromoSlug function from the store
-  const { activePromoSlug, setPromoSlug } = usePromoStore();
+  // Extract hook to the top level to avoid breaking React rules of hooks
+  const promoStore = usePromoStore();
+  const activePromoSlug = promoStore.activePromoSlug;
+  const setPromoSlug = promoStore.setPromoSlug;
   
   // Fetch promo data by slug if needed
   const { data: promoData, isLoading: isLoadingPromo } = usePromoBySlug(activePromoSlug);
@@ -1113,11 +1116,11 @@ const YourQuotePage: React.FC = () => {
         
         // Apply discount if available
         if (promoData.data.discountValue > 0) {
-          if (promoData.data.discountType === DiscountType.PERCENT) {
+          if (promoData.data.discountType === 'percent') {
             const discountMultiplier = (100 - promoData.data.discountValue) / 100;
             promoTreatment.priceGBP = Math.round(promoTreatment.priceGBP * discountMultiplier);
             promoTreatment.priceUSD = Math.round(promoTreatment.priceUSD * discountMultiplier);
-          } else if (promoData.data.discountType === DiscountType.FIXED) {
+          } else if (promoData.data.discountType === 'fixed') {
             promoTreatment.priceGBP = Math.max(0, promoTreatment.priceGBP - promoData.data.discountValue);
             promoTreatment.priceUSD = Math.max(0, promoTreatment.priceUSD - Math.round(promoData.data.discountValue * 1.28));
           }
@@ -1131,7 +1134,7 @@ const YourQuotePage: React.FC = () => {
         
         // Show welcome toast for the promo
         toast({
-          title: `${promoData.data.promoType === PromoType.PACKAGE ? 'Treatment Package' : 'Special Offer'} Selected`,
+          title: `${promoData.data.promoType === 'package' ? 'Treatment Package' : 'Special Offer'} Selected`,
           description: `Your quote includes: ${promoData.data.title}`,
         });
         
