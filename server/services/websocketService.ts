@@ -50,16 +50,40 @@ export class WebSocketService {
     console.log('WebSocket service initialized with improved heartbeat settings');
   }
   
-  // Setup heartbeat to keep connections alive
+  // Setup heartbeat to keep connections alive with improved error handling
   private setupHeartbeat() {
+    const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+    
     // Send ping every 30 seconds to prevent connections from timing out
     setInterval(() => {
-      this.clients.forEach(client => {
-        if (client.ws.readyState === WebSocket.OPEN) {
-          client.ws.ping(() => {});
+      // Use Array.from to convert the Map entries to avoid MapIterator issues
+      Array.from(this.clients.entries()).forEach(([clientId, client]) => {
+        try {
+          if (client.ws.readyState === WebSocket.OPEN) {
+            // Use noop function for callback to handle potential errors
+            client.ws.ping(() => {
+              // Ping successful, client is responsive
+              console.log(`Heartbeat ping successful for client ${clientId} (${client.type})`);
+            });
+          } else if (client.ws.readyState === WebSocket.CLOSED || client.ws.readyState === WebSocket.CLOSING) {
+            // Remove dead connections to prevent memory leaks
+            console.log(`Removing dead WebSocket connection for ${clientId} (${client.type})`);
+            this.clients.delete(clientId);
+          }
+        } catch (error) {
+          console.error(`Error during WebSocket heartbeat for client ${clientId}:`, error);
+          // Clean up broken connections
+          try {
+            this.clients.delete(clientId);
+          } catch (cleanupError) {
+            console.error(`Error removing dead client ${clientId}:`, cleanupError);
+          }
         }
       });
-    }, 30000);
+      
+      // Log active connections count for monitoring
+      console.log(`WebSocket heartbeat: ${this.getClientCount()} active connections`);
+    }, HEARTBEAT_INTERVAL);
   }
   
   // Get client count for health checks
@@ -83,10 +107,15 @@ export class WebSocketService {
     const message = JSON.stringify(data);
     let clientCount = 0;
     
-    WebSocketService.instance.clients.forEach(client => {
-      if (client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(message);
-        clientCount++;
+    // Use Array.from to convert Map values to array to avoid MapIterator issues
+    Array.from(WebSocketService.instance.clients.values()).forEach(client => {
+      try {
+        if (client.ws.readyState === WebSocket.OPEN) {
+          client.ws.send(message);
+          clientCount++;
+        }
+      } catch (error) {
+        console.error(`Error broadcasting to client ${client.id}:`, error);
       }
     });
     
@@ -259,15 +288,24 @@ export class WebSocketService {
   // Broadcast to all clients of a specific type
   public broadcast(message: any, targetType?: 'patient' | 'clinic' | 'admin') {
     const payload = JSON.stringify(message);
+    let clientCount = 0;
     
-    this.clients.forEach((client) => {
-      if (
-        client.ws.readyState === WebSocket.OPEN && 
-        (!targetType || client.type === targetType)
-      ) {
-        client.ws.send(payload);
+    // Use Array.from to convert Map values to array to avoid MapIterator issues
+    Array.from(this.clients.values()).forEach(client => {
+      try {
+        if (
+          client.ws.readyState === WebSocket.OPEN && 
+          (!targetType || client.type === targetType)
+        ) {
+          client.ws.send(payload);
+          clientCount++;
+        }
+      } catch (error) {
+        console.error(`Error broadcasting to client ${client.id}:`, error);
       }
     });
+    
+    console.log(`Broadcast message sent to ${clientCount} clients of type ${targetType || 'any'}`);
   }
   
   // Broadcast special offer image updates to all connected clients
@@ -284,10 +322,15 @@ export class WebSocketService {
     const payload = JSON.stringify(message);
     let clientCount = 0;
     
-    this.clients.forEach((client) => {
-      if (client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(payload);
-        clientCount++;
+    // Use Array.from to convert Map values to array to avoid MapIterator issues
+    Array.from(this.clients.values()).forEach(client => {
+      try {
+        if (client.ws.readyState === WebSocket.OPEN) {
+          client.ws.send(payload);
+          clientCount++;
+        }
+      } catch (error) {
+        console.error(`Error sending image refresh to client ${client.id}:`, error);
       }
     });
     
