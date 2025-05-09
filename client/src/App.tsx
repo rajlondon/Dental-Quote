@@ -222,16 +222,7 @@ function Router() {
           );
         }}
       </Route>
-      <Route path="/quote-flow-test">
-        {() => {
-          const QuoteFlowTest = React.lazy(() => import("@/pages/QuoteFlowTest"));
-          return (
-            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
-              <QuoteFlowTest />
-            </React.Suspense>
-          );
-        }}
-      </Route>
+      {/* Route moved to avoid duplication */}
       <Route path="/rebuild">
         {() => {
           const RebuildGateway = React.lazy(() => {

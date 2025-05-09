@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TreatmentItem, TreatmentCategory } from '@/components/TreatmentPlanBuilder';
+import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
+import { TreatmentCategory } from '@/data/treatment-categories-data';
 import { treatmentCategoriesData } from '@/data/treatment-categories-data';
 import { useSpecialOffers } from '@/hooks/use-special-offers';
 import { Button } from '@/components/ui/button';
