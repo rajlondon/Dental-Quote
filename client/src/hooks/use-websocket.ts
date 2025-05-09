@@ -1,0 +1,378 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+export interface WebSocketMessage {
+  type: string;
+  data?: any;
+  timestamp?: number;
+}
+
+interface UseWebSocketOptions {
+  onMessage?: (message: WebSocketMessage) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onError?: (error: Event) => void;
+  reconnectInterval?: number;
+  maxReconnectAttempts?: number;
+  userId?: number;
+  isClinic?: boolean;
+  disableAutoConnect?: boolean;
+}
+
+export function useWebSocket(options: UseWebSocketOptions = {}) {
+  const {
+    onMessage,
+    onOpen,
+    onClose,
+    onError,
+    reconnectInterval = 2000,
+    maxReconnectAttempts = 10,
+    userId,
+    isClinic = false,
+    disableAutoConnect = false,
+  } = options;
+
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  const { toast } = useToast();
+  
+  // Use refs to track the socket instance and connection state
+  // across render cycles and not lose track during reconnects
+  const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const messageQueueRef = useRef<WebSocketMessage[]>([]);
+  const connectionIdRef = useRef<string>(`ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`);
+  const manualDisconnectRef = useRef<boolean>(false);
+  const clinicModeRef = useRef<boolean>(isClinic);
+
+  // Initialize WebSocket connection
+  const connect = useCallback(() => {
+    if (disableAutoConnect) {
+      console.log('WebSocket auto-connect disabled');
+      return;
+    }
+
+    // Don't try to reconnect if we've manually disconnected
+    if (manualDisconnectRef.current) {
+      console.log('Skipping WebSocket connection - manual disconnect flag is set');
+      return;
+    }
+
+    // Don't reconnect if we're already connected
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already connected, skipping reconnect');
+      return;
+    }
+    
+    // Check if we're in the clinic portal and should avoid connections
+    if (isClinic && (window as any).__inClinicPortal) {
+      console.log('In clinic portal - using special WebSocket handling');
+      // Set up dummy connection for clinic portal
+      setSocket(null);
+      setIsConnected(false);
+      return;
+    }
+
+    try {
+      // Use the correct protocol based on page protocol
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      // Close any existing socket before creating a new one
+      if (socketRef.current) {
+        socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
+        socketRef.current.close();
+      }
+      
+      console.log(`Connecting to WebSocket at ${wsUrl} (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
+      
+      // Generate a unique connection ID for this connection
+      connectionIdRef.current = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+      
+      // Log connection ID and details for debugging
+      console.log(`WebSocket ${connectionIdRef.current} connecting...`);
+      
+      socket.onopen = () => {
+        console.log(`WebSocket ${connectionIdRef.current} connected successfully`);
+        setSocket(socket);
+        setIsConnected(true);
+        setReconnectAttempt(0);
+        
+        // Store user ID association with this socket
+        if (userId) {
+          // Send auth message to associate this connection with the user
+          const authMessage = {
+            type: 'auth',
+            userId,
+            connectionId: connectionIdRef.current,
+            isClinic,
+            timestamp: Date.now()
+          };
+          socket.send(JSON.stringify(authMessage));
+          
+          // Set up connection tracking
+          if (!(window as any).__websocketConnections) {
+            (window as any).__websocketConnections = {};
+          }
+          (window as any).__websocketConnections[`user-${userId}`] = {
+            socket,
+            connectionId: connectionIdRef.current,
+            timestamp: Date.now()
+          };
+          
+          // Track last activity time for this user
+          if (!(window as any).__websocketLastActivity) {
+            (window as any).__websocketLastActivity = {};
+          }
+          (window as any).__websocketLastActivity[`user-${userId}`] = Date.now();
+        }
+        
+        // Send any queued messages
+        if (messageQueueRef.current.length > 0) {
+          console.log(`Sending ${messageQueueRef.current.length} queued messages`);
+          messageQueueRef.current.forEach(msg => {
+            socket.send(JSON.stringify(msg));
+          });
+          messageQueueRef.current = [];
+        }
+        
+        // Call onOpen callback if provided
+        if (onOpen) {
+          onOpen();
+        }
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as WebSocketMessage;
+          
+          // Update last activity timestamp
+          if (userId && (window as any).__websocketLastActivity) {
+            (window as any).__websocketLastActivity[`user-${userId}`] = Date.now();
+          }
+          
+          // Call onMessage callback if provided
+          if (onMessage) {
+            onMessage(message);
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      socket.onclose = (event) => {
+        console.log(`WebSocket ${connectionIdRef.current} closed with code ${event.code}:`, event.reason || 'No reason provided');
+        
+        // Don't reconnect if we're in clinic mode - we handle that separately
+        const skipReconnect = manualDisconnectRef.current || clinicModeRef.current;
+        console.log(`WebSocket ${connectionIdRef.current} closed - skip reconnect - Manual: ${manualDisconnectRef.current}, Clinic: ${clinicModeRef.current}, Code: ${event.code}`);
+        
+        setSocket(null);
+        setIsConnected(false);
+        
+        if (onClose) {
+          onClose();
+        }
+
+        // Don't reconnect if we've exceeded max attempts or manual disconnect
+        if (skipReconnect) {
+          console.log('Skipping WebSocket reconnect - manual disconnect or clinic mode');
+          return;
+        }
+        
+        if (reconnectAttempt < maxReconnectAttempts) {
+          console.log(`Attempting to reconnect in ${reconnectInterval}ms (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
+          // Use a timeout to avoid immediate reconnect attempts
+          if (reconnectTimeoutRef.current) {
+            window.clearTimeout(reconnectTimeoutRef.current);
+          }
+          
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            setReconnectAttempt(prev => prev + 1);
+            connect();
+          }, reconnectInterval);
+        } else {
+          // Show toast notification for connection failures
+          if (!isClinic) {
+            toast({
+              title: 'Connection Lost',
+              description: 'Lost connection to the server. Please refresh the page to reconnect.',
+              variant: 'destructive',
+            });
+          }
+          console.error(`WebSocket failed to reconnect after ${maxReconnectAttempts} attempts`);
+        }
+      };
+
+      socket.onerror = (error) => {
+        console.error(`WebSocket ${connectionIdRef.current} error:`, error);
+        
+        if (onError) {
+          onError(error);
+        }
+        
+        // Log reconnect attempt warnings
+        if (reconnectAttempt > 0) {
+          console.warn(`WebSocket failure #${reconnectAttempt} at ${new Date().toISOString()}`);
+        }
+        
+        // Show detailed error message for abnormal closures and network issues
+        if (error.type === 'error') {
+          console.warn(`⚠️ WebSocket abnormal closure (1006) detected for connection ${connectionIdRef.current}. This typically indicates network issues or server restart.`);
+        }
+      };
+
+    } catch (error) {
+      console.error('Error creating WebSocket:', error);
+      
+      // Show error toast only for patient users, not clinic
+      if (!isClinic) {
+        toast({
+          title: 'Connection Error',
+          description: 'Failed to establish connection to the server. Some features may be unavailable.',
+          variant: 'destructive',
+        });
+      }
+      
+      setSocket(null);
+      setIsConnected(false);
+    }
+  }, [
+    disableAutoConnect,
+    isClinic,
+    maxReconnectAttempts,
+    onClose,
+    onError,
+    onMessage,
+    onOpen,
+    reconnectAttempt,
+    reconnectInterval,
+    toast,
+    userId,
+  ]);
+
+  // Send a message through the WebSocket
+  const sendMessage = useCallback((message: WebSocketMessage) => {
+    // Add timestamp to message
+    const timestampedMessage = {
+      ...message,
+      timestamp: Date.now(),
+    };
+    
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      // If connected, send immediately
+      socketRef.current.send(JSON.stringify(timestampedMessage));
+    } else {
+      // Otherwise, queue for later
+      console.log('WebSocket not connected, queueing message:', message.type);
+      messageQueueRef.current.push(timestampedMessage);
+    }
+  }, []);
+
+  // Manual disconnect function - won't try to reconnect
+  const disconnect = useCallback(() => {
+    console.log(`Manually disconnecting WebSocket ${connectionIdRef.current}`);
+    manualDisconnectRef.current = true;
+    
+    if (socketRef.current) {
+      socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+    
+    setSocket(null);
+    setIsConnected(false);
+    
+    // Clear any pending reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      window.clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Force connect - will try to connect even after manual disconnect
+  const forceConnect = useCallback(() => {
+    manualDisconnectRef.current = false;
+    setReconnectAttempt(0);
+    connect();
+  }, [connect]);
+
+  // Initial connection
+  useEffect(() => {
+    // Update the clinic mode ref whenever isClinic changes
+    clinicModeRef.current = isClinic;
+    
+    // Only connect automatically if not disabled
+    if (!disableAutoConnect) {
+      connect();
+    }
+    
+    // Listen for manual WebSocket close events
+    const handleManualClose = () => {
+      disconnect();
+    };
+    
+    // Set up event listener for component cleanup events
+    const handleComponentCleanup = (event: CustomEvent) => {
+      // Check if this cleanup is for our user
+      if (event.detail && event.detail.userId === userId) {
+        console.log(`Received cleanup event for user ${userId}`);
+        disconnect();
+      }
+    };
+    
+    document.addEventListener('manual-websocket-close', handleManualClose);
+    document.addEventListener('websocket-component-cleanup', handleComponentCleanup as EventListener);
+    
+    return () => {
+      // Clean up on unmount
+      if (socketRef.current) {
+        console.log(`Closing WebSocket ${connectionIdRef.current} on hook unmount`);
+        
+        // Explicitly tell the server we're disconnecting to avoid reconnect problems
+        if (socketRef.current.readyState === WebSocket.OPEN) {
+          try {
+            socketRef.current.send(JSON.stringify({
+              type: 'disconnect',
+              userId,
+              connectionId: connectionIdRef.current,
+              reason: 'component_unmount',
+              timestamp: Date.now()
+            }));
+          } catch (e) {
+            console.error('Error sending disconnect message:', e);
+          }
+        }
+        
+        socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
+        socketRef.current.close();
+        socketRef.current = null;
+      }
+      
+      // Clear any pending reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      // Remove event listeners
+      document.removeEventListener('manual-websocket-close', handleManualClose);
+      document.removeEventListener('websocket-component-cleanup', handleComponentCleanup as EventListener);
+    };
+  }, [connect, disconnect, disableAutoConnect, isClinic, userId]);
+
+  return {
+    socket, 
+    isConnected, 
+    reconnectAttempt,
+    sendMessage,
+    disconnect,
+    connect: forceConnect,
+    connectionId: connectionIdRef.current
+  };
+}
+
+export default useWebSocket;

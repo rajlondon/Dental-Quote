@@ -234,14 +234,49 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     };
   }, [user]);
   
-  // Component unmount cleanup effect with advanced WebSocket handling
+  // Import the useWebSocket hook from our new implementation
+  const { isConnected, disconnect } = useWebSocket({
+    onOpen: () => {
+      console.log('WebSocket connected for clinic portal');
+      // Store connection status in session for recovery purposes
+      sessionStorage.setItem('clinic_websocket_connected', 'true');
+    },
+    onClose: () => {
+      console.log('WebSocket disconnected for clinic portal');
+      // Store disconnection in session
+      sessionStorage.setItem('clinic_websocket_connected', 'false');
+    },
+    onError: (error) => {
+      console.error('WebSocket error in clinic portal:', error);
+    },
+    onMessage: (message) => {
+      console.log('WebSocket message received in clinic portal:', message);
+      // Handle specific message types
+      if (message.type === 'notification') {
+        // Handle notification updates
+        toast({
+          title: message.data?.title || 'New Notification',
+          description: message.data?.message || 'You have a new notification',
+        });
+      }
+    },
+    userId: user?.id,
+    isClinic: true, // Flag this as a clinic connection
+    maxReconnectAttempts: 3, // Limit reconnect attempts for clinic portal
+  });
+
+  // Component unmount cleanup effect with enhanced WebSocket handling
   useEffect(() => {
     // Set a flag on mount to track this instance
     const instanceId = `clinic-portal-instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     (window as any).__lastClinicPortalInstance = instanceId;
     
+    // Set up additional recovery options
+    sessionStorage.setItem('clinic_portal_instance_id', instanceId);
+    sessionStorage.setItem('clinic_portal_active', 'true');
+    
     return () => {
-      // Prevent WebSocket connection errors on unmount
+      // Prevent WebSocket connection errors on unmount with better cleanup
       if (isMounted.current) {
         console.log("ClinicPortalPage unmounting, performing cleanup");
         
@@ -250,23 +285,17 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         if ((window as any).__lastClinicPortalInstance === instanceId) {
           // Clear any stored session data
           sessionStorage.removeItem('clinic_portal_active');
+          sessionStorage.setItem('clinic_portal_unmounted', 'true');
           
-          // Disconnect WebSocket safely if this component is responsible for it
-          if (user) {
-            // Manually trigger WebSocket cleanup via custom event
-            // This event is caught by the useWebSocket hook
-            const cleanupEvent = new CustomEvent('websocket-component-cleanup', {
-              detail: { userId: user.id, componentId: instanceId }
-            });
-            document.dispatchEvent(cleanupEvent);
-            console.log(`Triggered WebSocket cleanup for user ${user.id}`);
-          }
+          // Disconnect WebSocket using our new hook
+          disconnect();
+          console.log(`Disconnected WebSocket for clinic portal`);
         } else {
           console.log("Skipping full cleanup - newer instance exists");
         }
       }
     };
-  }, [user]);
+  }, [user, disconnect]);
   
   // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
