@@ -1,0 +1,68 @@
+Let’s push forward with the first “visible” slice—the part that makes promos real for the user and proves the discount engine works in production screens. Everything else (claim button, analytics, admin panel) is easier once this slice is solid.
+
+Focus for the next sprint:
+Homepage ➜ Quote Builder ➜ Results Page end-to-end promo flow
+Goal	Why first?	Key Deliverables
+1. Promo Showcase on Home	Users must see (and click) offers before anything else matters.	• React component <PromoCard> for each active promo
+• Pull GET /promo/active?city= via React-Query
+• On click → ?promo=SLUG in URL + setPromo(slug) in Zustand
+2. Quote Builder awareness	Ensures discounts/validations fire immediately.	• Banner/ribbon “You’re building the All-in-6 Package – save 30 %”
+• Call POST /promo/validate whenever treatment list changes → surface warnings
+• Price summary line Package discount: –£X
+3. Discount math in /quotes/from-promo	Back-end source of truth; prevents tampering.	• Calculate subtotal → apply % or £ discount → return finalTotal
+• Unit tests for % vs fixed, expired promo, non-participating clinic
+4. Results Page highlighting	Immediate feedback that the offer is honoured.	• Pin participating clinic first; add “Promo” badge and strike-through old price
+• If multiple clinics in promo later, still group them at top
+5. State persistence	Keeps promo alive on hard-refresh & deep links.	• On app load: read ?promo=SLUG → validate & hydrate store
+• Save promoSlug to sessionStorage and restore if store empty
+
+This slice gives marketing a shareable URL (/istanbul?promo=ALLIN6), shows users the savings, and lets you run a real-world test of the new tables & endpoints.
+
+Implementation Pointers
+Component scaffolding
+
+bash
+Copy
+Edit
+client/
+  src/components/PromoCard.tsx
+  src/features/promo/usePromoStore.ts       # Zustand
+  src/pages/Home.tsx                        # maps promos -> cards
+  src/pages/QuoteBuilder/PromoRibbon.tsx
+API hooks (React-Query)
+
+ts
+Copy
+Edit
+export const useActivePromos = (city: string) =>
+  useQuery(['promos', city], () => api.get(`/promo/active?city=${city}`));
+
+export const useValidatePromo = (promoSlug: string, payload) =>
+  useMutation(() => api.post('/promo/validate', { promoSlug, ...payload }));
+Price calculation UI
+
+tsx
+Copy
+Edit
+const discount = quote.promo
+  ? calculateDiscount(quote.subtotal, quote.promo)
+  : 0;
+const total = quote.subtotal - discount;
+Routing helper
+
+tsx
+Copy
+Edit
+// when user lands on any route
+const params = new URLSearchParams(location.search);
+if (params.has('promo')) hydratePromo(params.get('promo'));
+After this slice ships ✅
+Claim button in patient portal is trivial (it just binds the existing quote to the authed user).
+
+Analytics: add a Mixpanel event in the same places you already call useValidatePromo.
+
+Admin panel: CRUD for the promos table can be a separate sprint once marketing sees the flow live.
+
+Action for the Replit agent
+
+“Implement the Homepage-to-Results promo slice as outlined above. Start in branch feat/promo-ui. Priorities: PromoCard, Ribbon, validate hook, discount math in /quotes/from-promo, results highlighting, and session persistence. Write Jest tests for discount calculation and promo validation.”
