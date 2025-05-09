@@ -1,147 +1,96 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+import ReactCanvasConfetti from 'react-canvas-confetti';
 
 interface ConfettiProps {
-  active: boolean;
+  run: boolean;
+  onComplete?: () => void;
   duration?: number;
+  className?: string;
 }
 
-const Confetti: React.FC<ConfettiProps> = ({ active, duration = 5000 }) => {
-  const [particles, setParticles] = useState<JSX.Element[]>([]);
-  const [isActive, setIsActive] = useState(active);
+const Confetti: React.FC<ConfettiProps> = ({ 
+  run, 
+  onComplete, 
+  duration = 3000, 
+  className = '' 
+}) => {
+  const refAnimationInstance = useRef<CreateTypes | null>(null);
+  const [isAnimating, setIsAnimating] = React.useState(false);
 
-  // Generate confetti particles
+  const getInstance = useCallback((instance: CreateTypes | null) => {
+    refAnimationInstance.current = instance;
+  }, []);
+
+  // Start animation when run prop changes to true
   useEffect(() => {
-    if (!active) {
-      setIsActive(false);
-      return;
-    }
-
-    setIsActive(true);
+    if (!run || isAnimating) return;
     
-    // Create confetti particles
-    const colors = ['#FFC700', '#FF0066', '#2EC4B6', '#011627', '#FDFFFC', '#5BC0EB', '#9BC53D'];
-    const shapes = ['circle', 'square', 'triangle'];
-    
-    const newParticles: JSX.Element[] = [];
-    const particleCount = 150;
-    
-    for (let i = 0; i < particleCount; i++) {
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const shape = shapes[Math.floor(Math.random() * shapes.length)];
-      const left = `${Math.random() * 100}%`;
-      const top = `${Math.random() * 100}%`;
-      const size = `${Math.random() * 1 + 0.5}rem`;
-      const animationDuration = `${Math.random() * 3 + 2}s`;
-      const animationDelay = `${Math.random() * 0.5}s`;
-      const rotation = `${Math.random() * 360}deg`;
+    if (refAnimationInstance.current) {
+      setIsAnimating(true);
+      fire();
       
-      let shapeElement;
-      if (shape === 'circle') {
-        shapeElement = (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left,
-              top,
-              width: size,
-              height: size,
-              backgroundColor: color,
-              borderRadius: '50%',
-              transform: `rotate(${rotation})`,
-              animation: `fall ${animationDuration} ease-in forwards`,
-              animationDelay,
-              opacity: 0,
-            }}
-          />
-        );
-      } else if (shape === 'square') {
-        shapeElement = (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left,
-              top,
-              width: size,
-              height: size,
-              backgroundColor: color,
-              transform: `rotate(${rotation})`,
-              animation: `fall ${animationDuration} ease-in forwards`,
-              animationDelay,
-              opacity: 0,
-            }}
-          />
-        );
-      } else {
-        shapeElement = (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left,
-              top,
-              width: 0,
-              height: 0,
-              borderLeft: size,
-              borderRight: size,
-              borderBottom: size,
-              borderLeftColor: 'transparent',
-              borderRightColor: 'transparent',
-              borderBottomColor: color,
-              transform: `rotate(${rotation})`,
-              animation: `fall ${animationDuration} ease-in forwards`,
-              animationDelay,
-              opacity: 0,
-            }}
-          />
-        );
+      // Set a timeout to stop the animation
+      const timer = setTimeout(() => {
+        stop();
+        setIsAnimating(false);
+        if (onComplete) onComplete();
+      }, duration);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [run, duration, onComplete, isAnimating]);
+
+  const fire = useCallback(() => {
+    if (!refAnimationInstance.current) return;
+    
+    refAnimationInstance.current({
+      spread: 70,
+      startVelocity: 30,
+      particleCount: 150,
+      origin: { y: 0.6 }
+    });
+
+    // Add continuous animation
+    const interval = setInterval(() => {
+      if (!refAnimationInstance.current) {
+        clearInterval(interval);
+        return;
       }
       
-      newParticles.push(shapeElement);
-    }
-    
-    setParticles(newParticles);
-    
-    // Auto-cleanup after duration
-    const timer = setTimeout(() => {
-      setIsActive(false);
-    }, duration);
-    
-    return () => clearTimeout(timer);
-  }, [active, duration]);
-  
-  if (!isActive) return null;
-  
+      refAnimationInstance.current({
+        spread: 70,
+        startVelocity: 30,
+        particleCount: 50,
+        origin: { x: Math.random(), y: Math.random() - 0.2 }
+      });
+    }, 400);
+
+    // Clear interval after duration
+    setTimeout(() => clearInterval(interval), duration - 500);
+  }, [duration]);
+
+  const stop = useCallback(() => {
+    if (!refAnimationInstance.current) return;
+    refAnimationInstance.current.reset();
+  }, []);
+
+  // Custom canvas styles
+  const canvasStyles: React.CSSProperties = {
+    position: 'fixed',
+    pointerEvents: 'none',
+    width: '100%',
+    height: '100%',
+    top: 0,
+    left: 0,
+    zIndex: 999
+  };
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        zIndex: 9999,
-        overflow: 'hidden',
-      }}
-    >
-      <style>
-        {`
-          @keyframes fall {
-            0% {
-              transform: translateY(-10vh) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(100vh) rotate(360deg);
-              opacity: 0;
-            }
-          }
-        `}
-      </style>
-      {particles}
-    </div>
+    <ReactCanvasConfetti
+      refConfetti={getInstance}
+      style={canvasStyles}
+      className={className}
+    />
   );
 };
 
