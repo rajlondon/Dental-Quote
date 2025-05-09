@@ -97,7 +97,13 @@ setInterval(() => {
   });
 }, 5 * 60 * 1000); // Check every 5 minutes
 
+// Import the API routes
+import apiRouter from './routes/api';
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // API Routes
+  app.use('/api', apiRouter);
+  
   // Serve the public directory for static files like translations and images
   app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
   app.use('/images', express.static(path.join(__dirname, '../public/images')));
