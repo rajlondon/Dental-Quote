@@ -3,6 +3,7 @@ import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/use-toast";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { NotificationsProvider } from "@/hooks/use-notifications";
@@ -544,11 +545,41 @@ function Router() {
       
       {/* Direct clinic portal access route - bypasses the standard guard */}
       <Route path="/clinic-direct">
-        {() => (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic portal...</div>}>
-            <ClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
-          </React.Suspense>
-        )}
+        {() => {
+          const { toast } = useToast();
+          
+          // Use an effect to detect WebSocket issues
+          useEffect(() => {
+            const checkWebSocketConnection = () => {
+              const wsConnected = sessionStorage.getItem('clinic_websocket_connected');
+              
+              if (wsConnected === 'false') {
+                console.log('WebSocket connection failed - showing notification');
+                toast({
+                  title: 'Connection Status',
+                  description: 'Limited connection to real-time updates. Refresh if you need immediate data updates.',
+                  variant: 'default',
+                  duration: 5000
+                });
+              }
+            };
+            
+            // Check after 5 seconds to see if WebSocket connected
+            const timer = setTimeout(checkWebSocketConnection, 5000);
+            return () => clearTimeout(timer);
+          }, [toast]);
+          
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">
+              <div className="flex flex-col items-center gap-3">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                <p className="text-sm">Loading clinic portal...</p>
+              </div>
+            </div>}>
+              <ClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
+            </React.Suspense>
+          );
+        }}
       </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />

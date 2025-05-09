@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
+import useWebSocket, { WebSocketMessage } from "@/hooks/use-websocket";
 import {
   Select,
   SelectContent,
@@ -234,7 +235,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     };
   }, [user]);
   
-  // Import the useWebSocket hook from our new implementation
+  // Import and use the WebSocket hook for real-time updates
   const { isConnected, disconnect } = useWebSocket({
     onOpen: () => {
       console.log('WebSocket connected for clinic portal');
@@ -246,10 +247,10 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       // Store disconnection in session
       sessionStorage.setItem('clinic_websocket_connected', 'false');
     },
-    onError: (error) => {
+    onError: (error: Event) => {
       console.error('WebSocket error in clinic portal:', error);
     },
-    onMessage: (message) => {
+    onMessage: (message: WebSocketMessage) => {
       console.log('WebSocket message received in clinic portal:', message);
       // Handle specific message types
       if (message.type === 'notification') {
