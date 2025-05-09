@@ -1600,8 +1600,7 @@ const YourQuotePage: React.FC = () => {
       // Set this as the active promo in the store if not already set
       // The store is persisted in sessionStorage so it will survive page refreshes
       if (activePromoSlug !== promoSlugFromUrl) {
-        // Import methods from usePromoStore to set the active slug
-        const { setPromoSlug } = usePromoStore.getState();
+        // Use setPromoSlug from our component-level variable that we declared earlier
         setPromoSlug(promoSlugFromUrl);
         
         // Set flow as promo_token type for consistency

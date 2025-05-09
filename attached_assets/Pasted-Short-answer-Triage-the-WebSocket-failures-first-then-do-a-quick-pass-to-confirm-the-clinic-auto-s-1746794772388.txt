@@ -1,0 +1,99 @@
+Short answer:
+Triage the WebSocket failures first, then do a quick pass to confirm the clinic-auto-selection. Broken sockets can cripple messaging and real-time UI across every portal, whereas the promo flow now looks functional and just needs validation tests.
+
+Why prioritise WebSockets?
+Impact area	Effect if WS is flaky
+Patient ↔ Clinic messaging	Chats won’t appear, leading to confused clients.
+Admin oversight	No live ticket updates; SLA metrics break.
+Quote status events	Real-time treatment-plan edits or payment confirmations may never reach users.
+
+A mis-routed promo hurts conversion, but a dead socket kills trust.
+
+Quick-hit WS debug plan (≈1-2 hrs)
+Replicate locally
+REPLIT_WS_DEBUG=1 pnpm dev → watch terminal for:
+“WebSocket is closed before the connection is established”
+or Replit’s proxy 400/502.
+
+Check server initialisation
+
+ts
+Copy
+Edit
+import { Server } from "socket.io";
+const io = new Server(httpServer, {
+  path: "/socket.io",
+  cors: { origin: process.env.FRONTEND_URL, credentials: true }
+});
+Common slip: Replit rewrites ports; ensure you pass the actual httpServer you feed Express.
+
+Health endpoint
+Add
+
+ts
+Copy
+Edit
+app.get("/ws-health", (_, res) =>
+  res.json({ clients: io.engine.clientsCount })
+);
+so you can call it from the browser; 0 clients = handshake never completed.
+
+Client-side config
+
+ts
+Copy
+Edit
+const socket = io(import.meta.env.VITE_WS_URL, {
+  path: "/socket.io",
+  transports: ["websocket"],        // skip polling
+  autoConnect: false,
+});
+socket.on("connect_error", console.error);
+socket.connect();
+TLS / wss:// on prod
+Replit’s reverse proxy terminates TLS. Use
+
+ts
+Copy
+Edit
+const WS =
+  window.location.protocol === "https:"
+    ? "wss://" + window.location.host
+    : "ws://" + window.location.hostname + ":3000";
+Heartbeat
+If you see disconnects every 20-30 s, raise pingTimeout on the server or add client-side socket.io-client pingInterval.
+
+✅ Once /ws-health shows clients > 0 and you can echo a “ping” event both ways, the foundation is fixed.
+
+Then: validate clinic auto-selection
+E2E test (Cypress or Playwright)
+
+js
+Copy
+Edit
+it("auto-selects promo clinic", () => {
+  cy.visit("/?promo=SPRING_SMILE");
+  cy.get("button").contains("Get Your Quote").click();
+  cy.get("[data-cy=ribbon]").should("contain", "Spring Smile");
+  cy.completeQuizMock();           // your helper
+  cy.url().should("include", "/results");
+  cy.get(".clinic-card").first().should("contain", "Promo");
+});
+Manual sanity (5 min)
+
+Home → promo click → ribbon visible → run quiz → results pinned.
+
+Repeat without promo param → no ribbon, default sort.
+
+Suggested workflow for the Replit agent
+text
+Copy
+Edit
+1. Fix WebSocket handshake issues (steps 1-5 above) on branch feat/ws-fix.
+2. Add /ws-health endpoint + basic ping test.
+3. Merge to develop, redeploy, smoke-test.
+4. Switch to branch feat/promo-autoselect-tests.
+   • Add Cypress e2e for promo clinic selection.
+   • Create stub API to bypass quiz for faster test runs.
+5. Commit & push.
+Once sockets stay green for 24 h and the e2e test passes in CI, jump back to finishing touches (analytics events, admin promo CRUD).
