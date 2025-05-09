@@ -55,7 +55,7 @@ export class PromoService {
       if (promoItemsWithId.length > 0) {
         await db
           .insert(promoItems)
-          .values(promoItemsWithId);
+          .values(promoItemsWithId as any);
       }
     }
 
