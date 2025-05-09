@@ -1,73 +1,74 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 
 interface QuoteFormFooterProps {
-  onNext?: () => void;
+  onContinue?: () => void;
   onBack?: () => void;
-  onSubmit?: () => void;
+  showBack?: boolean;
+  showContinue?: boolean;
+  continueText?: string;
+  backText?: string;
+  showHelp?: boolean;
+  disabled?: boolean;
   isLoading?: boolean;
-  isLastStep?: boolean;
-  isFirstStep?: boolean;
-  nextLabel?: string;
-  backLabel?: string;
-  submitLabel?: string;
   className?: string;
 }
 
+/**
+ * A consistent footer component for quote forms with back/continue buttons
+ */
 const QuoteFormFooter: React.FC<QuoteFormFooterProps> = ({
-  onNext,
+  onContinue,
   onBack,
-  onSubmit,
+  showBack = true,
+  showContinue = true,
+  continueText = 'Continue',
+  backText = 'Back',
+  showHelp = true,
+  disabled = false,
   isLoading = false,
-  isLastStep = false,
-  isFirstStep = false,
-  nextLabel = 'Next',
-  backLabel = 'Back',
-  submitLabel = 'Submit Quote',
-  className = ''
+  className = '',
 }) => {
   return (
-    <div className={`flex justify-between mt-6 pt-4 border-t ${className}`}>
-      <div>
-        {!isFirstStep && onBack && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            disabled={isLoading}
+    <div className={`flex justify-between items-center mt-6 w-full ${className}`}>
+      <div className="flex items-center">
+        {showBack && (
+          <Button 
+            variant="outline" 
+            onClick={onBack} 
+            disabled={disabled || isLoading}
+            className="mr-3"
           >
-            {backLabel}
+            {backText}
           </Button>
+        )}
+        
+        {showHelp && (
+          <Link 
+            to="/help/quote" 
+            className="text-sm text-muted-foreground ml-2 hover:underline"
+          >
+            Need help?
+          </Link>
         )}
       </div>
       
-      <div>
-        {isLastStep ? (
-          <Button
-            type="submit"
-            onClick={onSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              submitLabel
-            )}
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={onNext}
-            disabled={isLoading}
-          >
-            {nextLabel}
-          </Button>
-        )}
-      </div>
+      {showContinue && (
+        <Button 
+          onClick={onContinue} 
+          disabled={disabled || isLoading}
+          className="flex items-center"
+        >
+          {continueText}
+          {isLoading ? (
+            <span className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+          ) : (
+            <CheckCircle2 className="ml-2 h-4 w-4" />
+          )}
+        </Button>
+      )}
     </div>
   );
 };

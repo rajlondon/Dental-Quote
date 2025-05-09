@@ -1,176 +1,182 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Smile, Check, Clock, Info } from 'lucide-react';
-
-interface TreatmentItem {
-  treatmentType: string;
-  name: string;
-  quantity: number;
-  priceGBP: number;
-  priceUSD: number;
-  subtotalGBP: number;
-  subtotalUSD: number;
-  guarantee: string;
-  isBonus?: boolean;
-  isLocked?: boolean;
-  isSpecialOffer?: boolean;
-  packageId?: string;
-  specialOffer?: {
-    id: string;
-    title: string;
-    discountType: string;
-    discountValue: number;
-    clinicId: string;
-  };
-}
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, AlertCircle, Clock, ShieldCheck } from 'lucide-react';
 
 interface TreatmentPlanCardProps {
-  treatments: TreatmentItem[];
+  treatment: {
+    id: string;
+    name: string;
+    treatmentType: string;
+    quantity: number;
+    priceGBP: number;
+    priceUSD: number;
+    guarantee?: string;
+    isBonus?: boolean;
+    isLocked?: boolean;
+    isSpecialOffer?: boolean;
+    originalPriceGBP?: number;
+    originalPriceUSD?: number;
+    discountPercent?: number;
+  };
   currency?: 'GBP' | 'USD';
-  discountAmount?: number;
-  discountType?: 'percentage' | 'fixed_amount';
-  title?: string;
-  description?: string;
+  showDiscount?: boolean;
+  onRemove?: (id: string) => void;
+  onQuantityChange?: (id: string, quantity: number) => void;
   className?: string;
-  onEdit?: () => void;
-  readOnly?: boolean;
 }
 
+/**
+ * A card component for displaying a treatment in the treatment plan
+ */
 const TreatmentPlanCard: React.FC<TreatmentPlanCardProps> = ({
-  treatments,
+  treatment,
   currency = 'GBP',
-  discountAmount = 0,
-  discountType = 'percentage',
-  title = 'Your Treatment Plan',
-  description = 'Summary of your selected dental treatments',
+  showDiscount = true,
+  onRemove,
+  onQuantityChange,
   className = '',
-  onEdit,
-  readOnly = false
 }) => {
-  // Calculate totals
-  const subtotal = treatments.reduce((sum, item) => 
-    sum + (currency === 'GBP' ? item.subtotalGBP : item.subtotalUSD), 0);
-  
-  const discountValue = discountType === 'percentage' 
-    ? (subtotal * discountAmount / 100) 
-    : discountAmount;
-    
-  const total = subtotal - discountValue;
+  const {
+    id,
+    name,
+    treatmentType,
+    quantity,
+    priceGBP,
+    priceUSD,
+    guarantee,
+    isBonus,
+    isLocked,
+    isSpecialOffer,
+    originalPriceGBP,
+    originalPriceUSD,
+    discountPercent,
+  } = treatment;
+
+  const price = currency === 'GBP' ? priceGBP : priceUSD;
+  const originalPrice = currency === 'GBP' ? originalPriceGBP : originalPriceUSD;
+  const subtotal = price * quantity;
   
   const currencySymbol = currency === 'GBP' ? '£' : '$';
-  
-  // Count bonus items
-  const bonusItemsCount = treatments.filter(t => t.isBonus).length;
-  
+
+  const handleRemove = () => {
+    if (onRemove && !isLocked) {
+      onRemove(id);
+    }
+  };
+
+  const handleIncrement = () => {
+    if (onQuantityChange && !isLocked) {
+      onQuantityChange(id, quantity + 1);
+    }
+  };
+
+  const handleDecrement = () => {
+    if (onQuantityChange && !isLocked && quantity > 1) {
+      onQuantityChange(id, quantity - 1);
+    }
+  };
+
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
+    <Card className={`w-full transition-all duration-200 ${className}`}>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <CardTitle className="text-base font-medium">{name}</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">{treatmentType}</p>
+            
+            <div className="flex flex-wrap gap-1 mt-2">
+              {isBonus && (
+                <Badge variant="secondary" className="text-xs flex items-center">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Bonus
+                </Badge>
+              )}
+              {isSpecialOffer && (
+                <Badge variant="destructive" className="text-xs flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Special Offer
+                </Badge>
+              )}
+              {isLocked && (
+                <Badge variant="outline" className="text-xs flex items-center">
+                  <ShieldCheck className="h-3 w-3 mr-1" />
+                  Package
+                </Badge>
+              )}
+              {guarantee && (
+                <Badge variant="outline" className="text-xs flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {guarantee} Guarantee
+                </Badge>
+              )}
+            </div>
           </div>
-          {!readOnly && onEdit && (
-            <Button variant="outline" size="sm" onClick={onEdit}>
-              Edit Plan
-            </Button>
-          )}
+          
+          <div className="text-right">
+            <div className="flex flex-col items-end">
+              {showDiscount && originalPrice && originalPrice > price && (
+                <span className="text-sm line-through text-muted-foreground">
+                  {currencySymbol}{originalPrice.toFixed(2)}
+                </span>
+              )}
+              <span className="text-base font-semibold">
+                {currencySymbol}{price.toFixed(2)}
+              </span>
+              {discountPercent && showDiscount && (
+                <Badge variant="outline" className="mt-1 bg-green-50">
+                  Save {discountPercent}%
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
       </CardHeader>
-      <CardContent>
-        {bonusItemsCount > 0 && (
-          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md flex items-center gap-2">
-            <Smile className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <p className="text-sm text-green-800 dark:text-green-400">
-              Your plan includes {bonusItemsCount} bonus {bonusItemsCount === 1 ? 'item' : 'items'} from special offers!
-            </p>
-          </div>
-        )}
-        
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Treatment</TableHead>
-              <TableHead className="w-20 text-right">Qty</TableHead>
-              <TableHead className="w-28 text-right">Price</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {treatments.map((treatment, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">
-                  <div className="flex flex-col">
-                    <span>{treatment.name}</span>
-                    <div className="flex gap-1 mt-1">
-                      {treatment.isBonus && (
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                          Bonus
-                        </Badge>
-                      )}
-                      {treatment.isSpecialOffer && (
-                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                          Special Offer
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">{treatment.quantity}</TableCell>
-                <TableCell className="text-right">
-                  {treatment.isBonus ? (
-                    <span className="text-green-600 font-medium">Free</span>
-                  ) : (
-                    <span>
-                      {currencySymbol}{currency === 'GBP' 
-                        ? treatment.subtotalGBP.toFixed(2) 
-                        : treatment.subtotalUSD.toFixed(2)}
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span>{currencySymbol}{subtotal.toFixed(2)}</span>
+      
+      <CardContent className="py-2">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            {!isLocked && (
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="text-sm text-muted-foreground hover:text-destructive"
+              >
+                Remove
+              </button>
+            )}
           </div>
           
-          {discountValue > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-1">
-                Discount
-                {discountType === 'percentage' && (
-                  <span className="text-green-600">({discountAmount}%)</span>
-                )}
+          <div className="flex items-center">
+            <span className="text-sm mr-2">Qty:</span>
+            {isLocked ? (
+              <span className="px-2 py-1 border rounded-md min-w-[40px] text-center">
+                {quantity}
               </span>
-              <span className="text-green-600">-{currencySymbol}{discountValue.toFixed(2)}</span>
-            </div>
-          )}
-          
-          <div className="flex justify-between font-medium pt-2 border-t">
-            <span>Total</span>
-            <span>{currencySymbol}{total.toFixed(2)}</span>
-          </div>
-        </div>
-        
-        <div className="mt-6 space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Check className="h-4 w-4 text-green-500" />
-            <span>High-quality dental care</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4 text-blue-500" />
-            <span>Quick appointment scheduling</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Info className="h-4 w-4 text-amber-500" />
-            <span>Free initial consultation</span>
+            ) : (
+              <div className="flex items-center border rounded-md">
+                <button
+                  type="button"
+                  onClick={handleDecrement}
+                  disabled={quantity <= 1}
+                  className="px-2 py-1 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  -
+                </button>
+                <span className="px-2 min-w-[20px] text-center">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={handleIncrement}
+                  className="px-2 py-1 hover:bg-gray-100"
+                >
+                  +
+                </button>
+              </div>
+            )}
+            
+            <span className="ml-4 font-semibold">
+              {currencySymbol}{subtotal.toFixed(2)}
+            </span>
           </div>
         </div>
       </CardContent>

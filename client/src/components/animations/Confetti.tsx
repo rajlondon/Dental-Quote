@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactCanvasConfetti from 'react-canvas-confetti';
 
 interface ConfettiProps {
@@ -8,16 +8,37 @@ interface ConfettiProps {
   className?: string;
 }
 
+type CreateConfetti = (options: {
+  particleCount?: number;
+  angle?: number;
+  spread?: number;
+  startVelocity?: number;
+  decay?: number;
+  gravity?: number;
+  drift?: number;
+  ticks?: number;
+  origin?: {
+    x?: number;
+    y?: number;
+  };
+  colors?: string[];
+  shapes?: string[];
+  scalar?: number;
+  zIndex?: number;
+  disableForReducedMotion?: boolean;
+  [key: string]: any;
+}) => void;
+
 const Confetti: React.FC<ConfettiProps> = ({ 
   run, 
   onComplete, 
   duration = 3000, 
   className = '' 
 }) => {
-  const refAnimationInstance = useRef<CreateTypes | null>(null);
-  const [isAnimating, setIsAnimating] = React.useState(false);
+  const refAnimationInstance = useRef<CreateConfetti | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const getInstance = useCallback((instance: CreateTypes | null) => {
+  const getInstance = useCallback((instance: CreateConfetti | null) => {
     refAnimationInstance.current = instance;
   }, []);
 
@@ -71,7 +92,8 @@ const Confetti: React.FC<ConfettiProps> = ({
 
   const stop = useCallback(() => {
     if (!refAnimationInstance.current) return;
-    refAnimationInstance.current.reset();
+    // Using any here because reset is not properly typed but exists in the library
+    (refAnimationInstance.current as any).reset();
   }, []);
 
   // Custom canvas styles
@@ -87,6 +109,7 @@ const Confetti: React.FC<ConfettiProps> = ({
 
   return (
     <ReactCanvasConfetti
+      // @ts-ignore - refConfetti exists in the library but has type issues
       refConfetti={getInstance}
       style={canvasStyles}
       className={className}
