@@ -12,230 +12,168 @@ const useSearchParams = () => {
   return [searchParams];
 };
 
-interface SpecialOfferParams {
+// Define special offer data interface for better type safety
+interface SpecialOfferData {
   id: string;
-  title: string;
   clinicId: string;
+  title: string;
   discountValue: number;
   discountType: 'percentage' | 'fixed_amount';
-  applicableTreatment: string;
+  description?: string;
 }
 
 interface UseSpecialOfferDetectionProps {
   source?: string;
   setSource?: (source: string) => void;
-  offerId?: string;
-  setOfferId?: (id: string) => void;
+  promoId?: string;
+  setPromoId?: (id: string) => void;
   clinicId?: string;
   setClinicId?: (id: string) => void;
-  isSpecialOfferFlow?: boolean;
+  isPromoFlow?: boolean;
 }
 
 export function useSpecialOfferDetection({
   source,
   setSource,
-  offerId,
-  setOfferId,
+  promoId,
+  setPromoId,
   clinicId,
   setClinicId,
-  isSpecialOfferFlow
+  isPromoFlow
 }: UseSpecialOfferDetectionProps = {}) {
   const [searchParams] = useSearchParams();
-  const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(null);
+  const [offerData, setOfferData] = useState<SpecialOfferData | null>(null);
 
   // Run this effect once on component mount
   useEffect(() => {
-    console.log("Initializing special offer detection with URL params:", window.location.search);
+    console.log("Initializing special offer data from all possible sources");
     
-    // First check URL parameters - look for both offerId and specialOffer parameters
-    const offerIdFromUrl = searchParams.get('offerId') || searchParams.get('specialOffer');
-    console.log("Special offer ID from URL:", offerIdFromUrl, 
-      "offerId param:", searchParams.get('offerId'),
-      "specialOffer param:", searchParams.get('specialOffer'));
+    // First check URL parameters for promoId and offer JSON params
+    const promoIdFromUrl = searchParams.get('promoId');
+    const offerJsonFromUrl = searchParams.get('offer');
     
-    // Log all URL parameters for debugging
-    const urlParams: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      urlParams[key] = value;
+    console.log("Special offer info from URL:", {
+      promoId: promoIdFromUrl,
+      offerJsonExists: !!offerJsonFromUrl,
+      clinicId: searchParams.get('clinicId'),
+      source: searchParams.get('source')
     });
-    console.log("All URL parameters for debugging:", urlParams);
     
-    // NEW: First check QuoteFlowContext - if we have offerId there, use it
-    const quoteFlowOfferId = offerId || searchParams.get('offerId');
-    console.log("Quote flow offerId:", quoteFlowOfferId, "isSpecialOfferFlow:", isSpecialOfferFlow);
-    
-    // If source=special_offer is already set in QuoteFlowContext, prioritize that
-    if (source === 'special_offer' && quoteFlowOfferId) {
-      console.log("Using special offer from QuoteFlowContext:", quoteFlowOfferId);
-      
-      // Check for corresponding sessionStorage data
-      const storedActiveOffer = sessionStorage.getItem('activeSpecialOffer');
-      if (storedActiveOffer) {
-        try {
-          const offerData = JSON.parse(storedActiveOffer);
-          console.log("Found matching activeSpecialOffer in sessionStorage:", offerData);
-          
-          if (offerData.id === quoteFlowOfferId) {
-            setSpecialOffer({
-              id: offerData.id,
-              title: offerData.title,
-              clinicId: offerData.clinicId || clinicId || '1',
-              discountValue: offerData.discountValue || offerData.discount_value || 0,
-              discountType: offerData.discountType || offerData.discount_type || 'percentage',
-              applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
-            });
-            return;
-          }
-        } catch (error) {
-          console.error("Error parsing activeSpecialOffer from sessionStorage:", error);
-        }
+    // Try to read offer from special "offer" JSON parameter first
+    if (offerJsonFromUrl) {
+      try {
+        // The 'offer' parameter contains a JSON string with complete offer details
+        const offerInfo = JSON.parse(decodeURIComponent(offerJsonFromUrl));
+        console.log("Successfully parsed offer JSON from URL param:", offerInfo);
+        
+        // Save it to multiple storages for maximum availability
+        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerInfo));
+        sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerInfo));
+        localStorage.setItem('selectedSpecialOffer', JSON.stringify(offerInfo));
+        
+        setOfferData(offerInfo);
+        return;
+      } catch (error) {
+        console.error("Error parsing offer JSON from URL:", error);
       }
     }
     
-    // If there's a special offer ID in the URL parameters, create a special offer object
-    if (offerIdFromUrl) {
-      console.log("Special offer parameters found in URL:");
-      console.log("- Title:", searchParams.get('offerTitle'));
-      console.log("- Clinic ID:", searchParams.get('clinicId') || searchParams.get('offerClinic'));
-      console.log("- Discount Value:", searchParams.get('offerDiscount'));
-      console.log("- Discount Type:", searchParams.get('offerDiscountType'));
-      console.log("- Treatment:", searchParams.get('treatment'));
+    // If there's a promo ID in the URL parameters, create an offer object
+    if (promoIdFromUrl) {
+      console.log("Promo parameters found in URL parameters:");
+      console.log("- Promo ID:", promoIdFromUrl);
+      console.log("- Clinic ID:", searchParams.get('clinicId'));
+      console.log("- Promo Title:", searchParams.get('promoTitle'));
       
-      // Ensure consistent parameter parsing with proper error handling
-      let discountValue = 0;
-      try {
-        const discountStr = searchParams.get('offerDiscount');
-        if (discountStr) {
-          discountValue = parseInt(discountStr);
-          if (isNaN(discountValue)) {
-            console.warn(`Invalid discount value "${discountStr}", defaulting to 0`);
-            discountValue = 0;
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing discount value:", e);
-      }
-      
-      // Ensure we have the correct discount type (percentage or fixed_amount)
-      const rawDiscountType = searchParams.get('offerDiscountType') || 'percentage';
-      const discountType = (rawDiscountType === 'fixed' || rawDiscountType === 'fixed_amount') 
-        ? 'fixed_amount' 
-        : 'percentage';
-      
-      const offerData = {
-        id: offerIdFromUrl,
-        title: searchParams.get('offerTitle') || 'Special Offer',
-        clinicId: searchParams.get('clinicId') || searchParams.get('offerClinic') || '',
-        discountValue,
-        discountType: discountType as 'percentage' | 'fixed_amount',
-        applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
+      const offerInfo = {
+        id: promoIdFromUrl,
+        clinicId: searchParams.get('clinicId') || '',
+        title: searchParams.get('promoTitle') || 'Special Offer',
+        discountValue: parseFloat(searchParams.get('discountValue') || '0'),
+        discountType: (searchParams.get('discountType') as 'percentage' | 'fixed_amount') || 'percentage'
       };
       
-      console.log("Created special offer data from URL params:", offerData);
+      console.log("Created offer data from URL params:", offerInfo);
       
-      // Update both storage locations for maximum reliability
-      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
+      // Save to multiple storage locations for redundancy
+      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerInfo));
+      localStorage.setItem('selectedSpecialOffer', JSON.stringify(offerInfo));
       
-      // Also set the QuoteFlowContext values
-      if (setSource && source !== 'special_offer') {
-        setSource('special_offer');
-      }
-      if (setOfferId && !offerId) {
-        setOfferId(offerIdFromUrl);
-      }
-      if (setClinicId && !clinicId && offerData.clinicId) {
-        setClinicId(offerData.clinicId);
-      }
-      
-      setSpecialOffer(offerData);
+      setOfferData(offerInfo);
       return;
     }
     
-    // If not in URL, check sessionStorage
-    const storedOffer = sessionStorage.getItem('activeSpecialOffer');
-    if (storedOffer) {
+    // If not in URL, check localStorage first (most recent)
+    const storedOfferLS = localStorage.getItem('selectedSpecialOffer');
+    if (storedOfferLS) {
       try {
-        const offerData = JSON.parse(storedOffer);
-        console.log("Retrieved special offer from sessionStorage:", offerData);
+        const offerInfo = JSON.parse(storedOfferLS);
+        console.log("Retrieved offer from localStorage:", offerInfo);
         
-        // Ensure QuoteFlowContext is updated with these values
-        if (setSource && source !== 'special_offer') {
-          setSource('special_offer');
-        }
-        if (setOfferId && !offerId) {
-          setOfferId(offerData.id);
-        }
-        if (setClinicId && !clinicId && offerData.clinicId) {
-          setClinicId(offerData.clinicId);
-        }
+        // Sync it to sessionStorage as well
+        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerInfo));
         
-        setSpecialOffer({
-          id: offerData.id,
-          title: offerData.title,
-          clinicId: offerData.clinicId || clinicId || '1',
-          discountValue: offerData.discountValue || offerData.discount_value || 0,
-          discountType: offerData.discountType || offerData.discount_type || 'percentage',
-          applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
-        });
+        setOfferData(offerInfo);
         return;
       } catch (error) {
-        console.error("Error parsing special offer from sessionStorage:", error);
+        console.error("Error parsing offer from localStorage:", error);
       }
     }
     
-    // Also check for pendingSpecialOffer which may happen when redirected after login
+    // Then check sessionStorage
+    const storedOffer = sessionStorage.getItem('activeSpecialOffer');
+    if (storedOffer) {
+      try {
+        const offerInfo = JSON.parse(storedOffer);
+        console.log("Retrieved offer from sessionStorage:", offerInfo);
+        setOfferData(offerInfo);
+        return;
+      } catch (error) {
+        console.error("Error parsing offer from sessionStorage:", error);
+      }
+    }
+    
+    // Also check for pendingOffer which may happen when redirected after login
     const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
     if (pendingOfferData) {
       try {
-        const offerData = JSON.parse(pendingOfferData);
-        console.log("Found pendingSpecialOffer in sessionStorage:", offerData);
-        
-        // Ensure QuoteFlowContext is updated with these values
-        if (setSource && source !== 'special_offer') {
-          setSource('special_offer');
-        }
-        if (setOfferId && !offerId) {
-          setOfferId(offerData.id);
-        }
-        if (setClinicId && !clinicId && offerData.clinicId) {
-          setClinicId(offerData.clinicId);
-        }
+        const offerInfo = JSON.parse(pendingOfferData);
+        console.log("Found pendingSpecialOffer in sessionStorage:", offerInfo);
         
         // Convert to the right format
         const formattedOffer = {
-          id: offerData.id,
-          title: offerData.title,
-          clinicId: offerData.clinicId || offerData.clinic_id || '',
-          discountValue: offerData.discountValue || offerData.discount_value || 0,
-          discountType: (offerData.discountType || offerData.discount_type || 'percentage') as 'percentage' | 'fixed_amount',
-          applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
+          id: offerInfo.id,
+          title: offerInfo.title || offerInfo.name || 'Special Offer',
+          clinicId: offerInfo.clinicId || '',
+          discountValue: offerInfo.discountValue || 0,
+          discountType: offerInfo.discountType || 'percentage'
         };
         
-        // Now that we've processed it, clear it
-        sessionStorage.removeItem('pendingSpecialOffer');
-        
-        // But save it to activeSpecialOffer for future persistence
+        // Store it to other locations but don't remove yet
         sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
+        localStorage.setItem('selectedSpecialOffer', JSON.stringify(formattedOffer));
         
         console.log("Converted pendingSpecialOffer to activeSpecialOffer:", formattedOffer);
-        setSpecialOffer(formattedOffer);
+        setOfferData(formattedOffer);
         return;
       } catch (error) {
         console.error("Error parsing pendingSpecialOffer from sessionStorage:", error);
       }
     }
     
+    // If we've reached here, we don't have offer data
+    console.log("No special offer data found in any source");
+    
   }, [
     searchParams, 
     source, 
-    offerId, 
+    promoId, 
     clinicId, 
-    isSpecialOfferFlow, 
-    setSource, 
-    setOfferId, 
+    isPromoFlow,
+    setSource,
+    setPromoId,
     setClinicId
   ]);
 
-  return { specialOffer, setSpecialOffer };
+  return { offerData, setOfferData };
 }

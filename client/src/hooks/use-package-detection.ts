@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'wouter';
+
+// Custom hook to parse search params from the URL
+const useSearchParams = () => {
+  const getParams = () => {
+    if (typeof window === 'undefined') return new URLSearchParams();
+    return new URLSearchParams(window.location.search);
+  };
+  
+  const [searchParams] = useState(getParams());
+  
+  return [searchParams];
+};
 
 // Define package data interface for better type safety
 interface PackageData {

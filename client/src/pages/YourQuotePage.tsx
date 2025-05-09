@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, Link, useSearchParams } from 'wouter';
+import { useLocation, Link } from 'wouter';
+
+// Custom hook to parse search params from the URL
+const useSearchParams = () => {
+  const getParams = () => {
+    if (typeof window === 'undefined') return new URLSearchParams();
+    return new URLSearchParams(window.location.search);
+  };
+  
+  const [searchParams] = useState(getParams());
+  
+  return [searchParams];
+};
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
