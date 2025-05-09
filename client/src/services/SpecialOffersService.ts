@@ -1,178 +1,129 @@
-import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
+import { TreatmentItem } from "@/components/TreatmentPlanBuilder";
 
-// Define types for various special offer formats
-export type SpecialOfferType = 'percentage' | 'fixed_amount' | 'free_item' | 'package';
-
+// Types for special offers
 export interface SpecialOffer {
   id: string;
   title: string;
-  description?: string;
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
   clinicId: string;
   applicableTreatment?: string;
-  imageUrl?: string;
 }
 
-export interface PromotionalPackage {
+export interface Package {
   id: string;
   title: string;
-  description?: string;
+  price: number;
+  priceUSD: number;
+  treatments: string[];
   clinicId: string;
-  treatments: TreatmentItem[];
-  imageUrl?: string;
 }
 
 export interface PromoToken {
   token: string;
-  promoType: 'special_offer' | 'package';
-  offerId: string;
+  type: 'special_offer' | 'package';
+  title: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
   clinicId: string;
-  metadata?: Record<string, any>;
 }
 
-/**
- * Central service for managing special offers, packages, and promotional flows
- */
-export class SpecialOffersService {
-  /**
-   * Creates a special offer treatment item (£0.00 bonus item)
-   */
-  createSpecialOfferTreatment(
-    offer: SpecialOffer, 
-    basePriceGBP: number = 450, 
-    basePriceUSD: number = 580,
-    customName?: string
-  ): TreatmentItem {
+// Special Offers Service - A singleton service for handling special offers
+class SpecialOffersService {
+  private static instance: SpecialOffersService;
+  
+  // Private constructor to prevent direct instantiation
+  private constructor() {}
+  
+  // Get the singleton instance
+  public static getInstance(): SpecialOffersService {
+    if (!SpecialOffersService.instance) {
+      SpecialOffersService.instance = new SpecialOffersService();
+    }
+    return SpecialOffersService.instance;
+  }
+  
+  // Create a treatment item for a special offer
+  public createSpecialOfferTreatment(offer: SpecialOffer): TreatmentItem {
     return {
-      id: `special_offer_${Date.now()}`,
-      category: 'special_offer',
-      name: customName || `${offer.title || 'Special Offer'} - ${offer.applicableTreatment || 'Dental Treatment'}`,
+      id: `special-offer-${offer.id}`,
+      name: `${offer.title} - ${offer.discountType === 'percentage' ? 
+        `${offer.discountValue}% discount` : 
+        `£${offer.discountValue} discount`}`,
+      category: 'special-offers',
       quantity: 1,
-      priceGBP: 0,  // Special offers are £0.00 line items per tech spec
-      priceUSD: 0,  // Special offers are $0.00 line items per tech spec
+      priceGBP: 0,
+      priceUSD: 0,
       subtotalGBP: 0,
       subtotalUSD: 0,
-      guarantee: '5-year',
       isSpecialOffer: true,
-      isLocked: true, // Lock this treatment as it's part of a special offer
-      isBonus: true,  // Mark as bonus item per tech spec
-      basePriceGBP: basePriceGBP, // Store original price for display/reference
-      basePriceUSD: basePriceUSD, // Store original price for display/reference
-      hasDiscount: true, // Flag for UI rendering
-      discountPercent: offer.discountType === 'percentage' 
-        ? offer.discountValue 
-        : Math.round((offer.discountValue / basePriceGBP) * 100),
-      originalPrice: basePriceGBP, // For display purposes
-      discountedPrice: 0, // Always 0 for special offers
+      isBonus: true,
+      isLocked: true,
       specialOffer: {
         id: offer.id,
         title: offer.title,
         discountType: offer.discountType,
         discountValue: offer.discountValue,
         clinicId: offer.clinicId
-      }
+      },
+      ukPriceGBP: 0,
+      ukPriceUSD: 0
     };
   }
-
-  /**
-   * Creates a consultation item (free or paid)
-   */
-  createConsultationTreatment(
-    title: string = 'Free Consultation',
-    isFree: boolean = true,
-    basePriceGBP: number = 75,
-    basePriceUSD: number = 95,
-    offerId: string = 'free-consultation',
-    clinicId: string = '1'
+  
+  // Create a treatment item for a package
+  public createPackageTreatment(
+    title: string,
+    priceGBP: number,
+    priceUSD: number,
+    packageId: string
   ): TreatmentItem {
     return {
-      id: `consultation_${Date.now()}`,
-      category: 'consultation',
+      id: `package-${packageId}`,
       name: title,
-      quantity: 1,
-      priceGBP: isFree ? 0 : basePriceGBP, 
-      priceUSD: isFree ? 0 : basePriceUSD,
-      subtotalGBP: isFree ? 0 : basePriceGBP,
-      subtotalUSD: isFree ? 0 : basePriceUSD,
-      guarantee: '30-day',
-      isSpecialOffer: isFree,
-      isLocked: isFree,
-      isBonus: isFree,
-      basePriceGBP: basePriceGBP,
-      basePriceUSD: basePriceUSD,
-      hasDiscount: isFree,
-      discountPercent: isFree ? 100 : 0,
-      originalPrice: basePriceGBP,
-      discountedPrice: isFree ? 0 : basePriceGBP,
-      specialOffer: isFree ? {
-        id: offerId,
-        title: title,
-        discountType: 'percentage',
-        discountValue: 100,
-        clinicId: clinicId
-      } : undefined
-    };
-  }
-
-  /**
-   * Creates a package treatment item 
-   */
-  createPackageTreatment(
-    title: string = 'Treatment Package',
-    priceGBP: number = 1200,
-    priceUSD: number = 1550,
-    packageId: string = 'default-package'
-  ): TreatmentItem {
-    return {
-      id: `package_${Date.now()}`,
       category: 'packages',
-      name: title,
       quantity: 1,
       priceGBP: priceGBP,
       priceUSD: priceUSD,
       subtotalGBP: priceGBP,
       subtotalUSD: priceUSD,
-      guarantee: '5-year',
       isPackage: true,
       isLocked: true,
-      packageId: packageId
+      packageId: packageId,
+      ukPriceGBP: priceGBP * 2.857,
+      ukPriceUSD: priceUSD * 2.857
     };
   }
-
-  /**
-   * Creates a promo token treatment item
-   */
-  createPromoTokenTreatment(
+  
+  // Create a treatment item for a promo token
+  public createPromoTokenTreatment(
     token: string,
-    promoType: 'special_offer' | 'package',
-    title: string = 'Special Promotion',
-    basePriceGBP: number = 450,
-    basePriceUSD: number = 580,
-    discountType: 'percentage' | 'fixed_amount' = 'percentage',
-    discountValue: number = 20,
-    clinicId: string = '1'
+    type: 'special_offer' | 'package',
+    title: string,
+    basePrice: number,
+    basePriceUSD: number,
+    discountType: 'percentage' | 'fixed_amount',
+    discountValue: number,
+    clinicId: string
   ): TreatmentItem {
-    if (promoType === 'special_offer') {
+    const isDiscount = type === 'special_offer';
+    
+    if (isDiscount) {
+      // For special offers, create a £0 bonus item
       return {
-        id: `promo_${Date.now()}`,
-        category: 'special_offer',
-        name: `Special Offer: ${title}`,
+        id: `promo-${token}`,
+        name: `${title} - ${discountType === 'percentage' ? 
+          `${discountValue}% discount` : 
+          `£${discountValue} discount`}`,
+        category: 'promotions',
         quantity: 1,
         priceGBP: 0,
         priceUSD: 0,
         subtotalGBP: 0,
         subtotalUSD: 0,
-        guarantee: '5-year',
-        isSpecialOffer: true,
-        isLocked: true,
         isBonus: true,
-        hasDiscount: true,
-        discountPercent: discountType === 'percentage' 
-          ? discountValue
-          : Math.round((discountValue / basePriceGBP) * 100),
-        basePriceGBP,
-        basePriceUSD,
+        isLocked: true,
+        promoToken: token,
         specialOffer: {
           id: token,
           title,
@@ -180,126 +131,171 @@ export class SpecialOffersService {
           discountValue,
           clinicId
         },
-        promoToken: token,
-        promoType
+        ukPriceGBP: 0,
+        ukPriceUSD: 0
       };
     } else {
+      // For packages, create a standard package item
       return {
-        id: `promo_${Date.now()}`,
+        id: `promo-package-${token}`,
+        name: title,
         category: 'packages',
-        name: `Package: ${title}`,
         quantity: 1,
-        priceGBP: basePriceGBP,
+        priceGBP: basePrice,
         priceUSD: basePriceUSD,
-        subtotalGBP: basePriceGBP,
+        subtotalGBP: basePrice,
         subtotalUSD: basePriceUSD,
-        guarantee: '5-year',
         isPackage: true,
         isLocked: true,
         promoToken: token,
-        promoType
+        ukPriceGBP: basePrice * 2.857,
+        ukPriceUSD: basePriceUSD * 2.857
       };
     }
   }
-
-  /**
-   * Applies a special offer to a list of treatments
-   */
-  applySpecialOfferToTreatments(
-    treatments: TreatmentItem[],
-    offer: SpecialOffer
-  ): TreatmentItem[] {
-    // Create a clone of the treatments array
-    const updatedTreatments = [...treatments];
+  
+  // Calculate discount based on a special offer
+  public calculateDiscount(
+    basePrice: number,
+    discountType: 'percentage' | 'fixed_amount',
+    discountValue: number
+  ): number {
+    if (discountType === 'percentage') {
+      return basePrice * (discountValue / 100);
+    } else {
+      return Math.min(basePrice, discountValue);
+    }
+  }
+  
+  // Get special offer data from URL parameters
+  public getSpecialOfferFromUrl(): SpecialOffer | undefined {
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
     
-    // First, check if the special offer is already in the treatments
-    const hasOffer = treatments.some(t => 
-      (t.isSpecialOffer && t.specialOffer?.id === offer.id) ||
-      (t.promoToken && t.specialOffer?.id === offer.id)
-    );
-    
-    // If we don't have the offer yet, add it
-    if (!hasOffer) {
-      const offerTreatment = this.createSpecialOfferTreatment(offer);
-      updatedTreatments.push(offerTreatment);
+    if (source === 'special_offer') {
+      const offerId = urlParams.get('offerId') || urlParams.get('specialOffer');
+      if (!offerId) return undefined;
+      
+      const offerTitle = urlParams.get('offerTitle') || 'Special Offer';
+      const discountType = (urlParams.get('offerDiscountType') || urlParams.get('discountType') || 'percentage') as 'percentage' | 'fixed_amount';
+      const discountValue = parseFloat(urlParams.get('offerDiscount') || urlParams.get('discountValue') || '0');
+      const clinicId = urlParams.get('clinicId') || urlParams.get('offerClinic') || '1';
+      const applicableTreatment = urlParams.get('applicableTreatment');
+      
+      return {
+        id: offerId,
+        title: offerTitle,
+        discountType,
+        discountValue,
+        clinicId,
+        applicableTreatment: applicableTreatment
+      };
     }
     
-    return updatedTreatments;
+    return undefined;
   }
-
-  /**
-   * Parse URL parameters for special offer data
-   */
-  parseSpecialOfferFromUrl(): {
-    isSpecialOffer: boolean;
-    offerData?: SpecialOffer;
-    isPackage: boolean;
-    packageData?: {id: string; title: string; clinicId?: string};
-    isPromoFlow: boolean;
-    promoToken?: string;
-    promoType?: 'special_offer' | 'package';
-  } {
+  
+  // Get package data from URL parameters
+  public getPackageFromUrl(): Package | undefined {
     const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
     
-    // Check for direct special offer
-    const offerId = urlParams.get('offerId') || urlParams.get('specialOffer');
-    const offerTitle = urlParams.get('offerTitle');
-    const clinicId = urlParams.get('clinicId') || urlParams.get('offerClinic') || '1';
-    const discountType = urlParams.get('offerDiscountType') || urlParams.get('discountType') || 'percentage';
-    const discountValue = urlParams.get('offerDiscount') || urlParams.get('discountValue') || '20';
-    const treatment = urlParams.get('treatment') || urlParams.get('treatmentName');
-    
-    // Check for package flow
-    const packageId = urlParams.get('packageId');
-    const packageTitle = urlParams.get('packageTitle');
-    
-    // Check for promo token flow
-    const promoToken = urlParams.get('promoToken');
-    const promoType = urlParams.get('promoType') as 'special_offer' | 'package' | null;
-    
-    const isSpecialOffer = !!(offerId || offerTitle);
-    const isPackage = !!(packageId || packageTitle);
-    const isPromoFlow = !!promoToken;
-    
-    return {
-      isSpecialOffer,
-      offerData: isSpecialOffer ? {
-        id: offerId || 'direct-special-offer',
-        title: offerTitle || 'Special Offer',
-        discountType: discountType as 'percentage' | 'fixed_amount',
-        discountValue: parseFloat(discountValue),
-        clinicId,
-        applicableTreatment: treatment
-      } : undefined,
+    if (source === 'package') {
+      const packageId = urlParams.get('packageId');
+      if (!packageId) return undefined;
       
-      isPackage,
-      packageData: isPackage ? {
-        id: packageId || 'direct-package',
-        title: packageTitle || 'Treatment Package',
+      const packageTitle = urlParams.get('packageTitle') || 'Treatment Package';
+      const price = parseFloat(urlParams.get('packagePrice') || '1200');
+      const priceUSD = parseFloat(urlParams.get('packagePriceUSD') || '1560');
+      const clinicId = urlParams.get('clinicId') || '1';
+      
+      return {
+        id: packageId,
+        title: packageTitle,
+        price,
+        priceUSD,
+        treatments: [],
         clinicId
-      } : undefined,
-      
-      isPromoFlow,
-      promoToken,
-      promoType: promoType || 'special_offer'
-    };
-  }
-
-  /**
-   * Detect if we need to add a free consultation from URL parameters
-   */
-  shouldAddFreeConsultation(): boolean {
-    const urlParams = new URLSearchParams(window.location.search);
-    const offerTitle = urlParams.get('offerTitle');
+      };
+    }
     
-    // Check for consultation in offer title
-    return !!(offerTitle && 
-      (offerTitle.includes('Consultation') || 
-       offerTitle.includes('consultation')));
+    return undefined;
+  }
+  
+  // Get promo token data from URL parameters
+  public getPromoTokenFromUrl(): PromoToken | undefined {
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
+    
+    if (source === 'promo_token') {
+      const token = urlParams.get('promoToken');
+      if (!token) return undefined;
+      
+      const type = (urlParams.get('promoType') || 'special_offer') as 'special_offer' | 'package';
+      const title = urlParams.get('promoTitle') || 'Special Promotion';
+      const discountType = (urlParams.get('discountType') || 'percentage') as 'percentage' | 'fixed_amount';
+      const discountValue = parseFloat(urlParams.get('discountValue') || '20');
+      const clinicId = urlParams.get('clinicId') || '1';
+      
+      return {
+        token,
+        type,
+        title,
+        discountType,
+        discountValue,
+        clinicId
+      };
+    }
+    
+    return undefined;
+  }
+  
+  // Process treatments for special offers, packages, etc.
+  public processTreatments(treatments: TreatmentItem[], options: {
+    specialOffer?: SpecialOffer,
+    package?: Package,
+    promoToken?: PromoToken
+  }): TreatmentItem[] {
+    const { specialOffer, package: packageData, promoToken } = options;
+    const result = [...treatments];
+    
+    // Handle special offer
+    if (specialOffer && !treatments.some(t => t.specialOffer?.id === specialOffer.id)) {
+      result.push(this.createSpecialOfferTreatment(specialOffer));
+    }
+    
+    // Handle package
+    if (packageData && !treatments.some(t => t.packageId === packageData.id)) {
+      result.push(this.createPackageTreatment(
+        packageData.title,
+        packageData.price,
+        packageData.priceUSD,
+        packageData.id
+      ));
+    }
+    
+    // Handle promo token
+    if (promoToken && !treatments.some(t => t.promoToken === promoToken.token)) {
+      // Base price for promo packages (if needed)
+      const basePrice = 1200;
+      const basePriceUSD = 1560;
+      
+      result.push(this.createPromoTokenTreatment(
+        promoToken.token,
+        promoToken.type,
+        promoToken.title,
+        basePrice,
+        basePriceUSD,
+        promoToken.discountType,
+        promoToken.discountValue,
+        promoToken.clinicId
+      ));
+    }
+    
+    return result;
   }
 }
 
 // Export a singleton instance
-export const specialOffersService = new SpecialOffersService();
-
+const specialOffersService = SpecialOffersService.getInstance();
 export default specialOffersService;
