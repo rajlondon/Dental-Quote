@@ -704,7 +704,7 @@ export function TreatmentPackageManager() {
                         </FormControl>
                       </div>
                       <div>
-                        <GenerateOfferImageButton 
+                        <GeneratePackageImageButton 
                           onImageGenerated={(url: any) => field.onChange(url)} 
                           title={createForm.watch('title') || 'Treatment Package'}
                         />
@@ -950,7 +950,7 @@ export function TreatmentPackageManager() {
                         </FormControl>
                       </div>
                       <div>
-                        <GenerateOfferImageButton 
+                        <GeneratePackageImageButton 
                           onImageGenerated={(url: any) => field.onChange(url)} 
                           title={editForm.watch('title') || 'Treatment Package'}
                         />
