@@ -22,8 +22,11 @@ interface EnhancedTreatmentPlanBuilderProps {
 const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> = ({
   initialTreatments = [],
   onTreatmentsChange,
-  hideHeader = false
+  hideHeader = false,
+  treatmentCategoriesData: customTreatmentCategories
 }) => {
+  // Use custom categories data if provided, otherwise use the default import
+  const categories = customTreatmentCategories || treatmentCategoriesData;
   const [treatments, setTreatments] = useState<TreatmentItem[]>(initialTreatments);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
@@ -49,7 +52,7 @@ const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> 
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
   
   // Get available treatments for the selected category
-  const availableTreatments = treatmentCategoriesData.find((cat: TreatmentCategory) => cat.id === selectedCategory)?.treatments || [];
+  const availableTreatments = categories.find((cat: TreatmentCategory) => cat.id === selectedCategory)?.treatments || [];
   
   // Get the selected treatment details
   const treatmentDetails = availableTreatments.find((t: {id: string}) => t.id === selectedTreatment);
@@ -204,7 +207,7 @@ const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> 
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {treatmentCategoriesData.map((category: TreatmentCategory) => (
+                  {categories.map((category: TreatmentCategory) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
