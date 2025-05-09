@@ -67,17 +67,27 @@ fromPromoRouter.post('/', catchAsync(async (req: Request, res: Response) => {
     const quoteId = uuidv4();
     const timestamp = new Date();
     
-    // Insert the quote
+    // Find a default patient ID for anonymous quotes
+    const [defaultPatient] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, 'anonymous@mydentalfly.com'))
+      .limit(1);
+      
+    const anonymousPatientId = defaultPatient?.id || 1; // Fallback to ID 1 if not found
+    
+    // Insert the quote with temporary patient ID - will be reassigned when claimed
     await db.insert(quotes).values({
       id: quoteId,
-      status: 'draft',
+      patientId: anonymousPatientId, // Required by schema, will be updated when claimed
+      clinicId: promoToken.clinicId,
+      status: 'promo_draft', // Special status for promo-generated quotes
+      totalPrice: 0, // Will be calculated later when treatments are added
+      currency: 'GBP',
+      promoToken: token, // Store the promo token used
+      source: 'promo', // Mark as coming from a promotion
       createdAt: timestamp,
       updatedAt: timestamp,
-      totalGBP: 0, // Will be calculated later when treatments are added
-      totalUSD: 0, // Will be calculated later when treatments are added
-      clinicId: promoToken.clinicId, // Associate with the clinic from the promo token
-      patientEmail: visitorEmail || null, // Store the visitor email if provided
-      promoToken: token, // Store the promo token used
     });
 
     // For initial implementation, just create an empty quote
