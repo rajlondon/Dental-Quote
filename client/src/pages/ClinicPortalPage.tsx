@@ -158,16 +158,63 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // SIMPLIFIED: Just a simple effect for initialization - no complicated checks
+  // Helper function to initialize clinic sessions consistently
+  const initializeClinicSession = (userId: number) => {
+    console.log(`🔧 Initializing clinic session for user ${userId}`);
+    
+    // Store clinic user data securely in session storage for recovery purposes
+    sessionStorage.setItem('clinic_user_id', userId.toString());
+    sessionStorage.setItem('clinic_session_timestamp', Date.now().toString());
+    sessionStorage.setItem('clinic_session_initialized', 'true');
+    
+    // Specific flag for direct access route
+    if (window.location.pathname === '/clinic-direct') {
+      sessionStorage.setItem('clinic_direct_session', 'true');
+      console.log('Setting up direct clinic access session');
+      
+      // This flag is checked by our API middleware to allow access
+      // even in scenarios where the full auth context isn't available
+      sessionStorage.setItem('clinic_api_access_token', `clinic-${userId}-${Date.now()}`);
+    }
+    
+    // Set shared state flags
+    (window as any).__clinicPortalMounted = true;
+    (window as any).__clinicSessionActive = true;
+    
+    return true;
+  };
+  
+  // Enhanced initialization with direct access support
   useEffect(() => {
     // Skip if no user
     if (!user) {
+      // Special handling for direct access mode
+      if (window.location.pathname === '/clinic-direct') {
+        console.log('Attempting to initialize clinic session from direct access route');
+        
+        // Check if we have cached user data in session storage
+        const cachedUserData = sessionStorage.getItem('clinic_user_data');
+        if (cachedUserData) {
+          try {
+            const parsedUser = JSON.parse(cachedUserData);
+            if (parsedUser && parsedUser.id) {
+              console.log('Using cached user data for direct clinic access:', parsedUser.id);
+              initializeClinicSession(parsedUser.id);
+            }
+          } catch (e) {
+            console.error('Failed to parse cached user data:', e);
+          }
+        }
+      }
       return;
     }
     
     console.log("ClinicPortalPage: Initializing for clinic staff user:", user.id);
     
-    // Simple straightforward initialization
+    // Initialize the clinic session
+    initializeClinicSession(user.id);
+    
+    // Mark initialization complete
     initialLoadComplete.current = true;
     
     // Cleanup function for component unmount
@@ -177,9 +224,11 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       
       // This prevents issues with WebSocket connection management
       setTimeout(() => {
-        if (window.location.pathname !== '/clinic-portal') {
+        if (window.location.pathname !== '/clinic-portal' && 
+            window.location.pathname !== '/clinic-direct') {
           console.log("Clearing clinic portal mounted flag after navigation");
           (window as any).__clinicPortalMounted = false;
+          (window as any).__clinicSessionActive = false;
         }
       }, 1000);
     };
