@@ -18,7 +18,7 @@ import {
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
   Menu, LogOut, ChevronRight, Grid3X3, TestTube,
-  Clock, TrendingUp, CalendarDays, Tag, Image
+  Clock, TrendingUp, CalendarDays, Tag, Image, Package
 } from 'lucide-react';
 import { 
   Card, 
@@ -47,6 +47,7 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
+import { TreatmentPackageManager } from '@/components/clinic/TreatmentPackageManager';
 import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
 
 interface ClinicPortalPageProps {
@@ -297,6 +298,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     { id: 'quotes', label: t("clinic.nav.quotes", "Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
     { id: 'treatmentplans', label: t("clinic.nav.treatment_plans", "Treatment Plans"), icon: <FileText className="h-5 w-5" /> },
     { id: 'special_offers', label: t("clinic.nav.special_offers", "Special Offers"), icon: <Tag className="h-5 w-5" /> },
+    { id: 'treatment_packages', label: t("clinic.nav.treatment_packages", "Treatment Packages"), icon: <Package className="h-5 w-5" /> },
     { id: 'treatment_mapper', label: t("clinic.nav.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
@@ -478,6 +480,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         return <ClinicTreatmentPlansSection />;
       case 'special_offers':
         return <SpecialOffersManager />;
+      case 'treatment_packages':
+        return <TreatmentPackageManager />;
       case 'treatment_mapper':
         return <ClinicTreatmentMapperPage />;
       case 'appointments':
