@@ -610,6 +610,9 @@ const YourQuotePage: React.FC = () => {
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
   
+  // Get the active promo slug from the store
+  const { activePromoSlug } = usePromoStore();
+  
   // Special offer data (if passed from homepage or stored in sessionStorage)
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
     console.log("Initializing YourQuotePage with URL params:", window.location.search);
@@ -2156,7 +2159,7 @@ const YourQuotePage: React.FC = () => {
                       />
                       
                       {/* Show PromoRibbon when there's an active promotion */}
-                      {usePromoStore().activePromoSlug && (
+                      {activePromoSlug && (
                         <PromoRibbon />
                       )}
 
