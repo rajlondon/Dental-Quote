@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { GenerateOfferImageButton } from './GenerateOfferImageButton';
+import { GeneratePackageImageButton } from './GeneratePackageImageButton';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -666,8 +666,8 @@ export function TreatmentPackageManager() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Start Date</FormLabel>
                       <DatePicker 
-                        selected={field.value} 
-                        onSelect={field.onChange}
+                        date={field.value} 
+                        setDate={field.onChange}
                       />
                       <FormMessage />
                     </FormItem>
@@ -681,8 +681,8 @@ export function TreatmentPackageManager() {
                     <FormItem className="flex flex-col">
                       <FormLabel>End Date</FormLabel>
                       <DatePicker 
-                        selected={field.value}
-                        onSelect={field.onChange}
+                        date={field.value}
+                        setDate={field.onChange}
                         minDate={createForm.watch('startDate')}
                       />
                       <FormMessage />
@@ -912,8 +912,8 @@ export function TreatmentPackageManager() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Start Date</FormLabel>
                       <DatePicker 
-                        selected={field.value} 
-                        onSelect={field.onChange}
+                        date={field.value} 
+                        setDate={field.onChange}
                       />
                       <FormMessage />
                     </FormItem>
@@ -927,8 +927,8 @@ export function TreatmentPackageManager() {
                     <FormItem className="flex flex-col">
                       <FormLabel>End Date</FormLabel>
                       <DatePicker 
-                        selected={field.value}
-                        onSelect={field.onChange}
+                        date={field.value}
+                        setDate={field.onChange}
                         minDate={editForm.watch('startDate')}
                       />
                       <FormMessage />
