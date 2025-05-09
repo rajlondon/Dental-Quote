@@ -70,7 +70,7 @@ import {
   authRateLimit, 
   uploadRateLimit 
 } from "./middleware/security";
-import { setupWebSocketService } from "./services/websocketService";
+import { setupWebSocketService, getWebSocketService, WebSocketService } from "./services/websocketService";
 import { createNotificationService } from "./services/notificationService";
 import { createEmailNotificationService } from "./services/emailNotificationService";
 
@@ -1281,6 +1281,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Add WebSocket health endpoint for monitoring
   app.get("/ws-health", (req, res) => {
+    const wsService = getWebSocketService();
+    const wsStatus = wsService ? {
+      active: true,
+      clientCount: wsService.getClientCount(),
+      serverTime: new Date().toISOString()
+    } : {
+      active: false,
+      error: 'WebSocket service not initialized',
+      serverTime: new Date().toISOString()
+    };
+    
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      websocket: wsStatus
+    });
+  });
+  
+  // WebSocket ping test endpoint
+  app.get('/ws-ping', (req, res) => {
+    try {
+      const wsService = getWebSocketService();
+      if (!wsService) {
+        return res.status(503).json({
+          success: false,
+          message: 'WebSocket service not available',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Broadcast a test message to all clients
+      const testMessage = {
+        type: 'ping',
+        timestamp: Date.now(),
+        message: 'Server ping test'
+      };
+      
+      // Get client count before ping
+      const clientCount = wsService.getClientCount();
+      
+      // Broadcast to all clients
+      WebSocketService.broadcastToAll(testMessage);
+      
+      res.json({
+        success: true,
+        message: 'Ping broadcast sent successfully',
+        clientCount,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error in WebSocket ping test:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error in ping test',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
+  // Original WebSocket health endpoint
+  app.get("/old-ws-health", (req, res) => {
     const clientCount = wsService.getClientCount();
     return res.json({ 
       status: "ok", 
@@ -1290,8 +1351,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // Add WebSocket ping test endpoint
-  app.get("/ws-ping", (req, res) => {
+  // Legacy WebSocket ping test endpoint (redirects to new endpoint)
+  app.get("/ws-ping-legacy", (req, res) => {
     if (!wsService) {
       return res.status(503).json({ status: "error", message: "WebSocket service not initialized" });
     }
