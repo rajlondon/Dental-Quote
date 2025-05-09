@@ -147,6 +147,12 @@ export function PromoCard({
           <Badge variant="secondary" className="text-base font-semibold bg-primary/10 text-primary hover:bg-primary/20">
             Save {discountLabel}
           </Badge>
+          
+          {clinicId && (
+            <Badge variant="outline" className="text-sm bg-slate-100 text-slate-700">
+              Clinic: {clinicId}
+            </Badge>
+          )}
         </div>
       </CardContent>
       

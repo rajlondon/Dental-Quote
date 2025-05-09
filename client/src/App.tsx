@@ -21,6 +21,7 @@ import AdminPortalGuard from "@/components/AdminPortalGuard";
 import ClinicRouter from "@/pages/ClinicRouter";
 import ClinicDebugPage from "@/pages/ClinicDebugPage";
 import SpecialOfferTestPage from "@/pages/SpecialOfferTestPage";
+import PromoTestPage from "@/pages/PromoTestPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -188,6 +189,17 @@ function Router() {
           return (
             <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading test environment...</div>}>
               <PromoTokenTestPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
+      
+      {/* Route for testing promo clinic auto-selection */}
+      <Route path="/promo-test">
+        {() => {
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading promo test page...</div>}>
+              <PromoTestPage />
             </React.Suspense>
           );
         }}
