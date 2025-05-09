@@ -31,10 +31,17 @@ export class PromoService {
       promoData.slug = this.generateSlug(promoData.title);
     }
 
+    // Convert string enums to proper enum types
+    const promoDataWithEnums = {
+      ...promoData,
+      promoType: promoData.promoType as any,
+      discountType: promoData.discountType as any
+    };
+
     // Insert the promo
     const [newPromo] = await db
       .insert(promos)
-      .values(promoData)
+      .values(promoDataWithEnums)
       .returning();
 
     // Insert associated items
