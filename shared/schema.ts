@@ -3,6 +3,29 @@ import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+// === PROMO SYSTEM ENUMS ===
+// Define as TypeScript enums for better type safety
+export enum PromoType {
+  OFFER = "OFFER",
+  PACKAGE = "PACKAGE"
+}
+
+export enum DiscountType {
+  PERCENT = "PERCENT",
+  FIXED = "FIXED"
+}
+
+export enum ItemType {
+  TREATMENT = "TREATMENT",
+  EXTRA = "EXTRA"
+}
+
+export enum TokenSource {
+  WEB = "WEB",
+  EMAIL = "EMAIL",
+  UTM = "UTM"
+}
+
 // === USERS ===
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -306,6 +329,138 @@ export const promoQuoteVisitorsRelations = relations(promoQuoteVisitors, ({ one 
     references: [promoTokens.token],
   }),
 }));
+
+// === ENHANCED PROMO SYSTEM ===
+// Main promo table for offers and packages
+export const promos = pgTable("promos", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  promoType: varchar("promo_type", { length: 20 }).notNull().$type<PromoType>(),
+  discountType: varchar("discount_type", { length: 20 }).notNull().$type<DiscountType>(),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  heroImageUrl: varchar("hero_image_url", { length: 255 }),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  cityCode: varchar("city_code", { length: 50 }),
+  countryCode: varchar("country_code", { length: 50 }),
+  validationSchema: jsonb("validation_schema"), // JSONB rules for item validation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Promo items (treatments or extras included in the promo)
+export const promoItems = pgTable("promo_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  promoId: uuid("promo_id").notNull().references(() => promos.id, { onDelete: "cascade" }),
+  itemType: varchar("item_type", { length: 20 }).notNull().$type<ItemType>(),
+  itemCode: varchar("item_code", { length: 100 }).notNull(), // Treatment code or extra code
+  qty: integer("qty").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Join table for promos and clinics
+export const promoClinics = pgTable("promo_clinics", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  promoId: uuid("promo_id").notNull().references(() => promos.id, { onDelete: "cascade" }),
+  clinicId: varchar("clinic_id", { length: 50 }).notNull().references(() => clinics.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Enhanced promo tokens (one per visitor)
+export const enhancedPromoTokens = pgTable("enhanced_promo_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  promoId: uuid("promo_id").notNull().references(() => promos.id),
+  token: varchar("token", { length: 100 }).notNull().unique(),
+  source: varchar("source", { length: 20 }).notNull().$type<TokenSource>(),
+  userId: integer("user_id").references(() => users.id),
+  email: varchar("email", { length: 255 }),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expireAt: timestamp("expire_at").notNull(),
+});
+
+// Relations for promos
+export const promosRelations = relations(promos, ({ many }) => ({
+  items: many(promoItems),
+  clinics: many(promoClinics),
+  tokens: many(enhancedPromoTokens),
+}));
+
+// Relations for promo items
+export const promoItemsRelations = relations(promoItems, ({ one }) => ({
+  promo: one(promos, {
+    fields: [promoItems.promoId],
+    references: [promos.id],
+  }),
+}));
+
+// Relations for promo clinics
+export const promoClinicsRelations = relations(promoClinics, ({ one }) => ({
+  promo: one(promos, {
+    fields: [promoClinics.promoId],
+    references: [promos.id],
+  }),
+  clinic: one(clinics, {
+    fields: [promoClinics.clinicId],
+    references: [clinics.id],
+  }),
+}));
+
+// Relations for enhanced promo tokens
+export const enhancedPromoTokensRelations = relations(enhancedPromoTokens, ({ one }) => ({
+  promo: one(promos, {
+    fields: [enhancedPromoTokens.promoId],
+    references: [promos.id],
+  }),
+  user: one(users, {
+    fields: [enhancedPromoTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+// Create insert schemas for new promo tables
+export const insertPromoSchema = createInsertSchema(promos)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export const insertPromoItemSchema = createInsertSchema(promoItems)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export const insertPromoClinicSchema = createInsertSchema(promoClinics)
+  .omit({
+    id: true,
+    createdAt: true,
+  });
+
+export const insertEnhancedPromoTokenSchema = createInsertSchema(enhancedPromoTokens)
+  .omit({
+    id: true,
+    createdAt: true,
+  });
+
+// Export types for new promo tables
+export type Promo = typeof promos.$inferSelect;
+export type InsertPromo = z.infer<typeof insertPromoSchema>;
+
+export type PromoItem = typeof promoItems.$inferSelect;
+export type InsertPromoItem = z.infer<typeof insertPromoItemSchema>;
+
+export type PromoClinic = typeof promoClinics.$inferSelect;
+export type InsertPromoClinic = z.infer<typeof insertPromoClinicSchema>;
+
+export type EnhancedPromoToken = typeof enhancedPromoTokens.$inferSelect;
+export type InsertEnhancedPromoToken = z.infer<typeof insertEnhancedPromoTokenSchema>;
 
 // === CLINICS ===
 export const clinics = pgTable("clinics", {
