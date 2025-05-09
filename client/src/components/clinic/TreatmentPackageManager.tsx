@@ -370,6 +370,12 @@ export function TreatmentPackageManager() {
       return `${extra?.name || item.itemCode} (${item.qty})`;
     }).join(", ");
   };
+  
+  // Helper function to get city name from code
+  const getCityName = (cityCode: string | undefined) => {
+    if (!cityCode) return "";
+    return Array.isArray(cities) ? cities.find((c: any) => c.code === cityCode)?.name || cityCode : cityCode;
+  };
 
   return (
     <div className="space-y-8">
@@ -424,7 +430,7 @@ export function TreatmentPackageManager() {
                       <CardTitle>{pkg.title}</CardTitle>
                       {pkg.cityCode && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          {cities?.find(c => c.code === pkg.cityCode)?.name || pkg.cityCode}
+                          {getCityName(pkg.cityCode)}
                         </Badge>
                       )}
                     </div>
@@ -481,7 +487,7 @@ export function TreatmentPackageManager() {
                       <CardTitle>{pkg.title}</CardTitle>
                       {pkg.cityCode && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          {cities?.find(c => c.code === pkg.cityCode)?.name || pkg.cityCode}
+                          {getCityName(pkg.cityCode)}
                         </Badge>
                       )}
                     </div>
@@ -569,7 +575,7 @@ export function TreatmentPackageManager() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="">All Cities</SelectItem>
-                          {cities?.map((city) => (
+                          {Array.isArray(cities) && cities.map((city: any) => (
                             <SelectItem key={city.code} value={city.code}>
                               {city.name}, {city.country}
                             </SelectItem>
@@ -622,7 +628,7 @@ export function TreatmentPackageManager() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value={DiscountType.FIXED} id="fixed" />
-                            <Label htmlFor="fixed">Fixed Amount (£)</Label>
+                            <Label htmlFor="fixed">Fixed Amount Discount (£)</Label>
                           </div>
                         </RadioGroup>
                       </FormControl>
@@ -638,13 +644,14 @@ export function TreatmentPackageManager() {
                     <FormItem>
                       <FormLabel>Discount Value</FormLabel>
                       <FormControl>
-                        <Input type="number" min="1" placeholder="10" {...field} />
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          placeholder={createForm.watch('discountType') === DiscountType.PERCENT ? "e.g. 20 for 20%" : "e.g. 100 for £100"}
+                          {...field}
+                          onChange={e => field.onChange(e.target.valueAsNumber)}
+                        />
                       </FormControl>
-                      <FormDescription>
-                        {createForm.watch('discountType') === DiscountType.PERCENT ? 
-                          'Enter percentage (e.g., 10 for 10% discount)' : 
-                          'Enter amount in GBP (e.g., 200 for £200 discount)'}
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -658,9 +665,9 @@ export function TreatmentPackageManager() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Start Date</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
+                      <DatePicker 
+                        selected={field.value} 
+                        onSelect={field.onChange}
                       />
                       <FormMessage />
                     </FormItem>
@@ -673,9 +680,10 @@ export function TreatmentPackageManager() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>End Date</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
+                      <DatePicker 
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        minDate={createForm.watch('startDate')}
                       />
                       <FormMessage />
                     </FormItem>
@@ -685,84 +693,25 @@ export function TreatmentPackageManager() {
               
               <FormField
                 control={createForm.control}
-                name="treatmentItems"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Included Treatments</FormLabel>
-                    <FormDescription>
-                      Select treatments to include in this package. Add quantity for each.
-                    </FormDescription>
-                    <div className="border rounded-md p-4">
-                      {/* Dynamic treatment fields would go here */}
-                      <p className="text-sm text-amber-600">
-                        Note: Treatment selection UI would be implemented here with options to add 
-                        multiple treatments with quantities.
-                      </p>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={createForm.control}
-                name="includedExtras"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Included Extras</FormLabel>
-                    <FormDescription>
-                      Select additional services included in this package.
-                    </FormDescription>
-                    <div className="border rounded-md p-4">
-                      {/* This would be implemented with a proper MultiSelect component */}
-                      <p className="text-sm text-amber-600">
-                        Note: Extra services selection UI would be implemented here for options like 
-                        airport transfers, consultation, etc.
-                      </p>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={createForm.control}
                 name="heroImageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Package Image URL</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input placeholder="https://example.com/image.jpg" {...field} />
-                      </FormControl>
-                      <GenerateOfferImageButton
-                        onImageGenerated={(url) => createForm.setValue('heroImageUrl', url)}
-                        title={createForm.watch('title')}
-                      />
+                    <FormLabel>Hero Image URL (Optional)</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="md:col-span-2">
+                        <FormControl>
+                          <Input placeholder="https://example.com/image.jpg" {...field} />
+                        </FormControl>
+                      </div>
+                      <div>
+                        <GenerateOfferImageButton 
+                          onImageGenerated={(url: any) => field.onChange(url)} 
+                          title={createForm.watch('title') || 'Treatment Package'}
+                        />
+                      </div>
                     </div>
                     <FormDescription>
-                      Add an image URL or generate one with AI based on the package title.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={createForm.control}
-                name="terms_conditions"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Terms & Conditions</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Enter any specific terms and conditions for this package..." 
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Important information customers should know before booking.
+                      Add an image URL or generate one automatically.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -777,7 +726,7 @@ export function TreatmentPackageManager() {
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Active Status</FormLabel>
                       <FormDescription>
-                        Make this package visible to customers immediately upon approval
+                        Set whether this package should be active and visible to patients.
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -790,18 +739,40 @@ export function TreatmentPackageManager() {
                 )}
               />
               
+              <FormField
+                control={createForm.control}
+                name="terms_conditions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Terms & Conditions (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Optional terms and conditions for this package..." 
+                        className="min-h-[80px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Special terms that apply only to this package.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending && (
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>Create Package</>
                   )}
-                  Create Package
                 </Button>
               </DialogFooter>
             </form>
@@ -809,19 +780,18 @@ export function TreatmentPackageManager() {
         </DialogContent>
       </Dialog>
       
-      {/* Edit Dialog - Similar to Create but with pre-filled values */}
+      {/* Edit Treatment Package Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Treatment Package</DialogTitle>
             <DialogDescription>
-              Update the details of this treatment package.
+              Update the details of your treatment package.
             </DialogDescription>
           </DialogHeader>
           
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
-              {/* Same form fields as create dialog but with editForm */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={editForm.control}
@@ -854,7 +824,7 @@ export function TreatmentPackageManager() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="">All Cities</SelectItem>
-                          {cities?.map((city) => (
+                          {Array.isArray(cities) && cities.map((city: any) => (
                             <SelectItem key={city.code} value={city.code}>
                               {city.name}, {city.country}
                             </SelectItem>
@@ -867,20 +837,188 @@ export function TreatmentPackageManager() {
                 />
               </div>
               
-              {/* Additional form fields would be similar to create form */}
+              <FormField
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe the benefits and details of this package..." 
+                        className="min-h-[100px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="discountType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Discount Type</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={DiscountType.PERCENT} id="edit-percent" />
+                            <Label htmlFor="edit-percent">Percentage Discount</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={DiscountType.FIXED} id="edit-fixed" />
+                            <Label htmlFor="edit-fixed">Fixed Amount Discount (£)</Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="discountValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount Value</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          placeholder={editForm.watch('discountType') === DiscountType.PERCENT ? "e.g. 20 for 20%" : "e.g. 100 for £100"}
+                          {...field}
+                          onChange={e => field.onChange(e.target.valueAsNumber)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <DatePicker 
+                        selected={field.value} 
+                        onSelect={field.onChange}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>End Date</FormLabel>
+                      <DatePicker 
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        minDate={editForm.watch('startDate')}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={editForm.control}
+                name="heroImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hero Image URL (Optional)</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="md:col-span-2">
+                        <FormControl>
+                          <Input placeholder="https://example.com/image.jpg" {...field} />
+                        </FormControl>
+                      </div>
+                      <div>
+                        <GenerateOfferImageButton 
+                          onImageGenerated={(url: any) => field.onChange(url)} 
+                          title={editForm.watch('title') || 'Treatment Package'}
+                        />
+                      </div>
+                    </div>
+                    <FormDescription>
+                      Add an image URL or generate one automatically.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Active Status</FormLabel>
+                      <FormDescription>
+                        Set whether this package should be active and visible to patients.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="terms_conditions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Terms & Conditions (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Optional terms and conditions for this package..." 
+                        className="min-h-[80px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Special terms that apply only to this package.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={updateMutation.isPending}
-                >
-                  {updateMutation.isPending && (
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>Update Package</>
                   )}
-                  Update Package
                 </Button>
               </DialogFooter>
             </form>
@@ -892,32 +1030,38 @@ export function TreatmentPackageManager() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Treatment Package</DialogTitle>
+            <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this treatment package? This action cannot be undone.
+              Are you sure you want to delete this package? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           
           {selectedPackage && (
-            <div className="py-3">
-              <h3 className="font-medium">{selectedPackage.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Created: {formatDate(selectedPackage.createdAt)}
+            <div className="py-4">
+              <p><strong>Package:</strong> {selectedPackage.title}</p>
+              <p><strong>Discount:</strong> {selectedPackage.discountType === DiscountType.PERCENT ? 
+                `${selectedPackage.discountValue}%` : 
+                `£${selectedPackage.discountValue}`}
               </p>
+              {selectedPackage.cityCode && (
+                <p><strong>City:</strong> {getCityName(selectedPackage.cityCode)}</p>
+              )}
             </div>
           )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button 
-              variant="destructive" 
-              onClick={confirmDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending && (
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+            <Button type="button" variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={confirmDelete} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                  Deleting...
+                </>
+              ) : (
+                <>Delete Package</>
               )}
-              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
