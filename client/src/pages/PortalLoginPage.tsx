@@ -542,10 +542,27 @@ const PortalLoginPage: React.FC = () => {
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
         
+        // Mark that we're in the middle of a clinic navigation to avoid race conditions
+        sessionStorage.setItem('clinic_navigation_in_progress', 'true');
+        
+        // Force direct navigation instead of using setLocation to prevent any potential issues
+        // with React Router hooks or state updates that might get interrupted
+        console.log("Using direct window location for clinic portal navigation");
+        
         // Add delay to ensure caches are written before redirect
         setTimeout(() => {
           console.log("Redirecting to clinic portal with pre-cached session");
-          setLocation('/clinic-portal');
+          try {
+            // Store indicator for ongoing navigation
+            sessionStorage.setItem('clinic_portal_redirect_timestamp', Date.now().toString());
+            
+            // Direct navigation bypassing React Router
+            window.location.href = '/clinic-portal';
+          } catch (navError) {
+            console.error("Error during clinic portal navigation:", navError);
+            // Fallback to react router
+            setLocation('/clinic-portal');
+          }
         }, 100);
       } else {
         // Default to patient portal for any other role
