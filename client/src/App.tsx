@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -470,13 +470,67 @@ function Router() {
       </Route>
       
       {/* Original clinic portal route with special guard to prevent refresh issues */}
-      {/* Direct clinic portal access route for debugging - NO AUTH CHECKING */}
+      {/* Direct clinic portal access route with minimal authentication checking */}
       <Route path="/clinic-direct">
-        {() => (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic portal...</div>}>
-            <ClinicPortalPage disableAutoRefresh={true} />
-          </React.Suspense>
-        )}
+        {() => {
+          // Local authentication check to ensure we have clinic_staff access
+          const [isLoading, setIsLoading] = useState(true);
+          const [isAuthenticated, setIsAuthenticated] = useState(false);
+          const { toast } = useToast();
+
+          useEffect(() => {
+            // Check authentication status
+            fetch('/api/auth/user')
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && data.user && (data.user.role === 'clinic_staff' || data.user.role === 'admin')) {
+                  console.log('User authenticated as clinic staff:', data.user);
+                  // Cache the user data in sessionStorage
+                  sessionStorage.setItem('clinic_user_data', JSON.stringify(data.user));
+                  sessionStorage.setItem('clinic_direct_access', 'true');
+                  setIsAuthenticated(true);
+                } else {
+                  console.error('Not authenticated as clinic staff');
+                  toast({
+                    title: 'Authentication Required',
+                    description: 'Please log in with your clinic credentials',
+                    variant: 'destructive',
+                  });
+                }
+                setIsLoading(false);
+              })
+              .catch(err => {
+                console.error('Auth check failed:', err);
+                setIsLoading(false);
+                toast({
+                  title: 'Authentication Error',
+                  description: 'Could not verify your credentials',
+                  variant: 'destructive',
+                });
+              });
+          }, [toast]);
+
+          if (isLoading) {
+            return (
+              <div className="flex justify-center items-center min-h-screen">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                  <p className="text-sm text-muted-foreground">Verifying clinic credentials...</p>
+                </div>
+              </div>
+            );
+          }
+
+          if (!isAuthenticated) {
+            return <Redirect to="/portal-login" />;
+          }
+
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic portal...</div>}>
+              <ClinicPortalPage disableAutoRefresh={true} />
+            </React.Suspense>
+          );
+        }}
       </Route>
 
       <Route path="/clinic-portal">
