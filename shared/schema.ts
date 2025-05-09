@@ -279,6 +279,34 @@ export const quoteLinesRelations = relations(quoteLines, ({ one }) => ({
   }),
 }));
 
+// === PROMOTIONAL QUOTE VISITORS ===
+// For tracking email addresses of people who request promotional quotes
+export const promoQuoteVisitors = pgTable("promo_quote_visitors", {
+  id: serial("id").primaryKey(),
+  quoteId: uuid("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  email: varchar("email", { length: 255 }).notNull(),
+  promoToken: varchar("promo_token", { length: 50 }).references(() => promoTokens.token),
+  claimed: boolean("claimed").default(false),
+  claimedByUserId: integer("claimed_by_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const promoQuoteVisitorsRelations = relations(promoQuoteVisitors, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [promoQuoteVisitors.quoteId],
+    references: [quotes.id],
+  }),
+  claimedByUser: one(users, {
+    fields: [promoQuoteVisitors.claimedByUserId],
+    references: [users.id],
+  }),
+  promoToken: one(promoTokens, {
+    fields: [promoQuoteVisitors.promoToken],
+    references: [promoTokens.token],
+  }),
+}));
+
 // === CLINICS ===
 export const clinics = pgTable("clinics", {
   id: serial("id").primaryKey(),
