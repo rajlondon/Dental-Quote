@@ -8,6 +8,8 @@ import ScrollToTop from '@/components/ScrollToTop';
 import { useQuoteFlow, useInitializeQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
+import { PromoRibbon } from '@/pages/QuoteBuilder/PromoRibbon';
+import { usePromoStore } from '@/features/promo/usePromoStore';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QuoteSummaryPanel from '@/components/quote/QuoteSummaryPanel';
@@ -2152,6 +2154,11 @@ const YourQuotePage: React.FC = () => {
                         onTreatmentsChange={setTreatmentItems}
                       />
                       
+                      {/* Show PromoRibbon when there's an active promotion */}
+                      {usePromoStore().activePromoSlug && (
+                        <PromoRibbon />
+                      )}
+
                       {/* Apply special offer discounts from our tracking hook to treatments */}
                       <TreatmentPlanBuilder
                         initialTreatments={hasActiveOffer ? applySpecialOfferToTreatments(treatmentItems) : treatmentItems}
