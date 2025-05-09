@@ -10,9 +10,7 @@ import {
   treatmentPackages,
   specialOffers
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { sendNotification } from '../../../../utils/notificationService';
-import { getGuestOrAuthenticatedUser } from '../../../../middleware/auth';
+import { eq, and, inArray } from 'drizzle-orm';
 
 // Schema for the promo token request
 const fromPromoRequestSchema = z.object({
@@ -27,7 +25,7 @@ const router = Router();
  * @desc Create a new quote from a promo token
  * @access Public
  */
-router.post('/from-promo', getGuestOrAuthenticatedUser, async (req, res) => {
+router.post('/from-promo', async (req, res) => {
   try {
     // Validate request body
     const validationResult = fromPromoRequestSchema.safeParse(req.body);
@@ -100,7 +98,7 @@ router.post('/from-promo', getGuestOrAuthenticatedUser, async (req, res) => {
       const treatmentDetails = await db.select().from(standardizedTreatments)
         .where(
           items.length > 0 
-            ? standardizedTreatments.code.in(items as string[]) 
+            ? inArray(standardizedTreatments.code, items as string[]) 
             : undefined
         );
       
@@ -160,21 +158,10 @@ router.post('/from-promo', getGuestOrAuthenticatedUser, async (req, res) => {
       });
     }
     
-    // If visitor email is provided, send a notification
+    // Store visitor email for potential follow-up (notification system to be implemented)
     if (visitorEmail) {
-      try {
-        await sendNotification({
-          recipientEmail: visitorEmail,
-          type: 'promo-welcome',
-          templateData: {
-            promoToken: token,
-            quoteId,
-          },
-        });
-      } catch (error) {
-        console.error('Failed to send promo email notification:', error);
-        // Don't fail the request if notification fails
-      }
+      console.log(`Promo quote ${quoteId} created for visitor email: ${visitorEmail}`);
+      // Email notification will be implemented in a future update
     }
     
     // Return the created quote ID
