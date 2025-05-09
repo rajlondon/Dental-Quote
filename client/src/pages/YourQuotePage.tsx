@@ -54,9 +54,11 @@ import {
   Package
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import TreatmentPlanBuilder, { TreatmentItem } from '@/components/TreatmentPlanBuilder';
+import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
+import EnhancedTreatmentPlanBuilder from '@/components/EnhancedTreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
 import SpecialOfferHandler from '@/components/specialOffers/SpecialOfferHandler';
+import PromoRibbon from '@/pages/QuoteBuilder/PromoRibbon';
 
 // Types
 interface ClinicInfo {
@@ -2159,10 +2161,12 @@ const YourQuotePage: React.FC = () => {
                         <PromoRibbon />
                       )}
 
-                      {/* Apply special offer discounts from our tracking hook to treatments */}
-                      <TreatmentPlanBuilder
+                      {/* Use our enhanced treatment plan builder with promo discount support */}
+                      {/* Replace standard TreatmentPlanBuilder with EnhancedTreatmentPlanBuilder that handles discounts */}
+                      <EnhancedTreatmentPlanBuilder
                         initialTreatments={hasActiveOffer ? applySpecialOfferToTreatments(treatmentItems) : treatmentItems}
                         onTreatmentsChange={setTreatmentItems}
+                        hideHeader={true}
                       />
                       
                       <div className="mt-6">
