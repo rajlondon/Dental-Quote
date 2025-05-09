@@ -530,8 +530,9 @@ const YourQuotePage: React.FC = () => {
                 <CardContent>
                   {/* Treatment selection panel */}
                   <QuoteTreatmentSelectionPanel 
-                    initialParams={quoteParams}
-                    onSave={handleSaveQuoteParams}
+                    selectedTreatments={treatmentPlan}
+                    onTreatmentsChange={setTreatmentPlan}
+                    specialOfferId={specialOffer?.id}
                     className="mb-6"
                   />
                   
