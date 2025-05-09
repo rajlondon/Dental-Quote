@@ -612,8 +612,8 @@ const YourQuotePage: React.FC = () => {
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
   
-  // Get the active promo slug from the store
-  const { activePromoSlug } = usePromoStore();
+  // Get the active promo slug and setPromoSlug function from the store
+  const { activePromoSlug, setPromoSlug } = usePromoStore();
   
   // Fetch promo data by slug if needed
   const { data: promoData, isLoading: isLoadingPromo } = usePromoBySlug(activePromoSlug);
