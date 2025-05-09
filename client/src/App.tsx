@@ -533,11 +533,21 @@ function Router() {
         }}
       </Route>
 
+      {/* Standard clinic portal route with ClinicGuard */}
       <Route path="/clinic-portal">
         {() => (
           <ClinicGuard>
             <ClinicPortalPage disableAutoRefresh={true} />
           </ClinicGuard>
+        )}
+      </Route>
+      
+      {/* Direct clinic portal access route - bypasses the standard guard */}
+      <Route path="/clinic-direct">
+        {() => (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic portal...</div>}>
+            <ClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
+          </React.Suspense>
         )}
       </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
