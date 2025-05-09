@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import EnhancedOffersCarousel from '@/components/EnhancedOffersCarousel';
+import { DiscountType } from '@shared/schema';
 
 /**
  * Test page to verify promo functionality
@@ -90,7 +91,10 @@ export default function PromoTestPage() {
                       <h3 className="font-semibold mb-2">Promotion Details</h3>
                       <div className="grid grid-cols-2 gap-2">
                         <Badge>Type: {promoData.data.promoType}</Badge>
-                        <Badge>Discount: {promoData.data.discountValue}{promoData.data.discountType === DiscountType.PERCENT ? '%' : ' GBP'}</Badge>
+                        <Badge>
+                          Discount: {promoData.data.discountValue}
+                          {promoData.data.discountType === DiscountType.PERCENT ? '%' : ' GBP'}
+                        </Badge>
                         <Badge variant="outline">
                           Starts: {new Date(promoData.data.startDate).toLocaleDateString()}
                         </Badge>
