@@ -216,7 +216,7 @@ export const promoTokensRelations = relations(promoTokens, ({ one }) => ({
   }),
 }));
 
-// Add promoToken field to quotes table
+// Quotes table with updated fields based on spec
 export const quotes = pgTable("quotes", {
   id: uuid("id").defaultRandom().primaryKey(),
   patientId: integer("patient_id").notNull().references(() => users.id),
@@ -228,6 +228,26 @@ export const quotes = pgTable("quotes", {
   offerId: varchar("offer_id", { length: 50 }),
   packageId: varchar("package_id", { length: 50 }),
   source: varchar("source", { length: 20 }).default("normal"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Quote lines table with base price and locked status
+export const quoteLines = pgTable("quote_lines", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  quoteId: uuid("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  treatmentCode: text("treatment_code").references(() => standardizedTreatments.code),
+  name: text("name").notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  basePriceGBP: integer("base_price_gbp"), // Original price before discount
+  unitPriceGBP: integer("unit_price_gbp").notNull(), // Actual price after discount
+  subtotalGBP: integer("subtotal_gbp").notNull(),
+  basePriceUSD: integer("base_price_usd"),
+  unitPriceUSD: integer("unit_price_usd"),
+  subtotalUSD: integer("subtotal_usd"),
+  isLocked: boolean("is_locked").default(false), // Cannot be removed when locked
+  isBonus: boolean("is_bonus").default(false), // Free item from promotion
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -244,6 +264,18 @@ export const quotesRelations = relations(quotes, ({ one, many }) => ({
   promoToken: one(promoTokens, {
     fields: [quotes.promoToken],
     references: [promoTokens.token],
+  }),
+  lines: many(quoteLines)
+}));
+
+export const quoteLinesRelations = relations(quoteLines, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteLines.quoteId],
+    references: [quotes.id],
+  }),
+  treatment: one(standardizedTreatments, {
+    fields: [quoteLines.treatmentCode],
+    references: [standardizedTreatments.code],
   }),
 }));
 
