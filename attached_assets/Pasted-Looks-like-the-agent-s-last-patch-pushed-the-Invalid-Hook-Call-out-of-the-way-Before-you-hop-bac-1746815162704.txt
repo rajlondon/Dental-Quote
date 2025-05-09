@@ -1,0 +1,69 @@
+Looks like the agent’s last patch pushed the Invalid Hook Call out of the way 🎉. Before you hop back to feature work, run a quick “regression hardening” loop so this bug (or its cousins) can’t sneak back in.
+
+1 — Smoke-test the fix
+Scenario	Steps	Expected
+Promo deep link	mydentalfly.repl.co/your-quote?promo=free-consultation-may	Page renders; Ribbon shows “Free Consultation (May only)”; no red nav-error screen
+No promo	…/your-quote	Same page loads without ribbon; totals show £0 discount
+Promo removal	On Quote Builder, click “Clear Promo” (or navigate back without promo=)	Ribbon disappears; totals recalc
+
+2 — Add a guardrail: eslint-plugin-react-hooks
+bash
+Copy
+Edit
+pnpm add -D eslint-plugin-react-hooks
+eslintrc.cjs:
+
+js
+Copy
+Edit
+{
+  "plugins": ["react-hooks"],
+  "rules": {
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}
+A pre-commit lint will now block any future “hook inside if” mistakes before they reach Replit’s preview.
+
+3 — Tiny Jest test to lock it in
+tsx
+Copy
+Edit
+import { render } from "@testing-library/react";
+import YourQuotePage from "../YourQuotePage";
+
+it("mounts with promo slug without throwing", () => {
+  // mock router to inject ?promo=test
+  window.history.pushState({}, "", "/your-quote?promo=test");
+  expect(() => render(<YourQuotePage />)).not.toThrow();
+});
+Add to CI so the invalid-hook call can’t regress silently.
+
+4 — WebSocket sanity (now that reconnect logic is merged)
+Open DevTools → Network → WS.
+
+Kill the server in Replit.
+
+Watch the client: should back-off (0.5 s, 1 s, 2 s, …), not spam 10 × sec.
+
+Restart server: socket should reconnect, clientsCount on /ws-health increases.
+
+If you still see stray 1006 codes after a couple of minutes, bump pingTimeout on the server to 30000.
+
+5 — Next slice after stability
+Results-page highlighting (pin promo clinics).
+
+Mixpanel/PostHog events (PromoApplied, WSReconnect).
+
+Admin CRUD for promos (React-Admin is quickest).
+
+But only once the above regression protections are green.
+
+TL;DR
+✅ Invalid hook call fixed.
+
+🔒 Add ESLint & Jest guard so it stays fixed.
+
+🔄 Verify WebSocket reconnect remains stable.
+
+📌 Then continue with promo UX polish or admin tooling.

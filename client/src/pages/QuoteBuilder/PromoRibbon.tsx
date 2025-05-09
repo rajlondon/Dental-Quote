@@ -1,86 +1,62 @@
 import React from 'react';
-import { usePromoStore } from '@/features/promo/usePromoStore';
-import { usePromoBySlug } from '@/features/promo/usePromoApi';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Percent, Tag, X } from 'lucide-react';
+import { X, Sparkles, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils';
-import { DiscountType, PromoType } from '@shared/schema';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-export function PromoRibbon() {
-  const { activePromoSlug, promoData, clearPromo } = usePromoStore();
-  
-  // Fetch promo data if we have a slug but not the data
-  const promoQuery = usePromoBySlug(
-    activePromoSlug && !promoData ? activePromoSlug : null
-  );
-  const { isLoading, error } = promoQuery;
-  
-  if (isLoading) {
-    return (
-      <Alert className="bg-gray-100 border-none">
-        <AlertTitle className="flex items-center gap-2">
-          <span className="animate-pulse">Loading promotion details...</span>
-        </AlertTitle>
-      </Alert>
-    );
-  }
-  
-  if (error || !promoData) {
-    return null;
-  }
-  
-  const discountLabel = promoData.discountType === DiscountType.PERCENT
-    ? `${promoData.discountValue}%`
-    : formatCurrency(promoData.discountValue);
-    
-  const promoTypeIcon = promoData.promoType === PromoType.PACKAGE
-    ? <Tag className="h-4 w-4" />
-    : <Percent className="h-4 w-4" />;
-    
-  const handleRemovePromo = () => {
-    if (window.confirm('Are you sure you want to remove this promotion? The discount will no longer apply.')) {
-      clearPromo();
-      
-      // Remove the promo from URL without navigation
-      const url = new URL(window.location.href);
-      url.searchParams.delete('promo');
-      window.history.replaceState({}, '', url.toString());
-    }
-  };
+interface PromoRibbonProps {
+  title: string | null;
+  description: string | null | undefined;
+  onClear?: () => void;
+}
+
+export const PromoRibbon: React.FC<PromoRibbonProps> = ({
+  title,
+  description,
+  onClear
+}) => {
+  if (!title) return null;
   
   return (
-    <Alert className="bg-primary/10 border-primary mb-6">
-      <div className="flex justify-between items-center w-full">
-        <div className="flex items-center gap-3">
-          {promoTypeIcon}
-          <div>
-            <AlertTitle className="text-primary font-medium">
-              {promoData.title}
-            </AlertTitle>
-            <AlertDescription className="text-sm">
-              {promoData.promoType === PromoType.PACKAGE 
-                ? "You're building a package with special pricing"
-                : "Special offer applied to your quote"}
-              {' '}
-              <Badge variant="outline" className="ml-1 bg-primary/20 hover:bg-primary/30">
-                Save {discountLabel}
-              </Badge>
-            </AlertDescription>
-          </div>
+    <div className="bg-green-600 text-white py-2 px-4 sticky top-0 z-50">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center">
+          <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
+          <p className="text-sm font-medium">
+            {title}: {description || 'Special promotion applied to your quote'}
+          </p>
         </div>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleRemovePromo}
-          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          title="Remove promotion"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-green-700">
+                  <Info className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  This promotion has been applied to your quote. 
+                  You can remove it at any time to see regular pricing.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          {onClear && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-white hover:bg-green-700"
+              onClick={onClear}
+              title="Clear promotion"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
-    </Alert>
+    </div>
   );
-}
+};
+
+export default PromoRibbon;
