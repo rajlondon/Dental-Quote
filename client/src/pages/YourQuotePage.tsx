@@ -612,13 +612,18 @@ const YourQuotePage: React.FC = () => {
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
   
-  // Get the active promo slug and setPromoSlug function from the store
+  // Get the active promo slug and all store functions from the store
   // Extract hook to the top level to avoid breaking React rules of hooks
   const promoStore = usePromoStore();
-  const activePromoSlug = promoStore.activePromoSlug;
-  const setPromoSlug = promoStore.setPromoSlug;
+  const { 
+    activePromoSlug, 
+    setPromoSlug, 
+    setPromoData,
+    clearPromo,
+    setApiState
+  } = promoStore;
   
-  // Fetch promo data by slug if needed
+  // Fetch promo data by slug if needed - must be called unconditionally
   const { data: promoData, isLoading: isLoadingPromo } = usePromoBySlug(activePromoSlug);
   
   // Special offer data (if passed from homepage or stored in sessionStorage)
@@ -1084,9 +1089,17 @@ const YourQuotePage: React.FC = () => {
   const [treatmentItems, setTreatmentItems] = useState<TreatmentItem[]>([]);
   
   // Handle promo data from slug after treatmentItems is defined
+  // Dedicated effect for handling promo data changes - always call at top level
   React.useEffect(() => {
-    if (promoData?.success && promoData.data && source === 'promo_token' && activePromoSlug) {
+    // Only process if we have valid promo data from the API - and make the check more robust
+    if (promoData?.success && promoData.data && activePromoSlug) {
       console.log("📣 Received promo data from API:", promoData.data);
+      
+      // Check if we're in the right flow state - if not, set it
+      if (source !== 'promo_token') {
+        console.log("Setting source to promo_token based on promoData");
+        setSource('promo_token');
+      }
       
       // Check if we already have treatment items for this promo
       const hasPromoTreatment = treatmentItems.some(item => 
@@ -1151,7 +1164,15 @@ const YourQuotePage: React.FC = () => {
         }
       }
     }
-  }, [promoData, activePromoSlug, source, treatmentItems]);
+  }, [
+    promoData, 
+    activePromoSlug, 
+    source, 
+    setSource,
+    treatmentItems,
+    setTreatmentItems,
+    toast
+  ]);
   
   // Patient Info State
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
@@ -1604,7 +1625,7 @@ const YourQuotePage: React.FC = () => {
       // Set this as the active promo in the store if not already set
       // The store is persisted in sessionStorage so it will survive page refreshes
       if (activePromoSlug !== promoSlugFromUrl) {
-        // Use setPromoSlug from our component-level variable that we declared earlier
+        // Set the promo slug - this function is obtained from usePromoStore at the component level
         setPromoSlug(promoSlugFromUrl);
         
         // Set flow as promo_token type for consistency
