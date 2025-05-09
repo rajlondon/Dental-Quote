@@ -356,6 +356,25 @@ export class PromoService {
     // Generate a secure random token
     return randomBytes(16).toString('hex');
   }
+  
+  /**
+   * Check if a clinic is eligible for a promotion
+   */
+  async isClinicEligibleForPromo(promoId: string, clinicId: string): Promise<boolean> {
+    // Check if this clinic is specifically associated with this promo
+    const [association] = await db
+      .select()
+      .from(promoClinics)
+      .where(
+        and(
+          eq(promoClinics.promoId, promoId),
+          eq(promoClinics.clinicId, clinicId)
+        )
+      )
+      .limit(1);
+      
+    return !!association;
+  }
 }
 
 // Export a singleton instance
