@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
 import { TreatmentCategory } from '@/data/treatment-categories-data';
 import { treatmentCategoriesData } from '@/data/treatment-categories-data';
 import { useSpecialOffers } from '@/hooks/use-special-offers';
+import { usePromoDiscount, TreatmentSelection } from '@/hooks/use-promo-discount';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Minus, X, Tag, Gift, Package, Star } from 'lucide-react';
+import { Plus, Minus, X, Tag, Gift, Package, Star, Percent } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 interface EnhancedTreatmentPlanBuilderProps {
   initialTreatments?: TreatmentItem[];
@@ -48,9 +50,56 @@ const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> 
     isPackageTreatment
   } = useSpecialOffers();
   
-  // Calculate totals
-  const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
-  const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
+  // Use our promo discount hook
+  const {
+    calculateDiscount,
+    calculateLocalDiscount,
+    getDiscountLabel,
+    getDiscountClasses,
+    hasActivePromo,
+    isLoading: isDiscountLoading
+  } = usePromoDiscount();
+  
+  // Track discount amounts
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [subtotal, setSubtotal] = useState(0);
+  
+  // Calculate subtotal
+  const rawTotalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
+  const rawTotalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
+  
+  // Apply discount and calculate final totals
+  const totalGBP = Math.max(0, rawTotalGBP - discountAmount);
+  const totalUSD = Math.max(0, rawTotalUSD - Math.round(discountAmount * 1.28)); // Approximate USD conversion
+  
+  // Calculate discount whenever treatments change
+  useEffect(() => {
+    if (hasActivePromo && treatments.length > 0) {
+      // Convert treatments to the format expected by the API
+      const treatmentSelections: TreatmentSelection[] = treatments.map(t => ({
+        code: t.id.split('_')[0], // Extract the treatment code from the ID
+        qty: t.quantity
+      }));
+      
+      // Calculate the discount using the API
+      calculateDiscount(treatmentSelections)
+        .then(result => {
+          setDiscountAmount(result.discountAmount);
+          setSubtotal(result.subtotal);
+        })
+        .catch(error => {
+          console.error('Error calculating discount:', error);
+          // Use local calculation as fallback
+          const localDiscount = calculateLocalDiscount(rawTotalGBP);
+          setDiscountAmount(localDiscount);
+          setSubtotal(rawTotalGBP);
+        });
+    } else {
+      // Reset discount when no promo is active
+      setDiscountAmount(0);
+      setSubtotal(rawTotalGBP);
+    }
+  }, [hasActivePromo, treatments, calculateDiscount, calculateLocalDiscount, rawTotalGBP]);
   
   // Get available treatments for the selected category
   const availableTreatments = categories.find((cat: TreatmentCategory) => cat.id === selectedCategory)?.treatments || [];
@@ -463,10 +512,33 @@ const EnhancedTreatmentPlanBuilder: React.FC<EnhancedTreatmentPlanBuilderProps> 
           )}
         </div>
         
+        {/* Subtotal & Discount */}
+        {hasActivePromo && discountAmount > 0 && (
+          <>
+            <div className="mt-4 flex justify-between text-gray-600 text-sm">
+              <span>Subtotal:</span>
+              <span>£{rawTotalGBP} (${rawTotalUSD})</span>
+            </div>
+            <div className="mt-1 flex justify-between text-emerald-600 font-medium text-sm">
+              <span className="flex items-center">
+                <Percent className="h-3 w-3 mr-1" /> Promotion Discount:
+              </span>
+              <span>- £{discountAmount.toFixed(2)}</span>
+            </div>
+          </>
+        )}
+        
         {/* Total */}
-        <div className="mt-4 flex justify-between font-semibold text-lg">
+        <div className="mt-2 flex justify-between font-semibold text-lg">
           <span>Total:</span>
-          <span>£{totalGBP} (${totalUSD})</span>
+          <span>
+            £{totalGBP} (${totalUSD})
+            {hasActivePromo && discountAmount > 0 && (
+              <Badge variant="outline" className="ml-2 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
+                {Math.round((discountAmount / rawTotalGBP) * 100)}% off
+              </Badge>
+            )}
+          </span>
         </div>
         
         {/* UK Comparison */}
