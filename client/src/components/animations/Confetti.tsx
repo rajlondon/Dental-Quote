@@ -1,83 +1,147 @@
 import React, { useEffect, useState } from 'react';
 
-const Confetti: React.FC = () => {
+interface ConfettiProps {
+  active: boolean;
+  duration?: number;
+}
+
+const Confetti: React.FC<ConfettiProps> = ({ active, duration = 5000 }) => {
   const [particles, setParticles] = useState<JSX.Element[]>([]);
-  
+  const [isActive, setIsActive] = useState(active);
+
+  // Generate confetti particles
   useEffect(() => {
+    if (!active) {
+      setIsActive(false);
+      return;
+    }
+
+    setIsActive(true);
+    
     // Create confetti particles
-    const colors = [
-      '#f44336', // red
-      '#e91e63', // pink
-      '#9c27b0', // purple
-      '#673ab7', // deep purple
-      '#3f51b5', // indigo
-      '#2196f3', // blue
-      '#03a9f4', // light blue
-      '#00bcd4', // cyan
-      '#009688', // teal
-      '#4CAF50', // green
-      '#8BC34A', // light green
-      '#CDDC39', // lime
-      '#FFEB3B', // yellow
-      '#FFC107', // amber
-      '#FF9800', // orange
-      '#FF5722', // deep orange
-    ];
+    const colors = ['#FFC700', '#FF0066', '#2EC4B6', '#011627', '#FDFFFC', '#5BC0EB', '#9BC53D'];
+    const shapes = ['circle', 'square', 'triangle'];
     
     const newParticles: JSX.Element[] = [];
-    const particleCount = 100;
+    const particleCount = 150;
     
     for (let i = 0; i < particleCount; i++) {
-      const left = Math.random() * 100;
-      const top = Math.random() * 100;
-      const size = Math.random() * 0.7 + 0.3; // Between 0.3rem and 1rem
       const color = colors[Math.floor(Math.random() * colors.length)];
-      const animationDuration = Math.random() * 3 + 1; // Between 1s and 4s
-      const animationDelay = Math.random() * 0.5; // Between 0s and 0.5s
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const left = `${Math.random() * 100}%`;
+      const top = `${Math.random() * 100}%`;
+      const size = `${Math.random() * 1 + 0.5}rem`;
+      const animationDuration = `${Math.random() * 3 + 2}s`;
+      const animationDelay = `${Math.random() * 0.5}s`;
+      const rotation = `${Math.random() * 360}deg`;
       
-      newParticles.push(
-        <div
-          key={i}
-          style={{
-            position: 'fixed',
-            left: `${left}%`,
-            top: `-5%`,
-            width: `${size}rem`,
-            height: `${size}rem`,
-            backgroundColor: color,
-            borderRadius: '50%',
-            transform: 'rotate(0deg)',
-            animation: `confetti-fall ${animationDuration}s ease-in ${animationDelay}s forwards, confetti-spin ${animationDuration * 0.5}s linear ${animationDelay}s infinite`
-          }}
-        />
-      );
+      let shapeElement;
+      if (shape === 'circle') {
+        shapeElement = (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left,
+              top,
+              width: size,
+              height: size,
+              backgroundColor: color,
+              borderRadius: '50%',
+              transform: `rotate(${rotation})`,
+              animation: `fall ${animationDuration} ease-in forwards`,
+              animationDelay,
+              opacity: 0,
+            }}
+          />
+        );
+      } else if (shape === 'square') {
+        shapeElement = (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left,
+              top,
+              width: size,
+              height: size,
+              backgroundColor: color,
+              transform: `rotate(${rotation})`,
+              animation: `fall ${animationDuration} ease-in forwards`,
+              animationDelay,
+              opacity: 0,
+            }}
+          />
+        );
+      } else {
+        shapeElement = (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left,
+              top,
+              width: 0,
+              height: 0,
+              borderLeft: size,
+              borderRight: size,
+              borderBottom: size,
+              borderLeftColor: 'transparent',
+              borderRightColor: 'transparent',
+              borderBottomColor: color,
+              transform: `rotate(${rotation})`,
+              animation: `fall ${animationDuration} ease-in forwards`,
+              animationDelay,
+              opacity: 0,
+            }}
+          />
+        );
+      }
+      
+      newParticles.push(shapeElement);
     }
     
     setParticles(newParticles);
     
-    // Clean up
-    return () => {
-      setParticles([]);
-    };
-  }, []);
+    // Auto-cleanup after duration
+    const timer = setTimeout(() => {
+      setIsActive(false);
+    }, duration);
+    
+    return () => clearTimeout(timer);
+  }, [active, duration]);
+  
+  if (!isActive) return null;
   
   return (
-    <>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 9999,
+        overflow: 'hidden',
+      }}
+    >
       <style>
         {`
-          @keyframes confetti-fall {
-            0% { top: -5%; }
-            100% { top: 105%; }
-          }
-          
-          @keyframes confetti-spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+          @keyframes fall {
+            0% {
+              transform: translateY(-10vh) rotate(0deg);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(100vh) rotate(360deg);
+              opacity: 0;
+            }
           }
         `}
       </style>
       {particles}
-    </>
+    </div>
   );
 };
 

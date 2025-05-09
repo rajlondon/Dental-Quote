@@ -196,14 +196,14 @@ const YourQuotePage: React.FC = () => {
   } = usePromoStore();
   
   // Use our new hooks for special offers and packages
-  const { specialOffer, setSpecialOffer } = useSpecialOfferDetection({
+  const { offerData, setOfferData } = useSpecialOfferDetection({
     source,
     setSource,
-    offerId,
-    setOfferId,
+    promoId: offerId,
+    setPromoId: setOfferId,
     clinicId,
     setClinicId,
-    isSpecialOfferFlow
+    isPromoFlow: isSpecialOfferFlow
   });
   
   const { packageData, setPackageData } = usePackageDetection({
@@ -308,8 +308,8 @@ const YourQuotePage: React.FC = () => {
     document.title = `Quote for ${quoteParams.treatment} | MyDentalFly`;
     
     // Track special offer view if present
-    if (specialOffer && !isLoadingPromo) {
-      trackOffer(specialOffer.id, 'view');
+    if (offerData && !isLoadingPromo && trackOffer) {
+      trackOffer(offerData.id, 'view');
     }
     
   }, [
@@ -327,11 +327,11 @@ const YourQuotePage: React.FC = () => {
   // Create treatment items based on context flow
   const createInitialTreatmentItem = useCallback(() => {
     // If special offer is active, create a special offer treatment
-    if (specialOffer) {
+    if (offerData) {
       console.log("Creating special offer treatment item");
       return {
         treatmentType: 'special-offer',
-        name: `${specialOffer.title} - ${specialOffer.applicableTreatment}`,
+        name: `${offerData.title} - Special Offer`,
         quantity: 1,
         priceGBP: 0,
         priceUSD: 0,
@@ -340,11 +340,11 @@ const YourQuotePage: React.FC = () => {
         guarantee: '30-day',
         isSpecialOffer: true,
         specialOffer: {
-          id: specialOffer.id,
-          title: specialOffer.title,
-          discountType: specialOffer.discountType,
-          discountValue: specialOffer.discountValue,
-          clinicId: specialOffer.clinicId
+          id: offerData.id,
+          title: offerData.title,
+          discountType: offerData.discountType,
+          discountValue: offerData.discountValue,
+          clinicId: offerData.clinicId || ''
         }
       };
     }
@@ -392,7 +392,7 @@ const YourQuotePage: React.FC = () => {
       subtotalUSD: 0,
       guarantee: '30-day'
     };
-  }, [specialOffer, packageData, promoToken, promoType, quoteParams.treatment]);
+  }, [offerData, packageData, promoToken, promoType, quoteParams.treatment]);
   
   // Initialize treatment plan on component mount
   useEffect(() => {
@@ -790,7 +790,7 @@ const YourQuotePage: React.FC = () => {
       <Footer />
       <ScrollToTop />
       
-      {showConfetti && <Confetti />}
+      <Confetti active={showConfetti} />
     </div>
   );
 };
