@@ -10,6 +10,7 @@ import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
 import { usePromoStore } from '@/features/promo/usePromoStore';
 import { usePromoBySlug } from '@/features/promo/usePromoApi';
+import { DiscountType, PromoType } from '@shared/schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QuoteSummaryPanel from '@/components/quote/QuoteSummaryPanel';
@@ -613,6 +614,9 @@ const YourQuotePage: React.FC = () => {
   
   // Get the active promo slug from the store
   const { activePromoSlug } = usePromoStore();
+  
+  // Fetch promo data by slug if needed
+  const { data: promoData, isLoading: isLoadingPromo } = usePromoBySlug(activePromoSlug);
   
   // Special offer data (if passed from homepage or stored in sessionStorage)
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
