@@ -107,6 +107,22 @@ export const useSpecialOffers = (options: UseSpecialOffersOptions = {}) => {
     return totalDiscount;
   }, [isSpecialOfferFlow, specialOffer, isPromoTokenFlow, promoToken]);
   
+  // Utility to check if a treatment is related to a special offer
+  const hasSpecialOffer = useCallback((treatment: TreatmentItem): boolean => {
+    return !!treatment.specialOffer;
+  }, []);
+
+  // Utility to check if a treatment is a package
+  const isPackageTreatment = useCallback((treatment: TreatmentItem): boolean => {
+    return !!treatment.isPackage;
+  }, []);
+
+  // Get the promo type (special_offer or package)
+  const promoType = promoToken?.type;
+
+  // Renamed for compatibility with EnhancedTreatmentPlanBuilder
+  const processSpecialOffers = processTreatments;
+
   return {
     // State
     specialOffer,
@@ -115,6 +131,7 @@ export const useSpecialOffers = (options: UseSpecialOffersOptions = {}) => {
     isSpecialOfferFlow,
     isPackageFlow,
     isPromoTokenFlow,
+    promoType,
     
     // Setters
     setSpecialOffer,
@@ -127,7 +144,12 @@ export const useSpecialOffers = (options: UseSpecialOffersOptions = {}) => {
     // Actions
     resetOffers,
     processTreatments,
+    processSpecialOffers, // Alias for compatibility
     calculateTotalDiscount,
+    
+    // Utilities
+    hasSpecialOffer,
+    isPackageTreatment,
     
     // Helpers
     hasActiveOffer: isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow

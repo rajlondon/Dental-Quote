@@ -198,6 +198,40 @@ function Router() {
       <Route path="/patient-portal">
         {() => <PatientPortalPage />}
       </Route>
+      
+      {/* Special Offers Rebuild Testing Routes */}
+      <Route path="/special-offers-rebuild">
+        {() => {
+          const QuoteFlowRebuildPage = React.lazy(() => import("@/pages/QuoteFlowRebuildPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+              <QuoteFlowRebuildPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
+      <Route path="/quote-flow-test">
+        {() => {
+          const QuoteFlowTest = React.lazy(() => import("@/pages/QuoteFlowTest"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+              <QuoteFlowTest />
+            </React.Suspense>
+          );
+        }}
+      </Route>
+      <Route path="/rebuild">
+        {() => {
+          const RebuildGateway = React.lazy(() => {
+            return import("./App.rebuild").then(module => ({ default: module.default }));
+          });
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading rebuild gateway...</div>}>
+              <RebuildGateway />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       <Route path="/dental-chart" component={DentalChartPage} />
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
