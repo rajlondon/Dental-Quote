@@ -180,6 +180,18 @@ function Router() {
           );
         }}
       </Route>
+      
+      {/* Test route for promo token API */}
+      <Route path="/promo-token-test">
+        {() => {
+          const PromoTokenTestPage = React.lazy(() => import("@/pages/PromoTokenTestPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading test environment...</div>}>
+              <PromoTokenTestPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       <Route path="/booking" component={BookingPage} />
       {/* Create separate routes for clinic pages with enhanced routing and diagnostics */}
       <Route path="/clinic/:id" component={ClinicRouter} />
