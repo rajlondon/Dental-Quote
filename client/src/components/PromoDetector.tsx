@@ -9,7 +9,7 @@ import { usePromoStore } from '@/features/promo/usePromoStore';
  * to detect URL parameters related to promotions, packages, and special offers.
  * This prevents hooks rule violations by encapsulating the use of router hooks.
  */
-export const PromoDetector: React.FC = () => {
+const PromoDetector: React.FC = () => {
   // Router hooks (only safe to use inside a Router component)
   const [location] = useLocation();
   
