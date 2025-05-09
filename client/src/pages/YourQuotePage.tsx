@@ -9,6 +9,7 @@ import { useQuoteFlow, useInitializeQuoteFlow } from '@/contexts/QuoteFlowContex
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
 import { usePromoStore } from '@/features/promo/usePromoStore';
+import { usePromoBySlug } from '@/features/promo/usePromoApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QuoteSummaryPanel from '@/components/quote/QuoteSummaryPanel';
@@ -1436,6 +1437,18 @@ const YourQuotePage: React.FC = () => {
     const promoTokenFromUrl = searchParams.get('promoToken');
     const promoTypeFromUrl = searchParams.get('promoType');
     
+    // Check for promo slug (from PromoCard click)
+    const promoSlugFromUrl = searchParams.get('promo');
+    if (promoSlugFromUrl) {
+      console.log(`Found promo slug in URL: ${promoSlugFromUrl}`);
+      // This would come from a PromoCard click, set it up as a promo token flow
+      if (!promoTokenFromUrl) {
+        // Only set if not already set by promoToken parameter
+        detectedSource = 'promo_token';
+        // We'll handle the actual promo lookup later
+      }
+    }
+    
     if (sourceTypeFromUrl && ['special_offer', 'package', 'promo_token', 'normal'].includes(sourceTypeFromUrl)) {
       // Explicit source parameter has highest priority
       detectedSource = sourceTypeFromUrl as 'special_offer' | 'package' | 'promo_token' | 'normal';
@@ -1485,6 +1498,34 @@ const YourQuotePage: React.FC = () => {
       const type = promoTypeFromUrl || 'special_offer';
       console.log(`Setting promoType to ${type}`);
       setPromoType(type as 'special_offer' | 'package');
+    }
+    
+    // Handle promo slug in URL (from PromoCard click)
+    if (promoSlugFromUrl) {
+      console.log(`Processing promo slug from URL: ${promoSlugFromUrl}`);
+      
+      // Set this as the active promo in the store if not already set
+      // The store is persisted in sessionStorage so it will survive page refreshes
+      if (activePromoSlug !== promoSlugFromUrl) {
+        // Import methods from usePromoStore to set the active slug
+        const { setPromoSlug } = usePromoStore.getState();
+        setPromoSlug(promoSlugFromUrl);
+        
+        // Set flow as promo_token type for consistency
+        if (source !== 'promo_token') {
+          setSource('promo_token');
+        }
+        
+        // Use the slug as the token for now - will be replaced with actual token after API fetch
+        if (!promoTokenFromUrl) {
+          setPromoToken(promoSlugFromUrl);
+          setPromoType('special_offer'); // Default type
+        }
+        
+        // Fetch the promo data using the usePromoBySlug hook
+        // This will be executed in a separate useEffect below
+        console.log(`Will fetch promo data for slug: ${promoSlugFromUrl}`);
+      }
     }
     
     console.log("QuoteFlowContext after sync:", {
