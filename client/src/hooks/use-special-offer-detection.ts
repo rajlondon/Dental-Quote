@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useCallback } from 'react';
 import { SpecialOfferDetails } from '../features/promo/promoTypes';
 
 /**
@@ -8,17 +7,16 @@ import { SpecialOfferDetails } from '../features/promo/promoTypes';
  * methods to apply special offers to treatments
  */
 export const useSpecialOfferDetection = () => {
-  const [searchParams] = useSearchParams();
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferDetails | null>(null);
 
-  // Parse URL parameters on mount
-  useEffect(() => {
-    const offerId = searchParams.get('offerId');
-    const offerTitle = searchParams.get('offerTitle');
-    const discountValue = searchParams.get('discountValue');
-    const discountType = searchParams.get('discountType') as 'percentage' | 'fixed_amount';
-    const clinicId = searchParams.get('clinicId');
-    const applicableTreatment = searchParams.get('applicableTreatment');
+  // Initialize from URL parameters - call this from a component inside Router context
+  const initFromSearchParams = useCallback((params: URLSearchParams) => {
+    const offerId = params.get('offerId');
+    const offerTitle = params.get('offerTitle');
+    const discountValue = params.get('discountValue');
+    const discountType = params.get('discountType') as 'percentage' | 'fixed_amount';
+    const clinicId = params.get('clinicId');
+    const applicableTreatment = params.get('applicableTreatment');
 
     // If we have the necessary parameters, set the special offer
     if (offerId && offerTitle && discountValue && discountType) {
@@ -31,7 +29,7 @@ export const useSpecialOfferDetection = () => {
         applicableTreatment: applicableTreatment || undefined
       });
     }
-  }, [searchParams]);
+  }, []);
 
   // Clear the special offer
   const clearSpecialOffer = useCallback(() => {
@@ -105,6 +103,7 @@ export const useSpecialOfferDetection = () => {
     specialOffer,
     setSpecialOffer,
     clearSpecialOffer,
+    initFromSearchParams,
     applySpecialOfferToTreatments,
     getDiscountedLines,
     hasActiveOffer: !!specialOffer,
