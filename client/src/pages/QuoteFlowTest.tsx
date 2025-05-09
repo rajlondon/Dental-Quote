@@ -1,377 +1,390 @@
-import React, { useState } from 'react';
-import { Link } from 'wouter';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { EnhancedQuoteFlowProvider, useEnhancedQuoteFlow } from '@/contexts/EnhancedQuoteFlowContext';
-import { QuoteFlowProvider, useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import EnhancedTreatmentPlanBuilder from '@/components/EnhancedTreatmentPlanBuilder';
-import TreatmentPlanBuilder from '@/components/TreatmentPlanBuilder';
-import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
-import {
-  ArrowRight,
-  ArrowLeft,
-  RefreshCw,
-  Package,
-  Gift,
-  ShoppingBag,
-  Tag
-} from 'lucide-react';
-import { treatmentCategoriesData } from '@/data/treatment-categories-data';
 import { Input } from '@/components/ui/input';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'wouter';
+import { TreatmentItem, TreatmentPlanBuilder } from '@/components/TreatmentPlanBuilder';
+import { EnhancedTreatmentPlanBuilder } from '@/components/EnhancedTreatmentPlanBuilder';
+import { treatmentCategoriesData } from '@/data/treatment-categories-data';
+import specialOffersService, { SpecialOffer, Package, PromoToken } from '@/services/SpecialOffersService';
+import { useSpecialOffers } from '@/hooks/use-special-offers';
 
-// Special Offer Test Scenarios
-const scenarios = [
-  {
-    id: 'standard',
-    name: 'Standard Quote',
-    description: 'No special offers or promotions',
-    params: '?source=standard'
-  },
-  {
-    id: 'special_offer',
-    name: 'Special Offer (20% Off)',
-    description: 'Standard percentage discount',
-    params: '?source=special_offer&offerId=test-offer-1&offerTitle=Spring%20Promotion&offerDiscountType=percentage&offerDiscount=20&clinicId=1'
-  },
-  {
-    id: 'special_offer_fixed',
-    name: 'Special Offer (£250 Off)',
-    description: 'Fixed amount discount',
-    params: '?source=special_offer&offerId=test-offer-2&offerTitle=Fixed%20Amount%20Discount&offerDiscountType=fixed_amount&offerDiscount=250&clinicId=1'
-  },
-  {
-    id: 'package',
-    name: 'Package Deal',
-    description: 'Bundled treatment package',
-    params: '?source=package&packageId=test-package-1&packageTitle=Smile%20Makeover%20Package&clinicId=1'
-  },
-  {
-    id: 'promo_token',
-    name: 'Promo Token',
-    description: 'Special promotional code',
-    params: '?source=promo_token&promoToken=SPRING2025&promoType=special_offer&promoTitle=Spring%20Promotion%20Code&discountType=percentage&discountValue=15&clinicId=1'
-  }
-];
-
-// Custom URL Builder Component
-const CustomUrlBuilder = ({ onApplyUrl }: { onApplyUrl: (url: string) => void }) => {
-  const [source, setSource] = useState('special_offer');
-  const [offerId, setOfferId] = useState('custom-offer');
-  const [offerTitle, setOfferTitle] = useState('Custom Offer');
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount'>('percentage');
-  const [discountValue, setDiscountValue] = useState('10');
-  const [clinicId, setClinicId] = useState('1');
+/**
+ * Test page for comparing the original TreatmentPlanBuilder with the enhanced version
+ */
+const QuoteFlowTest: React.FC = () => {
+  const { toast } = useToast();
+  const [navigate, setLocation] = useNavigate();
   
-  const generateUrl = () => {
-    const params = new URLSearchParams();
-    params.append('source', source);
+  // State for treatment plans
+  const [originalTreatments, setOriginalTreatments] = useState<TreatmentItem[]>([]);
+  const [enhancedTreatments, setEnhancedTreatments] = useState<TreatmentItem[]>([]);
+  
+  // State for special offers
+  const [specialOfferParam, setSpecialOfferParam] = useState<string>('');
+  const [packageParam, setPackageParam] = useState<string>('');
+  const [promoTokenParam, setPromoTokenParam] = useState<string>('');
+  
+  // Handle loading special offers from URL parameters
+  const loadParamsFromUrl = () => {
+    const searchParams = new URLSearchParams(window.location.search);
     
-    if (source === 'special_offer') {
-      params.append('offerId', offerId);
-      params.append('offerTitle', offerTitle);
-      params.append('offerDiscountType', discountType);
-      params.append('offerDiscount', discountValue);
-      params.append('clinicId', clinicId);
-    } else if (source === 'package') {
-      params.append('packageId', offerId);
-      params.append('packageTitle', offerTitle);
-      params.append('clinicId', clinicId);
-    } else if (source === 'promo_token') {
-      params.append('promoToken', offerId);
-      params.append('promoType', 'special_offer');
-      params.append('promoTitle', offerTitle);
-      params.append('discountType', discountType);
-      params.append('discountValue', discountValue);
-      params.append('clinicId', clinicId);
+    // Check for special offer ID
+    const offerParam = searchParams.get('specialOfferId');
+    if (offerParam) {
+      setSpecialOfferParam(offerParam);
     }
     
-    return `?${params.toString()}`;
+    // Check for package ID
+    const packageIdParam = searchParams.get('packageId');
+    if (packageIdParam) {
+      setPackageParam(packageIdParam);
+    }
+    
+    // Check for promo token
+    const tokenParam = searchParams.get('promoToken');
+    if (tokenParam) {
+      setPromoTokenParam(tokenParam);
+    }
   };
   
+  // Load parameters on initial mount
+  useEffect(() => {
+    loadParamsFromUrl();
+  }, []);
+  
+  // Handle applying special offer
+  const handleApplySpecialOffer = () => {
+    if (!specialOfferParam) {
+      toast({
+        title: "No special offer ID provided",
+        description: "Please enter a special offer ID to test",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Add the special offer ID to the URL
+    const params = new URLSearchParams();
+    params.set('specialOfferId', specialOfferParam);
+    
+    setLocation(`/quote-flow-test?${params.toString()}`);
+    window.location.reload(); // Reload to ensure that new parameters are processed
+  };
+  
+  // Handle applying package
+  const handleApplyPackage = () => {
+    if (!packageParam) {
+      toast({
+        title: "No package ID provided",
+        description: "Please enter a package ID to test",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Add the package ID to the URL
+    const params = new URLSearchParams();
+    params.set('packageId', packageParam);
+    
+    setLocation(`/quote-flow-test?${params.toString()}`);
+    window.location.reload(); // Reload to ensure that new parameters are processed
+  };
+  
+  // Handle applying promo token
+  const handleApplyPromoToken = () => {
+    if (!promoTokenParam) {
+      toast({
+        title: "No promo token provided",
+        description: "Please enter a promo token to test",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Add the promo token to the URL
+    const params = new URLSearchParams();
+    params.set('promoToken', promoTokenParam);
+    
+    setLocation(`/quote-flow-test?${params.toString()}`);
+    window.location.reload(); // Reload to ensure that new parameters are processed
+  };
+  
+  // Handle resetting the URL parameters
+  const handleReset = () => {
+    setLocation('/quote-flow-test');
+    setSpecialOfferParam('');
+    setPackageParam('');
+    setPromoTokenParam('');
+    window.location.reload(); // Reload to clear parameters
+  };
+  
+  // Handle adding a test treatment
+  const handleAddTestTreatment = () => {
+    // Create a simple test treatment item
+    const testTreatment: TreatmentItem = {
+      id: `test-treatment-${Date.now()}`,
+      category: 'basic-dentistry',
+      name: 'Test Treatment',
+      quantity: 1,
+      priceGBP: 100,
+      priceUSD: 120,
+      subtotalGBP: 100,
+      subtotalUSD: 120,
+      ukPriceGBP: 300,
+      ukPriceUSD: 360
+    };
+    
+    // Add to both sets of treatments
+    setOriginalTreatments(prev => [...prev, testTreatment]);
+    setEnhancedTreatments(prev => [...prev, testTreatment]);
+    
+    toast({
+      title: "Test treatment added",
+      description: "A test treatment has been added to both builders",
+    });
+  };
+  
+  // Get currently active parameters
+  const getActiveParams = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasSpecialOffer = searchParams.has('specialOfferId');
+    const hasPackage = searchParams.has('packageId');
+    const hasPromoToken = searchParams.has('promoToken');
+    
+    return { hasSpecialOffer, hasPackage, hasPromoToken };
+  };
+  
+  const { hasSpecialOffer, hasPackage, hasPromoToken } = getActiveParams();
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Custom URL Builder</CardTitle>
-        <CardDescription>Create a custom test scenario</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="source">Offer Type</Label>
-          <Select value={source} onValueChange={setSource}>
-            <SelectTrigger id="source">
-              <SelectValue placeholder="Select offer type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="standard">Standard Quote</SelectItem>
-              <SelectItem value="special_offer">Special Offer</SelectItem>
-              <SelectItem value="package">Package Deal</SelectItem>
-              <SelectItem value="promo_token">Promo Token</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Quote Flow Test Page</h1>
+        <p className="text-gray-600 mb-4">
+          This page allows you to test and compare the original treatment plan builder with the enhanced version
+          that handles special offers and packages more effectively.
+        </p>
         
-        <div className="space-y-2">
-          <Label htmlFor="offerId">
-            {source === 'special_offer' ? 'Offer ID' : 
-             source === 'package' ? 'Package ID' : 
-             source === 'promo_token' ? 'Promo Token' : 'ID'}
-          </Label>
-          <Input 
-            id="offerId" 
-            value={offerId} 
-            onChange={(e) => setOfferId(e.target.value)} 
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="offerTitle">
-            {source === 'special_offer' ? 'Offer Title' : 
-             source === 'package' ? 'Package Title' : 
-             source === 'promo_token' ? 'Promo Title' : 'Title'}
-          </Label>
-          <Input 
-            id="offerTitle" 
-            value={offerTitle} 
-            onChange={(e) => setOfferTitle(e.target.value)} 
-          />
-        </div>
-        
-        {(source === 'special_offer' || source === 'promo_token') && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="discountType">Discount Type</Label>
-              <Select 
-                value={discountType} 
-                onValueChange={(value) => setDiscountType(value as 'percentage' | 'fixed_amount')}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Special Offer Tester */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">Test Special Offer</h3>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="specialOfferId">Special Offer ID</Label>
+                <Input 
+                  id="specialOfferId"
+                  value={specialOfferParam}
+                  onChange={(e) => setSpecialOfferParam(e.target.value)}
+                  placeholder="Enter special offer ID"
+                />
+              </div>
+              <Button 
+                onClick={handleApplySpecialOffer}
+                className="w-full"
+                variant="default"
               >
-                <SelectTrigger id="discountType">
-                  <SelectValue placeholder="Select discount type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="percentage">Percentage (%)</SelectItem>
-                  <SelectItem value="fixed_amount">Fixed Amount (£)</SelectItem>
-                </SelectContent>
-              </Select>
+                Apply Special Offer
+              </Button>
+              {hasSpecialOffer && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  Special Offer Active
+                </Badge>
+              )}
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="discountValue">
-                {discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount (£)'}
-              </Label>
-              <Input 
-                id="discountValue" 
-                type="number"
-                value={discountValue} 
-                onChange={(e) => setDiscountValue(e.target.value)} 
-              />
+          </Card>
+          
+          {/* Package Tester */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">Test Package</h3>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="packageId">Package ID</Label>
+                <Input 
+                  id="packageId"
+                  value={packageParam}
+                  onChange={(e) => setPackageParam(e.target.value)}
+                  placeholder="Enter package ID"
+                />
+              </div>
+              <Button 
+                onClick={handleApplyPackage}
+                className="w-full"
+                variant="default"
+              >
+                Apply Package
+              </Button>
+              {hasPackage && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  Package Active
+                </Badge>
+              )}
             </div>
-          </>
-        )}
-        
-        <div className="space-y-2">
-          <Label htmlFor="clinicId">Clinic ID</Label>
-          <Input 
-            id="clinicId" 
-            value={clinicId} 
-            onChange={(e) => setClinicId(e.target.value)} 
-          />
+          </Card>
+          
+          {/* Promo Token Tester */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">Test Promo Token</h3>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="promoToken">Promo Token</Label>
+                <Input 
+                  id="promoToken"
+                  value={promoTokenParam}
+                  onChange={(e) => setPromoTokenParam(e.target.value)}
+                  placeholder="Enter promo token"
+                />
+              </div>
+              <Button 
+                onClick={handleApplyPromoToken}
+                className="w-full"
+                variant="default"
+              >
+                Apply Promo Token
+              </Button>
+              {hasPromoToken && (
+                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                  Promo Token Active
+                </Badge>
+              )}
+            </div>
+          </Card>
+          
+          {/* Test Controls */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">Test Controls</h3>
+            <div className="space-y-3">
+              <Button 
+                onClick={handleAddTestTreatment}
+                className="w-full"
+                variant="outline"
+              >
+                Add Test Treatment
+              </Button>
+              <Button 
+                onClick={handleReset}
+                className="w-full"
+                variant="destructive"
+              >
+                Reset Parameters
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full">Test Info</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Testing Instructions</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      <p className="mb-2">
+                        This testing page helps you compare the original treatment plan builder with the enhanced version.
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Add test treatments to both builders using the "Add Test Treatment" button</li>
+                        <li>Apply a special offer ID to see how both builders handle it</li>
+                        <li>Apply a package ID to see how both builders handle it</li>
+                        <li>Apply a promo token to see how both builders handle it</li>
+                      </ul>
+                      <p className="mt-2">
+                        The enhanced builder should properly display special offers as bonus items and handle packages
+                        more intelligently.
+                      </p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Close</AlertDialogCancel>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </Card>
         </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={() => onApplyUrl(generateUrl())} className="w-full">
-          Apply Custom URL
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-};
-
-// Component that allows testing both implementations side by side
-const SideBySideCompare = () => {
-  // Old implementation (QuoteFlowContext)
-  const oldImplementation = useQuoteFlow();
-  
-  // New implementation (EnhancedQuoteFlowContext)
-  const newImplementation = useEnhancedQuoteFlow();
-  
-  // State for treatments
-  const [oldTreatments, setOldTreatments] = useState<TreatmentItem[]>([]);
-  const [newTreatments, setNewTreatments] = useState<TreatmentItem[]>([]);
-  
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="border-gray-300">
-        <CardHeader className="pb-2 border-b">
-          <CardTitle className="text-base">Current Implementation</CardTitle>
-          <CardDescription>
-            Special offers are standard items with isBonus flag
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="h-[600px] overflow-auto">
-            <TreatmentPlanBuilder 
-              initialTreatments={oldTreatments}
-              onTreatmentsChange={setOldTreatments}
-              hideHeader
-              treatmentCategoriesData={treatmentCategoriesData}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      </div>
       
-      <Card className="border-primary/30 bg-primary/5">
-        <CardHeader className="pb-2 border-b">
-          <CardTitle className="text-base text-primary">New Implementation</CardTitle>
-          <CardDescription>
-            Enhanced special offer handling with proper UI sections
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="h-[600px] overflow-auto">
-            <EnhancedTreatmentPlanBuilder 
-              initialTreatments={newTreatments}
-              onTreatmentsChange={setNewTreatments}
-              hideHeader
+      <Separator className="my-6" />
+      
+      <Tabs defaultValue="sideBySide">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="sideBySide">Side by Side</TabsTrigger>
+          <TabsTrigger value="original">Original Builder</TabsTrigger>
+          <TabsTrigger value="enhanced">Enhanced Builder</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="sideBySide" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <Card className="p-4">
+                <h2 className="text-xl font-bold mb-4">Original Treatment Plan Builder</h2>
+                <TreatmentPlanBuilder 
+                  initialTreatments={originalTreatments}
+                  onTreatmentsChange={setOriginalTreatments}
+                  hideHeader={true}
+                  treatmentCategoriesData={treatmentCategoriesData}
+                />
+              </Card>
+            </div>
+            <div>
+              <Card className="p-4">
+                <h2 className="text-xl font-bold mb-4">Enhanced Treatment Plan Builder</h2>
+                <EnhancedTreatmentPlanBuilder 
+                  initialTreatments={enhancedTreatments}
+                  onTreatmentsChange={setEnhancedTreatments}
+                  hideHeader={true}
+                  treatmentCategoriesData={treatmentCategoriesData}
+                />
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="original">
+          <Card className="p-4">
+            <h2 className="text-xl font-bold mb-4">Original Treatment Plan Builder</h2>
+            <TreatmentPlanBuilder 
+              initialTreatments={originalTreatments}
+              onTreatmentsChange={setOriginalTreatments}
               treatmentCategoriesData={treatmentCategoriesData}
             />
-          </div>
-        </CardContent>
-      </Card>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="enhanced">
+          <Card className="p-4">
+            <h2 className="text-xl font-bold mb-4">Enhanced Treatment Plan Builder</h2>
+            <EnhancedTreatmentPlanBuilder 
+              initialTreatments={enhancedTreatments}
+              onTreatmentsChange={setEnhancedTreatments}
+              treatmentCategoriesData={treatmentCategoriesData}
+            />
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-// Main Test Page Component
-const QuoteFlowTest: React.FC = () => {
-  const [currentUrl, setCurrentUrl] = useState('');
-  
-  // Apply scenario
-  const applyScenario = (scenarioParams: string) => {
-    // Update the URL without refreshing the page
-    window.history.pushState({}, '', scenarioParams);
-    setCurrentUrl(scenarioParams);
-    
-    // Force initialization of both providers
-    window.dispatchEvent(new Event('popstate'));
-  };
-  
-  return (
-    <>
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Special Offers Test Page</h1>
-            <p className="text-gray-600 mt-2">
-              Test and compare both implementations with different scenarios
-            </p>
-          </div>
-          
-          <Tabs defaultValue="compare" className="mb-8">
-            <TabsList>
-              <TabsTrigger value="compare">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Side by Side Comparison
-              </TabsTrigger>
-              <TabsTrigger value="scenarios">
-                <ShoppingBag className="h-4 w-4 mr-2" />
-                Test Scenarios
-              </TabsTrigger>
-              <TabsTrigger value="custom">
-                <Tag className="h-4 w-4 mr-2" />
-                Custom Test
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="compare" className="mt-6">
-              <SideBySideCompare />
-            </TabsContent>
-            
-            <TabsContent value="scenarios" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {scenarios.map((scenario) => (
-                  <Card key={scenario.id} className="h-full flex flex-col">
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-lg">
-                        {scenario.id === 'standard' ? (
-                          <ShoppingBag className="h-4 w-4 mr-2 text-gray-600" />
-                        ) : scenario.id.includes('special_offer') ? (
-                          <Gift className="h-4 w-4 mr-2 text-green-600" />
-                        ) : scenario.id === 'package' ? (
-                          <Package className="h-4 w-4 mr-2 text-blue-600" />
-                        ) : (
-                          <Tag className="h-4 w-4 mr-2 text-purple-600" />
-                        )}
-                        {scenario.name}
-                      </CardTitle>
-                      <CardDescription>{scenario.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <code className="text-xs bg-gray-100 p-2 rounded block whitespace-normal break-all">
-                        {scenario.params}
-                      </code>
-                    </CardContent>
-                    <CardFooter className="mt-auto pt-4">
-                      <Button 
-                        onClick={() => applyScenario(scenario.params)}
-                        className="w-full"
-                        variant={currentUrl === scenario.params ? "default" : "outline"}
-                      >
-                        Test Scenario
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="custom" className="mt-6">
-              <CustomUrlBuilder onApplyUrl={applyScenario} />
-            </TabsContent>
-          </Tabs>
-          
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => window.history.back()}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            
-            <Link href="/special-offers-rebuild">
-              <Button>
-                View Rebuild Progress
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </>
-  );
-};
-
-// Wrap the component with both providers for test comparison
-const QuoteFlowTestWithProviders: React.FC = () => {
-  return (
-    <QuoteFlowProvider>
-      <EnhancedQuoteFlowProvider>
-        <QuoteFlowTest />
-      </EnhancedQuoteFlowProvider>
-    </QuoteFlowProvider>
-  );
-};
-
-export default QuoteFlowTestWithProviders;
+export default QuoteFlowTest;
