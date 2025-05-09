@@ -1080,6 +1080,75 @@ const YourQuotePage: React.FC = () => {
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<TreatmentItem[]>([]);
   
+  // Handle promo data from slug after treatmentItems is defined
+  React.useEffect(() => {
+    if (promoData?.success && promoData.data && source === 'promo_token' && activePromoSlug) {
+      console.log("📣 Received promo data from API:", promoData.data);
+      
+      // Check if we already have treatment items for this promo
+      const hasPromoTreatment = treatmentItems.some(item => 
+        item.promoToken === activePromoSlug || // Exact match by token
+        (item.isSpecialOffer && item.name === promoData.data.title) // Match by name
+      );
+      
+      if (!hasPromoTreatment && treatmentItems.length === 0) {
+        console.log("Creating promo treatment item from API data");
+        
+        // Create a treatment item based on the fetched promo
+        const promoTreatment: TreatmentItem = {
+          id: `promo_${Date.now()}`,
+          category: promoData.data.promoType === 'special_offer' ? 'special_offer' : 'packages',
+          name: promoData.data.title,
+          quantity: 1,
+          priceGBP: 450, // Base price, will be adjusted after discount calculation
+          priceUSD: 580, // Base price
+          subtotalGBP: 450,
+          subtotalUSD: 580,
+          guarantee: '5-year',
+          isSpecialOffer: promoData.data.promoType === 'special_offer',
+          isPackage: promoData.data.promoType === 'package',
+          promoToken: activePromoSlug || undefined,
+          promoType: promoData.data.promoType === 'special_offer' ? 'special_offer' : 'package'
+        };
+        
+        // Apply discount if available
+        if (promoData.data.discountValue > 0) {
+          if (promoData.data.discountType === 'percent') {
+            const discountMultiplier = (100 - promoData.data.discountValue) / 100;
+            promoTreatment.priceGBP = Math.round(promoTreatment.priceGBP * discountMultiplier);
+            promoTreatment.priceUSD = Math.round(promoTreatment.priceUSD * discountMultiplier);
+          } else if (promoData.data.discountType === 'fixed') {
+            promoTreatment.priceGBP = Math.max(0, promoTreatment.priceGBP - promoData.data.discountValue);
+            promoTreatment.priceUSD = Math.max(0, promoTreatment.priceUSD - Math.round(promoData.data.discountValue * 1.28));
+          }
+          promoTreatment.subtotalGBP = promoTreatment.priceGBP * promoTreatment.quantity;
+          promoTreatment.subtotalUSD = promoTreatment.priceUSD * promoTreatment.quantity;
+        }
+        
+        // Add the promo treatment to our treatment items
+        console.log("Setting promo treatment from API data:", promoTreatment);
+        setTreatmentItems([promoTreatment]);
+        
+        // Show welcome toast for the promo
+        toast({
+          title: `${promoData.data.promoType === 'package' ? 'Treatment Package' : 'Special Offer'} Selected`,
+          description: `Your quote includes: ${promoData.data.title}`,
+        });
+        
+        // If promo is linked to a specific clinic, auto-select it when clinics list is available
+        if (promoData.data.clinics && promoData.data.clinics.length === 1) {
+          const promoClinicId = promoData.data.clinics[0].clinicId;
+          console.log(`Promo is linked to clinic ID: ${promoClinicId}`);
+          
+          // Store this for later use with the real clinic list
+          sessionStorage.setItem('promoSelectedClinicId', promoClinicId);
+          
+          // We'll pre-select the clinic once it's available in another effect
+        }
+      }
+    }
+  }, [promoData, activePromoSlug, source, treatmentItems]);
+  
   // Patient Info State
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
   
