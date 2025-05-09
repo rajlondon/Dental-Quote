@@ -10,7 +10,7 @@ const router = Router();
  * POST /api/v1/promos/tokens
  * Admin access only
  */
-router.post("/", adminGuard, async (req, res) => {
+router.post("/", ensureRole("admin"), async (req, res) => {
   try {
     const { promoId, source, email, userId, expireAt } = req.body;
 
@@ -89,7 +89,7 @@ router.get("/validate/:token", async (req, res) => {
  * POST /api/v1/promos/tokens/:token/use
  * Authentication required
  */
-router.post("/:token/use", authGuard, async (req, res) => {
+router.post("/:token/use", ensureAuthenticated, async (req, res) => {
   try {
     const { token } = req.params;
     
