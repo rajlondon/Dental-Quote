@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, Link } from 'wouter';
+import { useLocation, Link, useSearchParams } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -10,6 +10,8 @@ import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
 import { usePromoStore } from '@/features/promo/usePromoStore';
 import { usePromoBySlug } from '@/features/promo/usePromoApi';
+import { useSpecialOfferDetection } from '@/hooks/use-special-offer-detection';
+import { usePackageDetection } from '@/hooks/use-package-detection';
 import { DiscountType, PromoType } from '@shared/schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,40 +30,31 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Check, 
-  ChevronRight, 
-  MapPin, 
-  Star, 
-  Clock, 
-  Calendar, 
-  Download, 
-  Mail, 
-  CreditCard,
-  Hotel,
-  Car,
-  Shield,
-  Plane,
-  Sparkles,
-  Info,
-  ArrowLeft,
-  Edit3,
-  RefreshCcw,
-  MessageCircle,
-  CheckCircle,
-  HeartHandshake,
-  Pencil,
-  Tag,
-  Package
-} from 'lucide-react';
-import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog } from '@/components/ui/dialog';
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertCircle, Calendar, Check, CheckCircle, Info, Loader2, MapPin, Package, Phone, User, X } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import QuoteFormFooter from '@/components/QuoteFormFooter';
+import PromoRibbon from '@/pages/QuoteBuilder/PromoRibbon';
+import ClinicCard from '@/components/ClinicCard';
+import QuoteTreatmentSelectionPanel from '@/components/QuoteTreatmentSelectionPanel';
+import TreatmentPlanCard from '@/components/TreatmentPlanCard';
 import EnhancedTreatmentPlanBuilder from '@/components/EnhancedTreatmentPlanBuilder';
-import EditQuoteModal from '@/components/EditQuoteModal';
-import SpecialOfferHandler from '@/components/specialOffers/SpecialOfferHandler';
-import { PromoRibbon } from '@/pages/QuoteBuilder/PromoRibbon';
+import Confetti from '@/components/animations/Confetti';
+import FreeConsultationWidget from '@/components/free-consultation/FreeConsultationWidget';
+import { useTransportCostEstimator } from '@/hooks/use-transport-cost-estimator';
 
-// Types
+// Define interfaces
 interface ClinicInfo {
   id: string;
   name: string;
@@ -99,8 +92,6 @@ interface QuoteParams {
   budget: string;
 }
 
-// We're now using the TreatmentItem interface imported from TreatmentPlanBuilder
-
 interface PatientInfo {
   fullName: string;
   email: string;
@@ -113,6 +104,28 @@ interface PatientInfo {
   preferredContactMethod: 'email' | 'whatsapp';
 }
 
+interface TreatmentItem {
+  treatmentType: string;
+  name: string;
+  quantity: number;
+  priceGBP: number;
+  priceUSD: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  guarantee: string;
+  isBonus?: boolean;
+  isLocked?: boolean;
+  isSpecialOffer?: boolean;
+  packageId?: string;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: string;
+    discountValue: number;
+    clinicId: string;
+  };
+}
+
 interface SpecialOfferParams {
   id: string;
   title: string;
@@ -122,461 +135,23 @@ interface SpecialOfferParams {
   applicableTreatment: string;
 }
 
-// Mock data for clinics
-const CLINIC_DATA: ClinicInfo[] = [
-  {
-    id: 'istanbul-dental-care',
-    name: 'Istanbul Dental Care',
-    tier: 'affordable',
-    priceGBP: 1550,
-    priceUSD: 1999,
-    location: 'Şişli, Istanbul',
-    rating: 4.1,
-    reviewCount: 58,
-    guarantee: '3-year',
-    materials: ['Generic Implants', 'Standard Materials'],
-    conciergeType: 'mydentalfly',
-    features: ['Airport pickup', 'Modern facility', 'English-speaking staff'],
-    description: 'A cost-effective option with quality care and modern facilities. Perfect for simple procedures and budget-conscious patients.',
-    packages: {
-      hotel: true,
-      transfers: true,
-      consultation: true
-    },
-    images: ['/images/clinics/istanbul-dental.jpg'],
-    // IMPORTANT: Force this to be true for all clinics
-    hasSpecialOffer: true,
-    specialOfferDetails: {
-      id: "default_offer_1",
-      title: "Free Consultation Package",
-      discountValue: 100,
-      discountType: "percentage"
-    }
-  },
-  {
-    id: 'dentgroup-istanbul',
-    name: 'DentGroup Istanbul',
-    tier: 'mid',
-    priceGBP: 1950,
-    priceUSD: 2499,
-    location: 'Kadıköy, Istanbul',
-    rating: 4.7,
-    reviewCount: 124,
-    guarantee: '5-year',
-    materials: ['Straumann Implants', 'Premium Materials'],
-    conciergeType: 'mydentalfly',
-    features: ['Airport pickup', 'Hotel transfers', 'Advanced technology', 'Multilingual staff'],
-    description: 'A balanced option offering premium quality at reasonable prices with excellent aftercare support. Popular with international patients.',
-    packages: {
-      hotel: true,
-      transfers: true,
-      consultation: true,
-      cityTour: true
-    },
-    images: ['/images/clinics/dentgroup.jpg'],
-    hasSpecialOffer: true,
-    specialOfferDetails: {
-      id: "default_offer_2",
-      title: "Premium Hotel Deal",
-      discountValue: 15,
-      discountType: "percentage"
-    }
-  },
-  {
-    id: 'maltepe-dental-clinic',
-    name: 'Maltepe Dental Clinic',
-    tier: 'premium',
-    priceGBP: 2250,
-    priceUSD: 2899,
-    location: 'Maltepe, Istanbul',
-    rating: 4.9,
-    reviewCount: 203,
-    guarantee: '10-year',
-    materials: ['Nobel Biocare Implants', 'Premium Zirconia'],
-    conciergeType: 'mydentalfly',
-    features: ['VIP airport service', 'Luxury hotel arrangements', 'State-of-the-art technology', 'VIP transfers'],
-    description: 'Our premium option offering VIP service, cutting-edge technology, and the finest materials. The choice for patients seeking luxury and perfection.',
-    packages: {
-      hotel: true,
-      transfers: true,
-      consultation: true,
-      cityTour: true
-    },
-    images: ['/images/clinics/maltepe.jpg'],
-    // Add special offer details to this clinic
-    hasSpecialOffer: true,
-    specialOfferDetails: {
-      id: "default_offer_3",
-      title: "Dental Implant + Crown Bundle",
-      discountValue: 20,
-      discountType: "percentage"
-    }
-  },
-  {
-    id: 'dentakay-clinic',
-    name: 'Dentakay',
-    tier: 'premium',
-    priceGBP: 2190,
-    priceUSD: 2799,
-    location: 'Sisli, Istanbul',
-    rating: 4.8,
-    reviewCount: 176,
-    guarantee: '7-year',
-    materials: ['Straumann Implants', 'E.max Crowns'],
-    conciergeType: 'clinic',
-    features: ['Dedicated patient coordinators', 'Luxury accommodation', 'VIP transfers', 'International accreditation'],
-    description: 'A prestigious clinic offering luxury services with its own concierge team. Known for catering to international celebrities and VIP clients.',
-    packages: {
-      hotel: true,
-      transfers: true,
-      consultation: true,
-      cityTour: true
-    },
-    images: ['/images/clinics/dentakay.jpg'],
-    // Add special offer details to this clinic
-    hasSpecialOffer: true,
-    specialOfferDetails: {
-      id: "default_offer_4",
-      title: "Luxury Airport Transfer",
-      discountValue: 120,
-      discountType: "fixed_amount" 
-    }
-  },
-  {
-    id: 'crown-dental',
-    name: 'Crown Dental Clinic',
-    tier: 'mid',
-    priceGBP: 1890,
-    priceUSD: 2399,
-    location: 'Taksim, Istanbul',
-    rating: 4.6,
-    reviewCount: 92,
-    guarantee: '5-year',
-    materials: ['Osstem Implants', 'Zirconia Crowns'],
-    conciergeType: 'mydentalfly',
-    features: ['Central location', 'Hotel booking assistance', 'Airport transfers', 'Multilingual staff'],
-    description: 'Located in the heart of Istanbul, this clinic combines convenience with quality care. Great for patients who want to explore the city.',
-    packages: {
-      hotel: true,
-      transfers: true,
-      consultation: true
-    },
-    images: ['/images/clinics/crown.jpg'],
-    // Add special offer details to this clinic
-    hasSpecialOffer: true,
-    specialOfferDetails: {
-      id: "default_offer_5",
-      title: "Free Hotel Stay",
-      discountValue: 25,
-      discountType: "percentage"
-    }
-  }
-];
-
-// Helper components
-const RatingStars: React.FC<{ rating: number }> = ({ rating }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating - fullStars >= 0.3;
-  
-  return (
-    <div className="flex items-center">
-      {[...Array(5)].map((_, i) => (
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i < fullStars 
-              ? 'fill-yellow-400 text-yellow-400' 
-              : (i === fullStars && hasHalfStar)
-                ? 'text-yellow-400 fill-yellow-400' 
-                : 'text-gray-300'
-          }`}
-        />
-      ))}
-      <span className="ml-2 text-sm font-medium">{rating}</span>
-    </div>
-  );
-};
-
-const TierBadge: React.FC<{ tier: 'affordable' | 'mid' | 'premium' }> = ({ tier }) => {
-  const colors = {
-    affordable: 'bg-blue-100 text-blue-800',
-    mid: 'bg-purple-100 text-purple-800',
-    premium: 'bg-amber-100 text-amber-800'
-  };
-  
-  const labels = {
-    affordable: 'Budget-Friendly',
-    mid: 'Mid-Range',
-    premium: 'Premium'
-  };
-  
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[tier]}`}>
-      {labels[tier]}
-    </span>
-  );
-};
-
-const PackageIcon: React.FC<{ type: 'hotel' | 'transfers' | 'consultation' | 'cityTour', included: boolean }> = ({ type, included }) => {
-  const icons = {
-    hotel: <Hotel className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />,
-    transfers: <Car className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />,
-    consultation: <Shield className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />,
-    cityTour: <Plane className={`h-5 w-5 ${included ? 'text-green-600' : 'text-gray-300'}`} />
-  };
-
-  const labels = {
-    hotel: 'Hotel',
-    transfers: 'Transfers',
-    consultation: 'Consultation',
-    cityTour: 'City Tour'
-  };
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      {icons[type]}
-      <span className={`text-xs ${included ? 'text-gray-700' : 'text-gray-400'}`}>{labels[type]}</span>
-    </div>
-  );
-};
-
-const ClinicCard: React.FC<{ 
-  clinic: ClinicInfo, 
-  isSelected: boolean,
-  onSelect: () => void 
-}> = ({ clinic, isSelected, onSelect }) => {
-  // Get promo information from context - this is the proper way to get the values
-  const { 
-    source,
-    offerId,
-    promoToken, 
-    promoType, 
-    isSpecialOfferFlow,
-    isPromoTokenFlow,
-    clinicId: promoClinicId 
-  } = useQuoteFlow();
-  
-  // Get all URL parameters to check for special offer indicators
-  const urlParams = new URLSearchParams(window.location.search);
-  const specialOfferIdFromUrl = urlParams.get('specialOffer') || urlParams.get('offerId');
-  const sourceFromUrl = urlParams.get('source');
-  const isSpecialOfferSource = sourceFromUrl === 'special_offer';
-  
-  // Direct URL parameter check for offer-related indicators
-  const isOfferUrl = urlParams.has('specialOffer') || urlParams.has('offerId');
-  
-  // Enhanced special offer detection:
-  // 1. Check URL directly (most reliable)
-  // 2. Check context source
-  // 3. Check clinic hasSpecialOffer property 
-  const hasSpecialOfferFromUrl = specialOfferIdFromUrl !== null || isSpecialOfferSource || isOfferUrl;
-  const hasSpecialOfferFromContext = isSpecialOfferFlow && (offerId !== null);
-  
-  // Log all detection methods to help debug
-  console.log(`ClinicCard for ${clinic.name} with ID: ${clinic.id}`, {
-    hasSpecialOfferFromUrl,
-    hasSpecialOfferFromContext,
-    hasSpecialOfferDirectly: clinic.hasSpecialOffer,
-    isSpecialOfferFlow,
-    specialOfferIdFromUrl,
-    sourceFromUrl,
-    offerId,
-    isOfferUrl
-  });
-  
-  // Final determination if this clinic should show special offer
-  // Show special offer for ALL clinics when in special offer flow
-  // DIRECT FIX: FORCE special offers to show in all clinics in special offer environment
-  const shouldShowSpecialOffer = true; // Force to true for testing
-  // Debug what's preventing special offers from showing
-  console.log(`💥 FORCE ENABLING SPECIAL OFFERS for all clinics`);
-  
-  // Specific clinic promo determination - for targeted promotions
-  const hasPromoForThisClinic = promoToken && promoClinicId === clinic.id;
-  
-  // For offer display
-  const promoTitle = urlParams.get('promoTitle') || urlParams.get('offerTitle') || 'Special Promotion';
-  
-  return (
-    <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
-      isSelected 
-        ? 'border-blue-500 shadow-lg' 
-        : shouldShowSpecialOffer
-          ? 'border-blue-300 shadow-md' // Apply blue border to all clinics in special offer flow
-          : hasPromoForThisClinic
-            ? 'border-primary shadow-md' 
-            : 'border-gray-200'
-    }`}>
-      {isSelected && (
-        <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 text-sm font-semibold z-10 rounded-bl-md">
-          Selected
-        </div>
-      )}
-      
-      {/* Enhanced badge design with more attention-grabbing appearance */}
-      {hasPromoForThisClinic ? (
-        <div className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/90 text-white px-4 py-2 text-sm font-bold z-10 rounded-br-lg shadow-md flex items-center">
-          <Tag className="h-4 w-4 mr-2 text-white" />
-          {promoType === 'special_offer' ? 'Special Offer' : 
-           promoType === 'package' ? 'Treatment Package' : 
-           'Promotion'}
-        </div>
-      ) : shouldShowSpecialOffer && (
-        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 text-white px-4 py-2 text-sm font-bold z-10 rounded-br-lg shadow-md flex items-center animate-pulse transform -rotate-2">
-          <Sparkles className="h-4 w-4 mr-2 text-yellow-300" />
-          <span className="relative">
-            Special Offer
-            <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-yellow-300"></span>
-          </span>
-        </div>
-      )}
-      
-      <div className="flex flex-col md:flex-row overflow-hidden">
-        {/* Left column - Clinic Image */}
-        <div className="md:w-1/4 h-52 md:h-auto relative overflow-hidden">
-          <img 
-            src={clinic.images[0]} 
-            alt={clinic.name} 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 left-2">
-            <TierBadge tier={clinic.tier} />
-          </div>
-        </div>
-        
-        {/* Middle column - Clinic details */}
-        <div className="md:w-2/4 p-4">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="text-xl font-bold">{clinic.name}</h3>
-              <div className="flex items-center gap-2 mb-2">
-                <RatingStars rating={clinic.rating} />
-                <span className="text-sm text-gray-500">({clinic.reviewCount} reviews)</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center text-gray-700 mb-3">
-            <MapPin className="h-4 w-4 mr-1 text-gray-500" />
-            <span className="text-sm">{clinic.location}</span>
-          </div>
-          
-          <p className="text-gray-700 mb-4 text-sm">{clinic.description}</p>
-          
-          <div className="mb-4">
-            <div className="flex gap-6 flex-wrap">
-              <PackageIcon type="hotel" included={clinic.packages.hotel || false} />
-              <PackageIcon type="transfers" included={clinic.packages.transfers || false} />
-              <PackageIcon type="consultation" included={clinic.packages.consultation || false} />
-              <PackageIcon type="cityTour" included={clinic.packages.cityTour || false} />
-            </div>
-          </div>
-          
-          <div className="mb-3">
-            <h4 className="font-medium text-sm text-gray-700 mb-2">Highlights:</h4>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
-              {clinic.features.map((feature, index) => (
-                <li key={index} className="flex items-center text-sm text-gray-600">
-                  <Check className="h-3 w-3 text-green-500 mr-1 flex-shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-700 font-medium">
-            <Shield className="h-4 w-4 mr-1 text-blue-500" />
-            <span>{clinic.guarantee} guarantee</span>
-          </div>
-        </div>
-        
-        {/* Right column - Pricing and action */}
-        <div className="md:w-1/4 p-4 bg-gray-50 flex flex-col justify-between">
-          <div>
-            <h4 className="font-bold text-lg mb-1">£{clinic.priceGBP}</h4>
-            <p className="text-gray-500 text-sm mb-4">Base package from</p>
-            
-            {/* Enhanced special offer section with more visibility and a CTA button */}
-            {shouldShowSpecialOffer && (
-              <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-3 rounded-md mb-4 border-2 border-blue-300 shadow-lg relative overflow-hidden">
-                {/* Decorative element */}
-                <div className="absolute -right-8 -top-8 w-16 h-16 bg-blue-400 rounded-full opacity-20"></div>
-                
-                <div className="flex items-center mb-2 relative z-10">
-                  <Sparkles className="h-5 w-5 text-blue-600 mr-2 animate-pulse" />
-                  <h5 className="font-bold text-blue-800 text-sm">
-                    {clinic.specialOfferDetails?.title || "Limited Time Special Offer!"}
-                  </h5>
-                </div>
-                
-                <p className="text-blue-800 text-sm font-medium mb-2 relative z-10">
-                  <span className="bg-white bg-opacity-50 px-2 py-0.5 rounded">
-                  {clinic.specialOfferDetails?.discountType === 'percentage'
-                    ? `${clinic.specialOfferDetails?.discountValue || 15}% discount on selected treatments` 
-                    : `£${clinic.specialOfferDetails?.discountValue || 100} off selected treatments`}
-                  </span>
-                </p>
-                
-                {/* Added CTA button for special offer */}
-                <button 
-                  className="w-full text-xs py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-md font-medium transition-all flex items-center justify-center shadow-md relative z-10 transform hover:scale-105"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect();
-                  }}
-                >
-                  <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
-                  <span className="relative inline-block">
-                    Claim This Offer
-                    <span className="absolute -bottom-px left-0 w-full h-0.5 bg-white opacity-60"></span>
-                  </span>
-                </button>
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-2 mb-4">
-              <h4 className="font-medium text-sm text-gray-700">Materials:</h4>
-              <ul className="space-y-1">
-                {clinic.materials.map((material, index) => (
-                  <li key={index} className="flex items-center text-xs text-gray-600">
-                    <Check className="h-3 w-3 text-green-500 mr-1 flex-shrink-0" />
-                    <span>{material}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          
-          <Button
-            onClick={onSelect}
-            className={`w-full ${isSelected ? 'bg-blue-700 hover:bg-blue-800' : ''}`}
-          >
-            {isSelected ? 'Selected Clinic' : 'Select This Clinic'}
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-};
-
 // WhatsApp button component
-const WhatsAppButton = () => {
+const WhatsAppButton = ({ clinic }: { clinic: ClinicInfo }) => {
+  const { t } = useTranslation();
+  const whatsappMessage = encodeURIComponent(
+    `Hello! I'm interested in dental treatment at ${clinic.name}. Can you provide more information?`
+  );
+  const whatsappNumber = "+90123456789"; // Replace with actual number
+
   return (
-    <a
-      href="https://wa.me/447312345678?text=Hi%20MyDentalFly%2C%20I%20have%20a%20question%20about%20my%20dental%20quote."
+    <a 
+      href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
-      aria-label="Contact on WhatsApp"
+      className="inline-flex items-center gap-2 px-4 py-2 font-medium text-white bg-green-500 rounded-md hover:bg-green-600"
     >
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="28" 
-        height="28" 
-        viewBox="0 0 24 24" 
-        fill="currentColor" 
-        className="mr-0"
-      >
+      <span>{t('contact.whatsapp')}</span>
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.6 6.32C16.27 4.985 14.448 4.24 12.525 4.24C8.59 4.24 5.395 7.435 5.395 11.37C5.395 12.619 5.74 13.839 6.395 14.895L5.34 18.84L9.37 17.805C10.388 18.405 11.443 18.72 12.525 18.72C16.46 18.72 19.655 15.525 19.655 11.59C19.655 9.667 18.91 7.845 17.6 6.535V6.32ZM12.525 17.56C11.555 17.56 10.598 17.245 9.765 16.735L9.535 16.6L7.121 17.215L7.75 14.85L7.6 14.62C6.98 13.731 6.642 12.625 6.642 11.59C6.642 8.115 9.265 5.28 12.525 5.28C14.133 5.28 15.635 5.91 16.752 7.025C17.87 8.14 18.5 9.645 18.5 11.37C18.5 14.845 15.877 17.56 12.525 17.56ZM15.407 13.075C15.2 12.985 14.122 12.46 13.942 12.39C13.765 12.32 13.63 12.285 13.5 12.495C13.368 12.705 12.965 13.185 12.84 13.32C12.7 13.455 12.602 13.502 12.395 13.365C12.188 13.275 11.495 13.02 10.68 12.305C10.047 11.755 9.627 11.065 9.485 10.855C9.35 10.645 9.467 10.525 9.582 10.41C9.685 10.305 9.8 10.15 9.917 10.015C10.035 9.88 10.068 9.79 10.137 9.655C10.205 9.52 10.175 9.385 10.123 9.295C10.07 9.205 9.645 8.127 9.477 7.707C9.35 7.27 9.142 7.35 9.01 7.35C8.875 7.35 8.742 7.325 8.61 7.325C8.478 7.325 8.267 7.376 8.09 7.586C7.915 7.796 7.354 8.322 7.354 9.399C7.354 10.477 8.142 11.5 8.26 11.67C8.377 11.805 9.627 13.705 11.5 14.63C11.94 14.827 12.282 14.942 12.547 15.027C12.993 15.172 13.395 15.152 13.725 15.099C14.09 15.039 14.96 14.572 15.143 14.072C15.323 13.572 15.323 13.152 15.257 13.057C15.19 12.962 15.077 12.937 14.87 12.827L15.407 13.075Z"/>
       </svg>
     </a>
@@ -586,2401 +161,625 @@ const WhatsAppButton = () => {
 // Main component for the Quote Page
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { 
     source, setSource,
     offerId, setOfferId,
     packageId, setPackageId,
     clinicId, setClinicId,
-    promoToken, setPromoToken,
-    promoType, setPromoType,
-    isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow,
-    quoteId, setQuoteId,
-    resetFlow,
-    buildUrl
+    isSpecialOfferFlow, isPackageFlow
   } = useQuoteFlow();
   
-  // Use our special offer tracking hook for consistent tracking
-  const { specialOffer: trackedOffer, hasActiveOffer, applySpecialOfferToTreatments } = useSpecialOfferTracking();
+  // Extract promo features from the Zustand store (all at once to prevent conditional hooks)
+  const { 
+    activePromoSlug,
+    setPromoSlug,
+    promoToken,
+    setPromoToken,
+    promoType,
+    setPromoType,
+    hasActivePromo,
+    trackedPromo
+  } = usePromoStore();
   
-  // Parse URL query parameters
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  
-  const [quoteParams, setQuoteParams] = useState<QuoteParams>({
-    treatment: searchParams.get('treatment') || 'Dental Implants',
-    travelMonth: searchParams.get('travelMonth') || 'Flexible',
-    budget: searchParams.get('budget') || '£1,500 - £2,500'
+  // Use our new hooks for special offers and packages
+  const { specialOffer, setSpecialOffer } = useSpecialOfferDetection({
+    source,
+    setSource,
+    offerId,
+    setOfferId,
+    clinicId,
+    setClinicId,
+    isSpecialOfferFlow
   });
   
-  // Get the active promo slug and all store functions from the store
-  // Extract hook to the top level to avoid breaking React rules of hooks
-  const promoStore = usePromoStore();
-  const { 
-    activePromoSlug, 
-    setPromoSlug, 
-    setPromoData,
-    clearPromo,
-    setApiState
-  } = promoStore;
+  const { packageData, setPackageData } = usePackageDetection({
+    source,
+    setSource,
+    packageId,
+    setPackageId,
+    clinicId,
+    setClinicId,
+    isPackageFlow
+  });
   
   // Fetch promo data by slug if needed - must be called unconditionally
   const { data: promoData, isLoading: isLoadingPromo } = usePromoBySlug(activePromoSlug);
   
-  // Special offer data (if passed from homepage or stored in sessionStorage)
-  const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
-    console.log("Initializing YourQuotePage with URL params:", window.location.search);
-    
-    // First check URL parameters - look for both offerId and specialOffer parameters
-    const offerIdFromUrl = searchParams.get('offerId') || searchParams.get('specialOffer');
-    console.log("Special offer ID from URL:", offerIdFromUrl, 
-      "offerId param:", searchParams.get('offerId'),
-      "specialOffer param:", searchParams.get('specialOffer'));
-    
-    // Log all URL parameters for debugging
-    const urlParams: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      urlParams[key] = value;
-    });
-    console.log("All URL parameters for debugging:", urlParams);
-    
-    // NEW: First check QuoteFlowContext - if we have offerId there, use it
-    const quoteFlowOfferId = offerId || searchParams.get('offerId');
-    console.log("Quote flow offerId:", quoteFlowOfferId, "isSpecialOfferFlow:", isSpecialOfferFlow);
-    
-    // If source=special_offer is already set in QuoteFlowContext, prioritize that
-    if (source === 'special_offer' && quoteFlowOfferId) {
-      console.log("Using special offer from QuoteFlowContext:", quoteFlowOfferId);
-      
-      // Check for corresponding sessionStorage data
-      const storedActiveOffer = sessionStorage.getItem('activeSpecialOffer');
-      if (storedActiveOffer) {
-        try {
-          const offerData = JSON.parse(storedActiveOffer);
-          console.log("Found matching activeSpecialOffer in sessionStorage:", offerData);
-          
-          if (offerData.id === quoteFlowOfferId) {
-            return {
-              id: offerData.id,
-              title: offerData.title,
-              clinicId: offerData.clinicId || clinicId || '1',
-              discountValue: offerData.discountValue || offerData.discount_value || 0,
-              discountType: offerData.discountType || offerData.discount_type || 'percentage',
-              applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
-            };
-          }
-        } catch (error) {
-          console.error("Error parsing activeSpecialOffer from sessionStorage:", error);
-        }
-      }
-    }
-    
-    // If there's a special offer ID in the URL parameters, create a special offer object
-    if (offerIdFromUrl) {
-      console.log("Special offer parameters found in URL:");
-      console.log("- Title:", searchParams.get('offerTitle'));
-      console.log("- Clinic ID:", searchParams.get('clinicId') || searchParams.get('offerClinic'));
-      console.log("- Discount Value:", searchParams.get('offerDiscount'));
-      console.log("- Discount Type:", searchParams.get('offerDiscountType'));
-      console.log("- Treatment:", searchParams.get('treatment'));
-      
-      // Ensure consistent parameter parsing with proper error handling
-      let discountValue = 0;
-      try {
-        const discountStr = searchParams.get('offerDiscount');
-        if (discountStr) {
-          discountValue = parseInt(discountStr);
-          if (isNaN(discountValue)) {
-            console.warn(`Invalid discount value "${discountStr}", defaulting to 0`);
-            discountValue = 0;
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing discount value:", e);
-      }
-      
-      // Ensure we have the correct discount type (percentage or fixed_amount)
-      const rawDiscountType = searchParams.get('offerDiscountType') || 'percentage';
-      const discountType = (rawDiscountType === 'fixed' || rawDiscountType === 'fixed_amount') 
-        ? 'fixed_amount' 
-        : 'percentage';
-      
-      const offerData = {
-        id: offerIdFromUrl,
-        title: searchParams.get('offerTitle') || 'Special Offer',
-        clinicId: searchParams.get('clinicId') || searchParams.get('offerClinic') || '',
-        discountValue,
-        discountType: discountType as 'percentage' | 'fixed_amount',
-        applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
-      };
-      
-      console.log("Created special offer data from URL params:", offerData);
-      
-      // Update both storage locations for maximum reliability
-      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offerData));
-      
-      // Also set the QuoteFlowContext values
-      if (setSource && source !== 'special_offer') {
-        setSource('special_offer');
-      }
-      if (setOfferId && !offerId) {
-        setOfferId(offerIdFromUrl);
-      }
-      if (setClinicId && !clinicId && offerData.clinicId) {
-        setClinicId(offerData.clinicId);
-      }
-      
-      return offerData;
-    }
-    
-    // If not in URL, check sessionStorage
-    const storedOffer = sessionStorage.getItem('activeSpecialOffer');
-    if (storedOffer) {
-      try {
-        const offerData = JSON.parse(storedOffer);
-        console.log("Retrieved special offer from sessionStorage:", offerData);
-        
-        // Ensure QuoteFlowContext is updated with these values
-        if (setSource && source !== 'special_offer') {
-          setSource('special_offer');
-        }
-        if (setOfferId && !offerId) {
-          setOfferId(offerData.id);
-        }
-        if (setClinicId && !clinicId && offerData.clinicId) {
-          setClinicId(offerData.clinicId);
-        }
-        
-        return {
-          id: offerData.id,
-          title: offerData.title,
-          clinicId: offerData.clinicId || clinicId || '1',
-          discountValue: offerData.discountValue || offerData.discount_value || 0,
-          discountType: offerData.discountType || offerData.discount_type || 'percentage',
-          applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
-        };
-      } catch (error) {
-        console.error("Error parsing special offer from sessionStorage:", error);
-      }
-    }
-    
-    // Also check for pendingSpecialOffer which may happen when redirected after login
-    const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
-    if (pendingOfferData) {
-      try {
-        const offerData = JSON.parse(pendingOfferData);
-        console.log("Found pendingSpecialOffer in sessionStorage:", offerData);
-        
-        // Ensure QuoteFlowContext is updated with these values
-        if (setSource && source !== 'special_offer') {
-          setSource('special_offer');
-        }
-        if (setOfferId && !offerId) {
-          setOfferId(offerData.id);
-        }
-        if (setClinicId && !clinicId && offerData.clinicId) {
-          setClinicId(offerData.clinicId);
-        }
-        
-        // Convert to the right format
-        const formattedOffer = {
-          id: offerData.id,
-          title: offerData.title,
-          clinicId: offerData.clinicId || offerData.clinic_id || '',
-          discountValue: offerData.discountValue || offerData.discount_value || 0,
-          discountType: (offerData.discountType || offerData.discount_type || 'percentage') as 'percentage' | 'fixed_amount',
-          applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
-        };
-        
-        // Now that we've processed it, clear it
-        sessionStorage.removeItem('pendingSpecialOffer');
-        
-        // But save it to activeSpecialOffer for future persistence
-        sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
-        
-        console.log("Converted pendingSpecialOffer to activeSpecialOffer:", formattedOffer);
-        return formattedOffer;
-      } catch (error) {
-        console.error("Error parsing pendingSpecialOffer from sessionStorage:", error);
-      }
-    }
-    
-    return null;
-  });
+  // Initialize tracking for special offers
+  const { trackOffer } = useSpecialOfferTracking();
   
-  // Define package data interface for better type safety
-  interface PackageData {
-    id: string;
-    clinicId: string;
-    title: string;
-  }
-  
-  // Treatment Package data (if passed from packages page or stored in sessionStorage)
-  const [packageData, setPackageData] = useState<PackageData | null>(() => {
-    console.log("Initializing package data from all possible sources");
-    
-    // First check URL parameters for packageId and package JSON params
-    const packageIdFromUrl = searchParams.get('packageId');
-    const packageJsonFromUrl = searchParams.get('package');
-    
-    console.log("Package info from URL:", {
-      packageId: packageIdFromUrl,
-      packageJsonExists: !!packageJsonFromUrl,
-      clinicId: searchParams.get('clinicId'),
-      source: searchParams.get('source')
-    });
-    
-    // Try to read package from special "package" JSON parameter first
-    if (packageJsonFromUrl) {
-      try {
-        // The 'package' parameter contains a JSON string with complete package details
-        const packageInfo = JSON.parse(decodeURIComponent(packageJsonFromUrl));
-        console.log("Successfully parsed package JSON from URL param:", packageInfo);
-        
-        // Save it to multiple storages for maximum availability
-        sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
-        sessionStorage.setItem('pendingPackage', JSON.stringify(packageInfo));
-        localStorage.setItem('selectedPackage', JSON.stringify(packageInfo));
-        
-        // Also save it to the treatment plan format for compatibility
-        sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
-          id: `package-${packageInfo.id}`,
-          packageId: packageInfo.id,
-          clinicId: packageInfo.clinicId,
-          treatments: [{
-            treatmentType: 'treatment-package',
-            name: packageInfo.title,
-            packageId: packageInfo.id
-          }]
-        }));
-        
-        return packageInfo;
-      } catch (error) {
-        console.error("Error parsing package JSON from URL:", error);
-      }
-    }
-    
-    // If there's a package ID in the URL parameters, create a package object
-    if (packageIdFromUrl) {
-      console.log("Package parameters found in URL parameters:");
-      console.log("- Package ID:", packageIdFromUrl);
-      console.log("- Clinic ID:", searchParams.get('clinicId'));
-      console.log("- Package Title:", searchParams.get('packageTitle'));
-      
-      const packageInfo = {
-        id: packageIdFromUrl,
-        clinicId: searchParams.get('clinicId') || '',
-        title: searchParams.get('packageTitle') || 'Treatment Package'
-      };
-      
-      console.log("Created package data from URL params:", packageInfo);
-      
-      // Save to multiple storage locations for redundancy
-      sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
-      localStorage.setItem('selectedPackage', JSON.stringify(packageInfo));
-      
-      // Also save as a treatment plan for compatibility with treatment builder
-      sessionStorage.setItem('pendingTreatmentPlan', JSON.stringify({
-        id: `package-${packageInfo.id}`,
-        packageId: packageInfo.id,
-        clinicId: packageInfo.clinicId,
-        treatments: [{
-          treatmentType: 'treatment-package',
-          name: packageInfo.title,
-          packageId: packageInfo.id
-        }]
-      }));
-      
-      return packageInfo;
-    }
-    
-    // If not in URL, check localStorage first (most recent)
-    const storedPackageLS = localStorage.getItem('selectedPackage');
-    if (storedPackageLS) {
-      try {
-        const packageInfo = JSON.parse(storedPackageLS);
-        console.log("Retrieved package from localStorage:", packageInfo);
-        
-        // Sync it to sessionStorage as well
-        sessionStorage.setItem('activePackage', JSON.stringify(packageInfo));
-        
-        return packageInfo;
-      } catch (error) {
-        console.error("Error parsing package from localStorage:", error);
-      }
-    }
-    
-    // Then check sessionStorage
-    const storedPackage = sessionStorage.getItem('activePackage');
-    if (storedPackage) {
-      try {
-        const packageInfo = JSON.parse(storedPackage);
-        console.log("Retrieved package from sessionStorage:", packageInfo);
-        return packageInfo;
-      } catch (error) {
-        console.error("Error parsing package from sessionStorage:", error);
-      }
-    }
-    
-    // Also check for pendingPackage which may happen when redirected after login
-    const pendingPackageData = sessionStorage.getItem('pendingPackage');
-    if (pendingPackageData) {
-      try {
-        const packageInfo = JSON.parse(pendingPackageData);
-        console.log("Found pendingPackage in sessionStorage:", packageInfo);
-        
-        // Convert to the right format
-        const formattedPackage = {
-          id: packageInfo.id,
-          title: packageInfo.title || packageInfo.name || 'Treatment Package',
-          clinicId: packageInfo.clinicId || ''
-        };
-        
-        // Store it to other locations but don't remove yet
-        sessionStorage.setItem('activePackage', JSON.stringify(formattedPackage));
-        localStorage.setItem('selectedPackage', JSON.stringify(formattedPackage));
-        
-        console.log("Converted pendingPackage to activePackage:", formattedPackage);
-        return formattedPackage;
-      } catch (error) {
-        console.error("Error parsing pendingPackage from sessionStorage:", error);
-      }
-    }
-    
-    // Finally check for treatment plan data that might contain package info
-    const pendingTreatmentPlan = sessionStorage.getItem('pendingTreatmentPlan');
-    if (pendingTreatmentPlan) {
-      try {
-        const planData = JSON.parse(pendingTreatmentPlan);
-        console.log("Found pendingTreatmentPlan in sessionStorage:", planData);
-        
-        // Check if this is a package-based treatment plan
-        if (planData.packageId || (planData.treatments && planData.treatments.some((t: any) => t.packageId))) {
-          const packageId = planData.packageId || planData.treatments.find((t: any) => t.packageId)?.packageId;
-          const packageTitle = planData.treatments?.find((t: any) => t.packageId)?.name || 'Treatment Package';
-          
-          console.log("Found package info in treatment plan:", { packageId, packageTitle });
-          
-          if (packageId) {
-            const formattedPackage = {
-              id: packageId,
-              title: packageTitle,
-              clinicId: planData.clinicId || ''
-            };
-            
-            sessionStorage.setItem('activePackage', JSON.stringify(formattedPackage));
-            return formattedPackage;
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing pendingTreatmentPlan from sessionStorage:", error);
-      }
-    }
-    
-    return null;
-  });
-  
-  // Clinics state
-  const [clinics, setClinics] = useState<ClinicInfo[]>(() => {
-    // Start with our clinic data
-    let clinicsList = [...CLINIC_DATA];
-    
-    // Add special offer details - either from URL params or hardcoded
-    if (specialOffer) {
-      console.log("🎯 Applying special offer to clinics from URL parameters:", specialOffer);
-      
-      // Determine which clinic should get the special offer
-      const clinicId = specialOffer.clinicId || '1';  // Fallback to first clinic if not specified
-      const targetClinicExists = clinicsList.some(c => c.id === clinicId);
-      
-      if (!targetClinicExists) {
-        console.warn(`⚠️ Clinic ID ${clinicId} for special offer doesn't exist, using first clinic`);
-      }
-      
-      // Sort clinics to prioritize the one with the offer
-      clinicsList = clinicsList.sort((a, b) => {
-        // Put the clinic with the special offer first
-        if (a.id === clinicId) return -1;
-        if (b.id === clinicId) return 1;
-        
-        // Then sort by tier (premium first)
-        if (a.tier === 'premium' && b.tier !== 'premium') return -1;
-        if (a.tier !== 'premium' && b.tier === 'premium') return 1;
-        
-        // Then by price (ascending)
-        return a.priceGBP - b.priceGBP;
-      });
-      
-      // Add special offer indicator to the relevant clinic
-      clinicsList = clinicsList.map(clinic => {
-        if (clinic.id === clinicId) {
-          console.log(`✅ Adding special offer "${specialOffer.title}" to clinic: ${clinic.name}`);
-          return {
-            ...clinic,
-            hasSpecialOffer: true,
-            specialOfferDetails: {
-              id: specialOffer.id,
-              title: specialOffer.title,
-              discountValue: specialOffer.discountValue,
-              discountType: specialOffer.discountType
-            }
-          };
-        }
-        return clinic;
-      });
-      
-      console.log(`Prioritized clinic ${clinicId} for special offer: ${specialOffer.title}`);
-    } else {
-      // IMPORTANT FIX: Add some default special offers to ensure display
-      console.log("⚠️ No special offers found from URL, adding default special offers to clinics");
-      
-      // Get special offers data from the server API response if needed
-      // For now, hardcode offers to ensure displays work
-      const defaultSpecialOffers = [
-        {
-          clinicIndex: 0, // First clinic
-          id: "default_offer_1",
-          title: "Free Consultation Package",
-          discountValue: 100,
-          discountType: "percentage" as const
-        },
-        {
-          clinicIndex: 1, // Second clinic
-          id: "default_offer_2",
-          title: "Premium Hotel Deal",
-          discountValue: 20,
-          discountType: "percentage" as const
-        }
-      ];
-      
-      // Apply these default offers to clinics
-      clinicsList = clinicsList.map((clinic, index) => {
-        const matchingOffer = defaultSpecialOffers.find(offer => offer.clinicIndex === index);
-        if (matchingOffer) {
-          console.log(`✅ Adding default special offer "${matchingOffer.title}" to clinic: ${clinic.name}`);
-          return {
-            ...clinic,
-            hasSpecialOffer: true,
-            specialOfferDetails: {
-              id: matchingOffer.id,
-              title: matchingOffer.title,
-              discountValue: matchingOffer.discountValue,
-              discountType: matchingOffer.discountType
-            }
-          };
-        }
-        return clinic;
-      });
-      
-      // Regular sorting by tier and then price
-      clinicsList = clinicsList.sort((a, b) => {
-        if (a.tier === 'premium' && b.tier !== 'premium') return -1;
-        if (a.tier !== 'premium' && b.tier === 'premium') return 1;
-        return a.priceGBP - b.priceGBP;
-      });
-    }
-    
-    return clinicsList;
-  });
-  
+  // Track the selected clinic (to show in the clinic panel when scrolling down)
   const [selectedClinic, setSelectedClinic] = useState<ClinicInfo | null>(null);
   
-  // Treatment Plan Builder State
-  const [treatmentItems, setTreatmentItems] = useState<TreatmentItem[]>([]);
+  // Track the selected clinics (3 clinics to be shown and compared)
+  const [selectedClinics, setSelectedClinics] = useState<ClinicInfo[]>([]);
   
-  // Handle promo data from slug after treatmentItems is defined
-  // Dedicated effect for handling promo data changes - always call at top level
-  React.useEffect(() => {
-    // Only process if we have valid promo data from the API - and make the check more robust
-    if (promoData?.success && promoData.data && activePromoSlug) {
-      console.log("📣 Received promo data from API:", promoData.data);
-      
-      // Check if we're in the right flow state - if not, set it
-      if (source !== 'promo_token') {
-        console.log("Setting source to promo_token based on promoData");
-        setSource('promo_token');
+  // Track the patient information
+  const [patientInfo, setPatientInfo] = useState<PatientInfo>({
+    fullName: '',
+    email: '',
+    phone: '',
+    travelMonth: '',
+    departureCity: '',
+    hasXrays: false,
+    hasCtScan: false,
+    additionalNotes: '',
+    preferredContactMethod: 'email'
+  });
+  
+  // Track quote parameters
+  const [quoteParams, setQuoteParams] = useState<QuoteParams>({
+    treatment: searchParams.get('treatment') || 'Dental Implants',
+    travelMonth: searchParams.get('travelMonth') || '',
+    budget: searchParams.get('budget') || 'all'
+  });
+  
+  // Special states for form handling
+  const [formStep, setFormStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  
+  // Treatment plan states
+  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
+  
+  // Handle saving quote parameters
+  const handleSaveQuoteParams = (params: QuoteParams) => {
+    setQuoteParams(params);
+    
+    // Also update the URL with the new parameters
+    const currentParams = new URLSearchParams(window.location.search);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        currentParams.set(key, value);
+      } else {
+        currentParams.delete(key);
       }
+    });
+    
+    // Update page URL with the new parameters
+    const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+    
+    toast({
+      title: "Parameters Updated",
+      description: "Your quote preferences have been saved."
+    });
+  };
+  
+  // Initialize quote flow parameters from URL and session storage
+  useEffect(() => {
+    // Process URL parameters for any potential context variables
+    console.log("Initializing quote flow from URL and session storage");
+    
+    // Check for promo data and update context if available
+    if (promoData && activePromoSlug) {
+      console.log("Promo data available:", promoData);
       
-      // Check if we already have treatment items for this promo
-      const hasPromoTreatment = treatmentItems.some(item => 
-        item.promoToken === activePromoSlug || // Exact match by token
-        (item.isSpecialOffer && item.name === promoData.data.title) // Match by name
-      );
-      
-      if (!hasPromoTreatment && treatmentItems.length === 0) {
-        console.log("Creating promo treatment item from API data");
+      // Update context with promo data
+      if (source !== 'promo' && setSource) {
+        setSource('promo');
         
-        // Create a treatment item based on the fetched promo
-        const promoTreatment: TreatmentItem = {
-          id: `promo_${Date.now()}`,
-          category: promoData.data.promoType === PromoType.OFFER ? 'special_offer' : 'packages',
-          name: promoData.data.title,
-          quantity: 1,
-          priceGBP: 450, // Base price, will be adjusted after discount calculation
-          priceUSD: 580, // Base price
-          subtotalGBP: 450,
-          subtotalUSD: 580,
-          guarantee: '5-year',
-          isSpecialOffer: promoData.data.promoType === PromoType.OFFER,
-          isPackage: promoData.data.promoType === PromoType.PACKAGE,
-          promoToken: activePromoSlug || undefined,
-          promoType: promoData.data.promoType === PromoType.OFFER ? 'special_offer' : 'package'
-        };
-        
-        // Apply discount if available
-        if (promoData.data.discountValue > 0) {
-          // Use string comparison to handle enum values safely
-          if (String(promoData.data.discountType) === "percent" || String(promoData.data.discountType) === "percentage") {
-            const discountMultiplier = (100 - promoData.data.discountValue) / 100;
-            promoTreatment.priceGBP = Math.round(promoTreatment.priceGBP * discountMultiplier);
-            promoTreatment.priceUSD = Math.round(promoTreatment.priceUSD * discountMultiplier);
-          } else if (String(promoData.data.discountType) === "fixed" || String(promoData.data.discountType) === "fixed_amount") {
-            promoTreatment.priceGBP = Math.max(0, promoTreatment.priceGBP - promoData.data.discountValue);
-            promoTreatment.priceUSD = Math.max(0, promoTreatment.priceUSD - Math.round(promoData.data.discountValue * 1.28));
-          }
-          promoTreatment.subtotalGBP = promoTreatment.priceGBP * promoTreatment.quantity;
-          promoTreatment.subtotalUSD = promoTreatment.priceUSD * promoTreatment.quantity;
-        }
-        
-        // Add the promo treatment to our treatment items
-        console.log("Setting promo treatment from API data:", promoTreatment);
-        setTreatmentItems([promoTreatment]);
-        
-        // Show welcome toast for the promo
+        // Notify user that a promo has been applied
         toast({
-          title: `${String(promoData.data.promoType) === "package" ? 'Treatment Package' : 'Special Offer'} Selected`,
-          description: `Your quote includes: ${promoData.data.title}`,
+          title: `${promoData.name || promoData.title} Applied`,
+          description: `This promotion gives you ${promoData.discount_value || promoData.discountValue}% off ${promoData.applicable_treatments?.[0] || promoData.applicableTreatment || 'selected treatments'}.`,
+          variant: "default"
         });
-        
-        // If promo is linked to a specific clinic, auto-select it when clinics list is available
-        if (promoData.data.clinics && promoData.data.clinics.length === 1) {
-          const promoClinicId = promoData.data.clinics[0].clinicId;
-          console.log(`Promo is linked to clinic ID: ${promoClinicId}`);
-          
-          // Store this for later use with the real clinic list
-          sessionStorage.setItem('promoSelectedClinicId', promoClinicId);
-          
-          // We'll pre-select the clinic once it's available in another effect
-        }
       }
     }
+    
+    // Update the document title based on parameters
+    document.title = `Quote for ${quoteParams.treatment} | MyDentalFly`;
+    
+    // Track special offer view if present
+    if (specialOffer && !isLoadingPromo) {
+      trackOffer(specialOffer.id, 'view');
+    }
+    
   }, [
     promoData, 
     activePromoSlug, 
     source, 
-    setSource,
-    treatmentItems,
-    setTreatmentItems,
+    setSource, 
+    quoteParams.treatment,
+    specialOffer,
+    isLoadingPromo,
+    trackOffer,
     toast
   ]);
   
-  // Patient Info State
-  const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
-  
-  // Edit Quote Modal State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
-  // Quote steps tracking - add offer-confirmation step
-  const [currentStep, setCurrentStep] = useState<'build-plan' | 'offer-confirmation' | 'patient-info' | 'select-clinic' | 'review'>('build-plan');
-  
-  // Extract query parameters to control the flow
-  const stepFromUrl = searchParams.get('step');
-  const skipInfoParam = searchParams.get('skipInfo');
-  const clinicIdFromUrl = searchParams.get('clinicId') || clinicId; // Use clinicId from context if available
-  const fromSpecialOffer = (clinicIdFromUrl && clinicIdFromUrl.length > 0) || isSpecialOfferFlow;
-  const [isQuoteReady, setIsQuoteReady] = useState(false);
-  
-  // Function to open edit quote modal
-  const handleEditQuote = () => {
-    setIsEditModalOpen(true);
-  };
-  
-  // Function to save updated quote parameters
-  const handleSaveQuoteParams = (params: QuoteParams) => {
-    setQuoteParams(params);
-    toast({
-      title: "Quote Updated",
-      description: "Your quote preferences have been updated.",
-    });
-  };
-  
-  // Calculate totals
-  const calculateTotalGBP = () => {
-    return treatmentItems.reduce((total, item) => total + item.subtotalGBP, 0);
-  };
-  
-  const calculateTotalUSD = () => {
-    return treatmentItems.reduce((total, item) => total + item.subtotalUSD, 0);
-  };
-  
-  // Helper function to save a treatment plan
-  const saveTreatmentPlan = async () => {
-    if (!patientInfo) {
-      toast({
-        title: "Missing Information",
-        description: "Please complete the patient info form before saving your quote.",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    if (!selectedClinic) {
-      toast({
-        title: "Clinic Required",
-        description: "Please select a clinic for your treatment plan.",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    if (treatmentItems.length === 0) {
-      toast({
-        title: "Treatment Plan Empty",
-        description: "Please add at least one treatment to your plan.",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    // Prepare the data to send
-    const planData = {
-      patientInfo: {
-        fullName: patientInfo.fullName,
-        email: patientInfo.email,
-        phone: patientInfo.phone,
-        travelMonth: patientInfo.travelMonth || quoteParams.travelMonth,
-        departureCity: patientInfo.departureCity || 'Unknown',
-        hasXrays: patientInfo.hasXrays,
-        hasCtScan: patientInfo.hasCtScan,
-        additionalNotes: patientInfo.additionalNotes || ''
-      },
-      quoteParams: quoteParams,
-      treatments: treatmentItems.map(item => ({
-        name: item.name,
-        category: item.category,
-        quantity: item.quantity,
-        priceGBP: item.priceGBP,
-        priceUSD: item.priceUSD,
-        specialOffer: item.specialOffer || null
-      })),
-      clinic: {
-        id: selectedClinic.id,
-        name: selectedClinic.name,
-        tier: selectedClinic.tier
-      },
-      totalGBP: calculateTotalGBP(),
-      totalUSD: calculateTotalUSD(),
-      source: source,
-      offerId: offerId || (hasActiveOffer && trackedOffer ? trackedOffer.id : null),
-      packageId: packageId,
-      specialOffer: hasActiveOffer && trackedOffer ? {
-        id: trackedOffer.id,
-        title: trackedOffer.title,
-        discountType: trackedOffer.discountType,
-        discountValue: trackedOffer.discountValue,
-        clinicId: trackedOffer.clinicId
-      } : null
-    };
-    
-    try {
-      // Call the API to save the treatment plan
-      const response = await fetch('/api/treatment-plans/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(planData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save treatment plan');
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Your treatment plan has been saved!",
-        });
-        
-        // Clear the special offer from session storage as it's now been used
-        if (specialOffer) {
-          sessionStorage.removeItem('activeSpecialOffer');
-        }
-        
-        return result;
-      } else {
-        throw new Error(result.message || 'Unknown error saving treatment plan');
-      }
-    } catch (error) {
-      console.error('Error saving treatment plan:', error);
-      
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save your treatment plan",
-        variant: "destructive"
-      });
-      
-      return null;
-    }
-  };
-  
-  // Function to format numbers with commas for thousands
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-  
-  // Leverage the useInitializeQuoteFlow hook
-  const { initializeFromUrlParams } = useInitializeQuoteFlow();
-  
-  // Improved special offer handling with forced display
-  useEffect(() => {
-    // Check if any clinics have special offers
-    const clinicsWithOffers = clinics.filter(c => c.hasSpecialOffer);
-    console.log(`🏥 Clinics with special offers: ${clinicsWithOffers.length}`, 
-      clinicsWithOffers.map(c => `${c.name} (${c.specialOfferDetails?.title})`));
-    
-    // Get source from URL for direct checks
-    const sourceFromUrl = searchParams.get('source');
-    
-    // ALWAYS show special offers in these cases, even without URL parameters:
-    // 1. We have special offer data from URL or context
-    // 2. We're explicitly in special offer flow
-    // 3. We've explicitly set mock special offers in the data
-    const shouldForceSpecialOffers = specialOffer || isSpecialOfferFlow || offerId || sourceFromUrl === 'special_offer';
-    
-    // Force all clinic cards to display offers if we're in a special offer context
-    if (shouldForceSpecialOffers) {
-      console.log("🚀 ENHANCING ALL CLINICS to ensure special offer display", {
-        specialOffer,
-        isSpecialOfferFlow,
-        offerId,
-        sourceFromUrl
-      });
-      
-      // Always apply special offers to all clinics in this mode
-      const enhancedClinics = clinics.map((clinic) => {
-        // If clinic already has a special offer, keep it
-        if (clinic.hasSpecialOffer && clinic.specialOfferDetails) {
-          return clinic;
-        }
-        
-        // Otherwise, apply either the special offer from context or a default
-        return {
-          ...clinic,
-          hasSpecialOffer: true, // Force this flag
-          specialOfferDetails: specialOffer ? {
-            id: specialOffer.id || "default_offer",
-            title: specialOffer.title || "Special Promotion",
-            discountValue: specialOffer.discountValue || 15,
-            discountType: specialOffer.discountType as 'percentage' | 'fixed_amount'
-          } : {
-            id: "default_offer", 
-            title: "Special Promotion",
-            discountValue: 15,
-            discountType: 'percentage' as const
-          }
-        };
-      });
-      
-      // Update the clinics with enhanced special offers
-      console.log("💾 Updating all clinics to show special offers");
-      // Use a proper type cast to ensure type safety
-      setClinics(enhancedClinics as ClinicInfo[]);
-    }
-  // FIXED: Remove clinics from dependency array to avoid infinite loop
-  // Include searchParams to react to URL changes
-  }, [specialOffer, isSpecialOfferFlow, offerId, searchParams]);
-  
-  // Add dedicated effect to ensure special offers are added to treatment items
-  useEffect(() => {
-    // Ensure we're properly logging what's happening
-    console.log("🔄 Treatment items check on YourQuotePage:", {
-      treatmentItemsCount: treatmentItems.length,
-      isSpecialOfferFlow,
-      isPackageFlow, 
-      isPromoTokenFlow,
-      specialOfferExists: !!specialOffer,
-      specialOfferDetails: specialOffer,
-      packageDataExists: !!packageData
-    });
-    
-    // Only run this if we have a special offer, package or promo token but no treatment items yet
-    if ((isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow) && treatmentItems.length === 0) {
-      console.log("🔍 Special offer flow detected but no treatment items yet. Adding special offer to treatment items list.");
-      
-      if (isSpecialOfferFlow && specialOffer) {
-        // Create a special offer treatment item
-        const specialOfferTreatment: TreatmentItem = {
-          id: `special_offer_${Date.now()}`,
-          category: 'special_offer',
-          name: `${specialOffer.title || 'Special Offer'} - ${specialOffer.applicableTreatment || 'Free Consultation'}`,
-          quantity: 1,
-          priceGBP: 0, // Free consultation
-          priceUSD: 0,
-          subtotalGBP: 0,
-          subtotalUSD: 0,
-          guarantee: 'N/A',
-          isSpecialOffer: true,
-          specialOffer: {
-            id: specialOffer.id,
-            title: specialOffer.title,
-            discountType: specialOffer.discountType,
-            discountValue: specialOffer.discountValue,
-            clinicId: specialOffer.clinicId
-          }
-        };
-        
-        console.log("📋 Adding special offer to treatment items:", specialOfferTreatment);
-        setTreatmentItems(current => [...current, specialOfferTreatment]);
-        
-        toast({
-          title: "Special Offer Added",
-          description: `${specialOffer.title} has been added to your treatment plan.`,
-        });
-      } else if (isPackageFlow && packageData) {
-        // Create a package treatment item
-        const packageTreatment: TreatmentItem = {
-          id: `package_${Date.now()}`,
-          category: 'packages',
-          name: packageData.title || 'Treatment Package',
-          quantity: 1,
-          priceGBP: 1200, // Default price, would be fetched from API
-          priceUSD: 1550,
-          subtotalGBP: 1200,
-          subtotalUSD: 1550,
-          guarantee: '5-year',
-          isPackage: true,
-          packageId: packageData.id
-        };
-        
-        console.log("📋 Adding package to treatment items:", packageTreatment);
-        setTreatmentItems(current => [...current, packageTreatment]);
-        
-        toast({
-          title: "Package Added",
-          description: `${packageData.title} has been added to your treatment plan.`,
-        });
-      } else if (isPromoTokenFlow && promoToken) {
-        // Create a promo token treatment item
-        // Handle null promoType by defaulting to 'special_offer'
-        const safePromoType = promoType === 'package' ? 'package' : 'special_offer';
-        
-        const promoTreatment: TreatmentItem = {
-          id: `promo_${Date.now()}`,
-          category: safePromoType === 'package' ? 'packages' : 'special_offer',
-          name: `${safePromoType === 'package' ? 'Package' : 'Special Offer'}: ${searchParams.get('promoTitle') || 'Promotion'}`,
-          quantity: 1,
-          priceGBP: 0,
-          priceUSD: 0,
-          subtotalGBP: 0,
-          subtotalUSD: 0,
-          guarantee: 'N/A',
-          isSpecialOffer: safePromoType === 'special_offer',
-          isPackage: safePromoType === 'package',
-          promoToken: promoToken,
-          promoType: safePromoType
-        };
-        
-        console.log("📋 Adding promo token treatment to items:", promoTreatment);
-        setTreatmentItems(current => [...current, promoTreatment]);
-        
-        toast({
-          title: "Promotion Added",
-          description: `Your promotion has been added to your treatment plan.`,
-        });
-      }
-    }
-  }, [isSpecialOfferFlow, isPackageFlow, isPromoTokenFlow, specialOffer, packageData, promoToken, promoType, treatmentItems.length]);
-
-  // Handle auto-selection of clinic based on promo data
-  React.useEffect(() => {
-    // Skip if already have a selected clinic
-    if (selectedClinic) return;
-    
-    // Check if we have a stored clinic ID from promo selection
-    const storedPromoClinicId = sessionStorage.getItem('promoSelectedClinicId');
-    if (storedPromoClinicId && clinics.length > 0) {
-      console.log(`Looking for clinic with ID: ${storedPromoClinicId} in clinics list`);
-      const matchingClinic = clinics.find(c => c.id === storedPromoClinicId);
-      if (matchingClinic) {
-        console.log(`Auto-selecting clinic from promo: ${matchingClinic.name}`);
-        setSelectedClinic(matchingClinic);
-        
-        // Clear the stored ID to prevent re-selection on future page loads
-        sessionStorage.removeItem('promoSelectedClinicId');
-      }
-    }
-  }, [clinics, selectedClinic]);
-
-  useEffect(() => {
-    // Set page title
-    document.title = "Build Your Dental Treatment Quote | MyDentalFly";
-    
-    console.log("🔄 Initializing YourQuotePage with URL parameters:", window.location.search);
-    
-    // Log all URL parameters for debugging
-    const urlParams: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      urlParams[key] = value;
-    });
-    console.log("All URL parameters for debugging:", urlParams);
-    
-    // Parse URL parameters
-    const offerIdFromUrl = searchParams.get('specialOffer') || searchParams.get('offerId');
-    const packageIdFromUrl = searchParams.get('packageId');
-    const clinicIdFromUrl = searchParams.get('clinicId');
-    const sourceTypeFromUrl = searchParams.get('source');
-
-    // First, initialize the QuoteFlowContext using our utility
-    initializeFromUrlParams();
-    
-    console.log('YourQuotePage: QuoteFlow context initialized with:', {
-      source,
-      offerId,
-      packageId,
-      clinicId,
-      isSpecialOfferFlow,
-      isPackageFlow
-    });
-    
-    // Then add additional processing for this specific page
-    // Determine the source type from URL parameters or use existing context
-    // Priority: explicit source parameter > specialOffer/packageId/promoToken parameters > existing context
-    let detectedSource = source; // Default to existing context value
-    
-    // Check for promo token in the URL
-    const promoTokenFromUrl = searchParams.get('promoToken');
-    const promoTypeFromUrl = searchParams.get('promoType');
-    
-    // Check for promo slug (from PromoCard click)
-    const promoSlugFromUrl = searchParams.get('promo');
-    if (promoSlugFromUrl) {
-      console.log(`Found promo slug in URL: ${promoSlugFromUrl}`);
-      // This would come from a PromoCard click, set it up as a promo token flow
-      if (!promoTokenFromUrl) {
-        // Only set if not already set by promoToken parameter
-        detectedSource = 'promo_token';
-        // We'll handle the actual promo lookup later
-      }
-    }
-    
-    if (sourceTypeFromUrl && ['special_offer', 'package', 'promo_token', 'normal'].includes(sourceTypeFromUrl)) {
-      // Explicit source parameter has highest priority
-      detectedSource = sourceTypeFromUrl as 'special_offer' | 'package' | 'promo_token' | 'normal';
-      console.log(`Source explicitly specified in URL: ${detectedSource}`);
-    } else if (promoTokenFromUrl) {
-      // Promo token indicates a promo_token source
-      detectedSource = 'promo_token';
-      console.log(`Source determined from promoToken parameter: ${detectedSource}`);
-    } else if (offerIdFromUrl) {
-      // Special offer ID parameter indicates special_offer source
-      detectedSource = 'special_offer';
-      console.log(`Source determined from specialOffer parameter: ${detectedSource}`);
-    } else if (packageIdFromUrl) {
-      // Package ID parameter indicates package source
-      detectedSource = 'package';
-      console.log(`Source determined from packageId parameter: ${detectedSource}`);
-    }
-    
-    // Update context with the determined source type and relevant IDs
-    if (detectedSource !== source) {
-      console.log(`Updating source from ${source} to ${detectedSource}`);
-      setSource(detectedSource);
-    }
-    
-    // Always update IDs if they are provided in URL, regardless of source type
-    if (offerIdFromUrl && offerIdFromUrl !== offerId) {
-      console.log(`Updating offerId from ${offerId} to ${offerIdFromUrl}`);
-      setOfferId(offerIdFromUrl);
-    }
-    
-    if (packageIdFromUrl && packageIdFromUrl !== packageId) {
-      console.log(`Updating packageId from ${packageId} to ${packageIdFromUrl}`);
-      setPackageId(packageIdFromUrl);
-    }
-    
-    if (clinicIdFromUrl && clinicIdFromUrl !== clinicId) {
-      console.log(`Updating clinicId from ${clinicId} to ${clinicIdFromUrl}`);
-      setClinicId(clinicIdFromUrl);
-    }
-    
-    // Handle promo token in URL if present
-    if (promoTokenFromUrl) {
-      console.log(`Setting promoToken to ${promoTokenFromUrl}`);
-      setPromoToken(promoTokenFromUrl);
-      
-      // Set promo type if available, default to 'special_offer' if not specified
-      const type = promoTypeFromUrl || 'special_offer';
-      console.log(`Setting promoType to ${type}`);
-      setPromoType(type as 'special_offer' | 'package');
-    }
-    
-    // Handle promo slug in URL (from PromoCard click)
-    if (promoSlugFromUrl) {
-      console.log(`Processing promo slug from URL: ${promoSlugFromUrl}`);
-      
-      // Set this as the active promo in the store if not already set
-      // The store is persisted in sessionStorage so it will survive page refreshes
-      if (activePromoSlug !== promoSlugFromUrl) {
-        // Set the promo slug - this function is obtained from usePromoStore at the component level
-        setPromoSlug(promoSlugFromUrl);
-        
-        // Set flow as promo_token type for consistency
-        if (source !== 'promo_token') {
-          setSource('promo_token');
-        }
-        
-        // Use the slug as the token for now - will be replaced with actual token after API fetch
-        if (!promoTokenFromUrl) {
-          setPromoToken(promoSlugFromUrl);
-          setPromoType('special_offer'); // Default type
-        }
-        
-        // Fetch the promo data using the usePromoBySlug hook
-        // This will be executed in a separate useEffect below
-        console.log(`Will fetch promo data for slug: ${promoSlugFromUrl}`);
-      }
-    }
-    
-    console.log("QuoteFlowContext after sync:", {
-      source: detectedSource,
-      offerId: offerIdFromUrl || offerId,
-      packageId: packageIdFromUrl || packageId,
-      clinicId: clinicIdFromUrl || clinicId,
-      promoToken: promoTokenFromUrl,
-      promoType: promoTypeFromUrl
-    });
-    
-    // If we have a special offer from URL params, store it in sessionStorage for persistence across page reloads
-    if (specialOffer && searchParams.get('specialOffer')) {
-      // Save to sessionStorage for persistence across authentication redirects
-      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(specialOffer));
-      console.log("Saved special offer to sessionStorage:", specialOffer);
-    }
-    
-    // Handle URL parameters for special offer flow
-    if (fromSpecialOffer) {
-      console.log("Special offer flow detected with clinicId:", clinicIdFromUrl);
-      
-      // If skipInfo is true, we should move straight to selecting a clinic
-      if (skipInfoParam === 'true' && patientInfo) {
-        console.log("Skipping patient info step as requested in URL");
-        setCurrentStep('select-clinic');
-      }
-      
-      // For special offers, automatically select the clinic if it matches
-      if (clinicIdFromUrl && clinics.length > 0) {
-        const matchingClinic = clinics.find(c => c.id.toString() === clinicIdFromUrl);
-        if (matchingClinic) {
-          console.log("Auto-selecting clinic for special offer:", matchingClinic.name);
-          setSelectedClinic(matchingClinic);
-          
-          // If we already have patient info, we can move to review
-          if (patientInfo && treatmentItems.length > 0) {
-            console.log("Moving directly to review step with selected clinic");
-            setCurrentStep('review');
-            setIsQuoteReady(true);
-          }
-        }
-      }
-    }
-    
-    // Set the initial step based on URL parameters
-    if (stepFromUrl === 'dental-quiz') {
-      setCurrentStep('build-plan');
-    } else if (stepFromUrl === 'patient-info' && treatmentItems.length > 0) {
-      setCurrentStep('patient-info');
-    }
-    
-    // Show welcome toast - adjusting based on whether this came from special offer
+  // Create treatment items based on context flow
+  const createInitialTreatmentItem = useCallback(() => {
+    // If special offer is active, create a special offer treatment
     if (specialOffer) {
-      // Create and add the special offer as a treatment item if we don't have any items yet
-      if (treatmentItems.length === 0) {
-        console.log("📣 Creating and adding special offer treatment from specialOffer object:", specialOffer);
-        
-        // Determine if this is a Free Consultation Package
-        const isFreeConsultation = 
-          specialOffer.title?.includes('Consultation') || 
-          specialOffer.title?.includes('consultation') || 
-          specialOffer.applicableTreatment?.includes('Consultation');
-          
-        // Set appropriate starting price based on offer type
-        let basePriceGBP = isFreeConsultation ? 75 : 450; // Lower price for consultations
-        let basePriceUSD = isFreeConsultation ? 95 : 580;
-            
-        const specialOfferTreatment: TreatmentItem = {
-          id: `special_offer_${Date.now()}`,
-          category: isFreeConsultation ? 'consultation' : 'special_offer',
-          name: specialOffer.title || specialOffer.applicableTreatment || 'Special Offer',
-          quantity: 1,
-          priceGBP: basePriceGBP,
-          priceUSD: basePriceUSD,
-          subtotalGBP: basePriceGBP,
-          subtotalUSD: basePriceUSD,
-          guarantee: isFreeConsultation ? '30-day' : '5-year',
-          isSpecialOffer: true, // Add flag for consistent detection
-          specialOffer: {
-            id: specialOffer.id,
-            title: specialOffer.title || 'Special Offer',
-            // Handle case where discount parameters may be missing
-            discountType: specialOffer.discountType || (isFreeConsultation ? 'percentage' : 'fixed_amount'),
-            discountValue: specialOffer.discountValue || (isFreeConsultation ? 100 : 50),
-            clinicId: specialOffer.clinicId || 'dentakay-istanbul'
-          }
-        };
-        
-        // For free consultation, ensure 100% discount
-        if (isFreeConsultation && specialOffer.title?.includes('Free') && specialOfferTreatment.specialOffer) {
-          console.log("📢 Handling Free Consultation Package - setting 100% discount");
-          specialOfferTreatment.specialOffer.discountType = 'percentage';
-          specialOfferTreatment.specialOffer.discountValue = 100;
-        }
-        
-        // Apply the discount based on type
-        if (specialOfferTreatment.specialOffer?.discountType === 'percentage' && specialOfferTreatment.specialOffer?.discountValue !== undefined) {
-          const discountMultiplier = (100 - specialOfferTreatment.specialOffer.discountValue) / 100;
-          specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
-          specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
-          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
-          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        } else if (specialOfferTreatment.specialOffer?.discountType === 'fixed_amount' && specialOfferTreatment.specialOffer?.discountValue !== undefined) {
-          specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - specialOfferTreatment.specialOffer.discountValue);
-          specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(specialOfferTreatment.specialOffer.discountValue * 1.28)); // Convert GBP to USD
-          specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
-          specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-        }
-        
-        // Actually add the treatment item to state
-        console.log("Setting special offer treatment:", specialOfferTreatment);
-        setTreatmentItems([specialOfferTreatment]);
-      }
-      
-      toast({
-        title: "Special Offer Selected",
-        description: `Your quote includes: ${specialOffer.title}`,
-      });
-    } else {
-      toast({
-        title: "Let's Build Your Quote",
-        description: "Start by creating your custom treatment plan below.",
-      });
-    }
-    
-    // Create a ref to access TreatmentPlanBuilder methods
-  const treatmentPlanBuilderRef = React.useRef<any>(null);
-  
-  // Let's update those remaining TypeScript errors elsewhere in the file before initializing treatments
-  
-  // Initialize treatments based on whether we have a special offer, package, or promo token
-    // We discovered the source should be promo_token but isPromoTokenFlow isn't reflecting that
-    // Check if we have a promo token regardless of the current isPromoTokenFlow value
-    if (promoTokenFromUrl) {
-      console.log("Initializing treatment plan with promo token:", promoTokenFromUrl);
-      console.log("Current flow state:", { source, isPromoTokenFlow });
-      
-      // Force set the source to promo_token to ensure the banner displays
-      if (source !== 'promo_token') {
-        console.log("Forcing source to promo_token");
-        setSource('promo_token');
-      }
-      
-      // Fetch the promotion details from the token
-      const treatmentType = promoTypeFromUrl || 'special_offer';
-      const treatmentName = searchParams.get('treatmentName') || 'Dental Treatment';
-      const promoTitle = searchParams.get('promoTitle') || 'Special Promotion';
-      
-      // Create a promo treatment item
-      const promoTreatment: TreatmentItem = {
-        id: `promo_${Date.now()}`,
-        category: treatmentType === 'special_offer' ? 'special_offer' : 'packages',
-        name: treatmentName,
+      console.log("Creating special offer treatment item");
+      return {
+        treatmentType: 'special-offer',
+        name: `${specialOffer.title} - ${specialOffer.applicableTreatment}`,
         quantity: 1,
-        priceGBP: 450, // Base price, will be adjusted after API fetch
-        priceUSD: 580, // Base price, will be adjusted after API fetch
-        subtotalGBP: 450,
-        subtotalUSD: 580,
-        guarantee: '5-year',
-        isSpecialOffer: treatmentType === 'special_offer',
-        isPackage: treatmentType === 'package',
-        // Add promo token data
-        promoToken: promoTokenFromUrl,
-        promoType: treatmentType as 'special_offer' | 'package'
-      };
-      
-      // Add the promo treatment to our treatment items
-      console.log("Setting promo token treatment:", promoTreatment);
-      setTreatmentItems([promoTreatment]);
-      
-      // Show welcome toast for promo
-      toast({
-        title: `${treatmentType === 'package' ? 'Treatment Package' : 'Special Offer'} Selected`,
-        description: `Your quote includes: ${promoTitle}`,
-      });
-    }
-    else if (specialOffer) {
-      console.log("📣 Creating treatment from special offer:", specialOffer);
-      
-      // Check for Free Consultation Package
-      const isFreeConsultation = 
-        specialOffer.title?.includes('Consultation') || 
-        specialOffer.title?.includes('consultation') || 
-        (searchParams.get('treatment')?.includes('Consultation'));
-        
-      console.log("🔎 Checking if this is a consultation offer:", {
-        isFreeConsultation,
-        title: specialOffer.title,
-        treatment: searchParams.get('treatment')
-      });
-      
-      // Set appropriate base price based on offer type
-      const basePriceGBP = isFreeConsultation ? 75 : 450;
-      const basePriceUSD = isFreeConsultation ? 95 : 580;
-      
-      // Use our utility function to create a special offer treatment
-      const specialOfferTreatment: TreatmentItem = {
-        id: `special_offer_${Date.now()}`,
-        category: isFreeConsultation ? 'consultation' : 'special_offer',
-        name: specialOffer.title || specialOffer.applicableTreatment || 'Special Offer', // Use title as main name
-        quantity: 1,
-        priceGBP: basePriceGBP,
-        priceUSD: basePriceUSD,
-        subtotalGBP: basePriceGBP,
-        subtotalUSD: basePriceUSD,
-        guarantee: isFreeConsultation ? '30-day' : '5-year',
-        isSpecialOffer: true, // Add flag for consistent detection
+        priceGBP: 0,
+        priceUSD: 0,
+        subtotalGBP: 0,
+        subtotalUSD: 0,
+        guarantee: '30-day',
+        isSpecialOffer: true,
         specialOffer: {
           id: specialOffer.id,
-          title: specialOffer.title || 'Special Offer',
-          discountType: specialOffer.discountType || (isFreeConsultation ? 'percentage' : 'fixed_amount'),
-          discountValue: specialOffer.discountValue || (isFreeConsultation ? 100 : 50),
-          clinicId: specialOffer.clinicId || 'dentakay-istanbul'
+          title: specialOffer.title,
+          discountType: specialOffer.discountType,
+          discountValue: specialOffer.discountValue,
+          clinicId: specialOffer.clinicId
         }
       };
-      
-      // Force 100% discount for Free Consultation Package
-      if (isFreeConsultation && 
-         (specialOffer.title?.includes('Free') || searchParams.get('offerDiscount') === '100') &&
-         specialOfferTreatment.specialOffer) {
-        console.log("📢 Handling Free Consultation Package - setting 100% discount");
-        specialOfferTreatment.specialOffer.discountType = 'percentage';
-        specialOfferTreatment.specialOffer.discountValue = 100;
-      }
-      
-      // Apply the discount based on type and ensure specialOffer.discountType/Value are defined
-      const discountType = specialOfferTreatment.specialOffer?.discountType || 'percentage';
-      const discountValue = specialOfferTreatment.specialOffer?.discountValue || 0;
-      
-      if (discountType === 'percentage') {
-        const discountMultiplier = (100 - discountValue) / 100;
-        specialOfferTreatment.priceGBP = Math.round(specialOfferTreatment.priceGBP * discountMultiplier);
-        specialOfferTreatment.priceUSD = Math.round(specialOfferTreatment.priceUSD * discountMultiplier);
-        specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
-        specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-      } else if (discountType === 'fixed_amount') {
-        specialOfferTreatment.priceGBP = Math.max(0, specialOfferTreatment.priceGBP - discountValue);
-        specialOfferTreatment.priceUSD = Math.max(0, specialOfferTreatment.priceUSD - Math.round(discountValue * 1.28)); // Convert GBP to USD
-        specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
-        specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
-      }
-      
-      // Add the special offer treatment to our treatment items
-      console.log("Setting special offer treatment:", specialOfferTreatment);
-      setTreatmentItems([specialOfferTreatment]);
-    }
-    // Initialize with package data if available
-    else if (packageData && isPackageFlow) {
-      console.log("Initializing treatment plan with package data:", packageData);
-      
-      // Create a package treatment item
-      const packageTreatment: TreatmentItem = {
-        id: `package_${Date.now()}`,
-        category: 'packages',
-        name: packageData.title || 'Treatment Package',
-        quantity: 1,
-        priceGBP: 1200, // Default package price, would be fetched from API in real app
-        priceUSD: 1550, // Default package price in USD
-        subtotalGBP: 1200,
-        subtotalUSD: 1550,
-        guarantee: '5-year',
-        isPackage: true,
-        packageId: packageData.id
-      };
-      
-      setTreatmentItems([packageTreatment]);
-      
-      // If we have a clinicId in packageData, prioritize that clinic
-      if (packageData.clinicId) {
-        console.log("Attempting to select clinic from package clinicId:", packageData.clinicId);
-        const packageClinic = clinics.find(c => c.id === packageData.clinicId);
-        if (packageClinic) {
-          console.log("Auto-selecting clinic for package:", packageClinic.name);
-          setSelectedClinic(packageClinic);
-          
-          // If we already have patient info, we can move to review
-          if (patientInfo && treatmentItems.length > 0) {
-            console.log("Moving directly to review step with selected clinic for package");
-            setCurrentStep('review');
-            setIsQuoteReady(true);
-          }
-        }
-      }
-      
-      // Show welcome toast for package
-      toast({
-        title: "Treatment Package Selected",
-        description: `Your quote includes: ${packageData.title || 'Treatment Package'}`,
-      });
-    }
-    // Initialize with a default treatment if the user came from selecting a specific treatment
-    else if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
-      const initialTreatment: TreatmentItem = {
-        id: `default_${Date.now()}`,
-        category: 'implants', // Default category, would be determined by mapping in real app
-        name: quoteParams.treatment,
-        quantity: 1,
-        priceGBP: 450, // Default price, would be determined by API in real app
-        priceUSD: 580, // Default price, would be determined by API in real app
-        subtotalGBP: 450,
-        subtotalUSD: 580,
-        guarantee: '5-year',
-        isSpecialOffer: false, // Explicitly mark as not a special offer for consistency
-        isPackage: false // Explicitly mark as not a package for consistency
-      };
-      
-      setTreatmentItems([initialTreatment]);
     }
     
-    // Initialize patient info from URL parameters if available
-    if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone')) {
-      setPatientInfo({
-        fullName: searchParams.get('name') || '',
-        email: searchParams.get('email') || '',
-        phone: searchParams.get('phone') || '',
-        travelMonth: searchParams.get('travelMonth') || '',
-        departureCity: '',
-        hasXrays: false,
-        hasCtScan: false,
-        additionalNotes: '',
-        preferredContactMethod: 'email'
-      });
+    // If package is active, create a package treatment
+    if (packageData) {
+      console.log("Creating package treatment item");
+      return {
+        treatmentType: 'treatment-package',
+        name: packageData.title,
+        quantity: 1,
+        priceGBP: 0, // Will be populated from API
+        priceUSD: 0, // Will be populated from API
+        subtotalGBP: 0,
+        subtotalUSD: 0,
+        guarantee: '30-day',
+        packageId: packageData.id
+      };
     }
-  }, []);
+    
+    // If promo token is active, create a promo treatment
+    if (promoToken && promoType) {
+      console.log("Creating promo token treatment item");
+      return {
+        treatmentType: 'promo',
+        name: `${promoType === PromoType.DISCOUNT ? 'Discount' : 'Bonus'} Promo`,
+        quantity: 1,
+        priceGBP: 0,
+        priceUSD: 0,
+        subtotalGBP: 0,
+        subtotalUSD: 0,
+        guarantee: '30-day'
+      };
+    }
+    
+    // Default treatment item based on query parameters
+    console.log("Creating standard treatment item");
+    return {
+      treatmentType: 'standard',
+      name: quoteParams.treatment || 'Dental Implants',
+      quantity: 1,
+      priceGBP: 0, // Will be populated from API
+      priceUSD: 0, // Will be populated from API
+      subtotalGBP: 0,
+      subtotalUSD: 0,
+      guarantee: '30-day'
+    };
+  }, [specialOffer, packageData, promoToken, promoType, quoteParams.treatment]);
+  
+  // Initialize treatment plan on component mount
+  useEffect(() => {
+    const initialTreatment = createInitialTreatmentItem();
+    console.log("Setting initial treatment plan:", initialTreatment);
+    setTreatmentPlan([initialTreatment]);
+  }, [createInitialTreatmentItem]);
+  
+  // Handle clearing promo data
+  const handleClearPromo = () => {
+    // Clear session storage
+    sessionStorage.removeItem('activePromoSlug');
+    sessionStorage.removeItem('activeSpecialOffer');
+    
+    // Clear state
+    if (setPromoSlug) setPromoSlug(null);
+    if (setSource && source === 'promo') setSource('standard');
+    
+    // Clear token if any
+    if (setPromoToken) setPromoToken(null);
+    if (setPromoType) setPromoType(null);
+    
+    // Notify user
+    toast({
+      title: "Promo Cleared",
+      description: "The promotional offer has been removed from your quote."
+    });
+    
+    // Reset treatment plan
+    const standardTreatment = {
+      treatmentType: 'standard',
+      name: quoteParams.treatment || 'Dental Implants',
+      quantity: 1,
+      priceGBP: 0,
+      priceUSD: 0,
+      subtotalGBP: 0,
+      subtotalUSD: 0,
+      guarantee: '30-day'
+    };
+    
+    setTreatmentPlan([standardTreatment]);
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Submit logic here
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Show success message
+      toast({
+        title: "Quote Generated",
+        description: "Your dental quote has been generated successfully!",
+        variant: "default"
+      });
+      
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
+      
+      // Navigate to results page
+      setLocation('/results');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Error",
+        description: "There was an error generating your quote. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle date selection
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      setPatientInfo(prev => ({
+        ...prev,
+        travelMonth: format(date, 'MMMM yyyy')
+      }));
+      setCalendarOpen(false);
+    }
+  };
   
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <ScrollToTop />
-      <WhatsAppButton />
-      
-      <main className="min-h-screen bg-gray-50 pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          {/* Promo token banner - displayed if we have a valid promo token */}
-          {isPromoTokenFlow && promoToken && (
-            <div className="mb-6 bg-gradient-to-r from-primary to-primary/90 text-white p-4 rounded-lg shadow-md flex items-center justify-between">
-              <div className="flex items-center">
-                <Tag className="h-5 w-5 mr-3 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold">
-                    {promoType === 'special_offer' ? 'Special Offer' : 
-                     promoType === 'package' ? 'Treatment Package' : 
-                     'Promotion'}: {searchParams.get('promoTitle') || searchParams.get('offerTitle') || 'Exclusive Promotion'}
-                  </h3>
-                  <p className="text-sm opacity-90">
-                    {promoType === 'special_offer' 
-                      ? `${searchParams.get('offerDiscount') || searchParams.get('discountValue') || ''}% off selected treatments` 
-                      : promoType === 'package' 
-                        ? 'Complete treatment package with special benefits' 
-                        : 'Limited time offer - Continue to claim your offer'}
-                  </p>
-                </div>
-              </div>
-              <div className="shrink-0">
-                <Badge variant="outline" className="bg-white/20 hover:bg-white/30 border-none text-white">
-                  Promo: {promoToken}
-                </Badge>
-              </div>
-            </div>
-          )}
-          
-          {/* Display active special offer if present through our tracking system */}
-          {hasActiveOffer && trackedOffer && (
-            <div className="mb-6">
-              <ActiveOfferBadge showDetails={true} size="lg" />
-            </div>
-          )}
-          
-          {/* Back button */}
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center text-gray-600"
-              onClick={() => setLocation('/')}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
+      <main className="flex-grow">
+        {/* Promo ribbon - shown conditionally based on active promo */}
+        {(activePromoSlug || specialOffer || promoToken) && (
+          <PromoRibbon 
+            title={
+              promoData?.name || 
+              specialOffer?.title || 
+              (promoToken ? `${promoType === PromoType.DISCOUNT ? 'Discount' : 'Bonus'} Promo` : null) || 
+              'Special Offer'
+            }
+            description={
+              promoData?.description || 
+              (specialOffer ? 
+                `${specialOffer.discountValue}% off ${specialOffer.applicableTreatment}` : 
+                'Limited time offer for your dental treatment')
+            }
+            onClear={handleClearPromo}
+          />
+        )}
+        
+        <div className="container px-4 py-6 mx-auto md:py-8 lg:py-12">
+          <div className="mb-6 space-y-2">
+            <h1 className="text-3xl font-bold md:text-4xl">Get Your Personalized Dental Quote</h1>
+            <p className="text-lg text-muted-foreground">
+              Compare prices from top clinics in Istanbul and find the perfect match for your dental treatment.
+            </p>
           </div>
           
-          {/* Page header */}
-          {searchParams.get('name') ? (
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              Hello, {searchParams.get('name')?.split(' ')[0]}!
-            </h1>
-          ) : (
-            <h1 className="text-3xl md:text-4xl font-bold mb-6">Build Your Treatment Plan</h1>
-          )}
-          
-          {searchParams.get('name') && (
-            <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
-          )}
-          
-          {/* Always show debug info */}
-          <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
-            <h3 className="text-sm font-semibold mb-2 text-gray-600">Debug Information:</h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p>Source: {source}</p>
-              <p>Special Offer Flow: {isSpecialOfferFlow ? 'Yes' : 'No'}</p>
-              <p>Package Flow: {isPackageFlow ? 'Yes' : 'No'}</p>
-              <p>Promo Token Flow: {isPromoTokenFlow ? 'Yes' : 'No'}</p>
-              {offerId && <p>Offer ID: {offerId}</p>}
-              {packageId && <p>Package ID: {packageId}</p>}
-              {clinicId && <p>Clinic ID: {clinicId}</p>}
-              {promoToken && <p>Promo Token: {promoToken}</p>}
-              {promoType && <p>Promo Type: {promoType}</p>}
-              {quoteId && <p>Quote ID: {quoteId}</p>}
-              {specialOffer && <p>Special Offer Title: {specialOffer.title}</p>}
-              {packageData && <p>Package Title: {packageData.title}</p>}
-              <p>URL Search: {window.location.search}</p>
-            </div>
-          </div>
-
-          {/* Special Offer, Package, or Promo Token Banner - Now with stronger visual styling */}
-          {/* Force show the banner if we have ANY promotion related data */}
-          {(isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow || promoToken) && (
-            <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg p-5 shadow-md text-white">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-1">
-                  {promoType === 'package' ? (
-                    <Package className="h-7 w-7 text-yellow-300" />
-                  ) : (
-                    <Sparkles className="h-7 w-7 text-yellow-300" />
-                  )}
-                </div>
-                <div className="ml-4">
-                  <h2 className="font-bold text-xl">
-                    {isSpecialOfferFlow ? 'Special Offer Selected' : 
-                     isPackageFlow ? 'Treatment Package Selected' : 
-                     promoToken && promoType === 'special_offer' ? 'Special Offer Applied' :
-                     promoToken && promoType === 'package' ? 'Treatment Package Applied' :
-                     promoToken ? 'Promotion Applied' : 
-                     'Promotion Applied'}
-                  </h2>
-                  <p className="text-white font-medium text-lg mt-2">
-                    {isSpecialOfferFlow && offerId ? (
-                      <>Your quote includes the special offer: <span className="font-bold underline">{specialOffer?.title || 'Special Offer'}</span></>
-                    ) : isPackageFlow && packageId ? (
-                      <>Your quote includes the package: <span className="font-bold underline">{packageData?.title || 'Treatment Package'}</span></>
-                    ) : promoToken ? (
-                      <>Promotion token applied: <span className="font-bold underline">{searchParams.get('promoTitle') || searchParams.get('offerTitle') || 'Special Promotion'}</span></>
-                    ) : (
-                      <>We'll prepare your personalized treatment plan</>
-                    )}
-                  </p>
-                  {quoteId && (
-                    <p className="text-white bg-blue-700 px-2 py-1 rounded-md text-sm mt-2 inline-block">
-                      Quote ID: {quoteId}
-                    </p>
-                  )}
-                  <p className="text-blue-100 mt-2">
-                    Complete the dental quiz below to customize your treatment experience
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Progress tracker */}
-          <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-bold">Your Quote Progress</h2>
-                  <p className="text-gray-600 text-sm">Follow these steps to get your personalized quote</p>
-                </div>
-                
-                {isQuoteReady && (
-                  <div className="mt-4 sm:mt-0">
-                    <Button 
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download Quote PDF
-                    </Button>
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <div 
-                  className={`relative flex items-center p-3 rounded-md ${
-                    currentStep === 'build-plan' 
-                      ? 'bg-blue-50 border border-blue-200' 
-                      : 'bg-gray-50 border border-gray-200'
-                  }`}
-                >
-                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
-                    currentStep === 'build-plan' 
-                      ? 'bg-blue-500 text-white' 
-                      : treatmentItems.length > 0 
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {treatmentItems.length > 0 ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span>1</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Build Treatment Plan</h3>
-                    <p className="text-xs text-gray-500">Select your treatments</p>
-                  </div>
-                  {currentStep !== 'build-plan' && treatmentItems.length > 0 && (
-                    <Button
-                      variant="ghost" 
-                      size="sm"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={() => setCurrentStep('build-plan')}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className={`relative flex items-center p-3 rounded-md ${
-                  currentStep === 'patient-info' 
-                    ? 'bg-blue-50 border border-blue-200' 
-                    : 'bg-gray-50 border border-gray-200'
-                }`}>
-                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
-                    currentStep === 'patient-info' 
-                      ? 'bg-blue-500 text-white' 
-                      : patientInfo 
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {patientInfo ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span>2</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Patient Information</h3>
-                    <p className="text-xs text-gray-500">Your contact details</p>
-                  </div>
-                  {currentStep !== 'patient-info' && patientInfo && (
-                    <Button
-                      variant="ghost" 
-                      size="sm"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={() => setCurrentStep('patient-info')}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className={`relative flex items-center p-3 rounded-md ${
-                  currentStep === 'select-clinic' 
-                    ? 'bg-blue-50 border border-blue-200' 
-                    : 'bg-gray-50 border border-gray-200'
-                }`}>
-                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
-                    currentStep === 'select-clinic' 
-                      ? 'bg-blue-500 text-white' 
-                      : selectedClinic 
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {selectedClinic ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span>3</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Select Clinic</h3>
-                    <p className="text-xs text-gray-500">Choose your preferred clinic</p>
-                  </div>
-                  {currentStep !== 'select-clinic' && selectedClinic && (
-                    <Button
-                      variant="ghost" 
-                      size="sm"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={() => setCurrentStep('select-clinic')}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className={`relative flex items-center p-3 rounded-md ${
-                  currentStep === 'review' 
-                    ? 'bg-blue-50 border border-blue-200' 
-                    : 'bg-gray-50 border border-gray-200'
-                }`}>
-                  <div className={`w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
-                    currentStep === 'review' 
-                      ? 'bg-blue-500 text-white' 
-                      : isQuoteReady 
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {isQuoteReady ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span>4</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Final Review</h3>
-                    <p className="text-xs text-gray-500">Review and save your quote</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Content based on current step */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left column - Main content */}
-            <div className="lg:col-span-2">
-              {/* Step 1: Build Plan */}
-              {currentStep === 'build-plan' && (
-                <>
-                  <Card className="mb-6">
-                    <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2">
-                      <div>
-                        <CardTitle className="text-xl">Build Your Treatment Plan</CardTitle>
-                        <p className="text-gray-500 text-sm">Select treatments to include in your quote</p>
-                      </div>
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="mt-2 sm:mt-0 flex items-center gap-1"
-                        onClick={handleEditQuote}
-                      >
-                        <Edit3 className="h-3.5 w-3.5" />
-                        Edit Quote Preferences
-                      </Button>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 p-3 bg-blue-50 rounded-md">
-                        <div className="flex items-start gap-3">
-                          <div className="text-blue-500 mt-0.5">
-                            <Info className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-blue-900">Your Quote Preferences</h3>
-                            <ul className="text-sm text-blue-700 space-y-1 mt-1">
-                              <li className="flex items-center gap-2">
-                                <span className="font-medium">Treatment:</span> {quoteParams.treatment}
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="font-medium">Travel Month:</span> {quoteParams.travelMonth}
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="font-medium">Budget:</span> {quoteParams.budget}
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                        <div className="mt-3 sm:mt-0">
-                          <RefreshCcw className="h-5 w-5 text-blue-500" />
-                        </div>
-                      </div>
-                      
-                      {/* Add the SpecialOfferHandler component that ensures special offers are in the treatment items */}
-                      <SpecialOfferHandler
-                        specialOffer={specialOffer}
-                        packageData={packageData}
-                        treatmentItems={treatmentItems}
-                        onTreatmentsChange={setTreatmentItems}
-                      />
-                      
-                      {/* Show PromoRibbon when there's an active promotion */}
-                      {activePromoSlug && (
-                        <PromoRibbon />
-                      )}
-
-                      {/* Use our enhanced treatment plan builder with promo discount support */}
-                      {/* Replace standard TreatmentPlanBuilder with EnhancedTreatmentPlanBuilder that handles discounts */}
-                      <EnhancedTreatmentPlanBuilder
-                        initialTreatments={hasActiveOffer ? applySpecialOfferToTreatments(treatmentItems) : treatmentItems}
-                        onTreatmentsChange={setTreatmentItems}
-                        hideHeader={true}
-                      />
-                      
-                      <div className="mt-6">
-                        <Button 
-                          onClick={() => {
-                            if (treatmentItems.length === 0) {
-                              toast({
-                                title: "Empty Plan",
-                                description: "Please add at least one treatment to your plan",
-                                variant: "destructive"
-                              });
-                              return;
-                            }
-                            setCurrentStep('patient-info');
-                          }}
-                          className="w-full sm:w-auto"
-                        >
-                          Continue to Patient Information
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
-              
-              {/* Step 2: Patient Info */}
-              {currentStep === 'patient-info' && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Patient Information</CardTitle>
-                    <p className="text-gray-500 text-sm">Provide your details so we can prepare your quote</p>
-                  </CardHeader>
-                  <CardContent>
-                    <form className="space-y-4" onSubmit={(e) => {
-                      e.preventDefault();
-                      setCurrentStep('select-clinic');
-                    }}>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label htmlFor="fullName" className="text-sm font-medium">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            id="fullName"
-                            value={patientInfo?.fullName || ''}
-                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, fullName: e.target.value }))}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label htmlFor="email" className="text-sm font-medium">
-                            Email Address *
-                          </label>
-                          <input
-                            type="email"
-                            id="email"
-                            value={patientInfo?.email || ''}
-                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, email: e.target.value }))}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label htmlFor="phone" className="text-sm font-medium">
-                            Phone Number *
-                          </label>
-                          <input
-                            type="tel"
-                            id="phone"
-                            value={patientInfo?.phone || ''}
-                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, phone: e.target.value }))}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label htmlFor="travelMonth" className="text-sm font-medium">
-                            Preferred Travel Month
-                          </label>
-                          <select
-                            id="travelMonth"
-                            value={patientInfo?.travelMonth || ''}
-                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, travelMonth: e.target.value }))}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">Select a month</option>
-                            <option value="Flexible">Flexible</option>
-                            <option value="May 2025">May 2025</option>
-                            <option value="June 2025">June 2025</option>
-                            <option value="July 2025">July 2025</option>
-                            <option value="August 2025">August 2025</option>
-                            <option value="September 2025">September 2025</option>
-                            <option value="October 2025">October 2025</option>
-                            <option value="November 2025">November 2025</option>
-                            <option value="December 2025">December 2025</option>
-                          </select>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label htmlFor="departureCity" className="text-sm font-medium">
-                            Departure City/Country
-                          </label>
-                          <input
-                            type="text"
-                            id="departureCity"
-                            value={patientInfo?.departureCity || ''}
-                            onChange={(e) => setPatientInfo(prev => ({ ...prev!, departureCity: e.target.value }))}
-                            placeholder="e.g., London, UK"
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label htmlFor="contactMethod" className="text-sm font-medium">
-                            Preferred Contact Method
-                          </label>
-                          <div className="flex gap-4 mt-1">
-                            <label className="flex items-center">
-                              <input
-                                type="radio"
-                                name="contactMethod"
-                                value="email"
-                                checked={patientInfo?.preferredContactMethod === 'email'}
-                                onChange={() => setPatientInfo(prev => ({ ...prev!, preferredContactMethod: 'email' }))}
-                                className="mr-2"
-                              />
-                              Email
-                            </label>
-                            <label className="flex items-center">
-                              <input
-                                type="radio"
-                                name="contactMethod"
-                                value="whatsapp"
-                                checked={patientInfo?.preferredContactMethod === 'whatsapp'}
-                                onChange={() => setPatientInfo(prev => ({ ...prev!, preferredContactMethod: 'whatsapp' }))}
-                                className="mr-2"
-                              />
-                              WhatsApp
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Do you have dental records?</label>
-                        <div className="flex flex-wrap gap-6 mt-1">
-                          <label className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={patientInfo?.hasXrays}
-                              onChange={(e) => setPatientInfo(prev => ({ ...prev!, hasXrays: e.target.checked }))}
-                              className="mr-2"
-                            />
-                            I have dental X-rays
-                          </label>
-                          <label className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={patientInfo?.hasCtScan}
-                              onChange={(e) => setPatientInfo(prev => ({ ...prev!, hasCtScan: e.target.checked }))}
-                              className="mr-2"
-                            />
-                            I have CT Scan
-                          </label>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="additionalNotes" className="text-sm font-medium">
-                          Additional Notes or Questions
-                        </label>
-                        <textarea
-                          id="additionalNotes"
-                          value={patientInfo?.additionalNotes || ''}
-                          onChange={(e) => setPatientInfo(prev => ({ ...prev!, additionalNotes: e.target.value }))}
-                          rows={3}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Any specific questions or concerns you'd like to mention..."
-                        ></textarea>
-                      </div>
-                      
-                      <div className="flex flex-col md:flex-row gap-3 pt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setCurrentStep('build-plan')}
-                        >
-                          <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                        </Button>
-                        
-                        <Button type="submit">
-                          Continue to Select Clinic <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Step 3: Select Clinic */}
-              {currentStep === 'select-clinic' && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Select Your Preferred Clinic</CardTitle>
-                    <p className="text-gray-500 text-sm">Choose a dental clinic that best meets your needs</p>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Clinic filtering and sorting (simplified) */}
-                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h3 className="font-medium mb-2">Filter & Sort Options</h3>
-                      <div className="flex flex-wrap gap-3">
-                        <Badge variant="outline" className="bg-white cursor-pointer">All Clinics</Badge>
-                        <Badge variant="outline" className="bg-white cursor-pointer">Premium</Badge>
-                        <Badge variant="outline" className="bg-white cursor-pointer">Mid-Range</Badge>
-                        <Badge variant="outline" className="bg-white cursor-pointer">Budget-Friendly</Badge>
-                      </div>
-                    </div>
-                    
-                    {/* Special offer notice if applicable */}
-                    {isSpecialOfferFlow && (
-                      <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-md flex items-start">
-                        <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                        <div>
-                          <h3 className="font-medium text-blue-800">Special Offer Selected</h3>
-                          <p className="text-sm text-blue-700">
-                            Your quote includes a special offer from a specific clinic. 
-                            We've highlighted this clinic at the top of the list.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Clinic selection */}
-                    <div className="space-y-6">
-                      {clinics.map((clinic) => (
-                        <ClinicCard
-                          key={clinic.id}
-                          clinic={clinic}
-                          isSelected={selectedClinic?.id === clinic.id}
-                          onSelect={() => setSelectedClinic(clinic)}
-                        />
-                      ))}
-                    </div>
-                    
-                    <div className="flex flex-col md:flex-row gap-3 mt-6">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentStep('patient-info')}
-                      >
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                      </Button>
-                      
-                      <Button
-                        onClick={() => {
-                          if (!selectedClinic) {
-                            toast({
-                              title: "No Clinic Selected",
-                              description: "Please select a clinic to continue",
-                              variant: "destructive"
-                            });
-                            return;
-                          }
-                          setCurrentStep('review');
-                          setIsQuoteReady(true);
-                        }}
-                      >
-                        Continue to Review <ChevronRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Step 4: Review */}
-              {currentStep === 'review' && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Review Your Quote</CardTitle>
-                    <p className="text-gray-500 text-sm">Review the details of your treatment plan</p>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Treatment Plan Review */}
-                    <div className="mb-6">
-                      <h3 className="font-medium text-lg mb-3">Treatment Plan</h3>
-                      <div className="bg-gray-50 rounded-md p-4 border border-gray-200">
-                        <table className="w-full">
-                          <thead className="border-b border-gray-200">
-                            <tr>
-                              <th className="text-left py-2 text-sm font-medium text-gray-600">Treatment</th>
-                              <th className="text-center py-2 text-sm font-medium text-gray-600">Qty</th>
-                              <th className="text-right py-2 text-sm font-medium text-gray-600">Price</th>
-                              <th className="text-right py-2 text-sm font-medium text-gray-600">Subtotal</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {treatmentItems.map((item, index) => (
-                              <tr key={index} className="border-b border-gray-200 last:border-0">
-                                <td className="py-3 text-sm">
-                                  {item.name}
-                                  {item.specialOffer && (
-                                    <div className="mt-1 flex items-center">
-                                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                        <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
-                                        Special Offer: {item.specialOffer.title}
-                                      </Badge>
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="py-3 text-center text-sm">{item.quantity}</td>
-                                <td className="py-3 text-right text-sm">
-                                  {item.specialOffer ? (
-                                    <div>
-                                      <span className="line-through text-gray-400 mr-1">£{item.specialOffer.discountType === 'percentage' ? Math.round(item.priceGBP / (1 - item.specialOffer.discountValue / 100)) : item.priceGBP + item.specialOffer.discountValue}</span>
-                                      <span className="font-medium">£{item.priceGBP}</span>
-                                    </div>
-                                  ) : (
-                                    <span>£{item.priceGBP}</span>
-                                  )}
-                                </td>
-                                <td className="py-3 text-right text-sm font-medium">£{item.subtotalGBP}</td>
-                              </tr>
-                            ))}
-                            
-                            {/* Totals */}
-                            <tr className="bg-gray-50">
-                              <td colSpan={3} className="py-3 text-right font-medium">Total</td>
-                              <td className="py-3 text-right font-bold">£{formatCurrency(calculateTotalGBP())}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    
-                    {/* Clinic Details */}
-                    {selectedClinic && (
-                      <div className="mb-6">
-                        <h3 className="font-medium text-lg mb-3">Clinic Details</h3>
-                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200 flex">
-                          <div className="w-24 h-24 flex-shrink-0 mr-4 overflow-hidden rounded-md">
-                            <img 
-                              src={selectedClinic.images[0]} 
-                              alt={selectedClinic.name} 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div>
-                            <h4 className="font-bold">{selectedClinic.name}</h4>
-                            <div className="flex items-center gap-1 mb-1">
-                              <MapPin className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm text-gray-600">{selectedClinic.location}</span>
-                            </div>
-                            <div className="flex items-center mb-2">
-                              <RatingStars rating={selectedClinic.rating} />
-                              <span className="text-sm text-gray-500 ml-2">({selectedClinic.reviewCount} reviews)</span>
-                            </div>
-                            <p className="text-sm text-gray-700">{selectedClinic.description}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Patient Details */}
-                    {patientInfo && (
-                      <div className="mb-6">
-                        <h3 className="font-medium text-lg mb-3">Patient Information</h3>
-                        <div className="bg-gray-50 rounded-md p-4 border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-                          <div>
-                            <p className="text-sm text-gray-500">Full Name</p>
-                            <p className="font-medium">{patientInfo.fullName}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Email</p>
-                            <p className="font-medium">{patientInfo.email}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Phone</p>
-                            <p className="font-medium">{patientInfo.phone}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Travel Month</p>
-                            <p className="font-medium">{patientInfo.travelMonth || quoteParams.travelMonth || 'Flexible'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Departure City</p>
-                            <p className="font-medium">{patientInfo.departureCity || 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Dental Records</p>
-                            <p className="font-medium">
-                              {patientInfo.hasXrays ? 'X-rays available' : ''}
-                              {patientInfo.hasXrays && patientInfo.hasCtScan ? ', ' : ''}
-                              {patientInfo.hasCtScan ? 'CT Scan available' : ''}
-                              {!patientInfo.hasXrays && !patientInfo.hasCtScan ? 'None available' : ''}
-                            </p>
-                          </div>
-                          {patientInfo.additionalNotes && (
-                            <div className="col-span-2">
-                              <p className="text-sm text-gray-500">Additional Notes</p>
-                              <p className="font-medium">{patientInfo.additionalNotes}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentStep('select-clinic')}
-                      >
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                      </Button>
-                      
-                      <Button
-                        className="flex items-center"
-                        onClick={async () => {
-                          try {
-                            // Attempt to save the treatment plan
-                            const result = await saveTreatmentPlan();
-                            
-                            if (!result) {
-                              // Error handling is done in saveTreatmentPlan
-                              return;
-                            }
-                            
-                            // Clear session storage items
-                            sessionStorage.removeItem('activeSpecialOffer');
-                            
-                            // Reset context and redirect after successful save
-                            setTimeout(() => {
-                              // Reset context
-                              resetFlow();
-                              
-                              // Use the redirectUrl from API if available, otherwise use standard redirect
-                              const redirectPath = result.redirectUrl || `/client-portal?source=${source}&planId=${result.id}`;
-                              console.log(`Redirecting to: ${redirectPath}`);
-                              window.location.href = redirectPath;
-                            }, 1500);
-                          } catch (error) {
-                            console.error('Error saving treatment plan:', error);
-                            toast({
-                              title: "Error",
-                              description: "Failed to save your treatment plan. Please try again.",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Save Your {source === 'package' ? 'Package' : 'Treatment'} Plan
-                      </Button>
-                      
-                      {/* Download Quote button would go here */}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Supplementary information - Customer testimonials */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg">What Our Patients Say</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="text-yellow-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="h-4 w-4 inline-block fill-current" />
-                          ))}
-                        </div>
-                        <span className="font-medium">5.0</span>
-                      </div>
-                      <p className="text-sm italic mb-3">
-                        "MyDentalFly made my dental trip to Istanbul so easy. The clinic was fantastic and I saved over £3,000 compared to UK prices!"
-                      </p>
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm mr-2">
-                          SJ
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">Sarah J.</p>
-                          <p className="text-xs text-gray-500">London, UK</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="text-yellow-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="h-4 w-4 inline-block fill-current" />
-                          ))}
-                        </div>
-                        <span className="font-medium">5.0</span>
-                      </div>
-                      <p className="text-sm italic mb-3">
-                        "The quality of care I received in Istanbul was better than anything I'd experienced before. My new smile looks amazing!"
-                      </p>
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm mr-2">
-                          DT
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">David T.</p>
-                          <p className="text-xs text-gray-500">Manchester, UK</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* FAQs */}
+          <Tabs defaultValue="treatment" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="treatment">Treatment</TabsTrigger>
+              <TabsTrigger value="clinic">Clinic Selection</TabsTrigger>
+              <TabsTrigger value="contact">Your Details</TabsTrigger>
+            </TabsList>
+            
+            {/* Treatment Tab */}
+            <TabsContent value="treatment" className="px-1 py-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Frequently Asked Questions</CardTitle>
+                  <CardTitle>Select Your Treatment</CardTitle>
+                  <CardDescription>
+                    Tell us what dental treatment you're interested in
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
-                      <AccordionTrigger className="text-base font-medium">How does dental tourism work?</AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
-                        Dental tourism allows you to receive high-quality dental care in another country at a fraction of the cost. With MyDentalFly, we handle all the logistics from clinic selection to transportation and accommodation arrangements, making your dental trip as comfortable as possible.
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="item-2">
-                      <AccordionTrigger className="text-base font-medium">Is the quality of treatment comparable to the UK?</AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
-                        Yes! The clinics we partner with in Istanbul use the same or better materials and technologies as those in the UK. Many dentists are internationally trained and clinics maintain international certifications. The key difference is the significantly lower cost due to lower overhead expenses.
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="item-3">
-                      <AccordionTrigger className="text-base font-medium">How long will I need to stay in Istanbul?</AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
-                        The duration of your stay depends on the treatments you need. Simple procedures may require just 3-4 days, while more complex treatments like full-mouth reconstructions typically need 7-10 days across two visits. Your quote will include a recommended stay duration.
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="item-4">
-                      <AccordionTrigger className="text-base font-medium">What happens if I need adjustments after returning home?</AccordionTrigger>
-                      <AccordionContent className="text-sm text-gray-600">
-                        All treatments come with guarantees ranging from 3 to 10 years. Minor adjustments can often be handled by your local dentist, but for significant issues, the clinics will cover the cost of any necessary return visits. MyDentalFly provides ongoing support even after you return home.
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Right column - Summary panel */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24">
-                <QuoteSummaryPanel
-                  treatments={treatmentItems.map(item => ({
-                    name: item.name,
-                    priceGBP: item.priceGBP,
-                    quantity: item.quantity,
-                    subtotalGBP: item.subtotalGBP
-                  }))}
-                  onContinue={() => {}} 
-                  specialOfferTitle={specialOffer?.title}
-                  discountValue={specialOffer?.discountValue}
-                  discountType={specialOffer?.discountType}
-                  clinicName={selectedClinic?.name}
-                />
-                
-                <Card className="mt-6">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center">
-                      <HeartHandshake className="h-5 w-5 mr-2 text-blue-500" />
-                      How We Support You
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <div className="mr-2 mt-0.5 text-green-500">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm">Personal dental treatment coordinator</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="mr-2 mt-0.5 text-green-500">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm">Pre-travel consultation & planning</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="mr-2 mt-0.5 text-green-500">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm">Clinic-verified guarantees & aftercare</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="mr-2 mt-0.5 text-green-500">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm">Help with flights & accommodation</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="mr-2 mt-0.5 text-green-500">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm">Airport & clinic transfers</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="mr-2 mt-0.5 text-green-500">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="text-sm">24/7 support during your stay</span>
-                      </li>
-                    </ul>
-                    
-                    <div className="mt-4">
-                      <Button 
-                        variant="outline" 
-                        className="w-full flex items-center justify-center" 
-                        size="sm"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Talk to a Coordinator
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Edit Quote Modal */}
-                {isEditModalOpen && (
-                  <EditQuoteModal
-                    isOpen={isEditModalOpen}
-                    onClose={() => setIsEditModalOpen(false)}
+                  {/* Treatment selection panel */}
+                  <QuoteTreatmentSelectionPanel 
                     initialParams={quoteParams}
                     onSave={handleSaveQuoteParams}
+                    className="mb-6"
                   />
-                )}
-              </div>
-            </div>
-          </div>
+                  
+                  {/* Treatment plan builder */}
+                  <div className="mt-8">
+                    <h3 className="mb-4 text-lg font-semibold">Your Treatment Plan</h3>
+                    <EnhancedTreatmentPlanBuilder 
+                      treatments={treatmentPlan}
+                      setTreatments={setTreatmentPlan}
+                      specialOffer={specialOffer}
+                      promoData={promoData}
+                      isSpecialOfferFlow={isSpecialOfferFlow}
+                      isPromoTokenFlow={!!promoToken}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Clinic Selection Tab */}
+            <TabsContent value="clinic" className="px-1 py-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compare Clinics</CardTitle>
+                  <CardDescription>
+                    Choose up to 3 clinics to compare treatment options
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Clinic selection will be implemented here */}
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Card className="overflow-hidden">
+                      <CardHeader className="p-0">
+                        <AspectRatio ratio={16/9}>
+                          <img 
+                            src="/images/clinics/premium-clinic-1.jpg" 
+                            alt="Premium Clinic" 
+                            className="object-cover w-full h-full"
+                          />
+                        </AspectRatio>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-semibold">Premium Dental</h3>
+                          <Badge>Premium</Badge>
+                        </div>
+                        <div className="flex items-center mb-2 text-sm">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          <span>Istanbul, Turkey</span>
+                        </div>
+                        <div className="flex items-center mb-4 text-sm">
+                          <span className="flex items-center mr-2">
+                            <svg className="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            4.9
+                          </span>
+                          <span>(120 reviews)</span>
+                        </div>
+                        <p className="mb-4 text-sm text-muted-foreground">Premium quality dental care with state-of-the-art facilities and internationally trained doctors.</p>
+                        <div className="flex justify-between">
+                          <Button>Select Clinic</Button>
+                          <WhatsAppButton clinic={{ 
+                            id: '1', 
+                            name: 'Premium Dental', 
+                            tier: 'premium',
+                            priceGBP: 1200,
+                            priceUSD: 1500,
+                            location: 'Istanbul, Turkey',
+                            rating: 4.9,
+                            reviewCount: 120,
+                            guarantee: '5-year',
+                            materials: ['Premium'],
+                            conciergeType: 'mydentalfly',
+                            features: ['Airport Transfer', 'Hotel Booking'],
+                            description: 'Premium quality dental care with state-of-the-art facilities.',
+                            packages: {
+                              hotel: true,
+                              transfers: true
+                            },
+                            images: []
+                          }} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    {/* More clinic cards would be rendered here */}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Contact Tab */}
+            <TabsContent value="contact" className="px-1 py-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Contact Information</CardTitle>
+                  <CardDescription>
+                    Fill in your details to receive your personalized quote
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName">Full Name</Label>
+                        <Input 
+                          id="fullName" 
+                          placeholder="Enter your full name" 
+                          value={patientInfo.fullName}
+                          onChange={(e) => setPatientInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input 
+                          id="email" 
+                          type="email" 
+                          placeholder="Enter your email" 
+                          value={patientInfo.email}
+                          onChange={(e) => setPatientInfo(prev => ({ ...prev, email: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input 
+                          id="phone" 
+                          placeholder="Enter your phone number" 
+                          value={patientInfo.phone}
+                          onChange={(e) => setPatientInfo(prev => ({ ...prev, phone: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="travelMonth">Preferred Travel Month</Label>
+                        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-left"
+                            >
+                              <Calendar className="w-4 h-4 mr-2" />
+                              {selectedDate ? (
+                                format(selectedDate, 'MMMM yyyy')
+                              ) : (
+                                <span>Select month</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <CalendarComponent
+                              mode="single"
+                              selected={selectedDate}
+                              onSelect={handleDateSelect}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="departureCity">Departure City/Country</Label>
+                      <Input 
+                        id="departureCity" 
+                        placeholder="Where will you travel from?" 
+                        value={patientInfo.departureCity || ''}
+                        onChange={(e) => setPatientInfo(prev => ({ ...prev, departureCity: e.target.value }))}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Do you have dental records?</Label>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="hasXrays" 
+                            checked={patientInfo.hasXrays}
+                            onCheckedChange={(checked) => 
+                              setPatientInfo(prev => ({ ...prev, hasXrays: checked === true }))
+                            }
+                          />
+                          <Label htmlFor="hasXrays" className="font-normal">I have dental X-rays</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="hasCtScan" 
+                            checked={patientInfo.hasCtScan}
+                            onCheckedChange={(checked) => 
+                              setPatientInfo(prev => ({ ...prev, hasCtScan: checked === true }))
+                            }
+                          />
+                          <Label htmlFor="hasCtScan" className="font-normal">I have a CT scan</Label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="additionalNotes">Additional Information</Label>
+                      <textarea 
+                        id="additionalNotes" 
+                        className="w-full h-32 p-2 border rounded-md"
+                        placeholder="Please provide any additional information about your dental needs..."
+                        value={patientInfo.additionalNotes}
+                        onChange={(e) => setPatientInfo(prev => ({ ...prev, additionalNotes: e.target.value }))}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Preferred Contact Method</Label>
+                      <RadioGroup 
+                        value={patientInfo.preferredContactMethod}
+                        onValueChange={(value) => 
+                          setPatientInfo(prev => ({ 
+                            ...prev, 
+                            preferredContactMethod: value as 'email' | 'whatsapp' 
+                          }))
+                        }
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="email" id="email-contact" />
+                          <Label htmlFor="email-contact" className="font-normal">Email</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="whatsapp" id="whatsapp-contact" />
+                          <Label htmlFor="whatsapp-contact" className="font-normal">WhatsApp</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        "Get Your Quote"
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       
+      <FreeConsultationWidget />
       <Footer />
-    </>
+      <ScrollToTop />
+      
+      {showConfetti && <Confetti />}
+    </div>
   );
 };
 
