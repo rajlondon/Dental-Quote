@@ -1,142 +1,166 @@
 /**
- * API route for applying coupon codes to quotes
+ * API endpoint for applying promotional codes to quotes
  */
-import { Router } from 'express';
-import { db } from '../db';
-import { applyPromoToQuote } from '../utils/promo-utils';
-import { eq } from 'drizzle-orm';
-import { promos, quotes } from '@shared/schema';
-import { logger } from '../utils/logger';
-import { mixpanelTrack } from '../utils/analytics';
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { findPromoByCode, canApplyPromoToQuote, applyPromoToQuote, removePromoFromQuote, findPromoById } from '../utils/promo-utils';
+import log from '../utils/logger';
+import { pool } from '../db';
+import { trackPromoCodeApplication } from '../utils/analytics';
 
-const router = Router();
+// Validation schema for apply code request
+const applyCodeSchema = z.object({
+  code: z.string().min(1).max(50),
+  quoteId: z.string().uuid()
+});
+
+// Validation schema for remove code request
+const removeCodeSchema = z.object({
+  quoteId: z.string().uuid()
+});
 
 /**
- * Apply a coupon code to a quote
- * POST /quotes/apply-code
- * 
- * Body:
- * - quoteId: string - The ID of the quote to apply the code to
- * - clinicId: string - The ID of the clinic (for validation)
- * - code: string - The coupon code to apply
- * 
- * Returns:
- * - Updated quote with applied discount
+ * Apply a promo code to a quote
+ * @param req The request object
+ * @param res The response object
  */
-router.post('/quotes/apply-code', async (req, res) => {
+export async function applyCode(req: Request, res: Response) {
   try {
-    const { quoteId, clinicId, code } = req.body;
+    const validation = applyCodeSchema.safeParse(req.body);
     
-    if (!quoteId || !clinicId || !code) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Missing required fields: quoteId, clinicId, and code are required' 
-      });
-    }
-
-    // Find the promo by code (must be active)
-    const foundPromo = await db.select().from(promos)
-      .where(
-        eq(promos.code, code.toUpperCase())
-      ).limit(1);
-    
-    if (!foundPromo || foundPromo.length === 0) {
-      logger.info(`Invalid promo code attempted: ${code}`);
-      mixpanelTrack('CodeApplyFailed', { 
-        code, 
-        quoteId, 
-        clinicId,
-        reason: 'INVALID_CODE' 
-      });
-      
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        message: 'INVALID_CODE'
-      });
-    }
-
-    const promoRecord = foundPromo[0];
-    
-    // Validate the promo is active
-    if (!promoRecord.isActive) {
-      mixpanelTrack('CodeApplyFailed', { 
-        code, 
-        quoteId, 
-        clinicId,
-        reason: 'INACTIVE_CODE' 
-      });
-      
-      return res.status(400).json({
-        success: false,
-        message: 'INACTIVE_CODE'
+        message: 'Invalid request data',
+        errors: validation.error.errors
       });
     }
     
-    // Validate the clinic is valid for this promo
-    const validForClinic = await db.query.promoClinics.findFirst({
-      where: (promoClinic, { and, eq }) => and(
-        eq(promoClinic.promoId, promoRecord.id),
-        eq(promoClinic.clinicId, clinicId)
-      )
-    });
+    const { code, quoteId } = validation.data;
     
-    if (!validForClinic) {
-      mixpanelTrack('CodeApplyFailed', { 
-        code, 
-        quoteId, 
-        clinicId,
-        reason: 'INVALID_CLINIC' 
-      });
-      
-      return res.status(400).json({
-        success: false,
-        message: 'INVALID_CLINIC'
-      });
-    }
-
-    // Get the quote
-    const foundQuote = await db.select().from(quotes)
-      .where(
-        eq(quotes.id, quoteId)
-      ).limit(1);
+    // Find the promo by code
+    const promo = await findPromoByCode(code);
     
-    if (!foundQuote || foundQuote.length === 0) {
+    if (!promo) {
       return res.status(404).json({
         success: false,
-        message: 'Quote not found'
+        message: 'Promo code not found or expired'
       });
     }
-
-    const quoteRecord = foundQuote[0];
+    
+    // Check if the promo can be applied to this quote
+    const canApply = await canApplyPromoToQuote(promo, quoteId);
+    
+    if (!canApply) {
+      return res.status(403).json({
+        success: false,
+        message: 'This promo code cannot be applied to the selected quote'
+      });
+    }
     
     // Apply the promo to the quote
-    const updatedQuote = await applyPromoToQuote(quoteRecord, promoRecord);
+    const updatedQuote = await applyPromoToQuote(quoteId, promo);
     
-    // Track successful application
-    mixpanelTrack('CodeApplied', { 
-      code, 
-      quoteId, 
-      clinicId,
-      city: updatedQuote.cityCode || 'unknown' 
-    });
+    if (!updatedQuote) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to apply promo code'
+      });
+    }
     
-    return res.json({
+    // Track the promo code application
+    const userId = req.user?.id || 'anonymous';
+    await trackPromoCodeApplication(
+      userId,
+      promo.id,
+      quoteId,
+      updatedQuote.discount || 0,
+      true
+    );
+    
+    // Return success response with updated quote and promo details
+    return res.status(200).json({
       success: true,
-      data: {
-        quoteId: updatedQuote.id,
-        subtotal: updatedQuote.subtotal,
-        discount: updatedQuote.discount,
-        total: updatedQuote.total,
-        promoLabel: `${code.toUpperCase()} applied`
-      }
+      message: 'Promo code applied successfully',
+      quote: updatedQuote,
+      promo
     });
-  } catch (error) {
-    logger.error('Error applying promo code:', error);
+  } catch (err: any) {
+    log.error('Error applying promo code:', err);
+    
     return res.status(500).json({
       success: false,
       message: 'An error occurred while applying the promo code'
     });
   }
-});
+}
 
-export default router;
+/**
+ * Remove a promo code from a quote
+ * @param req The request object
+ * @param res The response object
+ */
+export async function removeCode(req: Request, res: Response) {
+  try {
+    const validation = removeCodeSchema.safeParse(req.body);
+    
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request data',
+        errors: validation.error.errors
+      });
+    }
+    
+    const { quoteId } = validation.data;
+    
+    // Get the current quote to find the promo ID before removal
+    const quoteQuery = `
+      SELECT q.*, p.* 
+      FROM quotes q
+      LEFT JOIN promos p ON q.promo_id = p.id
+      WHERE q.id = $1
+    `;
+    
+    const quoteResult = await pool.query(quoteQuery, [quoteId]);
+    
+    if (quoteResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quote not found'
+      });
+    }
+    
+    const quote = quoteResult.rows[0];
+    const promoId = quote.promo_id;
+    
+    // Remove the promo from the quote
+    const updatedQuote = await removePromoFromQuote(quoteId);
+    
+    if (!updatedQuote) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to remove promo code'
+      });
+    }
+    
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: 'Promo code removed successfully',
+      quote: updatedQuote
+    });
+  } catch (err: any) {
+    log.error('Error removing promo code:', err);
+    
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while removing the promo code'
+    });
+  }
+}
+
+export default {
+  applyCode,
+  removeCode
+};

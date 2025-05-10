@@ -1,86 +1,90 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Tag } from "lucide-react";
-import { formatCurrency, formatDiscount } from '@/lib/format';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Tag, X } from "lucide-react";
+import { formatCurrency, formatDiscount, formatDate } from "@/lib/format";
+import { PromoDetails, QuoteDetails, useApplyCode } from "@/hooks/use-apply-code";
 
 interface PromoCodeSummaryProps {
-  promoData: {
-    id: string;
-    title: string;
-    code: string;
-    discount_type: string;
-    discount_value: number;
-  } | null;
-  originalPrice: number;
-  discountAmount: number;
-  finalPrice: number;
+  promo: PromoDetails;
+  quote: QuoteDetails;
   onRemove?: () => void;
 }
 
 /**
- * Displays a summary of the applied promo code with discount details
+ * Component to display promo code details and summary of applied discount
  */
-export const PromoCodeSummary: React.FC<PromoCodeSummaryProps> = ({
-  promoData,
-  originalPrice,
-  discountAmount,
-  finalPrice,
-  onRemove
-}) => {
-  if (!promoData) return null;
+export const PromoCodeSummary = ({ promo, quote, onRemove }: PromoCodeSummaryProps) => {
+  const { removePromoCode, isRemoving } = useApplyCode();
+
+  // Handle removing the promo code
+  const handleRemove = () => {
+    if (isRemoving) return;
+    
+    removePromoCode(
+      { quoteId: quote.id },
+      {
+        onSuccess: () => {
+          if (onRemove) onRemove();
+        },
+      }
+    );
+  };
 
   return (
-    <Card className="mb-4 border-primary/10 bg-primary/5">
+    <Card className="border-2 border-primary/20 bg-primary/5">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Tag className="h-4 w-4 mr-2 text-primary" />
-            <CardTitle className="text-sm font-medium">Applied Promotion</CardTitle>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              {promo.title}
+            </CardTitle>
+            <CardDescription className="text-sm mt-1">
+              Code: <span className="font-medium text-primary">{promo.code}</span>
+            </CardDescription>
           </div>
-          {onRemove && (
-            <button 
-              onClick={onRemove}
-              className="text-sm text-muted-foreground hover:text-destructive"
-              aria-label="Remove promo code"
-            >
-              Remove
-            </button>
-          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0" 
+            onClick={handleRemove}
+            disabled={isRemoving}
+          >
+            {isRemoving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <X className="h-4 w-4" />
+            )}
+            <span className="sr-only">Remove promo code</span>
+          </Button>
         </div>
-        <CardDescription className="text-xs">{promoData.title}</CardDescription>
       </CardHeader>
-      <CardContent className="pt-0 pb-2">
-        <div className="flex items-center space-x-2 bg-primary/10 p-2 rounded-md mb-3">
-          <span className="font-mono text-sm text-primary font-semibold">{promoData.code}</span>
-          <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-xs font-semibold">
-            {formatDiscount(promoData.discount_value, promoData.discount_type)} OFF
-          </span>
-        </div>
-        
+      <CardContent>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Original Price:</span>
-            <span>{formatCurrency(originalPrice)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Discount:</span>
+            <span className="font-medium">
+              {formatDiscount(promo.discount_value, promo.discount_type)}
+            </span>
           </div>
-          <div className="flex justify-between text-primary">
-            <span>Discount:</span>
-            <span>-{formatCurrency(discountAmount)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Subtotal:</span>
+            <span>{formatCurrency(quote.subtotal)}</span>
           </div>
-          <Separator className="my-1" />
-          <div className="flex justify-between font-medium">
-            <span>Final Price:</span>
-            <span>{formatCurrency(finalPrice)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Savings:</span>
+            <span className="font-medium text-green-600">-{formatCurrency(quote.discount)}</span>
+          </div>
+          <div className="flex justify-between items-center pt-1 border-t">
+            <span className="font-medium">Final Price:</span>
+            <span className="font-semibold">{formatCurrency(quote.total_price)}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs text-muted-foreground pt-2">
+            <span>Valid until:</span>
+            <span>{formatDate(promo.end_date)}</span>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-0 pb-3">
-        <p className="text-xs text-muted-foreground">
-          Promotional discount applied to your quote.
-        </p>
-      </CardFooter>
     </Card>
   );
 };
-
-export default PromoCodeSummary;
