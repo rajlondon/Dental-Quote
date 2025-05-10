@@ -24,10 +24,45 @@ const loginSchema = z.object({
 
 const ClinicLoginPage: React.FC = () => {
   const { t } = useTranslation();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { loginMutation } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Check URL for error parameters
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    
+    if (error) {
+      let errorMessage = "An error occurred during login. Please try again.";
+      
+      switch(error) {
+        case 'invalid_credentials':
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+          break;
+        case 'access_denied':
+          errorMessage = "This account doesn't have clinic staff permissions.";
+          break;
+        case 'server_error':
+          errorMessage = "A server error occurred. Please try again later.";
+          break;
+        case 'session_error':
+          errorMessage = "Failed to create login session. Please try again.";
+          break;
+      }
+      
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      // Remove the error parameter from URL to prevent showing the error again on refresh
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [location, toast]);
 
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -57,72 +92,39 @@ const ClinicLoginPage: React.FC = () => {
     try {
       console.log("Clinic login attempt with:", values);
       
-      // Store login intent in session storage before login
-      sessionStorage.setItem('clinic_login_attempt', 'true');
-      sessionStorage.setItem('login_timestamp', Date.now().toString());
+      // Simple approach: use basic form POST to trigger a server-side redirect
+      // This creates a regular form submission that bypasses SPA routing issues
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/api/auth/clinic-login';
       
-      // Pre-cache clinic portal data to avoid reload
-      sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
+      // Add email field
+      const emailInput = document.createElement('input');
+      emailInput.type = 'hidden';
+      emailInput.name = 'email';
+      emailInput.value = values.email;
+      form.appendChild(emailInput);
       
-      // Use the loginMutation from useAuth hook
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password
-        }),
-        credentials: 'include'
-      });
+      // Add password field
+      const passwordInput = document.createElement('input');
+      passwordInput.type = 'hidden';
+      passwordInput.name = 'password';
+      passwordInput.value = values.password;
+      form.appendChild(passwordInput);
       
-      if (!response.ok) {
-        throw new Error('Authentication failed');
-      }
+      // Add return URL
+      const returnUrlInput = document.createElement('input');
+      returnUrlInput.type = 'hidden';
+      returnUrlInput.name = 'returnUrl';
+      returnUrlInput.value = '/clinic-portal/dashboard';
+      form.appendChild(returnUrlInput);
       
-      const userData = await response.json();
+      // Submit the form
+      document.body.appendChild(form);
+      form.submit();
       
-      // Verify this is a clinic staff account
-      if (userData.role !== 'clinic_staff' && userData.role !== 'admin') {
-        toast({
-          title: "Access Denied",
-          description: "This account does not have clinic staff permissions.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        isSubmitting.current = false;
-        return;
-      }
+      // No need for catch block or state resets since we're doing a full page navigation
       
-      // Pre-cache the user data to avoid double fetching on redirect
-      sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
-      sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-      sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
-      
-      // Mark that we're in the middle of a clinic navigation to avoid race conditions
-      sessionStorage.setItem('clinic_navigation_in_progress', 'true');
-      
-      // Force direct navigation to prevent issues with WebSocket connections
-      console.log("Using direct window location for clinic portal navigation");
-      
-      // Add delay to ensure caches are written before redirect
-      setTimeout(() => {
-        console.log("Redirecting to clinic portal with pre-cached session");
-        try {
-          // Store indicator for ongoing navigation
-          sessionStorage.setItem('clinic_portal_redirect_timestamp', Date.now().toString());
-          sessionStorage.setItem('clinic_websocket_connected', 'true'); // Set WebSocket status
-          
-          // Direct navigation to the clinic portal dashboard directly
-          console.log('🔄 Redirecting to clinic portal dashboard');
-          window.location.href = '/clinic-portal/dashboard';
-        } catch (navError) {
-          console.error("Error during clinic portal navigation:", navError);
-          // Fallback to react router
-          setLocation('/clinic-portal');
-        }
-      }, 100);
     } catch (error) {
       console.error("Login error:", error);
       

@@ -237,6 +237,34 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   }, [user]);
   
   // Import and use the WebSocket hook for real-time updates
+  // Check if user is authenticated
+  if (!user) {
+    // Redirect to login page if not authenticated
+    React.useEffect(() => {
+      console.log("No authenticated user found in ClinicPortalPage, redirecting to login");
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access the clinic portal.",
+        variant: "destructive"
+      });
+      
+      // Short delay to allow toast to show before redirect
+      setTimeout(() => {
+        setLocation('/clinic-login');
+      }, 1500);
+    }, []);
+    
+    // Show loading indicator while redirecting
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+        <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+        <p className="text-muted-foreground">Redirecting to login page...</p>
+      </div>
+    );
+  }
+  
+  // Only use WebSocket if user is authenticated
   const { isConnected, disconnect } = useWebSocket({
     onOpen: () => {
       console.log('WebSocket connected for clinic portal');
@@ -262,7 +290,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         });
       }
     },
-    userId: user?.id,
+    userId: user.id, // Now we know user exists
     isClinic: true, // Flag this as a clinic connection
     maxReconnectAttempts: 3, // Limit reconnect attempts for clinic portal
   });

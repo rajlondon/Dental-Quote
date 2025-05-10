@@ -253,7 +253,57 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint with enhanced email verification handling and clinic session optimization
+  // Dedicated clinic login endpoint that performs server-side redirect
+  app.post("/api/auth/clinic-login", (req, res, next) => {
+    // Extract credentials and return URL from form submission
+    const { email, password, returnUrl } = req.body;
+    const targetUrl = returnUrl || '/clinic-portal/dashboard';
+    
+    // Check if already authenticated as clinic_staff with same email
+    if (req.isAuthenticated() && 
+        req.user.role === 'clinic_staff' && 
+        req.user.email === email) {
+      
+      console.log("Already authenticated as clinic staff with same email, redirecting");
+      return res.redirect(targetUrl);
+    }
+    
+    // Authenticate the user
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
+      if (err) {
+        console.error("Clinic login error:", err);
+        return res.redirect('/clinic-login?error=server_error');
+      }
+      
+      if (!user) {
+        console.log("Clinic login failed: Invalid credentials");
+        return res.redirect('/clinic-login?error=invalid_credentials');
+      }
+      
+      // Verify this is a clinic staff account
+      if (user.role !== 'clinic_staff' && user.role !== 'admin') {
+        console.log("Clinic login failed: Not a clinic staff account");
+        return res.redirect('/clinic-login?error=access_denied');
+      }
+      
+      // Log the user in
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error("Clinic login session error:", loginErr);
+          return res.redirect('/clinic-login?error=session_error');
+        }
+        
+        // Set a marker that this is a clinic staff session
+        (req.session as any).isClinicStaff = true;
+        
+        // Redirect to the target URL
+        console.log(`Clinic login successful, redirecting to ${targetUrl}`);
+        return res.redirect(targetUrl);
+      });
+    })(req, res, next);
+  });
+  
+  // Standard login endpoint with enhanced email verification handling
   app.post("/api/auth/login", (req, res, next) => {
     // Special session optimization for clinic staff to prevent double login
     // Check if already authenticated as clinic_staff with same email
