@@ -187,7 +187,55 @@ const YourQuotePage: React.FC = () => {
   } = useQuoteFlow();
   
   // Auto-apply promo code from URL if present
-  const { appliedPromo, clearAppliedPromo } = useAutoApplyCode(quoteId);
+  const { appliedPromo, clearAppliedPromo, isLoading: isApplyingPromo } = useAutoApplyCode(quoteId);
+  
+  // Effect to update treatments when promo code is applied
+  useEffect(() => {
+    if (appliedPromo && treatments.length > 0) {
+      // Apply discount to treatments based on promo type
+      const updatedTreatments = [...treatments].map(treatment => {
+        // Skip if this is a special offer item or package that already has discounts
+        if (treatment.isSpecialOffer || treatment.packageId) {
+          return treatment;
+        }
+        
+        // Clone the treatment to avoid mutating the original
+        const updatedTreatment = { ...treatment };
+        
+        // Apply percent or fixed discount to the treatment
+        if (appliedPromo.discount_type === 'PERCENT') {
+          const discountMultiplier = 1 - (appliedPromo.discount_value / 100);
+          updatedTreatment.priceGBP = Math.round(updatedTreatment.priceGBP * discountMultiplier);
+          updatedTreatment.priceUSD = Math.round(updatedTreatment.priceUSD * discountMultiplier);
+          updatedTreatment.subtotalGBP = Math.round(updatedTreatment.subtotalGBP * discountMultiplier);
+          updatedTreatment.subtotalUSD = Math.round(updatedTreatment.subtotalUSD * discountMultiplier);
+        } else if (appliedPromo.discount_type === 'AMOUNT') {
+          // For fixed amount discounts, we'd distribute it proportionally across items
+          // This is a simplified implementation - in production you might want a more
+          // sophisticated distribution algorithm
+          const fixedDiscount = appliedPromo.discount_value / treatments.length;
+          updatedTreatment.priceGBP = Math.max(0, updatedTreatment.priceGBP - fixedDiscount);
+          updatedTreatment.priceUSD = Math.max(0, updatedTreatment.priceUSD - fixedDiscount);
+          updatedTreatment.subtotalGBP = Math.max(0, updatedTreatment.subtotalGBP - fixedDiscount);
+          updatedTreatment.subtotalUSD = Math.max(0, updatedTreatment.subtotalUSD - fixedDiscount);
+        }
+        
+        return updatedTreatment;
+      });
+      
+      // Update treatments with discounted versions
+      setTreatments(updatedTreatments);
+      
+      // If we have a toast message, show it
+      toast({
+        title: "Promo code applied",
+        description: `Discount of ${appliedPromo.discount_type === 'PERCENT' ? 
+          `${appliedPromo.discount_value}%` : 
+          `€${appliedPromo.discount_value}`} has been applied to your quote.`,
+        variant: "default",
+      });
+    }
+  }, [appliedPromo, toast, treatments, setTreatments]);
   
   // Extract promo features from the Zustand store (all at once to prevent conditional hooks)
   const { 
@@ -510,6 +558,17 @@ const YourQuotePage: React.FC = () => {
         )}
         
         <div className="container px-4 py-6 mx-auto md:py-8 lg:py-12">
+          {/* Display auto-applied promo code badge */}
+          {appliedPromo && (
+            <div className="mb-6">
+              <PromoCodeBadge
+                promo={appliedPromo}
+                onDismiss={clearAppliedPromo}
+                isDismissible={true}
+              />
+            </div>
+          )}
+          
           <div className="mb-6 space-y-2">
             <h1 className="text-3xl font-bold md:text-4xl">Get Your Personalized Dental Quote</h1>
             <p className="text-lg text-muted-foreground">
