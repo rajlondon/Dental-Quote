@@ -58,6 +58,7 @@ function cleanupStaleClients() {
 setInterval(cleanupStaleClients, 60000);
 
 export function registerMessageRoutes(app: Express) {
+  console.log('Setting up HTTP fallback routes for resilient WebSocket at:', new Date().toISOString());
   /**
    * Register a new HTTP client for message polling
    * This endpoint is called when a client wants to use the HTTP fallback

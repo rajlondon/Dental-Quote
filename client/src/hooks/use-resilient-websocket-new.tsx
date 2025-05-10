@@ -266,6 +266,17 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
       return;
     }
     
+    // Add more debug info
+    if (debug) console.log('Browser environment details:', {
+      protocol: window.location.protocol,
+      host: window.location.host,
+      pathname: window.location.pathname,
+      userAgent: navigator.userAgent,
+      webSocketSupported: typeof WebSocket !== 'undefined',
+      secureContext: window.isSecureContext
+    });
+    
+    
     try {
       // Generate a connection ID if needed
       const connId = connectionIdState || generateConnectionId();
