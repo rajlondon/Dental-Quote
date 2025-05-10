@@ -1,74 +1,53 @@
-# Promotional Code Testing Links
+# Promo Code Test Links
 
-## Test Links
+Use these links to test various aspects of the promotional system.
 
-Copy and paste these URLs into your browser to test the promotional code filtering:
+## URL Auto-Apply Testing
 
-### 1. DENTSPA20 Promo Code
+The following links will automatically apply a promo code when opening the quote page:
 
-```
-/matched-clinics?source=promo_token&clinicId=dentspa&promoToken=DENTSPA20&treatmentItems=[{"id":"dental_implant_standard","name":"Dental Implant","quantity":2,"priceGBP":1800,"subtotalGBP":3600,"category":"Implants"},{"id":"dental_crown","name":"Dental Crown","quantity":2,"priceGBP":600,"subtotalGBP":1200,"category":"Cosmetic"},{"id":"teeth_whitening","name":"Teeth Whitening","quantity":1,"priceGBP":350,"subtotalGBP":350,"category":"Cosmetic"}]
-```
+### Test Link 1: Apply WELCOME20
+[Quote with WELCOME20 Code](/quote?code=WELCOME20)
+- 20% discount applied to all treatments
+- Tests percentage-based discounts
 
-### 2. BEYAZ250 Promo Code
+### Test Link 2: Apply SUMMER10
+[Quote with SUMMER10 Code](/quote?code=SUMMER10)
+- 10% discount applied to all treatments
+- Tests smaller percentage discounts
 
-```
-/matched-clinics?source=promo_token&clinicId=beyazada&promoToken=BEYAZ250&treatmentItems=[{"id":"dental_implant_standard","name":"Dental Implant","quantity":2,"priceGBP":1800,"subtotalGBP":3600,"category":"Implants"},{"id":"dental_crown","name":"Dental Crown","quantity":2,"priceGBP":600,"subtotalGBP":1200,"category":"Cosmetic"},{"id":"teeth_whitening","name":"Teeth Whitening","quantity":1,"priceGBP":350,"subtotalGBP":350,"category":"Cosmetic"}]
-```
+### Test Link 3: Apply TEETH100
+[Quote with TEETH100 Code](/quote?code=TEETH100)
+- €100 fixed discount applied to applicable treatments
+- Tests fixed amount discounts
 
-### 3. MALTEPE15 Promo Code
+## Special Offer Testing
 
-```
-/matched-clinics?source=promo_token&clinicId=maltepe&promoToken=MALTEPE15&treatmentItems=[{"id":"dental_implant_standard","name":"Dental Implant","quantity":2,"priceGBP":1800,"subtotalGBP":3600,"category":"Implants"},{"id":"dental_crown","name":"Dental Crown","quantity":2,"priceGBP":600,"subtotalGBP":1200,"category":"Cosmetic"},{"id":"teeth_whitening","name":"Teeth Whitening","quantity":1,"priceGBP":350,"subtotalGBP":350,"category":"Cosmetic"}]
-```
+The following links will navigate to special offers which redirect to the quote builder:
 
-### 4. Control (No Promo Code)
+### Special Offer 1: Summer Teeth Whitening
+[Summer Whitening Special](/special-offers/summer-whitening)
+- Tests special offer integration with quote flow
+- Applies a 15% discount on whitening treatments
 
-```
-/matched-clinics?source=promo_token&treatmentItems=[{"id":"dental_implant_standard","name":"Dental Implant","quantity":2,"priceGBP":1800,"subtotalGBP":3600,"category":"Implants"},{"id":"dental_crown","name":"Dental Crown","quantity":2,"priceGBP":600,"subtotalGBP":1200,"category":"Cosmetic"},{"id":"teeth_whitening","name":"Teeth Whitening","quantity":1,"priceGBP":350,"subtotalGBP":350,"category":"Cosmetic"}]
-```
+### Special Offer 2: Dental Implant Package
+[Implant Special](/special-offers/implant-special)
+- Tests package bundling with special offers
+- Includes free consultation and discounted CT scan
 
-## Testing Instructions
+## Testing Manual Entry
 
-1. Copy one of the URLs above
-2. Append it to your application's base URL (e.g., `https://yourdomain.com`)
-3. Open the URL in your browser
-4. Observe that:
-   - With a promo code, only one clinic is displayed with the appropriate badge
-   - Without a promo code, all clinics are shown in comparison view
+To test manual promo code entry:
+1. Navigate to the regular [Quote Builder](/quote)
+2. Scroll down to the clinic selection section
+3. Find the "Have a promo code?" input field
+4. Enter one of the test codes (WELCOME20, SUMMER10, TEETH100)
+5. Click "Apply" to see the discount applied
 
-## Expected Results
+## Expected Behavior
 
-When using a promo code URL, the application should:
-1. Only show the clinic associated with that promo code
-2. Display a special badge with the promo code name
-3. Use the SingleClinicCard component rather than the standard comparison view
-
-## Implementation Details
-
-The filtering is implemented in the MatchedClinicsPage component with the following code:
-
-```jsx
-{isPromoTokenFlow && promoToken ? (
-  // If we're in a promo flow, only show the clinic associated with the promo
-  // We'll use the SingleClinicCard component for this
-  clinicsData
-    .filter(clinic => clinic.id === clinicId)
-    .map(clinic => {
-      const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-      
-      return (
-        <SingleClinicCard 
-          key={clinic.id}
-          clinic={clinic}
-          badge={`Special Offer: ${promoToken}`}
-          onSelect={() => handleSelectClinic(clinic.id)}
-          totalPrice={totalPrice}
-        />
-      );
-    })
-) : (
-  // Normal flow - show all clinics
-  // ...
-)}
-```
+When a promo code is applied (via URL or manual entry):
+- A blue PromoCodeBadge should appear showing the applied code
+- Treatment prices should update to reflect the discount
+- When the quote is submitted, the promo data should be saved with it
+- The patient should see the promo code and discount on their account
