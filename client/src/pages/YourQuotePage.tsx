@@ -189,54 +189,6 @@ const YourQuotePage: React.FC = () => {
   // Auto-apply promo code from URL if present
   const { appliedPromo, clearAppliedPromo, isLoading: isApplyingPromo } = useAutoApplyCode(quoteId);
   
-  // Effect to update treatments when promo code is applied
-  useEffect(() => {
-    if (appliedPromo && treatments.length > 0) {
-      // Apply discount to treatments based on promo type
-      const updatedTreatments = [...treatments].map(treatment => {
-        // Skip if this is a special offer item or package that already has discounts
-        if (treatment.isSpecialOffer || treatment.packageId) {
-          return treatment;
-        }
-        
-        // Clone the treatment to avoid mutating the original
-        const updatedTreatment = { ...treatment };
-        
-        // Apply percent or fixed discount to the treatment
-        if (appliedPromo.discount_type === 'PERCENT') {
-          const discountMultiplier = 1 - (appliedPromo.discount_value / 100);
-          updatedTreatment.priceGBP = Math.round(updatedTreatment.priceGBP * discountMultiplier);
-          updatedTreatment.priceUSD = Math.round(updatedTreatment.priceUSD * discountMultiplier);
-          updatedTreatment.subtotalGBP = Math.round(updatedTreatment.subtotalGBP * discountMultiplier);
-          updatedTreatment.subtotalUSD = Math.round(updatedTreatment.subtotalUSD * discountMultiplier);
-        } else if (appliedPromo.discount_type === 'AMOUNT') {
-          // For fixed amount discounts, we'd distribute it proportionally across items
-          // This is a simplified implementation - in production you might want a more
-          // sophisticated distribution algorithm
-          const fixedDiscount = appliedPromo.discount_value / treatments.length;
-          updatedTreatment.priceGBP = Math.max(0, updatedTreatment.priceGBP - fixedDiscount);
-          updatedTreatment.priceUSD = Math.max(0, updatedTreatment.priceUSD - fixedDiscount);
-          updatedTreatment.subtotalGBP = Math.max(0, updatedTreatment.subtotalGBP - fixedDiscount);
-          updatedTreatment.subtotalUSD = Math.max(0, updatedTreatment.subtotalUSD - fixedDiscount);
-        }
-        
-        return updatedTreatment;
-      });
-      
-      // Update treatments with discounted versions
-      setTreatments(updatedTreatments);
-      
-      // If we have a toast message, show it
-      toast({
-        title: "Promo code applied",
-        description: `Discount of ${appliedPromo.discount_type === 'PERCENT' ? 
-          `${appliedPromo.discount_value}%` : 
-          `€${appliedPromo.discount_value}`} has been applied to your quote.`,
-        variant: "default",
-      });
-    }
-  }, [appliedPromo, toast, treatments, setTreatments]);
-  
   // Extract promo features from the Zustand store (all at once to prevent conditional hooks)
   const { 
     activePromoSlug,
@@ -495,26 +447,53 @@ const YourQuotePage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Submit logic here
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Prepare quote data to be submitted
+      const quoteData = {
+        patientInfo,
+        treatmentPlan,
+        clinics: selectedClinics,
+        specialOfferId: specialOffer?.id,
+        packageId: packageDetails?.id,
+        // Include promo code information if applied
+        promoCode: appliedPromo ? {
+          promoId: appliedPromo.id,
+          code: appliedPromo.code,
+          discountType: appliedPromo.discount_type,
+          discountValue: appliedPromo.discount_value
+        } : null
+      };
       
-      // Show success message
-      toast({
-        title: "Quote Generated",
-        description: "Your dental quote has been generated successfully!",
-        variant: "default"
-      });
+      // Submit the data to create a quote
+      const response = await apiRequest('POST', '/api/quotes', quoteData);
+      const data = await response.json();
       
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
-      
-      // Navigate to results page
-      setLocation('/results');
+      if (data.success) {
+        // Update quote ID in context if needed
+        if (data.quoteId) {
+          setQuoteId(data.quoteId);
+        }
+        
+        // Show success message
+        toast({
+          title: "Quote Generated",
+          description: "Your dental quote has been generated successfully!",
+          variant: "default"
+        });
+        
+        // Celebration effects
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 5000);
+        
+        // Navigate to results page with the quote ID
+        setLocation(data.quoteId ? `/results?quoteId=${data.quoteId}` : '/results');
+      } else {
+        throw new Error(data.message || 'Failed to create quote');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({
         title: "Error",
-        description: "There was an error generating your quote. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error generating your quote. Please try again.",
         variant: "destructive"
       });
     } finally {
