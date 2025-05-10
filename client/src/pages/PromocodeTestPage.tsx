@@ -1,244 +1,252 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
-import { Calculator, Tag, Percent } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { InfoIcon, TicketIcon } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
-import CouponCodeInput from "@/components/clinic/CouponCodeInput";
-import PromoCodeSummary from "@/components/clinic/PromoCodeSummary";
-import { formatCurrency } from '@/lib/format';
+import { CouponCodeInput } from "@/components/clinic/CouponCodeInput";
+import { PromoCodeSummary } from "@/components/clinic/PromoCodeSummary";
+import { ApplyCodeResponse, PromoDetails, QuoteDetails } from "@/hooks/use-apply-code";
+
+// Mock data for testing purposes
+const mockQuote: QuoteDetails = {
+  id: "f8a7b6c5-1234-5678-90ab-cdef12345678",
+  subtotal: 1200,
+  discount: 0,
+  total_price: 1200,
+  patient_id: "patient-123",
+  clinic_id: "clinic-456",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+const samplePromos: PromoDetails[] = [
+  {
+    id: "promo-123",
+    title: "Welcome Discount 20%",
+    code: "WELCOME20",
+    discount_type: "PERCENT",
+    discount_value: 20,
+    is_active: true,
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+  },
+  {
+    id: "promo-456",
+    title: "Summer Special €50 Off",
+    code: "SUMMER50",
+    discount_type: "AMOUNT",
+    discount_value: 50,
+    is_active: true,
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days from now
+  }
+];
 
 /**
  * Test page for demonstrating promo code functionality
  */
 export default function PromocodeTestPage() {
-  const [subtotal, setSubtotal] = useState<number>(1000);
-  const [discount, setDiscount] = useState<number>(0);
-  const [total, setTotal] = useState<number>(1000);
-  const [hasPromo, setHasPromo] = useState<boolean>(false);
-  const [promoData, setPromoData] = useState<any>(null);
-  const { toast } = useToast();
+  const [quote, setQuote] = useState<QuoteDetails>(mockQuote);
+  const [appliedPromo, setAppliedPromo] = useState<PromoDetails | null>(null);
+  const [testTab, setTestTab] = useState<string>("apply");
 
-  // Simulate applying a code
-  const handleApplyCode = async (code: string): Promise<boolean> => {
-    // This would normally call the API endpoint
-    // For demo, we'll simulate a successful code application for "WELCOME20"
-    if (code.toUpperCase() === "WELCOME20") {
-      // Calculate 20% discount
-      const discountAmount = subtotal * 0.2;
-      const finalPrice = subtotal - discountAmount;
-      
-      setDiscount(discountAmount);
-      setTotal(finalPrice);
-      setHasPromo(true);
-      setPromoData({
-        id: "demo-promo-1",
-        title: "Welcome Discount",
-        code: "WELCOME20",
-        discount_type: "PERCENT",
-        discount_value: 20
-      });
-      
-      toast({
-        title: "Discount applied",
-        description: `${formatCurrency(discountAmount)} discount applied to your quote.`,
-      });
-      
-      return true;
+  // Simulate applying a promo code
+  const handlePromoApplied = (response: ApplyCodeResponse) => {
+    if (response.success && response.quote && response.promo) {
+      setQuote(response.quote);
+      setAppliedPromo(response.promo);
+      setTestTab("summary");
     }
-    
-    // Simulate failed code application
-    toast({
-      title: "Invalid code",
-      description: "The code you entered is invalid or expired.",
-      variant: "destructive",
-    });
-    
-    return false;
   };
 
-  // Simulate removing a code
-  const handleRemoveCode = () => {
-    setDiscount(0);
-    setTotal(subtotal);
-    setHasPromo(false);
-    setPromoData(null);
-    
-    toast({
-      title: "Discount removed",
-      description: "The discount has been removed from your quote.",
+  // Simulate removing a promo code
+  const handlePromoRemoved = () => {
+    setQuote({
+      ...mockQuote,
+      discount: 0,
+      total_price: mockQuote.subtotal,
+      promo_id: undefined
     });
+    setAppliedPromo(null);
+    setTestTab("apply");
   };
 
-  // Simulate updating the subtotal
-  const handleUpdateSubtotal = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Simulate direct application of a sample promo
+  const applyMockPromo = (promo: PromoDetails) => {
+    const discountAmount = promo.discount_type === "PERCENT" 
+      ? (mockQuote.subtotal * (promo.discount_value / 100)) 
+      : Math.min(promo.discount_value, mockQuote.subtotal);
     
-    const formElement = e.target as HTMLFormElement;
-    const newSubtotalStr = (formElement.elements.namedItem("subtotal") as HTMLInputElement)?.value;
+    const updatedQuote = {
+      ...mockQuote,
+      discount: discountAmount,
+      total_price: mockQuote.subtotal - discountAmount,
+      promo_id: promo.id
+    };
     
-    if (newSubtotalStr) {
-      const newSubtotal = parseFloat(newSubtotalStr);
-      
-      if (!isNaN(newSubtotal) && newSubtotal >= 0) {
-        setSubtotal(newSubtotal);
-        
-        // Recalculate discount if promo is applied
-        if (hasPromo && promoData) {
-          if (promoData.discount_type === "PERCENT") {
-            const newDiscount = newSubtotal * (promoData.discount_value / 100);
-            setDiscount(newDiscount);
-            setTotal(newSubtotal - newDiscount);
-          } else {
-            // For fixed amount discounts
-            const newDiscount = Math.min(promoData.discount_value, newSubtotal);
-            setDiscount(newDiscount);
-            setTotal(newSubtotal - newDiscount);
-          }
-        } else {
-          setTotal(newSubtotal);
-        }
-      }
-    }
+    setQuote(updatedQuote);
+    setAppliedPromo(promo);
+    setTestTab("summary");
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 space-y-8">
       <PageHeader 
-        title="Promo Code Test Page" 
-        description="This page demonstrates the functionality of promotional codes"
+        title="Promo Code Testing" 
+        description="Test the hybrid promotional system with both automatic and manual code entry"
       />
-      
-      <div className="grid md:grid-cols-3 gap-8 mt-6">
-        <div className="md:col-span-2 space-y-6">
+
+      <div className="grid md:grid-cols-2 gap-8">
+        <div>
           <Card>
             <CardHeader>
-              <div className="flex items-center">
-                <Calculator className="h-5 w-5 mr-2 text-primary" />
-                <CardTitle>Quote Simulator</CardTitle>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <TicketIcon className="h-5 w-5" />
+                Coupon Code System
+              </CardTitle>
               <CardDescription>
-                Update the quote subtotal and apply promotional codes
+                Apply promotional codes to quotes for instant discounts
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleUpdateSubtotal} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="subtotal">Quote Subtotal</Label>
-                  <div className="flex space-x-2">
-                    <Input 
-                      id="subtotal"
-                      name="subtotal"
-                      type="number" 
-                      min="0" 
-                      step="100"
-                      defaultValue={subtotal.toString()} 
-                    />
-                    <Button type="submit">Update</Button>
-                  </div>
-                </div>
-              </form>
-              
-              <Separator className="my-6" />
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Price Breakdown</h3>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Subtotal:</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Percent className="h-4 w-4 mr-2 text-primary" />
-                      <span className={`${discount > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                        Discount:
-                      </span>
+              <Tabs value={testTab} onValueChange={setTestTab}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="apply">Apply Code</TabsTrigger>
+                  <TabsTrigger value="summary" disabled={!appliedPromo}>Summary</TabsTrigger>
+                </TabsList>
+                <TabsContent value="apply" className="space-y-4 pt-4">
+                  {!appliedPromo ? (
+                    <>
+                      <div className="space-y-4">
+                        <h3 className="font-medium">Enter Coupon Code</h3>
+                        <CouponCodeInput 
+                          quoteId={quote.id} 
+                          onApplied={() => handlePromoApplied({
+                            success: true,
+                            message: "Promo code applied successfully",
+                            quote: {
+                              ...quote,
+                              discount: 240, // 20% of 1200
+                              total_price: 960,
+                              promo_id: "promo-123"
+                            },
+                            promo: samplePromos[0]
+                          })}
+                        />
+                        
+                        <Separator className="my-4" />
+                        
+                        <h3 className="font-medium">Or Select a Sample Promo</h3>
+                        <div className="grid gap-2">
+                          {samplePromos.map((promo) => (
+                            <Button 
+                              key={promo.id} 
+                              variant="outline" 
+                              className="justify-start"
+                              onClick={() => applyMockPromo(promo)}
+                            >
+                              <TicketIcon className="mr-2 h-4 w-4" />
+                              {promo.title} - Code: <span className="font-bold ml-1">{promo.code}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="pt-4 border-t mt-4">
+                        <h3 className="font-medium mb-2">Current Quote</h3>
+                        <div className="flex justify-between py-1">
+                          <span>Subtotal:</span>
+                          <span>{formatCurrency(quote.subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span>Discount:</span>
+                          <span>{formatCurrency(quote.discount)}</span>
+                        </div>
+                        <div className="flex justify-between py-1 font-bold">
+                          <span>Total:</span>
+                          <span>{formatCurrency(quote.total_price)}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center p-8">
+                      <Button onClick={() => setTestTab("summary")}>
+                        View Applied Promo
+                      </Button>
                     </div>
-                    <span className={discount > 0 ? 'text-primary font-medium' : ''}>
-                      {discount > 0 ? `-${formatCurrency(discount)}` : '—'}
-                    </span>
-                  </div>
-                  
-                  <Separator className="my-2" />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Total:</span>
-                    <span className="font-semibold text-lg">
-                      {formatCurrency(total)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <div className="flex items-center">
-                <Tag className="h-5 w-5 mr-2 text-primary" />
-                <CardTitle>Testing Instructions</CardTitle>
-              </div>
-              <CardDescription>
-                How to test the promotional code functionality
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-md bg-muted p-4">
-                <h3 className="text-sm font-medium mb-2">Valid Promo Code</h3>
-                <div className="grid place-items-center bg-primary/10 rounded-md p-3 font-mono text-lg font-bold tracking-wide">
-                  WELCOME20
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Use this code to get a 20% discount on the quote subtotal.
-                </p>
-              </div>
-              
-              <ol className="list-decimal list-inside space-y-2 ml-2 text-sm">
-                <li>Enter a subtotal amount and click <strong>Update</strong></li>
-                <li>Enter the promo code <strong>WELCOME20</strong> in the sidebar</li>
-                <li>Click <strong>Apply Code</strong> to calculate the discount</li>
-                <li>To remove the discount, click <strong>Remove</strong> in the promo summary</li>
-                <li>Try an invalid code to see the error handling</li>
-              </ol>
+                  )}
+                </TabsContent>
+                <TabsContent value="summary" className="pt-4">
+                  {appliedPromo ? (
+                    <PromoCodeSummary 
+                      promo={appliedPromo} 
+                      quote={quote} 
+                      onRemove={handlePromoRemoved} 
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center p-8 text-center">
+                      <div>
+                        <InfoIcon className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+                        <p>No promotion has been applied yet</p>
+                        <Button variant="outline" onClick={() => setTestTab("apply")} className="mt-4">
+                          Apply a Promo Code
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
-        
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Promotional Code</h3>
-          
-          {!hasPromo ? (
-            <CouponCodeInput onApplyCode={handleApplyCode} />
-          ) : (
-            <PromoCodeSummary
-              promoData={promoData}
-              originalPrice={subtotal}
-              discountAmount={discount}
-              finalPrice={total}
-              onRemove={handleRemoveCode}
-            />
-          )}
-          
+
+        <div>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">How It Works</CardTitle>
+            <CardHeader>
+              <CardTitle>How It Works</CardTitle>
+              <CardDescription>
+                Overview of the hybrid promotional system
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                This demonstration shows how promotional codes are validated and applied to quotes.
-                In a production environment, these codes would be validated against a database.
-              </p>
-              <Separator className="my-4" />
-              <p className="text-xs text-muted-foreground">
-                The actual implementation uses the server-side <code>/api/apply-code</code> endpoint
-                to validate codes and calculate discounts.
-              </p>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-2">Key Features</h3>
+                <ul className="space-y-2 list-disc pl-5">
+                  <li>Support for both percentage and fixed-amount discounts</li>
+                  <li>Manual coupon code entry for patient-initiated discounts</li>
+                  <li>Automatic token-based special offers from marketing campaigns</li>
+                  <li>Comprehensive validation for eligibility, expiration, and clinic association</li>
+                  <li>Integration with analytics for campaign tracking</li>
+                </ul>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="font-medium mb-2">Testing Instructions</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Try the following sample codes:
+                </p>
+                <ul className="space-y-1 text-sm">
+                  <li><span className="font-mono bg-muted px-1 rounded">WELCOME20</span> - 20% off your treatment</li>
+                  <li><span className="font-mono bg-muted px-1 rounded">SUMMER50</span> - €50 off your treatment</li>
+                  <li><span className="font-mono bg-muted px-1 rounded">INVALID</span> - Should return an error</li>
+                </ul>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="font-medium mb-2">Technical Implementation</h3>
+                <p className="text-sm text-muted-foreground">
+                  This hybrid system integrates with both the existing token-based special 
+                  offers and the new manual coupon code entry. The backend validates codes, 
+                  applies discounts, and tracks usage for analytics.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -1,114 +1,127 @@
-# MyDentalFly Promotional System Testing Guide
+# Special Offers & Promo Codes Testing Guide
 
-This document provides instructions for testing the hybrid promotional system which supports both automatic tokens and manual coupon codes.
+This document provides instructions for testing the hybrid promotional system, which combines automatic token-based special offers with manual coupon code redemption.
 
-## Setup Complete
+## Testing Promo Codes
 
-The following components have been set up:
+### Step 1: Create a Test Promo Code
 
-- ✅ Added `code` column to promos table to support coupon codes
-- ✅ Added discount fields to quotes table (`subtotal`, `discount`, `total_price`)
-- ✅ Created server-side API for promo code validation and application
-- ✅ Implemented client-side components for coupon code entry and display
-- ✅ Added analytics for tracking promotion usage
+Run the test script to create a sample promotional code:
 
-## Test Promo Code
-
-A test promo code has been created in the database:
-
-- **Promo Code**: `WELCOME20`
-- **Discount**: 20% off
-- **Details**: Welcome discount for new patients
-- **Valid Period**: One year from creation date
-- **City**: Istanbul
-
-## Testing Methods
-
-### Method 1: Direct URL Tokens (Automatic)
-
-Users can access special offers directly through tokenized URLs:
-
-1. Go to the homepage
-2. Click on any special offer card
-3. The system will automatically track the promo through the quote journey
-4. The discount will be automatically applied at checkout
-
-### Method 2: Manual Coupon Codes
-
-Users can manually enter coupon codes:
-
-1. Create a new quote or load an existing quote
-2. Find the "Coupon Code" section in the sidebar
-3. Enter `WELCOME20` into the input field
-4. Click "Apply Code"
-5. The discount will be applied to the quote
-
-## API Testing
-
-### Promo Filtering API
-
-To test the promo filtering API:
-
-```
-GET /api/v1/promos?code=WELCOME20
+```bash
+node test-promo-code.js
 ```
 
-This will return all promos matching the code.
+This will create a promo code "WELCOME20" that gives 20% off a quote and associates it with all clinics.
 
-### Apply Code API
+### Step 2: Access the Test UI
 
-To test applying a code to a quote:
+Navigate to the promo code testing page:
 
 ```
-POST /api/apply-code
-{
-  "code": "WELCOME20",
-  "quoteId": "[QUOTE_ID]"
-}
+/promocode-test
 ```
 
-## Test Scenarios
+This page provides a UI for testing the coupon code functionality without needing to go through the entire quote creation flow.
 
-1. **New Patient Registration + Code**
-   - Register a new patient account
-   - Create a new quote
-   - Apply the `WELCOME20` code
-   - Verify 20% discount is applied
+### Step 3: Test Coupon Code Entry
 
-2. **Click Through From Promo**
-   - Click a promo on the homepage
-   - Follow through to quote creation
-   - Verify promo is automatically applied
+On the test page:
+1. Enter "WELCOME20" in the coupon code field
+2. Click "Apply"
+3. You should see a success message and the code applied with a 20% discount
+4. Verify the discount calculation is correct
 
-3. **Clinic Applying Code For Patient**
-   - Login to clinic portal
-   - Create a quote for a patient
-   - Apply the `WELCOME20` code
-   - Verify discount is applied
+### Step 4: Try Invalid Scenarios
 
-4. **Invalid Code Testing**
-   - Try to apply an invalid code (e.g., `INVALID`)
-   - Verify appropriate error message is shown
+Test the following invalid scenarios to verify error handling:
+1. Enter an invalid code like "INVALID"
+2. Enter an empty code
+3. Try to apply the same code twice
 
-5. **Double Discount Prevention**
-   - Apply a promo through URL token
-   - Try to apply an additional code
-   - Verify system prevents double-discounting
+### Step 5: Test Removal
 
-## Verification
+1. Apply a valid code
+2. Click the "X" button to remove the code
+3. Verify the discount is removed and totals are recalculated
 
-For each test, verify:
+## Testing Special Offers (Token-Based)
 
-1. The UI correctly shows the discount amount
-2. The subtotal reflects original price
-3. The total price correctly applies the discount
-4. The price breakdown in the PDF quote is accurate
+### Step 1: Create a Test Special Offer
 
-## Analytics
+Run the special offer creation script:
 
-The system tracks promo code usage through Mixpanel events:
-- `promo_code_applied`
-- `promo_code_invalid`
-- `special_offer_selected`
+```bash
+node test-special-offer-end-to-end.js
+```
 
-These events include user ID, promo ID, and discount amount applied.
+This creates a special offer and generates a tracking token for it.
+
+### Step 2: Access the Special Offer Link
+
+The script will output a link like:
+```
+/special-offer?promoId=1234&token=abc123
+```
+
+Visit this link to simulate clicking on a special offer from an email or advertisement.
+
+### Step 3: Verify Quote Flow
+
+1. The system should take you to the quote creation flow
+2. Complete the quote flow
+3. Verify the special offer is automatically applied to your quote
+4. Check the final quote page to ensure the discount appears correctly
+
+## Testing Integration in Patient Portal
+
+### Step 1: Login to Patient Portal
+
+Login to the patient portal using the test patient account.
+
+### Step 2: View an Existing Quote
+
+Navigate to a quote that has a promotion applied to it.
+
+### Step 3: Verify Display
+
+Verify that the promotion appears correctly in the quote details, including:
+1. Discount amount
+2. Promo code (if applicable)
+3. Correct price calculation (original price, discount, final price)
+
+## Testing in Clinic Portal
+
+### Step 1: Login to Clinic Portal
+
+Login to the clinic portal using the test clinic account.
+
+### Step 2: Create a New Quote
+
+1. Create a new quote for a patient
+2. In the quote details, expand the "Apply Promotion" section
+3. Enter "WELCOME20" and apply it
+4. Verify the discount is applied correctly
+
+### Step 3: Verify Reporting
+
+1. Go to the "Promotions" section of the clinic portal
+2. Verify that applied promotions appear in the reports
+3. Check that analytics data is being tracked correctly
+
+## Testing Analytics Tracking
+
+To verify analytics tracking is working:
+
+```bash
+node test-notification-analytics.js
+```
+
+This will create test notifications including promotion usage analytics.
+
+## Important Notes
+
+- Promo codes are not case-sensitive (WELCOME20 = welcome20)
+- Promotions have validity dates, ensure you're testing with active promos
+- Each promotion can only be applied once per quote
+- The hybrid system allows both automatic (token-based) and manual (code-based) promotions
