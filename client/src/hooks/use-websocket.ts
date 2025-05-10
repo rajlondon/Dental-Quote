@@ -366,11 +366,38 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
       // Log connection ID and details for debugging
       console.log(`WebSocket ${connectionIdRef.current} connecting...`);
       
+      // Track ping-pong heartbeat
+      const lastPingTime = { current: 0 };
+      const lastPongTime = { current: 0 };
+      
+      // Set up binary message event handler for ping/pong
       socket.onopen = () => {
         console.log(`WebSocket ${connectionIdRef.current} connected successfully`);
         setSocket(socket);
         setIsConnected(true);
         setReconnectAttempt(0);
+        
+        // Add ping event listener for server heartbeats
+        socket.addEventListener('ping', () => {
+          // Record ping receipt time
+          lastPingTime.current = Date.now();
+          
+          // Don't need to manually send pong - browser does it automatically
+          // Just for tracking, we record that we got a ping
+          if (isDebugMode) {
+            console.log(`Received ping from server at ${new Date().toISOString()}`);
+          }
+        });
+        
+        // Add pong event listener 
+        socket.addEventListener('pong', () => {
+          // Update the last pong time
+          lastPongTime.current = Date.now();
+          
+          if (isDebugMode) {
+            console.log(`Received pong from server at ${new Date().toISOString()}`);
+          }
+        });
         
         // Store user ID association with this socket
         if (userId) {
@@ -400,6 +427,49 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
           }
           (window as any).__websocketLastActivity[`user-${userId}`] = Date.now();
         }
+        
+        // Set up heartbeat check to detect dead connections that the browser hasn't recognized
+        const HEARTBEAT_CHECK_INTERVAL = 30000; // 30 seconds
+        const MAX_TIME_WITHOUT_SERVER_HEARTBEAT = 90000; // 90 seconds
+        
+        // Create an interval that checks if we've received server heartbeats
+        const heartbeatCheckInterval = setInterval(() => {
+          const now = Date.now();
+          
+          // Skip check if disconnecting or if no pings have ever been received
+          if (manualDisconnectRef.current || lastPingTime.current === 0) {
+            return;
+          }
+          
+          // Check if we haven't received a ping in too long
+          const timeSinceLastHeartbeat = now - lastPingTime.current;
+          if (timeSinceLastHeartbeat > MAX_TIME_WITHOUT_SERVER_HEARTBEAT && lastPingTime.current !== 0) {
+            console.warn(`No server heartbeats received for ${Math.floor(timeSinceLastHeartbeat/1000)}s. Connection may be dead.`);
+            
+            // If socket still appears open, it might be a zombie connection
+            if (socket.readyState === WebSocket.OPEN) {
+              console.warn('WebSocket appears open but no heartbeats received. Forcing reconnection.');
+              
+              // Force close and trigger reconnect
+              try {
+                // Clear this interval first to prevent multiple executions
+                clearInterval(heartbeatCheckInterval);
+                
+                // Close the socket
+                socket.close(4000, 'Client-initiated close due to heartbeat timeout');
+                
+                // Let onclose handle reconnection
+              } catch (closeError) {
+                console.error('Error forcing socket close:', closeError);
+              }
+            }
+          }
+        }, HEARTBEAT_CHECK_INTERVAL);
+        
+        // Clean up the heartbeat interval when connection closes
+        socket.addEventListener('close', () => {
+          clearInterval(heartbeatCheckInterval);
+        });
         
         // Send any queued messages
         if (messageQueueRef.current.length > 0) {
