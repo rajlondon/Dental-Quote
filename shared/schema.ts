@@ -594,6 +594,10 @@ export const specialOffers = pgTable("special_offers", {
   maxUses: integer("max_uses"),
   bonus: json("bonus").$type<{ description: string, unitPrice: number }>(),
   
+  // Location information
+  cityCode: varchar("city_code", { length: 50 }),
+  cityName: varchar("city_name", { length: 100 }),
+  
   // Images and display properties
   imageUrl: varchar("image_url", { length: 255 }),
   badgeText: varchar("badge_text", { length: 50 }),
@@ -663,6 +667,10 @@ export const treatmentPackages = pgTable("treatment_packages", {
   promoCode: varchar("promo_code", { length: 30 }).unique(),
   usedCount: integer("used_count").default(0),
   maxUses: integer("max_uses"),
+  
+  // Location information
+  cityCode: varchar("city_code", { length: 50 }),
+  cityName: varchar("city_name", { length: 100 }),
   
   // Package content
   treatments: json("treatments").$type<{

@@ -5,6 +5,7 @@ import path from "path";
 import cors from "cors";
 import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import { addCityColumns } from "./migrations/add-city-columns";
 
 /**
  * Helper function to detect duplicate routes in Express app
@@ -103,6 +104,19 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run database migrations before starting the server
+  try {
+    console.log('Running database migrations...');
+    const migrationResult = await addCityColumns();
+    if (migrationResult.success) {
+      console.log('✅ Database migrations completed successfully');
+    } else {
+      console.error('❌ Database migration failed:', migrationResult.message);
+    }
+  } catch (error) {
+    console.error('Error running database migrations:', error);
+  }
+
   const server = await registerRoutes(app);
 
   // Check for duplicate routes to help diagnose 404 errors
