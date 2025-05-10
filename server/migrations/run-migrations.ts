@@ -1,5 +1,6 @@
 import { addCityColumns } from './add-city-columns';
-import { db } from '../db';
+import { addCodeToPromo } from './add-code-to-promo';
+import { db, pool } from '../db';
 
 /**
  * Migration runner that executes all migrations in sequence
@@ -15,20 +16,18 @@ async function runMigrations() {
     // Run migrations in sequence
     const migrations = [
       { name: 'addCityColumns', fn: addCityColumns },
+      { name: 'addCodeToPromo', fn: addCodeToPromo },
       // Add future migrations here
     ];
     
     for (const migration of migrations) {
       console.log(`Running migration: ${migration.name}`);
-      const result = await migration.fn();
-      
-      if (result.success) {
+      try {
+        const result = await migration.fn();
         console.log(`✅ Migration ${migration.name} completed successfully`);
-      } else {
-        console.error(`❌ Migration ${migration.name} failed:`, result.message);
-        if (result.error) {
-          console.error(result.error);
-        }
+      } catch (error) {
+        console.error(`❌ Migration ${migration.name} failed:`, error.message || 'Unknown error');
+        console.error(error);
       }
     }
     
@@ -37,7 +36,7 @@ async function runMigrations() {
     console.error('Migration process failed:', error);
   } finally {
     // Close the database connection
-    await db.end();
+    await pool.end();
   }
 }
 
