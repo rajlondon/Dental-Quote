@@ -377,7 +377,7 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
    * Start long-polling as fallback for WebSockets
    * This provides a similar experience but uses regular HTTP requests
    */
-  const startLongPolling = useCallback(() => {
+  const startLongPolling = useCallback(async () => {
     // Clear any existing interval
     if (pollingIntervalId.current) {
       clearInterval(pollingIntervalId.current);
@@ -388,50 +388,110 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
       connectionId.current = generateConnectionId();
     }
     
-    // Notify that we're connected via fallback
-    setIsConnected(true);
-    if (onOpen) onOpen();
-    
-    console.log(`Starting long-polling fallback with ID ${connectionId.current}`);
-    
-    // Immediately send any queued messages
-    if (messageQueue.current.length > 0) {
-      sendQueuedMessagesViaHttp();
+    // First register with the server for long polling
+    try {
+      const response = await fetch('/api/messages/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          connectionId: connectionId.current,
+          userId: userId || undefined,
+          isClinic: isClinic || false
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to register for long-polling:', response.status, response.statusText);
+        // Try again with WebSockets after a delay
+        setTimeout(() => {
+          setUsingFallback(false);
+          connectWebSocket();
+        }, 3000);
+        return;
+      }
+      
+      // Notify that we're connected via fallback
+      setIsConnected(true);
+      if (onOpen) onOpen();
+      
+      console.log(`Starting long-polling fallback with ID ${connectionId.current}`);
+      
+      // Immediately send any queued messages
+      if (messageQueue.current.length > 0) {
+        sendQueuedMessagesViaHttp();
+      }
+      
+      // Start polling immediately
+      pollForMessages();
+      
+      // Set up polling interval
+      pollingIntervalId.current = setInterval(pollForMessages, 5000);
+      
+    } catch (error) {
+      console.error('Error setting up long-polling:', error);
+      // Fall back to WebSockets after a delay
+      setTimeout(() => {
+        setUsingFallback(false);
+        connectWebSocket();
+      }, 3000);
     }
+  }, [connectWebSocket, generateConnectionId, isClinic, onOpen, sendQueuedMessagesViaHttp, userId]);
+  
+  // Separate function for polling to avoid nesting callbacks
+  const pollForMessages = useCallback(async () => {
+    if (!connectionId.current || !usingFallback) return;
     
-    // Set up polling interval (every 3 seconds)
-    pollingIntervalId.current = setInterval(async () => {
-      try {
-        // Poll for messages
-        const response = await fetch(`/api/messages/poll?connectionId=${connectionId.current}&userId=${userId || 'anonymous'}&isClinic=${isClinic ? 'true' : 'false'}`);
+    try {
+      // Poll for messages
+      const url = `/api/messages/poll/${connectionId.current}${lastMessageIdRef.current ? `?lastMessageId=${lastMessageIdRef.current}` : ''}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
         
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Process each message
-          if (data.messages && Array.isArray(data.messages)) {
-            data.messages.forEach((message: WebSocketMessage) => {
-              if (onMessage) onMessage(message);
+        // Process each message
+        if (data.success && data.messages && Array.isArray(data.messages)) {
+          // Update last message ID if we received messages
+          if (data.messages.length > 0) {
+            const lastMessage = data.messages[data.messages.length - 1];
+            lastMessageIdRef.current = lastMessage.id;
+            
+            // Process each message
+            data.messages.forEach((message: any) => {
+              // Convert server message format to our WebSocketMessage format
+              const wsMessage: WebSocketMessage = {
+                type: message.type,
+                ...message.payload,
+                timestamp: message.timestamp
+              };
+              
+              if (onMessage) onMessage(wsMessage);
             });
           }
           
-          // Send ping every few intervals
-          if (Math.random() < 0.3) { // ~30% chance each poll
+          // Send heartbeat occasionally
+          if (Math.random() < 0.2) { // ~20% chance each poll
             sendMessageViaHttp({
-              type: 'ping',
+              type: 'heartbeat',
               timestamp: Date.now(),
               connectionId: connectionId.current
             });
           }
-        } else {
-          console.warn('Long-polling request failed:', response.status, response.statusText);
         }
-      } catch (error) {
-        console.error('Error in long-polling:', error);
+      } else {
+        console.warn('Long-polling request failed:', response.status, response.statusText);
+        
+        // If we get a 404, our connection might be gone - try to re-register
+        if (response.status === 404) {
+          startLongPolling();
+        }
       }
-    }, 3000);
-    
-  }, [connectionId, generateConnectionId, isClinic, onMessage, onOpen, sendQueuedMessagesViaHttp, sendMessageViaHttp, userId]);
+    } catch (error) {
+      console.error('Error in long-polling:', error);
+    }
+  }, [connectionId, onMessage, sendMessageViaHttp, usingFallback]);
   
   /**
    * Send a message to the server
