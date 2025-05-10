@@ -167,15 +167,44 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
     // Debug log for navigation
     console.log("ClinicGuard: Navigation check for clinic user", {
       role: user.role,
-      pathname: window.location.pathname
+      pathname: window.location.pathname,
+      userId: user.id,
+      clinicId: user.clinicId
     });
 
-    // Store that we've successfully accessed the clinic portal
-    sessionStorage.setItem('clinic_portal_access_successful', 'true');
+    // Store session markers in multiple locations for redundancy
+    const storeSessionMarkers = () => {
+      // 1. Store in sessionStorage that we've successfully accessed the clinic portal
+      sessionStorage.setItem('clinic_portal_access_successful', 'true');
+      
+      // 2. Set cookies to mark that this is a clinic staff session with longer expiration
+      // This will help other components know not to do promo redirects
+      document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "is_clinic_login=true; path=/; max-age=86400; SameSite=Lax";
+      
+      // 3. Store clinic user ID in sessionStorage (useful for reconnecting WebSockets)
+      if (user.id) {
+        sessionStorage.setItem('clinic_user_id', user.id.toString());
+      }
+      
+      // 4. Store clinic ID in sessionStorage if available
+      if (user.clinicId) {
+        sessionStorage.setItem('clinic_id', user.clinicId.toString());
+      }
+      
+      // 5. Store timestamp of last successful clinic access
+      sessionStorage.setItem('last_clinic_access', Date.now().toString());
+    };
     
-    // Set a cookie to mark that this is a clinic staff session
-    // This will help other components know not to do promo redirects
-    document.cookie = "is_clinic_staff=true; path=/; max-age=86400";
+    // Execute immediately
+    storeSessionMarkers();
+    
+    // Also set a periodic refresh of these session markers
+    const refreshInterval = setInterval(storeSessionMarkers, 5 * 60 * 1000); // Every 5 minutes
+    
+    return () => {
+      clearInterval(refreshInterval);
+    };
   }, [user]);
 
   if (!initialized) {
