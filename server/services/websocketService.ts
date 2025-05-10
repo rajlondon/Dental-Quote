@@ -346,6 +346,32 @@ export class WebSocketService {
           this.relayMessage(parsedData);
           break;
           
+        case 'disconnect':
+          // Handle client-initiated disconnects gracefully
+          console.log(`Received graceful disconnect message from ${connectionId}`);
+          
+          // Find and remove the client from the clients map
+          Array.from(this.clients.entries()).forEach(([id, client]) => {
+            if (client.ws === ws) {
+              console.log(`Removing client ${id} due to graceful disconnect request`);
+              this.clients.delete(id);
+            }
+          });
+          
+          // Send confirmation to client before closing
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'disconnect_ack',
+              connectionId: connectionId,
+              timestamp: Date.now(),
+              message: 'Disconnect request acknowledged'
+            }));
+            
+            // Close the connection properly with normal close code
+            ws.close(1000, 'Client requested disconnect');
+          }
+          break;
+          
         default:
           console.log(`Unknown message type: ${parsedData.type} from connection ${connectionId}`);
           // Echo back unknown message types with warning
