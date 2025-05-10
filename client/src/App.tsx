@@ -482,8 +482,30 @@ function Router() {
         {() => <ClinicGuard><SimpleClinicPage /></ClinicGuard>}
       </Route>
       
-      {/* Original clinic portal route with special guard to prevent refresh issues */}
-      {/* Direct clinic portal access route with minimal authentication checking */}
+      {/* Dedicated clinic login page */}
+      <Route path="/clinic-login">
+        {() => {
+          const ClinicLoginPage = React.lazy(() => import("@/pages/ClinicLoginPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>}>
+              <ClinicLoginPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
+
+      {/* Standard clinic portal route with ClinicGuard */}
+      <Route path="/clinic-portal">
+        {() => (
+          <ClinicGuard>
+            <ClinicPortalPage disableAutoRefresh={true} />
+          </ClinicGuard>
+        )}
+      </Route>
+      
+      {/* Direct clinic portal access route - bypasses the standard guard */}
       <Route path="/clinic-direct">
         {() => {
           // Local authentication check to ensure we have clinic_staff access
@@ -491,8 +513,29 @@ function Router() {
           const [isAuthenticated, setIsAuthenticated] = useState(false);
           const { toast } = useToast();
 
+          // Use an effect to detect WebSocket issues
           useEffect(() => {
-            // Check authentication status
+            const checkWebSocketConnection = () => {
+              const wsConnected = sessionStorage.getItem('clinic_websocket_connected');
+              
+              if (wsConnected === 'false') {
+                console.log('WebSocket connection failed - showing notification');
+                toast({
+                  title: 'Connection Status',
+                  description: 'Limited connection to real-time updates. Refresh if you need immediate data updates.',
+                  variant: 'default',
+                  duration: 5000
+                });
+              }
+            };
+            
+            // Check after 5 seconds to see if WebSocket connected
+            const timer = setTimeout(checkWebSocketConnection, 5000);
+            return () => clearTimeout(timer);
+          }, [toast]);
+          
+          // Check authentication status
+          useEffect(() => {
             fetch('/api/auth/user')
               .then(res => res.json())
               .then(data => {
@@ -535,51 +578,8 @@ function Router() {
           }
 
           if (!isAuthenticated) {
-            return <Redirect to="/portal-login" />;
+            return <Redirect to="/clinic-login" />;
           }
-
-          return (
-            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic portal...</div>}>
-              <ClinicPortalPage disableAutoRefresh={true} />
-            </React.Suspense>
-          );
-        }}
-      </Route>
-
-      {/* Standard clinic portal route with ClinicGuard */}
-      <Route path="/clinic-portal">
-        {() => (
-          <ClinicGuard>
-            <ClinicPortalPage disableAutoRefresh={true} />
-          </ClinicGuard>
-        )}
-      </Route>
-      
-      {/* Direct clinic portal access route - bypasses the standard guard */}
-      <Route path="/clinic-direct">
-        {() => {
-          const { toast } = useToast();
-          
-          // Use an effect to detect WebSocket issues
-          useEffect(() => {
-            const checkWebSocketConnection = () => {
-              const wsConnected = sessionStorage.getItem('clinic_websocket_connected');
-              
-              if (wsConnected === 'false') {
-                console.log('WebSocket connection failed - showing notification');
-                toast({
-                  title: 'Connection Status',
-                  description: 'Limited connection to real-time updates. Refresh if you need immediate data updates.',
-                  variant: 'default',
-                  duration: 5000
-                });
-              }
-            };
-            
-            // Check after 5 seconds to see if WebSocket connected
-            const timer = setTimeout(checkWebSocketConnection, 5000);
-            return () => clearTimeout(timer);
-          }, [toast]);
           
           return (
             <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">
