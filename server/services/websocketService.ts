@@ -1,6 +1,15 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 
+/**
+ * Global interface for HTTP message queue used by long-polling fallback
+ */
+declare global {
+  var httpMessageQueue: {
+    addMessageToQueue: (connectionId: string, message: any) => void;
+  };
+}
+
 interface Client {
   ws: WebSocket;
   id: string;
@@ -169,6 +178,22 @@ export class WebSocketService {
       
       // Use the instance method
       WebSocketService.instance.broadcast(data);
+      
+      // Also broadcast to long-polling clients if the HTTP message queue is available
+      if (global.httpMessageQueue) {
+        try {
+          // Send to specific client if target is specified
+          if (data.target) {
+            global.httpMessageQueue.addMessageToQueue(data.target, data);
+          } 
+          // Otherwise broadcast to all clients with connection IDs
+          else if (data.connectionId) {
+            global.httpMessageQueue.addMessageToQueue(data.connectionId, data);
+          }
+        } catch (lpError) {
+          console.error('Error broadcasting to long-polling clients:', lpError);
+        }
+      }
     } catch (error) {
       console.error('Error in static broadcastToAll method:', error);
     }
