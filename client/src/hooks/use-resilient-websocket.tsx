@@ -139,7 +139,7 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
   const generateConnectionId = useCallback(() => {
     return `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }, []);
-  
+
   /**
    * Send a message via HTTP POST (fallback method)
    */
@@ -172,8 +172,20 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
   }, [connectionId, isClinic, userId]);
   
   /**
+   * Send all queued messages via HTTP
+   */
+  const sendQueuedMessagesViaHttp = useCallback(async () => {
+    const messages = [...messageQueue.current];
+    messageQueue.current = [];
+    
+    for (const message of messages) {
+      await sendMessageViaHttp(message);
+    }
+  }, [sendMessageViaHttp]);
+  
+  /**
    * Internal helper for sending messages
-   * This is defined earlier to avoid circular reference issues
+   * This is defined before it's used to avoid circular reference issues
    */
   const sendMessageInternal = (message: WebSocketMessage, socket: WebSocket | null) => {
     // Add connection ID if not present
@@ -203,6 +215,9 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     }
   };
 
+  /**
+   * Establish a WebSocket connection
+   */
   const connectWebSocket = useCallback(() => {
     // Skip if manually disconnected
     if (manualDisconnect.current) {
@@ -353,7 +368,6 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     onMessage,
     onOpen,
     reconnectAttempt,
-    sendMessage,
     toast,
     userId,
     useResilientMode,
@@ -417,50 +431,7 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
       }
     }, 3000);
     
-  }, [connectionId, generateConnectionId, isClinic, onMessage, onOpen, userId]);
-  
-  /**
-   * Send a message via HTTP POST (fallback method)
-   */
-  const sendMessageViaHttp = useCallback(async (message: WebSocketMessage) => {
-    try {
-      const response = await fetch('/api/messages/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...message,
-          connectionId: connectionId.current,
-          userId: userId,
-          isClinic: isClinic,
-          timestamp: Date.now(),
-        }),
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to send message via HTTP:', response.status, response.statusText);
-        // Queue the message for retry
-        messageQueue.current.push(message);
-      }
-    } catch (error) {
-      console.error('Error sending message via HTTP:', error);
-      // Queue the message for retry
-      messageQueue.current.push(message);
-    }
-  }, [connectionId, isClinic, userId]);
-  
-  /**
-   * Send all queued messages via HTTP
-   */
-  const sendQueuedMessagesViaHttp = useCallback(async () => {
-    const messages = [...messageQueue.current];
-    messageQueue.current = [];
-    
-    for (const message of messages) {
-      await sendMessageViaHttp(message);
-    }
-  }, [sendMessageViaHttp]);
+  }, [connectionId, generateConnectionId, isClinic, onMessage, onOpen, sendQueuedMessagesViaHttp, sendMessageViaHttp, userId]);
   
   /**
    * Send a message to the server
