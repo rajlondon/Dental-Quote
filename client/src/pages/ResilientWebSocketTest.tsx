@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import useResilientWebSocket from '@/hooks/use-resilient-websocket';
-import { AlertCircle, CheckCircle, XCircle, RefreshCw, ArrowUpDown } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, RefreshCw, ArrowUpDown, Info } from 'lucide-react';
 
 interface Message {
   type: string;
@@ -20,6 +20,9 @@ interface Message {
 export function ResilientWebSocketTest() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageToSend, setMessageToSend] = useState('');
+  
+  // Define constant for options
+  const useResilientMode = true;
   
   const { 
     isConnected, 
@@ -94,9 +97,47 @@ export function ResilientWebSocketTest() {
     ]);
   };
 
+  // Add info about environment 
+  const [envInfo, setEnvInfo] = useState({
+    hostname: window.location.hostname,
+    protocol: window.location.protocol,
+    userAgent: navigator.userAgent,
+    time: new Date().toISOString()
+  });
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setEnvInfo(prev => ({
+        ...prev,
+        time: new Date().toISOString()
+      }));
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="container py-6">
       <h1 className="text-2xl font-bold mb-6">Resilient WebSocket Testing</h1>
+      
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+        <div className="flex items-center">
+          <Info className="h-5 w-5 text-blue-500 mr-2" />
+          <h2 className="text-lg font-medium text-blue-700">About This Page</h2>
+        </div>
+        <p className="mt-2 text-sm text-blue-600">
+          This page demonstrates our resilient WebSocket solution with HTTP long-polling fallback. 
+          If normal WebSockets fail (which is common in Replit), the system will automatically switch 
+          to HTTP-based communication while maintaining the same API.
+        </p>
+        <div className="mt-3 text-xs font-mono text-blue-500 grid grid-cols-2 gap-x-4 gap-y-1">
+          <div>Host: {envInfo.hostname}</div>
+          <div>Protocol: {envInfo.protocol}</div>
+          <div>Time: {new Date(envInfo.time).toLocaleTimeString()}</div>
+          <div>Auto-fallback: {useResilientMode ? "Enabled" : "Disabled"}</div>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card>
