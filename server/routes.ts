@@ -102,6 +102,12 @@ setInterval(() => {
 import apiRouter from './routes/api';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve the static clinic login page directly
+  app.get('/static-clinic-login', (req, res) => {
+    const staticLoginPath = path.resolve(__dirname, '..', 'client', 'public', 'clinic-login.html');
+    console.log('Serving static clinic login page from:', staticLoginPath);
+    res.sendFile(staticLoginPath);
+  });
   // API Routes
   app.use('/api', apiRouter);
   
