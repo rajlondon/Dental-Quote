@@ -31,6 +31,7 @@ export function ConnectionStatusIndicator({
   } = useWebSocket({
     userId,
     isClinic,
+    debug: true, // Enable debug mode for the test page
     onMessage: (message) => {
       setMessages(prev => [
         { 
