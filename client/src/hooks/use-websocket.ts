@@ -293,12 +293,47 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
             (window as any).__websocketLastActivity[`user-${userId}`] = Date.now();
           }
           
+          // Handle system messages with special logging
+          if (message.type === 'error' || message.type === 'warning') {
+            console.warn(`WebSocket ${message.type} received:`, message);
+            // Show toast for important errors
+            if (message.type === 'error' && toast) {
+              toast({
+                title: 'Connection Error',
+                description: message.message || 'An error occurred with the real-time connection',
+                variant: 'destructive',
+              });
+            }
+          } else if (message.type === 'registered') {
+            console.log('WebSocket registration confirmed:', message);
+            
+            // Track connection status in session
+            try {
+              const connectionEntry = {
+                connectionId: connectionIdRef.current,
+                userId: userId,
+                timestamp: Date.now(),
+                isClinic: clinicModeRef.current
+              };
+              sessionStorage.setItem('ws_last_connection', JSON.stringify(connectionEntry));
+            } catch (e) {
+              // Ignore storage errors
+            }
+          } else if (message.type !== 'pong') {
+            // Skip logging for routine pong messages
+            console.log(`WebSocket message received [${message.type}]`, message);
+          }
+          
           // Call onMessage callback if provided
           if (onMessage) {
             onMessage(message);
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
+          console.error('Raw message:', event.data ? 
+            (typeof event.data === 'string' ? event.data.substring(0, 200) : '[Binary data]') : 
+            '[Empty message]'
+          );
         }
       };
 

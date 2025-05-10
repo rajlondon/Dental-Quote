@@ -153,6 +153,20 @@ export class WebSocketService {
       let connectionId = '';
       const urlParams = new URL(req.url || '', `http://${req.headers.host}`).searchParams;
       const clientProvidedId = urlParams.get('connectionId');
+      const userId = urlParams.get('userId');
+      const isClinic = urlParams.get('isClinic') === 'true';
+      
+      // Log connection details for debugging
+      console.log(`New WebSocket connection request received with params:`, { 
+        clientProvidedId, 
+        userId, 
+        isClinic,
+        url: req.url,
+        headers: {
+          userAgent: req.headers['user-agent'],
+          origin: req.headers.origin
+        }
+      });
       
       if (clientProvidedId && clientProvidedId.length > 10) {
         // Use client-provided ID if available (helps with error tracking)
@@ -258,39 +272,107 @@ export class WebSocketService {
   }
   
   private handleMessage(ws: WebSocket, message: string) {
+    const connectionId = (ws as any).connectionId || 'unknown';
+    let parsedData: any = null;
+    
     try {
-      const data = JSON.parse(message) as Message;
+      // Parse the message and add more context for debugging
+      parsedData = JSON.parse(message);
       
-      switch (data.type) {
+      // Skip detailed logging for heartbeat messages to reduce noise
+      if (parsedData.type !== 'ping' && parsedData.type !== 'pong') {
+        console.log(`WebSocket message received from ${connectionId}:`, {
+          type: parsedData.type,
+          sender: parsedData.sender,
+          hasConnectionId: !!parsedData.connectionId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Add connection tracking fields if missing
+      if (!parsedData.connectionId) {
+        parsedData.connectionId = connectionId;
+      }
+      
+      // Check for critical fields
+      if (!parsedData.type) {
+        throw new Error('Message type is required');
+      }
+      
+      // Enhanced handling with connection tracking
+      if (parsedData.type === 'auth') {
+        if (!parsedData.sender || !parsedData.sender.id || !parsedData.sender.type) {
+          throw new Error('Auth message requires sender.id and sender.type');
+        }
+        
+        // Log enhanced authentication attempt
+        console.log(`Authentication attempt: ID=${parsedData.sender.id}, Type=${parsedData.sender.type}, ConnectionID=${connectionId}`);
+        
+        // Register the client
+        this.registerClient(ws, parsedData.sender.id, parsedData.sender.type);
+        return;
+      }
+      
+      // Apply handlers based on message type
+      switch (parsedData.type) {
+        case 'ping':
+          // Respond to keep-alive ping
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'pong',
+              timestamp: Date.now(),
+              connectionId: connectionId
+            }));
+          }
+          break;
+          
         case 'register':
           // Register a new client
-          this.registerClient(ws, data.sender.id, data.sender.type);
+          this.registerClient(ws, parsedData.sender.id, parsedData.sender.type);
           break;
           
         case 'sync_appointment':
           // Sync appointment data between patient and clinic
-          this.syncAppointmentData(data);
+          this.syncAppointmentData(parsedData);
           break;
           
         case 'treatment_update':
           // Update treatment status/progress
-          this.notifyTreatmentUpdate(data);
+          this.notifyTreatmentUpdate(parsedData);
           break;
           
         case 'message':
           // Handle direct messaging
-          this.relayMessage(data);
+          this.relayMessage(parsedData);
           break;
           
         default:
-          console.log(`Unknown message type: ${data.type}`);
+          console.log(`Unknown message type: ${parsedData.type} from connection ${connectionId}`);
+          // Echo back unknown message types with warning
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'warning',
+              originalType: parsedData.type,
+              message: `Unrecognized message type: ${parsedData.type}`,
+              timestamp: Date.now(),
+              connectionId: connectionId
+            }));
+          }
       }
     } catch (error) {
-      console.error('Error handling WebSocket message:', error);
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Invalid message format',
-      }));
+      console.error(`Error handling WebSocket message from ${connectionId}:`, error);
+      console.error('Problem message content:', message.substring(0, 200) + (message.length > 200 ? '...' : ''));
+      
+      // Send detailed error response for easier debugging
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid message format: ' + (error instanceof Error ? error.message : 'Unknown error'),
+          timestamp: Date.now(),
+          connectionId: connectionId,
+          originalMessage: parsedData ? { type: parsedData.type } : null
+        }));
+      }
     }
   }
   
