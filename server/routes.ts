@@ -1294,7 +1294,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   try {
     console.log('Registering long-polling message routes for WebSocket fallback');
     registerMessageRoutes(app);
-    console.log('Long-polling message routes registered successfully');
+    
+    // Set up global HTTP message queue for WebSocket fallback
+    global.httpMessageQueue = {
+      addMessageToQueue: (connectionId: string, message: any) => {
+        try {
+          // This function is called by the WebSocketService to add messages to the queue
+          // for clients using HTTP long-polling as a WebSocket fallback
+          const { messageQueue } = require('./routes/messageRoutes');
+          if (messageQueue && Array.isArray(messageQueue)) {
+            messageQueue.push({
+              id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+              connectionId,
+              type: message.type || 'message',
+              payload: message.payload || message,
+              timestamp: Date.now()
+            });
+          }
+        } catch (error) {
+          console.error('Error adding message to HTTP queue:', error);
+        }
+      }
+    };
+    console.log('Long-polling message routes registered with HTTP message queue');
   } catch (error) {
     console.error('Failed to register long-polling message routes:', error);
   }
