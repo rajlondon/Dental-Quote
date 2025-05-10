@@ -1,6 +1,5 @@
-import { Express, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { getWebSocketService } from '../services/websocketService';
+import { Express, Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Global message queue for long-polling fallback
@@ -14,44 +13,48 @@ interface MessageQueueItem {
   timestamp: number;
 }
 
-// Map of connectionId to array of messages
-const messageQueues: Map<string, MessageQueueItem[]> = new Map();
-// Map of connectionId to client information
-const httpClients: Map<string, {
-  id: string;
+/**
+ * Client connection tracking
+ */
+interface HttpClient {
+  connectionId: string;
   userId?: number;
   isClinic?: boolean;
-  lastPoll: number;
+  lastActivity: number;
   lastMessageId?: string;
-}> = new Map();
+}
 
-// Configuration
-const MAX_QUEUE_SIZE = 100; // Maximum number of messages to keep per client
-const CLIENT_TIMEOUT_MS = 60000; // Consider client disconnected after 60 seconds of no polls
-const LONG_POLL_TIMEOUT_MS = 30000; // Long-polling timeout (30 seconds)
+// In-memory storage for HTTP fallback clients and messages
+const httpClients: Map<string, HttpClient> = new Map();
+const messageQueue: MessageQueueItem[] = [];
+
+// Time in milliseconds after which to consider a connection stale
+const STALE_CONNECTION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const MESSAGE_RETENTION_PERIOD = 2 * 60 * 1000; // 2 minutes
 
 /**
- * Clean up old clients that haven't polled in a while
+ * Cleanup function to remove stale connections and old messages
  */
 function cleanupStaleClients() {
   const now = Date.now();
-  let removedCount = 0;
   
-  httpClients.forEach((client, connectionId) => {
-    if (now - client.lastPoll > CLIENT_TIMEOUT_MS) {
+  // Remove stale clients
+  for (const [connectionId, client] of httpClients.entries()) {
+    if (now - client.lastActivity > STALE_CONNECTION_TIMEOUT) {
+      console.log(`Removing stale HTTP client: ${connectionId}`);
       httpClients.delete(connectionId);
-      messageQueues.delete(connectionId);
-      removedCount++;
     }
-  });
+  }
   
-  if (removedCount > 0) {
-    console.log(`Cleaned up ${removedCount} stale HTTP clients`);
+  // Remove old messages
+  let oldestValidMessageTime = now - MESSAGE_RETENTION_PERIOD;
+  while (messageQueue.length > 0 && messageQueue[0].timestamp < oldestValidMessageTime) {
+    messageQueue.shift();
   }
 }
 
-// Periodically clean up stale clients
-setInterval(cleanupStaleClients, 30000);
+// Run cleanup every minute
+setInterval(cleanupStaleClients, 60000);
 
 export function registerMessageRoutes(app: Express) {
   /**
@@ -59,37 +62,32 @@ export function registerMessageRoutes(app: Express) {
    * This endpoint is called when a client wants to use the HTTP fallback
    */
   app.post('/api/messages/register', (req: Request, res: Response) => {
-    const { connectionId, userId, isClinic } = req.body;
-    
-    if (!connectionId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing connectionId' 
+    try {
+      const { connectionId, userId, isClinic } = req.body;
+      
+      if (!connectionId) {
+        return res.status(400).json({ success: false, message: 'Connection ID is required' });
+      }
+      
+      // Update or create the client
+      httpClients.set(connectionId, {
+        connectionId,
+        userId: userId || undefined,
+        isClinic: isClinic || false,
+        lastActivity: Date.now(),
       });
+      
+      console.log(`HTTP fallback client registered: ${connectionId}${userId ? ` (User ID: ${userId})` : ''}`);
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'HTTP client registered successfully',
+        connectionId
+      });
+    } catch (error) {
+      console.error('Error registering HTTP client:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
-    
-    // Create or update client record
-    httpClients.set(connectionId, {
-      id: connectionId,
-      userId: userId || undefined,
-      isClinic: isClinic || false,
-      lastPoll: Date.now()
-    });
-    
-    // Initialize message queue if needed
-    if (!messageQueues.has(connectionId)) {
-      messageQueues.set(connectionId, []);
-    }
-    
-    console.log(`HTTP client registered: ${connectionId} (userId: ${userId || 'none'}, isClinic: ${isClinic || false})`);
-    
-    return res.json({ 
-      success: true, 
-      connectionId, 
-      httpFallbackActive: true,
-      registeredAt: new Date().toISOString(),
-      clientCount: httpClients.size
-    });
   });
   
   /**
@@ -98,97 +96,52 @@ export function registerMessageRoutes(app: Express) {
    * there are messages available or the timeout is reached
    */
   app.get('/api/messages/poll/:connectionId', async (req: Request, res: Response) => {
-    const { connectionId } = req.params;
-    const { lastMessageId } = req.query;
+    const connectionId = req.params.connectionId;
+    const lastMessageId = req.query.lastMessageId as string | undefined;
     
-    // Validate connection ID
-    if (!connectionId || !httpClients.has(connectionId)) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Unknown connection ID or client not registered' 
-      });
+    // Check if the client exists
+    const client = httpClients.get(connectionId);
+    if (!client) {
+      return res.status(404).json({ success: false, message: 'Client not found' });
     }
     
-    // Update last poll time
-    const client = httpClients.get(connectionId)!;
-    client.lastPoll = Date.now();
-    if (lastMessageId) {
-      client.lastMessageId = lastMessageId as string;
-    }
+    // Update last activity
+    client.lastActivity = Date.now();
+    client.lastMessageId = lastMessageId || client.lastMessageId;
     
-    // Get messages for this client
-    let messages = messageQueues.get(connectionId) || [];
-    
-    // Filter messages by lastMessageId if provided
-    if (lastMessageId) {
-      const lastMsgIndex = messages.findIndex(m => m.id === lastMessageId);
-      if (lastMsgIndex !== -1) {
-        messages = messages.slice(lastMsgIndex + 1);
+    try {
+      // Get messages for this client
+      let clientMessages = messageQueue.filter(msg => 
+        msg.connectionId === connectionId ||
+        msg.connectionId === 'broadcast'
+      );
+      
+      // Filter for messages newer than the last one received by the client
+      if (lastMessageId) {
+        const lastMessageIndex = clientMessages.findIndex(msg => msg.id === lastMessageId);
+        if (lastMessageIndex !== -1) {
+          clientMessages = clientMessages.slice(lastMessageIndex + 1);
+        }
       }
-    }
-    
-    // If there are already messages, send them immediately
-    if (messages.length > 0) {
-      return res.json({ 
-        success: true, 
-        messages,
-        timestamp: Date.now(),
-        queueSize: messages.length
-      });
-    }
-    
-    // Otherwise, set up a timeout and wait for messages
-    const timeout = setTimeout(() => {
-      // If no messages after timeout, send empty response
-      if (!res.headersSent) {
-        res.json({ 
+      
+      // If there are messages, send them immediately
+      if (clientMessages.length > 0) {
+        return res.status(200).json({ 
           success: true, 
-          messages: [],
-          timestamp: Date.now(),
-          queueSize: 0,
-          timeout: true
+          messages: clientMessages
         });
       }
-    }, LONG_POLL_TIMEOUT_MS);
-    
-    // Clean up timeout on request close
-    req.on('close', () => {
-      clearTimeout(timeout);
-    });
-    
-    // Set up interval to check for new messages
-    const interval = setInterval(() => {
-      if (res.headersSent) {
-        clearInterval(interval);
-        return;
-      }
       
-      const currentMessages = messageQueues.get(connectionId) || [];
-      let filteredMessages = currentMessages;
+      // For immediate response with no messages
+      return res.status(200).json({ 
+        success: true, 
+        messages: [] 
+      });
       
-      // Filter messages by lastMessageId if provided
-      if (lastMessageId) {
-        const lastMsgIndex = currentMessages.findIndex(m => m.id === lastMessageId);
-        if (lastMsgIndex !== -1) {
-          filteredMessages = currentMessages.slice(lastMsgIndex + 1);
-        }
-      }
-      
-      // If new messages are available, send them
-      if (filteredMessages.length > 0) {
-        clearInterval(interval);
-        clearTimeout(timeout);
-        
-        if (!res.headersSent) {
-          res.json({ 
-            success: true, 
-            messages: filteredMessages,
-            timestamp: Date.now(),
-            queueSize: filteredMessages.length
-          });
-        }
-      }
-    }, 500); // Check every 500ms
+    } catch (error) {
+      console.error('Error polling for messages:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
   });
   
   /**
@@ -196,120 +149,91 @@ export function registerMessageRoutes(app: Express) {
    * This endpoint is used by clients when WebSocket is not available
    */
   app.post('/api/messages/send', (req: Request, res: Response) => {
-    const { connectionId, message } = req.body;
-    
-    if (!connectionId || !message) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing connectionId or message' 
-      });
-    }
-    
-    if (!httpClients.has(connectionId)) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Unknown connection ID or client not registered' 
-      });
-    }
-    
-    // Get the WebSocket service
-    const wsService = getWebSocketService();
-    if (!wsService) {
-      return res.status(500).json({ 
-        success: false, 
-        error: 'WebSocket service not available' 
-      });
-    }
-    
-    // Process the message as if it came from WebSocket
     try {
-      // Route message to appropriate handler based on type
-      console.log(`HTTP message received: ${message.type} from ${connectionId}`);
+      const { connectionId, message } = req.body;
       
-      // Use the WebSocket service to broadcast or relay the message
-      if (message.target) {
-        // Targeted message to specific client
-        const targetClient = httpClients.get(message.target);
-        if (targetClient) {
-          // Add message to target's queue
-          const messageItem: MessageQueueItem = {
-            id: uuidv4(),
-            connectionId: message.target,
-            type: message.type,
-            payload: message.payload,
-            timestamp: Date.now()
-          };
-          
-          const queue = messageQueues.get(message.target) || [];
-          queue.push(messageItem);
-          
-          // Trim queue if it gets too large
-          if (queue.length > MAX_QUEUE_SIZE) {
-            queue.splice(0, queue.length - MAX_QUEUE_SIZE);
-          }
-          
-          messageQueues.set(message.target, queue);
-        }
-      } else {
-        // Broadcast to all based on type
-        if (message.type === 'patient_notification' && wsService) {
-          wsService.broadcast({
-            type: 'patient_notification',
-            payload: message.payload
-          }, 'patient');
-        } else if (message.type === 'clinic_notification' && wsService) {
-          wsService.broadcast({
-            type: 'clinic_notification',
-            payload: message.payload
-          }, 'clinic');
-        } else {
-          // Default: process as normal WebSocket message
-          const client = httpClients.get(connectionId);
-          if (client) {
-            // Also add to all other clients' queues for this type
-            httpClients.forEach((otherClient, otherConnectionId) => {
-              if (otherConnectionId !== connectionId) {
-                // Only send to appropriate client type
-                if (
-                  (message.type.includes('patient') && !otherClient.isClinic) ||
-                  (message.type.includes('clinic') && otherClient.isClinic) ||
-                  message.type === 'heartbeat' // Always relay heartbeats
-                ) {
-                  const messageItem: MessageQueueItem = {
-                    id: uuidv4(),
-                    connectionId: otherConnectionId,
-                    type: message.type,
-                    payload: message.payload,
-                    timestamp: Date.now()
-                  };
-                  
-                  const queue = messageQueues.get(otherConnectionId) || [];
-                  queue.push(messageItem);
-                  
-                  // Trim queue if it gets too large
-                  if (queue.length > MAX_QUEUE_SIZE) {
-                    queue.splice(0, queue.length - MAX_QUEUE_SIZE);
-                  }
-                  
-                  messageQueues.set(otherConnectionId, queue);
-                }
-              }
-            });
-          }
-        }
+      if (!connectionId || !message) {
+        return res.status(400).json({ success: false, message: 'Connection ID and message are required' });
       }
       
-      return res.json({ 
+      // Check if the client exists
+      const client = httpClients.get(connectionId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'Client not found' });
+      }
+      
+      // Update last activity
+      client.lastActivity = Date.now();
+      
+      if (message.type === 'heartbeat') {
+        // Just update the activity timestamp for heartbeats
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Heartbeat received'
+        });
+      }
+      
+      console.log(`Message received via HTTP from ${connectionId}: Type=${message.type}`);
+      
+      if (message.type === 'ping') {
+        // Respond with a pong message
+        const pongMessageId = uuidv4();
+        const timestamp = Date.now();
+        
+        const messageItem: MessageQueueItem = {
+          id: pongMessageId,
+          connectionId,
+          type: 'pong',
+          payload: {
+            timestamp,
+            originalTimestamp: message.timestamp,
+            roundTrip: timestamp - message.timestamp
+          },
+          timestamp
+        };
+        
+        messageQueue.push(messageItem);
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Ping processed, pong queued' 
+        });
+      } else if (message.type === 'chat') {
+        // Process chat message (echo it back for testing)
+        if (client.userId) {
+          // Here you could handle the chat message, e.g., save to database, deliver to recipients, etc.
+          const timestamp = Date.now();
+          const echoMessageId = uuidv4();
+          
+                  const messageItem: MessageQueueItem = {
+                    id: echoMessageId,
+                    connectionId,
+                    type: 'chat',
+                    payload: {
+                      content: `Echo: ${message.content}`,
+                      timestamp,
+                      sender: 'server'
+                    },
+                    timestamp
+                  };
+                  
+                  messageQueue.push(messageItem);
+        }
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Message received and processed' 
+        });
+      }
+      
+      // Handle other message types
+      return res.status(200).json({ 
         success: true, 
-        messageProcessed: true,
-        timestamp: Date.now()
+        message: 'Message received' 
       });
     } catch (error) {
-      console.error('Error processing HTTP message:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Error processing message' 
-      });
+      console.error('Error processing message:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
   
@@ -318,26 +242,28 @@ export function registerMessageRoutes(app: Express) {
    * This endpoint is called when a client disconnects and no longer needs the HTTP fallback
    */
   app.post('/api/messages/unregister', (req: Request, res: Response) => {
-    const { connectionId } = req.body;
-    
-    if (!connectionId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing connectionId' 
+    try {
+      const { connectionId } = req.body;
+      
+      if (!connectionId) {
+        return res.status(400).json({ success: false, message: 'Connection ID is required' });
+      }
+      
+      // Remove the client
+      const removed = httpClients.delete(connectionId);
+      
+      if (removed) {
+        console.log(`HTTP fallback client unregistered: ${connectionId}`);
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'HTTP client unregistered successfully' 
       });
+    } catch (error) {
+      console.error('Error unregistering HTTP client:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
-    
-    // Remove client and its message queue
-    httpClients.delete(connectionId);
-    messageQueues.delete(connectionId);
-    
-    console.log(`HTTP client unregistered: ${connectionId}`);
-    
-    return res.json({ 
-      success: true, 
-      unregistered: true,
-      remainingClients: httpClients.size
-    });
   });
   
   /**
@@ -345,40 +271,28 @@ export function registerMessageRoutes(app: Express) {
    * This is useful for monitoring and debugging
    */
   app.get('/api/messages/status', (req: Request, res: Response) => {
-    // Clean up stale clients before reporting status
-    cleanupStaleClients();
-    
-    const clients: any[] = [];
-    httpClients.forEach((client, connectionId) => {
-      const queue = messageQueues.get(connectionId) || [];
-      clients.push({
-        connectionId,
-        userId: client.userId,
-        isClinic: client.isClinic,
-        lastPoll: new Date(client.lastPoll).toISOString(),
-        queueSize: queue.length,
-        lastMessageId: client.lastMessageId,
-        inactive: Date.now() - client.lastPoll > CLIENT_TIMEOUT_MS / 2
+    try {
+      return res.status(200).json({
+        success: true,
+        metrics: {
+          activeHttpClients: httpClients.size,
+          queuedMessages: messageQueue.length,
+        },
+        clients: Array.from(httpClients.values()).map(client => ({
+          connectionId: client.connectionId,
+          userId: client.userId,
+          isClinic: client.isClinic,
+          lastActivity: new Date(client.lastActivity).toISOString(),
+          idleTimeSeconds: Math.floor((Date.now() - client.lastActivity) / 1000)
+        }))
       });
-    });
-    
-    return res.json({
-      success: true,
-      totalClients: httpClients.size,
-      clients,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    });
+    } catch (error) {
+      console.error('Error getting HTTP client status:', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
   });
   
-  // Add a diagnostic endpoint to verify message routes are registered
   app.get('/api/messages/ping', (req: Request, res: Response) => {
-    res.json({
-      success: true,
-      message: 'Long-polling message routes are active',
-      timestamp: new Date().toISOString(),
-      clientCount: httpClients.size,
-      queueCount: messageQueues.size
-    });
+    res.status(200).json({ success: true, timestamp: Date.now() });
   });
 }
