@@ -1,252 +1,166 @@
-/**
- * Utility functions for handling promotions and coupon codes
- */
-import { pool } from '../db';
-import log from './logger';
+import { db } from "../db";
+import { promos, promoItems, promoClinics, DiscountType, PromoType } from "@shared/schema";
+import { eq, and, or, inArray, isNull, isNotNull } from "drizzle-orm";
+import { z } from "zod";
+import logger from "./logger";
 
-interface Promo {
+export interface PromoCodeInfo {
   id: string;
-  title: string;
   code: string;
-  discount_type: 'PERCENT' | 'AMOUNT';
-  discount_value: number;
-  is_active: boolean;
-  start_date: Date;
-  end_date: Date;
-  [key: string]: any;
+  name: string;
+  description: string;
+  discountType: DiscountType;
+  discountValue: number;
+  startDate: Date;
+  endDate: Date | null;
+  type: PromoType;
+  maxUses: number | null;
+  currentUses: number;
+  applicableTreatments: string[];
+  applicableClinics: number[];
+  isActive: boolean;
 }
 
-interface Quote {
-  id: string;
-  subtotal: number;
-  discount?: number;
-  total_price: number;
-  promo_id?: string;
-  [key: string]: any;
+export interface PromoValidationResult {
+  isValid: boolean;
+  message: string;
+  promo?: PromoCodeInfo;
 }
 
 /**
- * Find a promo by its code
- * @param code The promo code to search for
- * @returns The promo object if found, otherwise null
+ * Validate a promo code and return its information if valid
  */
-export async function findPromoByCode(code: string): Promise<Promo | null> {
+export async function validatePromoCode(code: string): Promise<PromoValidationResult> {
   try {
-    if (!code?.trim()) return null;
-
-    const query = `
-      SELECT p.* FROM promos p
-      WHERE p.code = $1 
-      AND p.is_active = true
-      AND p.start_date <= NOW() 
-      AND p.end_date >= NOW()
-    `;
+    logger.info(`Validating promo code: ${code}`);
     
-    const result = await pool.query(query, [code.trim().toUpperCase()]);
-    
-    if (result.rows.length === 0) {
-      return null;
+    if (!code || code.trim() === "") {
+      return { isValid: false, message: "Promo code is required" };
     }
     
-    return result.rows[0] as Promo;
-  } catch (err) {
-    log.error('Error finding promo by code:', err);
-    return null;
+    // Find the promo in the database
+    const currentDate = new Date();
+    const allPromos = await db.select()
+      .from(promos)
+      .where(and(
+        eq(promos.code, code),
+        or(
+          isNull(promos.endDate),
+          promos.endDate.gte(currentDate)
+        ),
+        promos.startDate.lte(currentDate),
+        or(
+          isNull(promos.maxUses),
+          promos.currentUses.lt(promos.maxUses)
+        ),
+        eq(promos.isActive, true)
+      ));
+    
+    if (allPromos.length === 0) {
+      logger.info(`No valid promo found for code: ${code}`);
+      return { isValid: false, message: "Invalid or expired promo code" };
+    }
+    
+    const promo = allPromos[0];
+    logger.info(`Found valid promo: ${promo.name} (ID: ${promo.id})`);
+    
+    // Get applicable treatments
+    const promoItemsData = await db.select()
+      .from(promoItems)
+      .where(eq(promoItems.promoId, promo.id));
+    
+    const applicableTreatments = promoItemsData.map(item => item.itemId);
+    
+    // Get applicable clinics
+    const promoClinicsData = await db.select()
+      .from(promoClinics)
+      .where(eq(promoClinics.promoId, promo.id));
+    
+    const applicableClinics = promoClinicsData.map(clinic => clinic.clinicId);
+    
+    // Return formatted promo info
+    const promoInfo: PromoCodeInfo = {
+      id: promo.id,
+      code: promo.code,
+      name: promo.name,
+      description: promo.description || "",
+      discountType: promo.discountType as DiscountType,
+      discountValue: Number(promo.discountValue),
+      startDate: promo.startDate,
+      endDate: promo.endDate,
+      type: promo.type as PromoType,
+      maxUses: promo.maxUses,
+      currentUses: promo.currentUses,
+      applicableTreatments,
+      applicableClinics,
+      isActive: promo.isActive
+    };
+    
+    return {
+      isValid: true,
+      message: "Promo code is valid",
+      promo: promoInfo
+    };
+  } catch (error) {
+    logger.error("Error validating promo code:", error);
+    return { isValid: false, message: "Error validating promo code" };
   }
 }
 
 /**
- * Find a promo by its ID
- * @param id The promo ID to search for
- * @returns The promo object if found, otherwise null
+ * Increment the usage count for a promo code
  */
-export async function findPromoById(id: string): Promise<Promo | null> {
+export async function incrementPromoCodeUsage(promoId: string): Promise<boolean> {
   try {
-    if (!id) return null;
-
-    const query = `
-      SELECT p.* FROM promos p
-      WHERE p.id = $1 
-      AND p.is_active = true
-      AND p.start_date <= NOW() 
-      AND p.end_date >= NOW()
-    `;
+    logger.info(`Incrementing usage count for promo ID: ${promoId}`);
     
-    const result = await pool.query(query, [id]);
+    await db.update(promos)
+      .set({ 
+        currentUses: promos.currentUses + 1,
+        updatedAt: new Date()
+      })
+      .where(eq(promos.id, promoId));
     
-    if (result.rows.length === 0) {
-      return null;
-    }
-    
-    return result.rows[0] as Promo;
-  } catch (err) {
-    log.error('Error finding promo by ID:', err);
-    return null;
-  }
-}
-
-/**
- * Check if a promo can be applied to a specific quote
- * @param promo The promo to check
- * @param quoteId The quote ID
- * @returns Boolean indicating if the promo can be applied
- */
-export async function canApplyPromoToQuote(promo: Promo, quoteId: string): Promise<boolean> {
-  try {
-    if (!promo || !quoteId) return false;
-    
-    // Get the quote details to check clinic association
-    const quoteQuery = `
-      SELECT q.clinic_id FROM quotes q
-      WHERE q.id = $1
-    `;
-    
-    const quoteResult = await pool.query(quoteQuery, [quoteId]);
-    
-    if (quoteResult.rows.length === 0) {
-      return false;
-    }
-    
-    const clinicId = quoteResult.rows[0].clinic_id;
-    
-    // Check if the promo is associated with this clinic
-    const promoClinicQuery = `
-      SELECT * FROM promo_clinics pc
-      WHERE pc.promo_id = $1 AND pc.clinic_id = $2
-    `;
-    
-    const promoClinicResult = await pool.query(promoClinicQuery, [promo.id, clinicId]);
-    
-    return promoClinicResult.rows.length > 0;
-  } catch (err) {
-    log.error('Error checking if promo can be applied to quote:', err);
+    logger.info(`Successfully incremented usage count for promo ID: ${promoId}`);
+    return true;
+  } catch (error) {
+    logger.error(`Error incrementing promo usage for ID ${promoId}:`, error);
     return false;
   }
 }
 
 /**
- * Calculate discount amount based on promo and quote total
- * @param promo The promo to apply
- * @param subtotal The quote subtotal
- * @returns The discount amount
+ * Calculate the discount amount based on promo type and original price
  */
-export function calculateDiscountAmount(promo: Promo, subtotal: number): number {
-  if (!promo || subtotal <= 0) return 0;
+export function calculateDiscount(
+  originalPrice: number, 
+  discountType: DiscountType, 
+  discountValue: number
+): { discountAmount: number, finalPrice: number } {
   
-  if (promo.discount_type === 'PERCENT') {
-    // Calculate percentage discount
-    return Math.round((subtotal * (promo.discount_value / 100)) * 100) / 100;
-  } else {
-    // Fixed amount discount, cannot exceed subtotal
-    return Math.min(promo.discount_value, subtotal);
+  // Ensure inputs are valid numbers
+  originalPrice = Number(originalPrice);
+  discountValue = Number(discountValue);
+  
+  if (isNaN(originalPrice) || isNaN(discountValue) || originalPrice < 0 || discountValue < 0) {
+    logger.warn(`Invalid discount calculation parameters: originalPrice=${originalPrice}, discountValue=${discountValue}`);
+    return { discountAmount: 0, finalPrice: originalPrice };
   }
-}
-
-/**
- * Apply a promotion to a quote
- * @param quoteId The quote ID to apply the promotion to
- * @param promo The promotion to apply
- * @returns The updated quote or null if application failed
- */
-export async function applyPromoToQuote(quoteId: string, promo: Promo): Promise<Quote | null> {
-  try {
-    if (!quoteId || !promo) return null;
-    
-    // Get the current quote
-    const quoteQuery = `
-      SELECT * FROM quotes
-      WHERE id = $1
-    `;
-    
-    const quoteResult = await pool.query(quoteQuery, [quoteId]);
-    
-    if (quoteResult.rows.length === 0) {
-      return null;
-    }
-    
-    const quote = quoteResult.rows[0] as Quote;
-    
-    // Calculate discount
-    const subtotal = Number(quote.subtotal) || 0;
-    const discountAmount = calculateDiscountAmount(promo, subtotal);
-    const finalPrice = Math.max(0, subtotal - discountAmount);
-    
-    // Update the quote with discount details
-    const updateQuery = `
-      UPDATE quotes
-      SET 
-        subtotal = $1,
-        discount = $2,
-        total_price = $3,
-        promo_id = $4,
-        updated_at = NOW()
-      WHERE id = $5
-      RETURNING *
-    `;
-    
-    const updateResult = await pool.query(updateQuery, [
-      subtotal, 
-      discountAmount, 
-      finalPrice, 
-      promo.id, 
-      quoteId
-    ]);
-    
-    if (updateResult.rows.length === 0) {
-      return null;
-    }
-    
-    return updateResult.rows[0] as Quote;
-  } catch (err) {
-    log.error('Error applying promo to quote:', err);
-    return null;
+  
+  let discountAmount = 0;
+  
+  if (discountType === DiscountType.PERCENT) {
+    // Cap percentage at 100%
+    const cappedPercentage = Math.min(discountValue, 100);
+    discountAmount = originalPrice * (cappedPercentage / 100);
+  } else if (discountType === DiscountType.FIXED) {
+    // Fixed amount discount can't exceed original price
+    discountAmount = Math.min(discountValue, originalPrice);
   }
-}
-
-/**
- * Remove a promotion from a quote
- * @param quoteId The quote ID to remove the promotion from
- * @returns The updated quote or null if the operation failed
- */
-export async function removePromoFromQuote(quoteId: string): Promise<Quote | null> {
-  try {
-    if (!quoteId) return null;
-    
-    // Get the current quote
-    const quoteQuery = `
-      SELECT * FROM quotes
-      WHERE id = $1
-    `;
-    
-    const quoteResult = await pool.query(quoteQuery, [quoteId]);
-    
-    if (quoteResult.rows.length === 0) {
-      return null;
-    }
-    
-    const quote = quoteResult.rows[0] as Quote;
-    
-    // Update the quote, removing discount details
-    const updateQuery = `
-      UPDATE quotes
-      SET 
-        discount = 0,
-        total_price = subtotal,
-        promo_id = NULL,
-        updated_at = NOW()
-      WHERE id = $1
-      RETURNING *
-    `;
-    
-    const updateResult = await pool.query(updateQuery, [quoteId]);
-    
-    if (updateResult.rows.length === 0) {
-      return null;
-    }
-    
-    return updateResult.rows[0] as Quote;
-  } catch (err) {
-    log.error('Error removing promo from quote:', err);
-    return null;
-  }
+  
+  // Round to 2 decimal places
+  discountAmount = Math.round(discountAmount * 100) / 100;
+  const finalPrice = Math.round((originalPrice - discountAmount) * 100) / 100;
+  
+  return { discountAmount, finalPrice };
 }

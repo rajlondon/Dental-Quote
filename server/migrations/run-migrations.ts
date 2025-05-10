@@ -1,56 +1,64 @@
-import { addCityColumns } from './add-city-columns';
-import { addCodeToPromo } from './add-code-to-promo';
-import { db, pool } from '../db';
+import fs from 'fs';
+import path from 'path';
+import { pool } from '../db';
+import log from '../utils/logger';
 
 /**
- * Migration runner that executes all migrations in sequence
+ * Runs all migration files on server start
  */
-async function runMigrations() {
-  console.log('Starting migrations...');
-  
+export async function runMigrations() {
   try {
-    // Check database connection
-    await db.execute('SELECT 1');
-    console.log('Database connection successful');
+    log.info('Running database migrations...');
     
-    // Run migrations in sequence
-    const migrations = [
-      { name: 'addCityColumns', fn: addCityColumns },
-      { name: 'addCodeToPromo', fn: addCodeToPromo },
-      // Add future migrations here
-    ];
+    // Get all migration SQL files
+    const migrationsDir = path.join(__dirname);
+    const sqlFiles = fs.readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .map(file => path.join(migrationsDir, file))
+      .sort(); // Ensure files are executed in alphabetical order
     
-    for (const migration of migrations) {
-      console.log(`Running migration: ${migration.name}`);
-      try {
-        const result = await migration.fn();
-        console.log(`✅ Migration ${migration.name} completed successfully`);
-      } catch (error) {
-        console.error(`❌ Migration ${migration.name} failed:`, error.message || 'Unknown error');
-        console.error(error);
+    log.info(`Found ${sqlFiles.length} migration files to execute`);
+    
+    // Create migrations table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS migrations (
+        id SERIAL PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL UNIQUE,
+        executed_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
+    // Get already executed migrations
+    const { rows } = await pool.query('SELECT filename FROM migrations');
+    const executedMigrations = new Set(rows.map(row => row.filename));
+    
+    // Execute each migration file if not already executed
+    for (const sqlFile of sqlFiles) {
+      const filename = path.basename(sqlFile);
+      
+      if (executedMigrations.has(filename)) {
+        log.info(`Migration ${filename} already executed, skipping`);
+        continue;
       }
+      
+      log.info(`Executing migration: ${filename}`);
+      
+      // Read and execute the SQL file
+      const sql = fs.readFileSync(sqlFile, 'utf8');
+      await pool.query(sql);
+      
+      // Record that this migration was executed
+      await pool.query(
+        'INSERT INTO migrations (filename) VALUES ($1)',
+        [filename]
+      );
+      
+      log.info(`Migration ${filename} executed successfully`);
     }
     
-    console.log('All migrations completed');
+    log.info('All migrations completed successfully');
   } catch (error) {
-    console.error('Migration process failed:', error);
-  } finally {
-    // Close the database connection
-    await pool.end();
+    log.error('Error running migrations:', error);
+    throw error; // Re-throw to allow the caller to handle it
   }
 }
-
-// Run migrations when executed directly
-if (require.main === module) {
-  runMigrations()
-    .then(() => {
-      console.log('Migration process finished');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Unhandled error during migration:', error);
-      process.exit(1);
-    });
-}
-
-export { runMigrations };
