@@ -296,9 +296,17 @@ export async function setupAuth(app: Express) {
         // Set a marker that this is a clinic staff session
         (req.session as any).isClinicStaff = true;
         
-        // Redirect to the target URL
-        console.log(`Clinic login successful, redirecting to ${targetUrl}`);
-        return res.redirect(targetUrl);
+        // Save the session explicitly before redirect to ensure cookie is set
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Error saving session before redirect:", saveErr);
+            return res.redirect('/clinic-login?error=session_save_error');
+          }
+          
+          // Redirect to the target URL with proper cookies set
+          console.log(`Clinic login successful, redirecting to ${targetUrl}`);
+          return res.redirect(targetUrl);
+        });
       });
     })(req, res, next);
   });

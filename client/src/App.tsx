@@ -497,22 +497,38 @@ function Router() {
       </Route>
 
       {/* Standard clinic portal route with ClinicGuard */}
+      {/* Standard clinic portal route with dashboard redirect */}
       <Route path="/clinic-portal">
-        {() => (
-          <ClinicGuard>
-            <ClinicPortalPage disableAutoRefresh={true} />
-          </ClinicGuard>
-        )}
+        {() => <Redirect to="/clinic-portal/dashboard" />}
       </Route>
       
-      {/* Direct clinic portal access route - bypasses the standard guard */}
+      {/* Specific clinic portal section route */}
+      <Route path="/clinic-portal/:section">
+        {({ params }) => {
+          // Extract the section from the URL
+          const section = params.section || 'dashboard';
+          
+          return (
+            <React.Suspense fallback={
+              <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+                <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
+                <p className="text-lg">Loading {section} section...</p>
+              </div>
+            }>
+              <ClinicPortalPage disableAutoRefresh={true} initialSection={section} />
+            </React.Suspense>
+          );
+        }}
+      </Route>
+      
+      {/* Route for direct clinic access with authentication check */}
       <Route path="/clinic-direct">
         {() => {
-          // Local authentication check to ensure we have clinic_staff access
+          // Local authentication check to ensure clinic access
           const [isLoading, setIsLoading] = useState(true);
           const [isAuthenticated, setIsAuthenticated] = useState(false);
           const { toast } = useToast();
-
+          
           // Use an effect to detect WebSocket issues
           useEffect(() => {
             const checkWebSocketConnection = () => {
