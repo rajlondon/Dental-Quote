@@ -5,7 +5,7 @@
 import 'dotenv/config';
 import fetch from 'node-fetch';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:5173';
 
 async function testPromoFiltering() {
   try {

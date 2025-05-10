@@ -1,74 +1,114 @@
-# Special Offers and Promo Codes Testing Guide
+# MyDentalFly Promotional System Testing Guide
 
-## Overview
+This document provides instructions for testing the hybrid promotional system which supports both automatic tokens and manual coupon codes.
 
-This document provides instructions on testing the new promotional code functionality. The feature allows filtering clinics based on promotional codes, showing only the associated clinic when a promotional code is present.
+## Setup Complete
 
-## Implementation Details
+The following components have been set up:
 
-The promotional code filtering is implemented through the following components:
+- ✅ Added `code` column to promos table to support coupon codes
+- ✅ Added discount fields to quotes table (`subtotal`, `discount`, `total_price`)
+- ✅ Created server-side API for promo code validation and application
+- ✅ Implemented client-side components for coupon code entry and display
+- ✅ Added analytics for tracking promotion usage
 
-1. **QuoteFlowContext**: Handles promotional code detection using the `isPromoTokenFlow` flag
-2. **SingleClinicCard**: A specialized component for displaying a single clinic with promotional information
-3. **MatchedClinicsPage**: Contains the filtering logic using `clinicsData.filter(clinic => clinic.id === clinicId)`
-4. **WhatsAppButton**: Added international number format support
+## Test Promo Code
 
-## Testing Instructions
+A test promo code has been created in the database:
 
-### Method 1: Using Test Link Page
+- **Promo Code**: `WELCOME20`
+- **Discount**: 20% off
+- **Details**: Welcome discount for new patients
+- **Valid Period**: One year from creation date
+- **City**: Istanbul
 
-1. Navigate to `/test-promo-urls.html` in your browser
-2. Click on any of the promo code test links
-3. Observe that only one clinic is displayed when using a promo code
-4. Notice the special offer badge below the clinic card
-5. Verify that the regular link (without promo) shows all clinics
+## Testing Methods
 
-### Method 2: Manual URL Testing
+### Method 1: Direct URL Tokens (Automatic)
 
-You can manually test the functionality by adding the following parameters to the matched-clinics URL:
+Users can access special offers directly through tokenized URLs:
+
+1. Go to the homepage
+2. Click on any special offer card
+3. The system will automatically track the promo through the quote journey
+4. The discount will be automatically applied at checkout
+
+### Method 2: Manual Coupon Codes
+
+Users can manually enter coupon codes:
+
+1. Create a new quote or load an existing quote
+2. Find the "Coupon Code" section in the sidebar
+3. Enter `WELCOME20` into the input field
+4. Click "Apply Code"
+5. The discount will be applied to the quote
+
+## API Testing
+
+### Promo Filtering API
+
+To test the promo filtering API:
 
 ```
-/matched-clinics?source=promo_token&clinicId=dentspa&promoToken=DENTSPA20&treatmentItems=[...]
+GET /api/v1/promos?code=WELCOME20
 ```
 
-Required parameters:
-- `source=promo_token` - Indicates this is a promotional code flow
-- `clinicId=CLINIC_ID` - The ID of the clinic to display (e.g., dentspa, beyazada, maltepe)
-- `promoToken=TOKEN_ID` - The promotional code to display (e.g., DENTSPA20, BEYAZ250)
-- `treatmentItems=[...]` - JSON array of treatment items
+This will return all promos matching the code.
 
-## Test Cases
+### Apply Code API
 
-1. **DENTSPA20 Promo Code**
-   - Expected Behavior: Only DentSpa clinic is displayed with "DENTSPA20" badge
-   - Clinic Features: Premium tier, 5-star hotel included
+To test applying a code to a quote:
 
-2. **BEYAZ250 Promo Code**
-   - Expected Behavior: Only Beyaz Ada clinic is displayed with "BEYAZ250" badge
-   - Clinic Features: Standard tier, 4-star hotel discounted
+```
+POST /api/apply-code
+{
+  "code": "WELCOME20",
+  "quoteId": "[QUOTE_ID]"
+}
+```
 
-3. **MALTEPE15 Promo Code**
-   - Expected Behavior: Only Maltepe clinic is displayed with "MALTEPE15" badge
-   - Clinic Features: Affordable tier, airport transfers included
+## Test Scenarios
 
-4. **No Promo Code (Control)**
-   - Expected Behavior: All clinics are displayed in comparison view
-   - No promotional badges visible
+1. **New Patient Registration + Code**
+   - Register a new patient account
+   - Create a new quote
+   - Apply the `WELCOME20` code
+   - Verify 20% discount is applied
 
-## Validation Criteria
+2. **Click Through From Promo**
+   - Click a promo on the homepage
+   - Follow through to quote creation
+   - Verify promo is automatically applied
 
-The implementation is considered successful if:
+3. **Clinic Applying Code For Patient**
+   - Login to clinic portal
+   - Create a quote for a patient
+   - Apply the `WELCOME20` code
+   - Verify discount is applied
 
-1. When a promotional URL with valid parameters is accessed, only the specified clinic is shown
-2. The promotional badge displays the correct promo code
-3. The filtering is consistent across page refreshes
-4. Selecting the clinic properly continues the quote flow
-5. The user experience feels seamless when coming from a promotional link
+4. **Invalid Code Testing**
+   - Try to apply an invalid code (e.g., `INVALID`)
+   - Verify appropriate error message is shown
 
-## Future Enhancements
+5. **Double Discount Prevention**
+   - Apply a promo through URL token
+   - Try to apply an additional code
+   - Verify system prevents double-discounting
 
-1. Add ability to apply/remove promo codes during the quote flow
-2. Implement promo code validation against database of valid codes
-3. Add expiration dates and usage limits to promotional codes
-4. Develop analytics tracking for promotional code usage
-5. Create admin interface for generating and managing promotional codes
+## Verification
+
+For each test, verify:
+
+1. The UI correctly shows the discount amount
+2. The subtotal reflects original price
+3. The total price correctly applies the discount
+4. The price breakdown in the PDF quote is accurate
+
+## Analytics
+
+The system tracks promo code usage through Mixpanel events:
+- `promo_code_applied`
+- `promo_code_invalid`
+- `special_offer_selected`
+
+These events include user ID, promo ID, and discount amount applied.
