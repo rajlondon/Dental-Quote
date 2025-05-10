@@ -606,7 +606,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                       {t('quotes.subtotal', 'Subtotal')}:
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      £{quote.subtotal || 0}
+                      {formatCurrency(quote.subtotal || 0)}
                     </td>
                   </tr>
                   <tr>
@@ -615,7 +615,11 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                       {quote.promoName && <span> ({quote.promoName})</span>}:
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 text-right">
-                      - £{quote.discountAmount || 0}
+                      {quote.discountAmount ? (
+                        `- ${formatCurrency(quote.discountAmount)}`
+                      ) : (
+                        `- ${formatDiscount(quote.discountType || 'fixed_amount', quote.discountValue || 0)}`
+                      )}
                     </td>
                   </tr>
                 </>
@@ -625,7 +629,7 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
                   {t('quotes.total', 'Total')}:
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                  £{quote.totalPrice || 0}
+                  {formatCurrency(quote.totalPrice || 0)}
                 </td>
               </tr>
             </tfoot>
@@ -640,9 +644,9 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
           <PromoCodeSummary
             promoCode={quote.promoCode}
             promoName={quote.promoName || 'Special Discount'}
-            discountType={quote.discountType === 'percentage' ? 'PERCENT' : 'FIXED_AMOUNT'}
+            discountType={quote.discountType === 'percentage' ? DiscountType.PERCENT : DiscountType.FIXED}
             discountValue={quote.discountValue || 0}
-            promoType={'DISCOUNT'}
+            promoType={PromoType.OFFER}
             subtotal={quote.subtotal}
             discountAmount={quote.discountAmount}
             totalAfterDiscount={quote.totalPrice}
