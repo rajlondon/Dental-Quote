@@ -136,6 +136,13 @@ export const quoteRequests = pgTable("quote_requests", {
   quoteData: json("quote_data"),
   // Special offer data
   specialOffer: json("special_offer"),
+  // Promo code data
+  promoId: uuid("promo_id"),
+  promoCode: varchar("promo_code", { length: 50 }),
+  discountType: varchar("discount_type", { length: 20 }),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }),
+  totalAfterDiscount: decimal("total_after_discount", { precision: 10, scale: 2 }),
   // Selected clinic
   selectedClinicId: integer("selected_clinic_id").references(() => clinics.id),
   // Notes visible to different users

@@ -6,6 +6,7 @@ import cors from "cors";
 import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { addCityColumns } from "./migrations/add-city-columns";
+import { runMigrations } from "./migrations/run-migrations";
 
 /**
  * Helper function to detect duplicate routes in Express app
@@ -107,12 +108,18 @@ app.use((req, res, next) => {
   // Run database migrations before starting the server
   try {
     console.log('Running database migrations...');
+    
+    // Run legacy city columns migration
     const migrationResult = await addCityColumns();
     if (migrationResult.success) {
-      console.log('✅ Database migrations completed successfully');
+      console.log('✅ City columns migration completed successfully');
     } else {
-      console.error('❌ Database migration failed:', migrationResult.message);
+      console.error('❌ City columns migration failed:', migrationResult.message);
     }
+    
+    // Run all SQL migrations using the new migration system
+    await runMigrations();
+    console.log('✅ SQL migrations completed successfully');
   } catch (error) {
     console.error('Error running database migrations:', error);
   }

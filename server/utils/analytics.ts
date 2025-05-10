@@ -1,129 +1,130 @@
-/**
- * Analytics utilities for tracking user actions
- */
+import logger from './logger';
 
-import axios from 'axios';
-import log from './logger';
+// Enum for event types to ensure consistency
+export enum AnalyticsEventType {
+  PROMO_CODE_APPLIED = 'promo_code_applied',
+  PROMO_CODE_REMOVED = 'promo_code_removed',
+  QUOTE_CREATED = 'quote_created',
+  QUOTE_VIEWED = 'quote_viewed',
+  BOOKING_CREATED = 'booking_created',
+  OFFER_CLICKED = 'offer_clicked',
+  PACKAGE_VIEWED = 'package_viewed',
+}
 
-// You might have Mixpanel or similar analytics service key
-const MIXPANEL_TOKEN = process.env.MIXPANEL_TOKEN;
-const ANALYTICS_ENABLED = !!MIXPANEL_TOKEN;
-
-interface AnalyticsEvent {
-  event: string;
-  properties: {
-    distinct_id: string;
-    [key: string]: any;
-  };
+export interface AnalyticsEvent {
+  eventType: AnalyticsEventType;
+  userId?: number;
+  userType?: 'anonymous' | 'authenticated';
+  promoId?: string;
+  promoCode?: string;
+  quoteId?: number;
+  bookingId?: number;
+  offerId?: string;
+  packageId?: string;
+  discountAmount?: number;
+  discountType?: string;
+  referrer?: string;
+  metadata?: Record<string, any>;
+  timestamp: Date;
 }
 
 /**
- * Track an event in the analytics system
- * @param event The event name
- * @param userId The user ID
- * @param properties Additional properties to track
- * @returns Promise resolving to true if tracking was successful
+ * Track an analytics event
+ * In a production environment, this would send data to an analytics service
+ * like Mixpanel, Segment, or Google Analytics
  */
-export async function trackEvent(
-  event: string, 
-  userId: string | number, 
-  properties: Record<string, any> = {}
-): Promise<boolean> {
-  // Skip if analytics is disabled
-  if (!ANALYTICS_ENABLED) {
-    log.debug(`Analytics disabled, would have tracked: ${event} for user ${userId}`);
-    return true;
-  }
-
+export function trackEvent(event: Omit<AnalyticsEvent, 'timestamp'>): void {
   try {
-    // Format the event data
-    const eventData: AnalyticsEvent = {
-      event,
-      properties: {
-        distinct_id: userId.toString(),
-        time: Date.now(),
-        ...properties,
-      },
+    const fullEvent: AnalyticsEvent = {
+      ...event,
+      timestamp: new Date()
     };
-
-    // When using Mixpanel, you'd send something like this:
-    if (MIXPANEL_TOKEN) {
-      const response = await axios.post(
-        'https://api.mixpanel.com/track',
-        {
-          data: Buffer.from(JSON.stringify([eventData])).toString('base64'),
-        },
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'text/plain',
-          },
-          params: {
-            verbose: 1,
-          },
-          auth: {
-            username: MIXPANEL_TOKEN,
-            password: '',
-          },
-        }
-      );
-
-      if (response.status !== 200) {
-        throw new Error(`Mixpanel API responded with status ${response.status}`);
-      }
-
-      return true;
+    
+    // Log the event for now - in production this would send to an analytics service
+    logger.info(`[ANALYTICS] ${event.eventType}`, { event: fullEvent });
+    
+    // In production environment, integrate with Mixpanel, Segment, etc.
+    if (process.env.NODE_ENV === 'production') {
+      // Example integration with a hypothetical analytics service
+      sendToAnalyticsService(fullEvent);
     }
-
-    // Default mock implementation for development
-    log.info(`[ANALYTICS] Tracked event: ${event}`, { userId, ...properties });
-    return true;
-  } catch (err) {
-    log.error(`Error tracking analytics event: ${event}`, err);
-    return false;
+  } catch (error) {
+    logger.error('[ANALYTICS] Failed to track event:', error);
   }
 }
 
 /**
- * Track a promo code application event
- * @param userId The user ID
- * @param promoId The promo ID
- * @param quoteId The quote ID
- * @param discountAmount The discount amount applied
- * @param success Whether the application was successful
- * @returns Promise resolving to true if tracking was successful
+ * Track when a promo code is applied
  */
-export async function trackPromoCodeApplication(
-  userId: string | number,
-  promoId: string,
-  quoteId: string,
-  discountAmount: number,
-  success: boolean
-): Promise<boolean> {
-  const event = success ? 'promo_code_applied' : 'promo_code_invalid';
-  
-  return trackEvent(event, userId, {
-    promo_id: promoId,
-    quote_id: quoteId,
-    discount_amount: discountAmount,
-    success,
+export function trackPromoCodeApplied(params: {
+  promoId: string;
+  promoCode: string;
+  userId?: number;
+  quoteId?: number;
+  discountAmount?: number;
+  discountType?: string;
+  referrer?: string;
+  metadata?: Record<string, any>;
+}): void {
+  trackEvent({
+    eventType: AnalyticsEventType.PROMO_CODE_APPLIED,
+    userType: params.userId ? 'authenticated' : 'anonymous',
+    ...params
   });
 }
 
 /**
- * Track a special offer selection event
- * @param userId The user ID
- * @param promoId The promo ID
- * @param source The source of the selection (e.g., 'homepage', 'email')
- * @returns Promise resolving to true if tracking was successful
+ * Track when a promo code is removed
  */
-export async function trackSpecialOfferSelection(
-  userId: string | number,
-  promoId: string,
-  source: string = 'homepage'
-): Promise<boolean> {
-  return trackEvent('special_offer_selected', userId, {
-    promo_id: promoId,
-    source,
+export function trackPromoCodeRemoved(params: {
+  promoId: string;
+  promoCode: string;
+  userId?: number;
+  quoteId?: number;
+  referrer?: string;
+  metadata?: Record<string, any>;
+}): void {
+  trackEvent({
+    eventType: AnalyticsEventType.PROMO_CODE_REMOVED,
+    userType: params.userId ? 'authenticated' : 'anonymous',
+    ...params
   });
+}
+
+/**
+ * Track when a special offer is clicked
+ */
+export function trackOfferClicked(params: {
+  offerId: string;
+  userId?: number;
+  referrer?: string;
+  metadata?: Record<string, any>;
+}): void {
+  trackEvent({
+    eventType: AnalyticsEventType.OFFER_CLICKED,
+    userType: params.userId ? 'authenticated' : 'anonymous',
+    ...params
+  });
+}
+
+/**
+ * Placeholder function for production analytics integration
+ * Would be replaced with actual API calls to analytics services
+ */
+function sendToAnalyticsService(event: AnalyticsEvent): void {
+  // This is where we'd integrate with an analytics service
+  try {
+    // Example: 
+    // if (process.env.MIXPANEL_TOKEN) {
+    //   const mixpanel = require('mixpanel').init(process.env.MIXPANEL_TOKEN);
+    //   mixpanel.track(event.eventType, {
+    //     distinct_id: event.userId || 'anonymous',
+    //     ...event
+    //   });
+    // }
+    
+    logger.debug('[ANALYTICS] Event sent to analytics service', { event });
+  } catch (error) {
+    logger.error('[ANALYTICS] Failed to send to analytics service:', error);
+  }
 }
