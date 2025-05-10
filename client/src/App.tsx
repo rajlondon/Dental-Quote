@@ -27,6 +27,7 @@ import PromoTestPage from "@/pages/PromoTestPage";
 import WebSocketTestPage from "@/pages/WebSocketTestPage";
 import ResilientWebSocketTest2 from "@/pages/ResilientWebSocketTest2";
 import ResilientWebSocketTest from "@/pages/ResilientWebSocketTest";
+import ResilientWebSocketTest3 from "@/pages/ResilientWebSocketTest3";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -151,6 +152,7 @@ function Router() {
       <Route path="/websocket-test" component={WebSocketTestPage} />
       <Route path="/resilient-websocket-test" component={ResilientWebSocketTest2} />
       <Route path="/resilient-websocket" component={ResilientWebSocketTest} />
+      <Route path="/resilient-websocket-test3" component={ResilientWebSocketTest3} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
