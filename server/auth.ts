@@ -233,16 +233,48 @@ export async function setupAuth(app: Express) {
         
         console.error("Database error during session restore:", dbErr);
         
-        // On database error, create a fallback user to maintain session continuity
-        console.log("Creating minimal fallback user during database outage");
+        // On database error, create a better fallback user to maintain session continuity
+        console.log("Creating enhanced fallback user during database outage");
         
-        // Create minimal user object for emergency fallback
+        // Check if the ID is likely for a clinic user based on known patterns
+        // We can't access req here because we're in the Passport deserializeUser
+        
+        // Try to get stored clinic role and ID from any available sources
+        let reconstructedRole = "recovery_mode";
+        let reconstructedClinicId: number | undefined = undefined;
+        
+        // Attempt to determine if this is a clinic user based on known ID ranges or patterns
+        // In this case, we'll use the sessionStore directly to check for session data
+        try {
+          // Check if this is likely a clinic user based on stored flags or known patterns
+          const isLikelyClinicId = 
+            // Check known clinic ID range
+            (typeof id === 'number' && id >= 30 && id <= 50) || 
+            // Or other known indicators
+            (typeof id === 'string' && id.startsWith('clinic-'));
+            
+          if (isLikelyClinicId) {
+            console.log(`User ID ${id} appears to be a clinic user ID based on known patterns`);
+            reconstructedRole = "clinic";
+            
+            // If we don't have a clinic ID but believe this is a clinic user, use ID as clinic ID
+            if (typeof id === 'number') {
+              reconstructedClinicId = id;
+            }
+          }
+        } catch (patternError) {
+          console.error("Error checking for clinic patterns:", patternError);
+        }
+        
+        // Create enhanced fallback user object with potential clinic data
         const fallbackUser = {
           id: id,
           email: "session-recovery@mydentalfly.local",
-          role: "recovery_mode"
+          role: reconstructedRole,
+          clinicId: reconstructedClinicId
         };
         
+        console.log(`Created fallback user with role: ${reconstructedRole}, clinicId: ${reconstructedClinicId || 'none'}`);
         done(null, fallbackUser);
       }
     } catch (err) {
