@@ -26,7 +26,8 @@ interface HttpClient {
 
 // In-memory storage for HTTP fallback clients and messages
 const httpClients: Map<string, HttpClient> = new Map();
-const messageQueue: MessageQueueItem[] = [];
+// Export message queue for access from websocketService
+export const messageQueue: MessageQueueItem[] = [];
 
 // Time in milliseconds after which to consider a connection stale
 const STALE_CONNECTION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
@@ -38,13 +39,13 @@ const MESSAGE_RETENTION_PERIOD = 2 * 60 * 1000; // 2 minutes
 function cleanupStaleClients() {
   const now = Date.now();
   
-  // Remove stale clients
-  for (const [connectionId, client] of httpClients.entries()) {
+  // Remove stale clients - use Array.from to avoid MapIterator issues
+  Array.from(httpClients.entries()).forEach(([connectionId, client]) => {
     if (now - client.lastActivity > STALE_CONNECTION_TIMEOUT) {
       console.log(`Removing stale HTTP client: ${connectionId}`);
       httpClients.delete(connectionId);
     }
-  }
+  });
   
   // Remove old messages
   let oldestValidMessageTime = now - MESSAGE_RETENTION_PERIOD;
