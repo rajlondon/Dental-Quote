@@ -4,6 +4,9 @@ import { useToast } from '@/hooks/use-toast';
 export interface WebSocketMessage {
   type: string;
   data?: any;
+  message?: string;
+  originalType?: string;
+  originalMessage?: any;
   timestamp?: number;
   connectionId?: string;
   userId?: number;
@@ -216,7 +219,22 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     try {
       // Use the correct protocol based on page protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      // Generate a unique connection ID for this connection
+      connectionIdRef.current = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      
+      // Build URL with connection tracking parameters
+      let wsUrl = `${protocol}//${window.location.host}/ws?connectionId=${connectionIdRef.current}`;
+      
+      // Add user identification when available
+      if (userId) {
+        wsUrl += `&userId=${userId}`;
+      }
+      
+      // Add clinic mode flag
+      if (clinicModeRef.current) {
+        wsUrl += `&isClinic=true`;
+      }
       
       // Close any existing socket before creating a new one
       if (socketRef.current) {
@@ -226,8 +244,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       
       console.log(`Connecting to WebSocket at ${wsUrl} (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
       
-      // Generate a unique connection ID for this connection
-      connectionIdRef.current = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
       
@@ -298,9 +314,16 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
             console.warn(`WebSocket ${message.type} received:`, message);
             // Show toast for important errors
             if (message.type === 'error' && toast) {
+              // Extract error message from any of the possible message formats
+              const errorMessage = 
+                typeof message.message === 'string' ? message.message :
+                typeof message.data === 'string' ? message.data :
+                message.data?.message || message.data?.error || 
+                'An error occurred with the real-time connection';
+                
               toast({
                 title: 'Connection Error',
-                description: message.message || 'An error occurred with the real-time connection',
+                description: errorMessage,
                 variant: 'destructive',
               });
             }
