@@ -148,10 +148,23 @@ export class WebSocketService {
   }
   
   private setupEventHandlers() {
-    this.wss.on('connection', (ws: WebSocket) => {
-      // Set a unique identifier for this connection
-      const connectionId = `ws-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    this.wss.on('connection', (ws: WebSocket, req) => {
+      // Set a unique identifier for this connection - preserve client-side ID if available
+      let connectionId = '';
+      const urlParams = new URL(req.url || '', `http://${req.headers.host}`).searchParams;
+      const clientProvidedId = urlParams.get('connectionId');
+      
+      if (clientProvidedId && clientProvidedId.length > 10) {
+        // Use client-provided ID if available (helps with error tracking)
+        connectionId = clientProvidedId;
+      } else {
+        // Generate server-side ID
+        connectionId = `ws-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      }
+      
+      // Store the connection ID on the socket object for reference
       (ws as any).connectionId = connectionId;
+      (ws as any).connectedAt = Date.now();
       console.log(`New WebSocket connection established: ${connectionId}`);
       
       // Handle messages with error catching
