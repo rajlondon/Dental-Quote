@@ -596,6 +596,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
           const failureTime = new Date().toISOString();
           console.warn(`WebSocket failure #${reconnectAttempt + 1} at ${failureTime}`);
           
+          // Force reset socket state to null
+          setSocket(null);
+          
+          // Generate a fresh connection ID for next attempt
+          connectionIdRef.current = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+          
           // Special handling for clinic staff
           if (clinicModeRef.current) {
             console.log('Clinic portal detected abnormal WebSocket closure - handling with enhanced reconnection');
@@ -607,7 +613,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
             }
             
             // Use a shorter initial delay for clinic users to minimize disruption
-            const clinicReconnectDelay = 1000; // 1 second instead of normal backoff
+            const clinicReconnectDelay = 750; // Shortened from 1000ms
             
             // Store timestamp of last abnormal close
             sessionStorage.setItem('last_ws_error_time', Date.now().toString());
