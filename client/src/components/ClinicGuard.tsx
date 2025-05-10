@@ -172,6 +172,10 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
 
     // Store that we've successfully accessed the clinic portal
     sessionStorage.setItem('clinic_portal_access_successful', 'true');
+    
+    // Set a cookie to mark that this is a clinic staff session
+    // This will help other components know not to do promo redirects
+    document.cookie = "is_clinic_staff=true; path=/; max-age=86400";
   }, [user]);
 
   if (!initialized) {

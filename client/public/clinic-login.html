@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clinic Staff Login | MyDentalFly</title>
+  <!-- Prevent caching to avoid redirect/session issues -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="stylesheet" href="/assets/static-login.css">
   <style>
     body {
@@ -282,7 +286,16 @@
         }
       }
       
-      // Add submit handler to show success message
+      // Add a session marker to disable promo redirects for this session
+      if (window.sessionStorage) {
+        sessionStorage.setItem('disable_promo_redirect', 'true');
+        console.log('Set session storage to disable promo redirects');
+      }
+      
+      // Set a clinic login marker cookie (fallback to sessionStorage if cookies don't work)
+      document.cookie = "is_clinic_login=true; path=/; max-age=86400";
+      
+      // Add submit handler to show success message and enhance form submission
       const loginForm = document.getElementById('loginForm');
       loginForm.addEventListener('submit', function(e) {
         // Don't prevent default - we want the form to actually submit
@@ -290,10 +303,21 @@
         // Show success message
         const successMessage = document.getElementById('successMessage');
         successMessage.style.display = 'block';
+        successMessage.textContent = 'Logging in... Please wait.';
         
         // Hide any error message
         const errorMessage = document.getElementById('errorMessage');
         errorMessage.style.display = 'none';
+        
+        // Disable the submit button to prevent double submission
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = 'Signing in...';
+        }
+        
+        // Log for debugging
+        console.log('Clinic login form submitted, redirecting to clinic portal...');
       });
     });
   </script>
