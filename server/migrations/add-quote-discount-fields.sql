@@ -1,0 +1,6 @@
+-- Add discount and promo fields to quotes table
+ALTER TABLE quotes 
+ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2) DEFAULT 0, 
+ADD COLUMN IF NOT EXISTS subtotal DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS promo_id UUID REFERENCES promos(id);

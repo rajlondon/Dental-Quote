@@ -43,7 +43,9 @@ export const useApplyCode = () => {
     },
     onSuccess: (data, variables) => {
       // Invalidate the quote query to refetch with the new discount
-      queryClient.invalidateQueries(['quote', variables.quoteId]);
+      queryClient.invalidateQueries({ 
+        queryKey: ['quote', variables.quoteId]
+      });
       
       // Show success message with debounce to prevent multiple toasts
       if (data.success && data.data) {
