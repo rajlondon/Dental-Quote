@@ -72,6 +72,7 @@ import {
   uploadRateLimit 
 } from "./middleware/security";
 import { setupWebSocketService, getWebSocketService, WebSocketService } from "./services/websocketService";
+import { registerMessageRoutes } from "./routes/messageRoutes";
 import { createNotificationService } from "./services/notificationService";
 import { createEmailNotificationService } from "./services/emailNotificationService";
 
@@ -1288,6 +1289,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
+  
+  // Set up long-polling fallback for WebSocket
+  registerMessageRoutes(app);
   
   // Add WebSocket health endpoint for monitoring
   app.get("/ws-health", (req, res) => {
