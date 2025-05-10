@@ -65,10 +65,33 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       return;
     }
     
-    // Check if we're in the clinic portal and should avoid connections
-    if (isClinic && (window as any).__inClinicPortal) {
-      console.log('In clinic portal - using special WebSocket handling');
-      // Set up dummy connection for clinic portal
+    // Check for clinic staff cookies and session storage flags
+    const isClinicStaff = document.cookie.split(';').some(cookie => 
+      cookie.trim().startsWith('is_clinic_staff=true') || 
+      cookie.trim().startsWith('is_clinic_login=true'));
+      
+    const clinicSessionActive = sessionStorage.getItem('clinic_portal_access_successful') === 'true';
+    
+    // If we're in clinic mode, check more persistently for portal access
+    if (isClinic || isClinicStaff || clinicSessionActive || (window as any).__inClinicPortal) {
+      console.log('In clinic portal - using special WebSocket handling', { 
+        isClinic, 
+        isClinicStaff, 
+        clinicSessionActive, 
+        inClinicPortal: (window as any).__inClinicPortal 
+      });
+      
+      // For clinic staff, try to get stored clinic ID from sessionStorage
+      let clinicUserId: number | undefined = undefined;
+      const storedUserId = sessionStorage.getItem('clinic_user_id');
+      if (storedUserId) {
+        clinicUserId = parseInt(storedUserId, 10);
+        if (!isNaN(clinicUserId) && clinicUserId > 0) {
+          console.log(`Retrieved clinic user ID from sessionStorage: ${clinicUserId}`);
+        }
+      }
+      
+      // Set up special clinic connection
       setSocket(null);
       setIsConnected(false);
       return;
@@ -166,9 +189,28 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       socket.onclose = (event) => {
         console.log(`WebSocket ${connectionIdRef.current} closed with code ${event.code}:`, event.reason || 'No reason provided');
         
-        // Don't reconnect if we're in clinic mode - we handle that separately
+        // Check clinic mode again to catch late clinic status flags
+        const isClinicStaff = document.cookie.split(';').some(cookie => 
+          cookie.trim().startsWith('is_clinic_staff=true') || 
+          cookie.trim().startsWith('is_clinic_login=true'));
+          
+        const clinicSessionActive = sessionStorage.getItem('clinic_portal_access_successful') === 'true';
+        
+        // Update clinic mode reference with latest status
+        clinicModeRef.current = isClinic || isClinicStaff || clinicSessionActive || !!(window as any).__inClinicPortal;
+        
+        // Determine if we should skip reconnection
         const skipReconnect = manualDisconnectRef.current || clinicModeRef.current;
-        console.log(`WebSocket ${connectionIdRef.current} closed - skip reconnect - Manual: ${manualDisconnectRef.current}, Clinic: ${clinicModeRef.current}, Code: ${event.code}`);
+        
+        console.log(`WebSocket ${connectionIdRef.current} closed - skip reconnect analysis:`, {
+          manual: manualDisconnectRef.current, 
+          clinicMode: clinicModeRef.current,
+          isClinicStaff,
+          clinicSessionActive,
+          inClinicPortal: !!(window as any).__inClinicPortal,
+          closeCode: event.code,
+          closeReason: event.reason || 'No reason provided'
+        });
         
         setSocket(null);
         setIsConnected(false);
@@ -177,30 +219,50 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           onClose();
         }
 
-        // Don't reconnect if we've exceeded max attempts or manual disconnect
+        // Special handling for code 1006 (abnormal closure)
+        const isAbnormalClosure = event.code === 1006;
+        if (isAbnormalClosure) {
+          console.warn(`WebSocket abnormal closure detected (code 1006). This typically indicates network issues.`);
+          
+          // Show a more specific message for clinic staff
+          if (clinicModeRef.current) {
+            console.log('Clinic portal detected abnormal WebSocket closure - handling specially');
+          }
+        }
+
+        // Don't reconnect if we've explicitly flagged to skip reconnect
         if (skipReconnect) {
-          console.log('Skipping WebSocket reconnect - manual disconnect or clinic mode');
+          console.log('Skipping WebSocket reconnect - manual disconnect or clinic mode active');
           return;
         }
         
+        // Implement exponential backoff for reconnection attempts
         if (reconnectAttempt < maxReconnectAttempts) {
-          console.log(`Attempting to reconnect in ${reconnectInterval}ms (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
-          // Use a timeout to avoid immediate reconnect attempts
+          // Calculate backoff time with jitter for reconnect attempts
+          const baseDelay = Math.min(reconnectInterval * Math.pow(1.5, reconnectAttempt), 30000); // Max 30 seconds
+          const jitter = Math.random() * 1000; // Add up to 1 second of jitter to prevent thundering herd
+          const delay = baseDelay + jitter;
+          
+          console.log(`Attempting to reconnect in ${Math.round(delay)}ms (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
+          
+          // Clear any existing timeout
           if (reconnectTimeoutRef.current) {
             window.clearTimeout(reconnectTimeoutRef.current);
           }
           
+          // Set up the next reconnect attempt
           reconnectTimeoutRef.current = window.setTimeout(() => {
             setReconnectAttempt(prev => prev + 1);
             connect();
-          }, reconnectInterval);
+          }, delay);
         } else {
-          // Show toast notification for connection failures
-          if (!isClinic) {
+          // Show toast notification for connection failures, but only for patient users
+          if (!clinicModeRef.current) {
             toast({
               title: 'Connection Lost',
               description: 'Lost connection to the server. Please refresh the page to reconnect.',
               variant: 'destructive',
+              duration: 10000, // 10 seconds
             });
           }
           console.error(`WebSocket failed to reconnect after ${maxReconnectAttempts} attempts`);

@@ -23,31 +23,53 @@ const PromoDetector: React.FC = () => {
     return null;
   }
   
+  // Create searchParams from the current URL first
+  const searchParams = new URLSearchParams(
+    typeof window !== 'undefined' ? window.location.search : ''
+  );
+  
   // Skip if explicitly disabled during clinic login
   if (typeof window !== 'undefined') {
-    // Check session storage flag
+    // Check multiple signals that we're in a clinic staff flow
+    
+    // 1. Check session storage flag
     if (sessionStorage.getItem('disable_promo_redirect') === 'true') {
       console.log('PromoDetector explicitly disabled via sessionStorage flag');
-      // Clear the flag so it doesn't persist forever
-      sessionStorage.removeItem('disable_promo_redirect');
       return null;
     }
     
-    // Check for clinic staff cookie
+    // 2. Check for clinic_portal_access_successful flag
+    if (sessionStorage.getItem('clinic_portal_access_successful') === 'true') {
+      console.log('PromoDetector disabled: clinic portal access detected');
+      return null;
+    }
+    
+    // 3. Check for clinic staff cookies (multiple possible indicators)
     const cookies = document.cookie.split(';');
     const isClinicStaff = cookies.some(cookie => 
-      cookie.trim().startsWith('is_clinic_staff=true'));
+      cookie.trim().startsWith('is_clinic_staff=true') || 
+      cookie.trim().startsWith('is_clinic_login=true'));
       
     if (isClinicStaff) {
       console.log('PromoDetector disabled: detected clinic staff cookie');
       return null;
     }
+    
+    // 4. Check for clinic login URL parameter
+    const isFromClinicLogin = searchParams.get('from') === 'clinic_login';
+    if (isFromClinicLogin) {
+      console.log('PromoDetector disabled: coming from clinic login page');
+      return null;
+    }
+    
+    // 5. Check for redirect from clinic guard flag
+    if (sessionStorage.getItem('redirecting_from_clinic_guard') === 'true') {
+      console.log('PromoDetector disabled: redirecting from clinic guard');
+      // Clear this flag after checking
+      sessionStorage.removeItem('redirecting_from_clinic_guard');
+      return null;
+    }
   }
-  
-  // Create searchParams from the current URL
-  const searchParams = new URLSearchParams(
-    typeof window !== 'undefined' ? window.location.search : ''
-  );
   
   // Our custom hooks
   const specialOfferHook = useSpecialOfferDetection();
