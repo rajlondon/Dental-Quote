@@ -26,9 +26,11 @@ import {
   ClipboardCheck, 
   ArrowRight,
   Sparkles,
-  Tag
+  Tag,
+  Ticket
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type PortalType = "patient" | "clinic" | "admin";
@@ -73,6 +75,7 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [specialOfferFilter, setSpecialOfferFilter] = useState<string>("all");
+  const [promoCodeFilter, setPromoCodeFilter] = useState<string>("all");
 
   if (isLoading) {
     return <div className="flex justify-center my-8">Loading quotes...</div>;
@@ -93,7 +96,7 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
     );
   }
 
-  // Filter quotes based on search term, status, and special offers
+  // Filter quotes based on search term, status, special offers, and promo codes
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch = 
       quote.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,7 +110,12 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
       (specialOfferFilter === "with-offers" && quote.specialOffer) || 
       (specialOfferFilter === "without-offers" && !quote.specialOffer);
     
-    return matchesSearch && matchesStatus && matchesSpecialOffer;
+    const matchesPromoCode = 
+      promoCodeFilter === "all" || 
+      (promoCodeFilter === "with-promo" && quote.promoCode) || 
+      (promoCodeFilter === "without-promo" && !quote.promoCode);
+    
+    return matchesSearch && matchesStatus && matchesSpecialOffer && matchesPromoCode;
   });
 
   // Generate the appropriate route prefix based on portal type
@@ -135,24 +143,45 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
         />
         <div className="flex gap-2">
           {(portalType === 'clinic' || portalType === 'admin') && (
-            <Select 
-              value={specialOfferFilter} 
-              onValueChange={setSpecialOfferFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Special offers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Quotes</SelectItem>
-                <SelectItem value="with-offers">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-blue-500" />
-                    <span>With Special Offers</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="without-offers">Without Special Offers</SelectItem>
-              </SelectContent>
-            </Select>
+            <>
+              <Select 
+                value={specialOfferFilter} 
+                onValueChange={setSpecialOfferFilter}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Special offers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Quotes</SelectItem>
+                  <SelectItem value="with-offers">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-blue-500" />
+                      <span>With Special Offers</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="without-offers">Without Special Offers</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select 
+                value={promoCodeFilter} 
+                onValueChange={setPromoCodeFilter}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Promo codes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Quotes</SelectItem>
+                  <SelectItem value="with-promo">
+                    <div className="flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-green-500" />
+                      <span>With Promo Codes</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="without-promo">Without Promo Codes</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
           )}
           
           <Select 
@@ -195,7 +224,15 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
             {filteredQuotes.map((quote) => (
               <TableRow 
                 key={quote.id}
-                className={quote.specialOffer ? 'bg-blue-50/50 hover:bg-blue-50/70' : ''}
+                className={
+                  quote.specialOffer && quote.promoCode 
+                    ? 'bg-gradient-to-r from-blue-50/50 to-green-50/50 hover:from-blue-50/70 hover:to-green-50/70' 
+                    : quote.specialOffer 
+                      ? 'bg-blue-50/50 hover:bg-blue-50/70' 
+                      : quote.promoCode 
+                        ? 'bg-green-50/50 hover:bg-green-50/70' 
+                        : ''
+                }
               >
                 <TableCell>
                   <div className="flex items-center gap-1">
@@ -214,6 +251,21 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
                         </Tooltip>
                       </TooltipProvider>
                     )}
+                    {quote.promoCode && (portalType === 'clinic' || portalType === 'admin') && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <Ticket className="h-4 w-4 text-green-500 ml-1" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Promo Code: {quote.promoCode}</p>
+                            {quote.promoName && <p className="text-xs text-muted-foreground">{quote.promoName}</p>}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -223,12 +275,30 @@ export default function QuoteListTable({ quotes, portalType, isLoading = false }
                 <TableCell>
                   <div className="flex flex-col">
                     <span>{quote.treatment}</span>
+                    {/* Special Offer Discount Info */}
                     {quote.specialOffer && (portalType === 'clinic' || portalType === 'admin') && (
                       <div className="flex items-center mt-1 text-xs text-blue-600">
                         <Tag className="h-3 w-3 mr-1" />
                         {quote.specialOffer.discountType === 'percentage' 
                           ? `${quote.specialOffer.discountValue}% off` 
                           : `£${quote.specialOffer.discountValue} off`}
+                      </div>
+                    )}
+                    {/* Promo Code Discount Info */}
+                    {quote.promoCode && quote.discountType && quote.discountValue && (portalType === 'clinic' || portalType === 'admin') && (
+                      <div className="flex items-center mt-1 text-xs text-green-600">
+                        <Ticket className="h-3 w-3 mr-1" />
+                        {quote.discountType === 'PERCENT' 
+                          ? `${quote.discountValue}% off` 
+                          : `${formatCurrency(parseFloat(quote.discountValue.toString()))} off`}
+                        {quote.promoName && ` • ${quote.promoName}`}
+                      </div>
+                    )}
+                    {/* Price Information with Subtotal */}
+                    {quote.subtotal && quote.totalAfterDiscount && (portalType === 'clinic' || portalType === 'admin') && (
+                      <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                        <span>Subtotal: {formatCurrency(parseFloat(quote.subtotal.toString()))}</span>
+                        <span className="font-medium">Total: {formatCurrency(parseFloat(quote.totalAfterDiscount.toString()))}</span>
                       </div>
                     )}
                   </div>
