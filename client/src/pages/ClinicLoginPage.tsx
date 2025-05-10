@@ -65,10 +65,23 @@ const ClinicLoginPage: React.FC = () => {
       sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
       
       // Use the loginMutation from useAuth hook
-      const userData = await loginMutation.mutateAsync({
-        email: values.email,
-        password: values.password
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password
+        }),
+        credentials: 'include'
       });
+      
+      if (!response.ok) {
+        throw new Error('Authentication failed');
+      }
+      
+      const userData = await response.json();
       
       // Verify this is a clinic staff account
       if (userData.role !== 'clinic_staff' && userData.role !== 'admin') {
