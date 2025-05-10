@@ -1290,8 +1290,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
   
-  // Set up long-polling fallback for WebSocket
-  registerMessageRoutes(app);
+  // Set up long-polling fallback for WebSocket with explicit route registration
+  try {
+    console.log('Registering long-polling message routes for WebSocket fallback');
+    registerMessageRoutes(app);
+    console.log('Long-polling message routes registered successfully');
+  } catch (error) {
+    console.error('Failed to register long-polling message routes:', error);
+  }
   
   // Add WebSocket health endpoint for monitoring
   app.get("/ws-health", (req, res) => {
