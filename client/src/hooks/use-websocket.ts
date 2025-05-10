@@ -91,10 +91,123 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         }
       }
       
-      // Set up special clinic connection
-      setSocket(null);
-      setIsConnected(false);
-      return;
+      // IMPORTANT IMPROVEMENT: Instead of skipping WebSocket connection for clinic staff,
+      // we'll establish a proper connection with clinic ID
+      if (clinicUserId) {
+        try {
+          // Use the correct protocol based on page protocol
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          
+          console.log(`Establishing clinic staff WebSocket connection to ${wsUrl} with clinic ID ${clinicUserId}`);
+          
+          // Close any existing socket before creating a new one
+          if (socketRef.current) {
+            socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
+            socketRef.current.close();
+          }
+          
+          // Generate unique connection ID for clinic connection
+          connectionIdRef.current = `ws-clinic-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+          
+          const socket = new WebSocket(wsUrl);
+          socketRef.current = socket;
+          
+          console.log(`WebSocket ${connectionIdRef.current} connecting for clinic ID: ${clinicUserId}`);
+          
+          socket.onopen = () => {
+            console.log(`Clinic WebSocket ${connectionIdRef.current} connected successfully`);
+            setSocket(socket);
+            setIsConnected(true);
+            setReconnectAttempt(0);
+            
+            // Send auth message to associate this connection with clinic user
+            const authMessage = {
+              type: 'auth',
+              userId: clinicUserId,
+              connectionId: connectionIdRef.current,
+              isClinic: true,
+              timestamp: Date.now()
+            };
+            socket.send(JSON.stringify(authMessage));
+            
+            // Set clinic mode flag for other components
+            (window as any).__clinicWebSocketConnected = true;
+            sessionStorage.setItem('clinic_websocket_connected', 'true');
+            
+            // Call the onOpen callback if provided
+            if (onOpen) {
+              onOpen();
+            }
+          };
+          
+          // Set up standard event handlers for the clinic WebSocket
+          socket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              
+              // Call user-provided message handler if available
+              if (onMessage) {
+                onMessage(data);
+              }
+              
+              // Special handling for certain message types
+              if (data.type === 'ping') {
+                // Respond to ping with pong
+                sendMessage({
+                  type: 'pong',
+                  timestamp: Date.now(),
+                  connectionId: connectionIdRef.current
+                });
+              }
+            } catch (error) {
+              console.error('Error parsing WebSocket message:', error);
+            }
+          };
+          
+          // Use the same close handler as regular connections
+          socket.onclose = (event) => {
+            console.log(`Clinic WebSocket ${connectionIdRef.current} closed with code ${event.code}:`, event.reason || 'No reason provided');
+            setSocket(null);
+            setIsConnected(false);
+            
+            if (onClose) {
+              onClose();
+            }
+            
+            // For abnormal closures, attempt to reconnect faster
+            if (event.code === 1006) {
+              console.warn(`⚠️ Abnormal closure of clinic WebSocket. Attempting rapid reconnect.`);
+              
+              // Quick reconnect for clinic staff
+              setTimeout(() => {
+                setReconnectAttempt(prevAttempt => prevAttempt + 1);
+                connect();
+              }, 1000);
+            }
+          };
+          
+          // Simple error handler
+          socket.onerror = (error) => {
+            console.error(`Clinic WebSocket error:`, error);
+            if (onError) {
+              onError(error);
+            }
+          };
+          
+          return;
+        } catch (clinicConnectError) {
+          console.error('Error establishing clinic WebSocket connection:', clinicConnectError);
+          // Fall through to normal connection logic on failure
+        }
+      } else {
+        // If we couldn't get a clinic user ID but we're in clinic mode,
+        // skip the connection but don't block reconnection attempts
+        console.log('Clinic mode detected but no valid clinic user ID found - skipping WebSocket connection for now');
+        setSocket(null);
+        setIsConnected(false);
+        return;
+      }
     }
 
     try {
@@ -219,14 +332,56 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           onClose();
         }
 
-        // Special handling for code 1006 (abnormal closure)
+        // Enhanced handling for code 1006 (abnormal closure)
         const isAbnormalClosure = event.code === 1006;
         if (isAbnormalClosure) {
-          console.warn(`WebSocket abnormal closure detected (code 1006). This typically indicates network issues.`);
+          // Log with warning level for abnormal closures
+          console.warn(`⚠️ WebSocket abnormal closure (1006) detected for connection ${connectionIdRef.current}. This typically indicates network issues or server restart.`);
           
-          // Show a more specific message for clinic staff
+          // Track failures for debugging
+          const failureTime = new Date().toISOString();
+          console.warn(`WebSocket failure #${reconnectAttempt + 1} at ${failureTime}`);
+          
+          // Special handling for clinic staff
           if (clinicModeRef.current) {
-            console.log('Clinic portal detected abnormal WebSocket closure - handling specially');
+            console.log('Clinic portal detected abnormal WebSocket closure - handling with enhanced reconnection');
+            
+            // For clinic connections, use more aggressive reconnection strategy
+            // This helps ensure clinic staff maintain stable connections
+            if (reconnectTimeoutRef.current) {
+              window.clearTimeout(reconnectTimeoutRef.current);
+            }
+            
+            // Use a shorter initial delay for clinic users to minimize disruption
+            const clinicReconnectDelay = 1000; // 1 second instead of normal backoff
+            
+            // Store timestamp of last abnormal close
+            sessionStorage.setItem('last_ws_error_time', Date.now().toString());
+            
+            // Add entry to sessionStorage to track reconnection attempts
+            const reconnectAttempts = JSON.parse(sessionStorage.getItem('ws_reconnect_attempts') || '[]');
+            reconnectAttempts.push({
+              timestamp: Date.now(),
+              connectionId: connectionIdRef.current,
+              code: event.code,
+              reason: event.reason || 'No reason provided'
+            });
+            
+            // Keep only the last 10 attempts
+            if (reconnectAttempts.length > 10) {
+              reconnectAttempts.shift();
+            }
+            
+            sessionStorage.setItem('ws_reconnect_attempts', JSON.stringify(reconnectAttempts));
+            
+            // Use special priority reconnection for clinic staff
+            reconnectTimeoutRef.current = window.setTimeout(() => {
+              console.log('Clinic staff priority reconnection attempt');
+              setReconnectAttempt(prevAttempt => prevAttempt + 1);
+              // Will trigger connect() in useEffect
+            }, clinicReconnectDelay);
+            
+            return;
           }
         }
 
