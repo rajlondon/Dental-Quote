@@ -208,7 +208,10 @@
             <input type="password" id="password" name="password" class="form-input" required>
           </div>
           
+          <!-- Explicit flag to identify clinic login -->
+          <input type="hidden" name="isClinicLogin" value="true">
           <input type="hidden" name="returnUrl" value="/clinic-portal/dashboard">
+          <input type="hidden" name="skipPromoRedirect" value="true">
           
           <button type="submit" class="submit-button">Sign In</button>
         </form>

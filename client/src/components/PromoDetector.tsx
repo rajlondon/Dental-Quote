@@ -24,11 +24,24 @@ const PromoDetector: React.FC = () => {
   }
   
   // Skip if explicitly disabled during clinic login
-  if (typeof window !== 'undefined' && sessionStorage.getItem('disable_promo_redirect') === 'true') {
-    console.log('PromoDetector explicitly disabled via sessionStorage flag');
-    // Clear the flag so it doesn't persist forever
-    sessionStorage.removeItem('disable_promo_redirect');
-    return null;
+  if (typeof window !== 'undefined') {
+    // Check session storage flag
+    if (sessionStorage.getItem('disable_promo_redirect') === 'true') {
+      console.log('PromoDetector explicitly disabled via sessionStorage flag');
+      // Clear the flag so it doesn't persist forever
+      sessionStorage.removeItem('disable_promo_redirect');
+      return null;
+    }
+    
+    // Check for clinic staff cookie
+    const cookies = document.cookie.split(';');
+    const isClinicStaff = cookies.some(cookie => 
+      cookie.trim().startsWith('is_clinic_staff=true'));
+      
+    if (isClinicStaff) {
+      console.log('PromoDetector disabled: detected clinic staff cookie');
+      return null;
+    }
   }
   
   // Create searchParams from the current URL

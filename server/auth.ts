@@ -256,8 +256,17 @@ export async function setupAuth(app: Express) {
   // Dedicated clinic login endpoint that performs server-side redirect
   app.post("/api/auth/clinic-login", (req, res, next) => {
     // Extract credentials and return URL from form submission
-    const { email, password, returnUrl } = req.body;
+    const { email, password, returnUrl, isClinicLogin, skipPromoRedirect } = req.body;
     const targetUrl = returnUrl || '/clinic-portal/dashboard';
+    
+    // Log the clinic login request for debugging
+    console.log("Clinic login request:", {
+      email: email ? `${email.substring(0, 3)}...` : undefined,
+      hasPassword: !!password,
+      returnUrl,
+      isClinicLogin,
+      skipPromoRedirect
+    });
     
     // Check if already authenticated as clinic_staff with same email
     if (req.isAuthenticated() && 
@@ -293,8 +302,13 @@ export async function setupAuth(app: Express) {
           return res.redirect('/clinic-login?error=session_error');
         }
         
-        // Set a marker that this is a clinic staff session
+        // Set markers in the session
         (req.session as any).isClinicStaff = true;
+        
+        // Add flags to prevent promo redirects if needed
+        if (skipPromoRedirect === 'true' || isClinicLogin === 'true') {
+          (req.session as any).skipPromoRedirect = true;
+        }
         
         // Save the session explicitly before redirect to ensure cookie is set
         req.session.save((saveErr) => {
@@ -305,6 +319,14 @@ export async function setupAuth(app: Express) {
           
           // Redirect to the target URL with proper cookies set
           console.log(`Clinic login successful, redirecting to ${targetUrl}`);
+          
+          // Set a cookie to help client-side detect this is a clinic session
+          res.cookie('is_clinic_staff', 'true', { 
+            httpOnly: false, // Allow JavaScript to read
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/' 
+          });
+          
           return res.redirect(targetUrl);
         });
       });
