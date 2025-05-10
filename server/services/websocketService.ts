@@ -28,6 +28,7 @@ export class WebSocketService {
   private static instance: WebSocketService;
   private wss: WebSocketServer;
   private clients: Map<string, Client> = new Map();
+  private recentClosures: Map<string, number[]> = new Map();
   
   constructor(server: Server) {
     // Initialize WebSocket server on a specific path to avoid conflict with Vite HMR
@@ -218,56 +219,145 @@ export class WebSocketService {
         }
       });
       
-      // Handle connection closing with improved error handling for code 1006
+      // Handle connection closing with enhanced diagnostics and recovery
       ws.on('close', (code: number, reason: string) => {
+        // Capture detailed diagnostics
+        const serverUptime = process.uptime();
+        const memoryUsage = process.memoryUsage();
+        const activeConnectionsBefore = this.getClientCount();
+        const connectionDuration = Date.now() - ((ws as any).connectedAt || Date.now());
+        const connectionDurationSeconds = (connectionDuration / 1000).toFixed(1);
+        
         // Remove client on disconnect
         // Convert Map entries to Array to avoid downlevelIteration issues
         let clientId = "unknown";
         let clientType = "unknown";
+        let wasRemoved = false;
         
         Array.from(this.clients.entries()).forEach(([id, client]) => {
           if (client.ws === ws) {
             this.clients.delete(id);
             clientId = id;
             clientType = client.type;
+            wasRemoved = true;
             console.log(`Client ${id} (${client.type}) disconnected with code ${code}, reason: ${reason || 'No reason'}`);
           }
         });
         
-        // If code 1006 (abnormal closure), log more details for debugging
+        // If code 1006 (abnormal closure), enhanced handling for this common issue
         if (code === 1006) {
           console.warn(`Abnormal WebSocket closure (1006) for client ${clientId} type ${clientType}. This typically indicates network issues or server restart.`);
           
-          // No need to attempt reconnect here - the client will handle reconnection
-          // Just log detailed information to help diagnose the issue
+          // For clinic connections, attempt to broadcast to other connections from same user
+          if (clientType === 'clinic') {
+            // Track abnormal closure for diagnostics
+            const closeTime = new Date().toISOString();
+            console.log(`Clinic WebSocket abnormal closure at ${closeTime} after ${connectionDurationSeconds}s connection`);
+            
+            // Capture additional state
+            const recentConnections = Array.from(this.clients.values())
+              .filter(c => c.type === 'clinic')
+              .map(c => ({
+                id: c.id,
+                connectionId: c.connectionId,
+                readyState: c.ws.readyState
+              }));
+              
+            console.log(`Current clinic connections: ${JSON.stringify(recentConnections)}`);
+          }
+          
+          // Log detailed connection diagnostics
           console.log(`WebSocket connection details:
             - Connection ID: ${clientId}
             - Client type: ${clientType}
             - Close code: ${code}
             - Close reason: ${reason || 'No reason provided'}
-            - Current server uptime: ${process.uptime().toFixed(2)}s
-            - Active connections: ${this.getClientCount()}
+            - Connection duration: ${connectionDurationSeconds}s
+            - Current server uptime: ${serverUptime.toFixed(2)}s
+            - Memory usage: ${Math.round(memoryUsage.rss / 1024 / 1024)}MB RSS
+            - Active connections before: ${activeConnectionsBefore}
+            - Active connections after: ${this.getClientCount()}
+            - Client was removed: ${wasRemoved}
           `);
+          
+          // Detect potential WebSocket storms (rapid reconnect cycles)
+          // This helps identify client-side issues
+          const now = Date.now();
+          const connectionKey = `${clientType}-${clientId}`;
+          if (!this.recentClosures) {
+            this.recentClosures = new Map();
+          }
+          
+          const closures = this.recentClosures.get(connectionKey) || [];
+          closures.push(now);
+          
+          // Only keep closures from the last minute
+          const recentClosures = closures.filter((time: number) => now - time < 60000);
+          this.recentClosures.set(connectionKey, recentClosures);
+          
+          // Alert if there are too many reconnect attempts
+          if (recentClosures.length >= 5) {
+            console.warn(`⚠️ Potential WebSocket storm detected for ${clientType} ${clientId}: ${recentClosures.length} reconnects in 60s`);
+          }
         }
       });
       
-      // Handle errors
+      // Handle errors with enhanced diagnostics
       ws.on('error', (error) => {
         console.error(`WebSocket error for connection ${connectionId}:`, error);
         
-        // Try to determine client ID
+        // Capture system state for diagnostics
+        const memoryUsage = process.memoryUsage();
+        const serverUptime = process.uptime();
+        const activeConnections = this.getClientCount();
+        
+        // Try to determine client ID and type
         let clientId = "unknown";
+        let clientType = "unknown";
         try {
           Array.from(this.clients.entries()).forEach(([id, client]) => {
             if (client.ws === ws) {
               clientId = id;
+              clientType = client.type;
             }
           });
           
-          // Log detailed error information
-          console.error(`WebSocket error for client ${clientId}:`, error);
+          // Log detailed error information with system state
+          console.error(`WebSocket error diagnostic information:
+            - Connection ID: ${connectionId}
+            - Client ID: ${clientId}
+            - Client type: ${clientType}
+            - Error name: ${error.name}
+            - Error message: ${error.message}
+            - Server uptime: ${serverUptime.toFixed(2)}s
+            - Memory usage: ${Math.round(memoryUsage.rss / 1024 / 1024)}MB RSS
+            - Active connections: ${activeConnections}
+            - Socket readyState: ${ws.readyState}
+            - Client protocol: ${(ws as any).protocol || 'unknown'}
+          `);
+          
+          // For clinic connections, attempt more aggressive error recovery
+          if (clientType === 'clinic') {
+            console.log(`Attempting additional error recovery for clinic connection ${connectionId}`);
+            
+            // If the socket is in an error state but technically still open, try to notify client
+            if (ws.readyState === WebSocket.OPEN) {
+              try {
+                ws.send(JSON.stringify({
+                  type: 'connection_warning',
+                  message: 'Server detected socket error - please refresh if functionality is impaired',
+                  errorType: error.name,
+                  timestamp: Date.now(),
+                  connectionId: connectionId
+                }));
+              } catch (notifyError) {
+                // Ignore notification errors during error handling
+                console.log(`Could not send error notification to client ${clientId}`);
+              }
+            }
+          }
         } catch (cleanupError) {
-          console.error(`Error identifying client during error handling:`, cleanupError);
+          console.error(`Error during enhanced error diagnostics:`, cleanupError);
         }
       });
       
