@@ -12,6 +12,9 @@ import ws from 'ws';
 // Initialize dotenv
 dotenv.config();
 
+// Set up WebSocket for Neon
+neonConfig.webSocketConstructor = ws;
+
 // Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

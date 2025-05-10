@@ -5,7 +5,7 @@ import { Router } from 'express';
 import { db } from '../db';
 import { applyPromoToQuote } from '../utils/promo-utils';
 import { eq } from 'drizzle-orm';
-import { promo, quote } from '@shared/schema';
+import { promos, quotes } from '@shared/schema';
 import { logger } from '../utils/logger';
 import { mixpanelTrack } from '../utils/analytics';
 
@@ -35,9 +35,9 @@ router.post('/quotes/apply-code', async (req, res) => {
     }
 
     // Find the promo by code (must be active)
-    const foundPromo = await db.select().from(promo)
+    const foundPromo = await db.select().from(promos)
       .where(
-        eq(promo.code, code.toUpperCase())
+        eq(promos.code, code.toUpperCase())
       ).limit(1);
     
     if (!foundPromo || foundPromo.length === 0) {
@@ -95,9 +95,9 @@ router.post('/quotes/apply-code', async (req, res) => {
     }
 
     // Get the quote
-    const foundQuote = await db.select().from(quote)
+    const foundQuote = await db.select().from(quotes)
       .where(
-        eq(quote.id, quoteId)
+        eq(quotes.id, quoteId)
       ).limit(1);
     
     if (!foundQuote || foundQuote.length === 0) {
