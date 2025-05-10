@@ -10,21 +10,23 @@ interface PageHeaderProps {
 /**
  * Consistent page header component used across the application
  */
-const PageHeader: React.FC<PageHeaderProps> = ({
+export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
   actions,
-  className = '',
+  className = ''
 }) => {
   return (
-    <div className={`flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0 mb-6 ${className}`}>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {description && (
-          <p className="text-muted-foreground mt-1">{description}</p>
-        )}
+    <div className={`mb-8 ${className}`}>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex space-x-2">{actions}</div>}
+      {description && (
+        <p className="mt-2 text-muted-foreground">
+          {description}
+        </p>
+      )}
     </div>
   );
 };
