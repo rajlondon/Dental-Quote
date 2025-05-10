@@ -116,6 +116,12 @@ interface UseWebSocketOptions {
    * @default false
    */
   disableAutoConnect?: boolean;
+  
+  /**
+   * Enable debug mode with verbose logging
+   * @default false
+   */
+  debug?: boolean;
 }
 
 /**
@@ -152,6 +158,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
     userId,
     isClinic = false,
     disableAutoConnect = false,
+    debug = false,
   } = options;
 
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -384,7 +391,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
           
           // Don't need to manually send pong - browser does it automatically
           // Just for tracking, we record that we got a ping
-          if (isDebugMode) {
+          if (debug) {
             console.log(`Received ping from server at ${new Date().toISOString()}`);
           }
         });
@@ -394,7 +401,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): {
           // Update the last pong time
           lastPongTime.current = Date.now();
           
-          if (isDebugMode) {
+          if (debug) {
             console.log(`Received pong from server at ${new Date().toISOString()}`);
           }
         });
