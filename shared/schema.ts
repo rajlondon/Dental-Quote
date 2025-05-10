@@ -335,6 +335,7 @@ export const promoQuoteVisitorsRelations = relations(promoQuoteVisitors, ({ one 
 export const promos = pgTable("promos", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
+  code: varchar("code", { length: 50 }).unique(), // Added for coupon code support
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   promoType: varchar("promo_type", { length: 20 }).notNull().$type<PromoType>(),
