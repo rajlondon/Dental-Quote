@@ -112,10 +112,11 @@ const ClinicLoginPage: React.FC = () => {
         try {
           // Store indicator for ongoing navigation
           sessionStorage.setItem('clinic_portal_redirect_timestamp', Date.now().toString());
+          sessionStorage.setItem('clinic_websocket_connected', 'true'); // Set WebSocket status
           
-          // Direct navigation to the unguarded clinic portal route
-          console.log('🔄 Redirecting to direct clinic portal access route');
-          window.location.href = '/clinic-direct';
+          // Direct navigation to the clinic portal dashboard directly
+          console.log('🔄 Redirecting to clinic portal dashboard');
+          window.location.href = '/clinic-portal/dashboard';
         } catch (navError) {
           console.error("Error during clinic portal navigation:", navError);
           // Fallback to react router
