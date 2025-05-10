@@ -50,6 +50,7 @@ import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
 import { TreatmentPackageManager } from '@/components/clinic/TreatmentPackageManager';
 import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
+import PackageQuoteManager from '@/components/clinic/PackageQuoteManager';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
