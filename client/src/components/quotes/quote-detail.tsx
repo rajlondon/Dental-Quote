@@ -31,6 +31,9 @@ import {
 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import QuoteXrayFiles from "./quote-xray-files";
+import { PromoCodeBadge } from "@/components/promo/PromoCodeSummary";
+import { PromoCodeSummary } from "@/components/promo/PromoCodeSummary";
+import { DiscountType, PromoType } from "@shared/schema";
 
 type PortalType = "patient" | "clinic" | "admin";
 
@@ -214,6 +217,9 @@ export default function QuoteDetail({
                   <Badge variant={getStatusBadgeColor(quoteRequest.status)}>
                     {getStatusLabel(quoteRequest.status)}
                   </Badge>
+                  {quoteRequest.promoCode && (
+                    <PromoCodeBadge code={quoteRequest.promoCode} />
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Created on {formatDate(quoteRequest.createdAt)}
