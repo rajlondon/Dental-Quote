@@ -24,6 +24,8 @@ import { usePromoStore } from '@/features/promo/usePromoStore';
 import { usePromoBySlug } from '@/features/promo/usePromoApi';
 import { useSpecialOfferDetection } from '@/hooks/use-special-offer-detection';
 import { usePackageDetection } from '@/hooks/use-package-detection';
+import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
+import { PromoCodeBadge } from '@/components/promo/PromoCodeBadge';
 import { DiscountType, PromoType } from '@shared/schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -180,8 +182,12 @@ const YourQuotePage: React.FC = () => {
     offerId, setOfferId,
     packageId, setPackageId,
     clinicId, setClinicId,
-    isSpecialOfferFlow, isPackageFlow
+    isSpecialOfferFlow, isPackageFlow,
+    quoteId, setQuoteId
   } = useQuoteFlow();
+  
+  // Auto-apply promo code from URL if present
+  const { appliedPromo, clearAppliedPromo } = useAutoApplyCode(quoteId);
   
   // Extract promo features from the Zustand store (all at once to prevent conditional hooks)
   const { 
