@@ -165,22 +165,36 @@ export class WebSocketService {
         }
       });
       
-      // Handle connection closing
+      // Handle connection closing with improved error handling for code 1006
       ws.on('close', (code: number, reason: string) => {
         // Remove client on disconnect
         // Convert Map entries to Array to avoid downlevelIteration issues
         let clientId = "unknown";
+        let clientType = "unknown";
+        
         Array.from(this.clients.entries()).forEach(([id, client]) => {
           if (client.ws === ws) {
             this.clients.delete(id);
             clientId = id;
-            console.log(`Client ${id} disconnected with code ${code}, reason: ${reason || 'No reason'}`);
+            clientType = client.type;
+            console.log(`Client ${id} (${client.type}) disconnected with code ${code}, reason: ${reason || 'No reason'}`);
           }
         });
         
         // If code 1006 (abnormal closure), log more details for debugging
         if (code === 1006) {
-          console.warn(`Abnormal WebSocket closure (1006) for client ${clientId}. This may indicate network issues.`);
+          console.warn(`Abnormal WebSocket closure (1006) for client ${clientId} type ${clientType}. This typically indicates network issues or server restart.`);
+          
+          // No need to attempt reconnect here - the client will handle reconnection
+          // Just log detailed information to help diagnose the issue
+          console.log(`WebSocket connection details:
+            - Connection ID: ${clientId}
+            - Client type: ${clientType}
+            - Close code: ${code}
+            - Close reason: ${reason || 'No reason provided'}
+            - Current server uptime: ${process.uptime().toFixed(2)}s
+            - Active connections: ${this.getClientCount()}
+          `);
         }
       });
       
