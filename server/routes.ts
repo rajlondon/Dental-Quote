@@ -37,6 +37,7 @@ import messagingRoutes from "./routes/messaging-routes";
 import bookingRoutes from "./routes/booking-routes";
 import appointmentRoutes from "./routes/appointment-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
+import { registerMessageRoutes } from "./routes/messageRoutes";
 import specialOffersRoutes from "./routes/special-offers-routes-fixed";
 import clinicSpecialOffersRoutes from "./routes/clinic-special-offers-fixed-v2";
 import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
