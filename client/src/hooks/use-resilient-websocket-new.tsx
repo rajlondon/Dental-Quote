@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from './use-toast';
 
+// Global connection tracking to prevent duplicate connections
+const activeConnections = new Map<string, boolean>();
+
 /**
  * Message structure for WebSocket communications
  */
@@ -109,6 +112,10 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const { toast } = useToast();
+  
+  // We'll define these functions later in the code
+  const pollForMessagesRef = useRef<(retryCount?: number) => Promise<void>>();
+  const startLongPollingRef = useRef<() => Promise<void>>();
   
   // Generate a unique connection ID
   const generateConnectionId = useCallback(() => {
