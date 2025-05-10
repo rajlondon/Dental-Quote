@@ -44,8 +44,14 @@ interface Quote {
   clinicContact?: string;
   treatments?: QuoteTreatment[];
   totalPrice?: number;
+  subtotal?: number;  // Original price before applying discount
   notes?: string;
   canEdit?: boolean;
+  promoCode?: string;  // Promo code applied to the quote
+  promoName?: string;  // Name of the promotion
+  discountType?: string; // Type of discount (percentage or fixed_amount)
+  discountValue?: number; // Value of the discount
+  discountAmount?: number; // Calculated discount amount
 }
 
 interface PatientQuoteDetailProps {
@@ -210,9 +216,16 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
       clinicAddress: quoteRequest.clinicAddress || 'Istanbul, Turkey',
       clinicContact: quoteRequest.clinicPhone || '+90 123 456 7890',
       totalPrice: totalPrice,
+      subtotal: quoteRequest.subtotal || totalPrice, // Original price before discount
       notes: quoteRequest.notes,
       treatments: treatments,
-      canEdit: canEdit
+      canEdit: canEdit,
+      // Promo code information
+      promoCode: quoteRequest.promoCode || null,
+      promoName: quoteRequest.promoName || null,
+      discountType: quoteRequest.discountType || null,
+      discountValue: quoteRequest.discountValue || null,
+      discountAmount: quoteRequest.discountAmount || null
     };
     
     console.log('[DEBUG] Final structured quote object:', result);
@@ -571,6 +584,28 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
               )}
             </tbody>
             <tfoot className="bg-gray-50">
+              {/* Show discount information if promo code was applied */}
+              {quote.promoCode && (
+                <>
+                  <tr>
+                    <td colSpan={2} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                      {t('quotes.subtotal', 'Subtotal')}:
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      £{quote.subtotal || 0}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2} className="px-6 py-4 text-sm font-medium text-blue-600 text-right">
+                      {t('quotes.discount', 'Discount')} 
+                      {quote.promoName && <span> ({quote.promoName})</span>}:
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 text-right">
+                      - £{quote.discountAmount || 0}
+                    </td>
+                  </tr>
+                </>
+              )}
               <tr>
                 <td colSpan={2} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
                   {t('quotes.total', 'Total')}:

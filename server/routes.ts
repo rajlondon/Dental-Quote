@@ -50,7 +50,7 @@ import clinicMediaRoutes from "./routes/clinic-media-routes";
 import openaiRoutes from "./routes/openai-routes";
 import imageCacheRoutes from "./routes/image-cache-routes";
 import promoTokenRoutes from "./routes/promo-token-routes";
-import applyCodeController from "./routes/apply-code";
+import applyCodeRoutes from "./routes/apply-code";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -530,8 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/quotes', quoteRoutes);
   
   // Register the apply-code endpoint for coupon code redemption
-  app.post('/api/promocodes/apply', applyCodeController.applyCode);
-  app.post('/api/promocodes/remove', applyCodeController.removeCode);
+  app.use(applyCodeRoutes);
   
   // Register Gemini AI routes for dental advice
   app.use('/api/gemini', geminiRoutes);
