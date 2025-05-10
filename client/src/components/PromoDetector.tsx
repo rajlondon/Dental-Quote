@@ -13,6 +13,24 @@ const PromoDetector: React.FC = () => {
   // Router hooks (only safe to use inside a Router component)
   const [location] = useLocation();
   
+  // Skip for specific routes - clinic portal, login, etc.
+  const isClinicRoute = location.startsWith('/clinic-') || location.startsWith('/clinic/') || location.startsWith('/clinic_');
+  const isAdminRoute = location.startsWith('/admin');
+  
+  // If we're on a clinic or admin route, don't process promo params
+  if (isClinicRoute || isAdminRoute) {
+    console.log('PromoDetector skipping for protected route:', location);
+    return null;
+  }
+  
+  // Skip if explicitly disabled during clinic login
+  if (typeof window !== 'undefined' && sessionStorage.getItem('disable_promo_redirect') === 'true') {
+    console.log('PromoDetector explicitly disabled via sessionStorage flag');
+    // Clear the flag so it doesn't persist forever
+    sessionStorage.removeItem('disable_promo_redirect');
+    return null;
+  }
+  
   // Create searchParams from the current URL
   const searchParams = new URLSearchParams(
     typeof window !== 'undefined' ? window.location.search : ''
@@ -25,6 +43,12 @@ const PromoDetector: React.FC = () => {
 
   // Process URL parameters once on mount or when they change
   useEffect(() => {
+    // Check if we're in the middle of a clinic login
+    if (typeof window !== 'undefined' && (window as any).clinicLoginInProgress) {
+      console.log('PromoDetector skipping due to clinic login in progress');
+      return;
+    }
+    
     // Initialize special offers from URL params
     specialOfferHook.initFromSearchParams(searchParams);
     

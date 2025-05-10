@@ -137,7 +137,13 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
   }
 
   if (!user) {
-    return <Redirect to="/portal-login" />;
+    console.log('ClinicGuard: Redirecting to clinic-login due to missing user');
+    // Set a specific flag to prevent interference from promo detection
+    sessionStorage.setItem('disable_promo_redirect', 'true');
+    sessionStorage.setItem('redirecting_from_clinic_guard', 'true');
+    
+    // Use /clinic-login endpoint for better cross-site compatibility with authorization
+    return <Redirect to="/clinic-login" />;
   }
 
   if (user.role !== 'clinic_staff' && user.role !== 'admin') {
@@ -146,7 +152,14 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       description: 'You do not have permission to access the clinic portal.',
       variant: 'destructive',
     });
-    return <Redirect to="/portal-login" />;
+    console.log('ClinicGuard: Redirecting to clinic-login due to invalid role:', user.role);
+    
+    // Set specific flags to prevent interference
+    sessionStorage.setItem('disable_promo_redirect', 'true');
+    sessionStorage.setItem('redirecting_from_clinic_guard', 'true');
+    
+    // Use /clinic-login endpoint for better cross-site compatibility with authorization
+    return <Redirect to="/clinic-login" />;
   }
   
   // Ensure we're not in a redirect loop by checking if we're coming from the login page
