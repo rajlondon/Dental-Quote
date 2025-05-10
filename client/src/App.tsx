@@ -24,6 +24,7 @@ import ClinicRouter from "@/pages/ClinicRouter";
 import ClinicDebugPage from "@/pages/ClinicDebugPage";
 import SpecialOfferTestPage from "@/pages/SpecialOfferTestPage";
 import PromoTestPage from "@/pages/PromoTestPage";
+import WebSocketTestPage from "@/pages/WebSocketTestPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -145,6 +146,7 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
+      <Route path="/websocket-test" component={WebSocketTestPage} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (

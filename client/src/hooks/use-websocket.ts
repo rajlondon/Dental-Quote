@@ -1,31 +1,147 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * Standard WebSocket message format for communication between client and server
+ */
 export interface WebSocketMessage {
+  /** 
+   * Message type identifier (required)
+   * Common types:
+   * - 'ping': Heartbeat message
+   * - 'pong': Server heartbeat response
+   * - 'auth': Authentication message
+   * - 'disconnect': Client-initiated disconnect
+   * - 'notification': User notification
+   * - 'update': Data update (specific entity data in the `data` field)
+   * - 'error': Error message (error details in the `message` field)
+   */
   type: string;
+  
+  /**
+   * Optional payload data specific to the message type
+   * Structure depends on the `type` field
+   */
   data?: any;
+  
+  /**
+   * Optional text message, used for notifications, errors, etc.
+   */
   message?: string;
+  
+  /**
+   * For response messages, the original request type
+   */
   originalType?: string;
+  
+  /**
+   * For response messages, the original request message
+   */
   originalMessage?: any;
+  
+  /**
+   * Timestamp in milliseconds (if not provided, will be added by the hook)
+   */
   timestamp?: number;
+  
+  /**
+   * Unique connection identifier (automatically added by the hook)
+   */
   connectionId?: string;
+  
+  /**
+   * User ID for authenticated messages (automatically added by the hook if available)
+   */
   userId?: number;
+  
+  /**
+   * Flag indicating if message is from/to a clinic user (automatically added by the hook if available)
+   */
   isClinic?: boolean;
 }
 
+/**
+ * Configuration options for the useWebSocket hook
+ */
 interface UseWebSocketOptions {
+  /**
+   * Callback when a message is received from the server
+   * @param message The received message
+   */
   onMessage?: (message: WebSocketMessage) => void;
+  
+  /**
+   * Callback when connection is established
+   */
   onOpen?: () => void;
+  
+  /**
+   * Callback when connection is closed
+   */
   onClose?: () => void;
+  
+  /**
+   * Callback when an error occurs
+   * @param error The error event
+   */
   onError?: (error: Event) => void;
+  
+  /**
+   * Time between reconnection attempts in milliseconds
+   * @default 2000
+   */
   reconnectInterval?: number;
+  
+  /**
+   * Maximum number of reconnection attempts before giving up
+   * @default 10
+   */
   maxReconnectAttempts?: number;
+  
+  /**
+   * User ID for authenticated connections
+   * Automatically added to outgoing messages
+   */
   userId?: number;
+  
+  /**
+   * Whether this connection is for a clinic user
+   * Affects message routing on the server
+   */
   isClinic?: boolean;
+  
+  /**
+   * Disable automatic connection on hook mount
+   * If true, you must manually call the returned connect function
+   * @default false
+   */
   disableAutoConnect?: boolean;
 }
 
-export function useWebSocket(options: UseWebSocketOptions = {}) {
+/**
+ * Hook for WebSocket communication with enhanced reliability and reconnection
+ * 
+ * @param options Configuration options for the WebSocket connection
+ * @returns Object containing connection state and control methods
+ * 
+ * Returned values:
+ * - socket: The active WebSocket instance or null if not connected
+ * - isConnected: Boolean indicating if the socket is currently connected
+ * - reconnectAttempt: The current reconnection attempt count
+ * - sendMessage: Function to send a message to the server
+ * - disconnect: Function to gracefully disconnect from the server (properly notifies the server)
+ * - connect: Function to force a connection (useful after manual disconnect)
+ * - connectionId: Unique identifier for this connection (useful for debugging)
+ */
+export function useWebSocket(options: UseWebSocketOptions = {}): {
+  socket: WebSocket | null;
+  isConnected: boolean;
+  reconnectAttempt: number;
+  sendMessage: (message: WebSocketMessage) => void;
+  disconnect: () => void;
+  connect: () => void;
+  connectionId: string | null;
+} {
   const {
     onMessage,
     onOpen,
@@ -472,16 +588,42 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
             connect();
           }, delay);
         } else {
-          // Show toast notification for connection failures, but only for patient users
-          if (!clinicModeRef.current) {
-            toast({
-              title: 'Connection Lost',
-              description: 'Lost connection to the server. Please refresh the page to reconnect.',
-              variant: 'destructive',
-              duration: 10000, // 10 seconds
+          // Log detailed diagnostic information about the failure
+          const connectionInfo = {
+            connectionId: connectionIdRef.current,
+            userId: userId,
+            isClinic: clinicModeRef.current,
+            attempts: reconnectAttempt,
+            maxAttempts: maxReconnectAttempts,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href
+          };
+          
+          console.error(`WebSocket failed to reconnect after ${maxReconnectAttempts} attempts`, connectionInfo);
+          
+          // Track reconnection failure in session for debugging
+          try {
+            const failures = JSON.parse(sessionStorage.getItem('ws_reconnect_failures') || '[]');
+            failures.push({
+              connectionId: connectionIdRef.current,
+              timestamp: Date.now(),
+              attempts: reconnectAttempt
             });
+            sessionStorage.setItem('ws_reconnect_failures', JSON.stringify(failures.slice(-5))); // Keep last 5
+          } catch (e) {
+            // Ignore storage errors
           }
-          console.error(`WebSocket failed to reconnect after ${maxReconnectAttempts} attempts`);
+          
+          // Show toast notification for connection failures
+          toast({
+            title: 'Connection Issue',
+            description: clinicModeRef.current 
+              ? 'Lost connection to the server. Some real-time updates will be delayed until you refresh the page.' 
+              : 'Lost connection to the server. Please refresh the page to reconnect.',
+            variant: 'destructive',
+            duration: 10000, // 10 seconds
+          });
         }
       };
 
@@ -569,9 +711,13 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         // Ignore storage errors
       }
     } else {
-      // Otherwise, queue for later
-      console.log('WebSocket not connected, queueing message:', message.type);
-      messageQueueRef.current.push(enhancedMessage);
+      // Otherwise, queue for later (maximum 50 messages to prevent memory issues)
+      if (messageQueueRef.current.length < 50) {
+        console.log(`WebSocket not connected, queueing message [${message.type}] (queue size: ${messageQueueRef.current.length + 1})`);
+        messageQueueRef.current.push(enhancedMessage);
+      } else {
+        console.warn(`WebSocket message queue full (50), dropping message [${message.type}]`);
+      }
     }
   }, [userId]);
 
