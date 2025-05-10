@@ -115,7 +115,7 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
   
   // Function references to break circular dependencies
   const pollForMessagesRef = useRef<(retryCount?: number) => Promise<void>>();
-  const startLongPollingRef = useRef<(manualStartForRetry?: boolean) => Promise<void>>();
+  const startLongPollingRef = useRef<(manualStartForRetry?: boolean, retryCount?: number) => Promise<void>>();
   
   // Generate a unique connection ID
   const generateConnectionId = useCallback(() => {
@@ -239,13 +239,21 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
   // Store the function in the ref to break circular dependencies
   pollForMessagesRef.current = pollForMessages;
   
-  // Start long polling for messages
-  const startLongPolling = useCallback(async (manualStartForRetry = false) => {
+  // Start long polling for messages with exponential backoff
+  const startLongPolling = useCallback(async (manualStartForRetry = false, retryCount = 0) => {
     if ((!useResilientMode && !manualStartForRetry) || manuallyDisconnected) return;
     
     try {
       // If we're already using fallback and connected, don't start again
       if (usingFallback && isConnected && !manualStartForRetry) return;
+      
+      // Don't retry too many times
+      if (retryCount > 5) {
+        if (debug) {
+          console.log(`Giving up on HTTP fallback after ${retryCount} attempts`);
+        }
+        return;
+      }
       
       // Generate a new connection ID if we don't have one
       const connectionId = connectionIdState || generateConnectionId();
@@ -265,55 +273,98 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
         registrationData.isClinic = isClinic;
       }
       
-      // Register with the server
-      const response = await fetch('/api/messages/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
-      });
+      // Register with the server with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
       
-      if (!response.ok) {
-        throw new Error(`Failed to register HTTP client: ${response.status}`);
-      }
-      
-      setIsConnected(true);
-      setUsingFallback(true);
-      
-      if (onOpen) {
-        onOpen();
-      }
-      
-      if (debug) {
-        console.log(`HTTP polling fallback active for connection ${connectionId}`);
-        toast({
-          title: 'Using HTTP Fallback',
-          description: 'WebSocket connection unavailable, using HTTP instead',
-          variant: 'default',
+      try {
+        const response = await fetch('/api/messages/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(registrationData),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.status === 429) {
+          // Rate limited - use exponential backoff
+          const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+          if (debug) {
+            console.log(`Rate limited, retrying HTTP fallback in ${retryDelay}ms (attempt ${retryCount + 1})`);
+          }
+          
+          setTimeout(() => {
+            if (startLongPollingRef.current) {
+              // TypeScript doesn't like us passing params here
+              (startLongPollingRef.current as any)(true, retryCount + 1);
+            }
+          }, retryDelay);
+          return;
+        }
+        
+        if (!response.ok) {
+          throw new Error(`Failed to register HTTP client: ${response.status}`);
+        }
+        
+        // Success
+        setIsConnected(true);
+        setUsingFallback(true);
+        setReconnectAttempt(0);
+        
+        if (onOpen) {
+          onOpen();
+        }
+        
+        if (debug) {
+          console.log(`HTTP polling fallback active for connection ${connectionId}`);
+          toast({
+            title: 'Using HTTP Fallback',
+            description: 'WebSocket connection unavailable, using HTTP instead',
+            variant: 'default',
+          });
+        }
+        
+        // Start polling for messages
+        if (pollForMessagesRef.current) {
+          // TypeScript doesn't like us passing params here, but this is
+          // correctly defined in the useCallback below
+          (pollForMessagesRef.current as any)(0);
+        }
+        
+        // Send any queued messages
+        await sendQueuedMessagesViaHttp();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err; // Re-throw for outer catch
       }
-      
-      // Start polling for messages
-      if (pollForMessagesRef.current) {
-        pollForMessagesRef.current();
+    } catch (error: any) {
+      if (error && error.name === 'AbortError') {
+        console.warn('HTTP registration request timed out');
+      } else {
+        console.error('Error starting long polling:', error ? error.message || String(error) : 'Unknown error');
       }
-      
-      // Send any queued messages
-      await sendQueuedMessagesViaHttp();
-    } catch (error) {
-      console.error('Error starting long polling:', error);
       
       if (onError) {
         onError(new Event('error'));
       }
       
-      // Try to restart polling after delay
+      // Calculate backoff delay
+      const retryDelay = Math.min(reconnectInterval * Math.pow(1.5, retryCount), 30000);
+      
+      if (debug) {
+        console.log(`Retrying HTTP fallback in ${retryDelay}ms (attempt ${retryCount + 1})`);
+      }
+      
+      // Try to restart polling after delay with incremented retry count
       setTimeout(() => {
         if (startLongPollingRef.current) {
-          startLongPollingRef.current();
+          // TypeScript doesn't like us passing params here
+          (startLongPollingRef.current as any)(true, retryCount + 1);
         }
-      }, reconnectInterval);
+      }, retryDelay);
     }
   }, [
     connectionIdState,
