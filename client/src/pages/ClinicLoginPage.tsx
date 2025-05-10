@@ -119,9 +119,22 @@ const ClinicLoginPage: React.FC = () => {
       returnUrlInput.value = '/clinic-portal/dashboard';
       form.appendChild(returnUrlInput);
       
-      // Submit the form
+      // Disable promo redirection specifically for clinic login
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      
+      // Set a flag to prevent redirection to your-quote page
+      window.clinicLoginInProgress = true;
+      
+      // Submit the form - using a workaround to overcome SPA intercepting the form
       document.body.appendChild(form);
-      form.submit();
+      
+      // Logging to debug redirect issue
+      console.log('Submitting clinic login form to:', form.action);
+      
+      // Navigate directly to avoid any SPA interception
+      setTimeout(() => {
+        form.submit();
+      }, 10);
       
       // No need for catch block or state resets since we're doing a full page navigation
       
