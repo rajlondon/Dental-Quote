@@ -580,8 +580,38 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     console.log(`Manually disconnecting WebSocket ${connectionIdRef.current}`);
     manualDisconnectRef.current = true;
     
-    if (socketRef.current) {
-      socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      try {
+        // Send graceful disconnect notification to server
+        console.log('Sending graceful disconnect signal to server');
+        socketRef.current.send(JSON.stringify({
+          type: 'disconnect',
+          connectionId: connectionIdRef.current,
+          userId: userId,
+          isClinic: clinicModeRef.current,
+          timestamp: new Date().toISOString()
+        }));
+        
+        // Add small delay to allow server to process disconnect message
+        setTimeout(() => {
+          if (socketRef.current) {
+            socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
+            socketRef.current.close(1000, 'Client initiated disconnect');
+            socketRef.current = null;
+          }
+        }, 100);
+      } catch (e) {
+        console.error('Error sending disconnect message:', e);
+        // Fall back to immediate close if message fails
+        if (socketRef.current) {
+          socketRef.current.onclose = null;
+          socketRef.current.close();
+          socketRef.current = null;
+        }
+      }
+    } else if (socketRef.current) {
+      // Socket exists but not in OPEN state
+      socketRef.current.onclose = null;
       socketRef.current.close();
       socketRef.current = null;
     }
@@ -594,7 +624,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       window.clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-  }, []);
+  }, [userId]);
 
   // Force connect - will try to connect even after manual disconnect
   const forceConnect = useCallback(() => {
@@ -631,34 +661,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     document.addEventListener('websocket-component-cleanup', handleComponentCleanup as EventListener);
     
     return () => {
-      // Clean up on unmount
+      // Clean up on unmount using the improved disconnect method
       if (socketRef.current) {
         console.log(`Closing WebSocket ${connectionIdRef.current} on hook unmount`);
-        
-        // Explicitly tell the server we're disconnecting to avoid reconnect problems
-        if (socketRef.current.readyState === WebSocket.OPEN) {
-          try {
-            socketRef.current.send(JSON.stringify({
-              type: 'disconnect',
-              userId,
-              connectionId: connectionIdRef.current,
-              reason: 'component_unmount',
-              timestamp: Date.now()
-            }));
-          } catch (e) {
-            console.error('Error sending disconnect message:', e);
-          }
-        }
-        
-        socketRef.current.onclose = null; // Prevent onclose from triggering reconnect
-        socketRef.current.close();
-        socketRef.current = null;
-      }
-      
-      // Clear any pending reconnect timeout
-      if (reconnectTimeoutRef.current) {
-        window.clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
+        // Use our enhanced disconnect method with proper server notification
+        disconnect();
       }
       
       // Remove event listeners
