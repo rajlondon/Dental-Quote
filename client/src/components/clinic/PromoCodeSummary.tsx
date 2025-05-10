@@ -1,73 +1,84 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tag, PercentIcon, PoundSterling } from 'lucide-react';
-import { formatCurrency } from '@/lib/format';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tag } from "lucide-react";
+import { formatCurrency, formatDiscount } from '@/lib/format';
 
 interface PromoCodeSummaryProps {
-  code: string;
-  discountType: 'PERCENT' | 'FIXED';
-  discountValue: number;
-  subtotal: number;
-  discount: number;
-  total: number;
-  className?: string;
+  promoData: {
+    id: string;
+    title: string;
+    code: string;
+    discount_type: string;
+    discount_value: number;
+  } | null;
+  originalPrice: number;
+  discountAmount: number;
+  finalPrice: number;
+  onRemove?: () => void;
 }
 
 /**
- * Component that displays a summary of an applied promotion code
+ * Displays a summary of the applied promo code with discount details
  */
-const PromoCodeSummary: React.FC<PromoCodeSummaryProps> = ({
-  code,
-  discountType,
-  discountValue,
-  subtotal,
-  discount,
-  total,
-  className = '',
+export const PromoCodeSummary: React.FC<PromoCodeSummaryProps> = ({
+  promoData,
+  originalPrice,
+  discountAmount,
+  finalPrice,
+  onRemove
 }) => {
+  if (!promoData) return null;
+
   return (
-    <Card className={`p-4 ${className}`}>
-      <div className="space-y-4">
+    <Card className="mb-4 border-primary/10 bg-primary/5">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Tag className="h-5 w-5 text-primary" />
-            <span className="font-medium text-lg">Promotion Applied</span>
+          <div className="flex items-center">
+            <Tag className="h-4 w-4 mr-2 text-primary" />
+            <CardTitle className="text-sm font-medium">Applied Promotion</CardTitle>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary font-medium">
-            {code}
-          </Badge>
-        </div>
-        
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          {discountType === 'PERCENT' ? (
-            <>
-              <PercentIcon className="h-4 w-4" />
-              <span>{discountValue}% discount</span>
-            </>
-          ) : (
-            <>
-              <PoundSterling className="h-4 w-4" />
-              <span>{formatCurrency(discountValue)} fixed discount</span>
-            </>
+          {onRemove && (
+            <button 
+              onClick={onRemove}
+              className="text-sm text-muted-foreground hover:text-destructive"
+              aria-label="Remove promo code"
+            >
+              Remove
+            </button>
           )}
         </div>
+        <CardDescription className="text-xs">{promoData.title}</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0 pb-2">
+        <div className="flex items-center space-x-2 bg-primary/10 p-2 rounded-md mb-3">
+          <span className="font-mono text-sm text-primary font-semibold">{promoData.code}</span>
+          <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-xs font-semibold">
+            {formatDiscount(promoData.discount_value, promoData.discount_type)} OFF
+          </span>
+        </div>
         
-        <div className="border-t pt-3 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Subtotal:</span>
-            <span>{formatCurrency(subtotal)}</span>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Original Price:</span>
+            <span>{formatCurrency(originalPrice)}</span>
           </div>
-          <div className="flex justify-between text-sm text-primary font-medium">
+          <div className="flex justify-between text-primary">
             <span>Discount:</span>
-            <span>-{formatCurrency(discount)}</span>
+            <span>-{formatCurrency(discountAmount)}</span>
           </div>
-          <div className="flex justify-between font-bold pt-2 border-t">
-            <span>Total:</span>
-            <span>{formatCurrency(total)}</span>
+          <Separator className="my-1" />
+          <div className="flex justify-between font-medium">
+            <span>Final Price:</span>
+            <span>{formatCurrency(finalPrice)}</span>
           </div>
         </div>
-      </div>
+      </CardContent>
+      <CardFooter className="pt-0 pb-3">
+        <p className="text-xs text-muted-foreground">
+          Promotional discount applied to your quote.
+        </p>
+      </CardFooter>
     </Card>
   );
 };

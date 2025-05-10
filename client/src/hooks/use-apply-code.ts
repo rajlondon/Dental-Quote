@@ -1,80 +1,145 @@
-/**
- * Hook for applying coupon codes to quotes
- */
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import { toast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-export interface ApplyCodeParams {
+interface UseApplyCodeOptions {
   quoteId: string;
-  clinicId: string;
-  code: string;
+  onSuccess?: (data: any) => void;
+  onError?: (error: Error) => void;
 }
 
-export interface ApplyCodeResponse {
+interface ApplyCodeResponse {
   success: boolean;
-  data?: {
-    quoteId: string;
+  message?: string;
+  quote?: {
+    id: string;
     subtotal: number;
     discount: number;
-    total: number;
-    promoLabel: string;
+    total_price: number;
+    promo_id?: string;
+    [key: string]: any;
   };
-  message?: string;
+  promo?: {
+    id: string;
+    title: string;
+    code: string;
+    discount_type: string;
+    discount_value: number;
+    [key: string]: any;
+  }
 }
 
 /**
- * Hook for applying coupon codes to quotes
- * @param options Optional configuration options
- * @returns Mutation for applying a coupon code
+ * Custom hook for applying promo codes to quotes
  */
-export const useApplyCode = () => {
-  const queryClient = useQueryClient();
+export function useApplyCode({ quoteId, onSuccess, onError }: UseApplyCodeOptions) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
-  return useMutation<ApplyCodeResponse, Error, ApplyCodeParams>({
-    mutationFn: async ({ quoteId, clinicId, code }) => {
-      const response = await apiRequest('POST', '/quotes/apply-code', {
-        quoteId,
-        clinicId,
-        code: code.toUpperCase().trim()
-      });
-      
-      return await response.json();
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate the quote query to refetch with the new discount
-      queryClient.invalidateQueries({ 
-        queryKey: ['quote', variables.quoteId]
-      });
-      
-      // Show success message with debounce to prevent multiple toasts
-      if (data.success && data.data) {
-        toast({
-          title: 'Promo code applied',
-          description: data.data.promoLabel,
-          variant: 'default',
-        });
-      }
-    },
-    onError: (error, variables) => {
-      console.error('Error applying code:', error);
-      
-      let message = 'Failed to apply promo code';
-      if (error.message?.includes('INVALID_CODE')) {
-        message = 'Invalid promo code';
-      } else if (error.message?.includes('INACTIVE_CODE')) {
-        message = 'This promo code has expired';
-      } else if (error.message?.includes('INVALID_CLINIC')) {
-        message = 'This promo code is not valid for the selected clinic';
-      }
-      
-      toast({
-        title: 'Error',
-        description: message,
-        variant: 'destructive',
-      });
+  const applyCode = async (code: string): Promise<boolean> => {
+    if (!code?.trim()) {
+      setError('Please enter a valid code');
+      return false;
     }
-  });
-};
 
-export default useApplyCode;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiRequest(
+        'POST',
+        '/api/apply-code',
+        { code: code.trim(), quoteId }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to apply promo code');
+      }
+
+      const data: ApplyCodeResponse = await response.json();
+      
+      if (data.success && data.quote) {
+        // Invalidate quote cache to refresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/quotes', quoteId] });
+        
+        if (onSuccess) {
+          onSuccess(data);
+        }
+        
+        return true;
+      } else {
+        setError(data.message || 'Invalid or expired coupon code');
+        if (onError) {
+          onError(new Error(data.message || 'Invalid or expired coupon code'));
+        }
+        return false;
+      }
+    } catch (err: any) {
+      console.error('Error applying promo code:', err);
+      setError(err.message || 'An error occurred while applying the code');
+      toast({
+        title: "Error",
+        description: err.message || 'An error occurred while applying the code',
+        variant: "destructive",
+      });
+      
+      if (onError) {
+        onError(err);
+      }
+      
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const removeCode = async (): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiRequest(
+        'POST',
+        '/api/remove-code',
+        { quoteId }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to remove promo code');
+      }
+
+      const data = await response.json();
+      
+      // Invalidate quote cache to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes', quoteId] });
+      
+      if (onSuccess) {
+        onSuccess(data);
+      }
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error removing promo code:', err);
+      setError(err.message || 'An error occurred while removing the code');
+      
+      if (onError) {
+        onError(err);
+      }
+      
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    applyCode,
+    removeCode,
+    isLoading,
+    error
+  };
+}
