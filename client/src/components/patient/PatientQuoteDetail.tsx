@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit, Gift, Tag, Percent } from 'lucide-react';
+import { PromoType, DiscountType } from '@shared/schema';
 
 // Define the treatment type
 type QuoteTreatment = {
