@@ -10,11 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { apiRequest } from '@/lib/queryClient';
-import { usePackages } from '@/hooks/use-packages';
+import { usePackages, PackageFilterOptions } from '@/hooks/use-packages';
 import { useSpecialOffers } from '@/hooks/use-special-offers';
-import { Loader2, PackageOpen, Tag, Calendar, FileText, Plus, X, Sparkles } from 'lucide-react';
+import { Loader2, PackageOpen, Tag, Calendar, FileText, Plus, X, Sparkles, MapPin } from 'lucide-react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CITIES, getActiveCities, getDefaultCity } from '@/constants/cities';
 
 interface PackageQuoteManagerProps {
   clinicId: number;
@@ -22,7 +24,15 @@ interface PackageQuoteManagerProps {
 
 const PackageQuoteManager: React.FC<PackageQuoteManagerProps> = ({ clinicId }) => {
   const { toast } = useToast();
-  const { packages, isLoading: isLoadingPackages } = usePackages(clinicId);
+  const [selectedCityCode, setSelectedCityCode] = useState(getDefaultCity().code);
+  
+  // Apply city filtering to the packages query
+  const packageOptions: PackageFilterOptions = {
+    clinicId,
+    cityCode: selectedCityCode
+  };
+  
+  const { packages, isLoading: isLoadingPackages } = usePackages(packageOptions);
   const { specialOffers, isLoading: isLoadingOffers } = useSpecialOffers(clinicId);
   const [selectedTab, setSelectedTab] = useState('packages');
   const [recentQuotes, setRecentQuotes] = useState<any[]>([]);
@@ -67,11 +77,17 @@ const PackageQuoteManager: React.FC<PackageQuoteManagerProps> = ({ clinicId }) =
     setIsCreatingQuote(true);
     
     try {
+      // Get city name for the quote
+      const selectedCity = getActiveCities().find(city => city.code === selectedCityCode);
+      const cityName = selectedCity ? selectedCity.name : 'Istanbul';
+      
       // Use the unified quote endpoint
       const response = await apiRequest('POST', '/api/treatment-plans/unified-quote', {
         promoType,
         promoId: selectedPromotionId,
         clinicId,
+        cityCode: selectedCityCode,
+        cityName,
         notes: additionalNotes || `Created for patient: ${patientEmail}`,
       });
 
@@ -127,6 +143,27 @@ const PackageQuoteManager: React.FC<PackageQuoteManagerProps> = ({ clinicId }) =
         <CardDescription>
           Create and manage quotes from packages and special offers
         </CardDescription>
+        <div className="mt-4 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={selectedCityCode}
+            onValueChange={setSelectedCityCode}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select city" />
+            </SelectTrigger>
+            <SelectContent>
+              {getActiveCities().map((city) => (
+                <SelectItem key={city.code} value={city.code}>
+                  {city.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            Filter by city
+          </span>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="packages" value={selectedTab} onValueChange={setSelectedTab}>
@@ -172,6 +209,12 @@ const PackageQuoteManager: React.FC<PackageQuoteManagerProps> = ({ clinicId }) =
                             </Badge>
                           )}
                         </div>
+                        {pkg.cityName && (
+                          <div className="flex items-center text-xs text-muted-foreground mt-1">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {pkg.cityName}
+                          </div>
+                        )}
                       </CardHeader>
                       <CardContent className="pb-2">
                         <p className="text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
@@ -201,6 +244,28 @@ const PackageQuoteManager: React.FC<PackageQuoteManagerProps> = ({ clinicId }) =
                               <div className="space-y-2">
                                 <Label htmlFor="package-title">Package</Label>
                                 <Input id="package-title" value={pkg.title} disabled />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="city">City</Label>
+                                <Select
+                                  value={selectedCityCode}
+                                  onValueChange={setSelectedCityCode}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select city" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {getActiveCities().map((city) => (
+                                      <SelectItem key={city.code} value={city.code}>
+                                        {city.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Select the city where the treatment will take place
+                                </div>
                               </div>
                               
                               <div className="space-y-2">
