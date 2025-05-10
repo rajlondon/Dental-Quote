@@ -251,6 +251,18 @@ function Router() {
           );
         }}
       </Route>
+      
+      {/* Promo Code Testing Route */}
+      <Route path="/promocode-test">
+        {() => {
+          const PromocodeTestPage = React.lazy(() => import("@/pages/PromocodeTestPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+              <PromocodeTestPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       {/* Route moved to avoid duplication */}
       <Route path="/rebuild">
         {() => {
