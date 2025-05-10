@@ -476,21 +476,46 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
   // Send a message through the WebSocket
   const sendMessage = useCallback((message: WebSocketMessage) => {
-    // Add timestamp to message
-    const timestampedMessage = {
+    // Add timestamp and connection tracking info to message
+    const enhancedMessage = {
       ...message,
       timestamp: Date.now(),
+      connectionId: connectionIdRef.current,
+      userId: userId,
+      isClinic: clinicModeRef.current
     };
+    
+    // Log message for enhanced debugging
+    if (message.type !== 'ping' && message.type !== 'pong') {
+      console.log(`Sending WebSocket message [${message.type}] on connection ${connectionIdRef.current}`, 
+        message.type === 'auth' ? '(auth message, details hidden)' : message);
+    }
     
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       // If connected, send immediately
-      socketRef.current.send(JSON.stringify(timestampedMessage));
+      socketRef.current.send(JSON.stringify(enhancedMessage));
+      
+      // Track message in session for debugging
+      try {
+        if (message.type !== 'ping' && message.type !== 'pong') {
+          const sentMessages = JSON.parse(sessionStorage.getItem('ws_sent_messages') || '[]');
+          if (sentMessages.length >= 20) sentMessages.shift(); // Keep last 20
+          sentMessages.push({
+            timestamp: Date.now(),
+            type: message.type,
+            connectionId: connectionIdRef.current
+          });
+          sessionStorage.setItem('ws_sent_messages', JSON.stringify(sentMessages));
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
     } else {
       // Otherwise, queue for later
       console.log('WebSocket not connected, queueing message:', message.type);
-      messageQueueRef.current.push(timestampedMessage);
+      messageQueueRef.current.push(enhancedMessage);
     }
-  }, []);
+  }, [userId]);
 
   // Manual disconnect function - won't try to reconnect
   const disconnect = useCallback(() => {
