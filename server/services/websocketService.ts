@@ -5,6 +5,9 @@ interface Client {
   ws: WebSocket;
   id: string;
   type: 'patient' | 'clinic' | 'admin';
+  isAlive: boolean;
+  connectionId: string;
+  lastHeartbeat: number;
 }
 
 interface Message {
@@ -68,15 +71,28 @@ export class WebSocketService {
         // Use Array.from to convert the Map entries to avoid MapIterator issues
         Array.from(this.clients.entries()).forEach(([clientId, client]) => {
           try {
-            // Check for stale connections (no pong received in 2 minutes)
-            const lastPongTime = lastPongTimes.get(clientId) || now;
-            const timeSinceLastPong = now - lastPongTime;
+            // Check for stale connections (no pong received in 2 minutes or marked as not alive)
+            const lastHeartbeatTime = client.lastHeartbeat || now;
+            const timeSinceLastHeartbeat = now - lastHeartbeatTime;
             
-            if (timeSinceLastPong > INACTIVE_TIMEOUT) {
-              console.warn(`Client ${clientId} (${client.type}) has been unresponsive for ${Math.floor(timeSinceLastPong/1000)}s. Terminating connection.`);
+            if (timeSinceLastHeartbeat > INACTIVE_TIMEOUT || !client.isAlive) {
+              console.warn(`Client ${clientId} (${client.type}, conn: ${client.connectionId}) inactive (alive=${client.isAlive}) for ${Math.floor(timeSinceLastHeartbeat/1000)}s. Terminating connection.`);
               try {
-                // Force close and cleanup the connection
-                if (client.ws.readyState !== WebSocket.CLOSED) {
+                // Send a close frame first to allow for clean close if possible
+                if (client.ws.readyState === WebSocket.OPEN) {
+                  // Try to send a notification message first
+                  try {
+                    client.ws.send(JSON.stringify({
+                      type: 'connection_timeout',
+                      payload: {
+                        reason: 'Connection timeout - no heartbeat response',
+                        timeSinceLastHeartbeat: timeSinceLastHeartbeat
+                      }
+                    }));
+                  } catch (notifyError) {
+                    // Ignore notification errors
+                  }
+                  // Then close the connection
                   client.ws.close(1000, "Connection timeout - no response to ping");
                 }
                 this.clients.delete(clientId);
@@ -92,9 +108,19 @@ export class WebSocketService {
               // Set up pong handler for this specific client
               client.ws.once('pong', () => {
                 // Update last pong time on response
-                lastPongTimes.set(clientId, Date.now());
-                console.log(`Heartbeat ping successful for client ${clientId} (${client.type})`);
+                const now = Date.now();
+                lastPongTimes.set(clientId, now);
+                client.lastHeartbeat = now;
+                client.isAlive = true;
+                
+                // Reduce log noise by only logging every 5th ping for active connections
+                if (now % 5 === 0) {
+                  console.log(`Heartbeat ping successful for client ${clientId} (${client.type}) - connection: ${client.connectionId}`);
+                }
               });
+              
+              // Mark as not alive until we get a pong
+              client.isAlive = false;
               
               // Send the ping
               client.ws.ping();
@@ -419,11 +445,18 @@ export class WebSocketService {
         }
       }
       
-      // Create the new client entry
-      const newClient: Client = { ws, id, type };
+      // Create the new client entry with the enhanced properties
+      const newClient: Client = { 
+        ws, 
+        id, 
+        type,
+        isAlive: true,
+        connectionId: (ws as any).connectionId || `conn-${Date.now()}`,
+        lastHeartbeat: Date.now()
+      };
       this.clients.set(id, newClient);
       
-      console.log(`New ${type} client registered with ID: ${id}`);
+      console.log(`New ${type} client registered with ID: ${id}, connection ID: ${newClient.connectionId}`);
       
       // Notify client of successful registration with error handling
       if (ws.readyState === WebSocket.OPEN) {
