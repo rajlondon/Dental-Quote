@@ -63,8 +63,42 @@ export function registerMessageRoutes(app: Express) {
    * Register a new HTTP client for message polling
    * This endpoint is called when a client wants to use the HTTP fallback
    */
+  // Simple rate limiter for our HTTP fallback
+  const rateLimiter = {
+    windowMs: 30000, // 30 seconds
+    maxRequests: 50,  // Allow more requests per window
+    clients: new Map<string, { count: number, resetTime: number }>()
+  };
+
+  // Helper function to check rate limit
+  const checkRateLimit = (ip: string): boolean => {
+    const now = Date.now();
+    const clientData = rateLimiter.clients.get(ip) || { count: 0, resetTime: now + rateLimiter.windowMs };
+    
+    // Reset if window expired
+    if (now > clientData.resetTime) {
+      clientData.count = 0;
+      clientData.resetTime = now + rateLimiter.windowMs;
+    }
+    
+    // Increment count
+    clientData.count++;
+    rateLimiter.clients.set(ip, clientData);
+    
+    // Return true if rate limited
+    return clientData.count > rateLimiter.maxRequests;
+  };
+
   app.post('/api/messages/register', (req: Request, res: Response) => {
     try {
+      // Apply rate limiting - use a more permissive limit
+      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+      if (checkRateLimit(ip) && ip !== 'unknown') {
+        // Only rate limit actual IPs (skip 'unknown')
+        console.log(`Rate limiting HTTP fallback registration for ${ip}`);
+        return res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
+      }
+      
       const { connectionId, userId, isClinic } = req.body;
       
       if (!connectionId) {
@@ -98,6 +132,13 @@ export function registerMessageRoutes(app: Express) {
    * there are messages available or the timeout is reached
    */
   app.get('/api/messages/poll/:connectionId', async (req: Request, res: Response) => {
+    // Apply a more lenient rate limit for polling - this happens frequently
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    if (checkRateLimit(ip) && ip !== 'unknown') {
+      console.log(`Rate limiting HTTP fallback polling for ${ip}`);
+      return res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
+    }
+    
     const connectionId = req.params.connectionId;
     const lastMessageId = req.query.lastMessageId as string | undefined;
     
@@ -245,6 +286,13 @@ export function registerMessageRoutes(app: Express) {
    */
   app.post('/api/messages/unregister', (req: Request, res: Response) => {
     try {
+      // Apply rate limiting
+      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+      if (checkRateLimit(ip) && ip !== 'unknown') {
+        console.log(`Rate limiting HTTP fallback unregistration for ${ip}`);
+        return res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
+      }
+      
       const { connectionId } = req.body;
       
       if (!connectionId) {
