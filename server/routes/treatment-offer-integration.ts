@@ -5,7 +5,6 @@ import { treatmentPlans, quotes, quoteLines, promoTokens, treatmentPackages, spe
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { v4 as uuidv4 } from 'uuid';
-import { insertQuoteSchema } from '@shared/schema';
 import { z } from 'zod';
 
 const router = Router();
