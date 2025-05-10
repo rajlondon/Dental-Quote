@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from './use-toast';
 
 /**
  * Message structure for WebSocket communications
