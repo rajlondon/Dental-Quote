@@ -1,130 +1,165 @@
 import logger from './logger';
 
-// Enum for event types to ensure consistency
-export enum AnalyticsEventType {
-  PROMO_CODE_APPLIED = 'promo_code_applied',
-  PROMO_CODE_REMOVED = 'promo_code_removed',
-  QUOTE_CREATED = 'quote_created',
-  QUOTE_VIEWED = 'quote_viewed',
-  BOOKING_CREATED = 'booking_created',
-  OFFER_CLICKED = 'offer_clicked',
-  PACKAGE_VIEWED = 'package_viewed',
-}
-
-export interface AnalyticsEvent {
-  eventType: AnalyticsEventType;
+/**
+ * Interface for tracking promo code application events
+ */
+interface PromoCodeAppliedEvent {
+  promoId: string;
+  promoCode: string;
+  quoteId: number;
   userId?: number;
-  userType?: 'anonymous' | 'authenticated';
-  promoId?: string;
-  promoCode?: string;
-  quoteId?: number;
-  bookingId?: number;
-  offerId?: string;
-  packageId?: string;
+  clinicId?: number;
   discountAmount?: number;
   discountType?: string;
   referrer?: string;
   metadata?: Record<string, any>;
-  timestamp: Date;
 }
 
 /**
- * Track an analytics event
- * In a production environment, this would send data to an analytics service
- * like Mixpanel, Segment, or Google Analytics
+ * Interface for tracking promo code removal events
  */
-export function trackEvent(event: Omit<AnalyticsEvent, 'timestamp'>): void {
+interface PromoCodeRemovedEvent {
+  promoId: string;
+  promoCode: string;
+  quoteId: number;
+  userId?: number;
+  clinicId?: number;
+  referrer?: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Track when a promo code is applied to a quote
+ */
+export function trackPromoCodeApplied(event: PromoCodeAppliedEvent): void {
   try {
-    const fullEvent: AnalyticsEvent = {
-      ...event,
-      timestamp: new Date()
-    };
-    
-    // Log the event for now - in production this would send to an analytics service
-    logger.info(`[ANALYTICS] ${event.eventType}`, { event: fullEvent });
-    
-    // In production environment, integrate with Mixpanel, Segment, etc.
-    if (process.env.NODE_ENV === 'production') {
-      // Example integration with a hypothetical analytics service
-      sendToAnalyticsService(fullEvent);
-    }
+    logger.info({
+      event: 'promo_code_applied',
+      timestamp: new Date().toISOString(),
+      ...event
+    });
+
+    // In a real implementation, you might send this to an analytics service
+    // such as Mixpanel, Google Analytics, or a custom analytics endpoint
   } catch (error) {
-    logger.error('[ANALYTICS] Failed to track event:', error);
+    logger.error('Error tracking promo code application:', error);
   }
 }
 
 /**
- * Track when a promo code is applied
+ * Track when a promo code is removed from a quote
  */
-export function trackPromoCodeApplied(params: {
-  promoId: string;
-  promoCode: string;
-  userId?: number;
-  quoteId?: number;
-  discountAmount?: number;
-  discountType?: string;
-  referrer?: string;
-  metadata?: Record<string, any>;
-}): void {
-  trackEvent({
-    eventType: AnalyticsEventType.PROMO_CODE_APPLIED,
-    userType: params.userId ? 'authenticated' : 'anonymous',
-    ...params
-  });
+export function trackPromoCodeRemoved(event: PromoCodeRemovedEvent): void {
+  try {
+    logger.info({
+      event: 'promo_code_removed',
+      timestamp: new Date().toISOString(),
+      ...event
+    });
+
+    // In a real implementation, you might send this to an analytics service
+  } catch (error) {
+    logger.error('Error tracking promo code removal:', error);
+  }
 }
 
 /**
- * Track when a promo code is removed
+ * Track when a special offer is viewed
  */
-export function trackPromoCodeRemoved(params: {
-  promoId: string;
-  promoCode: string;
-  userId?: number;
-  quoteId?: number;
-  referrer?: string;
-  metadata?: Record<string, any>;
-}): void {
-  trackEvent({
-    eventType: AnalyticsEventType.PROMO_CODE_REMOVED,
-    userType: params.userId ? 'authenticated' : 'anonymous',
-    ...params
-  });
+export function trackSpecialOfferViewed(
+  offerId: string,
+  userId?: number,
+  metadata?: Record<string, any>
+): void {
+  try {
+    logger.info({
+      event: 'special_offer_viewed',
+      timestamp: new Date().toISOString(),
+      offerId,
+      userId,
+      ...metadata
+    });
+  } catch (error) {
+    logger.error('Error tracking special offer view:', error);
+  }
 }
 
 /**
  * Track when a special offer is clicked
  */
-export function trackOfferClicked(params: {
-  offerId: string;
-  userId?: number;
-  referrer?: string;
-  metadata?: Record<string, any>;
-}): void {
-  trackEvent({
-    eventType: AnalyticsEventType.OFFER_CLICKED,
-    userType: params.userId ? 'authenticated' : 'anonymous',
-    ...params
-  });
+export function trackSpecialOfferClicked(
+  offerId: string,
+  userId?: number,
+  metadata?: Record<string, any>
+): void {
+  try {
+    logger.info({
+      event: 'special_offer_clicked',
+      timestamp: new Date().toISOString(),
+      offerId,
+      userId,
+      ...metadata
+    });
+  } catch (error) {
+    logger.error('Error tracking special offer click:', error);
+  }
 }
 
 /**
- * Placeholder function for production analytics integration
- * Would be replaced with actual API calls to analytics services
+ * Track when a user starts a quote from a special offer
  */
-function sendToAnalyticsService(event: AnalyticsEvent): void {
-  // This is where we'd integrate with an analytics service
+export function trackQuoteStartedFromOffer(
+  offerId: string,
+  quoteId: number,
+  userId?: number,
+  metadata?: Record<string, any>
+): void {
   try {
-    // Example: 
-    // if (process.env.MIXPANEL_TOKEN) {
-    //   const mixpanel = require('mixpanel').init(process.env.MIXPANEL_TOKEN);
-    //   mixpanel.track(event.eventType, {
-    //     distinct_id: event.userId || 'anonymous',
-    //     ...event
-    //   });
-    // }
-    
-    logger.debug('[ANALYTICS] Event sent to analytics service', { event });
+    logger.info({
+      event: 'quote_started_from_offer',
+      timestamp: new Date().toISOString(),
+      offerId,
+      quoteId,
+      userId,
+      ...metadata
+    });
   } catch (error) {
-    logger.error('[ANALYTICS] Failed to send to analytics service:', error);
+    logger.error('Error tracking quote started from offer:', error);
   }
 }
+
+/**
+ * Track when a quote with a promo code is completed
+ */
+export function trackQuoteCompletedWithPromo(
+  promoId: string,
+  promoCode: string,
+  quoteId: number,
+  userId?: number,
+  clinicId?: number,
+  metadata?: Record<string, any>
+): void {
+  try {
+    logger.info({
+      event: 'quote_completed_with_promo',
+      timestamp: new Date().toISOString(),
+      promoId,
+      promoCode,
+      quoteId,
+      userId,
+      clinicId,
+      ...metadata
+    });
+  } catch (error) {
+    logger.error('Error tracking quote completed with promo:', error);
+  }
+}
+
+export default {
+  trackPromoCodeApplied,
+  trackPromoCodeRemoved,
+  trackSpecialOfferViewed,
+  trackSpecialOfferClicked,
+  trackQuoteStartedFromOffer,
+  trackQuoteCompletedWithPromo
+};
