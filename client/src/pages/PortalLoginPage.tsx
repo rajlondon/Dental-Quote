@@ -916,6 +916,32 @@ const PortalLoginPage: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {/* Notice about dedicated clinic login page */}
+                  <div className="mb-4 p-3 bg-primary/5 rounded-md">
+                    <p className="text-sm font-medium mb-2">We've created a dedicated login page for clinic staff</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      For improved stability and better access to your dashboard, please use our new dedicated clinic portal.
+                    </p>
+                    <Button 
+                      onClick={() => setLocation('/clinic-login')} 
+                      className="w-full"
+                      variant="default"
+                    >
+                      Go to Clinic Login Portal
+                    </Button>
+                  </div>
+                  
+                  <div className="relative mb-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or continue here
+                      </span>
+                    </div>
+                  </div>
+                  
                   <Form {...loginForm}>
                     <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                       <FormField
