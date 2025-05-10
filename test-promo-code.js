@@ -1,112 +1,89 @@
 /**
  * Test script to create a promo code for testing
  */
-import 'dotenv/config';
-import pg from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+require('dotenv').config();
+const { Pool } = require('pg');
+const { v4: uuidv4 } = require('uuid');
 
-const { Pool } = pg;
-
-// Create a PostgreSQL client
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-// Set up the database
 async function setupTestPromoCode() {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
-    // Create a test promo with a code
-    const promoId = uuidv4();
-    const testCode = "WELCOME20";
-    const now = new Date();
-    const endDate = new Date();
-    endDate.setFullYear(endDate.getFullYear() + 1); // Valid for 1 year
-
-    // First check if a promo with this code already exists
-    const checkResult = await pool.query(
-      'SELECT * FROM promos WHERE code = $1',
-      [testCode]
-    );
+    console.log('Creating test promotional code...');
     
-    if (checkResult.rows.length > 0) {
-      console.log(`Promo code ${testCode} already exists with ID: ${checkResult.rows[0].id}`);
-      return checkResult.rows[0];
+    // Create a promo with a specific code
+    const promoResult = await pool.query(`
+      INSERT INTO promos (
+        id, title, description, image_url, is_active, start_date, end_date,
+        discount_type, discount_value, code, city_code
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+      )
+      ON CONFLICT (code) 
+      DO UPDATE SET 
+        title = EXCLUDED.title,
+        description = EXCLUDED.description,
+        is_active = EXCLUDED.is_active,
+        discount_type = EXCLUDED.discount_type,
+        discount_value = EXCLUDED.discount_value
+      RETURNING *
+    `, [
+      uuidv4(),
+      'Welcome Discount 20%',
+      'Get 20% off your first dental treatment quote with this promo code.',
+      'https://source.unsplash.com/random/800x600/?smile',
+      true,
+      new Date(),
+      new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
+      'PERCENT',
+      20,
+      'WELCOME20',
+      'IST' // Istanbul city code
+    ]);
+    
+    console.log('Created promo:', promoResult.rows[0]);
+    
+    // Associate promo with all clinics for testing purposes
+    // First, get all clinic IDs
+    const clinicsResult = await pool.query(`
+      SELECT id FROM clinics
+    `);
+    
+    if (clinicsResult.rows.length > 0) {
+      const promoId = promoResult.rows[0].id;
+      
+      for (const clinic of clinicsResult.rows) {
+        // Check if association already exists
+        const existingAssoc = await pool.query(`
+          SELECT * FROM promo_clinics 
+          WHERE promo_id = $1 AND clinic_id = $2
+        `, [promoId, clinic.id]);
+        
+        if (existingAssoc.rows.length === 0) {
+          // Create association if it doesn't exist
+          await pool.query(`
+            INSERT INTO promo_clinics (promo_id, clinic_id)
+            VALUES ($1, $2)
+          `, [promoId, clinic.id]);
+          
+          console.log(`Associated promo with clinic ID: ${clinic.id}`);
+        } else {
+          console.log(`Promo already associated with clinic ID: ${clinic.id}`);
+        }
+      }
     }
-
-    // Insert the promo
-    const promoResult = await pool.query(
-      `INSERT INTO promos (
-        id, slug, code, title, description, promo_type, discount_type, discount_value,
-        hero_image_url, start_date, end_date, is_active, city_code, country_code,
-        created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-      [
-        promoId,                                          // id
-        'welcome-discount',                               // slug
-        testCode,                                         // code
-        'Welcome Discount',                               // title
-        'Special welcome discount for new patients',      // description
-        'OFFER',                                          // promo_type
-        'PERCENT',                                        // discount_type
-        '20',                                             // discount_value (20%)
-        'https://placehold.co/600x400/e9f5ff/4299e1/png?text=Welcome+Discount', // hero_image_url
-        now,                                              // start_date
-        endDate,                                          // end_date
-        true,                                             // is_active
-        'IST',                                            // city_code (Istanbul)
-        'TR',                                             // country_code (Turkey)
-        now,                                              // created_at
-        now                                               // updated_at
-      ]
-    );
-
-    const promo = promoResult.rows[0];
-    console.log(`Created test promo code: ${testCode} with ID: ${promo.id}`);
-
-    // Now connect this promo to all clinics
-    const clinicsResult = await pool.query('SELECT id FROM clinics');
-    const clinics = clinicsResult.rows;
-
-    // If there are no clinics, create a default one
-    if (clinics.length === 0) {
-      console.log('No clinics found - creating a default clinic');
-      const clinicId = '1';
-      await pool.query(
-        `INSERT INTO clinics (id, name, city, country) 
-         VALUES ($1, $2, $3, $4) 
-         ON CONFLICT (id) DO NOTHING`,
-        [clinicId, 'Default Clinic', 'Istanbul', 'Turkey']
-      );
-      clinics.push({ id: clinicId });
-    }
-
-    // Connect the promo to each clinic
-    for (const clinic of clinics) {
-      const promoClinicId = uuidv4();
-      await pool.query(
-        `INSERT INTO promo_clinics (id, promo_id, clinic_id, created_at)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (promo_id, clinic_id) DO NOTHING`,
-        [promoClinicId, promoId, clinic.id, now]
-      );
-      console.log(`Connected promo to clinic ${clinic.id}`);
-    }
-
-    console.log('Setup complete - test promo code ready to use');
-    return promo;
+    
+    console.log('\nPromo code successfully created and associated with clinics.');
+    console.log('You can now test the coupon code: WELCOME20');
+    
   } catch (error) {
-    console.error('Error setting up test promo code:', error);
-    throw error;
+    console.error('Error creating test promo code:', error);
   } finally {
-    // Close the pool
     await pool.end();
   }
 }
 
-// Run the setup
-setupTestPromoCode()
-  .then(() => console.log('Done!'))
-  .catch(error => {
-    console.error('Failed to setup test promo code:', error);
-    process.exit(1);
-  });
+setupTestPromoCode().catch(console.error);
