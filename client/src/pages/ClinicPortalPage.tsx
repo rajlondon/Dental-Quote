@@ -379,6 +379,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     { id: 'treatmentplans', label: t("clinic.nav.treatment_plans", "Treatment Plans"), icon: <FileText className="h-5 w-5" /> },
     { id: 'special_offers', label: t("clinic.nav.special_offers", "Special Offers"), icon: <Tag className="h-5 w-5" /> },
     { id: 'treatment_packages', label: t("clinic.nav.treatment_packages", "Treatment Packages"), icon: <Package className="h-5 w-5" /> },
+    { id: 'package_quotes', label: t("clinic.nav.package_quotes", "Package Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
     { id: 'treatment_mapper', label: t("clinic.nav.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
@@ -562,6 +563,13 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         return <SpecialOffersManager />;
       case 'treatment_packages':
         return <TreatmentPackageManager />;
+      case 'package_quotes':
+        return user && user.clinicId ? <PackageQuoteManager clinicId={user.clinicId} /> : (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <h3 className="text-lg font-medium text-yellow-800">Clinic ID Required</h3>
+            <p className="mt-2 text-yellow-600">Please ensure your account is associated with a clinic.</p>
+          </div>
+        );
       case 'treatment_mapper':
         return <ClinicTreatmentMapperPage />;
       case 'appointments':
