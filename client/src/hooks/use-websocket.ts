@@ -5,6 +5,9 @@ export interface WebSocketMessage {
   type: string;
   data?: any;
   timestamp?: number;
+  connectionId?: string;
+  userId?: number;
+  isClinic?: boolean;
 }
 
 interface UseWebSocketOptions {
