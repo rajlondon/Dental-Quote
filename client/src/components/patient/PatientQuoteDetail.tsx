@@ -4,14 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 // No longer using UUID format conversion
 import { formatDate } from '@/lib/date-utils';
+import { formatDiscount, formatCurrency } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigation } from '@/hooks/use-navigation';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import TreatmentLinePrice from '@/components/specialOffers/TreatmentLinePrice';
+import { PromoCodeSummary, PromoCodeBadge } from '@/components/promo/PromoCodeSummary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit, Gift } from 'lucide-react';
+import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit, Gift, Tag, Percent } from 'lucide-react';
 
 // Define the treatment type
 type QuoteTreatment = {
@@ -423,9 +425,21 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
 
       {/* Quote header */}
       <div>
-        <h1 className="text-2xl font-bold">
-          {quote.title || (quote.id ? `Quote #${quote.id.toString().slice(0, 8)}` : 'Quote Details')}
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold">
+            {quote.title || (quote.id ? `Quote #${quote.id.toString().slice(0, 8)}` : 'Quote Details')}
+          </h1>
+          
+          {/* Promo code badge */}
+          {quote.promoCode && (
+            <Badge variant="outline" className="flex items-center gap-2 bg-blue-50 text-blue-700 border-blue-200">
+              {quote.discountType === 'percentage' ? <Percent className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
+              <span className="font-medium">
+                {quote.promoCode}: {formatDiscount(quote.discountType || 'fixed_amount', quote.discountValue || 0)} off
+              </span>
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center mt-2 text-gray-600">
           <StatusIcon />
           <span className="ml-2">{status.text}</span>
@@ -618,6 +632,25 @@ const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
           </table>
         </div>
       </div>
+
+      {/* Detailed promo code information if available */}
+      {quote.promoCode && (
+        <div className="mb-6">
+          <h2 className="font-semibold mb-3 text-blue-800">{t('quotes.promo_code', 'Promotional Discount')}</h2>
+          <PromoCodeSummary
+            promoCode={quote.promoCode}
+            promoName={quote.promoName || 'Special Discount'}
+            discountType={quote.discountType === 'percentage' ? 'PERCENT' : 'FIXED_AMOUNT'}
+            discountValue={quote.discountValue || 0}
+            promoType={'DISCOUNT'}
+            subtotal={quote.subtotal}
+            discountAmount={quote.discountAmount}
+            totalAfterDiscount={quote.totalPrice}
+            showFullDetails={true}
+            className="max-w-md"
+          />
+        </div>
+      )}
 
       {/* Notes */}
       {quote.notes && (
