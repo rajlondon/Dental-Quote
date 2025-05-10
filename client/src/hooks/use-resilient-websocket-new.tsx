@@ -153,15 +153,40 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     }
   }, [sendMessageViaHttp]);
   
-  // Poll for messages from the server
-  const pollForMessages = useCallback(async () => {
+  // Poll for messages from the server with retry logic
+  const pollForMessages = useCallback(async (retryCount = 0) => {
     if (!connectionIdState || !usingFallback) return;
     
     try {
       const url = `/api/messages/poll/${connectionIdState}${lastMessageIdRef.current ? `?lastMessageId=${lastMessageIdRef.current}` : ''}`;
       const response = await fetch(url);
       
-      if (response.ok) {
+      // Handle rate limiting with exponential backoff
+      if (response.status === 429) {
+        const maxRetries = 5;
+        
+        if (retryCount < maxRetries) {
+          const nextRetry = retryCount + 1;
+          const delay = Math.min(1000 * Math.pow(2, nextRetry), 10000); // Cap at 10 seconds
+          
+          if (debug) console.log(`Rate limited during polling, backing off for ${delay}ms before retry ${nextRetry}/${maxRetries}`);
+          
+          // Wait and retry with exponential backoff
+          if (pollIntervalRef.current) clearTimeout(pollIntervalRef.current);
+          pollIntervalRef.current = setTimeout(() => {
+            pollForMessages(nextRetry);
+          }, delay);
+          
+          return;
+        } else {
+          // After max retries, try to reestablish the connection completely
+          if (debug) console.log('Max polling retries reached, attempting to reestablish connection');
+          
+          // Reset for a fresh connection
+          await startLongPolling();
+          return;
+        }
+      } else if (response.ok) {
         const data = await response.json();
         
         // Process each message
@@ -192,14 +217,66 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
               connectionId: connectionIdState
             });
           }
+          
+          // Continue polling with reset retry count
+          if (pollIntervalRef.current) clearTimeout(pollIntervalRef.current);
+          pollIntervalRef.current = setTimeout(() => {
+            pollForMessages(0); // Reset retry count on success
+          }, 1000);
+        } else {
+          // No messages, but successful response - continue polling with reset retry count
+          if (pollIntervalRef.current) clearTimeout(pollIntervalRef.current);
+          pollIntervalRef.current = setTimeout(() => {
+            pollForMessages(0); // Reset retry count on success
+          }, 1000);
         }
       } else {
         console.warn('Long-polling request failed:', response.status, response.statusText);
+        
+        // For other errors, also use exponential backoff
+        const maxRetries = 5;
+        
+        if (retryCount < maxRetries) {
+          const nextRetry = retryCount + 1;
+          const delay = Math.min(1000 * Math.pow(2, nextRetry), 10000);
+          
+          if (debug) console.log(`Polling error ${response.status}, backing off for ${delay}ms before retry ${nextRetry}/${maxRetries}`);
+          
+          // Wait and retry with exponential backoff
+          if (pollIntervalRef.current) clearTimeout(pollIntervalRef.current);
+          pollIntervalRef.current = setTimeout(() => {
+            pollForMessages(nextRetry);
+          }, delay);
+        } else {
+          // After max retries, try to reestablish the connection completely
+          if (debug) console.log('Max polling error retries reached, attempting to reestablish connection');
+          await startLongPolling();
+        }
       }
     } catch (error) {
       console.error('Error in long-polling:', error);
+      
+      // For network errors, also use exponential backoff
+      const maxRetries = 5;
+      
+      if (retryCount < maxRetries) {
+        const nextRetry = retryCount + 1;
+        const delay = Math.min(1000 * Math.pow(2, nextRetry), 10000);
+        
+        if (debug) console.log(`Polling network error, backing off for ${delay}ms before retry ${nextRetry}/${maxRetries}`);
+        
+        // Wait and retry with exponential backoff
+        if (pollIntervalRef.current) clearTimeout(pollIntervalRef.current);
+        pollIntervalRef.current = setTimeout(() => {
+          pollForMessages(nextRetry);
+        }, delay);
+      } else {
+        // After max retries, try to reestablish the connection completely
+        if (debug) console.log('Max polling error retries reached, attempting to reestablish connection');
+        await startLongPolling();
+      }
     }
-  }, [connectionIdState, onMessage, sendMessageViaHttp, usingFallback]);
+  }, [connectionIdState, debug, onMessage, sendMessageViaHttp, startLongPolling, usingFallback]);
   
   // Start long-polling as a fallback
   const startLongPolling = useCallback(async () => {
@@ -215,22 +292,60 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
       setConnectionIdState(connId);
     }
     
+    // Track retry attempts for exponential backoff
+    let retryAttempt = 0;
+    const maxRetries = 5;
+    
+    // Helper function to handle rate limiting with exponential backoff
+    const registerWithRetry = async (): Promise<boolean> => {
+      try {
+        if (retryAttempt > 0 && debug) {
+          console.log(`Retrying HTTP fallback registration (attempt ${retryAttempt}/${maxRetries})`);
+        }
+        
+        const response = await fetch('/api/messages/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            connectionId: connId,
+            userId: userId || undefined,
+            isClinic: isClinic || false
+          }),
+        });
+        
+        // If rate limited, implement exponential backoff
+        if (response.status === 429) {
+          if (retryAttempt < maxRetries) {
+            retryAttempt++;
+            const delay = Math.min(1000 * (2 ** retryAttempt), 10000); // Cap at 10 seconds
+            if (debug) console.log(`Rate limited, backing off for ${delay}ms`);
+            
+            // Wait and retry
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return registerWithRetry();
+          } else {
+            console.error('Failed to register after max retry attempts');
+            return false;
+          }
+        } else if (!response.ok) {
+          console.error('Failed to register for long-polling:', response.status, response.statusText);
+          return false;
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Error during HTTP fallback registration:', error);
+        return false;
+      }
+    };
+    
     // First register with the server for long polling
     try {
-      const response = await fetch('/api/messages/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          connectionId: connId,
-          userId: userId || undefined,
-          isClinic: isClinic || false
-        }),
-      });
+      const registrationSuccessful = await registerWithRetry();
       
-      if (!response.ok) {
-        console.error('Failed to register for long-polling:', response.status, response.statusText);
+      if (!registrationSuccessful) {
         setUsingFallback(false);
         return;
       }
