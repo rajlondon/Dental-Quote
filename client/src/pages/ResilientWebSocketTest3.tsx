@@ -184,7 +184,13 @@ export function ResilientWebSocketTest3() {
               
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Transport Method:</span>
-                <span className="font-mono">{usingFallback ? "HTTP Fallback" : "WebSocket"}</span>
+                <span className={`font-mono rounded px-2 py-0.5 text-xs ${
+                  usingFallback 
+                    ? "bg-amber-100 text-amber-800 border border-amber-300" 
+                    : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                }`}>
+                  {usingFallback ? "HTTP Fallback" : "WebSocket"}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -248,28 +254,43 @@ export function ResilientWebSocketTest3() {
             
             <div className="flex space-x-2 mt-4">
               <Button 
-                variant="outline" 
+                variant={usingFallback ? "default" : "destructive"} 
                 size="sm"
                 onClick={() => {
                   // Test switching between WebSocket and HTTP fallback
                   if (usingFallback) {
-                    // Force a WebSocket reconnect
+                    // Force a WebSocket reconnect - add a notification
+                    setMessages(prev => [
+                      { type: 'system', timestamp: Date.now(), content: 'Attempting to switch back to WebSocket mode...' },
+                      ...prev.slice(0, 19)
+                    ]);
                     disconnect();
                     setTimeout(() => {
                       connect();
                     }, 500);
                   } else {
-                    // Force fallback mode
+                    // Force fallback mode - add a notification
+                    setMessages(prev => [
+                      { type: 'system', timestamp: Date.now(), content: 'Forcing HTTP fallback mode...' },
+                      ...prev.slice(0, 19)
+                    ]);
+                    // First disconnect
                     disconnect();
-                    sendMessage({
-                      type: 'force_fallback',
-                      timestamp: Date.now()
-                    });
+                    // Then force fallback mode by deliberately causing WebSocket to fail
+                    setTimeout(() => {
+                      // Try to connect with a deliberately invalid URL parameter
+                      // This will trigger a WebSocket failure and fallback to HTTP
+                      sendMessage({
+                        type: 'force_fallback',
+                        timestamp: Date.now(),
+                        forceFailure: true
+                      });
+                    }, 500);
                   }
                 }}
               >
                 <ArrowUpDown className="h-4 w-4 mr-2" />
-                {usingFallback ? "Try WebSocket" : "Force Fallback"}
+                {usingFallback ? "Try WebSocket Mode" : "Force HTTP Fallback Mode"}
               </Button>
             </div>
           </CardContent>
