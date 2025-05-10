@@ -251,6 +251,11 @@ export const quotes = pgTable("quotes", {
   offerId: varchar("offer_id", { length: 50 }),
   packageId: varchar("package_id", { length: 50 }),
   source: varchar("source", { length: 20 }).default("normal"),
+  // Fields for hybrid promo system
+  discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).default("0"),
+  promoId: uuid("promo_id").references(() => promos.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

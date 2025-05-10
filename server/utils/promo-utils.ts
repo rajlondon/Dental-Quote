@@ -60,7 +60,7 @@ export async function applyPromoToQuote(quote: any, promo: any) {
   // Update quote with new discount and total
   const updatedQuote = await db.update(quotes)
     .set({
-      discount,
+      discount: discount,
       total: quote.subtotal - discount,
       promoId: promo.id,
       updatedAt: new Date()
