@@ -317,8 +317,24 @@ export async function setupAuth(app: Express) {
         req.user.role === 'clinic_staff' && 
         req.user.email === email) {
       
-      console.log("Already authenticated as clinic staff with same email, redirecting");
-      return res.redirect(targetUrl);
+      console.log("Already authenticated as clinic staff with same email, redirecting to:", targetUrl);
+      
+      // Set additional redirect cookies to ensure the client-side gets the message
+      res.cookie('clinic_redirect_target', targetUrl, {
+        httpOnly: false,
+        maxAge: 60 * 1000, // 1 minute
+        path: '/'
+      });
+      
+      // Set the no_promo flag to ensure no promotional redirects occur
+      res.cookie('no_promo_redirect', 'true', {
+        httpOnly: false,
+        maxAge: 60 * 60 * 1000, // 1 hour
+        path: '/'
+      });
+      
+      // Force the client to go to the dashboard regardless of what might have been set elsewhere
+      return res.redirect('/clinic-portal/dashboard');
     }
     
     // Authenticate the user
@@ -382,7 +398,21 @@ export async function setupAuth(app: Express) {
           // Set the no_promo flag to prevent promotional redirects
           res.cookie('no_promo_redirect', 'true', {
             httpOnly: false,
-            maxAge: 60 * 1000, // 1 minute
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/'
+          });
+          
+          // Add a session marker cookie for clinic login
+          res.cookie('clinic_session_active', 'true', {
+            httpOnly: false,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/'
+          });
+          
+          // Add a login timestamp cookie
+          res.cookie('clinic_login_timestamp', Date.now().toString(), {
+            httpOnly: false,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
             path: '/'
           });
           
