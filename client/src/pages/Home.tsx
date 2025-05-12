@@ -11,6 +11,7 @@ import clinicsData from "@/data/clinics.json";
 import TrendingPackageCard from "@/components/TrendingPackageCard";
 import { trendingPackages } from "@/data/packages";
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
+import FixedHomePageOffers from "@/components/specialOffers/FixedHomePageOffers";
 
 // Clinic Card Component
 const ClinicCard = ({ 
