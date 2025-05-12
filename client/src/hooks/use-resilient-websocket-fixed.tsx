@@ -449,8 +449,27 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
   // Store the function in the ref to break circular dependencies
   startLongPollingRef.current = startLongPolling;
   
-  // Connect to WebSocket
+  // Connect to WebSocket with transport mode awareness
   const connectWebSocket = useCallback(() => {
+    // Check for persistent WebSocket failures from past page loads
+    const getFailureCount = () => {
+      try {
+        return parseInt(localStorage.getItem('websocket_failure_count') || '0', 10);
+      } catch (e) {
+        return 0;
+      }
+    };
+    
+    // If we've had consistent failures with WebSockets, go directly to HTTP
+    const failureCount = getFailureCount();
+    if (failureCount > 5 && !forceWebSocket) {
+      // We've had multiple failures across page loads, prefer HTTP fallback
+      if (debug) console.warn(`Detected ${failureCount} consecutive WebSocket failures, starting with HTTP fallback directly`);
+      setTransportMethod('http');
+      startLongPolling();
+      return;
+    }
+    
     if (manuallyDisconnected) {
       if (debug) console.log('Skipping WebSocket connection - manual disconnect flag is set');
       return;
@@ -585,6 +604,17 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
       ws.onerror = (event) => {
         if (debug) {
           console.log(`WebSocket ${connectionId} error:`, event);
+        }
+        
+        // Track WebSocket failures for smart transport selection
+        try {
+          const currentFailures = parseInt(localStorage.getItem('websocket_failure_count') || '0', 10);
+          localStorage.setItem('websocket_failure_count', (currentFailures + 1).toString());
+          if (debug) {
+            console.warn(`WebSocket failure count increased to ${currentFailures + 1}`);
+          }
+        } catch (e) {
+          // Ignore localStorage errors
         }
         
         if (onError) {
