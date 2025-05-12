@@ -1,12 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { CalendarClock, CheckCircle2, InfoIcon, ShoppingBag, Tag, Percent, Package } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card } from '@/components/ui/card';
+import { Package, Percent } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { formatDate } from '@/lib/utils';
-import OfferImagePlaceholder from './OfferImagePlaceholder';
 
 interface SpecialOfferCardProps {
   offer: {
@@ -23,7 +20,7 @@ interface SpecialOfferCardProps {
     imageUrl?: string;
     treatmentPriceGBP?: number;
     badgeText?: string;
-    type?: 'offer' | 'package'; // To differentiate offers from packages
+    type?: 'offer' | 'package';
   };
   className?: string;
   onClick?: (promoCode: string) => void;
@@ -37,11 +34,20 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   compact = false
 }) => {
   const [, setLocation] = useLocation();
+  const [mounted, setMounted] = useState(false);
   
-  // Debug logs
-  console.log('Rendering SpecialOfferCard with offer:', offer);
-  console.log('Has image URL?', !!offer.imageUrl, offer.imageUrl);
-  console.log('Offer type:', offer.type || 'default');
+  // Force component to re-render on mount and log data
+  useEffect(() => {
+    setMounted(true);
+    console.log('SpecialOfferCard mounted with offer:', offer);
+    
+    // Log DOM state after render
+    const timer = setTimeout(() => {
+      console.log('DOM after render:', document.querySelector('.special-offer-card'));
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [offer]);
 
   const handleUseOffer = () => {
     if (onClick) {
@@ -51,187 +57,100 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
       setLocation(`/your-quote?promoCode=${offer.promoCode}`);
     }
   };
+
+  // Explicitly check image existence
+  const hasImage = offer.imageUrl && offer.imageUrl.trim() !== '';
   
+  // Log what's being rendered
+  console.log('Rendering with image?', hasImage, offer.imageUrl);
+  
+  // Create appropriate discount label
   const discountLabel = offer.discountType === 'percentage' 
     ? `${offer.discountValue}% Off` 
     : `£${offer.discountValue} Off`;
-    
-  // Avoid duplicate display of title in badge
-  const displayBadge = offer.badgeText === offer.title
-    ? discountLabel
-    : offer.badgeText || discountLabel;
   
-  const timeRemaining = () => {
-    const endDate = new Date(offer.endDate);
-    const today = new Date();
-    const diffTime = Math.abs(endDate.getTime() - today.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays > 30) {
-      return `Valid until ${formatDate(offer.endDate)}`;
-    } else if (diffDays > 1) {
-      return `${diffDays} days left`;
-    } else {
-      return 'Last day!';
-    }
+  // Prevent duplicate title in badge
+  const displayBadge = offer.badgeText === offer.title 
+    ? discountLabel 
+    : (offer.badgeText || discountLabel);
+
+  // Set badge styles based on type
+  const badgeStyle = {
+    background: offer.type === 'package' ? '#f0e4ff' : '#fff4e6',
+    color: offer.type === 'package' ? '#7e3af2' : '#ff8a00',
+    border: `1px solid ${offer.type === 'package' ? '#d4bffc' : '#ffd0a0'}`,
+    padding: '4px 8px',
+    borderRadius: '12px',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    display: 'inline-flex',
+    alignItems: 'center',
+    marginTop: '6px'
   };
 
-  // Function to render description with a tooltip for full text
-  const renderDescription = (text: string) => {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="text-sm mt-2 text-gray-600 line-clamp-2">
-              {text}
-            </p>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs max-w-xs">{text}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
-
-  const BadgeIcon = offer.type === 'package' ? Package : Percent;
-  
-  // Force explicit type check for image URL
-  const hasValidImage = Boolean(offer.imageUrl && offer.imageUrl.trim() !== '');
-  console.log('hasValidImage check result:', hasValidImage);
-
-  if (compact) {
-    return (
-      <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
-        <div className="flex">
-          <div className="w-1/3" style={{ minHeight: '120px' }}>
-            {hasValidImage ? (
-              <img 
-                src={offer.imageUrl} 
-                alt={offer.title} 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <OfferImagePlaceholder 
-                title={offer.title} 
-                type={offer.type}
-                className="h-full"
-              />
-            )}
-          </div>
-          <div className="w-2/3 p-4">
-            <h3 className="font-semibold text-lg">{offer.title}</h3>
-            <Badge className="bg-amber-100 text-amber-800 border-amber-200 mt-1">
-              <BadgeIcon className="h-3 w-3 mr-1" />
-              {displayBadge}
-            </Badge>
-            {renderDescription(offer.description)}
-            <Button 
-              size="sm" 
-              className="mt-3" 
-              onClick={handleUseOffer}
-            >
-              Apply to Quote
-            </Button>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-  
   return (
-    <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`} data-testid="offer-card">
-      <div className="h-44 relative overflow-hidden">
-        {hasValidImage ? (
-          <img 
-            src={offer.imageUrl} 
-            alt={offer.title} 
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <OfferImagePlaceholder 
-            title={offer.title}
-            type={offer.type}
-            className="h-full"
-          />
-        )}
-        <div className="absolute top-2 right-2">
-          <Badge className="bg-amber-500 text-white font-semibold shadow-sm">
-            <BadgeIcon className="h-3 w-3 mr-1" />
-            {displayBadge}
-          </Badge>
+    <Card className={`special-offer-card overflow-hidden hover:shadow-md transition-shadow ${className}`} data-has-image={hasImage}>
+      {/* Card Header with badge */}
+      <div className="p-4 pb-0 flex justify-between items-start">
+        <h3 className="font-semibold text-lg">{offer.title}</h3>
+        <div style={badgeStyle}>
+          {offer.type === 'package' ? (
+            <><Package className="h-3 w-3 mr-1" /> Package Deal</>
+          ) : (
+            <><Percent className="h-3 w-3 mr-1" /> {displayBadge}</>
+          )}
         </div>
       </div>
       
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <h3 className="font-semibold text-xl">{offer.title}</h3>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-xs flex items-center text-amber-700 bg-amber-50 rounded-full px-2 py-1">
-                  <CalendarClock className="h-3 w-3 mr-1" />
-                  {timeRemaining()}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">
-                  Valid from {formatDate(offer.startDate)} to {formatDate(offer.endDate)}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+      {/* Image or placeholder */}
+      {hasImage ? (
+        <div 
+          className="offer-image my-3 mx-4"
+          style={{ 
+            backgroundImage: `url(${offer.imageUrl})`,
+            height: '120px',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: '8px'
+          }}
+        />
+      ) : (
+        <div className="offer-image-placeholder mx-4 my-3" style={{
+          height: '120px',
+          backgroundColor: offer.type === 'package' ? '#f5f0ff' : '#fff8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '2rem',
+          borderRadius: '8px'
+        }}>
+          {offer.type === 'package' ? '🎁' : '💰'}
         </div>
-      </CardHeader>
+      )}
       
-      <CardContent>
-        {renderDescription(offer.description)}
-        
-        {offer.applicableTreatments.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1">
-            {offer.applicableTreatments.slice(0, 3).map((treatment: string, index: number) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                {treatment.replace(/_/g, ' ')}
-              </Badge>
-            ))}
-            {offer.applicableTreatments.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{offer.applicableTreatments.length - 3} more
-              </Badge>
-            )}
-          </div>
-        )}
-        
-        {offer.treatmentPriceGBP && (
-          <div className="mt-3 flex items-center text-sm text-gray-700">
-            <ShoppingBag className="h-4 w-4 mr-1" />
-            <span>Treatment Value: </span>
-            <span className="font-semibold ml-1">£{offer.treatmentPriceGBP}</span>
-          </div>
-        )}
-      </CardContent>
+      {/* Description with guaranteed visibility */}
+      <div className="px-4 mb-2">
+        <p className="text-sm text-gray-600" style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          position: 'relative'
+        }} title={offer.description}>
+          {offer.description}
+        </p>
+      </div>
       
-      <CardFooter className="flex justify-between">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <InfoIcon className="h-4 w-4 mr-1" />
-                Terms
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs max-w-xs">{offer.termsAndConditions}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <Button onClick={handleUseOffer}>
-          <Tag className="h-4 w-4 mr-2" />
+      {/* Footer with button */}
+      <div className="px-4 pb-4 pt-2 flex justify-end">
+        <Button 
+          className="offer-button"
+          variant="default"
+          onClick={handleUseOffer}
+        >
           Apply to Quote
         </Button>
-      </CardFooter>
+      </div>
     </Card>
   );
 };
