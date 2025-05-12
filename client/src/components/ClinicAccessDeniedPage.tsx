@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 interface ClinicAccessDeniedPageProps {
   title?: string;
@@ -15,7 +15,7 @@ const ClinicAccessDeniedPage: React.FC<ClinicAccessDeniedPageProps> = ({
   buttonLabel = "Return to Clinic Portal",
   redirectUrl = "/clinic-portal"
 }) => {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Helper to handle navigation
   const handleRedirect = () => {
@@ -33,7 +33,7 @@ const ClinicAccessDeniedPage: React.FC<ClinicAccessDeniedPageProps> = ({
     }
     
     // Then navigate to the clinic portal
-    navigate(redirectUrl);
+    setLocation(redirectUrl);
   };
 
   return (
