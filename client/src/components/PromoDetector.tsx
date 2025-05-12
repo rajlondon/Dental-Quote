@@ -17,17 +17,51 @@ const PromoDetector: React.FC = () => {
   const isClinicRoute = location.startsWith('/clinic-') || location.startsWith('/clinic/') || location.startsWith('/clinic_');
   const isAdminRoute = location.startsWith('/admin');
   const isClinicLoginRoute = location === '/clinic-login';
+  const isPatientRoute = location.startsWith('/patient-portal');
   
-  // Critical redirection protection: Check for clinic login cookies
-  const hasClinicRedirectCookie = typeof document !== 'undefined' && 
+  // Add more comprehensive sessionStorage and cookie checks
+  const hasClinicCookies = typeof document !== 'undefined' && 
     document.cookie.split(';').some(c => 
       c.trim().startsWith('clinic_redirect_target=') ||
-      c.trim().startsWith('no_promo_redirect=true'));
+      c.trim().startsWith('no_promo_redirect=true') ||
+      c.trim().startsWith('is_clinic_staff=true') ||
+      c.trim().startsWith('clinic_session_active=true') ||
+      c.trim().startsWith('is_clinic_login=true') ||
+      c.trim().startsWith('clinic_login_timestamp='));
   
-  // If we're on a protected route or have a clinic redirect cookie, don't process promo params
-  if (isClinicRoute || isAdminRoute || isClinicLoginRoute || hasClinicRedirectCookie) {
+  // Check sessionStorage for clinic flags
+  const hasClinicSessionStorage = typeof window !== 'undefined' && (
+    sessionStorage.getItem('clinic_portal_access_successful') === 'true' ||
+    sessionStorage.getItem('clinic_dashboard_accessed') !== null ||
+    sessionStorage.getItem('disable_promo_redirect') === 'true' ||
+    sessionStorage.getItem('clinic_user_id') !== null ||
+    sessionStorage.getItem('clinic_session_initialized') === 'true' ||
+    sessionStorage.getItem('clinic_dashboard_requested') === 'true' ||
+    sessionStorage.getItem('clinic_login_in_progress') === 'true'
+  );
+  
+  // Check if user has explicitly set disable_promo_redirect
+  const hasDisablePromoFlag = typeof window !== 'undefined' && 
+    sessionStorage.getItem('disable_promo_redirect') === 'true';
+    
+  // If we're on a protected route or have any clinic indicators, don't process promo params
+  if (isClinicRoute || isAdminRoute || isClinicLoginRoute || hasClinicCookies || hasClinicSessionStorage || hasDisablePromoFlag) {
     console.log('PromoDetector skipping for protected route/session:', location, 
-      hasClinicRedirectCookie ? '(clinic redirect cookie detected)' : '');
+      hasClinicCookies ? '(clinic cookies detected)' : 
+      hasClinicSessionStorage ? '(clinic session storage detected)' :
+      hasDisablePromoFlag ? '(explicit disable_promo_redirect flag detected)' : '');
+    return null;
+  }
+  
+  // Additional safety check - if we have a user role cookie or session that indicates clinic staff,
+  // completely disable promo detection regardless of other factors
+  const isClinicUser = typeof window !== 'undefined' && (
+    sessionStorage.getItem('user_role') === 'clinic_staff' ||
+    document.cookie.split(';').some(c => c.trim().startsWith('user_role=clinic_staff'))
+  );
+  
+  if (isClinicUser) {
+    console.log('PromoDetector skipping for clinic staff user role');
     return null;
   }
   
