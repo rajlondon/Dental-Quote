@@ -20,7 +20,8 @@ router.get('/', async (req, res) => {
   try {
     const query = listQuerySchema.parse(req.query);
     
-    let queryBuilder = db.select({
+    // Define columns to select
+    const columns = {
       id: specialOffers.id,
       clinicId: specialOffers.clinicId,
       title: specialOffers.title,
@@ -44,28 +45,30 @@ router.get('/', async (req, res) => {
       status: specialOffers.status,
       createdAt: specialOffers.createdAt,
       updatedAt: specialOffers.updatedAt
-    }).from(specialOffers);
+    };
     
-    // Apply filters
+    // Start with base query
+    let baseQuery = db.select(columns).from(specialOffers);
+    
+    // Apply filters in a chain
     if (query?.clinicId) {
-      queryBuilder = queryBuilder.where(eq(specialOffers.clinicId, query.clinicId));
+      baseQuery = baseQuery.where(eq(specialOffers.clinicId, query.clinicId));
     }
     
-    // Active filter based on isActive field
     if (query?.active) {
-      queryBuilder = queryBuilder.where(eq(specialOffers.isActive, query.active === 'true'));
+      baseQuery = baseQuery.where(eq(specialOffers.isActive, query.active === 'true'));
     }
     
-    // Apply pagination
     if (query?.limit) {
-      queryBuilder = queryBuilder.limit(query.limit);
+      baseQuery = baseQuery.limit(query.limit);
     }
     
     if (query?.offset) {
-      queryBuilder = queryBuilder.offset(query.offset);
+      baseQuery = baseQuery.offset(query.offset);
     }
     
-    const offers = await queryBuilder;
+    // Execute the query
+    const offers = await baseQuery;
     res.json(offers);
   } catch (error) {
     console.error('Error fetching special offers:', error);
@@ -77,34 +80,41 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const [offer] = await db
-      .select({
-        id: specialOffers.id,
-        clinicId: specialOffers.clinicId,
-        title: specialOffers.title,
-        description: specialOffers.description,
-        discountType: specialOffers.discountType,
-        discountValue: specialOffers.discountValue,
-        applicableTreatments: specialOffers.applicableTreatments,
-        startDate: specialOffers.startDate,
-        endDate: specialOffers.endDate,
-        promoCode: specialOffers.promoCode,
-        termsAndConditions: specialOffers.termsAndConditions,
-        imageUrl: specialOffers.imageUrl,
-        badgeText: specialOffers.badgeText,
-        treatmentPriceGBP: specialOffers.treatmentPriceGBP,
-        treatmentPriceUSD: specialOffers.treatmentPriceUSD,
-        displayOnHomepage: specialOffers.displayOnHomepage,
-        featured: specialOffers.featured,
-        isActive: specialOffers.isActive,
-        cityCode: specialOffers.cityCode,
-        cityName: specialOffers.cityName,
-        status: specialOffers.status,
-        createdAt: specialOffers.createdAt,
-        updatedAt: specialOffers.updatedAt
-      })
+    
+    // Reuse the same column definition from the list route
+    const columns = {
+      id: specialOffers.id,
+      clinicId: specialOffers.clinicId,
+      title: specialOffers.title,
+      description: specialOffers.description,
+      discountType: specialOffers.discountType,
+      discountValue: specialOffers.discountValue,
+      applicableTreatments: specialOffers.applicableTreatments,
+      startDate: specialOffers.startDate,
+      endDate: specialOffers.endDate,
+      promoCode: specialOffers.promoCode,
+      termsAndConditions: specialOffers.termsAndConditions,
+      imageUrl: specialOffers.imageUrl,
+      badgeText: specialOffers.badgeText,
+      treatmentPriceGBP: specialOffers.treatmentPriceGBP,
+      treatmentPriceUSD: specialOffers.treatmentPriceUSD,
+      displayOnHomepage: specialOffers.displayOnHomepage,
+      featured: specialOffers.featured,
+      isActive: specialOffers.isActive,
+      cityCode: specialOffers.cityCode,
+      cityName: specialOffers.cityName,
+      status: specialOffers.status,
+      createdAt: specialOffers.createdAt,
+      updatedAt: specialOffers.updatedAt
+    };
+    
+    // Build and execute the query
+    const results = await db
+      .select(columns)
       .from(specialOffers)
       .where(eq(specialOffers.id, id));
+    
+    const offer = results[0];
     
     if (!offer) {
       return res.status(404).json({ error: 'Special offer not found' });
@@ -136,34 +146,41 @@ router.post('/', isAuthenticated, ensureRole("admin"), async (req, res) => {
 router.patch('/:id', isAuthenticated, async (req, res) => {
   try {
     const id = req.params.id;
-    const [existingOffer] = await db
-      .select({
-        id: specialOffers.id,
-        clinicId: specialOffers.clinicId,
-        title: specialOffers.title,
-        description: specialOffers.description,
-        discountType: specialOffers.discountType,
-        discountValue: specialOffers.discountValue,
-        applicableTreatments: specialOffers.applicableTreatments,
-        startDate: specialOffers.startDate,
-        endDate: specialOffers.endDate,
-        promoCode: specialOffers.promoCode,
-        termsAndConditions: specialOffers.termsAndConditions,
-        imageUrl: specialOffers.imageUrl,
-        badgeText: specialOffers.badgeText,
-        treatmentPriceGBP: specialOffers.treatmentPriceGBP,
-        treatmentPriceUSD: specialOffers.treatmentPriceUSD,
-        displayOnHomepage: specialOffers.displayOnHomepage,
-        featured: specialOffers.featured,
-        isActive: specialOffers.isActive,
-        cityCode: specialOffers.cityCode,
-        cityName: specialOffers.cityName,
-        status: specialOffers.status,
-        createdAt: specialOffers.createdAt,
-        updatedAt: specialOffers.updatedAt
-      })
+    
+    // Define columns to select
+    const columns = {
+      id: specialOffers.id,
+      clinicId: specialOffers.clinicId,
+      title: specialOffers.title,
+      description: specialOffers.description,
+      discountType: specialOffers.discountType,
+      discountValue: specialOffers.discountValue,
+      applicableTreatments: specialOffers.applicableTreatments,
+      startDate: specialOffers.startDate,
+      endDate: specialOffers.endDate,
+      promoCode: specialOffers.promoCode,
+      termsAndConditions: specialOffers.termsAndConditions,
+      imageUrl: specialOffers.imageUrl,
+      badgeText: specialOffers.badgeText,
+      treatmentPriceGBP: specialOffers.treatmentPriceGBP,
+      treatmentPriceUSD: specialOffers.treatmentPriceUSD,
+      displayOnHomepage: specialOffers.displayOnHomepage,
+      featured: specialOffers.featured,
+      isActive: specialOffers.isActive,
+      cityCode: specialOffers.cityCode,
+      cityName: specialOffers.cityName,
+      status: specialOffers.status,
+      createdAt: specialOffers.createdAt,
+      updatedAt: specialOffers.updatedAt
+    };
+    
+    // Find the existing offer
+    const results = await db
+      .select(columns)
       .from(specialOffers)
       .where(eq(specialOffers.id, id));
+    
+    const existingOffer = results[0];
     
     if (!existingOffer) {
       return res.status(404).json({ error: 'Special offer not found' });
@@ -179,11 +196,14 @@ router.patch('/:id', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to update this offer' });
     }
     
-    const [updatedOffer] = await db
+    // Update the offer
+    const updatedResults = await db
       .update(specialOffers)
       .set(req.body)
       .where(eq(specialOffers.id, id))
       .returning();
+    
+    const updatedOffer = updatedResults[0];
     
     res.json(updatedOffer);
   } catch (error) {
