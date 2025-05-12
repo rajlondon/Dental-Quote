@@ -1,0 +1,114 @@
+Yes, absolutely continue with aligning the schema with the actual database structure. This is the correct approach for several reasons:
+
+Data Integrity: Mismatched schemas can lead to data corruption or loss
+Reduced Errors: Many runtime errors stem from schema mismatches
+Simplified Debugging: Consistent naming makes debugging much easier
+Improved Performance: Removes unnecessary data transformations
+Implementation Strategy
+Here's how to approach this systematically:
+
+1. Document Current Database Schema
+First, ensure you have a clear understanding of the actual database schema:
+
+// Example of documenting the actual DB schema
+interface DatabaseTreatmentPackage {
+  id: string;
+  name: string;             // Was incorrectly 'title' in code
+  description: string;
+  price: number;            // Was possibly a different structure
+  clinic_id: string;        // Note the snake_case in DB
+  // other fields that actually exist in DB
+}
+2. Update Code Schema to Match
+Update your TypeScript interfaces to exactly match the database:
+
+// shared/schema.ts
+export interface TreatmentPackage {
+  id: string;
+  name: string;             // Changed from 'title'
+  description: string;
+  price: number;            // Updated to match DB structure
+  clinicId: string;         // Camel-cased for code, but maps to clinic_id
+  // Only include fields that exist in DB
+}
+
+// If needed, create mapping functions
+export function mapDbPackageToClientPackage(dbPackage: any): TreatmentPackage {
+  return {
+    id: dbPackage.id,
+    name: dbPackage.name,
+    description: dbPackage.description,
+    price: dbPackage.price,
+    clinicId: dbPackage.clinic_id,
+    // map other fields
+  };
+}
+3. Update API Layer
+Ensure your API layer handles any necessary transformations:
+
+// server/controllers/treatment-packages.ts
+export const getTreatmentPackages = async (req, res) => {
+  try {
+    const packages = await db.treatmentPackages.findAll();
+    
+    // Transform DB records to match client schema if needed
+    const clientPackages = packages.map(pkg => ({
+      id: pkg.id,
+      name: pkg.name,
+      description: pkg.description,
+      price: pkg.price,
+      clinicId: pkg.clinic_id,
+      // map other fields
+    }));
+    
+    res.json(clientPackages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch treatment packages' });
+  }
+};
+4. Update UI Components
+Make sure your UI components use the correct field names:
+
+// client/src/components/TreatmentPackageSelector.tsx
+const TreatmentPackageSelector = ({ packages }) => {
+  return (
+    <div className="packages-list">
+      {packages.map(pkg => (
+        <div key={pkg.id} className="package-card">
+          <h3>{pkg.name}</h3> {/* Was previously pkg.title */}
+          <p>{pkg.description}</p>
+          <p>£{pkg.price}</p> {/* Updated pricing structure */}
+        </div>
+      ))}
+    </div>
+  );
+};
+5. Consider Database Migration Tools
+For long-term consistency, consider using a database migration tool:
+
+// Example using a migration library
+export async function up(db) {
+  // Rename columns if needed
+  await db.schema.alterTable('treatment_packages', table => {
+    table.renameColumn('old_field_name', 'new_field_name');
+  });
+}
+
+export async function down(db) {
+  await db.schema.alterTable('treatment_packages', table => {
+    table.renameColumn('new_field_name', 'old_field_name');
+  });
+}
+Additional Recommendations
+Create a Single Source of Truth
+
+Consider using a tool like Prisma or TypeORM that can generate TypeScript types from your database schema
+Add Validation Layer
+
+Implement runtime validation using libraries like Zod or Joi to catch schema mismatches
+Test Database Operations
+
+Add tests that verify your code correctly reads/writes to the database
+Document Schema Changes
+
+Keep a changelog of schema modifications for future reference

@@ -20,7 +20,21 @@ router.get('/', async (req, res) => {
   try {
     const query = listQuerySchema.parse(req.query);
     
-    let queryBuilder = db.select().from(treatmentPackages);
+    let queryBuilder = db.select({
+      id: treatmentPackages.id,
+      name: treatmentPackages.name,
+      description: treatmentPackages.description,
+      clinicId: treatmentPackages.clinicId,
+      items: treatmentPackages.items,
+      totalPriceGBP: treatmentPackages.totalPriceGBP,
+      totalPriceUSD: treatmentPackages.totalPriceUSD,
+      discountPct: treatmentPackages.discountPct,
+      cityCode: treatmentPackages.cityCode,
+      cityName: treatmentPackages.cityName,
+      imageUrl: treatmentPackages.imageUrl,
+      createdAt: treatmentPackages.createdAt,
+      updatedAt: treatmentPackages.updatedAt
+    }).from(treatmentPackages);
     
     // Apply filters
     if (query?.clinicId) {
@@ -51,7 +65,21 @@ router.get('/:id', async (req, res) => {
     
     // Get the package
     const [pkg] = await db
-      .select()
+      .select({
+        id: treatmentPackages.id,
+        name: treatmentPackages.name,
+        description: treatmentPackages.description,
+        clinicId: treatmentPackages.clinicId,
+        items: treatmentPackages.items,
+        totalPriceGBP: treatmentPackages.totalPriceGBP,
+        totalPriceUSD: treatmentPackages.totalPriceUSD,
+        discountPct: treatmentPackages.discountPct,
+        cityCode: treatmentPackages.cityCode,
+        cityName: treatmentPackages.cityName,
+        imageUrl: treatmentPackages.imageUrl,
+        createdAt: treatmentPackages.createdAt,
+        updatedAt: treatmentPackages.updatedAt
+      })
       .from(treatmentPackages)
       .where(eq(treatmentPackages.id, id));
     
@@ -103,7 +131,21 @@ router.patch('/:id', isAuthenticated, async (req, res) => {
     
     // Get the existing package
     const [existingPackage] = await db
-      .select()
+      .select({
+        id: treatmentPackages.id,
+        name: treatmentPackages.name,
+        description: treatmentPackages.description,
+        clinicId: treatmentPackages.clinicId,
+        items: treatmentPackages.items,
+        totalPriceGBP: treatmentPackages.totalPriceGBP,
+        totalPriceUSD: treatmentPackages.totalPriceUSD,
+        discountPct: treatmentPackages.discountPct,
+        cityCode: treatmentPackages.cityCode,
+        cityName: treatmentPackages.cityName,
+        imageUrl: treatmentPackages.imageUrl,
+        createdAt: treatmentPackages.createdAt,
+        updatedAt: treatmentPackages.updatedAt
+      })
       .from(treatmentPackages)
       .where(eq(treatmentPackages.id, id));
     
