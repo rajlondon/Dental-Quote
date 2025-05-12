@@ -23,7 +23,7 @@ interface SpecialOffersContextType {
   refreshPackages: () => Promise<void>;
 }
 
-const SpecialOffersContext = createContext<SpecialOffersContextType | null>(null);
+export const SpecialOffersContext = createContext<SpecialOffersContextType | null>(null);
 
 export const SpecialOffersProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [offers, setOffers] = useState<SpecialOffer[]>([]);
