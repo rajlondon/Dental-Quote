@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<User | null, Error>({
-    queryKey: ["/api/auth/user"], // This path must match the fetch URL exactly
+    queryKey: ["/auth/user"], // Updated to use consistent path without /api prefix
     queryFn: async () => {
       // If we're in admin mode and already have cached data, return it directly to prevent loops
       if (window.location.pathname === '/admin-portal' && userDataRef.current) {
@@ -195,8 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user || data;
     },
     onSuccess: (user: User) => {
-      // Update query cache with the new user data
-      queryClient.setQueryData(["/api/auth/user"], user);
+      // Update query cache with the new user data - use consistent path without /api prefix
+      queryClient.setQueryData(["/auth/user"], user);
       
       // Set session flag for WebSocket initialization
       sessionStorage.setItem('just_logged_in', 'true');
@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user || data;
     },
     onSuccess: (user: User) => {
-      queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.setQueryData(["/auth/user"], user);
       toast({
         title: "Registration successful",
         description: "Please check your email to verify your account",
@@ -307,21 +307,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // CRITICAL: apiRequest uses fetch, NOT axios, so we MUST include the full path
-      // The apiRequest function in queryClient.ts does not add the /api prefix
-      const res = await apiRequest("POST", "/api/auth/logout");
+      // We've updated apiRequest to add the /api prefix if it's not already there
+      // So this should now be consistent across both axios and fetch clients
+      console.log("Executing logout with enhanced apiRequest");
+      const res = await apiRequest("POST", "/auth/logout");
       if (!res.ok) {
         throw new Error("Logout failed");
       }
     },
     onSuccess: () => {
-      // Clear user data from query cache
-      queryClient.setQueryData(["/api/auth/user"], null);
+      // Clear user data from query cache - use consistent path without /api prefix
+      queryClient.setQueryData(["/auth/user"], null);
       
       // Clear all session-related caches for a clean logout
       sessionStorage.removeItem('cached_user_data');
       sessionStorage.removeItem('cached_user_timestamp');
       sessionStorage.removeItem('clinic_portal_timestamp');
+      
+      // Clear all clinic-related flags
+      sessionStorage.removeItem('clinic_portal_access_successful');
+      sessionStorage.removeItem('is_clinic_staff');
+      sessionStorage.removeItem('disable_promo_redirect');
+      sessionStorage.removeItem('no_special_offer_redirect');
+      sessionStorage.removeItem('disable_quote_redirect');
+      sessionStorage.removeItem('clinic_session_active');
+      sessionStorage.removeItem('clinic_user_id');
+      sessionStorage.removeItem('clinic_id');
+      sessionStorage.removeItem('clinic_dashboard_requested');
+      sessionStorage.removeItem('clinic_login_in_progress');
+      
+      // Clear clinic cookies by setting them to expire immediately
+      document.cookie = "is_clinic_staff=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "is_clinic_login=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "no_promo_redirect=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "disable_quote_redirect=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "clinic_session_active=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "no_special_offer_redirect=; path=/; max-age=0; SameSite=Lax";
       
       console.log("Auth cache cleared during logout");
       

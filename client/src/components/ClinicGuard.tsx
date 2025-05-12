@@ -175,13 +175,22 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
     // Store session markers in multiple locations for redundancy
     const storeSessionMarkers = () => {
       // 1. Store in sessionStorage that we've successfully accessed the clinic portal
+      // Set multiple flags for redundant protection
       sessionStorage.setItem('clinic_portal_access_successful', 'true');
+      sessionStorage.setItem('is_clinic_staff', 'true');
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      sessionStorage.setItem('no_special_offer_redirect', 'true');
+      sessionStorage.setItem('disable_quote_redirect', 'true');
+      sessionStorage.setItem('clinic_session_active', 'true');
       
       // 2. Set cookies to mark that this is a clinic staff session with longer expiration
       // This will help other components know not to do promo redirects
       document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
       document.cookie = "is_clinic_login=true; path=/; max-age=86400; SameSite=Lax";
       document.cookie = "no_promo_redirect=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "disable_quote_redirect=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "clinic_session_active=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "no_special_offer_redirect=true; path=/; max-age=86400; SameSite=Lax";
       
       // 3. Store clinic user ID in sessionStorage (useful for reconnecting WebSockets)
       if (user.id) {
