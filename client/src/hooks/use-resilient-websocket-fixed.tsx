@@ -781,6 +781,25 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     connect,
     disconnect,
     sendMessage,
+    transportMethod,
+    setTransportMethod,
+    switchToWebSocket: () => {
+      setTransportMethod('websocket');
+      disconnect();
+      connect();
+    },
+    switchToHttp: () => {
+      setTransportMethod('http');
+      disconnect();
+      startLongPolling();
+    },
+    resetFailureCount: () => {
+      try {
+        localStorage.setItem('websocket_failure_count', '0');
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    }
   };
 }
 
