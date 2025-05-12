@@ -27,7 +27,9 @@ const PromoDetector: React.FC = () => {
       c.trim().startsWith('is_clinic_staff=true') ||
       c.trim().startsWith('clinic_session_active=true') ||
       c.trim().startsWith('is_clinic_login=true') ||
-      c.trim().startsWith('clinic_login_timestamp='));
+      c.trim().startsWith('clinic_login_timestamp=') ||
+      c.trim().startsWith('disable_quote_redirect=true') ||
+      c.trim().startsWith('no_special_offer_redirect=true'));
   
   // Check sessionStorage for clinic flags
   const hasClinicSessionStorage = typeof window !== 'undefined' && (
@@ -37,7 +39,11 @@ const PromoDetector: React.FC = () => {
     sessionStorage.getItem('clinic_user_id') !== null ||
     sessionStorage.getItem('clinic_session_initialized') === 'true' ||
     sessionStorage.getItem('clinic_dashboard_requested') === 'true' ||
-    sessionStorage.getItem('clinic_login_in_progress') === 'true'
+    sessionStorage.getItem('clinic_login_in_progress') === 'true' ||
+    sessionStorage.getItem('is_clinic_staff') === 'true' ||
+    sessionStorage.getItem('no_special_offer_redirect') === 'true' ||
+    sessionStorage.getItem('disable_quote_redirect') === 'true' ||
+    sessionStorage.getItem('clinic_session_active') === 'true'
   );
   
   // Check if user has explicitly set disable_promo_redirect
@@ -90,7 +96,10 @@ const PromoDetector: React.FC = () => {
     const cookies = document.cookie.split(';');
     const isClinicStaff = cookies.some(cookie => 
       cookie.trim().startsWith('is_clinic_staff=true') || 
-      cookie.trim().startsWith('is_clinic_login=true'));
+      cookie.trim().startsWith('is_clinic_login=true') ||
+      cookie.trim().startsWith('clinic_session_active=true') ||
+      cookie.trim().startsWith('disable_quote_redirect=true') ||
+      cookie.trim().startsWith('no_special_offer_redirect=true'));
       
     if (isClinicStaff) {
       console.log('PromoDetector disabled: detected clinic staff cookie');
