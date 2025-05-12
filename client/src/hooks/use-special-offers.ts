@@ -1,159 +1,34 @@
-import { useState, useEffect, useCallback } from 'react';
-import specialOffersService, { 
-  SpecialOffer, 
-  Package, 
-  PromoToken 
-} from '@/services/SpecialOffersService';
-import { TreatmentItem } from '@/components/TreatmentPlanBuilder';
-
-interface UseSpecialOffersOptions {
-  initialOffer?: SpecialOffer;
-  initialPackage?: Package;
-  initialPromoToken?: PromoToken;
-  autoParseUrl?: boolean;
-}
+import { useContext } from 'react';
+import { SpecialOffersContext } from '@/components/SpecialOffersProvider';
 
 /**
- * Custom hook for working with special offers, packages, and promo tokens
+ * Hook to access special offers and treatment packages functionality
+ * Use this hook to get applicable offers, calculate discounts, and manage
+ * special offer selection in the quote and treatment flow.
+ * 
+ * @example
+ * ```tsx
+ * const { 
+ *   offers,
+ *   getApplicableOffers,
+ *   applyOfferToTreatment
+ * } = useSpecialOffers();
+ * 
+ * // Get offers applicable to a specific treatment at a clinic
+ * const applicableOffers = getApplicableOffers(treatmentId, clinicId);
+ * 
+ * // Calculate the discount amount when applying an offer
+ * const discountAmount = applyOfferToTreatment(treatmentId, offerId);
+ * ```
  */
-export const useSpecialOffers = (options: UseSpecialOffersOptions = {}) => {
-  const {
-    initialOffer,
-    initialPackage,
-    initialPromoToken,
-    autoParseUrl = true
-  } = options;
+export const useSpecialOffers = () => {
+  const context = useContext(SpecialOffersContext);
   
-  // State for the offers
-  const [specialOffer, setSpecialOffer] = useState<SpecialOffer | undefined>(initialOffer);
-  const [packageData, setPackageData] = useState<Package | undefined>(initialPackage);
-  const [promoToken, setPromoToken] = useState<PromoToken | undefined>(initialPromoToken);
+  if (!context) {
+    throw new Error('useSpecialOffers must be used within a SpecialOffersProvider');
+  }
   
-  // Derived state
-  const [isSpecialOfferFlow, setIsSpecialOfferFlow] = useState<boolean>(!!initialOffer);
-  const [isPackageFlow, setIsPackageFlow] = useState<boolean>(!!initialPackage);
-  const [isPromoTokenFlow, setIsPromoTokenFlow] = useState<boolean>(!!initialPromoToken);
-  
-  // Parse URL parameters on mount
-  useEffect(() => {
-    if (autoParseUrl) {
-      const offerFromUrl = specialOffersService.getSpecialOfferFromUrl();
-      const packageFromUrl = specialOffersService.getPackageFromUrl();
-      const promoTokenFromUrl = specialOffersService.getPromoTokenFromUrl();
-      
-      if (offerFromUrl) {
-        setSpecialOffer(offerFromUrl);
-        setIsSpecialOfferFlow(true);
-      }
-      
-      if (packageFromUrl) {
-        setPackageData(packageFromUrl);
-        setIsPackageFlow(true);
-      }
-      
-      if (promoTokenFromUrl) {
-        setPromoToken(promoTokenFromUrl);
-        setIsPromoTokenFlow(true);
-      }
-    }
-  }, [autoParseUrl]);
-  
-  // Reset all offers
-  const resetOffers = useCallback(() => {
-    setSpecialOffer(undefined);
-    setPackageData(undefined);
-    setPromoToken(undefined);
-    setIsSpecialOfferFlow(false);
-    setIsPackageFlow(false);
-    setIsPromoTokenFlow(false);
-  }, []);
-  
-  // Process treatments based on active offers
-  const processTreatments = useCallback((currentTreatments: TreatmentItem[]): TreatmentItem[] => {
-    return specialOffersService.processTreatments(currentTreatments, {
-      specialOffer,
-      package: packageData,
-      promoToken
-    });
-  }, [specialOffer, packageData, promoToken]);
-  
-  // Calculate total discount for a treatment plan
-  const calculateTotalDiscount = useCallback((treatments: TreatmentItem[]): number => {
-    let totalDiscount = 0;
-    
-    // Get base price from treatments
-    const baseSubtotal = treatments
-      .filter(t => !t.isBonus && !t.isSpecialOffer)
-      .reduce((sum, item) => sum + item.subtotalGBP, 0);
-    
-    // Apply special offer discount
-    if (isSpecialOfferFlow && specialOffer) {
-      totalDiscount += specialOffersService.calculateDiscount(
-        baseSubtotal,
-        specialOffer.discountType,
-        specialOffer.discountValue
-      );
-    }
-    
-    // Apply promo token discount if it's a discount type
-    if (isPromoTokenFlow && promoToken && promoToken.type === 'special_offer') {
-      totalDiscount += specialOffersService.calculateDiscount(
-        baseSubtotal,
-        promoToken.discountType,
-        promoToken.discountValue
-      );
-    }
-    
-    return totalDiscount;
-  }, [isSpecialOfferFlow, specialOffer, isPromoTokenFlow, promoToken]);
-  
-  // Utility to check if a treatment is related to a special offer
-  const hasSpecialOffer = useCallback((treatment: TreatmentItem): boolean => {
-    return !!treatment.specialOffer;
-  }, []);
-
-  // Utility to check if a treatment is a package
-  const isPackageTreatment = useCallback((treatment: TreatmentItem): boolean => {
-    return !!treatment.isPackage;
-  }, []);
-
-  // Get the promo type (special_offer or package)
-  const promoType = promoToken?.type;
-
-  // Renamed for compatibility with EnhancedTreatmentPlanBuilder
-  const processSpecialOffers = processTreatments;
-
-  return {
-    // State
-    specialOffer,
-    packageData,
-    promoToken,
-    isSpecialOfferFlow,
-    isPackageFlow,
-    isPromoTokenFlow,
-    promoType,
-    
-    // Setters
-    setSpecialOffer,
-    setPackageData,
-    setPromoToken,
-    setIsSpecialOfferFlow,
-    setIsPackageFlow,
-    setIsPromoTokenFlow,
-    
-    // Actions
-    resetOffers,
-    processTreatments,
-    processSpecialOffers, // Alias for compatibility
-    calculateTotalDiscount,
-    
-    // Utilities
-    hasSpecialOffer,
-    isPackageTreatment,
-    
-    // Helpers
-    hasActiveOffer: isSpecialOfferFlow || isPackageFlow || isPromoTokenFlow
-  };
+  return context;
 };
 
 export default useSpecialOffers;
