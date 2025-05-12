@@ -147,8 +147,74 @@ function Router() {
         {() => <Redirect to="/blog/how-it-works" />}
       </Route>
       <Route path="/faq" component={FAQPage} />
-      <Route path="/your-quote" component={YourQuotePage} />
-      <Route path="/quote-results" component={QuoteResultsPage} />
+      <Route path="/your-quote">
+        {() => {
+          // Skip redirect for clinic staff - check both session storage and cookies
+          const isClinicStaff = typeof window !== 'undefined' && (
+            sessionStorage.getItem('user_role') === 'clinic_staff' ||
+            sessionStorage.getItem('is_clinic_staff') === 'true' ||
+            sessionStorage.getItem('clinic_session_active') === 'true' ||
+            document.cookie.split(';').some(c => 
+              c.trim().startsWith('is_clinic_staff=true') ||
+              c.trim().startsWith('user_role=clinic_staff')
+            )
+          );
+          
+          // If clinic staff, show message and return to portal
+          if (isClinicStaff) {
+            console.log("Clinic staff detected, blocking access to /your-quote");
+            return (
+              <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <h1 className="text-2xl font-bold mb-4">Clinic Staff Access</h1>
+                <p className="mb-4">This page is not available for clinic staff.</p>
+                <a 
+                  href="/clinic-portal" 
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition"
+                >
+                  Return to Clinic Portal
+                </a>
+              </div>
+            );
+          }
+          
+          // Otherwise, show the quote page for patients and visitors
+          return <YourQuotePage />;
+        }}
+      </Route>
+      <Route path="/quote-results">
+        {() => {
+          // Skip access for clinic staff - check both session storage and cookies
+          const isClinicStaff = typeof window !== 'undefined' && (
+            sessionStorage.getItem('user_role') === 'clinic_staff' ||
+            sessionStorage.getItem('is_clinic_staff') === 'true' ||
+            sessionStorage.getItem('clinic_session_active') === 'true' ||
+            document.cookie.split(';').some(c => 
+              c.trim().startsWith('is_clinic_staff=true') ||
+              c.trim().startsWith('user_role=clinic_staff')
+            )
+          );
+          
+          // If clinic staff, show message and return to portal
+          if (isClinicStaff) {
+            console.log("Clinic staff detected, blocking access to /quote-results");
+            return (
+              <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <h1 className="text-2xl font-bold mb-4">Clinic Staff Access</h1>
+                <p className="mb-4">This page is not available for clinic staff.</p>
+                <a 
+                  href="/clinic-portal" 
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition"
+                >
+                  Return to Clinic Portal
+                </a>
+              </div>
+            );
+          }
+          
+          // Otherwise, show the results page for patients and visitors
+          return <QuoteResultsPage />;
+        }}
+      </Route>
       <Route path="/websocket-test" component={WebSocketTestPage} />
       <Route path="/resilient-websocket-test" component={ResilientWebSocketTest2} />
       <Route path="/resilient-websocket" component={ResilientWebSocketTest} />
@@ -162,13 +228,76 @@ function Router() {
         );
       }} />
       <Route path="/quote">
-        {() => <Redirect to="/your-quote" />}
+        {() => {
+          // Skip redirect for clinic staff - check both session storage and cookies
+          const isClinicStaff = typeof window !== 'undefined' && (
+            sessionStorage.getItem('user_role') === 'clinic_staff' ||
+            sessionStorage.getItem('is_clinic_staff') === 'true' ||
+            sessionStorage.getItem('clinic_session_active') === 'true' ||
+            document.cookie.split(';').some(c => 
+              c.trim().startsWith('is_clinic_staff=true') ||
+              c.trim().startsWith('user_role=clinic_staff')
+            )
+          );
+          
+          // If clinic staff, don't redirect, just show a message
+          if (isClinicStaff) {
+            console.log("Clinic staff detected, skipping /quote redirect");
+            return (
+              <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <h1 className="text-2xl font-bold mb-4">Clinic Staff Access</h1>
+                <p className="mb-4">This page is not available for clinic staff.</p>
+                <a 
+                  href="/clinic-portal" 
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition"
+                >
+                  Return to Clinic Portal
+                </a>
+              </div>
+            );
+          }
+          
+          // Otherwise, proceed with normal redirect for patients and visitors
+          return <Redirect to="/your-quote" />;
+        }}
       </Route>
       
       {/* We no longer need a separate route for the dental quiz workflow as it's handled by YourQuotePage */}
       {/* Keeping this for backward compatibility but redirecting to the main quote path */}
+      {/* Add safety check for clinic staff */}
       <Route path="/quote-flow">
-        {() => <Redirect to="/quote" />}
+        {() => {
+          // Skip redirect for clinic staff - check both session storage and cookies
+          const isClinicStaff = typeof window !== 'undefined' && (
+            sessionStorage.getItem('user_role') === 'clinic_staff' ||
+            sessionStorage.getItem('is_clinic_staff') === 'true' ||
+            sessionStorage.getItem('clinic_session_active') === 'true' ||
+            document.cookie.split(';').some(c => 
+              c.trim().startsWith('is_clinic_staff=true') ||
+              c.trim().startsWith('user_role=clinic_staff')
+            )
+          );
+          
+          // If clinic staff, don't redirect, just show a message
+          if (isClinicStaff) {
+            console.log("Clinic staff detected, skipping /quote-flow redirect");
+            return (
+              <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <h1 className="text-2xl font-bold mb-4">Clinic Staff Access</h1>
+                <p className="mb-4">This page is not available for clinic staff.</p>
+                <a 
+                  href="/clinic-portal" 
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition"
+                >
+                  Return to Clinic Portal
+                </a>
+              </div>
+            );
+          }
+          
+          // Otherwise, proceed with normal redirect
+          return <Redirect to="/quote" />;
+        }}
       </Route>
       
       {/* Route for special offer confirmation */}
