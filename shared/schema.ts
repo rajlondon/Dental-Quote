@@ -663,38 +663,25 @@ export const specialOffersRelations = relations(specialOffers, ({ one, many }) =
 }));
 
 export const treatmentPackages = pgTable("treatment_packages", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: varchar("id", { length: 50 }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   clinicId: integer("clinic_id").references(() => clinics.id),
   
+  // Content fields
+  items: json("items").$type<string[]>().default([]),
+  
   // Pricing
   totalPriceGBP: decimal("total_price_gbp", { precision: 10, scale: 2 }),
   totalPriceUSD: decimal("total_price_usd", { precision: 10, scale: 2 }),
-  discountPct: decimal("discount_pct", { precision: 5, scale: 2 }).default("0.00"),
-  
-  // New fields from spec document
-  items: json("items").$type<string[]>().default([]),
+  discountPct: integer("discount_pct").default(0),
   
   // Location information
   cityCode: varchar("city_code", { length: 50 }),
   cityName: varchar("city_name", { length: 100 }),
   
-  // Package content
-  treatments: json("treatments").$type<{
-    treatmentType: string;
-    count: number;
-    details?: string;
-  }[]>().default([]),
-  
   // Display properties
   imageUrl: varchar("image_url", { length: 255 }),
-  
-  // Approval and activity status
-  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, approved, rejected
-  approvedBy: integer("approved_by").references(() => users.id),
-  approvedAt: timestamp("approved_at"),
-  rejectionReason: text("rejection_reason"),
   
   // Validity
   validFrom: timestamp("valid_from"),
