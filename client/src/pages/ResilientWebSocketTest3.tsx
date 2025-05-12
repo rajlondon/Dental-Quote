@@ -32,7 +32,11 @@ export function ResilientWebSocketTest3() {
     disconnect,
     connect,
     sendMessage,
-    usingFallback 
+    usingFallback,
+    transportMethod,
+    switchToWebSocket,
+    switchToHttp,
+    resetFailureCount
   } = useResilientWebSocket({
     userId: 40, // Use a test user ID
     isClinic: true, // Test as clinic user
@@ -187,11 +191,25 @@ export function ResilientWebSocketTest3() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Transport Method:</span>
                 <span className={`font-mono rounded px-2 py-0.5 text-xs ${
-                  usingFallback 
+                  transportMethod === 'http' 
                     ? "bg-amber-100 text-amber-800 border border-amber-300" 
                     : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                 }`}>
-                  {usingFallback ? "HTTP Fallback" : "WebSocket"}
+                  {transportMethod === 'http' ? "HTTP Fallback" : "WebSocket"}
+                </span>
+              </div>
+              
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Failure Count:</span>
+                <span className="font-mono">
+                  {(() => {
+                    try {
+                      const count = localStorage.getItem('websocket_failure_count');
+                      return count ? `${count} failures` : "No failures";
+                    } catch (e) {
+                      return "N/A";
+                    }
+                  })()}
                 </span>
               </div>
             </div>
