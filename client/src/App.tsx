@@ -24,6 +24,7 @@ import AdminPortalGuard from "@/components/AdminPortalGuard";
 import ClinicRouter from "@/pages/ClinicRouter";
 import ClinicDebugPage from "@/pages/ClinicDebugPage";
 import SpecialOfferTestPage from "@/pages/SpecialOfferTestPage";
+import SpecialOffersFixedPage from "@/pages/SpecialOffersFixedPage";
 import PromoTestPage from "@/pages/PromoTestPage";
 import WebSocketTestPage from "@/pages/WebSocketTestPage";
 import ResilientWebSocketTest2 from "@/pages/ResilientWebSocketTest2";
