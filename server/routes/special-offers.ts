@@ -2,8 +2,7 @@ import { Router } from 'express';
 import { db } from '../db';
 import { specialOffers } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
-import { isAuthenticated } from '../middleware/auth';
-import { isAdmin, isClinicStaff } from '../middleware/rbac';
+import { isAuthenticated, ensureRole } from '../middleware/auth';
 import { z } from 'zod';
 
 const router = Router();
@@ -68,7 +67,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new special offer (admin only)
-router.post('/', isAuthenticated, isAdmin, async (req, res) => {
+router.post('/', isAuthenticated, ensureRole("admin"), async (req, res) => {
   try {
     const [offer] = await db
       .insert(specialOffers)
@@ -119,7 +118,7 @@ router.patch('/:id', isAuthenticated, async (req, res) => {
 });
 
 // Delete a special offer (admin only)
-router.delete('/:id', isAuthenticated, isAdmin, async (req, res) => {
+router.delete('/:id', isAuthenticated, ensureRole("admin"), async (req, res) => {
   try {
     const id = req.params.id;
     await db.delete(specialOffers).where(eq(specialOffers.id, id));

@@ -84,7 +84,7 @@ export const TreatmentPackageSelector: React.FC<TreatmentPackageSelectorProps> =
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-base font-semibold">{pkg.title}</CardTitle>
+                    <CardTitle className="text-base font-semibold">{pkg.name}</CardTitle>
                     <CardDescription>{pkg.description}</CardDescription>
                   </div>
                   

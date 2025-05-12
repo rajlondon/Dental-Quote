@@ -664,22 +664,17 @@ export const specialOffersRelations = relations(specialOffers, ({ one, many }) =
 
 export const treatmentPackages = pgTable("treatment_packages", {
   id: uuid("id").primaryKey().defaultRandom(),
-  title: varchar("title", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   clinicId: integer("clinic_id").references(() => clinics.id),
   
   // Pricing
-  priceGBP: decimal("price_gbp", { precision: 10, scale: 2 }),
-  priceUSD: decimal("price_usd", { precision: 10, scale: 2 }),
-  originalPriceGBP: decimal("original_price_gbp", { precision: 10, scale: 2 }),
-  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }),
+  totalPriceGBP: decimal("total_price_gbp", { precision: 10, scale: 2 }),
+  totalPriceUSD: decimal("total_price_usd", { precision: 10, scale: 2 }),
+  discountPct: decimal("discount_pct", { precision: 5, scale: 2 }).default("0.00"),
   
   // New fields from spec document
-  discountPct: decimal("discount_pct", { precision: 5, scale: 2 }).default("0.00"),
   items: json("items").$type<string[]>().default([]),
-  promoCode: varchar("promo_code", { length: 30 }).unique(),
-  usedCount: integer("used_count").default(0),
-  maxUses: integer("max_uses"),
   
   // Location information
   cityCode: varchar("city_code", { length: 50 }),
@@ -691,14 +686,9 @@ export const treatmentPackages = pgTable("treatment_packages", {
     count: number;
     details?: string;
   }[]>().default([]),
-  includedServices: json("included_services").$type<string[]>().default([]),
   
   // Display properties
   imageUrl: varchar("image_url", { length: 255 }),
-  badgeText: varchar("badge_text", { length: 50 }),
-  displayOnHomepage: boolean("display_on_homepage").default(true),
-  featured: boolean("featured").default(false),
-  sortOrder: integer("sort_order").default(0),
   
   // Approval and activity status
   status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, approved, rejected

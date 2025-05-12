@@ -129,8 +129,11 @@ export const SpecialOffersProvider: React.FC<{ children: React.ReactNode }> = ({
       return { original: 0, discounted: 0, savings: 0 };
     }
 
-    const original = Number(pkg.originalPriceGBP || 0);
-    const discounted = Number(pkg.priceGBP || 0);
+    // Calculate price based on discount percentage and total price
+    const discountPct = Number(pkg.discountPct || 0);
+    const totalPrice = Number(pkg.totalPriceGBP || 0);
+    const original = totalPrice;
+    const discounted = totalPrice * (1 - (discountPct / 100));
     const savings = original - discounted;
 
     return { original, discounted, savings };

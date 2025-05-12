@@ -43,6 +43,7 @@ import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
 import offersRoutes from "./routes/offers-routes"; // Add our new offers routes
 import offerStartRoutes from "./routes/offer-start-routes"; // Add the offer start API routes
 import { appliedOffersRouter } from "./routes/applied-offers"; // Add applied offers tracking
+import treatmentPackagesRouter from "./routes/treatment-packages"; // Add our treatment packages router
 import quoteFromPromoRoutes from "./routes/api/v1"; // Add new v1 API endpoints for quotes
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
@@ -567,6 +568,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register special offers update helper routes for image generation
   app.use(specialOffersUpdateHelper);
+  
+  // Register new treatment packages API
+  app.use('/api/treatment-packages', treatmentPackagesRouter);
   
   // Register new unified treatment plan/offers integration routes
   app.use('/api', offersRoutes);
