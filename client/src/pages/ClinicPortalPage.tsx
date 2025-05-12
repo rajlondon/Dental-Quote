@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
 import ClinicWebSocketProvider, { useClinicWebSocket } from "@/components/ClinicWebSocketProvider";
+import useResilientWebSocket, { WebSocketMessage } from "@/hooks/use-resilient-websocket";
 import {
   Select,
   SelectContent,
@@ -373,7 +374,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   }
   
   // Only use WebSocket if user is authenticated
-  const { isConnected, disconnect } = useWebSocket({
+  const { isConnected, disconnect } = useResilientWebSocket(user?.id, {
     onOpen: () => {
       console.log('WebSocket connected for clinic portal');
       // Store connection status in session for recovery purposes
@@ -393,14 +394,12 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       if (message.type === 'notification') {
         // Handle notification updates
         toast({
-          title: message.data?.title || 'New Notification',
-          description: message.data?.message || 'You have a new notification',
+          title: message.payload?.title || 'New Notification',
+          description: message.payload?.message || 'You have a new notification',
         });
       }
     },
-    userId: user.id, // Now we know user exists
-    isClinic: true, // Flag this as a clinic connection
-    maxReconnectAttempts: 3, // Limit reconnect attempts for clinic portal
+    reconnectLimit: 3 // Limit reconnect attempts for clinic portal
   });
 
   // Component unmount cleanup effect with enhanced WebSocket handling
