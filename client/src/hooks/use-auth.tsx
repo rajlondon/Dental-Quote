@@ -121,7 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("Fetching fresh user data");
         // IMPORTANT: The api.get call automatically adds "/api" prefix (see client/src/lib/api.ts)
         // So we must NOT include /api here to avoid making a call to /api/api/auth/user
-        const apiRes = await api.get("auth/user");
+        console.log("Fetching user data with axios configured client");
+        const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
         
         // Update cache
@@ -155,9 +156,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       // Server expects email/password
-      // CRITICAL: apiRequest uses fetch, NOT axios, so we MUST include the full path
-      // The apiRequest function in queryClient.ts does not add the /api prefix
-      const res = await apiRequest("POST", "/api/auth/login", {
+      // We've updated apiRequest to add the /api prefix if it's not already there
+      // So this should now be consistent across both axios and fetch clients
+      console.log("Executing login with enhanced apiRequest");
+      const res = await apiRequest("POST", "/auth/login", {
         email: credentials.email,
         password: credentials.password
       });
@@ -275,9 +277,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      // CRITICAL: apiRequest uses fetch, NOT axios, so we MUST include the full path
-      // The apiRequest function in queryClient.ts does not add the /api prefix
-      const res = await apiRequest("POST", "/api/auth/register", userData);
+      // We've updated apiRequest to add the /api prefix if it's not already there
+      // So this should now be consistent across both axios and fetch clients
+      console.log("Executing registration with enhanced apiRequest");
+      const res = await apiRequest("POST", "/auth/register", userData);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Registration failed");

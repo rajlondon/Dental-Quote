@@ -23,7 +23,10 @@ export async function apiRequest(
   const { suppressErrorToast = false, headers = {}, retryCount = 0 } = options;
 
   try {
-    const res = await fetch(url, {
+    // Ensure URL always starts with /api/ if it doesn't already
+    const apiUrl = url.startsWith('/api/') ? url : `/api${url.startsWith('/') ? url : '/' + url}`;
+    console.log(`API Request: ${url} -> ${apiUrl}`);
+    const res = await fetch(apiUrl, {
       method,
       headers: {
         ...(data ? { "Content-Type": "application/json" } : {}),
@@ -77,7 +80,11 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior, retryCount = 0, suppressErrorToast = false }) =>
   async ({ queryKey }) => {
     try {
-      const res = await fetch(queryKey[0] as string, {
+      // Ensure URL always starts with /api/ if it doesn't already
+      const url = queryKey[0] as string;
+      const apiUrl = url.startsWith('/api/') ? url : `/api${url.startsWith('/') ? url : '/' + url}`;
+      console.log(`Query Request: ${url} -> ${apiUrl}`);
+      const res = await fetch(apiUrl, {
         credentials: "include",
       });
 
