@@ -2,10 +2,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { CalendarClock, CheckCircle2, InfoIcon, ShoppingBag, Tag } from 'lucide-react';
+import { CalendarClock, CheckCircle2, InfoIcon, ShoppingBag, Tag, Percent, Package } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLocation } from 'wouter';
 import { formatDate } from '@/lib/utils';
+import OfferImagePlaceholder from './OfferImagePlaceholder';
 
 interface SpecialOfferCardProps {
   offer: {
@@ -19,9 +20,10 @@ interface SpecialOfferCardProps {
     endDate: string;
     promoCode: string;
     termsAndConditions: string;
-    imageUrl?: string; // Changed from bannerImage to match DB field
+    imageUrl?: string;
     treatmentPriceGBP?: number;
     badgeText?: string;
+    type?: 'offer' | 'package'; // To differentiate offers from packages
   };
   className?: string;
   onClick?: (promoCode: string) => void;
@@ -32,7 +34,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   offer, 
   className = '', 
   onClick,
-  compact = false 
+  compact = false
 }) => {
   const [, setLocation] = useLocation();
 
@@ -49,6 +51,11 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
     ? `${offer.discountValue}% Off` 
     : `£${offer.discountValue} Off`;
     
+  // Avoid duplicate display of title in badge
+  const displayBadge = offer.badgeText === offer.title
+    ? discountLabel
+    : offer.badgeText || discountLabel;
+  
   const timeRemaining = () => {
     const endDate = new Date(offer.endDate);
     const today = new Date();
@@ -63,26 +70,52 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
       return 'Last day!';
     }
   };
+
+  // Function to render description with a tooltip for full text
+  const renderDescription = (text: string) => {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-sm mt-2 text-gray-600 line-clamp-2">
+              {text}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs max-w-xs">{text}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  const BadgeIcon = offer.type === 'package' ? Package : Percent;
   
   if (compact) {
     return (
       <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
         <div className="flex">
-          {offer.imageUrl && (
-            <div className="w-1/3">
+          <div className="w-1/3">
+            {offer.imageUrl ? (
               <img 
                 src={offer.imageUrl} 
                 alt={offer.title} 
                 className="w-full h-full object-cover"
               />
-            </div>
-          )}
-          <div className={`${offer.imageUrl ? 'w-2/3' : 'w-full'} p-4`}>
+            ) : (
+              <OfferImagePlaceholder 
+                title={offer.title} 
+                className="h-full"
+              />
+            )}
+          </div>
+          <div className="w-2/3 p-4">
             <h3 className="font-semibold text-lg">{offer.title}</h3>
             <Badge className="bg-amber-100 text-amber-800 border-amber-200 mt-1">
-              {offer.badgeText || discountLabel}
+              <BadgeIcon className="h-3 w-3 mr-1" />
+              {displayBadge}
             </Badge>
-            <p className="text-sm mt-2 text-gray-600 line-clamp-2">{offer.description}</p>
+            {renderDescription(offer.description)}
             <Button 
               size="sm" 
               className="mt-3" 
@@ -98,20 +131,26 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   
   return (
     <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
-      {offer.imageUrl && (
-        <div className="h-44 relative overflow-hidden">
+      <div className="h-44 relative overflow-hidden">
+        {offer.imageUrl ? (
           <img 
             src={offer.imageUrl} 
             alt={offer.title} 
             className="w-full h-full object-cover"
           />
-          <div className="absolute top-2 right-2">
-            <Badge className="bg-amber-500 text-white font-semibold shadow-sm">
-              {offer.badgeText || discountLabel}
-            </Badge>
-          </div>
+        ) : (
+          <OfferImagePlaceholder 
+            title={offer.title} 
+            className="h-full"
+          />
+        )}
+        <div className="absolute top-2 right-2">
+          <Badge className="bg-amber-500 text-white font-semibold shadow-sm">
+            <BadgeIcon className="h-3 w-3 mr-1" />
+            {displayBadge}
+          </Badge>
         </div>
-      )}
+      </div>
       
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
@@ -135,7 +174,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
       </CardHeader>
       
       <CardContent>
-        <p className="text-gray-600 text-sm">{offer.description}</p>
+        {renderDescription(offer.description)}
         
         {offer.applicableTreatments.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
@@ -179,7 +218,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
         
         <Button onClick={handleUseOffer}>
           <Tag className="h-4 w-4 mr-2" />
-          Use Offer
+          Apply to Quote
         </Button>
       </CardFooter>
     </Card>
