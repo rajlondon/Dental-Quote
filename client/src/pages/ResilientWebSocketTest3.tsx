@@ -179,7 +179,9 @@ export function ResilientWebSocketTest3() {
               
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Reconnect Attempts:</span>
-                <span className="font-mono">{reconnectAttempt}</span>
+                <span className={`font-mono ${
+                  reconnectAttempt > 5 ? "text-red-500 font-bold" : reconnectAttempt > 2 ? "text-amber-500" : ""
+                }`}>{reconnectAttempt}</span>
               </div>
               
               <div className="flex justify-between text-sm">

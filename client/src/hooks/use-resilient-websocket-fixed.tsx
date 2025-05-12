@@ -275,16 +275,24 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
       
       // Register with the server with timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // Increase timeout to 8 seconds
       
       try {
+        // Add a critical flag to indicate this is a first connection attempt
+        // This will help server prioritize these requests
         const response = await fetch('/api/messages/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-Priority': retryCount === 0 ? 'high' : 'normal'
           },
-          body: JSON.stringify(registrationData),
-          signal: controller.signal
+          body: JSON.stringify({
+            ...registrationData,
+            isCriticalConnection: retryCount === 0
+          }),
+          signal: controller.signal,
+          // Add cache control to prevent caching issues
+          cache: 'no-store'
         });
         
         clearTimeout(timeoutId);

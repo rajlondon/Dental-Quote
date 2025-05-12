@@ -63,37 +63,56 @@ export function registerMessageRoutes(app: Express) {
    * Register a new HTTP client for message polling
    * This endpoint is called when a client wants to use the HTTP fallback
    */
-  // Simple rate limiter for our HTTP fallback
+  // Enhanced rate limiter for our HTTP fallback with prioritization
   const rateLimiter = {
-    windowMs: 30000, // 30 seconds
-    maxRequests: 50,  // Allow more requests per window
-    clients: new Map<string, { count: number, resetTime: number }>()
+    windowMs: 60000, // 60 seconds (longer window)
+    maxRequests: 150,  // Allow significantly more requests per window
+    priorityMaxRequests: 300, // Even higher limit for high priority requests
+    clients: new Map<string, { count: number, priorityCount: number, resetTime: number }>()
   };
 
-  // Helper function to check rate limit
-  const checkRateLimit = (ip: string): boolean => {
+  // Enhanced rate limit checker with priority handling
+  const checkRateLimit = (ip: string, isPriority: boolean = false): boolean => {
     const now = Date.now();
-    const clientData = rateLimiter.clients.get(ip) || { count: 0, resetTime: now + rateLimiter.windowMs };
+    const clientData = rateLimiter.clients.get(ip) || { 
+      count: 0, 
+      priorityCount: 0,
+      resetTime: now + rateLimiter.windowMs 
+    };
     
     // Reset if window expired
     if (now > clientData.resetTime) {
       clientData.count = 0;
+      clientData.priorityCount = 0;
       clientData.resetTime = now + rateLimiter.windowMs;
     }
     
-    // Increment count
-    clientData.count++;
+    // Increment appropriate counter
+    if (isPriority) {
+      clientData.priorityCount++;
+    } else {
+      clientData.count++;
+    }
+    
     rateLimiter.clients.set(ip, clientData);
     
-    // Return true if rate limited
-    return clientData.count > rateLimiter.maxRequests;
+    // Check against appropriate limit
+    if (isPriority) {
+      return clientData.priorityCount > rateLimiter.priorityMaxRequests;
+    } else {
+      return clientData.count > rateLimiter.maxRequests;
+    }
   };
 
   app.post('/api/messages/register', (req: Request, res: Response) => {
     try {
-      // Apply rate limiting - use a more permissive limit
+      // Check for priority flag in request
+      const isPriority = req.headers['x-priority'] === 'high' || 
+                         req.body.isCriticalConnection === true;
+      
+      // Apply rate limiting with priority awareness
       const ip = req.ip || req.connection.remoteAddress || 'unknown';
-      if (checkRateLimit(ip) && ip !== 'unknown') {
+      if (checkRateLimit(ip, isPriority) && ip !== 'unknown') {
         // Only rate limit actual IPs (skip 'unknown')
         console.log(`Rate limiting HTTP fallback registration for ${ip}`);
         return res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
