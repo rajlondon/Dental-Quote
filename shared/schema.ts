@@ -590,46 +590,72 @@ export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
 
 // Define the specialOffers and treatmentPackages tables
 export const specialOffers = pgTable("special_offers", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: varchar("id", { length: 50 }).primaryKey(),
+  clinicId: integer("clinic_id").references(() => clinics.id),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  clinicId: integer("clinic_id").references(() => clinics.id),
-  discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
-  discountType: varchar("discount_type", { length: 20 }).default("percentage"), // percentage or fixed_amount
-  termsAndConditions: text("terms_and_conditions"),
-  applicableTreatments: json("applicable_treatments").$type<string[]>().default([]),
-  minTreatmentCount: integer("min_treatment_count").default(1),
-  maxDiscountAmount: decimal("max_discount_amount", { precision: 10, scale: 2 }),
   
-  // New fields from spec document
-  promoCode: varchar("promo_code", { length: 30 }).unique(),
-  usedCount: integer("used_count").default(0),
+  // Discount information
+  discountType: varchar("discount_type", { length: 20 }).default("percentage"), // percentage or fixed_amount
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
+  applicableTreatments: json("applicable_treatments").$type<string[]>().default([]),
+  
+  // Date range
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  
+  // Promotion details
+  promoCode: varchar("promo_code", { length: 50 }),
+  termsAndConditions: text("terms_and_conditions"),
+  bannerImage: varchar("banner_image", { length: 255 }),
+  isActive: boolean("is_active").default(true),
+  adminApproved: boolean("admin_approved").default(false),
+  
+  // Commission and level
+  commissionPercentage: integer("commission_percentage"),
+  promotionLevel: varchar("promotion_level", { length: 50 }),
+  
+  // Display settings
+  homepageDisplay: boolean("homepage_display").default(false),
+  
+  // Usage tracking
   maxUses: integer("max_uses"),
+  usedCount: integer("used_count").default(0),
   bonus: json("bonus").$type<{ description: string, unitPrice: number }>(),
   
-  // Location information
-  cityCode: varchar("city_code", { length: 50 }),
-  cityName: varchar("city_name", { length: 100 }),
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  adminReviewedAt: timestamp("admin_reviewed_at"),
   
-  // Images and display properties
-  imageUrl: varchar("image_url", { length: 255 }),
+  // Pricing
+  treatmentPriceGBP: decimal("treatment_price_gbp", { precision: 10, scale: 2 }),
+  treatmentPriceUSD: decimal("treatment_price_usd", { precision: 10, scale: 2 }),
+  
+  // Display options
   badgeText: varchar("badge_text", { length: 50 }),
-  displayOnHomepage: boolean("display_on_homepage").default(true),
+  displayOnHomepage: boolean("display_on_homepage").default(false),
   featured: boolean("featured").default(false),
   sortOrder: integer("sort_order").default(0),
   
-  // Approval and activity status
-  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, approved, rejected
+  // Treatment requirements
+  minTreatmentCount: integer("min_treatment_count").default(1),
+  maxDiscountAmount: decimal("max_discount_amount", { precision: 10, scale: 2 }),
+  
+  // Image and location
+  imageUrl: varchar("image_url", { length: 255 }),
+  status: varchar("status", { length: 20 }).default("pending"),
+  
+  // Approvals
+  createdBy: integer("created_by").references(() => users.id),
   approvedBy: integer("approved_by").references(() => users.id),
   approvedAt: timestamp("approved_at"),
   rejectionReason: text("rejection_reason"),
   validUntil: timestamp("valid_until"),
-  isActive: boolean("is_active").default(true),
   
-  // Tracking
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  // Location
+  cityCode: varchar("city_code", { length: 50 }),
+  cityName: varchar("city_name", { length: 100 }),
 });
 
 // Create insert schema and type definitions for specialOffers
@@ -683,13 +709,7 @@ export const treatmentPackages = pgTable("treatment_packages", {
   // Display properties
   imageUrl: varchar("image_url", { length: 255 }),
   
-  // Validity
-  validFrom: timestamp("valid_from"),
-  validUntil: timestamp("valid_until"),
-  isActive: boolean("is_active").default(true),
-  
-  // Tracking
-  createdBy: integer("created_by").references(() => users.id),
+  // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -710,16 +730,6 @@ export const treatmentPackagesRelations = relations(treatmentPackages, ({ one, m
   clinic: one(clinics, {
     fields: [treatmentPackages.clinicId],
     references: [clinics.id],
-  }),
-  creator: one(users, {
-    fields: [treatmentPackages.createdBy],
-    references: [users.id],
-    relationName: "package_creator"
-  }),
-  approver: one(users, {
-    fields: [treatmentPackages.approvedBy],
-    references: [users.id],
-    relationName: "package_approver"
   }),
   treatmentPlans: many(treatmentPlans)
 }));

@@ -20,14 +20,41 @@ router.get('/', async (req, res) => {
   try {
     const query = listQuerySchema.parse(req.query);
     
-    let queryBuilder = db.select().from(specialOffers);
+    let queryBuilder = db.select({
+      id: specialOffers.id,
+      clinicId: specialOffers.clinicId,
+      title: specialOffers.title,
+      description: specialOffers.description,
+      discountType: specialOffers.discountType,
+      discountValue: specialOffers.discountValue,
+      applicableTreatments: specialOffers.applicableTreatments,
+      startDate: specialOffers.startDate,
+      endDate: specialOffers.endDate,
+      promoCode: specialOffers.promoCode,
+      termsAndConditions: specialOffers.termsAndConditions,
+      imageUrl: specialOffers.imageUrl,
+      badgeText: specialOffers.badgeText,
+      treatmentPriceGBP: specialOffers.treatmentPriceGBP,
+      treatmentPriceUSD: specialOffers.treatmentPriceUSD,
+      displayOnHomepage: specialOffers.displayOnHomepage,
+      featured: specialOffers.featured,
+      isActive: specialOffers.isActive,
+      cityCode: specialOffers.cityCode,
+      cityName: specialOffers.cityName,
+      status: specialOffers.status,
+      createdAt: specialOffers.createdAt,
+      updatedAt: specialOffers.updatedAt
+    }).from(specialOffers);
     
     // Apply filters
     if (query?.clinicId) {
       queryBuilder = queryBuilder.where(eq(specialOffers.clinicId, query.clinicId));
     }
     
-    // Active filter is removed since validFrom/validUntil are not in schema
+    // Active filter based on isActive field
+    if (query?.active) {
+      queryBuilder = queryBuilder.where(eq(specialOffers.isActive, query.active === 'true'));
+    }
     
     // Apply pagination
     if (query?.limit) {
@@ -51,7 +78,31 @@ router.get('/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const [offer] = await db
-      .select()
+      .select({
+        id: specialOffers.id,
+        clinicId: specialOffers.clinicId,
+        title: specialOffers.title,
+        description: specialOffers.description,
+        discountType: specialOffers.discountType,
+        discountValue: specialOffers.discountValue,
+        applicableTreatments: specialOffers.applicableTreatments,
+        startDate: specialOffers.startDate,
+        endDate: specialOffers.endDate,
+        promoCode: specialOffers.promoCode,
+        termsAndConditions: specialOffers.termsAndConditions,
+        imageUrl: specialOffers.imageUrl,
+        badgeText: specialOffers.badgeText,
+        treatmentPriceGBP: specialOffers.treatmentPriceGBP,
+        treatmentPriceUSD: specialOffers.treatmentPriceUSD,
+        displayOnHomepage: specialOffers.displayOnHomepage,
+        featured: specialOffers.featured,
+        isActive: specialOffers.isActive,
+        cityCode: specialOffers.cityCode,
+        cityName: specialOffers.cityName,
+        status: specialOffers.status,
+        createdAt: specialOffers.createdAt,
+        updatedAt: specialOffers.updatedAt
+      })
       .from(specialOffers)
       .where(eq(specialOffers.id, id));
     
