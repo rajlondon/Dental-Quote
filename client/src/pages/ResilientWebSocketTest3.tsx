@@ -89,6 +89,32 @@ export function ResilientWebSocketTest3() {
     },
   });
 
+  // Add wrappers to log transport-related events
+  const handleSwitchToWebSocket = useCallback(() => {
+    logEvent("Manually switching to WebSocket transport");
+    switchToWebSocket();
+  }, [switchToWebSocket, logEvent]);
+  
+  const handleSwitchToHttp = useCallback(() => {
+    logEvent("Manually switching to HTTP fallback transport");
+    switchToHttp();
+  }, [switchToHttp, logEvent]);
+  
+  const handleResetFailureCount = useCallback(() => {
+    logEvent("Manually resetting transport failure count");
+    resetFailureCount();
+  }, [resetFailureCount, logEvent]);
+  
+  const handleConnect = useCallback(() => {
+    logEvent("Manually initiating connection");
+    connect();
+  }, [connect, logEvent]);
+  
+  const handleDisconnect = useCallback(() => {
+    logEvent("Manually disconnecting");
+    disconnect();
+  }, [disconnect, logEvent]);
+
   const handleSendMessage = () => {
     if (!messageToSend.trim()) return;
     
@@ -105,6 +131,8 @@ export function ResilientWebSocketTest3() {
       ...prev.slice(0, 19)
     ]);
     setMessageToSend('');
+    
+    logEvent(`Sent message via ${transportMethod === 'http' ? 'HTTP' : 'WebSocket'}`);
   };
 
   const pingServer = () => {
@@ -118,6 +146,8 @@ export function ResilientWebSocketTest3() {
       { type: 'outgoing', timestamp: Date.now(), content: 'Ping sent to server' },
       ...prev.slice(0, 19)
     ]);
+    
+    logEvent(`Sent ping via ${transportMethod === 'http' ? 'HTTP' : 'WebSocket'}`);
   };
 
   // Environment info was already defined at the top
@@ -125,7 +155,7 @@ export function ResilientWebSocketTest3() {
   // Update time every second
   useEffect(() => {
     const timer = setInterval(() => {
-      setEnvInfo(prev => ({
+      setEnvInfo((prev) => ({
         ...prev,
         time: new Date().toISOString()
       }));
