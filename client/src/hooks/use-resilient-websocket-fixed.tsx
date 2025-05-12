@@ -122,29 +122,57 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     return `ws-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
   }, []);
   
-  // Send a message via HTTP
+  // Send a message via HTTP with improved error handling and timeout
   const sendMessageViaHttp = useCallback(async (message: WebSocketMessage) => {
     if (!connectionIdState) return;
     
     try {
+      // Add timeout handling to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
       const response = await fetch('/api/messages/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'X-Priority': 'high' // Prioritize message sending
         },
         body: JSON.stringify({
           connectionId: connectionIdState,
           message,
+          timestamp: Date.now() // Add timestamp for debugging
         }),
+        signal: controller.signal,
+        cache: 'no-store'
       });
+      
+      // Clear the timeout since request completed
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         console.error('Failed to send message via HTTP:', response.status, response.statusText);
-        // Queue the message for retry
-        messageQueueRef.current.push(message);
+        // Queue the message for retry, but only for retriable status codes
+        const retriableStatusCodes = [408, 429, 500, 502, 503, 504];
+        if (retriableStatusCodes.includes(response.status)) {
+          messageQueueRef.current.push(message);
+        }
       }
-    } catch (error) {
-      console.error('Error sending message via HTTP:', error);
+    } catch (error: unknown) {
+      // Specific handling for timeout errors with proper type checking
+      if (
+        error && 
+        typeof error === 'object' && 
+        'name' in error && 
+        typeof error.name === 'string' && 
+        error.name === 'AbortError'
+      ) {
+        console.warn('HTTP message send timed out, will retry');
+      } else {
+        console.error('Error sending message via HTTP:', error);
+      }
+      
       // Queue the message for retry
       messageQueueRef.current.push(message);
     }
@@ -162,12 +190,27 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     }
   }, [sendMessageViaHttp]);
   
-  // Poll for messages from the server with retry logic
+  // Poll for messages from the server with enhanced retry logic and timeout handling
   const pollForMessages = useCallback(async (retryCount = 0) => {
     if (!connectionIdState || !usingFallback) return;
     
     try {
-      const response = await fetch(`/api/messages/poll/${connectionIdState}?lastMessageId=${lastMessageIdRef.current || ''}`);
+      // Add timeout handling for long polling to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout (longer for polling)
+      
+      const response = await fetch(`/api/messages/poll/${connectionIdState}?lastMessageId=${lastMessageIdRef.current || ''}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'X-Priority': retryCount < 2 ? 'high' : 'normal' // Prioritize initial polls
+        },
+        signal: controller.signal,
+        cache: 'no-store'
+      });
+      
+      // Clear the timeout since request completed
+      clearTimeout(timeoutId);
       
       if (response.status === 204) {
         // No content, continue polling
@@ -208,12 +251,24 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
           }
         }, 500);
       }
-    } catch (error) {
-      console.error('Error polling for messages:', error);
+    } catch (error: unknown) {
+      // Special handling for timeout vs. other errors
+      if (
+        error && 
+        typeof error === 'object' && 
+        'name' in error && 
+        typeof error.name === 'string' && 
+        error.name === 'AbortError'
+      ) {
+        console.warn('HTTP polling request timed out, will retry with increased timeout');
+      } else {
+        console.error('Error polling for messages:', error);
+      }
       
       // If we're connected and this is a temporary issue, retry with backoff
-      if (isConnected && retryCount < 5) {
-        const backoffTime = Math.min(1000 * Math.pow(1.5, retryCount), 10000);
+      if (isConnected && retryCount < 6) { // Increased retry limit
+        // Higher level of backoff for polling to reduce rate-limiting issues
+        const backoffTime = Math.min(1000 * Math.pow(2, retryCount), 15000);
         
         if (debug) {
           console.warn(`Polling retry ${retryCount + 1} in ${backoffTime}ms`);
