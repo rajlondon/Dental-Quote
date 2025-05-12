@@ -19,8 +19,9 @@ interface SpecialOfferCardProps {
     endDate: string;
     promoCode: string;
     termsAndConditions: string;
-    bannerImage?: string;
+    imageUrl?: string; // Changed from bannerImage to match DB field
     treatmentPriceGBP?: number;
+    badgeText?: string;
   };
   className?: string;
   onClick?: (promoCode: string) => void;
@@ -67,19 +68,19 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
     return (
       <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
         <div className="flex">
-          {offer.bannerImage && (
+          {offer.imageUrl && (
             <div className="w-1/3">
               <img 
-                src={offer.bannerImage} 
+                src={offer.imageUrl} 
                 alt={offer.title} 
                 className="w-full h-full object-cover"
               />
             </div>
           )}
-          <div className={`${offer.bannerImage ? 'w-2/3' : 'w-full'} p-4`}>
+          <div className={`${offer.imageUrl ? 'w-2/3' : 'w-full'} p-4`}>
             <h3 className="font-semibold text-lg">{offer.title}</h3>
             <Badge className="bg-amber-100 text-amber-800 border-amber-200 mt-1">
-              {discountLabel}
+              {offer.badgeText || discountLabel}
             </Badge>
             <p className="text-sm mt-2 text-gray-600 line-clamp-2">{offer.description}</p>
             <Button 
@@ -97,16 +98,16 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   
   return (
     <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
-      {offer.bannerImage && (
+      {offer.imageUrl && (
         <div className="h-44 relative overflow-hidden">
           <img 
-            src={offer.bannerImage} 
+            src={offer.imageUrl} 
             alt={offer.title} 
             className="w-full h-full object-cover"
           />
           <div className="absolute top-2 right-2">
             <Badge className="bg-amber-500 text-white font-semibold shadow-sm">
-              {discountLabel}
+              {offer.badgeText || discountLabel}
             </Badge>
           </div>
         </div>
