@@ -363,7 +363,7 @@ export function ResilientWebSocketTest3() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={disconnect}
+                  onClick={handleDisconnect}
                   className="flex-1"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
@@ -373,7 +373,7 @@ export function ResilientWebSocketTest3() {
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={connect}
+                  onClick={handleConnect}
                   className="flex-1"
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${reconnectAttempt > 0 ? "animate-spin" : ""}`} />
