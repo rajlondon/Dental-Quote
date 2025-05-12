@@ -202,7 +202,7 @@ const HomePageOffers: React.FC<HomePageOffersProps> = ({ className = '' }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleOffers.map((offer, index) => {
-              // Adapt the database fields to match our component's expected props
+              // Create the adapted offer with correct types
               const adaptedOffer = {
                 id: offer.id,
                 title: offer.title,
@@ -217,7 +217,7 @@ const HomePageOffers: React.FC<HomePageOffersProps> = ({ className = '' }) => {
                 // Fix the key mapping for images
                 imageUrl: offer.banner_image,
                 treatmentPriceGBP: offer.treatment_price_gbp,
-                // Set a default type
+                // Correctly typed as a literal
                 type: 'offer'
               };
               
