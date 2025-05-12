@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { LockKeyhole, AlertTriangle } from 'lucide-react';
 
@@ -20,7 +20,7 @@ const ClinicAccessDeniedPage: React.FC<ClinicAccessDeniedPageProps> = ({
   buttonLabel = "Return to Login",
   redirectUrl = "/clinic-login"
 }) => {
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   
   const handleRedirect = () => {
     // Clear any potentially problematic session data
@@ -36,7 +36,7 @@ const ClinicAccessDeniedPage: React.FC<ClinicAccessDeniedPageProps> = ({
     }
     
     // Navigate to login page or specified redirect URL
-    navigate(redirectUrl);
+    setLocation(redirectUrl);
   };
   
   return (

@@ -75,7 +75,6 @@ import FullMouthPage from "@/pages/FullMouthPage";
 import BookingPage from "@/pages/BookingPage";
 import PatientPortalPage from "@/pages/PatientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
-import EnhancedClinicPortalPage from "@/pages/EnhancedClinicPortalPage";
 // Special import with WebSocket disabled for clinic portal to prevent refresh cycles
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
 import PortalLoginPage from "@/pages/PortalLoginPage";
@@ -770,7 +769,7 @@ function Router() {
                 <p className="text-sm">Loading clinic portal...</p>
               </div>
             </div>}>
-              <EnhancedClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
+              <ClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
             </React.Suspense>
           );
         }}
