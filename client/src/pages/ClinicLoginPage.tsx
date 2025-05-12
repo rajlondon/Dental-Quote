@@ -122,14 +122,21 @@ const ClinicLoginPage: React.FC = () => {
       // Disable promo redirection specifically for clinic login
       sessionStorage.setItem('disable_promo_redirect', 'true');
       
+      // Set additional flags to help with redirect logic
+      sessionStorage.setItem('clinic_login_in_progress', 'true');
+      sessionStorage.setItem('clinic_dashboard_target', '/clinic-portal/dashboard');
+      
       // Set a flag to prevent redirection to your-quote page
       window.clinicLoginInProgress = true;
+      
+      // Set a more persistent cookie to prevent promo redirect
+      document.cookie = "clinic_login_redirect=true; path=/; max-age=60; SameSite=Lax";
       
       // Submit the form - using a workaround to overcome SPA intercepting the form
       document.body.appendChild(form);
       
       // Logging to debug redirect issue
-      console.log('Submitting clinic login form to:', form.action);
+      console.log('Submitting clinic login form to:', form.action, 'with returnUrl:', returnUrlInput.value);
       
       // Navigate directly to avoid any SPA interception
       setTimeout(() => {
