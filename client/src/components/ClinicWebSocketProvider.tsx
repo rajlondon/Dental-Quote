@@ -55,7 +55,7 @@ export const ClinicWebSocketProvider: React.FC<ClinicWebSocketProviderProps> = (
   const [usingFallback, setUsingFallback] = useState(false);
   
   // Create refs for WebSocket and related state
-  const socketRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef<WebSocket | undefined>(undefined);
   const messageQueueRef = useRef<WebSocketMessage[]>([]);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const manualDisconnectRef = useRef<boolean>(false);
@@ -101,7 +101,7 @@ export const ClinicWebSocketProvider: React.FC<ClinicWebSocketProviderProps> = (
       // Set up event handlers
       socketRef.current.onopen = () => {
         setIsConnected(true);
-        setLastError(null);
+        setLastError(undefined);
         setReconnectAttempt(0);
         
         console.log(`WebSocket ${uniqueId} connected successfully!`);
@@ -253,7 +253,7 @@ export const ClinicWebSocketProvider: React.FC<ClinicWebSocketProviderProps> = (
     if (socketRef.current) {
       console.log(`Manually disconnecting WebSocket ${connectionId}`);
       socketRef.current.close();
-      socketRef.current = null;
+      socketRef.current = undefined;
       setIsConnected(false);
     }
   };
@@ -274,7 +274,7 @@ export const ClinicWebSocketProvider: React.FC<ClinicWebSocketProviderProps> = (
   }, [user?.id]);
   
   // Memoized context value
-  const contextValue = {
+  const contextValue: ClinicWebSocketContextType = {
     isConnected,
     connectionId,
     reconnectAttempt,
