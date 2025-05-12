@@ -421,8 +421,15 @@ export async function setupAuth(app: Express) {
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
           
-          // Send the redirect
-          return res.redirect(targetUrl);
+          // Ensure we're redirecting to the clinic portal regardless of what was requested
+          // This is a security measure to prevent redirection to potentially malicious URLs
+          const safeTargetUrl = targetUrl.startsWith('/clinic-portal') ? 
+            targetUrl : '/clinic-portal/dashboard';
+            
+          console.log(`Redirecting to safe target URL: ${safeTargetUrl} (original: ${targetUrl})`);
+          
+          // Send the redirect to the safe target URL
+          return res.redirect(safeTargetUrl);
         });
       });
     })(req, res, next);

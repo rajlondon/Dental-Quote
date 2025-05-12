@@ -29,6 +29,34 @@ const ClinicLoginPage: React.FC = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
+  // Set up login flags and signals
+  React.useEffect(() => {
+    // Set flags to indicate we're in the clinic login flow
+    if (typeof window !== 'undefined') {
+      // Set sessionStorage flags for clinic login
+      sessionStorage.setItem('clinic_login_in_progress', 'true');
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      
+      // Set cookies to ensure the login process can't be hijacked
+      document.cookie = "is_clinic_login=true; path=/; max-age=300; SameSite=Lax";
+      document.cookie = "no_promo_redirect=true; path=/; max-age=300; SameSite=Lax";
+      
+      console.log('✅ ClinicLoginPage initialized and redirection protection configured');
+      
+      // Remove any lingering treatment selection or promo data
+      sessionStorage.removeItem('selected_treatments');
+      sessionStorage.removeItem('special_offer_id');
+      sessionStorage.removeItem('package_id');
+      sessionStorage.removeItem('quote_flow_state');
+      sessionStorage.removeItem('promo_redirect_pending');
+    }
+    
+    return () => {
+      // Only clear login_in_progress, keep no_promo_redirect active
+      sessionStorage.removeItem('clinic_login_in_progress');
+    };
+  }, []);
+  
   // Check URL for error parameters
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -119,11 +147,37 @@ const ClinicLoginPage: React.FC = () => {
       returnUrlInput.value = '/clinic-portal/dashboard';
       form.appendChild(returnUrlInput);
       
+      // Add flag to explicitly indicate this is a clinic login
+      const isClinicLoginInput = document.createElement('input');
+      isClinicLoginInput.type = 'hidden';
+      isClinicLoginInput.name = 'isClinicLogin';
+      isClinicLoginInput.value = 'true';
+      form.appendChild(isClinicLoginInput);
+      
+      // Add flag to skip promo redirects
+      const skipPromoRedirectInput = document.createElement('input');
+      skipPromoRedirectInput.type = 'hidden';
+      skipPromoRedirectInput.name = 'skipPromoRedirect';
+      skipPromoRedirectInput.value = 'true';
+      form.appendChild(skipPromoRedirectInput);
+      
+      // Add timestamp for debugging
+      const timestampInput = document.createElement('input');
+      timestampInput.type = 'hidden';
+      timestampInput.name = 'timestamp';
+      timestampInput.value = Date.now().toString();
+      form.appendChild(timestampInput);
+      
       // Disable promo redirection specifically for clinic login
       sessionStorage.setItem('disable_promo_redirect', 'true');
+      sessionStorage.setItem('clinic_login_in_progress', 'true');
+      sessionStorage.setItem('clinic_dashboard_requested', 'true');
+      
+      // Set cookies to ensure the login process can't be hijacked
+      document.cookie = "is_clinic_login=true; path=/; max-age=300; SameSite=Lax";
+      document.cookie = "no_promo_redirect=true; path=/; max-age=300; SameSite=Lax";
       
       // Set additional flags to help with redirect logic
-      sessionStorage.setItem('clinic_login_in_progress', 'true');
       sessionStorage.setItem('clinic_dashboard_target', '/clinic-portal/dashboard');
       
       // Set a flag to prevent redirection to your-quote page
