@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
@@ -388,8 +388,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     }
   }, [isConnected]);
   
-  // Listen for incoming WebSocket messages
-  const handleWebSocketMessage = (message: WebSocketMessage) => {
+  // Handle WebSocket messages
+  const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
     console.log('WebSocket message received in clinic portal:', message);
     // Handle specific message types
     if (message.type === 'notification') {
@@ -399,7 +399,25 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         description: message.payload?.message || 'You have a new notification',
       });
     }
-  }
+  }, [toast]);
+  
+  // Set up effect to listen for WebSocket messages
+  useEffect(() => {
+    // Custom event listener for WebSocket messages
+    const handleWebSocketEvent = (event: CustomEvent) => {
+      if (event.detail) {
+        handleWebSocketMessage(event.detail);
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener('websocket-message', handleWebSocketEvent as EventListener);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('websocket-message', handleWebSocketEvent as EventListener);
+    };
+  }, [handleWebSocketMessage]);
 
   // Component unmount cleanup effect with enhanced WebSocket handling
   useEffect(() => {
@@ -479,23 +497,23 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       
       // Step 5: Provide feedback to the user after successful logout
       toast({
-        title: t('portal.logout_success', 'Successfully logged out'),
-        description: t('portal.logout_message', 'You have been logged out of your account.'),
+        title: 'Successfully logged out',
+        description: 'You have been logged out of your account.',
       });
       
       // Step 6: Redirect to login page
       console.log("Logout sequence complete, redirecting to login page");
-      setLocation('/portal-login');
+      window.location.href = '/portal-login';
       
     } catch (err) {
       console.error("Logout handler error:", err);
       toast({
-        title: t('portal.logout_success', 'Logged out'),
-        description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
+        title: 'Logged out',
+        description: 'Logout completed with some errors, but you have been signed out.',
       });
       
       // Fallback: redirect even if something fails
-      setLocation('/portal-login');
+      window.location.href = '/portal-login';
     }
   };
 
