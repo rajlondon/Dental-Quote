@@ -26,13 +26,37 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
   }, [path, user]);
 
   // Check if user is logged in and has the required role (if specified)
-  const hasAccess = user && (!requiredRole || user.role === requiredRole);
+  // For clinic staff role, also allow admin role (admins should be able to access everything)
+  const hasAccess = user && (
+    !requiredRole || 
+    user.role === requiredRole || 
+    (requiredRole === 'clinic_staff' && user.role === 'admin')
+  );
   
   // Just a ref to track mount state
   const isMountedRef = useRef(true);
   
   // MUCH simpler approach - immediately mark all portals as ready
   const [readyForPortal, setReadyForPortal] = useState(true);
+  
+  // Check for specific role-based handling
+  useEffect(() => {
+    if (user && requiredRole === 'clinic_staff') {
+      console.log('ProtectedRoute for clinic staff, setting up session markers');
+      
+      // Set session markers for clinic staff portal
+      sessionStorage.setItem('clinic_portal_access_successful', 'true');
+      sessionStorage.setItem('is_clinic_staff', 'true');
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      sessionStorage.setItem('no_special_offer_redirect', 'true');
+      sessionStorage.setItem('disable_quote_redirect', 'true');
+      sessionStorage.setItem('clinic_session_active', 'true');
+      
+      // Set cookies to mark that this is a clinic staff session
+      document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "clinic_session_active=true; path=/; max-age=86400; SameSite=Lax";
+    }
+  }, [user, requiredRole]);
   
   useEffect(() => {
     // Cleanup function
@@ -69,8 +93,21 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
           return <Redirect to="/portal-login" />;
         }
 
-        if (requiredRole && user.role !== requiredRole) {
+        if (!hasAccess) {
           // User is logged in but doesn't have required role
+          console.log(`Access denied: User role ${user.role}, required role ${requiredRole}`);
+          
+          // For clinic staff access, redirect to the clinic login page
+          if (requiredRole === 'clinic_staff') {
+            return <Redirect to="/clinic-login" />;
+          }
+          
+          // For admin access, redirect to admin login
+          if (requiredRole === 'admin') {
+            return <Redirect to="/admin-login" />;
+          }
+          
+          // Default access denied page with redirect
           return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-4 text-center">
               <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>

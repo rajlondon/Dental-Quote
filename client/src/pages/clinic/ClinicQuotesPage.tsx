@@ -51,8 +51,10 @@ export default function ClinicQuotesPage() {
     refetch();
   }, []);
 
-  // Get item details if ID is provided
-  const itemDetails = quoteId ? getItemDetails(quoteId) : null;
+  // Always call getItemDetails with a default ID to maintain consistent hook calls
+  // This avoids the "rendered more hooks than during the previous render" error
+  const safeQuoteId = quoteId || -1; // Use -1 as a dummy ID when no quote is selected
+  const itemDetails = getItemDetails(safeQuoteId);
 
   // Handle loading states
   if (quoteId && itemDetails?.isLoading) {
