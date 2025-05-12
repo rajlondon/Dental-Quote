@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
-import useWebSocket, { WebSocketMessage } from "@/hooks/use-websocket";
+import ClinicWebSocketProvider, { useClinicWebSocket } from "@/components/ClinicWebSocketProvider";
 import {
   Select,
   SelectContent,
