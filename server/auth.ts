@@ -299,17 +299,33 @@ export async function setupAuth(app: Express) {
   // Dedicated clinic login endpoint that performs server-side redirect
   app.post("/api/auth/clinic-login", (req, res, next) => {
     // Extract credentials and return URL from form submission
-    const { email, password, returnUrl, isClinicLogin, skipPromoRedirect } = req.body;
-    const targetUrl = returnUrl || '/clinic-portal/dashboard';
+    const { 
+      email, 
+      password, 
+      returnUrl, 
+      isClinicLogin, 
+      skipPromoRedirect,
+      no_special_offer_redirect,
+      disable_quote_redirect,
+      login_source,
+      timestamp
+    } = req.body;
+    
+    // Always force dashboard as the target, ignore any other returnUrl to ensure safety
+    const targetUrl = '/clinic-portal/dashboard';
     
     // Enhanced logging for clinic login diagnostics
-    console.log("Clinic login request received:", {
+    console.log("CRITICAL: Clinic login request received:", {
       email: email ? `${email.substring(0, 3)}...` : undefined,
       hasPassword: !!password,
       returnUrl,
       targetUrl: targetUrl, // Log exactly where we plan to redirect
       isClinicLogin,
-      skipPromoRedirect
+      skipPromoRedirect,
+      hasNoSpecialOfferRedirect: !!no_special_offer_redirect,
+      hasDisableQuoteRedirect: !!disable_quote_redirect,
+      loginSource: login_source || 'unknown',
+      hasTimestamp: !!timestamp
     });
     
     // Check if already authenticated as clinic_staff with same email
@@ -362,13 +378,23 @@ export async function setupAuth(app: Express) {
           return res.redirect('/clinic-login?error=session_error');
         }
         
-        // Set markers in the session
+        // Set multiple markers in the session for redundant protection
         (req.session as any).isClinicStaff = true;
+        (req.session as any).clinicSessionActive = true;
+        (req.session as any).userRole = 'clinic_staff';
         
-        // Add flags to prevent promo redirects if needed
-        if (skipPromoRedirect === 'true' || isClinicLogin === 'true') {
-          (req.session as any).skipPromoRedirect = true;
+        // Always set these flags for clinic logins for maximum protection
+        (req.session as any).skipPromoRedirect = true;
+        (req.session as any).noSpecialOfferRedirect = true;
+        (req.session as any).disableQuoteRedirect = true;
+        
+        // Record login source for debugging
+        if (login_source) {
+          (req.session as any).loginSource = login_source;
         }
+        
+        // Add timestamp for tracking
+        (req.session as any).clinicLoginTimestamp = Date.now();
         
         // Save the session explicitly before redirect to ensure cookie is set
         req.session.save((saveErr) => {
