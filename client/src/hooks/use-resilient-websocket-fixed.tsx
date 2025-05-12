@@ -76,6 +76,18 @@ export interface UseResilientWebSocketOptions {
    * @default true
    */
   useResilientMode?: boolean;
+  
+  /**
+   * Force the use of WebSocket even if the environment has shown past failures
+   * @default false
+   */
+  forceWebSocket?: boolean;
+  
+  /**
+   * Initial transport method to use ('websocket' or 'http')
+   * @default 'websocket'
+   */
+  initialTransport?: 'websocket' | 'http';
 }
 
 /**
@@ -98,13 +110,16 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     disableAutoConnect = false,
     debug = false,
     useResilientMode = true,
+    forceWebSocket = false,
+    initialTransport = 'websocket'
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(initialTransport === 'http');
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
   const [manuallyDisconnected, setManuallyDisconnected] = useState(false);
   const [connectionIdState, setConnectionIdState] = useState<string | null>(null);
+  const [transportMethod, setTransportMethod] = useState<'websocket' | 'http'>(initialTransport);
   
   const websocketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -462,7 +477,7 @@ export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}
     
     // If we've had consistent failures with WebSockets, go directly to HTTP
     const failureCount = getFailureCount();
-    if (failureCount > 5 && !forceWebSocket) {
+    if (failureCount > 5 && !options.forceWebSocket) {
       // We've had multiple failures across page loads, prefer HTTP fallback
       if (debug) console.warn(`Detected ${failureCount} consecutive WebSocket failures, starting with HTTP fallback directly`);
       setTransportMethod('http');
