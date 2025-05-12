@@ -181,6 +181,7 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       // This will help other components know not to do promo redirects
       document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
       document.cookie = "is_clinic_login=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "no_promo_redirect=true; path=/; max-age=86400; SameSite=Lax";
       
       // 3. Store clinic user ID in sessionStorage (useful for reconnecting WebSockets)
       if (user.id) {
@@ -194,10 +195,38 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       
       // 5. Store timestamp of last successful clinic access
       sessionStorage.setItem('last_clinic_access', Date.now().toString());
+      
+      // 6. Clear any quote flow or promo redirect flags that might interfere
+      sessionStorage.removeItem('selected_treatments');
+      sessionStorage.removeItem('quote_flow_state');
+      sessionStorage.removeItem('promo_redirect_pending');
+      sessionStorage.removeItem('treatment_selection_active');
+      sessionStorage.removeItem('special_offer_id');
+      sessionStorage.removeItem('package_id');
+    };
+    
+    // Check if we just logged in from clinic-login page
+    const checkForClinicLogin = () => {
+      // Detect if we just came from a clinic login
+      const hasClinicRedirectCookie = document.cookie
+        .split(';')
+        .some(c => c.trim().startsWith('clinic_redirect_target='));
+      
+      if (hasClinicRedirectCookie || sessionStorage.getItem('clinic_login_in_progress') === 'true') {
+        console.log('✅ ClinicGuard detected successful clinic login - ensuring dashboard access');
+        
+        // Clear login flags
+        sessionStorage.removeItem('clinic_login_in_progress');
+        
+        // Set stronger protection
+        sessionStorage.setItem('disable_promo_redirect', 'true');
+        sessionStorage.setItem('clinic_dashboard_requested', 'true');
+      }
     };
     
     // Execute immediately
     storeSessionMarkers();
+    checkForClinicLogin();
     
     // Also set a periodic refresh of these session markers
     const refreshInterval = setInterval(storeSessionMarkers, 5 * 60 * 1000); // Every 5 minutes

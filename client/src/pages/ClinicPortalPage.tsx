@@ -160,6 +160,33 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
+  // New effect to handle clinic login redirection protection
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log("✅ ClinicPortalPage initialized - setting up redirection protection");
+      
+      // Clear any promotion or treatment quote flags to prevent conflicts
+      sessionStorage.removeItem('promo_redirect_pending');
+      sessionStorage.removeItem('special_offer_redirect_target');
+      sessionStorage.removeItem('selected_treatments');
+      sessionStorage.removeItem('quote_flow_state');
+      sessionStorage.removeItem('treatment_selection_active');
+      
+      // Set clinic portal specific flags
+      sessionStorage.setItem('clinic_portal_access_successful', 'true');
+      sessionStorage.setItem('clinic_dashboard_accessed', Date.now().toString());
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      
+      // Set cookies to maintain clinic session across page refreshes
+      document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = "clinic_session_active=true; path=/; max-age=3600; SameSite=Lax";
+      document.cookie = "no_promo_redirect=true; path=/; max-age=3600; SameSite=Lax";
+      
+      // Remove any lingering clinic redirect flags
+      sessionStorage.removeItem('clinic_login_in_progress');
+    }
+  }, []);
+  
   // Helper function to initialize clinic sessions consistently
   const initializeClinicSession = (userId: number) => {
     console.log(`🔧 Initializing clinic session for user ${userId}`);
