@@ -104,8 +104,37 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     return initialSection;
   };
   
-  // Use the redirect-safe section
-  const [activeSection, setActiveSection] = useState<string>(getRedirectSafeSection());
+  // Parse the URL for potential section parameter
+  const getInitialSectionFromUrl = () => {
+    try {
+      // First check if we're on a path like /clinic-portal/dashboard
+      const pathname = window.location.pathname;
+      const parts = pathname.split('/');
+      
+      // If format is /clinic-portal/{section}
+      if (parts.length >= 3 && parts[1] === 'clinic-portal' && parts[2]) {
+        console.log(`Found section in URL path: ${parts[2]}`);
+        return parts[2];
+      }
+      
+      // Otherwise check for query param
+      const params = new URLSearchParams(window.location.search);
+      const sectionParam = params.get('section');
+      if (sectionParam) {
+        console.log(`Found section in query parameter: ${sectionParam}`);
+        return sectionParam;
+      }
+      
+      // Fall back to the redirect-safe method
+      return getRedirectSafeSection();
+    } catch (error) {
+      console.error("Error parsing section from URL:", error);
+      return getRedirectSafeSection();
+    }
+  };
+  
+  // Use the section from URL or the redirect-safe section
+  const [activeSection, setActiveSection] = useState<string>(getInitialSectionFromUrl());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   

@@ -140,11 +140,11 @@ const ClinicLoginPage: React.FC = () => {
       passwordInput.value = values.password;
       form.appendChild(passwordInput);
       
-      // Add return URL
+      // Add return URL - use the correct format without section
       const returnUrlInput = document.createElement('input');
       returnUrlInput.type = 'hidden';
       returnUrlInput.name = 'returnUrl';
-      returnUrlInput.value = '/clinic-portal/dashboard';
+      returnUrlInput.value = '/clinic-portal';  // Use base URL without section
       form.appendChild(returnUrlInput);
       
       // Add flag to explicitly indicate this is a clinic login
@@ -178,7 +178,7 @@ const ClinicLoginPage: React.FC = () => {
       document.cookie = "no_promo_redirect=true; path=/; max-age=300; SameSite=Lax";
       
       // Set additional flags to help with redirect logic
-      sessionStorage.setItem('clinic_dashboard_target', '/clinic-portal/dashboard');
+      sessionStorage.setItem('clinic_dashboard_target', '/clinic-portal');
       
       // Set a flag to prevent redirection to your-quote page
       window.clinicLoginInProgress = true;
