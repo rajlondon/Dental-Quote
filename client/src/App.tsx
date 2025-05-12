@@ -617,6 +617,7 @@ function Router() {
       
       {/* Special Offers Testing Route */}
       <Route path="/special-offers-test" component={SpecialOfferTestPage} />
+      <Route path="/special-offers-fixed" component={SpecialOffersFixedPage} />
       
       {/* Debug Render Test Page - completely new route to verify build pipeline */}
       <Route path="/debug-render-test" component={() => {
