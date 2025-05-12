@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useResilientWebSocket } from '@/hooks/use-resilient-websocket-fixed';
-import { AlertCircle, CheckCircle, XCircle, RefreshCw, ArrowUpDown, Info } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, RefreshCw, ArrowUpDown, Info, History } from 'lucide-react';
 
 interface Message {
   type: string;
@@ -21,6 +22,23 @@ interface Message {
 export function ResilientWebSocketTest3() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageToSend, setMessageToSend] = useState('');
+  const [eventLog, setEventLog] = useState<Array<{event: string, timestamp: number}>>([]);
+  
+  // Environment information for debugging
+  const [envInfo, setEnvInfo] = useState({
+    hostname: window.location.hostname,
+    protocol: window.location.protocol,
+    userAgent: navigator.userAgent,
+    time: new Date().toISOString()
+  });
+  
+  // Log transport-related events
+  const logEvent = useCallback((event: string) => {
+    setEventLog(prev => [
+      { event, timestamp: Date.now() },
+      ...prev.slice(0, 19) // Keep last 20 events
+    ]);
+  }, []);
   
   // Define constant for options
   const useResilientMode = true;
@@ -102,13 +120,7 @@ export function ResilientWebSocketTest3() {
     ]);
   };
 
-  // Add info about environment 
-  const [envInfo, setEnvInfo] = useState({
-    hostname: window.location.hostname,
-    protocol: window.location.protocol,
-    userAgent: navigator.userAgent,
-    time: new Date().toISOString()
-  });
+  // Environment info was already defined at the top
 
   // Update time every second
   useEffect(() => {
@@ -150,6 +162,48 @@ export function ResilientWebSocketTest3() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Transport Event Log
+            </CardTitle>
+            <CardDescription>
+              Records of transport method changes and connection events
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[200px] rounded-md border p-2">
+              {eventLog.length > 0 ? (
+                <div className="space-y-2">
+                  {eventLog.map((event, i) => (
+                    <div 
+                      key={i} 
+                      className={`text-sm p-2 rounded ${
+                        event.event.includes('error') || event.event.includes('failed')
+                          ? 'bg-red-50 text-red-800 border border-red-200'
+                          : event.event.includes('switch') || event.event.includes('transport')
+                            ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                            : event.event.includes('connect')
+                              ? 'bg-green-50 text-green-800 border border-green-200'
+                              : 'bg-gray-50 text-gray-800 border border-gray-200'
+                      }`}
+                    >
+                      <span className="font-mono text-xs text-gray-500 mr-2">
+                        {new Date(event.timestamp).toLocaleTimeString()}
+                      </span>
+                      {event.event}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-10">
+                  No transport events recorded yet
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
@@ -222,11 +276,38 @@ export function ResilientWebSocketTest3() {
               
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Failure Count:</span>
-                <span className="font-mono">
+                <span className={`font-mono ${
+                  (() => {
+                    try {
+                      const count = parseInt(localStorage.getItem('websocket_failure_count') || '0');
+                      if (count > 5) return "text-red-600 font-semibold";
+                      if (count > 2) return "text-amber-600";
+                      return "";
+                    } catch (e) {
+                      return "";
+                    }
+                  })()
+                }`}>
                   {(() => {
                     try {
                       const count = localStorage.getItem('websocket_failure_count');
                       return count ? `${count} failures` : "No failures";
+                    } catch (e) {
+                      return "N/A";
+                    }
+                  })()}
+                </span>
+              </div>
+              
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Auto-Selection:</span>
+                <span className="font-mono">
+                  {(() => {
+                    try {
+                      const count = parseInt(localStorage.getItem('websocket_failure_count') || '0');
+                      if (count > 5) return "HTTP Preferred";
+                      if (count > 2) return "WebSocket with Caution";
+                      return "WebSocket Preferred";
                     } catch (e) {
                       return "N/A";
                     }
