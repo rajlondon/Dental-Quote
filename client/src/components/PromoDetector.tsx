@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useSpecialOfferDetection } from '@/hooks/use-special-offer-detection';
 import { usePackageDetection } from '@/hooks/use-package-detection';
 import { usePromoStore } from '@/features/promo/usePromoStore';
+import { useAuth } from '@/hooks/use-auth';
 
 /**
  * PromoDetector is a component that runs inside the router context
@@ -10,6 +11,9 @@ import { usePromoStore } from '@/features/promo/usePromoStore';
  * This prevents hooks rule violations by encapsulating the use of router hooks.
  */
 const PromoDetector: React.FC = () => {
+  // Get authentication context
+  const { user, isLoading } = useAuth();
+  
   // Router hooks (only safe to use inside a Router component)
   const [location] = useLocation();
   
@@ -18,6 +22,9 @@ const PromoDetector: React.FC = () => {
   const isAdminRoute = location.startsWith('/admin');
   const isClinicLoginRoute = location === '/clinic-login';
   const isPatientRoute = location.startsWith('/patient-portal');
+  
+  // Check if user is clinic staff from auth context
+  const isClinicStaffUser = user && user.role && user.role === 'clinic_staff';
   
   // Add more comprehensive sessionStorage and cookie checks
   const hasClinicCookies = typeof document !== 'undefined' && 
@@ -50,6 +57,25 @@ const PromoDetector: React.FC = () => {
   const hasDisablePromoFlag = typeof window !== 'undefined' && 
     sessionStorage.getItem('disable_promo_redirect') === 'true';
     
+  // If authentication is still loading, skip promo detection for safety
+  if (isLoading) {
+    console.log('PromoDetector skipping while auth state is loading');
+    return null;
+  }
+  
+  // MOST IMPORTANT CHECK: If user is clinic staff based on the auth context, 
+  // immediately skip all promo detection before any other checks
+  if (isClinicStaffUser) {
+    console.log('PromoDetector skipping for authenticated clinic staff user');
+    // Proactively set session flag to prevent any future redirections
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      sessionStorage.setItem('no_special_offer_redirect', 'true');
+      sessionStorage.setItem('disable_quote_redirect', 'true');
+    }
+    return null;
+  }
+  
   // If we're on a protected route or have any clinic indicators, don't process promo params
   if (isClinicRoute || isAdminRoute || isClinicLoginRoute || hasClinicCookies || hasClinicSessionStorage || hasDisablePromoFlag) {
     console.log('PromoDetector skipping for protected route/session:', location, 
@@ -67,7 +93,7 @@ const PromoDetector: React.FC = () => {
   );
   
   if (isClinicUser) {
-    console.log('PromoDetector skipping for clinic staff user role');
+    console.log('PromoDetector skipping for clinic staff user role in session/cookies');
     return null;
   }
   

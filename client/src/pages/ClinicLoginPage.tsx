@@ -38,10 +38,20 @@ const ClinicLoginPage: React.FC = () => {
       sessionStorage.setItem('disable_promo_redirect', 'true');
       
       // Set cookies to ensure the login process can't be hijacked
-      document.cookie = "is_clinic_login=true; path=/; max-age=300; SameSite=Lax";
-      document.cookie = "no_promo_redirect=true; path=/; max-age=300; SameSite=Lax";
+      document.cookie = "is_clinic_login=true; path=/; max-age=3600; SameSite=Lax";
+      document.cookie = "no_promo_redirect=true; path=/; max-age=3600; SameSite=Lax";
+      document.cookie = "is_clinic_staff=true; path=/; max-age=3600; SameSite=Lax";
+      document.cookie = "user_role=clinic_staff; path=/; max-age=3600; SameSite=Lax";
+      document.cookie = "disable_quote_redirect=true; path=/; max-age=3600; SameSite=Lax";
       
-      console.log('✅ ClinicLoginPage initialized and redirection protection configured');
+      // Set session storage flags with increased protection against redirects
+      sessionStorage.setItem('disable_promo_redirect', 'true');
+      sessionStorage.setItem('no_special_offer_redirect', 'true');
+      sessionStorage.setItem('disable_quote_redirect', 'true');
+      sessionStorage.setItem('is_clinic_staff', 'true');
+      sessionStorage.setItem('user_role', 'clinic_staff');
+      
+      console.log('✅ ClinicLoginPage initialized and redirection protection configured with extended protection');
       
       // Remove any lingering treatment selection or promo data
       sessionStorage.removeItem('selected_treatments');
