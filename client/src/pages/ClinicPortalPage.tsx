@@ -373,33 +373,33 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   }
   
   // Only use WebSocket if user is authenticated
-  const { isConnected, disconnect } = useResilientWebSocket(user?.id, {
-    onOpen: () => {
+  const { isConnected, sendMessage } = useClinicWebSocket();
+  
+  // Set up event listeners for WebSocket events
+  useEffect(() => {
+    if (isConnected) {
       console.log('WebSocket connected for clinic portal');
       // Store connection status in session for recovery purposes
       sessionStorage.setItem('clinic_websocket_connected', 'true');
-    },
-    onClose: () => {
+    } else {
       console.log('WebSocket disconnected for clinic portal');
       // Store disconnection in session
       sessionStorage.setItem('clinic_websocket_connected', 'false');
-    },
-    onError: (error: Event) => {
-      console.error('WebSocket error in clinic portal:', error);
-    },
-    onMessage: (message: WebSocketMessage) => {
-      console.log('WebSocket message received in clinic portal:', message);
-      // Handle specific message types
-      if (message.type === 'notification') {
-        // Handle notification updates
-        toast({
-          title: message.payload?.title || 'New Notification',
-          description: message.payload?.message || 'You have a new notification',
-        });
-      }
-    },
-    reconnectLimit: 3 // Limit reconnect attempts for clinic portal
-  });
+    }
+  }, [isConnected]);
+  
+  // Listen for incoming WebSocket messages
+  const handleWebSocketMessage = (message: WebSocketMessage) => {
+    console.log('WebSocket message received in clinic portal:', message);
+    // Handle specific message types
+    if (message.type === 'notification') {
+      // Handle notification updates
+      toast({
+        title: message.payload?.title || 'New Notification',
+        description: message.payload?.message || 'You have a new notification',
+      });
+    }
+  }
 
   // Component unmount cleanup effect with enhanced WebSocket handling
   useEffect(() => {
@@ -412,26 +412,20 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     sessionStorage.setItem('clinic_portal_active', 'true');
     
     return () => {
-      // Prevent WebSocket connection errors on unmount with better cleanup
-      if (isMounted.current) {
-        console.log("ClinicPortalPage unmounting, performing cleanup");
-        
-        // Only perform full cleanup if this is the most recent instance
-        // This prevents older unmounted instances from clearing newer ones
-        if ((window as any).__lastClinicPortalInstance === instanceId) {
-          // Clear any stored session data
-          sessionStorage.removeItem('clinic_portal_active');
-          sessionStorage.setItem('clinic_portal_unmounted', 'true');
-          
-          // Disconnect WebSocket using our new hook
-          disconnect();
-          console.log(`Disconnected WebSocket for clinic portal`);
-        } else {
-          console.log("Skipping full cleanup - newer instance exists");
-        }
+      console.log("ClinicPortalPage unmounting, performing cleanup");
+      
+      // Only perform full cleanup if this is the most recent instance
+      // This prevents older unmounted instances from clearing newer ones
+      if ((window as any).__lastClinicPortalInstance === instanceId) {
+        // Clear any stored session data
+        sessionStorage.removeItem('clinic_portal_active');
+        sessionStorage.setItem('clinic_portal_unmounted', 'true');
+        console.log(`Cleanup complete for clinic portal`);
+      } else {
+        console.log("Skipping full cleanup - newer instance exists");
       }
     };
-  }, [user, disconnect]);
+  }, []);
   
   // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
