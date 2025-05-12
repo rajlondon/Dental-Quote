@@ -291,11 +291,12 @@ export async function setupAuth(app: Express) {
     const { email, password, returnUrl, isClinicLogin, skipPromoRedirect } = req.body;
     const targetUrl = returnUrl || '/clinic-portal/dashboard';
     
-    // Log the clinic login request for debugging
-    console.log("Clinic login request:", {
+    // Enhanced logging for clinic login diagnostics
+    console.log("Clinic login request received:", {
       email: email ? `${email.substring(0, 3)}...` : undefined,
       hasPassword: !!password,
       returnUrl,
+      targetUrl: targetUrl, // Log exactly where we plan to redirect
       isClinicLogin,
       skipPromoRedirect
     });
@@ -349,16 +350,37 @@ export async function setupAuth(app: Express) {
             return res.redirect('/clinic-login?error=session_save_error');
           }
           
-          // Redirect to the target URL with proper cookies set
-          console.log(`Clinic login successful, redirecting to ${targetUrl}`);
+          // Enhanced redirect with debugging and reliability improvements
+          console.log(`✅ Clinic login successful, redirecting to ${targetUrl}`);
           
-          // Set a cookie to help client-side detect this is a clinic session
+          // Set multiple cookies to help client-side detect this is a clinic session
+          // This provides redundancy for our detection mechanisms
           res.cookie('is_clinic_staff', 'true', { 
             httpOnly: false, // Allow JavaScript to read
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
             path: '/' 
           });
           
+          // Add an additional cookie specifically for the post-login redirect
+          res.cookie('clinic_redirect_target', targetUrl, {
+            httpOnly: false, // Allow JavaScript to read
+            maxAge: 60 * 1000, // 1 minute - just enough for the redirect
+            path: '/'
+          });
+          
+          // Set the no_promo flag to prevent promotional redirects
+          res.cookie('no_promo_redirect', 'true', {
+            httpOnly: false,
+            maxAge: 60 * 1000, // 1 minute
+            path: '/'
+          });
+          
+          // Force cache headers to prevent issues
+          res.setHeader('Cache-Control', 'no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+          
+          // Send the redirect
           return res.redirect(targetUrl);
         });
       });
