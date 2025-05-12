@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<User | null, Error>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/api/auth/user"], // This path must match the fetch URL exactly
     queryFn: async () => {
       // If we're in admin mode and already have cached data, return it directly to prevent loops
       if (window.location.pathname === '/admin-portal' && userDataRef.current) {
@@ -119,9 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch fresh data
       try {
         console.log("Fetching fresh user data");
-        // Fix the API path to prevent duplicate /api prefix
-        // Remove the leading slash to ensure axios doesn't add /api/api
-        const apiRes = await api.get("auth/user");
+        // Make sure we use the full and correct path
+        const apiRes = await api.get("/api/auth/user");
         const userData = apiRes.data.user || null;
         
         // Update cache
@@ -155,8 +154,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       // Server expects email/password
-      // Fix API path - don't include the /api prefix as it's added by the axios instance
-      const res = await apiRequest("POST", "auth/login", {
+      // Fix API path by adding the /api prefix explicitly since apiRequest doesn't add it
+      const res = await apiRequest("POST", "/api/auth/login", {
         email: credentials.email,
         password: credentials.password
       });
@@ -274,8 +273,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      // Fix API path - don't include the /api prefix
-      const res = await apiRequest("POST", "auth/register", userData);
+      // Fix API path by including the /api prefix
+      const res = await apiRequest("POST", "/api/auth/register", userData);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Registration failed");
@@ -302,8 +301,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // Fix API path - don't include the /api prefix
-      const res = await apiRequest("POST", "auth/logout");
+      // Fix API path by including the /api prefix
+      const res = await apiRequest("POST", "/api/auth/logout");
       if (!res.ok) {
         throw new Error("Logout failed");
       }
