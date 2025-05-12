@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 export interface WebSocketMessage {
   type: string;
   payload?: any;
+  data?: any; // For backwards compatibility 
   timestamp?: number;
   connectionId?: string;
   sender?: {
