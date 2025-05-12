@@ -306,7 +306,11 @@ const HomePage: React.FC = () => {
       <HeroSimple />
       
       {/* Premium Offers Carousel */}
-      <EnhancedOffersCarousel className="px-4" />
+      {/* Temporarily commenting out the original component that has issues */}
+      {/* <EnhancedOffersCarousel className="px-4" /> */}
+      
+      {/* Using our fixed special offers component */}
+      <FixedHomePageOffers className="px-4" />
       
       {/* Popular Clinics Section */}
       <section className="py-16">
