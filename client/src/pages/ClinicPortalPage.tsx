@@ -70,6 +70,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   disableAutoRefresh = true,
   initialSection = 'dashboard'
 }) => {
+  // Defensive initialization for initialSection
+  const safeInitialSection = initialSection || 'dashboard';
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -107,7 +109,13 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   // Parse the URL for potential section parameter
   const getInitialSectionFromUrl = () => {
     try {
-      // First check if we're on a path like /clinic-portal/dashboard
+      // First check if we have a valid initialSection prop
+      if (safeInitialSection && safeInitialSection !== 'dashboard') {
+        console.log(`Using initialSection prop: ${safeInitialSection}`);
+        return safeInitialSection;
+      }
+      
+      // Then check if we're on a path like /clinic-portal/dashboard
       const pathname = window.location.pathname;
       const parts = pathname.split('/');
       
@@ -133,8 +141,11 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     }
   };
   
-  // Use the section from URL or the redirect-safe section
-  const [activeSection, setActiveSection] = useState<string>(getInitialSectionFromUrl());
+  // Use the section from URL or the redirect-safe section with extra safety checks
+  const [activeSection, setActiveSection] = useState<string>(() => {
+    const section = getInitialSectionFromUrl();
+    return section || 'dashboard'; // Ensure we always have a valid section
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
