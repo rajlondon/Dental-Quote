@@ -510,11 +510,15 @@ function Router() {
         {() => <Redirect to="/clinic-portal/dashboard" />}
       </Route>
       
-      {/* Specific clinic portal section route */}
+      {/* Specific clinic portal section route with parameter guard */}
       <Route path="/clinic-portal/:section">
-        {({ params }) => {
-          // Extract the section from the URL
-          const section = params.section || 'dashboard';
+        {(params: any) => {
+          // Extract the section from the URL with additional error checking
+          // This prevents the "Cannot read properties of undefined (reading 'section')" error
+          const section = params && params.section ? params.section : 'dashboard';
+          
+          // Add safe section verification
+          console.log(`Clinic portal loading section: ${section}`);
           
           return (
             <React.Suspense fallback={
@@ -523,7 +527,9 @@ function Router() {
                 <p className="text-lg">Loading {section} section...</p>
               </div>
             }>
-              <ClinicPortalPage disableAutoRefresh={true} initialSection={section} />
+              <ClinicGuard>
+                <ClinicPortalPage disableAutoRefresh={true} initialSection={section} />
+              </ClinicGuard>
             </React.Suspense>
           );
         }}
