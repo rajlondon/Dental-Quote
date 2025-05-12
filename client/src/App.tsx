@@ -28,6 +28,7 @@ import WebSocketTestPage from "@/pages/WebSocketTestPage";
 import ResilientWebSocketTest2 from "@/pages/ResilientWebSocketTest2";
 import ResilientWebSocketTest from "@/pages/ResilientWebSocketTest";
 import ResilientWebSocketTest3 from "@/pages/ResilientWebSocketTest3";
+import ClinicAccessDeniedPage from "@/components/ClinicAccessDeniedPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -352,7 +353,28 @@ function Router() {
       <Route path="/clinic-detail/:id" component={ClinicDetailPage} /> {/* Direct access to detail component */}
       <Route path="/clinic-debug/:id?" component={ClinicDebugPage} />
       <Route path="/package/:id" component={PackageDetailPage} />
-      <Route path="/portal-login" component={PortalLoginPage} />
+      <Route path="/portal-login">
+        {() => {
+          // Skip redirect for clinic staff - check both session storage and cookies
+          const isClinicStaff = typeof window !== 'undefined' && (
+            sessionStorage.getItem('user_role') === 'clinic_staff' ||
+            sessionStorage.getItem('is_clinic_staff') === 'true' ||
+            sessionStorage.getItem('clinic_session_active') === 'true' ||
+            document.cookie.split(';').some(c => 
+              c.trim().startsWith('is_clinic_staff=true') ||
+              c.trim().startsWith('user_role=clinic_staff')
+            )
+          );
+          
+          // If clinic staff, redirect to clinic portal directly
+          if (isClinicStaff) {
+            console.log("Clinic staff detected, redirecting to clinic portal");
+            return <Redirect to="/clinic-portal" />;
+          }
+          
+          return <PortalLoginPage />;
+        }}
+      </Route>
       <Route path="/portal">
         {() => <Redirect to="/portal-login" />}
       </Route>
