@@ -20,7 +20,8 @@ router.get('/', async (req, res) => {
   try {
     const query = listQuerySchema.parse(req.query);
     
-    let queryBuilder = db.select({
+    // Define columns to select
+    const columns = {
       id: treatmentPackages.id,
       name: treatmentPackages.name,
       description: treatmentPackages.description,
@@ -34,23 +35,26 @@ router.get('/', async (req, res) => {
       imageUrl: treatmentPackages.imageUrl,
       createdAt: treatmentPackages.createdAt,
       updatedAt: treatmentPackages.updatedAt
-    }).from(treatmentPackages);
+    };
     
-    // Apply filters
+    // Start with base query
+    let baseQuery = db.select(columns).from(treatmentPackages);
+    
+    // Apply filters in a chain
     if (query?.clinicId) {
-      queryBuilder = queryBuilder.where(eq(treatmentPackages.clinicId, query.clinicId));
+      baseQuery = baseQuery.where(eq(treatmentPackages.clinicId, query.clinicId));
     }
     
-    // Apply pagination
     if (query?.limit) {
-      queryBuilder = queryBuilder.limit(query.limit);
+      baseQuery = baseQuery.limit(query.limit);
     }
     
     if (query?.offset) {
-      queryBuilder = queryBuilder.offset(query.offset);
+      baseQuery = baseQuery.offset(query.offset);
     }
     
-    const packages = await queryBuilder;
+    // Execute the query
+    const packages = await baseQuery;
     res.json(packages);
   } catch (error) {
     console.error('Error fetching treatment packages:', error);
@@ -63,25 +67,30 @@ router.get('/:id', async (req, res) => {
   try {
     const id = req.params.id;
     
-    // Get the package
-    const [pkg] = await db
-      .select({
-        id: treatmentPackages.id,
-        name: treatmentPackages.name,
-        description: treatmentPackages.description,
-        clinicId: treatmentPackages.clinicId,
-        items: treatmentPackages.items,
-        totalPriceGBP: treatmentPackages.totalPriceGBP,
-        totalPriceUSD: treatmentPackages.totalPriceUSD,
-        discountPct: treatmentPackages.discountPct,
-        cityCode: treatmentPackages.cityCode,
-        cityName: treatmentPackages.cityName,
-        imageUrl: treatmentPackages.imageUrl,
-        createdAt: treatmentPackages.createdAt,
-        updatedAt: treatmentPackages.updatedAt
-      })
+    // Reuse the same column definition from the list route
+    const columns = {
+      id: treatmentPackages.id,
+      name: treatmentPackages.name,
+      description: treatmentPackages.description,
+      clinicId: treatmentPackages.clinicId,
+      items: treatmentPackages.items,
+      totalPriceGBP: treatmentPackages.totalPriceGBP,
+      totalPriceUSD: treatmentPackages.totalPriceUSD,
+      discountPct: treatmentPackages.discountPct,
+      cityCode: treatmentPackages.cityCode,
+      cityName: treatmentPackages.cityName,
+      imageUrl: treatmentPackages.imageUrl,
+      createdAt: treatmentPackages.createdAt,
+      updatedAt: treatmentPackages.updatedAt
+    };
+    
+    // Build and execute the query
+    const results = await db
+      .select(columns)
       .from(treatmentPackages)
       .where(eq(treatmentPackages.id, id));
+    
+    const pkg = results[0];
     
     if (!pkg) {
       return res.status(404).json({ error: 'Treatment package not found' });
@@ -129,25 +138,30 @@ router.patch('/:id', isAuthenticated, async (req, res) => {
     const id = req.params.id;
     const packageData = req.body;
     
+    // Define columns to select - reuse the same definition from other endpoints
+    const columns = {
+      id: treatmentPackages.id,
+      name: treatmentPackages.name,
+      description: treatmentPackages.description,
+      clinicId: treatmentPackages.clinicId,
+      items: treatmentPackages.items,
+      totalPriceGBP: treatmentPackages.totalPriceGBP,
+      totalPriceUSD: treatmentPackages.totalPriceUSD,
+      discountPct: treatmentPackages.discountPct,
+      cityCode: treatmentPackages.cityCode,
+      cityName: treatmentPackages.cityName,
+      imageUrl: treatmentPackages.imageUrl,
+      createdAt: treatmentPackages.createdAt,
+      updatedAt: treatmentPackages.updatedAt
+    };
+    
     // Get the existing package
-    const [existingPackage] = await db
-      .select({
-        id: treatmentPackages.id,
-        name: treatmentPackages.name,
-        description: treatmentPackages.description,
-        clinicId: treatmentPackages.clinicId,
-        items: treatmentPackages.items,
-        totalPriceGBP: treatmentPackages.totalPriceGBP,
-        totalPriceUSD: treatmentPackages.totalPriceUSD,
-        discountPct: treatmentPackages.discountPct,
-        cityCode: treatmentPackages.cityCode,
-        cityName: treatmentPackages.cityName,
-        imageUrl: treatmentPackages.imageUrl,
-        createdAt: treatmentPackages.createdAt,
-        updatedAt: treatmentPackages.updatedAt
-      })
+    const results = await db
+      .select(columns)
       .from(treatmentPackages)
       .where(eq(treatmentPackages.id, id));
+    
+    const existingPackage = results[0];
     
     if (!existingPackage) {
       return res.status(404).json({ error: 'Treatment package not found' });
@@ -164,11 +178,13 @@ router.patch('/:id', isAuthenticated, async (req, res) => {
     }
     
     // Update the package
-    const [updatedPackage] = await db
+    const updatedResults = await db
       .update(treatmentPackages)
       .set(packageData)
       .where(eq(treatmentPackages.id, id))
       .returning();
+    
+    const updatedPackage = updatedResults[0];
     
     res.json(updatedPackage);
   } catch (error) {
