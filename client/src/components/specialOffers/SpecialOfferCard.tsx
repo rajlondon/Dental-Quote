@@ -37,6 +37,11 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   compact = false
 }) => {
   const [, setLocation] = useLocation();
+  
+  // Debug logs
+  console.log('Rendering SpecialOfferCard with offer:', offer);
+  console.log('Has image URL?', !!offer.imageUrl, offer.imageUrl);
+  console.log('Offer type:', offer.type || 'default');
 
   const handleUseOffer = () => {
     if (onClick) {
@@ -91,12 +96,16 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
 
   const BadgeIcon = offer.type === 'package' ? Package : Percent;
   
+  // Force explicit type check for image URL
+  const hasValidImage = Boolean(offer.imageUrl && offer.imageUrl.trim() !== '');
+  console.log('hasValidImage check result:', hasValidImage);
+
   if (compact) {
     return (
       <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
         <div className="flex">
-          <div className="w-1/3">
-            {offer.imageUrl ? (
+          <div className="w-1/3" style={{ minHeight: '120px' }}>
+            {hasValidImage ? (
               <img 
                 src={offer.imageUrl} 
                 alt={offer.title} 
@@ -105,6 +114,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
             ) : (
               <OfferImagePlaceholder 
                 title={offer.title} 
+                type={offer.type}
                 className="h-full"
               />
             )}
@@ -121,7 +131,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
               className="mt-3" 
               onClick={handleUseOffer}
             >
-              Use Offer
+              Apply to Quote
             </Button>
           </div>
         </div>
@@ -130,9 +140,9 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   }
   
   return (
-    <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
+    <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`} data-testid="offer-card">
       <div className="h-44 relative overflow-hidden">
-        {offer.imageUrl ? (
+        {hasValidImage ? (
           <img 
             src={offer.imageUrl} 
             alt={offer.title} 
@@ -140,7 +150,8 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
           />
         ) : (
           <OfferImagePlaceholder 
-            title={offer.title} 
+            title={offer.title}
+            type={offer.type}
             className="h-full"
           />
         )}
