@@ -770,7 +770,7 @@ function Router() {
                 <p className="text-sm">Loading clinic portal...</p>
               </div>
             </div>}>
-              <ClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
+              <EnhancedClinicPortalPage disableAutoRefresh={true} initialSection="dashboard" />
             </React.Suspense>
           );
         }}

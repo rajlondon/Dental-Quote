@@ -1,631 +1,282 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useToast } from './use-toast';
+import { useToast } from '@/hooks/use-toast';
 
-/**
- * Message structure for WebSocket communications
- */
 export interface WebSocketMessage {
   type: string;
-  [key: string]: any;
+  payload?: any;
+  timestamp?: number;
+  connectionId?: string;
+  sender?: {
+    id: number;
+    type: 'patient' | 'clinic' | 'admin';
+  };
+  target?: string;
+  message?: string;
 }
 
-export interface UseResilientWebSocketOptions {
-  /**
-   * Callback function called when a message is received
-   */
+interface WebSocketOptions {
   onMessage?: (message: WebSocketMessage) => void;
-  
-  /**
-   * Callback function called when the WebSocket connection is opened
-   */
   onOpen?: () => void;
-  
-  /**
-   * Callback function called when the WebSocket connection is closed
-   */
-  onClose?: (event?: CloseEvent) => void;
-  
-  /**
-   * Callback function called when an error occurs
-   */
-  onError?: (event?: Event) => void;
-  
-  /**
-   * Time in milliseconds to wait before attempting to reconnect after a disconnect
-   * @default 2000
-   */
+  onClose?: (event: CloseEvent) => void;
+  onError?: (event: Event) => void;
+  reconnectLimit?: number;
   reconnectInterval?: number;
-  
-  /**
-   * Maximum number of reconnection attempts before giving up
-   * @default 10
-   */
-  maxReconnectAttempts?: number;
-  
-  /**
-   * User ID to associate with this connection
-   * Used for authentication and server-side tracking
-   */
-  userId?: number;
-  
-  /**
-   * Whether this connection is for a clinic user
-   * Affects message routing on the server
-   */
-  isClinic?: boolean;
-  
-  /**
-   * Disable automatic connection on hook mount
-   * If true, you must manually call the returned connect function
-   * @default false
-   */
-  disableAutoConnect?: boolean;
-  
-  /**
-   * Enable debug mode with verbose logging
-   * @default false
-   */
-  debug?: boolean;
+  reconnectBackoff?: boolean;
+  autoReconnect?: boolean;
+}
 
-  /**
-   * Use resilient mode for environments with problematic WebSockets
-   * This will fall back to long polling if WebSockets fail
-   * @default true
-   */
-  useResilientMode?: boolean;
+interface WebSocketResult {
+  isConnected: boolean;
+  sendMessage: (message: WebSocketMessage) => void;
+  connectionId: string | undefined;
+  lastError: string | undefined;
+  reconnectAttempt: number;
+  disconnect: () => void;
+  connect: () => void;
 }
 
 /**
- * Enhanced WebSocket hook with resilient fallback for problematic environments
- * Provides WebSocket-like functionality even in environments where WebSockets may be blocked
- * 
- * @param options Configuration options for the connection
- * @returns Object containing connection state and control methods
+ * A custom hook for reliable WebSocket connections with automatic reconnection
+ * Features:
+ * - Automatic reconnection with exponential backoff
+ * - Message queuing when disconnected
+ * - Connection status tracking
+ * - Error handling
  */
-export function useResilientWebSocket(options: UseResilientWebSocketOptions = {}) {
-  const {
-    onMessage,
-    onOpen,
-    onClose,
-    onError,
-    reconnectInterval = 2000,
-    maxReconnectAttempts = 10,
-    userId,
-    isClinic = false,
-    disableAutoConnect = false,
-    debug = false,
-    useResilientMode = true,
-  } = options;
-
-  const [isConnected, setIsConnected] = useState(false);
-  const [reconnectAttempt, setReconnectAttempt] = useState(0);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+export const useResilientWebSocket = (
+  userId: number | undefined,
+  options?: WebSocketOptions
+): WebSocketResult => {
   const { toast } = useToast();
-
-  // Use a ref for the actual connection ID to ensure it persists across renders
-  const connectionId = useRef<string | null>(null);
   
-  // Track message queue for sending during reconnection
-  const messageQueue = useRef<WebSocketMessage[]>([]);
+  // State for connection status and tracking
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionId, setConnectionId] = useState<string | undefined>(undefined);
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  const [lastError, setLastError] = useState<string | undefined>(undefined);
   
-  // Track manual disconnect state to prevent auto-reconnect
-  const manualDisconnect = useRef<boolean>(false);
+  // Refs for socket and related state
+  const socketRef = useRef<WebSocket | undefined>(undefined);
+  const messageQueueRef = useRef<WebSocketMessage[]>([]);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const manualDisconnectRef = useRef<boolean>(false);
   
-  // Track clinic mode for special handling
-  const clinicMode = useRef<boolean>(isClinic);
+  // Determine configuration
+  const reconnectLimit = options?.reconnectLimit ?? 10;
+  const reconnectInterval = options?.reconnectInterval ?? 1000;
+  const reconnectBackoff = options?.reconnectBackoff ?? true;
+  const autoReconnect = options?.autoReconnect ?? true;
+  const onMessageCallback = options?.onMessage;
+  const onOpenCallback = options?.onOpen;
+  const onCloseCallback = options?.onClose;
+  const onErrorCallback = options?.onError;
   
-  // Track WebSocket close reason for better diagnostics
-  const lastCloseEvent = useRef<CloseEvent | null>(null);
-  
-  // Track last ping/pong times for heartbeat monitoring
-  const lastPingTime = useRef<number>(0);
-  const lastPongTime = useRef<number>(0);
-  
-  // Track reconnection timeout reference for cleanup
-  const reconnectTimeoutId = useRef<NodeJS.Timeout | null>(null);
-
-  // Track long-polling interval ID for cleanup
-  const pollingIntervalId = useRef<NodeJS.Timeout | null>(null);
-  
-  // Track if we're using the fallback long-polling method
-  const [usingFallback, setUsingFallback] = useState(false);
-  
-  // Track WebSocket failure counter
-  const wsFailureCount = useRef<number>(0);
-  
-  /**
-   * Generate a unique connection ID
-   */
-  const generateConnectionId = useCallback(() => {
-    return `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-  }, []);
-
-  /**
-   * Send a message via HTTP POST (fallback method)
-   */
-  const sendMessageViaHttp = useCallback(async (message: WebSocketMessage) => {
-    try {
-      const response = await fetch('/api/messages/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...message,
-          connectionId: connectionId.current,
-          userId: userId,
-          isClinic: isClinic,
-          timestamp: Date.now(),
-        }),
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to send message via HTTP:', response.status, response.statusText);
-        // Queue the message for retry
-        messageQueue.current.push(message);
-      }
-    } catch (error) {
-      console.error('Error sending message via HTTP:', error);
-      // Queue the message for retry
-      messageQueue.current.push(message);
-    }
-  }, [connectionId, isClinic, userId]);
-  
-  /**
-   * Send all queued messages via HTTP
-   */
-  const sendQueuedMessagesViaHttp = useCallback(async () => {
-    const messages = [...messageQueue.current];
-    messageQueue.current = [];
-    
-    for (const message of messages) {
-      await sendMessageViaHttp(message);
-    }
-  }, [sendMessageViaHttp]);
-  
-  /**
-   * Internal helper for sending messages
-   * This is defined before it's used to avoid circular reference issues
-   */
-  const sendMessageInternal = (message: WebSocketMessage, socket: WebSocket | null) => {
-    // Add connection ID if not present
-    if (!message.connectionId && connectionId.current) {
-      message.connectionId = connectionId.current;
-    }
-    
-    // If using fallback mode, send via HTTP
-    if (usingFallback) {
-      sendMessageViaHttp(message);
-      return;
-    }
-    
-    // If socket is connected, send immediately
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message));
-      return;
-    }
-    
-    // Otherwise queue the message for later
-    if (debug) console.log(`WebSocket not connected, queueing message of type ${message.type}`);
-    // Limit queue size to prevent memory issues
-    if (messageQueue.current.length < 50) {
-      messageQueue.current.push(message);
-    } else {
-      console.warn('Message queue full, dropping message:', message);
-    }
-  };
-
-  /**
-   * Establish a WebSocket connection
-   */
-  const connectWebSocket = useCallback(() => {
+  // Connect method
+  const connect = useCallback(() => {
     // Skip if manually disconnected
-    if (manualDisconnect.current) {
-      if (debug) console.log('Skipping WebSocket connection - manual disconnect flag is set');
+    if (manualDisconnectRef.current) {
+      console.log("Skipping WebSocket connection - manual disconnect flag is set");
       return;
     }
     
+    if (!userId) {
+      console.log("No user ID provided, skipping connection");
+      return;
+    }
+    
+    // Generate a unique connection ID
+    const uniqueId = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    setConnectionId(uniqueId);
+    
     try {
-      // Generate a new connection ID if we don't have one
-      if (!connectionId.current) {
-        connectionId.current = generateConnectionId();
-      }
-      
+      // Determine protocol based on current URL
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws?connectionId=${connectionId.current}${userId ? `&userId=${userId}` : ''}${isClinic ? '&isClinic=true' : ''}`;
+      const host = window.location.host;
       
-      if (debug) console.log(`Connecting to WebSocket at ${wsUrl} (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})`);
+      // Create WebSocket URL with connection tracking parameters
+      const wsUrl = `${protocol}//${host}/ws?connectionId=${uniqueId}&userId=${userId}&isClinic=true`;
       
-      const newSocket = new WebSocket(wsUrl);
-      if (debug) console.log(`WebSocket ${connectionId.current} connecting...`);
+      console.log(`Connecting to WebSocket at ${wsUrl} (attempt ${reconnectAttempt + 1}/${reconnectLimit})`);
       
-      newSocket.onopen = () => {
-        setSocket(newSocket);
+      // Create new WebSocket
+      socketRef.current = new WebSocket(wsUrl);
+      
+      // Set up event handlers
+      socketRef.current.onopen = () => {
         setIsConnected(true);
+        setLastError(undefined);
         setReconnectAttempt(0);
-        wsFailureCount.current = 0; // Reset failure counter on successful connection
         
-        // Send any queued messages
-        if (messageQueue.current.length > 0) {
-          console.log(`Sending ${messageQueue.current.length} queued messages`);
-          messageQueue.current.forEach(msg => {
-            newSocket.send(JSON.stringify(msg));
+        console.log(`WebSocket ${uniqueId} connected successfully!`);
+        
+        // Send queued messages
+        if (messageQueueRef.current.length > 0) {
+          console.log(`Sending ${messageQueueRef.current.length} queued messages`);
+          messageQueueRef.current.forEach(msg => {
+            if (socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(JSON.stringify(msg));
+            }
           });
-          messageQueue.current = [];
+          messageQueueRef.current = [];
         }
         
-        // Call user's onOpen callback if provided
-        if (onOpen) onOpen();
+        // Call provided callback
+        if (onOpenCallback) {
+          onOpenCallback();
+        }
       };
       
-      newSocket.onmessage = (event) => {
+      socketRef.current.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          console.log(`WebSocket ${uniqueId} received message:`, message);
           
-          // Update heartbeat timing for ping messages
-          if (message.type === 'ping') {
-            lastPingTime.current = Date.now();
-            if (debug) console.log(`Received ping from server at ${new Date().toISOString()}`);
-            
-            // Respond to ping with pong
-            sendMessageInternal({
-              type: 'pong',
-              timestamp: Date.now(),
-              connectionId: connectionId.current
-            }, newSocket);
-          } else if (message.type === 'pong') {
-            lastPongTime.current = Date.now();
-            if (debug) console.log(`Received pong from server at ${new Date().toISOString()}`);
+          // Call provided callback
+          if (onMessageCallback) {
+            onMessageCallback(message);
           }
-          
-          // Forward message to user's callback
-          if (onMessage) onMessage(message);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error('Error processing WebSocket message:', error);
         }
       };
       
-      newSocket.onclose = (event) => {
-        setSocket(null);
+      socketRef.current.onclose = (event) => {
         setIsConnected(false);
-        lastCloseEvent.current = event;
+        console.log(`WebSocket ${uniqueId} closed:`, event);
         
-        // Call user's onClose callback if provided
-        if (onClose) onClose(event);
-        
-        // Handle reconnection for abnormal closures
-        const isAbnormalClosure = event.code === 1006;
-        
-        if (isAbnormalClosure) {
-          wsFailureCount.current += 1;
-          
-          console.warn(`⚠️ WebSocket abnormal closure (1006) detected for connection ${connectionId.current}. This typically indicates network issues or server restart.`);
-          
-          // If we've had too many WebSocket failures, switch to fallback mode
-          if (wsFailureCount.current >= 3 && useResilientMode) {
-            console.log(`Switching to fallback long-polling after ${wsFailureCount.current} WebSocket failures`);
-            setUsingFallback(true);
-            startLongPolling();
-            return;
-          }
+        // Call provided callback
+        if (onCloseCallback) {
+          onCloseCallback(event);
         }
         
-        // Only attempt to reconnect if we haven't exceeded the maximum attempts
-        // and the socket hasn't been explicitly closed by the user
-        if (reconnectAttempt < maxReconnectAttempts && !manualDisconnect.current) {
-          console.log(`Attempting to reconnect WebSocket (attempt ${reconnectAttempt + 1}/${maxReconnectAttempts})...`);
+        // Don't attempt to reconnect if manually disconnected
+        if (manualDisconnectRef.current || !autoReconnect) {
+          console.log(`WebSocket ${uniqueId} was manually disconnected, won't reconnect`);
+          return;
+        }
+        
+        // Handle abnormal closure (network issues)
+        if (event.code === 1006) {
+          console.warn(`⚠️ WebSocket abnormal closure (1006) detected for connection ${uniqueId}`);
+          setLastError("Network connectivity issue detected");
           
-          // Generate a fresh connection ID for the next attempt
-          connectionId.current = generateConnectionId();
+          // Calculate reconnect delay with optional exponential backoff
+          let reconnectDelay = reconnectInterval;
+          if (reconnectBackoff) {
+            reconnectDelay = Math.min(reconnectInterval * Math.pow(1.5, reconnectAttempt), 10000);
+          }
           
-          // Exponential backoff for reconnection attempts
-          const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempt), 10000);
-          
-          // Schedule reconnection attempt
-          reconnectTimeoutId.current = setTimeout(() => {
-            setReconnectAttempt((prev) => prev + 1);
-            connectWebSocket();
-          }, delay);
-        } else if (reconnectAttempt >= maxReconnectAttempts) {
-          // Switch to fallback mode if we've exceeded max reconnect attempts
-          if (useResilientMode) {
-            console.log(`Switching to fallback long-polling after ${reconnectAttempt} failed reconnection attempts`);
-            setUsingFallback(true);
-            startLongPolling();
+          // Try to reconnect
+          if (reconnectAttempt < reconnectLimit) {
+            reconnectTimeoutRef.current = window.setTimeout(() => {
+              setReconnectAttempt(prev => prev + 1);
+              connect();
+            }, reconnectDelay);
           } else {
-            toast({
-              title: "Connection Error",
-              description: "Failed to establish WebSocket connection after multiple attempts.",
-              variant: "destructive",
-            });
+            setLastError(`Connection failed after ${reconnectLimit} attempts`);
           }
         }
       };
       
-      newSocket.onerror = (error) => {
-        console.error(`WebSocket error:`, error);
+      socketRef.current.onerror = (error) => {
+        console.error(`WebSocket ${uniqueId} error:`, error);
+        setLastError("WebSocket connection error");
         
-        // Call user's onError callback if provided
-        if (onError) onError(error);
+        // Call provided callback
+        if (onErrorCallback) {
+          onErrorCallback(error);
+        }
       };
-    } catch (error) {
-      console.error('Error establishing WebSocket connection:', error);
       
-      // Fall back to long polling if WebSocket creation failed and resilient mode is enabled
-      if (useResilientMode) {
-        console.log('Falling back to long-polling due to WebSocket initialization error');
-        setUsingFallback(true);
-        startLongPolling();
-      }
+    } catch (error) {
+      console.error('Error creating WebSocket connection:', error);
+      setLastError("Failed to establish connection");
     }
   }, [
-    debug,
-    generateConnectionId,
-    isClinic,
-    maxReconnectAttempts,
-    onClose,
-    onError,
-    onMessage,
-    onOpen,
-    reconnectAttempt,
-    toast,
-    userId,
-    useResilientMode,
+    userId, 
+    reconnectAttempt, 
+    reconnectLimit, 
+    reconnectInterval,
+    reconnectBackoff,
+    autoReconnect,
+    onMessageCallback,
+    onOpenCallback,
+    onCloseCallback,
+    onErrorCallback
   ]);
   
-  /**
-   * Start long-polling as fallback for WebSockets
-   * This provides a similar experience but uses regular HTTP requests
-   */
-  const startLongPolling = useCallback(async () => {
-    // Clear any existing interval
-    if (pollingIntervalId.current) {
-      clearInterval(pollingIntervalId.current);
-    }
-    
-    // Generate a connection ID if we don't have one
-    if (!connectionId.current) {
-      connectionId.current = generateConnectionId();
-    }
-    
-    // First register with the server for long polling
-    try {
-      const response = await fetch('/api/messages/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          connectionId: connectionId.current,
-          userId: userId || undefined,
-          isClinic: isClinic || false
-        }),
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to register for long-polling:', response.status, response.statusText);
-        // Try again with WebSockets after a delay
-        setTimeout(() => {
-          setUsingFallback(false);
-          connectWebSocket();
-        }, 3000);
-        return;
-      }
-      
-      // Notify that we're connected via fallback
-      setIsConnected(true);
-      if (onOpen) onOpen();
-      
-      console.log(`Starting long-polling fallback with ID ${connectionId.current}`);
-      
-      // Immediately send any queued messages
-      if (messageQueue.current.length > 0) {
-        sendQueuedMessagesViaHttp();
-      }
-      
-      // Start polling immediately
-      pollForMessages();
-      
-      // Set up polling interval
-      pollingIntervalId.current = setInterval(pollForMessages, 5000);
-      
-    } catch (error) {
-      console.error('Error setting up long-polling:', error);
-      // Fall back to WebSockets after a delay
-      setTimeout(() => {
-        setUsingFallback(false);
-        connectWebSocket();
-      }, 3000);
-    }
-  }, [connectWebSocket, generateConnectionId, isClinic, onOpen, sendQueuedMessagesViaHttp, userId]);
-  
-  // Separate function for polling to avoid nesting callbacks
-  const pollForMessages = useCallback(async () => {
-    if (!connectionId.current || !usingFallback) return;
-    
-    try {
-      // Poll for messages
-      const url = `/api/messages/poll/${connectionId.current}${lastMessageIdRef.current ? `?lastMessageId=${lastMessageIdRef.current}` : ''}`;
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Process each message
-        if (data.success && data.messages && Array.isArray(data.messages)) {
-          // Update last message ID if we received messages
-          if (data.messages.length > 0) {
-            const lastMessage = data.messages[data.messages.length - 1];
-            lastMessageIdRef.current = lastMessage.id;
-            
-            // Process each message
-            data.messages.forEach((message: any) => {
-              // Convert server message format to our WebSocketMessage format
-              const wsMessage: WebSocketMessage = {
-                type: message.type,
-                ...message.payload,
-                timestamp: message.timestamp
-              };
-              
-              if (onMessage) onMessage(wsMessage);
-            });
-          }
-          
-          // Send heartbeat occasionally
-          if (Math.random() < 0.2) { // ~20% chance each poll
-            sendMessageViaHttp({
-              type: 'heartbeat',
-              timestamp: Date.now(),
-              connectionId: connectionId.current
-            });
-          }
-        }
-      } else {
-        console.warn('Long-polling request failed:', response.status, response.statusText);
-        
-        // If we get a 404, our connection might be gone - try to re-register
-        if (response.status === 404) {
-          startLongPolling();
-        }
-      }
-    } catch (error) {
-      console.error('Error in long-polling:', error);
-    }
-  }, [connectionId, onMessage, sendMessageViaHttp, usingFallback]);
-  
-  /**
-   * Send a message to the server
-   * This will use WebSocket if connected, otherwise queue for later or use HTTP fallback
-   */
+  // Method to send messages
   const sendMessage = useCallback((message: WebSocketMessage) => {
-    sendMessageInternal(message, socket);
-  }, [socket]);
-  
-  /**
-   * Gracefully disconnect from the server
-   */
-  const disconnect = useCallback(() => {
-    manualDisconnect.current = true;
-    
-    // Clear any reconnection timeouts
-    if (reconnectTimeoutId.current) {
-      clearTimeout(reconnectTimeoutId.current);
-      reconnectTimeoutId.current = null;
-    }
-    
-    // Clear any polling intervals
-    if (pollingIntervalId.current) {
-      clearInterval(pollingIntervalId.current);
-      pollingIntervalId.current = null;
-    }
-    
-    if (usingFallback) {
-      // Send disconnect message via HTTP
-      sendMessageViaHttp({
-        type: 'disconnect',
-        reason: 'Manual disconnect',
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      // Add connection tracking metadata
+      const enhancedMessage = {
+        ...message,
         timestamp: Date.now(),
-        connectionId: connectionId.current
+        connectionId,
+        sender: {
+          id: userId || 0,
+          type: 'clinic'
+        }
+      };
+      
+      socketRef.current.send(JSON.stringify(enhancedMessage));
+    } else {
+      // Queue the message for later
+      messageQueueRef.current.push({
+        ...message,
+        timestamp: Date.now(),
+        connectionId
       });
       
-      setIsConnected(false);
-      setUsingFallback(false);
+      console.log(`WebSocket not connected, queued message of type ${message.type}`);
       
-      if (onClose) onClose();
-    } else if (socket && socket.readyState === WebSocket.OPEN) {
-      // Send a disconnect message before closing
-      console.log(`Manually disconnecting WebSocket ${connectionId.current}`);
-      
-      try {
-        socket.send(JSON.stringify({
-          type: 'disconnect',
-          reason: 'Manual disconnect',
-          timestamp: Date.now(),
-          connectionId: connectionId.current
-        }));
-      } catch (error) {
-        console.error('Error sending disconnect message:', error);
+      // If socket is not connected, try to connect
+      if (!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) {
+        connect();
       }
-      
-      // Close the socket after a short delay to allow the message to be sent
-      setTimeout(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.close(1000, 'Manual disconnect');
-        }
-        setSocket(null);
-        setIsConnected(false);
-      }, 100);
-    } else {
-      setSocket(null);
-      setIsConnected(false);
     }
-  }, [onClose, sendMessageViaHttp, socket, usingFallback]);
+  }, [connectionId, userId, connect]);
   
-  /**
-   * Connect or reconnect to the server
-   */
-  const connect = useCallback(() => {
-    manualDisconnect.current = false;
+  // Method to manually disconnect
+  const disconnect = useCallback(() => {
+    manualDisconnectRef.current = true;
     
-    if (usingFallback) {
-      // Clear fallback state and restart with WebSockets
-      if (pollingIntervalId.current) {
-        clearInterval(pollingIntervalId.current);
-        pollingIntervalId.current = null;
-      }
-      
-      setUsingFallback(false);
-      wsFailureCount.current = 0;
-      connectionId.current = generateConnectionId();
-      connectWebSocket();
-    } else {
-      // Standard WebSocket connection
-      connectWebSocket();
+    if (reconnectTimeoutRef.current) {
+      window.clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
-  }, [connectWebSocket, generateConnectionId, usingFallback]);
+    
+    if (socketRef.current) {
+      console.log(`Manually disconnecting WebSocket ${connectionId}`);
+      socketRef.current.close();
+      socketRef.current = undefined;
+      setIsConnected(false);
+    }
+  }, [connectionId]);
   
-  // Connect on mount if not disabled
+  // Connect when component mounts and user ID changes
   useEffect(() => {
-    clinicMode.current = isClinic;
-    
-    if (!disableAutoConnect) {
+    if (userId) {
+      // Reset manual disconnect flag
+      manualDisconnectRef.current = false;
       connect();
     }
     
     // Clean up on unmount
     return () => {
-      if (debug) console.log(`Closing WebSocket ${connectionId.current} on hook unmount`);
-      
-      // Clear any timeouts and intervals
-      if (reconnectTimeoutId.current) {
-        clearTimeout(reconnectTimeoutId.current);
-      }
-      
-      if (pollingIntervalId.current) {
-        clearInterval(pollingIntervalId.current);
-      }
-      
-      // Close socket if open
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        try {
-          socket.close(1000, 'Component unmounted');
-        } catch (error) {
-          console.error('Error closing WebSocket on unmount:', error);
-        }
-      }
+      disconnect();
     };
-  }, [connect, debug, disableAutoConnect, isClinic, socket]);
+  }, [userId, connect, disconnect]);
   
   return {
-    socket,
     isConnected,
+    connectionId,
     reconnectAttempt,
     sendMessage,
+    lastError,
     disconnect,
-    connect,
-    connectionId: connectionId.current,
-    usingFallback
+    connect
   };
-}
+};
 
 export default useResilientWebSocket;
