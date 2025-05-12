@@ -18,6 +18,7 @@ import PromoDetector from "@/components/PromoDetector";
 import Home from "./pages/Home";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
+import { SpecialOffersProvider } from "@/components/SpecialOffersProvider";
 import ClinicGuard from "@/components/ClinicGuard";
 import AdminPortalGuard from "@/components/AdminPortalGuard";
 import ClinicRouter from "@/pages/ClinicRouter";
@@ -913,28 +914,30 @@ function App() {
               <BookingsProvider>
                 <UnifiedTreatmentPlansProvider>
                   <QuoteFlowProvider>
-                    <PageTransitionProvider>
-                      <NavigationProvider>
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <ScrollToTop />
-                          {/* Only exclude ReloadTranslations on clinic portal path */}
-                          {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                            <ReloadTranslations />
-                          }
-                          {/* Navigation status indicator */}
-                          <NavigationStatusBar />
-                          {/* Use PageTransitionLoader to show loading states */}
-                          <PageTransitionLoader>
-                            <ErrorBoundary>
-                              <Router />
-                            </ErrorBoundary>
-                          </PageTransitionLoader>
-                          <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-                          <EnvironmentBadge />
-                          <Toaster />
-                        </Suspense>
-                      </NavigationProvider>
-                    </PageTransitionProvider>
+                    <SpecialOffersProvider>
+                      <PageTransitionProvider>
+                        <NavigationProvider>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <ScrollToTop />
+                            {/* Only exclude ReloadTranslations on clinic portal path */}
+                            {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
+                              <ReloadTranslations />
+                            }
+                            {/* Navigation status indicator */}
+                            <NavigationStatusBar />
+                            {/* Use PageTransitionLoader to show loading states */}
+                            <PageTransitionLoader>
+                              <ErrorBoundary>
+                                <Router />
+                              </ErrorBoundary>
+                            </PageTransitionLoader>
+                            <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
+                            <EnvironmentBadge />
+                            <Toaster />
+                          </Suspense>
+                        </NavigationProvider>
+                      </PageTransitionProvider>
+                    </SpecialOffersProvider>
                   </QuoteFlowProvider>
                 </UnifiedTreatmentPlansProvider>
               </BookingsProvider>
