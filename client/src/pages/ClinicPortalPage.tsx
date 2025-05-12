@@ -57,6 +57,15 @@ interface ClinicPortalPageProps {
   initialSection?: string;
 }
 
+// Function to extract a cookie by name
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
 const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ 
   disableAutoRefresh = true,
   initialSection = 'dashboard'
@@ -64,7 +73,39 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<string>(initialSection);
+  
+  // Function to check for login redirect conditions
+  const getRedirectSafeSection = (): string => {
+    // Check various sources to determine if we're coming from a login
+    const hasLoginFlag = typeof window !== 'undefined' && 
+      sessionStorage.getItem('clinic_login_in_progress') === 'true';
+    const hasDashboardRequest = typeof window !== 'undefined' && 
+      sessionStorage.getItem('clinic_dashboard_requested') === 'true';
+    const hasRedirectCookie = getCookie('clinic_redirect_target') !== null;
+    
+    if (hasLoginFlag || hasDashboardRequest || hasRedirectCookie) {
+      console.log('✅ ClinicPortalPage detected login redirect indicators - forcing dashboard view');
+      
+      // Clear login flags while maintaining no_promo_redirect
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('clinic_login_in_progress');
+        sessionStorage.removeItem('clinic_dashboard_requested');
+        sessionStorage.setItem('clinic_dashboard_accessed', Date.now().toString());
+        
+        // Set strong cookies to maintain clinic session
+        document.cookie = "clinic_session_active=true; path=/; max-age=86400; SameSite=Lax";
+        document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
+        document.cookie = "no_promo_redirect=true; path=/; max-age=86400; SameSite=Lax";
+      }
+      
+      return 'dashboard';
+    }
+    
+    return initialSection;
+  };
+  
+  // Use the redirect-safe section
+  const [activeSection, setActiveSection] = useState<string>(getRedirectSafeSection());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
