@@ -247,11 +247,22 @@ export async function setupAuth(app: Express) {
         // In this case, we'll use the sessionStore directly to check for session data
         try {
           // Check if this is likely a clinic user based on stored flags or known patterns
-          const isLikelyClinicId = 
-            // Check known clinic ID range
-            (typeof id === 'number' && id >= 30 && id <= 50) || 
-            // Or other known indicators
-            (typeof id === 'string' && id.startsWith('clinic-'));
+          // Check if the ID is likely a clinic ID based on patterns
+          let isLikelyClinicId = false;
+          
+          // Convert ID to string for safe handling regardless of type
+          const idStr = String(id);
+          
+          // Check numeric pattern (30-50 range)
+          const numId = parseInt(idStr, 10);
+          if (!isNaN(numId) && numId >= 30 && numId <= 50) {
+            isLikelyClinicId = true;
+          }
+          
+          // Check string pattern with clinic prefix
+          if (idStr.includes('clinic')) {
+            isLikelyClinicId = true;
+          }
             
           if (isLikelyClinicId) {
             console.log(`User ID ${id} appears to be a clinic user ID based on known patterns`);

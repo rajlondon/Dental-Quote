@@ -13,13 +13,21 @@ const PromoDetector: React.FC = () => {
   // Router hooks (only safe to use inside a Router component)
   const [location] = useLocation();
   
-  // Skip for specific routes - clinic portal, login, etc.
+  // Skip for all protected routes - clinic portal, admin, clinic login, etc.
   const isClinicRoute = location.startsWith('/clinic-') || location.startsWith('/clinic/') || location.startsWith('/clinic_');
   const isAdminRoute = location.startsWith('/admin');
+  const isClinicLoginRoute = location === '/clinic-login';
   
-  // If we're on a clinic or admin route, don't process promo params
-  if (isClinicRoute || isAdminRoute) {
-    console.log('PromoDetector skipping for protected route:', location);
+  // Critical redirection protection: Check for clinic login cookies
+  const hasClinicRedirectCookie = typeof document !== 'undefined' && 
+    document.cookie.split(';').some(c => 
+      c.trim().startsWith('clinic_redirect_target=') ||
+      c.trim().startsWith('no_promo_redirect=true'));
+  
+  // If we're on a protected route or have a clinic redirect cookie, don't process promo params
+  if (isClinicRoute || isAdminRoute || isClinicLoginRoute || hasClinicRedirectCookie) {
+    console.log('PromoDetector skipping for protected route/session:', location, 
+      hasClinicRedirectCookie ? '(clinic redirect cookie detected)' : '');
     return null;
   }
   
