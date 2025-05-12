@@ -119,8 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch fresh data
       try {
         console.log("Fetching fresh user data");
-        // Make sure we use the full and correct path
-        const apiRes = await api.get("/api/auth/user");
+        // IMPORTANT: The api.get call automatically adds "/api" prefix (see client/src/lib/api.ts)
+        // So we must NOT include /api here to avoid making a call to /api/api/auth/user
+        const apiRes = await api.get("auth/user");
         const userData = apiRes.data.user || null;
         
         // Update cache
@@ -154,7 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       // Server expects email/password
-      // Fix API path by adding the /api prefix explicitly since apiRequest doesn't add it
+      // CRITICAL: apiRequest uses fetch, NOT axios, so we MUST include the full path
+      // The apiRequest function in queryClient.ts does not add the /api prefix
       const res = await apiRequest("POST", "/api/auth/login", {
         email: credentials.email,
         password: credentials.password
@@ -273,7 +275,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      // Fix API path by including the /api prefix
+      // CRITICAL: apiRequest uses fetch, NOT axios, so we MUST include the full path
+      // The apiRequest function in queryClient.ts does not add the /api prefix
       const res = await apiRequest("POST", "/api/auth/register", userData);
       if (!res.ok) {
         const errorData = await res.json();
@@ -301,7 +304,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // Fix API path by including the /api prefix
+      // CRITICAL: apiRequest uses fetch, NOT axios, so we MUST include the full path
+      // The apiRequest function in queryClient.ts does not add the /api prefix
       const res = await apiRequest("POST", "/api/auth/logout");
       if (!res.ok) {
         throw new Error("Logout failed");
