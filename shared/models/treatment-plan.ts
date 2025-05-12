@@ -110,6 +110,8 @@ export interface TreatmentPlanFilters {
   dateTo?: string;
   paymentStatus?: PaymentStatus | PaymentStatus[];
   search?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface PlanConversionOptions {

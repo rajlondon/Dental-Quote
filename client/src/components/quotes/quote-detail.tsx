@@ -37,7 +37,7 @@ import { DiscountType, PromoType } from "@shared/schema";
 
 type PortalType = "patient" | "clinic" | "admin";
 
-interface ActionButton {
+export interface ActionButton {
   label: string;
   variant: "default" | "destructive" | "outline" | "secondary" | "primary" | "accent" | "success" | "warning";
   onClick: () => void;
@@ -276,7 +276,7 @@ export default function QuoteDetail({
                         
                         {quoteRequest.discountType && quoteRequest.discountValue && (
                           <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-                            {quoteRequest.discountType === 'PERCENT' 
+                            {quoteRequest.discountType === 'percentage' 
                               ? `${quoteRequest.discountValue}% off` 
                               : `${formatCurrency(parseFloat(quoteRequest.discountValue.toString()))} off`}
                           </Badge>
@@ -289,14 +289,18 @@ export default function QuoteDetail({
                             <span className="text-gray-600">Subtotal:</span>
                             <span className="font-medium">{formatCurrency(parseFloat(quoteRequest.subtotal.toString()))}</span>
                           </div>
-                          <div className="flex justify-between text-green-600">
-                            <span>Discount:</span>
-                            <span className="font-medium">-{formatCurrency(parseFloat(quoteRequest.subtotal.toString()) - parseFloat(quoteRequest.totalAfterDiscount.toString()))}</span>
-                          </div>
-                          <div className="flex justify-between font-bold">
-                            <span>Total after discount:</span>
-                            <span>{formatCurrency(parseFloat(quoteRequest.totalAfterDiscount.toString()))}</span>
-                          </div>
+                          {quoteRequest.totalAfterDiscount && (
+                            <>
+                              <div className="flex justify-between text-green-600">
+                                <span>Discount:</span>
+                                <span className="font-medium">-{formatCurrency(parseFloat(quoteRequest.subtotal.toString()) - parseFloat(quoteRequest.totalAfterDiscount.toString()))}</span>
+                              </div>
+                              <div className="flex justify-between font-bold">
+                                <span>Total after discount:</span>
+                                <span>{formatCurrency(parseFloat(quoteRequest.totalAfterDiscount.toString()))}</span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
