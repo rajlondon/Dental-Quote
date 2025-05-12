@@ -132,9 +132,14 @@ export function ResilientWebSocketTest3() {
           <h2 className="text-lg font-medium text-blue-700">About This Page</h2>
         </div>
         <p className="mt-2 text-sm text-blue-600">
-          This page demonstrates our improved resilient WebSocket solution with HTTP long-polling fallback. 
-          This version fixes circular dependencies and improves error handling. If normal WebSockets fail, 
-          the system will automatically switch to HTTP-based communication while maintaining the same API.
+          This page demonstrates our enhanced resilient WebSocket solution with HTTP long-polling fallback and smart 
+          transport selection. This version fixes circular dependencies, improves error handling, and implements persistent 
+          failure tracking to automatically select the most reliable transport method. The system now includes intelligent 
+          rate limiting with priority handling for critical connections and better recovery strategies.
+        </p>
+        <p className="mt-2 text-sm text-blue-600">
+          <strong>New Features:</strong> Smart failure tracking, automatic transport method switching based on connection 
+          history, extended rate limiting window (60s) with higher request allowance (150), and enhanced visual indicators.
         </p>
         <div className="mt-3 text-xs font-mono text-blue-500 grid grid-cols-2 gap-x-4 gap-y-1">
           <div>Host: {envInfo.hostname}</div>
@@ -157,11 +162,27 @@ export function ResilientWebSocketTest3() {
             </CardTitle>
             <CardDescription>
               {isConnected 
-                ? usingFallback 
+                ? transportMethod === 'http'
                   ? "Connected via HTTP fallback (long-polling)"
                   : "Connected to server via WebSocket" 
                 : "Not connected to server"}
             </CardDescription>
+            
+            <div className="mt-4">
+              <div className={`text-sm px-3 py-2 rounded-md ${
+                isConnected 
+                  ? "bg-green-50 text-green-800 border border-green-200" 
+                  : reconnectAttempt > 0
+                    ? "bg-amber-50 text-amber-800 border border-amber-200"
+                    : "bg-gray-50 text-gray-800 border border-gray-200"
+              }`}>
+                {isConnected 
+                  ? `Connected via ${transportMethod === 'http' ? 'HTTP polling' : 'WebSocket'} (ID: ${connectionId})` 
+                  : reconnectAttempt > 0
+                    ? `Attempting to connect... (Attempt ${reconnectAttempt})`
+                    : "Disconnected"}
+              </div>
+            </div>
           </CardHeader>
           
           <CardContent className="pb-3">
@@ -215,35 +236,62 @@ export function ResilientWebSocketTest3() {
             </div>
           </CardContent>
           
-          <CardFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={pingServer}
-              disabled={!isConnected}
-            >
-              Ping Server
-            </Button>
+          <CardFooter className="flex flex-col gap-3 items-stretch">
+            <div className="flex justify-between gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={pingServer}
+                disabled={!isConnected}
+                className="flex-1"
+              >
+                Ping Server
+              </Button>
+              
+              {isConnected ? (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={disconnect}
+                  className="flex-1"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Disconnect
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={connect}
+                  className="flex-1"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${reconnectAttempt > 0 ? "animate-spin" : ""}`} />
+                  Connect
+                </Button>
+              )}
+            </div>
             
-            {isConnected ? (
+            <div className="flex justify-between gap-2">
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                onClick={disconnect}
+                onClick={() => transportMethod === 'http' ? switchToWebSocket() : switchToHttp()}
+                className="flex-1 flex items-center gap-2"
               >
-                <XCircle className="h-4 w-4 mr-2" />
-                Disconnect
+                <ArrowUpDown className="h-4 w-4" />
+                {transportMethod === 'http' ? "Try WebSocket" : "Try HTTP Fallback"}
               </Button>
-            ) : (
+              
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
-                onClick={connect}
+                onClick={() => resetFailureCount()}
+                className="flex-1 flex items-center gap-2"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${reconnectAttempt > 0 ? "animate-spin" : ""}`} />
-                Connect
+                <Info className="h-4 w-4" />
+                Reset Failure Count
               </Button>
-            )}
+            </div>
           </CardFooter>
         </Card>
         
