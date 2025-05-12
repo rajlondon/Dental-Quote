@@ -212,13 +212,24 @@
             <input type="password" id="password" name="password" class="form-input" required>
           </div>
           
-          <!-- Explicit flag to identify clinic login -->
+          <!-- Critical flags to ensure correct redirect handling -->
           <input type="hidden" name="isClinicLogin" value="true">
           <input type="hidden" name="returnUrl" value="/clinic-portal/dashboard">
           <input type="hidden" name="skipPromoRedirect" value="true">
+          <input type="hidden" name="no_special_offer_redirect" value="true">
+          <input type="hidden" name="disable_quote_redirect" value="true">
+          <input type="hidden" name="timestamp" value="">
+          <input type="hidden" name="login_source" value="static_clinic_login">
           
           <button type="submit" class="submit-button">Sign In</button>
         </form>
+        
+        <script>
+          // Set timestamp dynamically
+          document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('input[name="timestamp"]').value = Date.now().toString();
+          });
+        </script>
         
         <div class="error-message" id="errorMessage">
           Invalid email or password. Please try again.
@@ -316,8 +327,28 @@
           submitButton.textContent = 'Signing in...';
         }
         
+        // Set additional session storage flags to prevent redirection issues
+        if (window.sessionStorage) {
+          // Set multiple flags for redundancy
+          sessionStorage.setItem('disable_promo_redirect', 'true');
+          sessionStorage.setItem('clinic_login_in_progress', 'true');
+          sessionStorage.setItem('clinic_dashboard_requested', 'true');
+          sessionStorage.setItem('is_clinic_staff', 'true');
+          sessionStorage.setItem('disable_quote_redirect', 'true');
+          sessionStorage.setItem('no_special_offer_redirect', 'true');
+          
+          // Set a timestamp for the login attempt
+          sessionStorage.setItem('clinic_login_timestamp', Date.now().toString());
+        }
+        
+        // Set cookies for additional protection
+        document.cookie = "is_clinic_login=true; path=/; max-age=3600; SameSite=Lax";
+        document.cookie = "no_promo_redirect=true; path=/; max-age=3600; SameSite=Lax";
+        document.cookie = "clinic_session=true; path=/; max-age=3600; SameSite=Lax";
+        document.cookie = "disable_quote_redirect=true; path=/; max-age=3600; SameSite=Lax";
+        
         // Log for debugging
-        console.log('Clinic login form submitted, redirecting to clinic portal...');
+        console.log('Clinic login form submitted with enhanced protection, redirecting to clinic portal...');
       });
     });
   </script>
