@@ -617,6 +617,30 @@ function Router() {
       {/* Special Offers Testing Route */}
       <Route path="/special-offers-test" component={SpecialOfferTestPage} />
       
+      {/* Debug Render Test Page - completely new route to verify build pipeline */}
+      <Route path="/debug-render-test" component={() => {
+        console.log('DEBUG RENDER TEST ROUTE ACCESSED at', new Date().toISOString());
+        const DebugRenderTestPage = React.lazy(() => import("@/pages/DebugRenderTestPage"));
+        return (
+          <React.Suspense fallback={
+            <div style={{
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: 'black',
+              color: 'red',
+              fontSize: '24px',
+              fontWeight: 'bold'
+            }}>
+              Loading Debug Test Page...
+            </div>
+          }>
+            <DebugRenderTestPage />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Admin Treatment Plan Routes */}
       <ProtectedRoute path="/admin-portal/treatment-plan/:id" component={AdminTreatmentPlansPage} requiredRole="admin" />
       <ProtectedRoute path="/admin-portal/treatment-plans" component={AdminTreatmentPlansPage} requiredRole="admin" />
@@ -870,6 +894,56 @@ function App() {
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
+  const { toast } = useToast();
+  
+  // DIRECT DOM VERIFICATION TEST
+  useEffect(() => {
+    console.log('APP ENTRY POINT EXECUTED AT:', new Date().toISOString());
+    
+    // Add very obvious visual element to verify code changes
+    document.body.style.border = '10px solid red';
+    
+    // More dramatic approach after a delay
+    setTimeout(() => {
+      // Create a debug overlay
+      const debugEl = document.createElement('div');
+      debugEl.style.position = 'fixed';
+      debugEl.style.top = '0';
+      debugEl.style.left = '0';
+      debugEl.style.right = '0';
+      debugEl.style.backgroundColor = 'red';
+      debugEl.style.color = 'white';
+      debugEl.style.padding = '10px';
+      debugEl.style.zIndex = '9999';
+      debugEl.style.fontWeight = 'bold';
+      debugEl.style.textAlign = 'center';
+      debugEl.textContent = 'DOM DIRECT MANIPULATION TEST ACTIVE - ' + new Date().toLocaleTimeString();
+      document.body.appendChild(debugEl);
+      
+      // Show a toast notification
+      toast({
+        title: "Debug Mode",
+        description: "App.tsx code changes detected!",
+        variant: "destructive",
+      });
+      
+      // Try to find special offer elements
+      setTimeout(() => {
+        const offerElements = document.querySelectorAll('[class*="offer"], [class*="special"], [id*="offer"]');
+        console.log('Found potential offer elements:', offerElements.length);
+        
+        // Mark all found elements
+        offerElements.forEach(el => {
+          try {
+            (el as HTMLElement).style.outline = '5px dashed blue';
+            el.setAttribute('data-debug', 'found-by-script');
+          } catch (err) {
+            console.error('Error modifying element:', err);
+          }
+        });
+      }, 2000);
+    }, 2000);
+  }, [toast]);
   
   // Initialize reload prevention system
   useEffect(() => {
