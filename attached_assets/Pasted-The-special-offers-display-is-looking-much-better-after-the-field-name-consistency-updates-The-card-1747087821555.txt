@@ -1,0 +1,163 @@
+The special offers display is looking much better after the field name consistency updates. The cards are displaying correctly with the proper structure, but there are a few issues and potential improvements I can identify from the screenshot:
+
+Current Status
+The special offers section shows three different offers:
+
+Welcome Discount - 20% off for new patients
+Dental Vacation Package - A complete smile makeover package with accommodations
+Spring Smile Special - 20% off dental treatments (appears to be cut off)
+Issues to Address
+Duplication in Welcome Discount:
+
+The title "Welcome Discount" appears twice - once in blue (likely the badgeText) and again as the main heading
+This creates visual redundancy
+Text Truncation:
+
+The "Spring Smile Special" description is cut off with "..."
+Users can't see the full terms of the offer
+Inconsistent Badge Styling:
+
+The "Special Offer" and "Package Deal" badges have the same styling but different icons
+This might confuse users about the difference between offers and packages
+Image Issues:
+
+The middle card (Dental Vacation Package) appears to have no image
+The left card (Welcome Discount) also seems to have no image
+Code Improvements to Suggest
+// client/src/components/SpecialOfferCard.tsx
+// Add handling for missing images
+const SpecialOfferCard = ({ 
+  offer,
+  imageUrl,  // Previously bannerImage
+  badgeText,
+  ...props
+}) => {
+  // Add fallback image handling
+  const imageSrc = imageUrl || '/images/default-offer-bg.jpg';
+  
+  // Add text truncation with tooltip for full text
+  const renderDescription = (text) => {
+    const MAX_LENGTH = 80;
+    const isTruncated = text.length > MAX_LENGTH;
+    
+    return (
+      <p 
+        className="offer-description" 
+        title={isTruncated ? text : undefined}
+      >
+        {isTruncated ? `${text.substring(0, MAX_LENGTH)}...` : text}
+      </p>
+    );
+  };
+
+  return (
+    <div className="special-offer-card">
+      {/* Badge at top */}
+      <div className="badge">
+        {offer.type === 'package' ? 
+          <PackageIcon /> : 
+          <DiscountIcon />
+        }
+        {badgeText}
+      </div>
+      
+      {/* Image with fallback */}
+      <div 
+        className="offer-image"
+        style={{ backgroundImage: `url(${imageSrc})` }}
+      />
+      
+      {/* Content */}
+      <div className="offer-content">
+        <h3>{offer.name}</h3>
+        {renderDescription(offer.description)}
+        
+        {/* Pricing display */}
+        <div className="pricing">
+          {offer.type === 'percentage' ? (
+            <span className="discount">Save {offer.discountValue}%</span>
+          ) : (
+            <span className="discount">Save £{offer.discountValue}</span>
+          )}
+          <span className="clinic">Clinic: {offer.clinicId}</span>
+        </div>
+        
+        <Button>Get Your Quote</Button>
+      </div>
+    </div>
+  );
+};
+Recommendations for Next Steps
+Fix Image Display:
+
+// Make sure the image URL is correctly passed and handled
+<SpecialOfferCard 
+  imageUrl={offer.imageUrl} 
+  fallbackImage="/images/default-offer-bg.jpg"
+/>
+Fix Text Truncation:
+
+/* Add to your CSS */
+.offer-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 4.5em; /* Approximately 3 lines */
+}
+Avoid Duplicate Titles:
+
+// Modify the component to avoid showing duplicate titles
+const SpecialOfferCard = ({ offer }) => {
+  // If the badgeText is the same as the title, use a generic badge
+  const displayBadge = offer.badgeText === offer.name 
+    ? "Special Offer" 
+    : offer.badgeText;
+  
+  return (
+    // Component JSX
+  );
+};
+Consistent Badge Styling:
+
+// Create a consistent badge component
+const OfferBadge = ({ type, text }) => {
+  return (
+    <div className={`badge badge-${type}`}>
+      {type === 'package' ? <PackageIcon /> : <PercentIcon />}
+      {text}
+    </div>
+  );
+};
+Integration with Quote Flow
+Now that the display is working better, the next step would be to connect these offers to the quote flow:
+
+Add "Apply to Quote" functionality:
+
+// In the SpecialOfferCard component
+const { applyOfferToQuote } = useSpecialOffers();
+
+// In the return JSX
+<Button 
+  onClick={() => applyOfferToQuote(offer.id)}
+  variant="primary"
+>
+  Apply to Quote
+</Button>
+Create a selection mechanism in the quote flow:
+
+// In TreatmentPlanBuilder.tsx
+const { availableOffers, applyOfferToTreatment } = useSpecialOffers();
+
+// Show applicable offers for each treatment
+{treatments.map(treatment => (
+  <div>
+    <TreatmentItem treatment={treatment} />
+    {availableOffers(treatment.id).map(offer => (
+      <OfferChip 
+        offer={offer}
+        onClick={() => applyOfferToTreatment(treatment.id, offer.id)}
+      />
+    ))}
+  </div>
+))}
