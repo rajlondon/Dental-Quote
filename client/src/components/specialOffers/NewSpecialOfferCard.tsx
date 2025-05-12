@@ -1,6 +1,11 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
+console.log('COMPONENT_ID: NewSpecialOfferCard LOADED - ' + new Date().toISOString());
+
+// Add an intentional error to see if code changes are being picked up
+throw new Error('INTENTIONAL ERROR TO VERIFY CODE CHANGES - ' + new Date().toISOString());
+
 interface NewSpecialOfferCardProps {
   offer: {
     id: string;
