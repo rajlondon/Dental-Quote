@@ -12,15 +12,15 @@ interface SpecialOfferCardProps {
     id: string;
     title: string;
     description: string;
-    discount_type: string;
-    discount_value: number;
-    applicable_treatments: string[];
-    start_date: string;
-    end_date: string;
-    promo_code: string;
-    terms_conditions: string;
-    banner_image?: string;
-    treatment_price_gbp?: number;
+    discountType: string;
+    discountValue: number;
+    applicableTreatments: string[];
+    startDate: string;
+    endDate: string;
+    promoCode: string;
+    termsAndConditions: string;
+    bannerImage?: string;
+    treatmentPriceGBP?: number;
   };
   className?: string;
   onClick?: (promoCode: string) => void;
@@ -37,25 +37,25 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
 
   const handleUseOffer = () => {
     if (onClick) {
-      onClick(offer.promo_code);
+      onClick(offer.promoCode);
     } else {
       // Default behavior - redirect to quote page with promo code
-      setLocation(`/your-quote?promoCode=${offer.promo_code}`);
+      setLocation(`/your-quote?promoCode=${offer.promoCode}`);
     }
   };
   
-  const discountLabel = offer.discount_type === 'percentage' 
-    ? `${offer.discount_value}% Off` 
-    : `£${offer.discount_value} Off`;
+  const discountLabel = offer.discountType === 'percentage' 
+    ? `${offer.discountValue}% Off` 
+    : `£${offer.discountValue} Off`;
     
   const timeRemaining = () => {
-    const endDate = new Date(offer.end_date);
+    const endDate = new Date(offer.endDate);
     const today = new Date();
     const diffTime = Math.abs(endDate.getTime() - today.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays > 30) {
-      return `Valid until ${formatDate(offer.end_date)}`;
+      return `Valid until ${formatDate(offer.endDate)}`;
     } else if (diffDays > 1) {
       return `${diffDays} days left`;
     } else {
@@ -67,16 +67,16 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
     return (
       <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
         <div className="flex">
-          {offer.banner_image && (
+          {offer.bannerImage && (
             <div className="w-1/3">
               <img 
-                src={offer.banner_image} 
+                src={offer.bannerImage} 
                 alt={offer.title} 
                 className="w-full h-full object-cover"
               />
             </div>
           )}
-          <div className={`${offer.banner_image ? 'w-2/3' : 'w-full'} p-4`}>
+          <div className={`${offer.bannerImage ? 'w-2/3' : 'w-full'} p-4`}>
             <h3 className="font-semibold text-lg">{offer.title}</h3>
             <Badge className="bg-amber-100 text-amber-800 border-amber-200 mt-1">
               {discountLabel}
@@ -97,10 +97,10 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
   
   return (
     <Card className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}>
-      {offer.banner_image && (
+      {offer.bannerImage && (
         <div className="h-44 relative overflow-hidden">
           <img 
-            src={offer.banner_image} 
+            src={offer.bannerImage} 
             alt={offer.title} 
             className="w-full h-full object-cover"
           />
@@ -125,7 +125,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-xs">
-                  Valid from {formatDate(offer.start_date)} to {formatDate(offer.end_date)}
+                  Valid from {formatDate(offer.startDate)} to {formatDate(offer.endDate)}
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -136,27 +136,27 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
       <CardContent>
         <p className="text-gray-600 text-sm">{offer.description}</p>
         
-        {offer.applicable_treatments.length > 0 && (
+        {offer.applicableTreatments.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
-            {offer.applicable_treatments.slice(0, 3).map((treatment, index) => (
+            {offer.applicableTreatments.slice(0, 3).map((treatment: string, index: number) => (
               <Badge key={index} variant="outline" className="text-xs">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 {treatment.replace(/_/g, ' ')}
               </Badge>
             ))}
-            {offer.applicable_treatments.length > 3 && (
+            {offer.applicableTreatments.length > 3 && (
               <Badge variant="outline" className="text-xs">
-                +{offer.applicable_treatments.length - 3} more
+                +{offer.applicableTreatments.length - 3} more
               </Badge>
             )}
           </div>
         )}
         
-        {offer.treatment_price_gbp && (
+        {offer.treatmentPriceGBP && (
           <div className="mt-3 flex items-center text-sm text-gray-700">
             <ShoppingBag className="h-4 w-4 mr-1" />
             <span>Treatment Value: </span>
-            <span className="font-semibold ml-1">£{offer.treatment_price_gbp}</span>
+            <span className="font-semibold ml-1">£{offer.treatmentPriceGBP}</span>
           </div>
         )}
       </CardContent>
@@ -171,7 +171,7 @@ const SpecialOfferCard: React.FC<SpecialOfferCardProps> = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs max-w-xs">{offer.terms_conditions}</p>
+              <p className="text-xs max-w-xs">{offer.termsAndConditions}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
