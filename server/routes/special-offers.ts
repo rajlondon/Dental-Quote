@@ -137,7 +137,31 @@ router.patch('/:id', isAuthenticated, async (req, res) => {
   try {
     const id = req.params.id;
     const [existingOffer] = await db
-      .select()
+      .select({
+        id: specialOffers.id,
+        clinicId: specialOffers.clinicId,
+        title: specialOffers.title,
+        description: specialOffers.description,
+        discountType: specialOffers.discountType,
+        discountValue: specialOffers.discountValue,
+        applicableTreatments: specialOffers.applicableTreatments,
+        startDate: specialOffers.startDate,
+        endDate: specialOffers.endDate,
+        promoCode: specialOffers.promoCode,
+        termsAndConditions: specialOffers.termsAndConditions,
+        imageUrl: specialOffers.imageUrl,
+        badgeText: specialOffers.badgeText,
+        treatmentPriceGBP: specialOffers.treatmentPriceGBP,
+        treatmentPriceUSD: specialOffers.treatmentPriceUSD,
+        displayOnHomepage: specialOffers.displayOnHomepage,
+        featured: specialOffers.featured,
+        isActive: specialOffers.isActive,
+        cityCode: specialOffers.cityCode,
+        cityName: specialOffers.cityName,
+        status: specialOffers.status,
+        createdAt: specialOffers.createdAt,
+        updatedAt: specialOffers.updatedAt
+      })
       .from(specialOffers)
       .where(eq(specialOffers.id, id));
     
