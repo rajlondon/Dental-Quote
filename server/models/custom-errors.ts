@@ -1,7 +1,8 @@
 /**
- * Base class for custom API errors
+ * Custom error classes for the application
  */
-export class ApiError extends Error {
+
+export class AppError extends Error {
   statusCode: number;
   
   constructor(message: string, statusCode: number) {
@@ -12,68 +13,47 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * 400 Bad Request - Used when the client sends a request with invalid data
- */
-export class BadRequestError extends ApiError {
-  constructor(message = 'Bad request') {
+export class BadRequestError extends AppError {
+  constructor(message: string = 'Bad Request') {
     super(message, 400);
   }
 }
 
-/**
- * 401 Unauthorized - Used when authentication is required but failed or not provided
- */
-export class UnauthorizedError extends ApiError {
-  constructor(message = 'Unauthorized') {
+export class UnauthorizedError extends AppError {
+  constructor(message: string = 'Unauthorized') {
     super(message, 401);
   }
 }
 
-/**
- * 403 Forbidden - Used when the authenticated user doesn't have permission
- */
-export class ForbiddenError extends ApiError {
-  constructor(message = 'Access forbidden') {
+export class ForbiddenError extends AppError {
+  constructor(message: string = 'Forbidden') {
     super(message, 403);
   }
 }
 
-/**
- * 404 Not Found - Used when a resource is not found
- */
-export class NotFoundError extends ApiError {
-  constructor(message = 'Resource not found') {
+export class NotFoundError extends AppError {
+  constructor(message: string = 'Resource not found') {
     super(message, 404);
   }
 }
 
-/**
- * 409 Conflict - Used when there's a conflict with current state of the resource
- */
-export class ConflictError extends ApiError {
-  constructor(message = 'Conflict with current state') {
+export class ConflictError extends AppError {
+  constructor(message: string = 'Conflict') {
     super(message, 409);
   }
 }
 
-/**
- * 422 Unprocessable Entity - Used when validation fails but request syntax is correct
- */
-export class ValidationError extends ApiError {
-  errors?: Record<string, string> | string[];
+export class ValidationError extends AppError {
+  errors: any[];
   
-  constructor(message = 'Validation failed', errors?: Record<string, string> | string[]) {
+  constructor(message: string = 'Validation Error', errors: any[] = []) {
     super(message, 422);
     this.errors = errors;
   }
 }
 
-/**
- * 500 Internal Server Error - Used for unexpected server errors
- */
-export class InternalServerError extends ApiError {
-  constructor(message = 'Internal server error') {
+export class InternalServerError extends AppError {
+  constructor(message: string = 'Internal Server Error') {
     super(message, 500);
   }
 }

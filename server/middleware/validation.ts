@@ -1,20 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
+import { ValidationError } from '../models/custom-errors';
 import logger from '../utils/logger';
 
 /**
- * Express middleware to validate request using express-validator
- * This middleware should be used after defining validation rules
+ * Middleware to validate request data using express-validator
  */
-export const validate = (req: Request, res: Response, next: NextFunction) => {
+export function validate(req: Request, res: Response, next: NextFunction) {
   const errors = validationResult(req);
+  
   if (!errors.isEmpty()) {
-    logger.warn(`Validation error: ${JSON.stringify(errors.array())}`);
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array()
-    });
+    logger.warn('Validation error:', errors.array());
+    return next(new ValidationError('Validation error', errors.array()));
   }
+  
   next();
-};
+}

@@ -1,165 +1,90 @@
 import logger from './logger';
 
 /**
- * Interface for tracking promo code application events
+ * Track promo code application
  */
-interface PromoCodeAppliedEvent {
+export interface PromoAppliedData {
   promoId: string;
   promoCode: string;
-  quoteId: number;
+  quoteId: number | string;
   userId?: number;
-  clinicId?: number;
   discountAmount?: number;
   discountType?: string;
   referrer?: string;
   metadata?: Record<string, any>;
 }
 
-/**
- * Interface for tracking promo code removal events
- */
-interface PromoCodeRemovedEvent {
-  promoId: string;
-  promoCode: string;
-  quoteId: number;
-  userId?: number;
-  clinicId?: number;
-  referrer?: string;
-  metadata?: Record<string, any>;
-}
-
-/**
- * Track when a promo code is applied to a quote
- */
-export function trackPromoCodeApplied(event: PromoCodeAppliedEvent): void {
+export function trackPromoCodeApplied(data: PromoAppliedData): void {
   try {
-    logger.info({
-      event: 'promo_code_applied',
-      timestamp: new Date().toISOString(),
-      ...event
+    // Log the event
+    logger.info('Promo code applied', {
+      event: 'promo_applied',
+      ...data,
+      timestamp: new Date().toISOString()
     });
-
-    // In a real implementation, you might send this to an analytics service
-    // such as Mixpanel, Google Analytics, or a custom analytics endpoint
+    
+    // In a real implementation, this would send analytics data
+    // to a tracking service like Google Analytics or an internal
+    // analytics database
   } catch (error) {
     logger.error('Error tracking promo code application:', error);
   }
 }
 
 /**
- * Track when a promo code is removed from a quote
+ * Track promo code removal
  */
-export function trackPromoCodeRemoved(event: PromoCodeRemovedEvent): void {
-  try {
-    logger.info({
-      event: 'promo_code_removed',
-      timestamp: new Date().toISOString(),
-      ...event
-    });
+export interface PromoRemovedData {
+  promoId: string;
+  promoCode: string;
+  quoteId: number | string;
+  userId?: number;
+  referrer?: string;
+  metadata?: Record<string, any>;
+}
 
-    // In a real implementation, you might send this to an analytics service
+export function trackPromoCodeRemoved(data: PromoRemovedData): void {
+  try {
+    // Log the event
+    logger.info('Promo code removed', {
+      event: 'promo_removed',
+      ...data,
+      timestamp: new Date().toISOString()
+    });
+    
+    // In a real implementation, this would send analytics data
+    // to a tracking service like Google Analytics or an internal
+    // analytics database
   } catch (error) {
     logger.error('Error tracking promo code removal:', error);
   }
 }
 
 /**
- * Track when a special offer is viewed
+ * Track promo code view/impression
  */
-export function trackSpecialOfferViewed(
-  offerId: string,
-  userId?: number,
-  metadata?: Record<string, any>
-): void {
-  try {
-    logger.info({
-      event: 'special_offer_viewed',
-      timestamp: new Date().toISOString(),
-      offerId,
-      userId,
-      ...metadata
-    });
-  } catch (error) {
-    logger.error('Error tracking special offer view:', error);
-  }
+export interface PromoViewData {
+  promoId: string;
+  promoCode: string;
+  userId?: number;
+  context: string; // e.g., 'checkout', 'quote_page', 'admin_panel'
+  referrer?: string;
+  metadata?: Record<string, any>;
 }
 
-/**
- * Track when a special offer is clicked
- */
-export function trackSpecialOfferClicked(
-  offerId: string,
-  userId?: number,
-  metadata?: Record<string, any>
-): void {
+export function trackPromoCodeViewed(data: PromoViewData): void {
   try {
-    logger.info({
-      event: 'special_offer_clicked',
-      timestamp: new Date().toISOString(),
-      offerId,
-      userId,
-      ...metadata
+    // Log the event
+    logger.info('Promo code viewed', {
+      event: 'promo_viewed',
+      ...data,
+      timestamp: new Date().toISOString()
     });
+    
+    // In a real implementation, this would send analytics data
+    // to a tracking service like Google Analytics or an internal
+    // analytics database
   } catch (error) {
-    logger.error('Error tracking special offer click:', error);
+    logger.error('Error tracking promo code view:', error);
   }
 }
-
-/**
- * Track when a user starts a quote from a special offer
- */
-export function trackQuoteStartedFromOffer(
-  offerId: string,
-  quoteId: number,
-  userId?: number,
-  metadata?: Record<string, any>
-): void {
-  try {
-    logger.info({
-      event: 'quote_started_from_offer',
-      timestamp: new Date().toISOString(),
-      offerId,
-      quoteId,
-      userId,
-      ...metadata
-    });
-  } catch (error) {
-    logger.error('Error tracking quote started from offer:', error);
-  }
-}
-
-/**
- * Track when a quote with a promo code is completed
- */
-export function trackQuoteCompletedWithPromo(
-  promoId: string,
-  promoCode: string,
-  quoteId: number,
-  userId?: number,
-  clinicId?: number,
-  metadata?: Record<string, any>
-): void {
-  try {
-    logger.info({
-      event: 'quote_completed_with_promo',
-      timestamp: new Date().toISOString(),
-      promoId,
-      promoCode,
-      quoteId,
-      userId,
-      clinicId,
-      ...metadata
-    });
-  } catch (error) {
-    logger.error('Error tracking quote completed with promo:', error);
-  }
-}
-
-export default {
-  trackPromoCodeApplied,
-  trackPromoCodeRemoved,
-  trackSpecialOfferViewed,
-  trackSpecialOfferClicked,
-  trackQuoteStartedFromOffer,
-  trackQuoteCompletedWithPromo
-};
