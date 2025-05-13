@@ -648,6 +648,16 @@ function Router() {
       <ProtectedRoute path="/admin-portal/treatment-plans" component={AdminTreatmentPlansPage} requiredRole="admin" />
       <ProtectedRoute path="/admin-portal/treatment-plans/analytics" component={AdminTreatmentPlansPage} requiredRole="admin" />
       
+      {/* Admin Promotions Routes */}
+      <ProtectedRoute path="/admin-portal/promotions" component={() => {
+        const PromotionsPage = React.lazy(() => import("@/pages/admin/PromotionsPage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading promotions management...</div>}>
+            <PromotionsPage />
+          </React.Suspense>
+        );
+      }} requiredRole="admin" />
+      
       {/* Admin Booking Routes */}
       <ProtectedRoute path="/admin/bookings" component={AdminBookingsPage} requiredRole="admin" />
       <ProtectedRoute path="/admin/bookings/:id" component={AdminBookingDetailPage} requiredRole="admin" />
