@@ -61,15 +61,27 @@ export const QuoteFlowProvider: React.FC<{ children: ReactNode }> = ({ children 
   const isNormalFlow = source === 'normal';
   const isPromoTokenFlow = source === 'promo_token';
 
-  // Helper to build URLs with quoteId when available
+  // Helper to build URLs with quoteId and promo code when available
   const buildUrl = (path: string): string => {
-    if (!quoteId) return path;
-    
-    // Check if the path already has query parameters
+    // Start with the original path
+    let finalUrl = path;
     const hasQueryParams = path.includes('?');
-    const separator = hasQueryParams ? '&' : '?';
+    let separator = hasQueryParams ? '&' : '?';
     
-    return `${path}${separator}quoteId=${quoteId}`;
+    // Add quoteId parameter if available
+    if (quoteId) {
+      finalUrl = `${finalUrl}${separator}quoteId=${quoteId}`;
+      separator = '&'; // Subsequent params need & separator
+    }
+    
+    // Add promo code parameter if available (preserve from URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const promoCode = urlParams.get('code');
+    if (promoCode) {
+      finalUrl = `${finalUrl}${separator}code=${promoCode}`;
+    }
+    
+    return finalUrl;
   };
 
   // Reset the flow to default state
@@ -144,6 +156,7 @@ export const useInitializeQuoteFlow = () => {
     const promoTokenParam = urlParams.get('promoToken');
     const promoTypeParam = urlParams.get('promoType');
     const quoteIdParam = urlParams.get('quoteId');
+    const promoCodeParam = urlParams.get('code');
 
     console.log('QuoteFlowContext: Initializing from URL params:', {
       offerIdParam,
@@ -153,6 +166,7 @@ export const useInitializeQuoteFlow = () => {
       promoTokenParam,
       promoTypeParam,
       quoteIdParam,
+      promoCodeParam,
       urlSearch: window.location.search
     });
     
