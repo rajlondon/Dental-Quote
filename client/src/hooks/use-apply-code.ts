@@ -53,7 +53,7 @@ export function useApplyCode() {
   // Mutation for applying a promo code
   const applyMutation = useMutation({
     mutationFn: async ({ code, quoteId }: ApplyCodeParams): Promise<ApplyCodeResponse> => {
-      const response = await apiRequest("POST", "/api/promocodes/apply", { code, quoteId });
+      const response = await apiRequest("POST", `/api/promo/apply/${quoteId}`, { code });
       return await response.json();
     },
     onSuccess: (data: ApplyCodeResponse) => {
@@ -87,7 +87,7 @@ export function useApplyCode() {
   // Mutation for removing a promo code
   const removeMutation = useMutation({
     mutationFn: async ({ quoteId }: RemoveCodeParams): Promise<RemoveCodeResponse> => {
-      const response = await apiRequest("POST", "/api/promocodes/remove", { quoteId });
+      const response = await apiRequest("POST", `/api/promo/remove/${quoteId}`, {});
       return await response.json();
     },
     onSuccess: (data: RemoveCodeResponse) => {
