@@ -1,462 +1,470 @@
-import { Router } from 'express';
-import { db } from '../../db';
-import { promos, promoClinics } from '@shared/schema';
-import { eq, and, or, isNull, gte, like, desc, count, sql } from 'drizzle-orm';
-import { isAdmin } from '../../middlewares/auth-middleware';
-import { validatePromoData } from '../../utils/promo-utils';
+import express from 'express';
+import { body, param, query } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
+import { validate } from '../../middleware/validation';
+import { isAdmin } from '../../middleware/auth-middleware';
+import { db } from '../../db';
+import { promos, promoClinics, DiscountType, PromoType } from '@shared/schema';
+import { eq, and, gte, lte, sql, asc, desc, or, like, not, isNull, count } from 'drizzle-orm';
+import { BadRequestError, NotFoundError, ConflictError } from '../../models/custom-errors';
 import logger from '../../utils/logger';
+import { generatePromoSlug, generatePromoCode } from '../../utils/promo-utils';
 
-const router = Router();
+const router = express.Router();
 
-// List all promotions with filtering
-router.get('/', isAdmin, async (req, res) => {
+// Get all promos with usage stats
+router.get('/promos', isAdmin, async (req, res, next) => {
   try {
-    const { status, clinicId, search } = req.query;
+    const { status, search, sort, order } = req.query;
     
-    let query = db.select({
-      ...promos,
-      usageCount: count(sql`distinct quotes.id`).as('usage_count'),
-    })
-    .from(promos)
-    .leftJoin('quotes', eq(promos.id, sql`quotes.promo_id`))
-    .leftJoin(promoClinics, eq(promos.id, promoClinics.promoId));
+    // Count usage for each promo
+    const promosWithUsage = await db
+      .select({
+        ...promos,
+        usageCount: count(sql`quotes.id`).as('usage_count')
+      })
+      .from(promos)
+      .leftJoin('quotes', eq(promos.id, sql`quotes.promo_id`))
+      .groupBy(promos.id);
     
     // Apply filters
-    const filters = [];
+    let filteredPromos = [...promosWithUsage];
     
-    if (status === 'active') {
-      filters.push(eq(promos.isActive, true));
-      filters.push(or(isNull(promos.endDate), gte(promos.endDate, new Date())));
-    } else if (status === 'inactive') {
-      filters.push(or(
-        eq(promos.isActive, false),
-        and(
-          gte(new Date(), promos.endDate),
-          isNull(promos.endDate).not()
-        )
-      ));
+    // Filter by status
+    if (status && status !== 'all') {
+      filteredPromos = filteredPromos.filter(promo => 
+        promo.status === status
+      );
     }
     
-    if (clinicId) {
-      filters.push(eq(promoClinics.clinicId, String(clinicId)));
-    }
-    
+    // Search by title or code
     if (search) {
-      filters.push(like(promos.code, `%${search}%`));
+      const searchTerm = String(search).toLowerCase();
+      filteredPromos = filteredPromos.filter(promo => 
+        promo.title.toLowerCase().includes(searchTerm) || 
+        (promo.code && promo.code.toLowerCase().includes(searchTerm))
+      );
     }
     
-    if (filters.length > 0) {
-      query = query.where(and(...filters));
-    }
+    // Apply sorting (default: newest first)
+    const sortField = sort || 'createdAt';
+    const sortOrder = order === 'asc' ? 'asc' : 'desc';
     
-    // Group by promo ID to avoid duplicates from joins
-    query = query.groupBy(promos.id)
-      .orderBy(desc(promos.createdAt));
-    
-    const promotions = await query;
-    
-    // Get clinic names for restricted promos
-    const promosWithClinics = await Promise.all(promotions.map(async (promo) => {
-      const clinics = await db.select()
-        .from(promoClinics)
-        .leftJoin('clinics', eq(promoClinics.clinicId, sql`clinics.id`))
-        .where(eq(promoClinics.promoId, promo.id));
+    filteredPromos.sort((a, b) => {
+      if (sortField === 'usageCount') {
+        return sortOrder === 'asc' 
+          ? a.usageCount - b.usageCount 
+          : b.usageCount - a.usageCount;
+      }
       
-      return {
-        ...promo,
-        clinics: clinics.map(c => ({ 
-          id: c.clinics?.id, 
-          name: c.clinics?.name 
-        }))
-      };
-    }));
+      if (sortField === 'createdAt' || sortField === 'updatedAt') {
+        const dateA = new Date(a[sortField]).getTime();
+        const dateB = new Date(b[sortField]).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+      
+      if (typeof a[sortField] === 'string' && typeof b[sortField] === 'string') {
+        return sortOrder === 'asc'
+          ? a[sortField].localeCompare(b[sortField])
+          : b[sortField].localeCompare(a[sortField]);
+      }
+      
+      return 0;
+    });
     
-    res.json({
-      success: true,
-      data: promosWithClinics
-    });
+    res.json(filteredPromos);
   } catch (error) {
-    logger.error('Error fetching promotions:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch promotions'
-    });
+    next(error);
   }
 });
 
-// Get promotion details
-router.get('/:id', isAdmin, async (req, res) => {
+// Get a specific promo with usage stats and clinic associations
+router.get('/promos/:id', isAdmin, async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    const [promo] = await db.select()
+    // Get promo details
+    const [promo] = await db
+      .select()
       .from(promos)
       .where(eq(promos.id, id));
     
     if (!promo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Promotion not found'
-      });
+      throw new NotFoundError('Promotion not found');
     }
     
-    // Get associated clinics
-    const clinics = await db.select()
-      .from(promoClinics)
-      .leftJoin('clinics', eq(promoClinics.clinicId, sql`clinics.id`))
-      .where(eq(promoClinics.promoId, id));
-    
-    // Get usage statistics
-    const usageStats = await db.select({
-      count: count()
-    })
-    .from('quotes')
-    .where(eq(sql`quotes.promo_id`, id));
-    
-    res.json({
-      success: true,
-      data: {
-        ...promo,
-        clinics: clinics.map(c => ({ 
-          id: c.clinics?.id, 
-          name: c.clinics?.name 
-        })),
-        usageCount: usageStats[0]?.count || 0
-      }
-    });
-  } catch (error) {
-    logger.error(`Error fetching promotion ${req.params.id}:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch promotion details'
-    });
-  }
-});
-
-// Create new promotion
-router.post('/', isAdmin, async (req, res) => {
-  try {
-    const promoData = req.body;
-    
-    // Validate promo data
-    const validation = validatePromoData(promoData);
-    if (!validation.isValid) {
-      return res.status(400).json({
-        success: false,
-        message: validation.message
-      });
-    }
-    
-    // Check if code already exists
-    const existingPromo = await db.select()
-      .from(promos)
-      .where(eq(promos.code, promoData.code));
-    
-    if (existingPromo.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Promotion code already exists'
-      });
-    }
-    
-    const promoId = uuidv4();
-    
-    // Create the promotion
-    await db.insert(promos).values({
-      id: promoId,
-      code: promoData.code,
-      title: promoData.description || `${promoData.code} Promotion`,
-      description: promoData.description || '',
-      discountType: promoData.type,
-      discountValue: promoData.value,
-      startDate: new Date(),
-      endDate: promoData.expiryDate ? new Date(promoData.expiryDate) : null,
-      maxUses: promoData.maxUses || null,
-      currentUses: 0,
-      isActive: promoData.status === 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-    
-    // If clinic restriction is specified, create the association
-    if (promoData.clinicId) {
-      await db.insert(promoClinics).values({
-        id: uuidv4(),
-        promoId: promoId,
-        clinicId: promoData.clinicId,
-        createdAt: new Date()
-      });
-    }
-    
-    res.status(201).json({
-      success: true,
-      message: 'Promotion created successfully',
-      data: { id: promoId }
-    });
-  } catch (error) {
-    logger.error('Error creating promotion:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create promotion'
-    });
-  }
-});
-
-// Update promotion
-router.put('/:id', isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const promoData = req.body;
-    
-    // Validate promo data
-    const validation = validatePromoData(promoData);
-    if (!validation.isValid) {
-      return res.status(400).json({
-        success: false,
-        message: validation.message
-      });
-    }
-    
-    // Check if the promotion exists
-    const [existingPromo] = await db.select()
-      .from(promos)
-      .where(eq(promos.id, id));
-    
-    if (!existingPromo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Promotion not found'
-      });
-    }
-    
-    // Check if updated code already exists (if changing the code)
-    if (promoData.code !== existingPromo.code) {
-      const codeExists = await db.select()
-        .from(promos)
-        .where(and(
-          eq(promos.code, promoData.code),
-          sql`id != ${id}`
-        ));
-      
-      if (codeExists.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Promotion code already exists'
-        });
-      }
-    }
-    
-    // Update the promotion
-    await db.update(promos)
-      .set({
-        code: promoData.code,
-        title: promoData.description || `${promoData.code} Promotion`,
-        description: promoData.description || '',
-        discountType: promoData.type,
-        discountValue: promoData.value,
-        endDate: promoData.expiryDate ? new Date(promoData.expiryDate) : null,
-        maxUses: promoData.maxUses || null,
-        isActive: promoData.status === 'active',
-        updatedAt: new Date()
-      })
-      .where(eq(promos.id, id));
-    
-    // Update clinic associations if needed
-    if (promoData.clinicId) {
-      // First, remove existing associations
-      await db.delete(promoClinics)
+    // Get clinic associations if applicable
+    let clinics = [];
+    if (promo.promoType === 'clinic-specific') {
+      // Get all clinic IDs associated with this promo
+      const clinicRelations = await db
+        .select()
+        .from(promoClinics)
         .where(eq(promoClinics.promoId, id));
       
-      // Then add the new association
-      await db.insert(promoClinics).values({
-        id: uuidv4(),
-        promoId: id,
-        clinicId: promoData.clinicId,
-        createdAt: new Date()
-      });
+      // Get clinic details for each associated clinic
+      if (clinicRelations.length > 0) {
+        const clinicIds = clinicRelations.map(rel => rel.clinicId);
+        
+        // Fetch clinic details
+        const clinicDetails = await db
+          .select()
+          .from('clinics')
+          .where(sql`clinics.id IN (${clinicIds.join(',')})`);
+        
+        clinics = clinicDetails;
+      }
     }
     
+    // Get usage stats
+    const usageStats = await db
+      .select({
+        count: count(sql`quotes.id`).as('usage_count'),
+        totalDiscount: sql`SUM(CAST(quotes.discount_amount AS FLOAT))`.as('total_discount')
+      })
+      .from('quotes')
+      .where(eq(sql`quotes.promo_id`, id));
+    
+    // Return combined data
     res.json({
-      success: true,
-      message: 'Promotion updated successfully'
-    });
-  } catch (error) {
-    logger.error(`Error updating promotion ${req.params.id}:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update promotion'
-    });
-  }
-});
-
-// Delete promotion (or deactivate)
-router.delete('/:id', isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Check if the promotion exists
-    const [existingPromo] = await db.select()
-      .from(promos)
-      .where(eq(promos.id, id));
-    
-    if (!existingPromo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Promotion not found'
-      });
-    }
-    
-    // Check if this promo has been used in quotes
-    const usageStats = await db.select({
-      count: count()
-    })
-    .from('quotes')
-    .where(eq(sql`quotes.promo_id`, id));
-    
-    const hasBeenUsed = usageStats[0]?.count > 0;
-    
-    if (hasBeenUsed) {
-      // If used, just deactivate instead of deleting to maintain referential integrity
-      await db.update(promos)
-        .set({
-          isActive: false,
-          updatedAt: new Date()
-        })
-        .where(eq(promos.id, id));
-      
-      return res.json({
-        success: true,
-        message: 'Promotion has been used in quotes and has been deactivated instead of deleted'
-      });
-    }
-    
-    // If never used, we can safely delete it
-    // First, remove clinic associations
-    await db.delete(promoClinics)
-      .where(eq(promoClinics.promoId, id));
-    
-    // Then delete the promotion
-    await db.delete(promos)
-      .where(eq(promos.id, id));
-    
-    res.json({
-      success: true,
-      message: 'Promotion deleted successfully'
-    });
-  } catch (error) {
-    logger.error(`Error deleting promotion ${req.params.id}:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete promotion'
-    });
-  }
-});
-
-// Get promotion statistics
-router.get('/stats/overview', isAdmin, async (req, res) => {
-  try {
-    // Count active promotions
-    const activePromosQuery = await db.select({
-      count: count()
-    })
-    .from(promos)
-    .where(and(
-      eq(promos.isActive, true),
-      or(isNull(promos.endDate), gte(promos.endDate, new Date()))
-    ));
-    
-    const activePromosCount = activePromosQuery[0]?.count || 0;
-    
-    // Find most used promotion
-    const mostUsedPromoQuery = await db.select({
-      promoId: sql`quotes.promo_id`,
-      code: promos.code,
-      title: promos.title,
-      usageCount: count(sql`quotes.id`).as('usage_count')
-    })
-    .from('quotes')
-    .leftJoin(promos, eq(sql`quotes.promo_id`, promos.id))
-    .where(sql`quotes.promo_id is not null`)
-    .groupBy(sql`quotes.promo_id`, promos.code, promos.title)
-    .orderBy(desc(sql`usage_count`))
-    .limit(1);
-    
-    const mostUsedPromo = mostUsedPromoQuery.length > 0 ? mostUsedPromoQuery[0] : null;
-    
-    // Calculate total discount amount (optional)
-    const totalDiscountQuery = await db.select({
-      total: sql`sum(quotes.discount)`.as('total_discount')
-    })
-    .from('quotes')
-    .where(sql`quotes.promo_id is not null`);
-    
-    const totalDiscount = totalDiscountQuery[0]?.total || 0;
-    
-    res.json({
-      success: true,
-      data: {
-        activePromotions: activePromosCount,
-        mostUsedPromo,
-        totalDiscount
+      ...promo,
+      clinics,
+      stats: {
+        usageCount: usageStats[0]?.count || 0,
+        totalDiscount: usageStats[0]?.totalDiscount || 0
       }
     });
   } catch (error) {
-    logger.error('Error fetching promotion statistics:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch promotion statistics'
-    });
+    next(error);
   }
 });
 
-// Export promotions as CSV
-router.get('/export/csv', isAdmin, async (req, res) => {
-  try {
-    // Get all promotions with usage statistics
-    const promotions = await db.select({
-      ...promos,
-      usageCount: count(sql`distinct quotes.id`).as('usage_count'),
-    })
-    .from(promos)
-    .leftJoin('quotes', eq(promos.id, sql`quotes.promo_id`))
-    .groupBy(promos.id)
-    .orderBy(desc(promos.createdAt));
-    
-    // Create CSV content
-    let csvContent = 'Code,Title,Type,Value,Status,Start Date,End Date,Max Uses,Current Uses,Usage Count,Created At,Updated At\n';
-    
-    promotions.forEach(promo => {
-      const isActive = promo.isActive && (!promo.endDate || new Date(promo.endDate) >= new Date()) ? 'Active' : 'Inactive';
-      const row = [
-        promo.code,
-        promo.title,
-        promo.discountType,
-        promo.discountValue,
-        isActive,
-        promo.startDate ? new Date(promo.startDate).toISOString().split('T')[0] : '',
-        promo.endDate ? new Date(promo.endDate).toISOString().split('T')[0] : '',
-        promo.maxUses || 'Unlimited',
-        promo.currentUses,
-        promo.usageCount,
-        new Date(promo.createdAt).toISOString(),
-        new Date(promo.updatedAt).toISOString()
-      ];
+// Create a new promo
+router.post('/promos', 
+  isAdmin,
+  [
+    body('title').notEmpty().withMessage('Title is required'),
+    body('promoType').isIn(['global', 'clinic-specific']).withMessage('Invalid promo type'),
+    body('discountType').isIn(['percentage', 'fixed']).withMessage('Invalid discount type'),
+    body('discountValue').notEmpty().withMessage('Discount value is required'),
+    body('status').optional().isIn(['active', 'inactive', 'draft']).withMessage('Invalid status'),
+    body('code').optional(),
+    body('description').optional(),
+    body('startDate').optional().isISO8601().withMessage('Start date must be a valid date'),
+    body('endDate').optional().isISO8601().withMessage('End date must be a valid date'),
+    body('maxUses').optional().isInt({ min: 1 }).withMessage('Max uses must be a positive integer'),
+    body('clinicIds').optional().isArray().withMessage('Clinic IDs must be an array'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { 
+        title, promoType, discountType, discountValue, status = 'draft',
+        code, description, startDate, endDate, maxUses, clinicIds
+      } = req.body;
       
-      csvContent += row.join(',') + '\n';
+      // Check that dates are valid
+      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        throw new BadRequestError('Start date cannot be after end date');
+      }
+      
+      // Generate a slug
+      const slug = await generatePromoSlug(title);
+      
+      // Generate or validate promo code
+      let promoCode = code;
+      if (!promoCode) {
+        promoCode = await generatePromoCode();
+      } else {
+        // Check if code already exists
+        const existingPromo = await db
+          .select()
+          .from(promos)
+          .where(eq(promos.code, promoCode));
+        
+        if (existingPromo.length > 0) {
+          throw new ConflictError('Promo code already exists');
+        }
+      }
+      
+      // Create the promo
+      const id = uuidv4();
+      const now = new Date();
+      
+      const [newPromo] = await db.insert(promos).values({
+        id,
+        slug,
+        code: promoCode,
+        title,
+        description: description || null,
+        promoType: promoType as PromoType,
+        discountType: discountType as DiscountType,
+        discountValue,
+        status: status as PromoStatus,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        maxUses: maxUses || null,
+        uses: 0,
+        createdAt: now,
+        updatedAt: now
+      }).returning();
+      
+      // If clinic-specific, create associations with clinics
+      if (promoType === 'clinic-specific' && clinicIds && clinicIds.length > 0) {
+        const clinicPromises = clinicIds.map(clinicId => 
+          db.insert(promoClinics).values({
+            id: uuidv4(),
+            promoId: id,
+            clinicId,
+            createdAt: now
+          })
+        );
+        
+        await Promise.all(clinicPromises);
+      }
+      
+      // Return the created promo
+      res.status(201).json(newPromo);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Update a promo
+router.put('/promos/:id',
+  isAdmin,
+  [
+    param('id').notEmpty().withMessage('Promo ID is required'),
+    body('title').optional(),
+    body('promoType').optional().isIn(['global', 'clinic-specific']).withMessage('Invalid promo type'),
+    body('discountType').optional().isIn(['percentage', 'fixed']).withMessage('Invalid discount type'),
+    body('discountValue').optional(),
+    body('status').optional().isIn(['active', 'inactive', 'draft']).withMessage('Invalid status'),
+    body('code').optional(),
+    body('description').optional(),
+    body('startDate').optional().isISO8601().withMessage('Start date must be a valid date'),
+    body('endDate').optional().isISO8601().withMessage('End date must be a valid date'),
+    body('maxUses').optional().isInt({ min: 1 }).withMessage('Max uses must be a positive integer'),
+    body('clinicIds').optional().isArray().withMessage('Clinic IDs must be an array'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Check if promo exists
+      const [existingPromo] = await db
+        .select()
+        .from(promos)
+        .where(eq(promos.id, id));
+      
+      if (!existingPromo) {
+        throw new NotFoundError('Promotion not found');
+      }
+      
+      // Check if code is being changed and if it's unique
+      if (updates.code && updates.code !== existingPromo.code) {
+        const [codeCheck] = await db
+          .select()
+          .from(promos)
+          .where(eq(promos.code, updates.code));
+        
+        if (codeCheck) {
+          throw new ConflictError('Promo code already exists');
+        }
+      }
+      
+      // Check that dates are valid
+      const startDate = updates.startDate ? new Date(updates.startDate) : existingPromo.startDate;
+      const endDate = updates.endDate ? new Date(updates.endDate) : existingPromo.endDate;
+      
+      if (startDate && endDate && startDate > endDate) {
+        throw new BadRequestError('Start date cannot be after end date');
+      }
+      
+      // Update slug if title is changing
+      let slug = existingPromo.slug;
+      if (updates.title && updates.title !== existingPromo.title) {
+        slug = await generatePromoSlug(updates.title);
+      }
+      
+      // Prepare update data
+      const updateData = {
+        ...(updates.title && { title: updates.title }),
+        ...(updates.title && { slug }),
+        ...(updates.code && { code: updates.code }),
+        ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.promoType && { promoType: updates.promoType as PromoType }),
+        ...(updates.discountType && { discountType: updates.discountType as DiscountType }),
+        ...(updates.discountValue && { discountValue: updates.discountValue }),
+        ...(updates.status && { status: updates.status as PromoStatus }),
+        ...(updates.startDate && { startDate: new Date(updates.startDate) }),
+        ...(updates.endDate && { endDate: new Date(updates.endDate) }),
+        ...(updates.maxUses !== undefined && { maxUses: updates.maxUses }),
+        updatedAt: new Date()
+      };
+      
+      // Update the promo
+      const [updatedPromo] = await db
+        .update(promos)
+        .set(updateData)
+        .where(eq(promos.id, id))
+        .returning();
+      
+      // Handle clinic associations if promo type is clinic-specific
+      if (updates.clinicIds && Array.isArray(updates.clinicIds)) {
+        // Delete existing associations
+        await db
+          .delete(promoClinics)
+          .where(eq(promoClinics.promoId, id));
+        
+        // Add new associations
+        if (updates.clinicIds.length > 0) {
+          const clinicPromises = updates.clinicIds.map(clinicId =>
+            db.insert(promoClinics).values({
+              id: uuidv4(),
+              promoId: id,
+              clinicId,
+              createdAt: new Date()
+            })
+          );
+          
+          await Promise.all(clinicPromises);
+        }
+      }
+      
+      res.json(updatedPromo);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Delete a promo
+router.delete('/promos/:id', 
+  isAdmin,
+  param('id').notEmpty().withMessage('Promo ID is required'),
+  validate,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if promo exists
+      const [existingPromo] = await db
+        .select()
+        .from(promos)
+        .where(eq(promos.id, id));
+      
+      if (!existingPromo) {
+        throw new NotFoundError('Promotion not found');
+      }
+      
+      // Check if promo is in use
+      const [inUseCheck] = await db
+        .select({ count: count() })
+        .from('quotes')
+        .where(eq(sql`quotes.promo_id`, id));
+      
+      if (inUseCheck && inUseCheck.count > 0) {
+        // Instead of deleting, mark as inactive
+        await db
+          .update(promos)
+          .set({ 
+            status: 'inactive',
+            updatedAt: new Date()
+          })
+          .where(eq(promos.id, id));
+        
+        return res.json({
+          success: true,
+          message: 'Promo has been used in quotes and cannot be deleted. It has been marked as inactive instead.'
+        });
+      }
+      
+      // Delete clinic associations first
+      await db
+        .delete(promoClinics)
+        .where(eq(promoClinics.promoId, id));
+      
+      // Delete the promo
+      await db
+        .delete(promos)
+        .where(eq(promos.id, id));
+      
+      res.json({
+        success: true,
+        message: 'Promo deleted successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Get promo usage statistics
+router.get('/promos/stats/overview', isAdmin, async (req, res, next) => {
+  try {
+    // Count promos by status
+    const statusCounts = await db
+      .select({
+        status: promos.status,
+        count: count().as('count')
+      })
+      .from(promos)
+      .groupBy(promos.status);
+    
+    // Format status counts into an object
+    const statusStats = {
+      active: 0,
+      inactive: 0,
+      draft: 0
+    };
+    
+    statusCounts.forEach(item => {
+      statusStats[item.status] = item.count;
     });
     
-    // Set response headers for CSV download
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="promotions_export.csv"');
+    // Get total discount applied
+    const [discountStats] = await db
+      .select({
+        totalDiscount: sql`SUM(CAST(quotes.discount_amount AS FLOAT))`.as('total_discount'),
+        totalUses: count(sql`DISTINCT quotes.promo_id`).as('total_uses')
+      })
+      .from('quotes')
+      .where(not(isNull(sql`quotes.promo_id`)));
     
-    res.send(csvContent);
+    // Get most used promos (top 5)
+    const mostUsedPromos = await db
+      .select({
+        ...promos,
+        usageCount: count(sql`quotes.id`).as('usage_count')
+      })
+      .from(promos)
+      .leftJoin('quotes', eq(promos.id, sql`quotes.promo_id`))
+      .groupBy(promos.id)
+      .orderBy(desc(sql`usage_count`))
+      .limit(5);
+    
+    // Get recently created promos (last 5)
+    const recentPromos = await db
+      .select()
+      .from(promos)
+      .orderBy(desc(promos.createdAt))
+      .limit(5);
+    
+    res.json({
+      statusStats,
+      discountStats: {
+        totalDiscount: discountStats?.totalDiscount || 0,
+        totalUses: discountStats?.totalUses || 0
+      },
+      mostUsedPromos,
+      recentPromos
+    });
   } catch (error) {
-    logger.error('Error exporting promotions to CSV:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to export promotions to CSV'
-    });
+    next(error);
   }
 });
 

@@ -52,6 +52,7 @@ import openaiRoutes from "./routes/openai-routes";
 import imageCacheRoutes from "./routes/image-cache-routes";
 import promoTokenRoutes from "./routes/promo-token-routes";
 import applyCodeRoutes from "./routes/apply-code";
+import adminPromotionsRoutes from "./routes/admin/promotions";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -539,6 +540,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the apply-code endpoint for coupon code redemption
   app.use(applyCodeRoutes);
+  
+  // Register Admin Promotions Management routes
+  app.use('/api/admin', isAuthenticated, ensureRole("admin"), adminPromotionsRoutes);
   
   // Register Gemini AI routes for dental advice
   app.use('/api/gemini', geminiRoutes);

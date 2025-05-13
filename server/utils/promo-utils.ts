@@ -1,241 +1,107 @@
-import { promos, promoClinics, quotes } from '@shared/schema';
+import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db';
-import { and, eq, or, isNull, gte } from 'drizzle-orm';
 import logger from './logger';
-import { BadRequestError, NotFoundError } from '../models/custom-errors';
-
-export interface PromoCodeInfo {
-  id: string;
-  code: string;
-  title: string;
-  description?: string;
-  discountType: string;
-  discountValue: number;
-  isActive: boolean;
-  startDate: Date;
-  endDate?: Date | null;
-  maxUses?: number | null;
-  currentUses: number;
-}
-
-export interface PromoValidationResult {
-  isValid: boolean;
-  message?: string;
-  promo?: PromoCodeInfo;
-}
-
-export interface PromoDataInput {
-  code: string;
-  type: 'percentage' | 'fixed';
-  value: number;
-  description?: string;
-  expiryDate?: string | null;
-  maxUses?: number | null;
-  clinicId?: string | null;
-  status: 'active' | 'inactive';
-}
-
-// Interface for canApplyPromoToQuote result
-export interface CanApplyResult {
-  canApply: boolean;
-  message: string;
-  promo?: PromoCodeInfo;
-}
-
-// Interface for applyPromoToQuote result
-export interface ApplyPromoResult {
-  success: boolean;
-  message: string;
-  quote?: any;  // Using any for now since we don't have the full Quote type
-  promoDetails?: PromoCodeInfo;
-}
-
-// Interface for removePromoFromQuote result
-export interface RemovePromoResult {
-  success: boolean;
-  message: string;
-  quote?: any;  // Using any for now since we don't have the full Quote type
-}
+import { promos, quotes, promoClinics, DiscountType, PromoType } from '@shared/schema';
+import { eq, and, gt, lte, sql, isNull, or, count } from 'drizzle-orm';
+import slugify from 'slugify';
+import { BadRequestError, NotFoundError, ConflictError } from '../models/custom-errors';
+import { trackPromoCodeApplied, trackPromoCodeRemoved } from './analytics';
 
 /**
- * Validate a promo code data object
+ * Find a promo by its ID
  */
-export function validatePromoData(data: PromoDataInput): PromoValidationResult {
-  // Check required fields
-  if (!data.code || data.code.trim() === '') {
-    return { isValid: false, message: 'Promotion code is required' };
-  }
-  
-  if (!data.type || !['percentage', 'fixed'].includes(data.type)) {
-    return { isValid: false, message: 'Invalid discount type. Must be "percentage" or "fixed"' };
-  }
-  
-  if (data.value === undefined || data.value === null || isNaN(Number(data.value))) {
-    return { isValid: false, message: 'Valid discount value is required' };
-  }
-  
-  // Validate discount value based on type
-  if (data.type === 'percentage' && (data.value <= 0 || data.value > 100)) {
-    return { isValid: false, message: 'Percentage discount must be between 1 and 100' };
-  }
-  
-  if (data.type === 'fixed' && data.value <= 0) {
-    return { isValid: false, message: 'Fixed discount amount must be greater than 0' };
-  }
-  
-  // Validate expiry date if provided
-  if (data.expiryDate) {
-    const expiryDate = new Date(data.expiryDate);
-    if (isNaN(expiryDate.getTime())) {
-      return { isValid: false, message: 'Invalid expiry date format' };
-    }
-    
-    if (expiryDate < new Date()) {
-      return { isValid: false, message: 'Expiry date cannot be in the past' };
-    }
-  }
-  
-  // Validate max uses if provided
-  if (data.maxUses !== undefined && data.maxUses !== null) {
-    if (isNaN(Number(data.maxUses)) || Number(data.maxUses) <= 0) {
-      return { isValid: false, message: 'Max uses must be a positive number' };
-    }
-  }
-  
-  return { isValid: true };
-}
-
-/**
- * Validate a promo code and return its information if valid
- */
-export async function validatePromoCode(code: string): Promise<PromoValidationResult> {
+export async function findPromoById(promoId: string) {
   try {
-    logger.info(`Validating promo code: ${code}`);
-    
-    if (!code || code.trim() === "") {
-      return { isValid: false, message: "Promo code is required" };
-    }
-    
-    // Find the promo in the database
-    const currentDate = new Date();
-    const allPromos = await db.select()
-      .from(promos)
-      .where(and(
-        eq(promos.code, code),
-        or(
-          isNull(promos.endDate),
-          promos.endDate.gte(currentDate)
-        ),
-        promos.startDate.lte(currentDate),
-        or(
-          isNull(promos.maxUses),
-          promos.currentUses.lt(promos.maxUses)
-        ),
-        eq(promos.isActive, true)
-      ));
-    
-    if (allPromos.length === 0) {
-      logger.info(`No valid promo found for code: ${code}`);
-      return { isValid: false, message: "Invalid or expired promo code" };
-    }
-    
-    const promo = allPromos[0];
-    logger.info(`Found valid promo: ${promo.title} (ID: ${promo.id})`);
-    
-    // Get applicable treatments and clinics for advanced validation if needed
-    // This could be expanded for more complex validation rules
-    
-    return { 
-      isValid: true, 
-      promo: {
-        id: promo.id,
-        code: promo.code,
-        title: promo.title,
-        description: promo.description,
-        discountType: promo.discountType,
-        discountValue: Number(promo.discountValue),
-        isActive: promo.isActive,
-        startDate: promo.startDate,
-        endDate: promo.endDate,
-        maxUses: promo.maxUses,
-        currentUses: promo.currentUses
-      }
-    };
+    const [promo] = await db.select().from(promos).where(eq(promos.id, promoId));
+    return promo;
   } catch (error) {
-    logger.error(`Error validating promo code ${code}:`, error);
-    return { isValid: false, message: "Error validating promotion code" };
+    logger.error('Error finding promo by ID:', error);
+    throw error;
   }
 }
 
 /**
  * Find a promo by its code
  */
-export async function findPromoByCode(code: string): Promise<PromoCodeInfo | null> {
+export async function findPromoByCode(code: string) {
   try {
-    const validationResult = await validatePromoCode(code);
-    
-    if (!validationResult.isValid || !validationResult.promo) {
-      return null;
-    }
-    
-    return validationResult.promo;
+    const [promo] = await db.select().from(promos).where(eq(promos.code, code));
+    return promo;
   } catch (error) {
-    logger.error(`Error finding promo by code ${code}:`, error);
-    return null;
+    logger.error('Error finding promo by code:', error);
+    throw error;
   }
 }
 
 /**
- * Find a promo by its ID
+ * Validate if a promo code is valid and can be used
  */
-export async function findPromoById(id: string): Promise<PromoCodeInfo | null> {
+export async function validatePromoCode(code: string) {
   try {
-    const [promo] = await db.select()
-      .from(promos)
-      .where(eq(promos.id, id));
+    const promo = await findPromoByCode(code);
     
     if (!promo) {
-      return null;
-    }
-    
-    return {
-      id: promo.id,
-      code: promo.code,
-      title: promo.title,
-      description: promo.description,
-      discountType: promo.discountType,
-      discountValue: Number(promo.discountValue),
-      isActive: promo.isActive,
-      startDate: promo.startDate,
-      endDate: promo.endDate,
-      maxUses: promo.maxUses,
-      currentUses: promo.currentUses
-    };
-  } catch (error) {
-    logger.error(`Error finding promo by ID ${id}:`, error);
-    return null;
-  }
-}
-
-/**
- * Check if a promo code can be applied to a specific quote
- */
-export async function canApplyPromoToQuote(code: string, quoteId: number): Promise<CanApplyResult> {
-  try {
-    // First validate the promo code
-    const validationResult = await validatePromoCode(code);
-    
-    if (!validationResult.isValid || !validationResult.promo) {
       return {
-        canApply: false,
-        message: validationResult.message || 'Invalid promotion code'
+        valid: false,
+        message: 'Invalid promo code',
+        promo: null
       };
     }
     
-    // Check if the quote exists
-    const [quote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, String(quoteId)));
+    const now = new Date();
+    
+    // Check if promo is active
+    if (promo.status !== 'active') {
+      return {
+        valid: false,
+        message: 'This promo code is no longer active',
+        promo
+      };
+    }
+    
+    // Check if promo is within valid date range
+    if (promo.startDate && promo.startDate > now) {
+      return {
+        valid: false,
+        message: 'This promo code is not yet active',
+        promo
+      };
+    }
+    
+    if (promo.endDate && promo.endDate < now) {
+      return {
+        valid: false,
+        message: 'This promo code has expired',
+        promo
+      };
+    }
+    
+    // Check if promo has reached max usage limit (if set)
+    if (promo.maxUses !== null && promo.uses >= promo.maxUses) {
+      return {
+        valid: false,
+        message: 'This promo code has reached its usage limit',
+        promo
+      };
+    }
+    
+    return {
+      valid: true,
+      message: 'Valid promo code',
+      promo
+    };
+  } catch (error) {
+    logger.error('Error validating promo code:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if a promo can be applied to a specific quote
+ */
+export async function canApplyPromoToQuote(quoteId: number, promoId: string) {
+  try {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId));
     
     if (!quote) {
       return {
@@ -245,277 +111,279 @@ export async function canApplyPromoToQuote(code: string, quoteId: number): Promi
     }
     
     // Check if quote already has a promo applied
-    if (quote.promoId) {
+    if (quote.promoId && quote.promoId !== promoId) {
       return {
         canApply: false,
-        message: 'A promotion code is already applied to this quote'
+        message: 'Quote already has a different promo code applied'
       };
     }
     
-    // Add any additional validation logic here
-    // For example, check if promo is valid for the specific treatments in the quote
-    
-    return {
-      canApply: true,
-      message: 'Promotion code can be applied to this quote',
-      promo: validationResult.promo
-    };
-  } catch (error) {
-    logger.error(`Error checking if promo ${code} can be applied to quote ${quoteId}:`, error);
-    return {
-      canApply: false,
-      message: 'Error checking promotion compatibility'
-    };
-  }
-}
-
-/**
- * Apply a promo code to a quote
- */
-export async function applyPromoToQuote(code: string, quoteId: number, calculatedDiscount?: any): Promise<ApplyPromoResult> {
-  try {
-    // First check if the promo can be applied
-    const canApplyResult = await canApplyPromoToQuote(code, quoteId);
-    
-    if (!canApplyResult.canApply || !canApplyResult.promo) {
+    const promo = await findPromoById(promoId);
+    if (!promo) {
       return {
-        success: false,
-        message: canApplyResult.message
+        canApply: false,
+        message: 'Promo not found'
       };
     }
     
-    const promo = canApplyResult.promo;
-    
-    // Get the quote
-    const [quote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, String(quoteId)));
-    
-    if (!quote) {
-      return {
-        success: false,
-        message: 'Quote not found'
-      };
-    }
-    
-    // Calculate discount if not provided
-    let discount = 0;
-    if (calculatedDiscount && calculatedDiscount.discountAmount) {
-      discount = Number(calculatedDiscount.discountAmount);
-    } else {
-      if (promo.discountType === 'percentage') {
-        discount = (Number(quote.subtotal) * promo.discountValue) / 100;
-      } else {
-        discount = promo.discountValue > Number(quote.subtotal) ? Number(quote.subtotal) : promo.discountValue;
+    // If the promo is clinic-specific, check if it applies to this quote's clinic
+    if (promo.promoType === 'clinic-specific') {
+      // Get the clinic IDs this promo applies to
+      const clinicRelations = await db
+        .select()
+        .from(promo_clinics)
+        .where(eq(promo_clinics.promoId, promoId));
+      
+      const validClinicIds = clinicRelations.map(rel => rel.clinicId);
+      
+      if (!validClinicIds.includes(quote.clinicId)) {
+        return {
+          canApply: false,
+          message: 'This promo code is not valid for the clinic in this quote'
+        };
       }
     }
     
-    // Update quote with promo information
-    await db.update(quotes)
+    // If we get here, the promo can be applied
+    return {
+      canApply: true,
+      message: 'Promo can be applied to this quote'
+    };
+  } catch (error) {
+    logger.error('Error checking if promo can be applied to quote:', error);
+    throw error;
+  }
+}
+
+/**
+ * Apply a promo to a quote
+ */
+export async function applyPromoToQuote(quoteId: number, promoId: string, userId?: number) {
+  try {
+    // First, check if the promo can be applied
+    const { canApply, message } = await canApplyPromoToQuote(quoteId, promoId);
+    
+    if (!canApply) {
+      throw new BadRequestError(message);
+    }
+    
+    const promo = await findPromoById(promoId);
+    if (!promo) {
+      throw new NotFoundError('Promo not found');
+    }
+    
+    // Get quote details
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId));
+    
+    // Calculate discount amount
+    let discountAmount = 0;
+    let discountType = promo.discountType;
+    let originalTotal = parseFloat(quote.totalAmount);
+    
+    if (promo.discountType === 'percentage') {
+      // Calculate percentage discount
+      const discountPercentage = parseFloat(promo.discountValue);
+      discountAmount = (originalTotal * discountPercentage) / 100;
+    } else {
+      // Fixed amount discount
+      discountAmount = parseFloat(promo.discountValue);
+      
+      // Make sure discount doesn't exceed total
+      if (discountAmount > originalTotal) {
+        discountAmount = originalTotal;
+      }
+    }
+    
+    const discountedTotal = originalTotal - discountAmount;
+    
+    // Update the quote with promo details
+    await db
+      .update(quotes)
       .set({
-        promoId: promo.id,
+        promoId: promoId,
         promoCode: promo.code,
-        promoType: promo.discountType,
-        promoValue: promo.discountValue,
-        promoAppliedAt: new Date(),
-        discount: discount,
-        total: Number(quote.subtotal) - discount
+        discountAmount: discountAmount.toString(),
+        discountType: discountType,
+        discountedTotal: discountedTotal.toString()
       })
-      .where(eq(quotes.id, String(quoteId)));
+      .where(eq(quotes.id, quoteId));
     
     // Increment the promo usage count
-    await db.update(promos)
+    await db
+      .update(promos)
       .set({
-        currentUses: promo.currentUses + 1
+        uses: promo.uses + 1,
+        updatedAt: new Date()
       })
-      .where(eq(promos.id, promo.id));
+      .where(eq(promos.id, promoId));
     
-    // Get the updated quote
-    const [updatedQuote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, String(quoteId)));
+    // Track the promo application in analytics
+    trackPromoCodeApplied({
+      promoId,
+      promoCode: promo.code,
+      quoteId,
+      userId,
+      discountAmount,
+      discountType,
+    });
     
     return {
       success: true,
-      message: `Successfully applied "${promo.title}" promotion with ${discount} discount`,
-      quote: updatedQuote,
-      promoDetails: promo
+      message: 'Promo code applied successfully',
+      discountAmount,
+      discountType,
+      discountedTotal
     };
   } catch (error) {
-    logger.error(`Error applying promo code ${code} to quote ${quoteId}:`, error);
-    return {
-      success: false,
-      message: 'Error applying promotion code'
-    };
+    logger.error('Error applying promo to quote:', error);
+    throw error;
   }
 }
 
 /**
- * Remove a promo code from a quote
+ * Apply a promo code to a quote (uses code lookup)
  */
-export async function removePromoFromQuote(quoteId: number): Promise<RemovePromoResult> {
+export async function applyPromoCodeToQuote(quoteId: number, code: string, userId?: number) {
   try {
-    // Check if quote exists
-    const [quote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, String(quoteId)));
+    // Validate the promo code first
+    const { valid, message, promo } = await validatePromoCode(code);
     
-    if (!quote) {
-      return {
-        success: false,
-        message: 'Quote not found'
-      };
+    if (!valid || !promo) {
+      throw new BadRequestError(message);
     }
     
-    // Check if quote has a promo applied
+    // Now apply the promo to the quote
+    return await applyPromoToQuote(quoteId, promo.id, userId);
+  } catch (error) {
+    logger.error('Error applying promo code to quote:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a promo from a quote
+ */
+export async function removePromoFromQuote(quoteId: number, userId?: number) {
+  try {
+    // Get current quote details
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId));
+    
+    if (!quote) {
+      throw new NotFoundError('Quote not found');
+    }
+    
     if (!quote.promoId) {
       return {
         success: false,
-        message: 'No promotion code has been applied to this quote'
+        message: 'No promo code applied to this quote'
       };
     }
     
-    // Update quote to remove promo information
-    await db.update(quotes)
+    // Store for analytics
+    const promoId = quote.promoId;
+    const promoCode = quote.promoCode;
+    
+    // Reset promo fields in the quote
+    await db
+      .update(quotes)
       .set({
         promoId: null,
         promoCode: null,
-        promoType: null, 
-        promoValue: null,
-        promoAppliedAt: null,
-        discount: 0,
-        total: Number(quote.subtotal)
+        discountAmount: null,
+        discountType: null,
+        discountedTotal: null
       })
-      .where(eq(quotes.id, String(quoteId)));
+      .where(eq(quotes.id, quoteId));
     
-    // Get the updated quote
-    const [updatedQuote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, String(quoteId)));
+    // Track removal in analytics
+    trackPromoCodeRemoved({
+      promoId,
+      promoCode,
+      quoteId,
+      userId
+    });
     
-    return { 
-      success: true, 
-      message: 'Successfully removed promotion code from quote',
-      quote: updatedQuote
-    };
-  } catch (error) {
-    logger.error(`Error removing promo code from quote ${quoteId}:`, error);
     return {
-      success: false,
-      message: 'Error removing promotion code'
+      success: true,
+      message: 'Promo code removed successfully',
+      originalTotal: quote.totalAmount
     };
+  } catch (error) {
+    logger.error('Error removing promo from quote:', error);
+    throw error;
   }
 }
 
 /**
- * Apply a promo code to a quote
- * @deprecated Use applyPromoToQuote instead
+ * Remove promo code from quote (alias for removePromoFromQuote)
  */
-export async function applyPromoCodeToQuote(quoteId: string, code: string): Promise<{ success: boolean; message: string; discount?: number }> {
-  try {
-    // Validate the promo code
-    const validationResult = await validatePromoCode(code);
-    
-    if (!validationResult.isValid) {
-      return { success: false, message: validationResult.message || 'Invalid promo code' };
-    }
-    
-    const promo = validationResult.promo!;
-    
-    // Check if quote exists
-    const [quote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, quoteId));
-    
-    if (!quote) {
-      return { success: false, message: 'Quote not found' };
-    }
-    
-    // Check if quote already has a promo applied
-    if (quote.promoId) {
-      return { success: false, message: 'A promotion code is already applied to this quote' };
-    }
-    
-    // Calculate discount
-    let discount = 0;
-    if (promo.discountType === 'percentage') {
-      // Apply percentage discount
-      discount = (Number(quote.subtotal) * promo.discountValue) / 100;
-    } else {
-      // Apply fixed discount
-      discount = promo.discountValue > Number(quote.subtotal) ? Number(quote.subtotal) : promo.discountValue;
-    }
-    
-    // Update quote with promo information
-    await db.update(quotes)
-      .set({
-        promoId: promo.id,
-        promoCode: promo.code,
-        promoType: promo.discountType,
-        promoValue: promo.discountValue,
-        promoAppliedAt: new Date(),
-        discount: discount,
-        total: Number(quote.subtotal) - discount
-      })
-      .where(eq(quotes.id, quoteId));
-    
-    // Increment the promo usage count
-    await db.update(promos)
-      .set({
-        currentUses: promo.currentUses + 1
-      })
-      .where(eq(promos.id, promo.id));
-    
-    return { 
-      success: true, 
-      message: `Successfully applied ${promo.title} promotion`,
-      discount: discount
-    };
-  } catch (error) {
-    logger.error(`Error applying promo code to quote ${quoteId}:`, error);
-    return { success: false, message: 'Error applying promo code' };
-  }
+export async function removePromoCodeFromQuote(quoteId: number, userId?: number) {
+  return removePromoFromQuote(quoteId, userId);
 }
 
 /**
- * Remove a promo code from a quote
- * @deprecated Use removePromoFromQuote instead
+ * Generate a unique slug for a promo
  */
-export async function removePromoCodeFromQuote(quoteId: string): Promise<{ success: boolean; message: string }> {
-  try {
-    // Check if quote exists
-    const [quote] = await db.select()
-      .from(quotes)
-      .where(eq(quotes.id, quoteId));
-    
-    if (!quote) {
-      return { success: false, message: 'Quote not found' };
-    }
-    
-    // Check if quote has a promo applied
-    if (!quote.promoId) {
-      return { success: false, message: 'No promotion code has been applied to this quote' };
-    }
-    
-    // Update quote to remove promo information
-    await db.update(quotes)
-      .set({
-        promoId: null,
-        promoCode: null,
-        promoType: null, 
-        promoValue: null,
-        promoAppliedAt: null,
-        discount: 0,
-        total: Number(quote.subtotal)
-      })
-      .where(eq(quotes.id, quoteId));
-    
-    return { 
-      success: true, 
-      message: 'Successfully removed promotion code from quote'
-    };
-  } catch (error) {
-    logger.error(`Error removing promo code from quote ${quoteId}:`, error);
-    return { success: false, message: 'Error removing promo code' };
+export async function generatePromoSlug(title: string) {
+  const baseSlug = slugify(title, { lower: true, strict: true });
+  
+  // Check if there's any promo with this slug
+  const existingPromos = await db
+    .select()
+    .from(promos)
+    .where(eq(promos.slug, baseSlug));
+  
+  if (existingPromos.length === 0) {
+    return baseSlug;
   }
+  
+  // Add a unique identifier
+  return `${baseSlug}-${Date.now().toString().slice(-4)}`;
+}
+
+/**
+ * Generate a unique promo code
+ */
+export async function generatePromoCode(length = 8) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // removed confusing characters
+  let code = '';
+  let isUnique = false;
+  
+  while (!isUnique) {
+    code = '';
+    for (let i = 0; i < length; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Check if code already exists
+    const existingPromo = await findPromoByCode(code);
+    isUnique = !existingPromo;
+  }
+  
+  return code;
+}
+
+/**
+ * Calculate the discount for a quote based on a promo
+ */
+export function calculateDiscount(totalAmount: number, promo: { discountType: DiscountType, discountValue: string }) {
+  let discountAmount = 0;
+  
+  if (promo.discountType === 'percentage') {
+    const discountPercentage = parseFloat(promo.discountValue);
+    discountAmount = (totalAmount * discountPercentage) / 100;
+  } else {
+    // Fixed amount discount
+    discountAmount = parseFloat(promo.discountValue);
+    
+    // Make sure discount doesn't exceed total
+    if (discountAmount > totalAmount) {
+      discountAmount = totalAmount;
+    }
+  }
+  
+  return {
+    discountAmount,
+    discountedTotal: totalAmount - discountAmount
+  };
 }
