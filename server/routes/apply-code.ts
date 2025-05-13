@@ -3,7 +3,15 @@ import { body, param } from 'express-validator';
 import { validate } from '../middleware/validation';
 import logger from '../utils/logger';
 import { DiscountType } from '@shared/schema';
-import { validatePromoCode, canApplyPromoToQuote, applyPromoToQuote, removePromoFromQuote, findPromoById } from '../utils/promo-utils';
+import { 
+  validatePromoCode, 
+  canApplyPromoToQuote, 
+  applyPromoToQuote, 
+  removePromoFromQuote, 
+  findPromoById,
+  applyPromoCodeToQuote,
+  removePromoCodeFromQuote
+} from '../utils/promo-utils';
 import { z } from 'zod';
 import { BadRequestError, NotFoundError } from '../models/custom-errors';
 import { trackPromoCodeApplied, trackPromoCodeRemoved } from '../utils/analytics';
