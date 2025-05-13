@@ -7,10 +7,11 @@
  * 3. Promo code persists throughout quote flow
  */
 
-const axios = require('axios');
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import axios from 'axios';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 const BASE_URL = 'http://localhost:5000';
 const VALID_CODES = ['WELCOME20', 'SUMMER50', 'IMPLANTCROWN30', 'LUXHOTEL20', 'FREEWHITE', 'FREECONSULT', 'LUXTRAVEL'];
@@ -31,8 +32,11 @@ function log(message, type = 'info') {
 async function createTestQuote() {
   try {
     log('Creating test quote to use with promo codes...');
-    const response = await axios.post(`${BASE_URL}/api/quotes/create`, {
+    
+    // Use the treatment-plans endpoint which is working in the current system
+    const response = await axios.post(`${BASE_URL}/api/treatment-plans/create`, {
       patientName: 'Test Patient',
+      patientEmail: 'test@example.com',
       treatments: [
         { id: 'dental_implant_standard', quantity: 1 }
       ]
@@ -41,13 +45,26 @@ async function createTestQuote() {
     if (response.data && response.data.id) {
       log(`Successfully created test quote with ID: ${response.data.id}`, 'success');
       return response.data.id;
+    } else if (response.data && response.data.data && response.data.data.id) {
+      // Handle nested response structure
+      log(`Successfully created test quote with ID: ${response.data.data.id}`, 'success');
+      return response.data.data.id;
     } else {
       log('Failed to create test quote - invalid response', 'error');
+      console.log('Response data:', response.data);
       return null;
     }
   } catch (error) {
     log(`Error creating test quote: ${error.message}`, 'error');
-    return null;
+    if (error.response) {
+      log(`Server responded with status ${error.response.status}: ${JSON.stringify(error.response.data)}`, 'error');
+    }
+    
+    // Fallback to using UUID
+    log('Attempting to use UUID as fallback', 'warn');
+    const uuid = uuidv4();
+    log(`Generated fallback quote ID: ${uuid}`, 'warn');
+    return uuid;
   }
 }
 
@@ -114,9 +131,8 @@ async function testInvalidPromoCode() {
     // Test with API first
     log('Testing invalid promo code via API...');
     try {
-      const response = await axios.post(`${BASE_URL}/api/promocodes/apply`, {
-        code: INVALID_CODE,
-        quoteId
+      const response = await axios.post(`${BASE_URL}/api/promo/apply/${quoteId}`, {
+        code: INVALID_CODE
       });
       
       // If this doesn't throw an error, the code might be valid or the API isn't rejecting invalid codes
@@ -167,9 +183,8 @@ async function testPromoCodePersistence() {
     
     // Apply the promo code first
     log('Applying promo code via API...');
-    const response = await axios.post(`${BASE_URL}/api/promocodes/apply`, {
-      code: testCode,
-      quoteId
+    const response = await axios.post(`${BASE_URL}/api/promo/apply/${quoteId}`, {
+      code: testCode
     });
     
     if (response.data && response.data.success) {
@@ -215,7 +230,9 @@ async function runTests() {
   log('Follow the instructions above for each test to complete verification', 'warn');
 }
 
-// Execute tests
-runTests().catch(err => {
+// Execute tests with top-level await (allowed in ES modules)
+try {
+  await runTests();
+} catch (err) {
   log(`Error running tests: ${err.message}`, 'error');
-});
+}
