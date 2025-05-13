@@ -12,6 +12,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Promotion } from '@/types/promotion';
 import { CreatePromotionModal } from '@/components/admin/CreatePromotionModal';
 import { EditPromotionModal } from '@/components/admin/EditPromotionModal';
+import { apiToUiPromotion, uiToApiPromotion, getFormattedDiscount, getFormattedTreatments } from '@/utils/promotion-utils';
 
 export default function PromotionsPage() {
   const { toast } = useToast();
@@ -24,7 +25,14 @@ export default function PromotionsPage() {
   // Fetch promotions
   const { data: promotions, isLoading, refetch } = useQuery<Promotion[]>({
     queryKey: ['/api/admin/promotions'],
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000, // 30 seconds,
+    queryFn: async () => {
+      const response = await fetch('/api/admin/promotions');
+      if (!response.ok) throw new Error('Failed to fetch promotions');
+      const data = await response.json();
+      // Convert API response to match our Promotion type
+      return data.map((item: any): Promotion => apiToUiPromotion(item));
+    },
   });
   
   // Toggle promotion status
@@ -255,20 +263,19 @@ function generateCsv(promotions: Promotion[] | undefined) {
   
   const headers = [
     'ID', 'Code', 'Title', 'Discount Type', 'Discount Value', 
-    'Start Date', 'End Date', 'Max Uses', 'Use Count', 'Status',
+    'Start Date', 'End Date', 'Applicable Treatments', 'Status',
     'Created At', 'Updated At'
   ].join(',');
   
   const rows = promotions.map((p: Promotion) => [
     p.id,
-    p.code,
+    p.promo_code,
     `"${p.title.replace(/"/g, '""')}"`, // Escape quotes in CSV
     p.discount_type,
     p.discount_value,
     p.start_date,
     p.end_date,
-    p.max_uses || '',
-    p.use_count || '0',
+    `"${getFormattedTreatments(p)}"`,
     p.is_active ? 'Active' : 'Inactive',
     p.created_at || '',
     p.updated_at || ''

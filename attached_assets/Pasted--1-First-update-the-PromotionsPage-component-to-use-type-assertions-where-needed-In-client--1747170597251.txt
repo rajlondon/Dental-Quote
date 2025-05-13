@@ -1,0 +1,119 @@
+// 1. First, update the PromotionsPage component to use type assertions where needed:
+
+// In client/src/pages/admin/PromotionsPage.tsx
+import { Promotion } from '../../types/promotion';
+
+// When fetching data from the API:
+const { data, isLoading } = useQuery({
+  queryKey: ['promotions', statusFilter],
+  queryFn: async () => {
+    const response = await fetch(`/api/admin/promotions?status=${statusFilter}`);
+    if (!response.ok) throw new Error('Failed to fetch promotions');
+    const data = await response.json();
+    // Convert API response to match our Promotion type
+    return data.map((item: any): Promotion => ({
+      id: item.id,
+      code: item.code,
+      title: item.title || 'Unnamed Promotion',
+      description: item.description || '',
+      discountType: item.discount_type as 'PERCENT' | 'FIXED',
+      discountValue: Number(item.discount_value),
+      startDate: new Date(item.start_date),
+      endDate: new Date(item.end_date),
+      maxUses: item.max_uses ? Number(item.max_uses) : null,
+      currentUses: item.current_uses ? Number(item.current_uses) : 0,
+      clinicId: item.clinic_id || null,
+      clinicName: item.clinic_name || 'All Clinics',
+      isActive: Boolean(item.is_active),
+      createdAt: new Date(item.created_at || Date.now())
+    }));
+  }
+});
+
+// 2. Create a helper function to convert between API and UI formats:
+
+// Add this to your utils folder
+export function apiToUiPromotion(apiPromo: any): Promotion {
+  return {
+    id: apiPromo.id,
+    code: apiPromo.code,
+    title: apiPromo.title || 'Unnamed Promotion',
+    description: apiPromo.description || '',
+    discountType: apiPromo.discount_type,
+    discountValue: Number(apiPromo.discount_value),
+    startDate: new Date(apiPromo.start_date),
+    endDate: new Date(apiPromo.end_date),
+    maxUses: apiPromo.max_uses ? Number(apiPromo.max_uses) : null,
+    currentUses: apiPromo.current_uses ? Number(apiPromo.current_uses) : 0,
+    clinicId: apiPromo.clinic_id || null,
+    clinicName: apiPromo.clinic_name || 'All Clinics',
+    isActive: Boolean(apiPromo.is_active),
+    createdAt: new Date(apiPromo.created_at || Date.now())
+  };
+}
+
+export function uiToApiPromotion(uiPromo: Promotion): any {
+  return {
+    id: uiPromo.id,
+    code: uiPromo.code,
+    title: uiPromo.title,
+    description: uiPromo.description,
+    discount_type: uiPromo.discountType,
+    discount_value: uiPromo.discountValue,
+    start_date: uiPromo.startDate.toISOString(),
+    end_date: uiPromo.endDate.toISOString(),
+    max_uses: uiPromo.maxUses,
+    clinic_id: uiPromo.clinicId,
+    is_active: uiPromo.isActive
+  };
+}
+Recommended Approach for Completion
+Fix Type Inconsistencies:
+
+Create conversion functions between API and UI formats
+Use these in data fetching and submission functions
+Complete Admin Layout:
+
+Simplify the AdminLayout by using a basic layout structure
+Mock the authentication if needed for development purposes
+Implement Table Component:
+
+Focus on getting the promotions table working first
+Add filtering and sorting capabilities
+Add Create/Edit Functionality:
+
+Connect the modal forms to the API endpoints
+Implement proper error handling and success notifications
+Add CSV Export:
+
+Implement the CSV generation and download functionality
+Example Layout Implementation
+If you're having trouble with the AdminLayout, try this simplified version:
+
+// client/src/components/layouts/AdminLayout.tsx
+import React from 'react';
+
+interface AdminLayoutProps {
+  children: React.ReactNode;
+  title: string;
+}
+
+export function AdminLayout({ children, title }: AdminLayoutProps) {
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+        </div>
+      </header>
+      <main>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            {children}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+Would you like me to provide more specific guidance on any particular component you're struggling with?
