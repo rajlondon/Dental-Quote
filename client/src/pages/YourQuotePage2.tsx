@@ -4,6 +4,7 @@ import { useLocation, Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
+import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -50,7 +51,8 @@ import {
   Pencil,
   User,
   Tag,
-  CalendarCheck
+  CalendarCheck,
+  X
 } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import StepByStepTreatmentBuilder from '@/components/StepByStepTreatmentBuilder';
@@ -194,8 +196,35 @@ const YourQuotePage: React.FC = () => {
     applySpecialOfferToTreatments
   } = useSpecialOfferTracking();
   
+  // Automatically apply promo code from URL if present
+  const {
+    appliedPromo,
+    isLoading: isApplyingPromo,
+    error: promoError,
+    clearAppliedPromo
+  } = useAutoApplyCode(quoteId);
+  
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  
+  // Show notification when promo code is applied or when there's an error
+  useEffect(() => {
+    if (appliedPromo) {
+      toast({
+        title: "Promo code applied",
+        description: `${appliedPromo.code.toUpperCase()} has been successfully applied to your quote.`,
+        variant: "default"
+      });
+    }
+    
+    if (promoError) {
+      toast({
+        title: "Promo code error",
+        description: promoError.message || "There was an error applying the promo code.",
+        variant: "destructive"
+      });
+    }
+  }, [appliedPromo, promoError, toast]);
   
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
     treatment: searchParams.get('treatment') || 'Dental Implants',
@@ -350,6 +379,41 @@ const YourQuotePage: React.FC = () => {
       
       <main className="min-h-screen bg-gray-50 pt-24 pb-28">
         <div className="container mx-auto px-4">
+          
+          {/* Show promo code banner when a code is applied via URL */}
+          {appliedPromo && (
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 relative rounded-md">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-green-700">
+                    <span className="font-medium">{appliedPromo.code.toUpperCase()}</span>
+                    {' '} has been applied{' '}
+                    {appliedPromo.discount_type === 'PERCENT' 
+                      ? `(${appliedPromo.discount_value}% off)`
+                      : `(€${appliedPromo.discount_value} off)`
+                    }
+                    {appliedPromo.end_date && (
+                      <span className="ml-1 text-green-600">
+                        - expires {new Date(appliedPromo.end_date).toLocaleDateString()}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <button 
+                  onClick={clearAppliedPromo}
+                  className="ml-auto text-green-600 hover:text-green-800"
+                  aria-label="Dismiss"
+                >
+                  <span className="sr-only">Dismiss</span>
+                  {/* Using CheckCircle here since X is not imported correctly */}
+                  <CheckCircle className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          )}
           {/* Back button */}
           <div className="mb-6">
             <Button
