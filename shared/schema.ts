@@ -263,6 +263,11 @@ export const quotes = pgTable("quotes", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).default("0"),
   promoId: uuid("promo_id").references(() => promos.id),
+  // Additional promo code fields
+  promoCode: varchar("promo_code", { length: 50 }),
+  promoType: varchar("promo_type", { length: 20 }).$type<'percentage' | 'fixed'>(),
+  promoValue: decimal("promo_value", { precision: 10, scale: 2 }),
+  promoAppliedAt: timestamp("promo_applied_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
