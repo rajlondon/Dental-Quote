@@ -55,6 +55,20 @@ export interface IStorage {
   createPromotion(data: any): Promise<any>;
   updatePromotion(id: string, data: any): Promise<any | undefined>;
   deletePromotion(id: string): Promise<boolean>;
+  
+  // Quote management
+  getAllQuotes(): Promise<any[]>;
+  getQuote(id: string): Promise<any | undefined>;
+  getQuotesByUserId(userId: number): Promise<any[]>;
+  getQuotesByClinicId(clinicId: number): Promise<any[]>;
+  createQuote(data: any): Promise<any>;
+  updateQuote(id: string, data: any): Promise<any | undefined>;
+  deleteQuote(id: string): Promise<boolean>;
+  
+  // Quote items management
+  getTreatments(): Promise<any[]>;
+  getPackages(): Promise<any[]>;
+  getAddons(): Promise<any[]>;
   getOffer(offerId: string): Promise<any | undefined>;
   createOffer(offer: any): Promise<any>;
   updateOffer(offerId: string, data: any): Promise<any | undefined>;
