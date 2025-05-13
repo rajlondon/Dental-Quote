@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
+// For backward compatibility with existing usage
 interface User {
   id: string | number;
   username?: string;
@@ -8,12 +9,14 @@ interface User {
   email?: string;
 }
 
+// Simple interface for components that just need to check authentication
 export interface AdminAuthContextType {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
 }
 
+// A simple hook for components that need to check admin authentication
 export function useAdminAuth(): AdminAuthContextType {
   const { 
     data: user, 

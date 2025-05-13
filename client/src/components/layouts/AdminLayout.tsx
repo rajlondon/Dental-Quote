@@ -9,7 +9,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [location] = useLocation();
-  const { user, isLoading } = useAdminAuth();
+  const { adminUser, isLoading } = useAdminAuth();
   
   if (isLoading) {
     return (
@@ -19,7 +19,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     );
   }
   
-  if (!user) {
+  if (!adminUser) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
@@ -49,12 +49,12 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="font-medium">{user.username || user.name}</p>
+            <p className="font-medium">{adminUser.username || adminUser.firstName}</p>
             <p className="text-sm text-gray-500">Administrator</p>
           </div>
           <Link href="/admin-portal/profile">
             <a className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-              {(user.username || user.name || 'A').charAt(0).toUpperCase()}
+              {(adminUser.username || adminUser.firstName || 'A').charAt(0).toUpperCase()}
             </a>
           </Link>
         </div>
