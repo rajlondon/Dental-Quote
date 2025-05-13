@@ -382,33 +382,38 @@ const YourQuotePage: React.FC = () => {
           
           {/* Show promo code banner when a code is applied via URL */}
           {appliedPromo && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 relative rounded-md">
+            <div className="bg-green-50 border-green-200 border p-4 mb-6 rounded-md shadow-sm">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                <div className="flex-shrink-0 bg-green-100 p-2 rounded-full">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-700">
-                    <span className="font-medium">{appliedPromo.code.toUpperCase()}</span>
-                    {' '} has been applied{' '}
-                    {appliedPromo.discount_type === 'PERCENT' 
-                      ? `(${appliedPromo.discount_value}% off)`
-                      : `(€${appliedPromo.discount_value} off)`
-                    }
-                    {appliedPromo.end_date && (
-                      <span className="ml-1 text-green-600">
-                        - expires {new Date(appliedPromo.end_date).toLocaleDateString()}
+                <div className="ml-3 flex-1">
+                  <h3 className="text-sm font-medium text-green-800">
+                    Promo code applied: <span className="font-bold">{appliedPromo.code.toUpperCase()}</span>
+                  </h3>
+                  <div className="mt-1 text-sm text-green-700">
+                    <p>
+                      {appliedPromo.title || 'Discount'}: 
+                      <span className="font-medium ml-1">
+                        {appliedPromo.discount_type === 'PERCENT' 
+                          ? `${appliedPromo.discount_value}% off`
+                          : `€${appliedPromo.discount_value} off`
+                        }
                       </span>
+                    </p>
+                    {appliedPromo.end_date && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Expires: {new Date(appliedPromo.end_date).toLocaleDateString()}
+                      </p>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <button 
                   onClick={clearAppliedPromo}
-                  className="ml-auto text-green-600 hover:text-green-800"
-                  aria-label="Dismiss"
+                  className="ml-auto bg-green-100 text-green-600 hover:text-green-800 p-1.5 rounded-full hover:bg-green-200 transition-colors"
+                  aria-label="Remove promo code"
                 >
-                  <span className="sr-only">Dismiss</span>
-                  {/* Using CheckCircle here since X is not imported correctly */}
+                  <span className="sr-only">Remove promo code</span>
                   <CheckCircle className="h-5 w-5" />
                 </button>
               </div>
