@@ -67,6 +67,11 @@ html.rtl .text-right {
 }
 
 @layer base {
+  :root {
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+  }
+
   * {
     @apply border-border;
   }
