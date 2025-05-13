@@ -1,53 +1,109 @@
-# Promo Code Test Links
+# Promo Code URL Auto-Apply Test Links
 
-Use these links to test various aspects of the promotional system.
+Use these links to test the promo code URL auto-apply functionality.
 
-## URL Auto-Apply Testing
+## Valid Promo Code Tests
 
-The following links will automatically apply a promo code when opening the quote page:
+### Test 1: WELCOME20
+```
+/your-quote?code=WELCOME20
+```
+Expected behavior:
+- Promo banner appears showing "WELCOME20" and discount amount
+- Discount is reflected in the quote total
+- Dismissing the banner makes it disappear
+- Refreshing the page keeps the promo applied
+- Code persists through the quote flow
 
-### Test Link 1: Apply WELCOME20
-[Quote with WELCOME20 Code](/quote?code=WELCOME20)
-- 20% discount applied to all treatments
-- Tests percentage-based discounts
+### Test 2: SUMMER50
+```
+/your-quote?code=SUMMER50
+```
+Expected behavior:
+- Promo banner appears showing "SUMMER50" and discount amount
+- Higher discount percentage than WELCOME20
+- Discount is reflected in the quote total
+- Code persists through all steps of the quote flow
 
-### Test Link 2: Apply SUMMER10
-[Quote with SUMMER10 Code](/quote?code=SUMMER10)
-- 10% discount applied to all treatments
-- Tests smaller percentage discounts
+### Test 3: Special Offer Codes
 
-### Test Link 3: Apply TEETH100
-[Quote with TEETH100 Code](/quote?code=TEETH100)
-- €100 fixed discount applied to applicable treatments
-- Tests fixed amount discounts
+Try these special offer promo codes that match actual offers:
 
-## Special Offer Testing
+```
+/your-quote?code=IMPLANTCROWN30
+/your-quote?code=LUXHOTEL20
+/your-quote?code=FREECONSULT
+/your-quote?code=FREEWHITE
+/your-quote?code=LUXTRAVEL
+```
 
-The following links will navigate to special offers which redirect to the quote builder:
+## Invalid Promo Code Tests
 
-### Special Offer 1: Summer Teeth Whitening
-[Summer Whitening Special](/special-offers/summer-whitening)
-- Tests special offer integration with quote flow
-- Applies a 15% discount on whitening treatments
+### Test 1: INVALID123
+```
+/your-quote?code=INVALID123
+```
+Expected behavior:
+- Error toast appears indicating invalid promo code
+- No discount is applied to the quote
+- No promo banner appears
 
-### Special Offer 2: Dental Implant Package
-[Implant Special](/special-offers/implant-special)
-- Tests package bundling with special offers
-- Includes free consultation and discounted CT scan
+### Test 2: Expired Code
+```
+/your-quote?code=EXPIRED2024
+```
+Expected behavior:
+- Error toast appears indicating expired promo code
+- No discount is applied to the quote
+- No promo banner appears
 
-## Testing Manual Entry
+## Persistence Through Quote Flow Test
 
-To test manual promo code entry:
-1. Navigate to the regular [Quote Builder](/quote)
-2. Scroll down to the clinic selection section
-3. Find the "Have a promo code?" input field
-4. Enter one of the test codes (WELCOME20, SUMMER10, TEETH100)
-5. Click "Apply" to see the discount applied
+To test that a promo code persists through the entire quote journey:
 
-## Expected Behavior
+1. Start at:
+```
+/your-quote?code=SUMMER50
+```
 
-When a promo code is applied (via URL or manual entry):
-- A blue PromoCodeBadge should appear showing the applied code
-- Treatment prices should update to reflect the discount
-- When the quote is submitted, the promo data should be saved with it
-- The patient should see the promo code and discount on their account
+2. Complete each step in the quote flow:
+   - Select treatments
+   - Enter patient information
+   - Select clinic
+   - Review summary
+   - Proceed to payment (if applicable)
+
+3. Verify at each step:
+   - The promo banner remains visible
+   - The discount continues to be applied
+   - The final confirmation page includes promo details
+
+## Edge Cases
+
+### Multiple Codes (First One Should Be Used)
+```
+/your-quote?code=WELCOME20&code=SUMMER50
+```
+
+### Empty Code
+```
+/your-quote?code=
+```
+
+### Case Sensitivity Test
+```
+/your-quote?code=welcome20
+```
+
+## How to Run Automated Tests
+
+Run the automated test script to validate the promo code API endpoints:
+
+```bash
+node test-promo-url-auto-apply.js
+```
+
+This script will test:
+1. Valid promo code application
+2. Invalid promo code rejection
+3. Promo code persistence through quote flow
