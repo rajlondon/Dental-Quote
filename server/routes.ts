@@ -610,6 +610,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register image caching routes for handling Azure Blob Storage DALL-E images
   app.use(imageCacheRoutes);
   
+  // Register promo code validation routes
+  console.log('[DEBUG] Mounting promo-codes-routes at /api/promo-codes');
+  app.use('/api/promo-codes', promoCodesRoutes);
+  
+  // Register quotes API routes
+  console.log('[DEBUG] Mounting quotes-api-routes at /api/quotes-api');
+  app.use('/api/quotes-api', quotesApiRoutes);
+  
   // Create image-cache directory for storing cached images
   const imageCacheDir = path.join(process.cwd(), 'public', 'image-cache');
   if (!fs.existsSync(imageCacheDir)) {

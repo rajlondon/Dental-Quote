@@ -1,47 +1,42 @@
 import { Router } from 'express';
 import { storage } from '../storage';
-import { v4 as uuidv4 } from 'uuid';
+import { ZodError } from 'zod';
+import { isAuthenticated, ensureRole } from '../middleware/auth';
 
 const router = Router();
+
+/**
+ * Quote management API endpoints
+ * These endpoints handle CRUD operations for quotes
+ */
 
 /**
  * Get all quotes
  * GET /api/quotes
  */
-router.get('/', async (req, res) => {
+router.get('/', isAuthenticated, async (req, res) => {
   try {
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({
-        success: false,
-        message: 'You must be logged in to access quotes.'
-      });
-    }
-    
-    // Get user role from request
-    const userRole = req.user?.role || 'patient';
-    const userId = req.user?.id;
-    
-    let quotes = [];
-    
-    if (userRole === 'admin') {
+    const user = req.user!;
+    let quotes;
+
+    // Filter quotes based on user role
+    if (user.role === 'admin') {
       // Admins can see all quotes
       quotes = await storage.getAllQuotes();
-    } else if (userRole === 'clinic_staff') {
-      // Clinic staff can see quotes associated with their clinic
-      const clinicId = req.user?.clinicId;
-      if (!clinicId) {
+    } else if (user.role === 'clinic_staff') {
+      // Clinic staff can only see quotes for their clinic
+      if (!user.clinicId) {
         return res.status(400).json({
           success: false,
-          message: 'Clinic ID is required for clinic staff.'
+          message: 'User is not associated with a clinic'
         });
       }
-      quotes = await storage.getQuotesByClinicId(clinicId);
+      quotes = await storage.getQuotesByClinicId(user.clinicId);
     } else {
       // Patients can only see their own quotes
-      quotes = await storage.getQuotesByUserId(userId);
+      quotes = await storage.getQuotesByUserId(user.id);
     }
-    
+
     return res.status(200).json({
       success: true,
       data: quotes
@@ -50,7 +45,7 @@ router.get('/', async (req, res) => {
     console.error('Error fetching quotes:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch quotes. Please try again later.'
+      message: 'An error occurred while fetching quotes.'
     });
   }
 });
@@ -59,46 +54,33 @@ router.get('/', async (req, res) => {
  * Get a specific quote by ID
  * GET /api/quotes/:id
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', isAuthenticated, async (req, res) => {
   try {
     const quoteId = req.params.id;
-    
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({
-        success: false,
-        message: 'You must be logged in to access quotes.'
-      });
-    }
-    
-    // Get quote
+    const user = req.user!;
+
+    // Get the quote
     const quote = await storage.getQuote(quoteId);
-    
+
     if (!quote) {
       return res.status(404).json({
         success: false,
         message: 'Quote not found.'
       });
     }
-    
+
     // Check permissions
-    const userRole = req.user?.role || 'patient';
-    const userId = req.user?.id;
-    const clinicId = req.user?.clinicId;
-    
-    // Only allow access if user is admin, the quote belongs to the user,
-    // or the quote is assigned to the user's clinic
     if (
-      userRole !== 'admin' && 
-      quote.patientId !== userId && 
-      (userRole === 'clinic_staff' && quote.clinicId !== clinicId)
+      user.role !== 'admin' &&
+      (user.role === 'clinic_staff' && quote.clinicId !== user.clinicId) &&
+      (user.role === 'patient' && quote.patientId !== user.id)
     ) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to access this quote.'
       });
     }
-    
+
     return res.status(200).json({
       success: true,
       data: quote
@@ -107,7 +89,7 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching quote:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch quote. Please try again later.'
+      message: 'An error occurred while fetching the quote.'
     });
   }
 });
@@ -116,36 +98,42 @@ router.get('/:id', async (req, res) => {
  * Create a new quote
  * POST /api/quotes
  */
-router.post('/', async (req, res) => {
+router.post('/', isAuthenticated, async (req, res) => {
   try {
+    const user = req.user!;
     const quoteData = req.body;
-    
-    // For logged in users, associate the quote with their account
-    if (req.isAuthenticated()) {
-      quoteData.patientId = req.user?.id;
+
+    // Add user information to the quote
+    if (user.role === 'patient') {
+      quoteData.patientId = user.id;
+    } else if (user.role === 'clinic_staff' && user.clinicId) {
+      quoteData.clinicId = user.clinicId;
     }
-    
-    // Generate a unique ID for the quote
-    quoteData.id = quoteData.id || uuidv4();
-    
-    // Set the created date
-    quoteData.createdAt = new Date().toISOString();
-    
-    // Set initial status
-    quoteData.status = 'draft';
-    
+
+    // Set created by
+    quoteData.createdBy = user.id;
+
     // Create the quote
     const quote = await storage.createQuote(quoteData);
-    
+
     return res.status(201).json({
       success: true,
       data: quote
     });
   } catch (error) {
     console.error('Error creating quote:', error);
+    
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid quote data.',
+        errors: error.errors
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      message: 'Failed to create quote. Please try again later.'
+      message: 'An error occurred while creating the quote.'
     });
   }
 });
@@ -154,62 +142,55 @@ router.post('/', async (req, res) => {
  * Update a quote
  * PATCH /api/quotes/:id
  */
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', isAuthenticated, async (req, res) => {
   try {
     const quoteId = req.params.id;
+    const user = req.user!;
     const updateData = req.body;
-    
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({
-        success: false,
-        message: 'You must be logged in to update quotes.'
-      });
-    }
-    
-    // Get existing quote
+
+    // Get the existing quote
     const existingQuote = await storage.getQuote(quoteId);
-    
+
     if (!existingQuote) {
       return res.status(404).json({
         success: false,
         message: 'Quote not found.'
       });
     }
-    
+
     // Check permissions
-    const userRole = req.user?.role || 'patient';
-    const userId = req.user?.id;
-    const clinicId = req.user?.clinicId;
-    
-    // Only allow update if user is admin, the quote belongs to the user,
-    // or the quote is assigned to the user's clinic
     if (
-      userRole !== 'admin' && 
-      existingQuote.patientId !== userId && 
-      (userRole === 'clinic_staff' && existingQuote.clinicId !== clinicId)
+      user.role !== 'admin' &&
+      (user.role === 'clinic_staff' && existingQuote.clinicId !== user.clinicId) &&
+      (user.role === 'patient' && existingQuote.patientId !== user.id)
     ) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to update this quote.'
       });
     }
-    
+
     // Update the quote
-    const updatedQuote = await storage.updateQuote(quoteId, {
-      ...updateData,
-      updatedAt: new Date().toISOString()
-    });
-    
+    const updatedQuote = await storage.updateQuote(quoteId, updateData);
+
     return res.status(200).json({
       success: true,
       data: updatedQuote
     });
   } catch (error) {
     console.error('Error updating quote:', error);
+    
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid quote data.',
+        errors: error.errors
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      message: 'Failed to update quote. Please try again later.'
+      message: 'An error occurred while updating the quote.'
     });
   }
 });
@@ -218,43 +199,36 @@ router.patch('/:id', async (req, res) => {
  * Delete a quote
  * DELETE /api/quotes/:id
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', isAuthenticated, async (req, res) => {
   try {
     const quoteId = req.params.id;
-    
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({
-        success: false,
-        message: 'You must be logged in to delete quotes.'
-      });
-    }
-    
-    // Get existing quote
+    const user = req.user!;
+
+    // Get the existing quote
     const existingQuote = await storage.getQuote(quoteId);
-    
+
     if (!existingQuote) {
       return res.status(404).json({
         success: false,
         message: 'Quote not found.'
       });
     }
-    
-    // Check permissions
-    const userRole = req.user?.role || 'patient';
-    const userId = req.user?.id;
-    
-    // Only allow deletion if user is admin or the quote belongs to the user
-    if (userRole !== 'admin' && existingQuote.patientId !== userId) {
+
+    // Check permissions (only admins and the original creator can delete)
+    if (
+      user.role !== 'admin' &&
+      (user.role === 'clinic_staff' && existingQuote.clinicId !== user.clinicId) &&
+      (user.role === 'patient' && existingQuote.createdBy !== user.id)
+    ) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to delete this quote.'
       });
     }
-    
+
     // Delete the quote
     await storage.deleteQuote(quoteId);
-    
+
     return res.status(200).json({
       success: true,
       message: 'Quote deleted successfully.'
@@ -263,7 +237,7 @@ router.delete('/:id', async (req, res) => {
     console.error('Error deleting quote:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to delete quote. Please try again later.'
+      message: 'An error occurred while deleting the quote.'
     });
   }
 });
@@ -274,15 +248,17 @@ router.delete('/:id', async (req, res) => {
  */
 router.get('/treatments', async (req, res) => {
   try {
-    // Get treatments
     const treatments = await storage.getTreatments();
     
-    return res.status(200).json(treatments);
+    return res.status(200).json({
+      success: true,
+      data: treatments
+    });
   } catch (error) {
     console.error('Error fetching treatments:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch treatments. Please try again later.'
+      message: 'An error occurred while fetching treatments.'
     });
   }
 });
@@ -293,15 +269,17 @@ router.get('/treatments', async (req, res) => {
  */
 router.get('/packages', async (req, res) => {
   try {
-    // Get packages
     const packages = await storage.getPackages();
     
-    return res.status(200).json(packages);
+    return res.status(200).json({
+      success: true,
+      data: packages
+    });
   } catch (error) {
     console.error('Error fetching packages:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch packages. Please try again later.'
+      message: 'An error occurred while fetching packages.'
     });
   }
 });
@@ -312,15 +290,17 @@ router.get('/packages', async (req, res) => {
  */
 router.get('/addons', async (req, res) => {
   try {
-    // Get add-ons
     const addons = await storage.getAddons();
     
-    return res.status(200).json(addons);
+    return res.status(200).json({
+      success: true,
+      data: addons
+    });
   } catch (error) {
     console.error('Error fetching add-ons:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch add-ons. Please try again later.'
+      message: 'An error occurred while fetching add-ons.'
     });
   }
 });
