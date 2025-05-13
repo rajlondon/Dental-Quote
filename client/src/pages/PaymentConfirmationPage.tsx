@@ -5,7 +5,21 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowLeft, HomeIcon, CalendarClock, FileText } from 'lucide-react';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
-export default function PaymentConfirmationPage() {
+interface PaymentConfirmationPageProps {
+  clinicName?: string;
+  treatmentTotalGBP?: number;
+  depositAmount?: number;
+  onPaymentSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export default function PaymentConfirmationPage({
+  clinicName = 'Your Selected Clinic',
+  treatmentTotalGBP = 0,
+  depositAmount = 0,
+  onPaymentSuccess = () => {},
+  onCancel = () => {}
+}: PaymentConfirmationPageProps) {
   const [location, navigate] = useLocation();
   const [email, setEmail] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
@@ -23,7 +37,11 @@ export default function PaymentConfirmationPage() {
     if (paymentIdParam) {
       setPaymentId(paymentIdParam);
     }
-  }, []);
+    
+    // Call onPaymentSuccess callback when component mounts
+    // This allows parent components to respond to successful payment
+    onPaymentSuccess();
+  }, [onPaymentSuccess]);
   
   return (
     <div className="container max-w-4xl py-8 px-4 md:px-6">
@@ -46,7 +64,7 @@ export default function PaymentConfirmationPage() {
         <div className="flex space-x-3">
           <Button 
             variant="outline" 
-            onClick={() => window.history.back()}
+            onClick={onCancel}
             className="flex items-center"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -85,15 +103,29 @@ export default function PaymentConfirmationPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Thank You for Your Payment</h3>
               <p className="text-green-700">
-                Your booking is now confirmed and our team will be in touch soon.
+                Your booking with {clinicName} is now confirmed and our team will be in touch soon.
               </p>
             </div>
             
-            {paymentId && (
-              <div className="text-sm text-center text-green-700 mt-2">
-                Payment reference: {paymentId}
-              </div>
-            )}
+            <div className="flex flex-col items-center space-y-2 mt-4 border-t border-green-100 pt-4">
+              {depositAmount > 0 && (
+                <div className="text-sm text-center text-green-800">
+                  <span className="font-medium">Deposit amount:</span> £{depositAmount.toFixed(2)}
+                </div>
+              )}
+              
+              {treatmentTotalGBP > 0 && (
+                <div className="text-sm text-center text-green-800">
+                  <span className="font-medium">Estimated total:</span> £{treatmentTotalGBP.toFixed(2)}
+                </div>
+              )}
+              
+              {paymentId && (
+                <div className="text-sm text-center text-green-700 mt-2">
+                  <span className="font-medium">Payment reference:</span> {paymentId}
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="mt-8 space-y-6">
