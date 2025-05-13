@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -7,9 +7,20 @@ import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Switch } from '../ui/switch';
 import { toast } from '../../hooks/use-toast';
+import { PromotionFormData } from '../../types/promotion';
 
-export function CreatePromotionModal({ onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
+interface Clinic {
+  id: string;
+  name: string;
+}
+
+interface CreatePromotionModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function CreatePromotionModal({ onClose, onSuccess }: CreatePromotionModalProps) {
+  const [formData, setFormData] = useState<PromotionFormData>({
     code: '',
     title: '',
     description: '',
@@ -23,7 +34,7 @@ export function CreatePromotionModal({ onClose, onSuccess }) {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clinics, setClinics] = useState([]);
+  const [clinics, setClinics] = useState<Clinic[]>([]);
   
   // Fetch clinics on component mount
   useEffect(() => {
@@ -42,15 +53,15 @@ export function CreatePromotionModal({ onClose, onSuccess }) {
     fetchClinics();
   }, []);
   
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
   
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -62,15 +73,15 @@ export function CreatePromotionModal({ onClose, onSuccess }) {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create promotion');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create promotion');
       }
       
       onSuccess();
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message,
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
         variant: 'destructive',
       });
     } finally {
@@ -135,7 +146,7 @@ export function CreatePromotionModal({ onClose, onSuccess }) {
                 <RadioGroup
                   value={formData.discount_type}
                   onValueChange={(value) => 
-                    setFormData(prev => ({ ...prev, discount_type: value }))
+                    setFormData(prev => ({ ...prev, discount_type: value as 'PERCENT' | 'FIXED' }))
                   }
                   className="flex space-x-4 mt-2"
                 >
@@ -225,7 +236,7 @@ export function CreatePromotionModal({ onClose, onSuccess }) {
                   className="w-full px-3 py-2 border rounded-md"
                 >
                   <option value="">All Clinics</option>
-                  {clinics.map(clinic => (
+                  {clinics.map((clinic) => (
                     <option key={clinic.id} value={clinic.id}>
                       {clinic.name}
                     </option>

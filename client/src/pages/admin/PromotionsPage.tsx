@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, MouseEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminLayout } from '../../components/layouts/AdminLayout';
 import { Button } from '../../components/ui/button';
@@ -9,6 +9,7 @@ import { CreatePromotionModal } from '../../components/admin/CreatePromotionModa
 import { EditPromotionModal } from '../../components/admin/EditPromotionModal';
 import { formatDate, formatCurrency, formatNumber, formatPercentage } from '../../utils/format';
 import { toast } from '../../hooks/use-toast';
+import { Promotion } from '../../types/promotion';
 import {
   ChevronDown,
   Edit,
@@ -24,11 +25,11 @@ import {
 export default function PromotionsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [currentPromotion, setCurrentPromotion] = useState(null);
+  const [currentPromotion, setCurrentPromotion] = useState<Promotion | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
   
-  const { data: promotions, isLoading, isError, error, refetch } = useQuery({
+  const { data: promotions, isLoading, isError, error, refetch } = useQuery<Promotion[]>({
     queryKey: ['/api/admin/promotions'],
     queryFn: async () => {
       const response = await fetch('/api/admin/promotions');
@@ -39,7 +40,12 @@ export default function PromotionsPage() {
     }
   });
   
-  const toggleStatusMutation = useMutation({
+  interface ToggleStatusParams {
+    id: string;
+    isActive: boolean;
+  }
+  
+  const toggleStatusMutation = useMutation<Promotion, Error, ToggleStatusParams>({
     mutationFn: async ({ id, isActive }) => {
       const response = await fetch(`/api/admin/promotions/${id}/toggle-status`, {
         method: 'PUT',
@@ -61,7 +67,7 @@ export default function PromotionsPage() {
         variant: 'success',
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message,
