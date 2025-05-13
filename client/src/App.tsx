@@ -913,6 +913,16 @@ function App() {
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
   const { toast } = useToast();
   
+  // Initialize Google Analytics when app loads
+  useEffect(() => {
+    // Verify required environment variable is present
+    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+    } else {
+      initGA();
+    }
+  }, []);
+  
   // DIRECT DOM VERIFICATION TEST
   useEffect(() => {
     console.log('APP ENTRY POINT EXECUTED AT:', new Date().toISOString());
