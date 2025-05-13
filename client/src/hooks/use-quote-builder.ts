@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
 
-// Types for our quote system
+// Define the types we need for our hook
 export interface Treatment {
   id: string;
   name: string;
@@ -15,7 +14,7 @@ export interface Package {
   id: string;
   name: string;
   price: number;
-  treatments: string[]; // IDs of included treatments
+  treatments: string[];
   description?: string;
 }
 
@@ -30,13 +29,9 @@ export interface Promotion {
   id: string;
   title: string;
   description: string;
+  promo_code: string;
   discount_type: 'percentage' | 'fixed_amount';
   discount_value: number;
-  promo_code: string;
-  applicable_treatments: string[];
-  start_date: string;
-  end_date: string;
-  terms_conditions: string;
 }
 
 export interface Quote {
@@ -44,404 +39,241 @@ export interface Quote {
   treatments: Treatment[];
   packages: Package[];
   addons: Addon[];
-  promoCode: string | null;
-  promotion?: Promotion | null;
+  promotion: Promotion | null;
   subtotal: number;
   discount: number;
   total: number;
-  patientId?: string;
-  clinicId?: string;
+  patientId?: number;
+  clinicId?: number;
+  status?: string;
   createdAt?: string;
-  status?: 'draft' | 'submitted' | 'approved' | 'rejected';
+  updatedAt?: string;
 }
 
-/**
- * Calculate discount based on promotion type and value
- */
-export const calculateDiscount = (subtotal: number, promotion?: Promotion | null): number => {
-  if (!promotion) return 0;
-  
-  if (promotion.discount_type === 'percentage') {
-    return (subtotal * promotion.discount_value) / 100;
-  } else {
-    // Fixed amount discount
-    return Math.min(subtotal, promotion.discount_value); // Don't exceed subtotal
-  }
-};
+export interface QuoteBuilderOptions {
+  treatments?: Treatment[];
+  packages?: Package[];
+  addons?: Addon[];
+  promoCode?: string | null;
+}
 
-/**
- * Calculate totals for a quote
- */
-export const calculateTotals = (
-  treatments: Treatment[],
-  packages: Package[],
-  addons: Addon[],
-  promotion?: Promotion | null
-): { subtotal: number; discount: number; total: number } => {
-  // Calculate subtotal
+export interface UseQuoteBuilderResult {
+  quote: Quote;
+  addTreatment: (treatment: Treatment) => void;
+  removeTreatment: (treatmentId: string) => void;
+  addPackage: (pkg: Package) => void;
+  removePackage: (packageId: string) => void;
+  addAddon: (addon: Addon) => void;
+  removeAddon: (addonId: string) => void;
+  applyPromoCode: (code: string) => Promise<{ success: boolean; message: string }>;
+  removePromoCode: () => void;
+  saveQuote: () => Promise<{ success: boolean; quoteId?: string; message?: string }>;
+  reset: () => void;
+}
+
+const calculateSubtotal = (
+  treatments: Treatment[], 
+  packages: Package[], 
+  addons: Addon[]
+): number => {
   const treatmentsTotal = treatments.reduce((sum, t) => sum + t.price, 0);
   const packagesTotal = packages.reduce((sum, p) => sum + p.price, 0);
   const addonsTotal = addons.reduce((sum, a) => sum + a.price, 0);
   
-  const subtotal = treatmentsTotal + packagesTotal + addonsTotal;
-  
-  // Calculate discount
-  const discount = calculateDiscount(subtotal, promotion);
-  
-  // Calculate total
-  const total = subtotal - discount;
-  
-  return { subtotal, discount, total };
+  return treatmentsTotal + packagesTotal + addonsTotal;
 };
 
-/**
- * Hook for managing the quote building process
- */
-export function useQuoteBuilder(initialQuote?: Partial<Quote>) {
-  const { toast } = useToast();
+const calculateDiscount = (
+  subtotal: number, 
+  promotion: Promotion | null
+): number => {
+  if (!promotion) return 0;
   
-  const [quote, setQuote] = useState<Quote>({
-    treatments: initialQuote?.treatments || [],
-    packages: initialQuote?.packages || [],
-    addons: initialQuote?.addons || [],
-    promoCode: initialQuote?.promoCode || null,
-    promotion: initialQuote?.promotion || null,
-    subtotal: initialQuote?.subtotal || 0,
-    discount: initialQuote?.discount || 0,
-    total: initialQuote?.total || 0,
-    patientId: initialQuote?.patientId,
-    clinicId: initialQuote?.clinicId,
-    status: initialQuote?.status || 'draft'
-  });
+  if (promotion.discount_type === 'percentage') {
+    return subtotal * (promotion.discount_value / 100);
+  } else {
+    // Fixed amount discount, don't exceed subtotal
+    return Math.min(promotion.discount_value, subtotal);
+  }
+};
+
+export const useQuoteBuilder = (options: QuoteBuilderOptions = {}): UseQuoteBuilderResult => {
+  const [treatments, setTreatments] = useState<Treatment[]>(options.treatments || []);
+  const [packages, setPackages] = useState<Package[]>(options.packages || []);
+  const [addons, setAddons] = useState<Addon[]>(options.addons || []);
+  const [promotion, setPromotion] = useState<Promotion | null>(null);
   
-  // Recalculate totals whenever quote items change
-  const updateTotals = useCallback(() => {
-    const { subtotal, discount, total } = calculateTotals(
-      quote.treatments,
-      quote.packages,
-      quote.addons,
-      quote.promotion
-    );
-    
-    setQuote(prev => ({
-      ...prev,
-      subtotal,
-      discount,
-      total
-    }));
-  }, [quote.treatments, quote.packages, quote.addons, quote.promotion]);
-  
-  // Add a treatment to the quote
-  const addTreatment = useCallback((treatment: Treatment) => {
-    // Check if treatment already exists
-    if (quote.treatments.some(t => t.id === treatment.id)) {
-      toast({
-        title: 'Treatment already added',
-        description: 'This treatment is already in your quote.',
-        variant: 'default',
-      });
-      return;
+  // Initialize with promo code if provided
+  useEffect(() => {
+    if (options.promoCode) {
+      applyPromoCode(options.promoCode);
     }
-    
-    setQuote(prev => {
-      const newTreatments = [...prev.treatments, treatment];
-      const { subtotal, discount, total } = calculateTotals(
-        newTreatments,
-        prev.packages,
-        prev.addons,
-        prev.promotion
-      );
-      
-      // Track event for analytics
-      trackEvent('add_treatment', 'quote', treatment.name);
-      
-      return {
-        ...prev,
-        treatments: newTreatments,
-        subtotal,
-        discount,
-        total
-      };
-    });
-  }, [quote.treatments, toast]);
-  
-  // Remove a treatment from the quote
-  const removeTreatment = useCallback((treatmentId: string) => {
-    setQuote(prev => {
-      const newTreatments = prev.treatments.filter(t => t.id !== treatmentId);
-      const { subtotal, discount, total } = calculateTotals(
-        newTreatments,
-        prev.packages,
-        prev.addons,
-        prev.promotion
-      );
-      
-      // Track event for analytics
-      trackEvent('remove_treatment', 'quote');
-      
-      return {
-        ...prev,
-        treatments: newTreatments,
-        subtotal,
-        discount,
-        total
-      };
-    });
   }, []);
   
-  // Add a package to the quote
-  const addPackage = useCallback((pkg: Package) => {
-    // Check if package already exists
-    if (quote.packages.some(p => p.id === pkg.id)) {
-      toast({
-        title: 'Package already added',
-        description: 'This package is already in your quote.',
-        variant: 'default',
-      });
-      return;
+  // Calculate derived values
+  const subtotal = calculateSubtotal(treatments, packages, addons);
+  const discount = calculateDiscount(subtotal, promotion);
+  const total = Math.max(0, subtotal - discount);
+  
+  // Build the quote object
+  const quote: Quote = {
+    treatments,
+    packages,
+    addons,
+    promotion,
+    subtotal,
+    discount,
+    total
+  };
+  
+  /**
+   * Add a treatment to the quote
+   */
+  const addTreatment = (treatment: Treatment) => {
+    if (!treatments.some(t => t.id === treatment.id)) {
+      setTreatments([...treatments, treatment]);
+      trackEvent('add_treatment', 'quote_builder', treatment.id);
     }
-    
-    setQuote(prev => {
-      const newPackages = [...prev.packages, pkg];
-      const { subtotal, discount, total } = calculateTotals(
-        prev.treatments,
-        newPackages,
-        prev.addons,
-        prev.promotion
-      );
-      
-      // Track event for analytics
-      trackEvent('add_package', 'quote', pkg.name);
-      
-      return {
-        ...prev,
-        packages: newPackages,
-        subtotal,
-        discount,
-        total
-      };
-    });
-  }, [quote.packages, toast]);
+  };
   
-  // Remove a package from the quote
-  const removePackage = useCallback((packageId: string) => {
-    setQuote(prev => {
-      const newPackages = prev.packages.filter(p => p.id !== packageId);
-      const { subtotal, discount, total } = calculateTotals(
-        prev.treatments,
-        newPackages,
-        prev.addons,
-        prev.promotion
-      );
-      
-      // Track event for analytics
-      trackEvent('remove_package', 'quote');
-      
-      return {
-        ...prev,
-        packages: newPackages,
-        subtotal,
-        discount,
-        total
-      };
-    });
-  }, []);
+  /**
+   * Remove a treatment from the quote
+   */
+  const removeTreatment = (treatmentId: string) => {
+    setTreatments(treatments.filter(t => t.id !== treatmentId));
+    trackEvent('remove_treatment', 'quote_builder', treatmentId);
+  };
   
-  // Add an addon to the quote
-  const addAddon = useCallback((addon: Addon) => {
-    // Check if addon already exists
-    if (quote.addons.some(a => a.id === addon.id)) {
-      toast({
-        title: 'Add-on already added',
-        description: 'This add-on is already in your quote.',
-        variant: 'default',
-      });
-      return;
+  /**
+   * Add a package to the quote
+   */
+  const addPackage = (pkg: Package) => {
+    if (!packages.some(p => p.id === pkg.id)) {
+      setPackages([...packages, pkg]);
+      trackEvent('add_package', 'quote_builder', pkg.id);
     }
-    
-    setQuote(prev => {
-      const newAddons = [...prev.addons, addon];
-      const { subtotal, discount, total } = calculateTotals(
-        prev.treatments,
-        prev.packages,
-        newAddons,
-        prev.promotion
-      );
-      
-      // Track event for analytics
-      trackEvent('add_addon', 'quote', addon.name);
-      
-      return {
-        ...prev,
-        addons: newAddons,
-        subtotal,
-        discount,
-        total
-      };
-    });
-  }, [quote.addons, toast]);
+  };
   
-  // Remove an addon from the quote
-  const removeAddon = useCallback((addonId: string) => {
-    setQuote(prev => {
-      const newAddons = prev.addons.filter(a => a.id !== addonId);
-      const { subtotal, discount, total } = calculateTotals(
-        prev.treatments,
-        prev.packages,
-        newAddons,
-        prev.promotion
-      );
-      
-      // Track event for analytics
-      trackEvent('remove_addon', 'quote');
-      
-      return {
-        ...prev,
-        addons: newAddons,
-        subtotal,
-        discount,
-        total
-      };
-    });
-  }, []);
+  /**
+   * Remove a package from the quote
+   */
+  const removePackage = (packageId: string) => {
+    setPackages(packages.filter(p => p.id !== packageId));
+    trackEvent('remove_package', 'quote_builder', packageId);
+  };
   
-  // Apply a promo code to the quote
-  const applyPromoCode = useCallback(async (code: string) => {
+  /**
+   * Add an addon to the quote
+   */
+  const addAddon = (addon: Addon) => {
+    if (!addons.some(a => a.id === addon.id)) {
+      setAddons([...addons, addon]);
+      trackEvent('add_addon', 'quote_builder', addon.id);
+    }
+  };
+  
+  /**
+   * Remove an addon from the quote
+   */
+  const removeAddon = (addonId: string) => {
+    setAddons(addons.filter(a => a.id !== addonId));
+    trackEvent('remove_addon', 'quote_builder', addonId);
+  };
+  
+  /**
+   * Apply a promotion code to the quote
+   */
+  const applyPromoCode = async (code: string): Promise<{ success: boolean; message: string }> => {
     try {
-      // Track attempt to apply promo code
-      trackEvent('apply_promo_attempt', 'quote', code);
-      
-      const response = await apiRequest('GET', `/api/promo-codes/validate?code=${code}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        return { 
-          success: false, 
-          message: errorData.message || 'Invalid promo code. Please try again.'
-        };
-      }
-      
+      const response = await apiRequest('POST', '/api/promo-codes/validate', { code });
       const data = await response.json();
       
-      if (data.valid) {
-        // Calculate new totals with discount
-        setQuote(prev => {
-          const { subtotal, discount, total } = calculateTotals(
-            prev.treatments,
-            prev.packages,
-            prev.addons,
-            data.promotion
-          );
-          
-          // Track successful promo code application
-          trackEvent('apply_promo_success', 'quote', code);
-          
-          return {
-            ...prev,
-            promoCode: code,
-            promotion: data.promotion,
-            discount,
-            total
-          };
-        });
-        
-        return { success: true, message: `${data.promotion.title} applied!` };
+      if (data.success && data.promotion) {
+        setPromotion(data.promotion);
+        trackEvent('apply_promo_code_success', 'quote_builder', code);
+        return { 
+          success: true, 
+          message: `Promotion "${data.promotion.title}" applied successfully!` 
+        };
       } else {
-        // Track failed promo code application
-        trackEvent('apply_promo_invalid', 'quote', code);
-        
-        return { success: false, message: data.message };
+        trackEvent('apply_promo_code_fail', 'quote_builder', code);
+        return { 
+          success: false, 
+          message: data.message || 'Invalid promotion code. Please try again.' 
+        };
       }
     } catch (error) {
-      console.error('Error validating promo code:', error);
-      
-      // Track error in promo code application
-      trackEvent('apply_promo_error', 'quote', code);
-      
+      console.error('Error applying promo code:', error);
+      trackEvent('apply_promo_code_error', 'quote_builder', code);
       return { 
         success: false, 
-        message: "Error validating promo code. Please try again." 
+        message: 'An error occurred while applying the promotion code. Please try again.' 
       };
     }
-  }, []);
+  };
   
-  // Remove promo code from the quote
-  const removePromoCode = useCallback(() => {
-    setQuote(prev => {
-      // Track promo code removal
-      if (prev.promoCode) {
-        trackEvent('remove_promo', 'quote', prev.promoCode);
-      }
-      
-      const { subtotal, discount, total } = calculateTotals(
-        prev.treatments,
-        prev.packages,
-        prev.addons,
-        null
-      );
-      
-      return {
-        ...prev,
-        promoCode: null,
-        promotion: null,
-        discount,
-        total
-      };
-    });
-  }, []);
+  /**
+   * Remove the applied promotion code
+   */
+  const removePromoCode = () => {
+    if (promotion) {
+      trackEvent('remove_promo_code', 'quote_builder', promotion.promo_code);
+      setPromotion(null);
+    }
+  };
   
-  // Save the quote to the server
-  const saveQuote = useCallback(async () => {
+  /**
+   * Save the quote
+   */
+  const saveQuote = async (): Promise<{ success: boolean; quoteId?: string; message?: string }> => {
     try {
-      // Track quote save attempt
-      trackEvent('save_quote', 'quote');
+      // Only include necessary data to save
+      const quoteData = {
+        treatments: quote.treatments,
+        packages: quote.packages,
+        addons: quote.addons,
+        promoCode: promotion?.promo_code,
+        subtotal: quote.subtotal,
+        discount: quote.discount,
+        total: quote.total
+      };
       
-      const response = await apiRequest('POST', '/api/quotes', quote);
+      const response = await apiRequest('POST', '/api/quotes', quoteData);
+      const data = await response.json();
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast({
-          title: 'Error saving quote',
-          description: errorData.message || 'An error occurred while saving your quote.',
-          variant: 'destructive',
-        });
-        return { success: false };
+      if (data.success) {
+        trackEvent('save_quote_success', 'quote_builder');
+        return { 
+          success: true, 
+          quoteId: data.data.id 
+        };
+      } else {
+        trackEvent('save_quote_fail', 'quote_builder');
+        return { 
+          success: false, 
+          message: data.message || 'Failed to save quote. Please try again.' 
+        };
       }
-      
-      const savedQuote = await response.json();
-      
-      // Update local quote with server data (including ID)
-      setQuote(prev => ({
-        ...prev,
-        id: savedQuote.id,
-        createdAt: savedQuote.createdAt
-      }));
-      
-      toast({
-        title: 'Quote saved',
-        description: 'Your quote has been saved successfully.',
-        variant: 'default',
-      });
-      
-      // Track successful quote save
-      trackEvent('save_quote_success', 'quote');
-      
-      return { success: true, quoteId: savedQuote.id };
     } catch (error) {
       console.error('Error saving quote:', error);
-      
-      toast({
-        title: 'Error saving quote',
-        description: 'An error occurred while saving your quote. Please try again.',
-        variant: 'destructive',
-      });
-      
-      // Track error in quote save
-      trackEvent('save_quote_error', 'quote');
-      
-      return { success: false };
+      trackEvent('save_quote_error', 'quote_builder');
+      return { 
+        success: false, 
+        message: 'An error occurred while saving the quote. Please try again later.' 
+      };
     }
-  }, [quote, toast]);
+  };
+  
+  /**
+   * Reset the quote to empty state
+   */
+  const reset = () => {
+    setTreatments([]);
+    setPackages([]);
+    setAddons([]);
+    setPromotion(null);
+    trackEvent('reset_quote', 'quote_builder');
+  };
   
   return {
     quote,
@@ -454,6 +286,6 @@ export function useQuoteBuilder(initialQuote?: Partial<Quote>) {
     applyPromoCode,
     removePromoCode,
     saveQuote,
-    updateTotals
+    reset
   };
-}
+};
