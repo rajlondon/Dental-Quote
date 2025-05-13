@@ -69,9 +69,8 @@ async function testValidPromoCode() {
     // We can't fully automate the UI testing in this script, but we can 
     // test if the API endpoint works correctly
     log('Testing promo code application via API...');
-    const response = await axios.post(`${BASE_URL}/api/promocodes/apply`, {
-      code: testCode,
-      quoteId
+    const response = await axios.post(`${BASE_URL}/api/promo/apply/${quoteId}`, {
+      code: testCode
     });
     
     if (response.data && response.data.success) {
