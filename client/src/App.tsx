@@ -8,6 +8,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth.tsx";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import { BookingsProvider } from "@/hooks/use-bookings";
+import { initGA } from "./lib/analytics";
+import { useAnalytics } from "./hooks/use-analytics";
 import { NotFoundPage } from "@/pages/ErrorPage";
 import ErrorTestPage from "@/pages/ErrorTestPage";
 import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
@@ -120,6 +122,9 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { Suspense } from "react";
 
 function Router() {
+  // Track page views when routes change
+  useAnalytics();
+  
   return (
     <>
       {/* Add PromoDetector to handle URL parameters */}
