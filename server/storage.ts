@@ -48,6 +48,13 @@ export interface IStorage {
   // Special offers and treatment packages
   getHomepageOffers(): Promise<any[]>;
   getOffersByClinic(clinicId: string): Promise<any[]>;
+  
+  // Promotion management
+  getPromotionByCode(code: string): Promise<any | undefined>;
+  getActivePromotions(): Promise<any[]>;
+  createPromotion(data: any): Promise<any>;
+  updatePromotion(id: string, data: any): Promise<any | undefined>;
+  deletePromotion(id: string): Promise<boolean>;
   getOffer(offerId: string): Promise<any | undefined>;
   createOffer(offer: any): Promise<any>;
   updateOffer(offerId: string, data: any): Promise<any | undefined>;
@@ -1914,6 +1921,98 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`[Storage] Error getting package ${packageId}:`, error);
       return undefined;
+    }
+  }
+
+  // Promotion management methods
+  async getPromotionByCode(code: string): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Getting promotion by code: ${code}`);
+      
+      // Look up the promotion in the special_offers table that is already in the database
+      // For now, let's use a simplified approach and query the table directly
+      // We're using the special offers table as it contains similar data
+      
+      const offers = await this.getHomepageOffers();
+      const promotion = offers.find(offer => 
+        offer.promo_code && 
+        offer.promo_code.toLowerCase() === code.toLowerCase()
+      );
+      
+      if (!promotion) {
+        console.log(`[Storage] No promotion found with code: ${code}`);
+        return undefined;
+      }
+      
+      console.log(`[Storage] Found promotion with code ${code}: ${promotion.title}`);
+      return promotion;
+    } catch (error) {
+      console.error(`[Storage] Error getting promotion by code ${code}:`, error);
+      return undefined;
+    }
+  }
+  
+  async getActivePromotions(): Promise<any[]> {
+    try {
+      console.log('[Storage] Getting all active promotions');
+      
+      // Use the existing offers as promotions for now
+      const offers = await this.getHomepageOffers();
+      
+      // Filter to only include active offers
+      const activePromotions = offers.filter(offer => offer.is_active);
+      
+      console.log(`[Storage] Found ${activePromotions.length} active promotions`);
+      return activePromotions;
+    } catch (error) {
+      console.error('[Storage] Error getting active promotions:', error);
+      return [];
+    }
+  }
+  
+  async createPromotion(data: any): Promise<any> {
+    try {
+      console.log('[Storage] Creating new promotion:', data.title);
+      
+      // For now, create a promotion that mimics the special offers structure
+      // We'll reuse the offer creation logic until we have a proper promotions table
+      return await this.createOffer({
+        ...data,
+        id: uuidv4(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_active: true
+      });
+    } catch (error) {
+      console.error('[Storage] Error creating promotion:', error);
+      throw error;
+    }
+  }
+  
+  async updatePromotion(id: string, data: any): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Updating promotion ${id}`);
+      
+      // For now, update the promotion using the offer update logic
+      return await this.updateOffer(id, {
+        ...data,
+        updated_at: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error(`[Storage] Error updating promotion ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async deletePromotion(id: string): Promise<boolean> {
+    try {
+      console.log(`[Storage] Deleting promotion ${id}`);
+      
+      // For now, delete the promotion using the offer delete logic
+      return await this.deleteOffer(id);
+    } catch (error) {
+      console.error(`[Storage] Error deleting promotion ${id}:`, error);
+      return false;
     }
   }
 }

@@ -1,0 +1,102 @@
+Here's a streamlined approach for building out the quote management system:
+
+1. Focus on Core Quote Flow Components
+📂 Quote Flow Architecture
+├── Quote Initialization
+│   ├── City/Treatment Selection
+│   └── Initial Quote Parameters
+├── Quote Builder
+│   ├── Treatment Options
+│   ├── Package Selection
+│   └── Add-on Services
+├── Pricing Engine
+│   ├── Base Price Calculation
+│   ├── Discount Application
+│   └── Final Quote Generation
+└── Checkout Process
+    ├── User Information Collection
+    ├── Payment Integration
+    └── Confirmation & Receipt
+2. Implement Promotion System in Phases
+Since you're already working on the Admin Promo Manager, integrate it with the quote system:
+
+Phase 1: Basic Implementation
+
+URL parameter promo code application
+Admin interface for promo code management
+Simple discount application logic
+Phase 2: Enhanced Features
+
+Promo code validation rules
+Usage tracking and limits
+Clinic-specific promotions
+3. Prioritize Component Development
+First: Complete the core quote builder
+Second: Implement the special offers integration
+Third: Add the promo code system
+Fourth: Build the admin management interfaces
+Development Tips
+// Example: Implementing the quote builder with promo code support
+// client/src/hooks/use-quote-builder.ts
+
+export function useQuoteBuilder() {
+  const [quote, setQuote] = useState<Quote>({
+    treatments: [],
+    packages: [],
+    addons: [],
+    promoCode: null,
+    subtotal: 0,
+    discount: 0,
+    total: 0
+  });
+  
+  // Apply a promo code to the quote
+  const applyPromoCode = async (code: string) => {
+    try {
+      const response = await fetch(`/api/promo-codes/validate?code=${code}`);
+      const data = await response.json();
+      
+      if (data.valid) {
+        // Calculate new totals with discount
+        const discount = calculateDiscount(quote.subtotal, data.promotion);
+        
+        setQuote({
+          ...quote,
+          promoCode: code,
+          discount,
+          total: quote.subtotal - discount
+        });
+        
+        return { success: true, message: `${data.promotion.title} applied!` };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        message: "Error validating promo code. Please try again." 
+      };
+    }
+  };
+  
+  // Rest of quote builder logic
+  // ...
+  
+  return {
+    quote,
+    addTreatment,
+    removeTreatment,
+    addPackage,
+    removePackage,
+    applyPromoCode,
+    // ...other methods
+  };
+}
+Testing Strategy
+During development, focus on component-level testing:
+
+Unit Tests: Test individual functions like discount calculations
+Component Tests: Verify UI components render correctly
+Integration Tests: Test the full quote flow from start to finish
+Mock Backend: Use a mock backend during development to simulate API responses
+This approach lets you build the system properly from the ground up without worrying about breaking existing functionality, since the site isn't live yet.
