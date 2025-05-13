@@ -1,20 +1,23 @@
 import { Router } from 'express';
 import { storage } from '../storage';
+import { ZodError } from 'zod';
+import { isAuthenticated } from '../middleware/auth';
 
 const router = Router();
 
 /**
  * Validate a promo code
- * POST /api/promo-codes/validate
+ * GET /api/promo-codes/:code/validate
  */
-router.post('/validate', async (req, res) => {
+router.get('/:code/validate', async (req, res) => {
   try {
-    const { code } = req.body;
+    const code = req.params.code;
     
-    if (!code) {
-      return res.status(400).json({
-        success: false,
-        message: 'Promo code is required.'
+    // Validate code format
+    if (!code || code.length < 3 || code.length > 20) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid promo code format'
       });
     }
     
@@ -22,63 +25,36 @@ router.post('/validate', async (req, res) => {
     const promotion = await storage.getPromotionByCode(code);
     
     if (!promotion) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invalid promo code.'
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Promo code not found'
       });
     }
     
     // Check if promotion is active
-    if (!promotion.is_active) {
-      return res.status(400).json({
-        success: false,
-        message: 'This promotion is no longer active.'
-      });
-    }
-    
-    // Check if promotion is approved
-    if (!promotion.admin_approved) {
-      return res.status(400).json({
-        success: false,
-        message: 'This promotion has not been approved yet.'
-      });
-    }
-    
-    // Check if promotion is within date range
     const now = new Date();
     const startDate = new Date(promotion.start_date);
     const endDate = new Date(promotion.end_date);
     
-    if (now < startDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'This promotion is not yet active.'
+    if (!promotion.is_active || now < startDate || now > endDate) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Promo code is not active or has expired'
       });
     }
     
-    if (now > endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'This promotion has expired.'
-      });
-    }
-    
-    // Format the promotion data for the client
-    const formattedPromotion = {
-      id: promotion.id,
-      title: promotion.title,
-      description: promotion.description,
-      promo_code: promotion.promo_code,
-      discount_type: promotion.discount_type,
-      discount_value: promotion.discount_value,
-      applicable_treatments: promotion.applicable_treatments,
-      terms_conditions: promotion.terms_conditions
-    };
-    
+    // Return promotion data
     return res.status(200).json({
       success: true,
-      message: 'Valid promotion code.',
-      promotion: formattedPromotion
+      data: {
+        id: promotion.id,
+        code: promotion.promo_code,
+        title: promotion.title,
+        discount_type: promotion.discount_type,
+        discount_value: promotion.discount_value,
+        applicable_treatments: promotion.applicable_treatments,
+        terms_conditions: promotion.terms_conditions,
+      }
     });
   } catch (error) {
     console.error('Error validating promo code:', error);
@@ -90,24 +66,24 @@ router.post('/validate', async (req, res) => {
 });
 
 /**
- * Get all promotions that are active
- * GET /api/promo-codes
+ * Get all active promotions
+ * GET /api/promo-codes/active
  */
-router.get('/', async (req, res) => {
+router.get('/active', isAuthenticated, async (req, res) => {
   try {
-    // Get all active promotions
     const promotions = await storage.getActivePromotions();
     
-    // Format promotions for client
-    const formattedPromotions = promotions.map(promotion => ({
-      id: promotion.id,
-      title: promotion.title,
-      description: promotion.description,
-      promo_code: promotion.promo_code,
-      discount_type: promotion.discount_type,
-      discount_value: promotion.discount_value,
-      applicable_treatments: promotion.applicable_treatments,
-      terms_conditions: promotion.terms_conditions
+    // Format response
+    const formattedPromotions = promotions.map(promo => ({
+      id: promo.id,
+      code: promo.promo_code,
+      title: promo.title,
+      discount_type: promo.discount_type,
+      discount_value: promo.discount_value,
+      applicable_treatments: promo.applicable_treatments,
+      terms_conditions: promo.terms_conditions,
+      start_date: promo.start_date,
+      end_date: promo.end_date,
     }));
     
     return res.status(200).json({
@@ -115,10 +91,93 @@ router.get('/', async (req, res) => {
       data: formattedPromotions
     });
   } catch (error) {
-    console.error('Error fetching promotions:', error);
+    console.error('Error fetching active promotions:', error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching promotions.'
+      message: 'An error occurred while fetching active promotions.'
+    });
+  }
+});
+
+/**
+ * Apply a promo code to a quote
+ * POST /api/promo-codes/:code/apply
+ */
+router.post('/:code/apply', isAuthenticated, async (req, res) => {
+  try {
+    const code = req.params.code;
+    const { quoteId } = req.body;
+    
+    if (!quoteId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quote ID is required'
+      });
+    }
+    
+    // Validate code
+    const promotion = await storage.getPromotionByCode(code);
+    
+    if (!promotion) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Promo code not found'
+      });
+    }
+    
+    // Check if promotion is active
+    const now = new Date();
+    const startDate = new Date(promotion.start_date);
+    const endDate = new Date(promotion.end_date);
+    
+    if (!promotion.is_active || now < startDate || now > endDate) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Promo code is not active or has expired'
+      });
+    }
+    
+    // Get the quote
+    const quote = await storage.getQuote(quoteId);
+    
+    if (!quote) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quote not found'
+      });
+    }
+    
+    // Apply the promotion to the quote
+    const updatedQuote = await storage.updateQuote(quoteId, {
+      promoCodeId: promotion.id,
+      promoCodeApplied: true,
+      discountType: promotion.discount_type,
+      discountValue: promotion.discount_value,
+      // Calculate the new total price based on the discount
+      // This is a simplified calculation, actual implementation may vary
+      totalPrice: quote.totalPrice * (1 - (promotion.discount_type === 'percentage' 
+        ? promotion.discount_value / 100 
+        : promotion.discount_value / quote.totalPrice))
+    });
+    
+    return res.status(200).json({
+      success: true,
+      data: updatedQuote
+    });
+  } catch (error) {
+    console.error('Error applying promo code:', error);
+    
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid data.',
+        errors: error.errors
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while applying the promo code.'
     });
   }
 });
