@@ -1,308 +1,363 @@
 import { Router } from 'express';
 import { storage } from '../storage';
-import { ZodError } from 'zod';
-import { isAuthenticated, ensureRole } from '../middleware/auth';
+import { z } from 'zod';
+import { sendEmail } from '../email/mailjet';
 
 const router = Router();
 
-/**
- * Quote management API endpoints
- * These endpoints handle CRUD operations for quotes
- */
-
-/**
- * Get all quotes
- * GET /api/quotes
- */
-router.get('/', isAuthenticated, async (req, res) => {
-  try {
-    const user = req.user!;
-    let quotes;
-
-    // Filter quotes based on user role
-    if (user.role === 'admin') {
-      // Admins can see all quotes
-      quotes = await storage.getAllQuotes();
-    } else if (user.role === 'clinic_staff') {
-      // Clinic staff can only see quotes for their clinic
-      if (!user.clinicId) {
-        return res.status(400).json({
-          success: false,
-          message: 'User is not associated with a clinic'
-        });
-      }
-      quotes = await storage.getQuotesByClinicId(user.clinicId);
-    } else {
-      // Patients can only see their own quotes
-      quotes = await storage.getQuotesByUserId(user.id);
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: quotes
-    });
-  } catch (error) {
-    console.error('Error fetching quotes:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while fetching quotes.'
-    });
-  }
+// Schema for validation
+const quoteIdSchema = z.number().or(z.string().transform(val => parseInt(val, 10)));
+const emailSchema = z.object({
+  email: z.string().email().optional()
 });
 
-/**
- * Get a specific quote by ID
- * GET /api/quotes/:id
- */
-router.get('/:id', isAuthenticated, async (req, res) => {
+// Get quote by ID
+router.get('/:id', async (req, res) => {
   try {
-    const quoteId = req.params.id;
-    const user = req.user!;
-
-    // Get the quote
+    const quoteId = quoteIdSchema.parse(req.params.id);
     const quote = await storage.getQuote(quoteId);
-
+    
     if (!quote) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote not found.'
-      });
+      return res.status(404).json({ success: false, message: 'Quote not found' });
     }
-
-    // Check permissions
-    if (
-      user.role !== 'admin' &&
-      (user.role === 'clinic_staff' && quote.clinicId !== user.clinicId) &&
-      (user.role === 'patient' && quote.patientId !== user.id)
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to access this quote.'
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: quote
-    });
+    
+    res.json({ success: true, quote });
   } catch (error) {
-    console.error('Error fetching quote:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while fetching the quote.'
-    });
+    console.error('Error getting quote:', error);
+    res.status(400).json({ success: false, message: 'Invalid quote ID' });
   }
 });
 
-/**
- * Create a new quote
- * POST /api/quotes
- */
-router.post('/', isAuthenticated, async (req, res) => {
+// Create a new quote
+router.post('/', async (req, res) => {
   try {
-    const user = req.user!;
-    const quoteData = req.body;
-
-    // Add user information to the quote
-    if (user.role === 'patient') {
-      quoteData.patientId = user.id;
-    } else if (user.role === 'clinic_staff' && user.clinicId) {
-      quoteData.clinicId = user.clinicId;
-    }
-
-    // Set created by
-    quoteData.createdBy = user.id;
-
-    // Create the quote
-    const quote = await storage.createQuote(quoteData);
-
-    return res.status(201).json({
-      success: true,
-      data: quote
-    });
+    const quote = await storage.createQuote(req.body);
+    res.status(201).json({ success: true, quote });
   } catch (error) {
     console.error('Error creating quote:', error);
-    
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid quote data.',
-        errors: error.errors
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while creating the quote.'
-    });
+    res.status(500).json({ success: false, message: 'Failed to create quote' });
   }
 });
 
-/**
- * Update a quote
- * PATCH /api/quotes/:id
- */
-router.patch('/:id', isAuthenticated, async (req, res) => {
+// Update a quote
+router.patch('/:id', async (req, res) => {
   try {
-    const quoteId = req.params.id;
-    const user = req.user!;
-    const updateData = req.body;
-
-    // Get the existing quote
-    const existingQuote = await storage.getQuote(quoteId);
-
-    if (!existingQuote) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote not found.'
-      });
+    const quoteId = quoteIdSchema.parse(req.params.id);
+    const updatedQuote = await storage.updateQuote(quoteId, req.body);
+    
+    if (!updatedQuote) {
+      return res.status(404).json({ success: false, message: 'Quote not found' });
     }
-
-    // Check permissions
-    if (
-      user.role !== 'admin' &&
-      (user.role === 'clinic_staff' && existingQuote.clinicId !== user.clinicId) &&
-      (user.role === 'patient' && existingQuote.patientId !== user.id)
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to update this quote.'
-      });
-    }
-
-    // Update the quote
-    const updatedQuote = await storage.updateQuote(quoteId, updateData);
-
-    return res.status(200).json({
-      success: true,
-      data: updatedQuote
-    });
+    
+    res.json({ success: true, quote: updatedQuote });
   } catch (error) {
     console.error('Error updating quote:', error);
-    
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid quote data.',
-        errors: error.errors
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while updating the quote.'
-    });
+    res.status(400).json({ success: false, message: 'Invalid request' });
   }
 });
 
-/**
- * Delete a quote
- * DELETE /api/quotes/:id
- */
-router.delete('/:id', isAuthenticated, async (req, res) => {
+// Delete a quote
+router.delete('/:id', async (req, res) => {
   try {
-    const quoteId = req.params.id;
-    const user = req.user!;
-
-    // Get the existing quote
-    const existingQuote = await storage.getQuote(quoteId);
-
-    if (!existingQuote) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote not found.'
-      });
+    const quoteId = quoteIdSchema.parse(req.params.id);
+    const success = await storage.deleteQuote(quoteId);
+    
+    if (!success) {
+      return res.status(404).json({ success: false, message: 'Quote not found' });
     }
-
-    // Check permissions (only admins and the original creator can delete)
-    if (
-      user.role !== 'admin' &&
-      (user.role === 'clinic_staff' && existingQuote.clinicId !== user.clinicId) &&
-      (user.role === 'patient' && existingQuote.createdBy !== user.id)
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to delete this quote.'
-      });
-    }
-
-    // Delete the quote
-    await storage.deleteQuote(quoteId);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Quote deleted successfully.'
-    });
+    
+    res.json({ success: true, message: 'Quote deleted successfully' });
   } catch (error) {
     console.error('Error deleting quote:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while deleting the quote.'
-    });
+    res.status(400).json({ success: false, message: 'Invalid quote ID' });
   }
 });
 
-/**
- * Get available treatments
- * GET /api/treatments
- */
-router.get('/treatments', async (req, res) => {
+// Apply a promo code to a quote
+router.post('/:id/apply-promo', async (req, res) => {
   try {
-    const treatments = await storage.getTreatments();
+    const quoteId = quoteIdSchema.parse(req.params.id);
+    const { promoCode } = req.body;
     
-    return res.status(200).json({
-      success: true,
-      data: treatments
-    });
+    if (!promoCode) {
+      return res.status(400).json({ success: false, message: 'Promo code is required' });
+    }
+    
+    const updatedQuote = await storage.applyPromoCode(quoteId, promoCode);
+    
+    if (!updatedQuote) {
+      return res.status(404).json({ success: false, message: 'Quote not found or invalid promo code' });
+    }
+    
+    res.json({ success: true, quote: updatedQuote });
   } catch (error) {
-    console.error('Error fetching treatments:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while fetching treatments.'
-    });
+    console.error('Error applying promo code:', error);
+    res.status(400).json({ success: false, message: 'Invalid request' });
   }
 });
 
-/**
- * Get available packages
- * GET /api/packages
- */
-router.get('/packages', async (req, res) => {
+// Remove a promo code from a quote
+router.post('/:id/remove-promo', async (req, res) => {
   try {
-    const packages = await storage.getPackages();
+    const quoteId = quoteIdSchema.parse(req.params.id);
+    const updatedQuote = await storage.removePromoCode(quoteId);
     
-    return res.status(200).json({
-      success: true,
-      data: packages
-    });
+    if (!updatedQuote) {
+      return res.status(404).json({ success: false, message: 'Quote not found' });
+    }
+    
+    res.json({ success: true, quote: updatedQuote });
   } catch (error) {
-    console.error('Error fetching packages:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while fetching packages.'
-    });
+    console.error('Error removing promo code:', error);
+    res.status(400).json({ success: false, message: 'Invalid quote ID' });
   }
 });
 
-/**
- * Get available add-ons
- * GET /api/addons
- */
-router.get('/addons', async (req, res) => {
+// Apply a special offer to a quote
+router.post('/:id/apply-offer', async (req, res) => {
   try {
-    const addons = await storage.getAddons();
+    const quoteId = quoteIdSchema.parse(req.params.id);
+    const { offerId } = req.body;
     
-    return res.status(200).json({
-      success: true,
-      data: addons
-    });
+    if (!offerId) {
+      return res.status(400).json({ success: false, message: 'Offer ID is required' });
+    }
+    
+    const updatedQuote = await storage.applySpecialOffer(quoteId, offerId);
+    
+    if (!updatedQuote) {
+      return res.status(404).json({ success: false, message: 'Quote not found or invalid offer ID' });
+    }
+    
+    res.json({ success: true, quote: updatedQuote });
   } catch (error) {
-    console.error('Error fetching add-ons:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while fetching add-ons.'
-    });
+    console.error('Error applying special offer:', error);
+    res.status(400).json({ success: false, message: 'Invalid request' });
   }
 });
+
+// Send quote confirmation email
+router.post('/:id/send-confirmation', async (req, res) => {
+  try {
+    const quoteId = quoteIdSchema.parse(req.params.id);
+    const { email } = emailSchema.parse(req.body);
+    
+    // Get the quote
+    const quote = await storage.getQuote(quoteId);
+    
+    if (!quote) {
+      return res.status(404).json({ success: false, message: 'Quote not found' });
+    }
+    
+    // Determine recipient email, either from request or from user if authenticated
+    const recipientEmail = email || (req.user?.email) || null;
+    
+    if (!recipientEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email address is required. Either provide it in the request or log in.' 
+      });
+    }
+
+    // Generate email content
+    const emailHtml = generateQuoteEmailHtml(quote);
+    const emailText = generateQuoteEmailText(quote);
+    
+    // Send the email
+    const emailSent = await sendEmail({
+      to: recipientEmail,
+      subject: `Your MyDentalFly Quote #${quoteId}`,
+      text: emailText,
+      html: emailHtml
+    });
+    
+    if (!emailSent) {
+      return res.status(500).json({ success: false, message: 'Failed to send email' });
+    }
+    
+    // Update quote to mark as emailed
+    await storage.updateQuote(quoteId, { emailSent: true, emailSentAt: new Date() });
+    
+    res.json({ 
+      success: true, 
+      message: 'Quote confirmation email sent successfully',
+      recipientEmail
+    });
+  } catch (error) {
+    console.error('Error sending quote confirmation email:', error);
+    res.status(400).json({ success: false, message: 'Invalid request' });
+  }
+});
+
+// Helper function to generate HTML email content
+function generateQuoteEmailHtml(quote: any): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Your MyDentalFly Quote</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; }
+        .logo { max-width: 200px; }
+        h1 { color: #4361ee; }
+        .section { margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        .total-row { font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://mydentalfly.com/logo.png" alt="MyDentalFly Logo" class="logo">
+          <h1>Your Dental Quote</h1>
+        </div>
+        
+        <div class="section">
+          <p>Thank you for choosing MyDentalFly for your dental needs. Below is a summary of your quote:</p>
+        </div>
+        
+        <div class="section">
+          <h2>Quote Summary</h2>
+          <table>
+            <tr>
+              <th>Item</th>
+              <th>Description</th>
+              <th>Price</th>
+            </tr>
+            ${quote.treatments?.map((treatment: any) => `
+              <tr>
+                <td>${treatment.name}</td>
+                <td>${treatment.description}</td>
+                <td>$${treatment.price.toFixed(2)}</td>
+              </tr>
+            `).join('') || ''}
+            
+            ${quote.packages?.map((pkg: any) => `
+              <tr>
+                <td>${pkg.name}</td>
+                <td>${pkg.description}</td>
+                <td>$${pkg.price.toFixed(2)}</td>
+              </tr>
+            `).join('') || ''}
+            
+            ${quote.addons?.map((addon: any) => `
+              <tr>
+                <td>${addon.name}</td>
+                <td>${addon.description}</td>
+                <td>$${addon.price.toFixed(2)}</td>
+              </tr>
+            `).join('') || ''}
+            
+            <tr>
+              <td colspan="2">Subtotal</td>
+              <td>$${quote.subtotal.toFixed(2)}</td>
+            </tr>
+            
+            ${quote.discount > 0 ? `
+              <tr>
+                <td colspan="2">Discount</td>
+                <td>-$${quote.discount.toFixed(2)}</td>
+              </tr>
+            ` : ''}
+            
+            <tr class="total-row">
+              <td colspan="2">Total</td>
+              <td>$${quote.total.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+        
+        ${quote.promoCode ? `
+          <div class="section">
+            <p>Promo Code Applied: <strong>${quote.promoCode}</strong></p>
+          </div>
+        ` : ''}
+        
+        <div class="section">
+          <p>This quote is valid for 30 days. To proceed with your treatment or if you have any questions, please contact us.</p>
+          <p>You can view your quote online at: <a href="https://mydentalfly.com/quotes/${quote.id}">https://mydentalfly.com/quotes/${quote.id}</a></p>
+        </div>
+        
+        <div class="footer">
+          <p>MyDentalFly - Your Gateway to Premium Dental Care</p>
+          <p>© ${new Date().getFullYear()} MyDentalFly. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Helper function to generate plain text email content
+function generateQuoteEmailText(quote: any): string {
+  let text = `
+YOUR MYDENTALFLY QUOTE
+
+Thank you for choosing MyDentalFly for your dental needs. Below is a summary of your quote:
+
+QUOTE SUMMARY:
+`;
+
+  // Add treatments
+  if (quote.treatments && quote.treatments.length > 0) {
+    text += `\nTREATMENTS:\n`;
+    quote.treatments.forEach((treatment: any) => {
+      text += `${treatment.name} - $${treatment.price.toFixed(2)}\n`;
+    });
+  }
+
+  // Add packages
+  if (quote.packages && quote.packages.length > 0) {
+    text += `\nPACKAGES:\n`;
+    quote.packages.forEach((pkg: any) => {
+      text += `${pkg.name} - $${pkg.price.toFixed(2)}\n`;
+    });
+  }
+
+  // Add addons
+  if (quote.addons && quote.addons.length > 0) {
+    text += `\nADD-ONS:\n`;
+    quote.addons.forEach((addon: any) => {
+      text += `${addon.name} - $${addon.price.toFixed(2)}\n`;
+    });
+  }
+
+  // Add summary
+  text += `
+Subtotal: $${quote.subtotal.toFixed(2)}`;
+
+  if (quote.discount > 0) {
+    text += `
+Discount: -$${quote.discount.toFixed(2)}`;
+  }
+
+  text += `
+TOTAL: $${quote.total.toFixed(2)}
+
+`;
+
+  // Add promo code if applicable
+  if (quote.promoCode) {
+    text += `Promo Code Applied: ${quote.promoCode}\n\n`;
+  }
+
+  // Add footer
+  text += `
+This quote is valid for 30 days. To proceed with your treatment or if you have any questions, please contact us.
+
+You can view your quote online at: https://mydentalfly.com/quotes/${quote.id}
+
+MyDentalFly - Your Gateway to Premium Dental Care
+© ${new Date().getFullYear()} MyDentalFly. All rights reserved.
+`;
+
+  return text;
+}
 
 export default router;
