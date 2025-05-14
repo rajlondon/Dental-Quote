@@ -405,6 +405,15 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           total: newTotal
         };
         
+        // Debug log for updated quote object
+        console.log('[QuoteBuilder] Updated quote with discount:', {
+          subtotal: updatedQuote.subtotal,
+          promoDiscount: updatedQuote.promoDiscount,
+          offerDiscount: updatedQuote.offerDiscount,
+          totalDiscount: updatedQuote.discount,
+          newTotal: updatedQuote.total
+        });
+        
         setQuote(updatedQuote);
         
         // Track successful promo code application
