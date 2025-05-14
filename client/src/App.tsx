@@ -227,6 +227,24 @@ function Router() {
       <Route path="/resilient-websocket-test" component={ResilientWebSocketTest2} />
       <Route path="/resilient-websocket" component={ResilientWebSocketTest} />
       <Route path="/resilient-websocket-test3" component={ResilientWebSocketTest3} />
+      
+      {/* Quote System Testing Routes */}
+      <Route path="/quote-test" component={() => {
+        const QuoteTestPage = React.lazy(() => import("@/pages/QuoteTestPage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote testing page...</div>}>
+            <QuoteTestPage />
+          </React.Suspense>
+        );
+      }} />
+      <Route path="/test-dashboard" component={() => {
+        const TestDashboard = React.lazy(() => import("@/pages/TestDashboard"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading testing dashboard...</div>}>
+            <TestDashboard />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
