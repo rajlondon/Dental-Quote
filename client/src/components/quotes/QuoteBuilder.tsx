@@ -473,7 +473,24 @@ export function QuoteBuilder({
                 <span>{formatCurrency(quote.subtotal)}</span>
               </div>
               
-              {quote.discount > 0 && (
+              {/* Show promo discount separately if it exists */}
+              {(quote.promoDiscount || 0) > 0 && (
+                <div className="flex justify-between items-center text-sm text-green-600">
+                  <span>Promo Discount ({quote.promoCode})</span>
+                  <span>-{formatCurrency(quote.promoDiscount || 0)}</span>
+                </div>
+              )}
+              
+              {/* Show offer discount separately if it exists */}
+              {(quote.offerDiscount || 0) > 0 && (
+                <div className="flex justify-between items-center text-sm text-green-600">
+                  <span>Special Offer Discount</span>
+                  <span>-{formatCurrency(quote.offerDiscount || 0)}</span>
+                </div>
+              )}
+              
+              {/* Show total discount if neither exists separately */}
+              {quote.discount > 0 && !(quote.promoDiscount || 0) && !(quote.offerDiscount || 0) && (
                 <div className="flex justify-between items-center text-sm text-green-600">
                   <span>Discount</span>
                   <span>-{formatCurrency(quote.discount)}</span>
