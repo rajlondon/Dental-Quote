@@ -3,16 +3,33 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
 
-// Lazy-loaded components with proper named imports
-const QuoteBuilder = lazy(() => 
-  import('@/components/quotes/QuoteBuilder').then(module => ({ default: module.QuoteBuilder }))
-);
-const QuoteSummaryOptimized = lazy(() => 
-  import('@/components/quotes/QuoteSummaryOptimized').then(module => ({ default: module.QuoteSummaryOptimized }))
-);
-const QuoteConfirmation = lazy(() => 
-  import('@/components/quotes/QuoteConfirmation').then(module => ({ default: module.QuoteConfirmation }))
-);
+// Create fake default exports by wrapping them in components
+const LazyQuoteBuilder = lazy(() => {
+  return Promise.resolve({
+    default: (props: any) => {
+      const QuoteBuilderModule = require('@/components/quotes/QuoteBuilder');
+      return <QuoteBuilderModule.QuoteBuilder {...props} />;
+    }
+  });
+});
+
+const LazyQuoteSummaryOptimized = lazy(() => {
+  return Promise.resolve({
+    default: (props: any) => {
+      const QuoteSummaryOptimizedModule = require('@/components/quotes/QuoteSummaryOptimized');
+      return <QuoteSummaryOptimizedModule.QuoteSummaryOptimized {...props} />;
+    }
+  });
+});
+
+const LazyQuoteConfirmation = lazy(() => {
+  return Promise.resolve({
+    default: (props: any) => {
+      const QuoteConfirmationModule = require('@/components/quotes/QuoteConfirmation');
+      return <QuoteConfirmationModule.QuoteConfirmation {...props} />;
+    }
+  });
+});
 
 // Fallback loading component
 const LoadingFallback = () => (
@@ -105,7 +122,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
   return (
     <Suspense fallback={<LoadingFallback />}>
       {currentStep === 'builder' && (
-        <QuoteBuilder
+        <LazyQuoteBuilder
           quoteId={quoteId}
           specialOfferId={specialOfferId}
           promoCode={promoCode}
@@ -116,7 +133,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
       
       {currentStep === 'summary' && quote && (
         <div className="space-y-6">
-          <QuoteSummaryOptimized 
+          <LazyQuoteSummaryOptimized 
             quote={quote}
             showPromoDetails={true}
           />
@@ -138,7 +155,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
       )}
       
       {currentStep === 'confirmation' && quote && (
-        <QuoteConfirmation 
+        <LazyQuoteConfirmation 
           quote={quote}
           onComplete={handleConfirmationComplete}
           onCancel={handleCancel}
