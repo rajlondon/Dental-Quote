@@ -112,27 +112,47 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   const [quoteStartTime] = useState<number>(Date.now());
 
   // Fetch treatments
+  // Check if we're in test mode for endpoints
+  const isTestMode = typeof window !== 'undefined' && 
+    (window.location.pathname.includes('quote-test') || window.location.pathname.includes('test-dashboard'));
+
+  // Use appropriate endpoints based on test mode
+  const treatmentsEndpoint = isTestMode ? '/api/test-promo-codes/treatments' : '/api/treatments';
+  
+  // Log endpoints being used
+  useEffect(() => {
+    if (isTestMode) {
+      console.log('[QuoteBuilder] Using test mode endpoints');
+    }
+  }, [isTestMode]);
+  
   const { 
     data: treatments,
     isLoading: isLoadingTreatments
   } = useQuery({
-    queryKey: ['/api/treatments'],
+    queryKey: [treatmentsEndpoint],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/treatments');
+      console.log(`[QuoteBuilder] Fetching treatments from: ${treatmentsEndpoint}`);
+      const res = await apiRequest('GET', treatmentsEndpoint);
       const data = await res.json();
       return data;
     }
   });
 
+  // Set package and addon endpoints based on test mode
+  const packagesEndpoint = isTestMode ? '/api/test-packages' : '/api/treatment-packages';
+  const addonsEndpoint = isTestMode ? '/api/test-promo-codes/addons' : '/api/addons';
+  
   // Fetch treatment packages
   const { 
     data: packages,
     isLoading: isLoadingPackages
   } = useQuery({
-    queryKey: ['/api/test-packages'],
+    queryKey: [packagesEndpoint],
     queryFn: async () => {
       try {
-        const res = await apiRequest('GET', '/api/test-packages');
+        console.log(`[QuoteBuilder] Fetching packages from: ${packagesEndpoint}`);
+        const res = await apiRequest('GET', packagesEndpoint);
         if (!res.ok) {
           console.error('Failed to fetch packages:', res.statusText);
           return [];
@@ -152,9 +172,10 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
     data: addons,
     isLoading: isLoadingAddons
   } = useQuery({
-    queryKey: ['/api/addons'],
+    queryKey: [addonsEndpoint],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/addons');
+      console.log(`[QuoteBuilder] Fetching addons from: ${addonsEndpoint}`);
+      const res = await apiRequest('GET', addonsEndpoint);
       const data = await res.json();
       return data;
     }
@@ -279,7 +300,16 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         return { success: false, message: "Please enter a valid promo code" };
       }
       
-      const response = await fetch(`/api/promo-codes/${encodeURIComponent(code.trim())}/validate`);
+      // Check if we're in test mode
+      const isTestMode = window.location.pathname.includes('quote-test') || window.location.pathname.includes('test-dashboard');
+      
+      // Use test API endpoint if in test mode
+      const apiEndpoint = isTestMode 
+        ? `/api/test-promo-codes/${encodeURIComponent(code.trim())}/validate` 
+        : `/api/promo-codes/${encodeURIComponent(code.trim())}/validate`;
+        
+      console.log(`[QuoteBuilder] Using promo code validation endpoint: ${apiEndpoint}`);
+      const response = await fetch(apiEndpoint);
       
       // Handle network or server errors
       if (!response.ok) {
