@@ -165,8 +165,20 @@ export const QuoteConfirmation = ({ quoteId, quote: initialQuote, onComplete, on
   }
 
   if (showEmailForm) {
-    // Use empty string as fallback for quoteId when it's undefined
-    return <QuoteConfirmationEmail quoteId={quoteId || ''} />;
+    return (
+      <>
+        {quote && quote.id ? (
+          // If we have a quote object with an id, use that
+          <QuoteConfirmationEmail quoteId={quote.id} />
+        ) : quoteId ? (
+          // Otherwise use the quoteId prop if it exists
+          <QuoteConfirmationEmail quoteId={quoteId} />
+        ) : (
+          // Fallback to empty string if we have neither
+          <QuoteConfirmationEmail quoteId="" />
+        )}
+      </>
+    );
   }
 
   return (
