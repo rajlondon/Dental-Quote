@@ -162,7 +162,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   useEffect(() => {
     // Calculate subtotal
     const treatmentsTotal = quote.treatments.reduce((sum, item) => sum + item.price, 0);
-    const packagesTotal = quote.packages.reduce((sum, item) => sum + item.price, 0);
+    const packagesTotal = quote.packages.reduce((sum, item) => sum + (item.price || 0), 0);
     const addonsTotal = quote.addons.reduce((sum, item) => sum + item.price, 0);
     
     const newSubtotal = treatmentsTotal + packagesTotal + addonsTotal;

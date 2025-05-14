@@ -146,7 +146,9 @@ export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
                     <Card key={pkg.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{pkg.name}</h4>
-                        <Badge variant="outline">{formatCurrency(pkg.price)}</Badge>
+                        <Badge variant="outline">
+                          {pkg.price ? formatCurrency(pkg.price) : "Price on request"}
+                        </Badge>
                       </div>
                       <p className="text-sm text-gray-500 mb-2">{pkg.description}</p>
                       <div className="mb-4">
@@ -250,7 +252,7 @@ export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
                       <li key={index} className="flex justify-between items-center text-sm">
                         <span>{item.name}</span>
                         <div className="flex items-center gap-2">
-                          <span>{formatCurrency(item.price)}</span>
+                          <span>{item.price ? formatCurrency(item.price) : "Price on request"}</span>
                           <Button 
                             variant="ghost" 
                             size="icon" 
