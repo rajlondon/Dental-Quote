@@ -10,7 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from '@/lib/analytics';
 
-export function QuoteBuilder() {
+interface QuoteBuilderProps {
+  onComplete?: () => void;
+}
+
+export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
   const { 
     quote, 
     addTreatment, 
