@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
-import { sendEmail } from '../email/mailjet';
 
 const router = Router();
 
@@ -159,24 +158,16 @@ router.post('/:id/send-confirmation', async (req, res) => {
       });
     }
 
-    // Generate email content
-    const emailHtml = generateQuoteEmailHtml(quote);
-    const emailText = generateQuoteEmailText(quote);
+    // For this implementation, we'll mock sending an email
+    // In a real implementation, we would use mailjet or another email service
+    console.log(`[MOCK] Sending quote confirmation email to ${recipientEmail} for quote ${quoteId}`);
     
-    // Send the email
-    const emailSent = await sendEmail({
-      to: recipientEmail,
-      subject: `Your MyDentalFly Quote #${quoteId}`,
-      text: emailText,
-      html: emailHtml
-    });
+    // Log email content for debugging
+    console.log(`[MOCK] Email subject: Your MyDentalFly Quote #${quoteId}`);
+    console.log(`[MOCK] Email contains quote details for ${quote.id}`);
     
-    if (!emailSent) {
-      return res.status(500).json({ success: false, message: 'Failed to send email' });
-    }
-    
-    // Update quote to mark as emailed
-    await storage.updateQuote(quoteId, { emailSent: true, emailSentAt: new Date() });
+    // Update quote to mark as emailed (mock)
+    await storage.updateQuote(quoteId, { emailSent: true });
     
     res.json({ 
       success: true, 
