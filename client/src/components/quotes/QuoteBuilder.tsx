@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from '@/lib/analytics';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import { PackageIcon } from 'lucide-react';
+import { PackageIcon, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface QuoteBuilderProps {
@@ -473,11 +473,27 @@ export function QuoteBuilder({
                 <span>{formatCurrency(quote.subtotal)}</span>
               </div>
               
-              {/* Always show any available discount information */}
+              {/* Always show any available discount information with enhanced visibility */}
               {quote.promoCode && (
-                <div className="flex justify-between items-center text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-md">
-                  <span>Promo Discount ({quote.promoCode})</span>
-                  <span>-{formatCurrency(quote.promoDiscount || 0)}</span>
+                <div 
+                  className="flex flex-col text-sm text-green-600 font-semibold bg-green-50 p-3 rounded-md border border-green-200 mt-2 mb-2"
+                  data-testid="promo-discount-display"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center">
+                      <PackageIcon className="h-4 w-4 mr-2" />
+                      <span>Promo Code Applied: <strong>{quote.promoCode}</strong></span>
+                    </div>
+                    <Badge variant="outline" className="bg-green-100">
+                      {quote.discountType === 'percentage' && quote.discountValue 
+                        ? `${quote.discountValue}% off` 
+                        : 'Discount'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Discount Amount:</span>
+                    <span className="font-bold">-{formatCurrency(quote.promoDiscount || 0)}</span>
+                  </div>
                 </div>
               )}
               
