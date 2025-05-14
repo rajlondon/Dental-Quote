@@ -196,4 +196,83 @@ router.get('/:packageId/:promoCode', (req, res) => {
   });
 });
 
+// Helper function to calculate total quote price
+function calculateTotalPrice(quoteData) {
+  let total = 0;
+  
+  // Add up treatment prices
+  if (quoteData.selectedTreatments && Array.isArray(quoteData.selectedTreatments)) {
+    quoteData.selectedTreatments.forEach(treatment => {
+      if (treatment.price && treatment.quantity) {
+        total += treatment.price * treatment.quantity;
+      }
+    });
+  }
+  
+  // Add up package prices
+  if (quoteData.selectedPackages && Array.isArray(quoteData.selectedPackages)) {
+    quoteData.selectedPackages.forEach(pkg => {
+      if (pkg.price && pkg.quantity) {
+        total += pkg.price * pkg.quantity;
+      }
+    });
+  }
+  
+  // Add up addon prices
+  if (quoteData.selectedAddons && Array.isArray(quoteData.selectedAddons)) {
+    quoteData.selectedAddons.forEach(addon => {
+      if (addon.price && addon.quantity) {
+        total += addon.price * addon.quantity;
+      }
+    });
+  }
+  
+  return total;
+}
+
+// Test endpoint for applying promo code directly to a quote
+router.post('/apply', (req, res) => {
+  const { code, quoteData } = req.body;
+  console.log('Testing promo application for code:', code);
+  console.log('Quote data:', JSON.stringify(quoteData));
+  
+  // Find matching promo code
+  const matchingPromo = TEST_PROMO_CODES.find(
+    promo => promo.code.toLowerCase() === code.toLowerCase()
+  );
+  
+  if (!matchingPromo) {
+    return res.status(404).json({
+      success: false,
+      message: 'Promo code not found'
+    });
+  }
+  
+  // Calculate the discount
+  const originalTotal = calculateTotalPrice(quoteData);
+  let discountAmount = 0;
+  
+  if (matchingPromo.discount_type === 'percentage') {
+    discountAmount = originalTotal * (matchingPromo.discount_value / 100);
+    // Apply max discount if available
+    if (matchingPromo.max_discount_amount && discountAmount > matchingPromo.max_discount_amount) {
+      discountAmount = matchingPromo.max_discount_amount;
+    }
+  } else if (matchingPromo.discount_type === 'fixed_amount') {
+    discountAmount = Math.min(originalTotal, matchingPromo.discount_value);
+  }
+  
+  const discountedTotal = Math.max(0, originalTotal - discountAmount);
+  
+  return res.json({
+    success: true,
+    data: {
+      original_total: originalTotal,
+      discount_amount: discountAmount,
+      discounted_total: discountedTotal,
+      promo: matchingPromo
+    }
+  });
+});
+
 export default router;
