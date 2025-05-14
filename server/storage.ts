@@ -2425,9 +2425,292 @@ export class DatabaseStorage implements IStorage {
       } finally {
         client.release();
       }
-    } catch (error) {
-      console.error(`[Storage] Error deleting quote ${id}:`, error);
       return false;
+    } catch (error) {
+      console.error(`[Storage] Error deleting quote ID ${id}:`, error);
+      return false;
+    }
+  }
+  
+  /**
+   * Apply a promo code to a quote
+   * @param id Quote ID
+   * @param promoCode Promo code to apply
+   * @returns Updated quote or undefined if quote not found or promo code is invalid
+   */
+  async applyPromoCode(id: string, promoCode: string): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Applying promo code "${promoCode}" to quote ID: ${id}`);
+      
+      // Get the quote
+      const quote = await this.getQuote(id);
+      
+      if (!quote) {
+        console.log(`[Storage] No quote found with ID: ${id}`);
+        return undefined;
+      }
+      
+      // Get the promotion by code
+      const promotion = await this.getPromotionByCode(promoCode);
+      
+      if (!promotion) {
+        console.log(`[Storage] No promotion found with code: ${promoCode}`);
+        return undefined;
+      }
+      
+      // Check if the promotion is active
+      if (!promotion.is_active) {
+        console.log(`[Storage] Promotion with code ${promoCode} is not active`);
+        return undefined;
+      }
+      
+      // Check if the promotion has expired
+      const now = new Date();
+      const startDate = new Date(promotion.start_date);
+      const endDate = new Date(promotion.end_date);
+      
+      if (now < startDate || now > endDate) {
+        console.log(`[Storage] Promotion with code ${promoCode} is not valid at the current time`);
+        return undefined;
+      }
+      
+      // Calculate the discount based on the promotion type
+      let discount = 0;
+      const subtotal = parseFloat(quote.subtotal) || 0;
+      
+      if (promotion.discount_type === 'percentage') {
+        discount = subtotal * (promotion.discount_value / 100);
+      } else if (promotion.discount_type === 'fixed_amount') {
+        discount = parseFloat(promotion.discount_value);
+      }
+      
+      // Make sure the discount doesn't exceed the subtotal
+      discount = Math.min(discount, subtotal);
+      
+      // Calculate the new total
+      const total = subtotal - discount;
+      
+      // Update the quote with the promo code and discount info
+      const client = await pool.connect();
+      let updatedQuote;
+      
+      try {
+        await client.query('BEGIN');
+        
+        const result = await client.query(`
+          UPDATE quotes
+          SET 
+            promo_code = $1,
+            promo_code_id = $2,
+            discount_type = $3,
+            discount_value = $4,
+            discount = $5,
+            total = $6,
+            updated_at = NOW()
+          WHERE id = $7
+          RETURNING *
+        `, [
+          promoCode,
+          promotion.id,
+          promotion.discount_type,
+          promotion.discount_value,
+          discount,
+          total,
+          id
+        ]);
+        
+        await client.query('COMMIT');
+        
+        if (result.rows.length > 0) {
+          updatedQuote = result.rows[0];
+          console.log(`[Storage] Successfully applied promo code "${promoCode}" to quote ID: ${id}`);
+        } else {
+          console.log(`[Storage] Failed to update quote with ID: ${id}`);
+        }
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+      
+      return updatedQuote;
+    } catch (error) {
+      console.error(`[Storage] Error applying promo code to quote ID ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  /**
+   * Remove a promo code from a quote
+   * @param id Quote ID
+   * @returns Updated quote or undefined if quote not found
+   */
+  async removePromoCode(id: string): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Removing promo code from quote ID: ${id}`);
+      
+      // Get the quote
+      const quote = await this.getQuote(id);
+      
+      if (!quote) {
+        console.log(`[Storage] No quote found with ID: ${id}`);
+        return undefined;
+      }
+      
+      // Reset the promo code and discount info
+      const client = await pool.connect();
+      let updatedQuote;
+      
+      try {
+        await client.query('BEGIN');
+        
+        const result = await client.query(`
+          UPDATE quotes
+          SET 
+            promo_code = NULL,
+            promo_code_id = NULL,
+            discount_type = NULL,
+            discount_value = NULL,
+            discount = 0,
+            total = subtotal,
+            updated_at = NOW()
+          WHERE id = $1
+          RETURNING *
+        `, [id]);
+        
+        await client.query('COMMIT');
+        
+        if (result.rows.length > 0) {
+          updatedQuote = result.rows[0];
+          console.log(`[Storage] Successfully removed promo code from quote ID: ${id}`);
+        } else {
+          console.log(`[Storage] Failed to update quote with ID: ${id}`);
+        }
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+      
+      return updatedQuote;
+    } catch (error) {
+      console.error(`[Storage] Error removing promo code from quote ID ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  /**
+   * Apply a special offer to a quote
+   * @param id Quote ID
+   * @param offerId Special offer ID
+   * @returns Updated quote or undefined if quote or offer not found
+   */
+  async applySpecialOffer(id: string, offerId: string): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Applying special offer ID "${offerId}" to quote ID: ${id}`);
+      
+      // Get the quote
+      const quote = await this.getQuote(id);
+      
+      if (!quote) {
+        console.log(`[Storage] No quote found with ID: ${id}`);
+        return undefined;
+      }
+      
+      // Get the special offer
+      const offer = await this.getOffer(offerId);
+      
+      if (!offer) {
+        console.log(`[Storage] No special offer found with ID: ${offerId}`);
+        return undefined;
+      }
+      
+      // Check if the offer is active
+      if (!offer.is_active || !offer.admin_approved) {
+        console.log(`[Storage] Special offer with ID ${offerId} is not active or not approved`);
+        return undefined;
+      }
+      
+      // Check if the offer has expired
+      const now = new Date();
+      const startDate = new Date(offer.start_date);
+      const endDate = new Date(offer.end_date);
+      
+      if (now < startDate || now > endDate) {
+        console.log(`[Storage] Special offer with ID ${offerId} is not valid at the current time`);
+        return undefined;
+      }
+      
+      // Apply the offer's promo code to get the discount
+      let result;
+      
+      if (offer.promo_code) {
+        result = await this.applyPromoCode(id, offer.promo_code);
+      } else {
+        // If the offer doesn't have a promo code, apply the discount directly
+        let discount = 0;
+        const subtotal = parseFloat(quote.subtotal) || 0;
+        
+        if (offer.discount_type === 'percentage') {
+          discount = subtotal * (offer.discount_value / 100);
+        } else if (offer.discount_type === 'fixed_amount') {
+          discount = parseFloat(offer.discount_value);
+        }
+        
+        // Make sure the discount doesn't exceed the subtotal
+        discount = Math.min(discount, subtotal);
+        
+        // Calculate the new total
+        const total = subtotal - discount;
+        
+        // Update the quote with the offer info
+        const client = await pool.connect();
+        
+        try {
+          await client.query('BEGIN');
+          
+          const updateResult = await client.query(`
+            UPDATE quotes
+            SET 
+              special_offer_id = $1,
+              discount_type = $2,
+              discount_value = $3,
+              discount = $4,
+              total = $5,
+              updated_at = NOW()
+            WHERE id = $6
+            RETURNING *
+          `, [
+            offerId,
+            offer.discount_type,
+            offer.discount_value,
+            discount,
+            total,
+            id
+          ]);
+          
+          await client.query('COMMIT');
+          
+          if (updateResult.rows.length > 0) {
+            result = updateResult.rows[0];
+            console.log(`[Storage] Successfully applied special offer ID "${offerId}" to quote ID: ${id}`);
+          } else {
+            console.log(`[Storage] Failed to update quote with ID: ${id}`);
+          }
+        } catch (error) {
+          await client.query('ROLLBACK');
+          throw error;
+        } finally {
+          client.release();
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`[Storage] Error applying special offer to quote ID ${id}:`, error);
+      return undefined;
     }
   }
   

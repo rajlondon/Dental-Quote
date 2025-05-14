@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Mail, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/analytics';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+// Schema for form validation
+const emailSchema = z.object({
+  email: z.string()
+    .email('Please enter a valid email address')
+    .min(1, 'Email is required'),
+});
+
+type EmailFormValues = z.infer<typeof emailSchema>;
 
 interface QuoteConfirmationEmailProps {
   quoteId: string | number;
@@ -12,93 +27,181 @@ interface QuoteConfirmationEmailProps {
 }
 
 export const QuoteConfirmationEmail = ({ quoteId, recipientEmail }: QuoteConfirmationEmailProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [showBackButton, setShowBackButton] = useState(true);
   const { toast } = useToast();
 
-  const sendConfirmationEmail = async () => {
-    if (!quoteId) {
+  // Initialize form with default values if recipientEmail is provided
+  const form = useForm<EmailFormValues>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: {
+      email: recipientEmail || '',
+    },
+  });
+
+  // Handle form submission
+  const onSubmit = async (values: EmailFormValues) => {
+    setLoading(true);
+    try {
+      // Track event when user initiates email sending
+      trackEvent('quote_email_initiated', 'quotes', `quote_id_${quoteId}`);
+      
+      // Send API request to send the confirmation email
+      const response = await apiRequest('POST', `/api/quotes/${quoteId}/send-confirmation`, {
+        email: values.email,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send email');
+      }
+      
+      const data = await response.json();
+      
+      // Update UI state
+      setSuccess(true);
+      setShowBackButton(false);
+      
+      // Show success toast
+      toast({
+        title: 'Email Sent!',
+        description: `Quote confirmation has been sent to ${data.recipientEmail}`,
+      });
+      
+      // Track successful email sending
+      trackEvent('quote_email_sent', 'quotes', `quote_id_${quoteId}`);
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      
+      // Show error toast
       toast({
         title: 'Error',
-        description: 'Cannot send confirmation email without a quote ID',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await apiRequest('POST', `/api/quotes/${quoteId}/send-confirmation`, {
-        email: recipientEmail
-      });
-      
-      setEmailSent(true);
-      toast({
-        title: 'Success',
-        description: 'Confirmation email sent!',
-      });
-      
-      // Track the event
-      trackEvent('quote_confirmation_email_sent', 'quotes', `quote_id_${quoteId}`);
-    } catch (error) {
-      console.error('Failed to send confirmation email:', error);
-      toast({
-        title: 'Error sending email',
-        description: 'We could not send the confirmation email. Please try again later.',
+        description: error instanceof Error ? error.message : 'Failed to send email. Please try again later.',
         variant: 'destructive',
       });
       
-      // Track the error
-      trackEvent('quote_confirmation_email_error', 'quotes', `quote_id_${quoteId}`);
+      // Track error event
+      trackEvent('quote_email_error', 'quotes', `quote_id_${quoteId}`);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  // If email was successfully sent, show success state
+  if (success) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl">
+            <CheckCircle2 className="mr-2 text-green-500" />
+            Email Sent Successfully
+          </CardTitle>
+          <CardDescription>
+            Your quote has been emailed to the provided address
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-lg">
+            The quote details have been sent to <span className="font-semibold">{form.getValues().email}</span>.
+          </p>
+          <p className="mt-4">
+            Please check your inbox (and spam folder) for the email containing your dental quote information.
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button 
+            onClick={() => window.location.href = '/quotes'}
+            className="mt-4"
+          >
+            View All Quotes
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="w-full max-w-md mx-auto mt-6">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          {emailSent ? <CheckCircle2 className="mr-2 text-green-500" /> : <Mail className="mr-2" />}
-          Quote Confirmation
+        <CardTitle className="flex items-center text-2xl">
+          <Mail className="mr-2 text-primary" />
+          Send Quote by Email
         </CardTitle>
         <CardDescription>
-          {emailSent 
-            ? 'Your quote confirmation has been sent!' 
-            : 'Would you like to receive this quote by email?'}
+          Receive a copy of your dental quote in your inbox
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {emailSent ? (
-          <p>
-            We've sent a confirmation email with your quote details. 
-            You can access this quote anytime from your account dashboard.
-          </p>
-        ) : (
-          <p>
-            Click the button below to receive a copy of your quote by email.
-            This email will include all details of your selected treatments and pricing.
-          </p>
-        )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="your.email@example.com" 
+                      {...field} 
+                      disabled={loading}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    We'll send your quote details to this email address.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              {showBackButton && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center"
+                  onClick={() => window.history.back()}
+                  disabled={loading}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              )}
+              
+              <Button
+                type="submit"
+                className="flex items-center"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send Quote
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+        
+        <div className="mt-6 bg-muted p-4 rounded-md">
+          <h3 className="font-semibold mb-2">What's included in the email:</h3>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Complete quote summary</li>
+            <li>Treatment details with prices</li>
+            <li>Applicable discounts and promo codes</li>
+            <li>Total cost breakdown</li>
+            <li>Link to view quote online</li>
+          </ul>
+        </div>
       </CardContent>
-      <CardFooter>
-        {!emailSent && (
-          <Button 
-            onClick={sendConfirmationEmail} 
-            disabled={isLoading || emailSent}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              'Send Quote by Email'
-            )}
-          </Button>
-        )}
-      </CardFooter>
     </Card>
   );
 };
