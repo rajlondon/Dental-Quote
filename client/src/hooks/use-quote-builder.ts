@@ -79,6 +79,9 @@ interface PromoCodeResponse {
  */
 interface UseQuoteBuilderResult {
   quote: QuoteState;
+  treatments: any[];
+  packages: any[];
+  addons: any[];
   isLoading: boolean;
   isLoadingTreatments: boolean;
   isLoadingPackages: boolean;
@@ -92,7 +95,7 @@ interface UseQuoteBuilderResult {
   removePackage: (pkg: Package) => void;
   addAddon: (addon: Addon) => void;
   removeAddon: (addon: Addon) => void;
-  applyPromoCode: (code: string) => Promise<void>;
+  applyPromoCode: (code: string) => Promise<PromoCodeResponse>;
   saveQuote: () => Promise<QuoteState>;
   finalizeQuote: () => Promise<QuoteState>;
   resetQuote: () => void;
@@ -542,6 +545,9 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
 
   return {
     quote,
+    treatments,
+    packages,
+    addons,
     isLoading: isLoadingTreatments || isLoadingPackages || isLoadingAddons || promoCodeMutation.isPending || saveQuoteMutation.isPending,
     isLoadingTreatments,
     isLoadingPackages,

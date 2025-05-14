@@ -1,18 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useQuoteBuilder } from './use-quote-builder';
-import { useSpecialOffers } from './use-special-offers';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
 
-// Define the Treatment interface for quote treatments
-interface Treatment {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  type: 'treatment';
-}
-
-// Define the SpecialOffer interface conforming to API structure
 interface SpecialOffer {
   id: string;
   title: string;
@@ -20,118 +11,176 @@ interface SpecialOffer {
   discount_type: 'percentage' | 'fixed_amount';
   discount_value: number;
   applicable_treatments: string[];
-  clinic_id?: string | number;
-  [key: string]: any;
+  clinic_id: string;
+  promo_code: string;
+  terms_conditions: string;
+  banner_image?: string;
 }
 
-// Map API special offer structure to our local structure
-const mapApiOfferToLocalOffer = (apiOffer: any): SpecialOffer => {
-  return {
-    id: apiOffer.id,
-    title: apiOffer.title,
-    description: apiOffer.description || '',
-    discount_type: apiOffer.discountType === 'percentage' ? 'percentage' : 'fixed_amount',
-    discount_value: Number(apiOffer.discountValue || 0),
-    applicable_treatments: Array.isArray(apiOffer.applicableTreatments) 
-      ? apiOffer.applicableTreatments 
-      : [],
-    clinic_id: apiOffer.clinicId,
-    promo_code: apiOffer.promoCode
-  };
-};
+interface UseSpecialOffersResult {
+  specialOfferId: string | null;
+  specialOffer: SpecialOffer | null;
+  isLoading: boolean;
+  error: string | null;
+  applySpecialOfferToQuote: (quote: any) => any;
+  clearSpecialOffer: () => void;
+}
 
 /**
- * Custom hook for integrating special offers into the quote builder
+ * Custom hook to handle special offers in quotes
  * 
- * This hook provides functionality to find applicable special offers for the
- * current quote treatments and apply them to calculate discounts.
+ * This hook manages fetching special offer details and applying them to quotes
+ * 
+ * @param initialOfferId - The initial special offer ID (if any)
+ * @returns Object with special offer state and methods
  */
-export function useSpecialOffersInQuote() {
-  const { quote, setQuote } = useQuoteBuilder();
-  const { offers, packages } = useSpecialOffers();
-  const [applicableOffers, setApplicableOffers] = useState<SpecialOffer[]>([]);
-  
-  // Convert API offers to our local structure
-  const mappedOffers = offers.map(mapApiOfferToLocalOffer);
-  
-  // Update applicable offers when treatments change
-  useEffect(() => {
-    if (quote.treatments && quote.treatments.length > 0) {
-      const treatmentIds = quote.treatments.map((t: Treatment) => t.id);
+export function useSpecialOffersInQuote(initialOfferId?: string): UseSpecialOffersResult {
+  const [specialOfferId, setSpecialOfferId] = useState<string | null>(initialOfferId || null);
+  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch special offer details if an ID is provided
+  const {
+    data: specialOffer,
+    isLoading,
+    isError,
+    error: queryError
+  } = useQuery({
+    queryKey: ['/api/special-offers', specialOfferId],
+    queryFn: async () => {
+      if (!specialOfferId) return null;
       
-      // Filter offers that apply to any of the treatments in the quote
-      const applicable = mappedOffers.filter(offer => {
-        if (!offer.applicable_treatments || !Array.isArray(offer.applicable_treatments)) {
-          return false;
+      try {
+        // First try to get a specific offer by ID
+        const response = await apiRequest('GET', `/api/special-offers/${specialOfferId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch special offer details');
         }
         
-        // Check if any of the quote treatments are in the offer's applicable treatments
-        return offer.applicable_treatments.some(treatmentId => 
-          treatmentIds.includes(treatmentId)
-        );
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching special offer:', error);
+        trackEvent('special_offer_fetch_error', 'error', error instanceof Error ? error.message : 'unknown');
+        throw error;
+      }
+    },
+    enabled: !!specialOfferId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Update error state when query fails
+  useEffect(() => {
+    if (isError && queryError) {
+      setError(queryError instanceof Error ? queryError.message : 'Failed to fetch special offer');
+      
+      // Show error toast
+      toast({
+        title: 'Error Loading Special Offer',
+        description: queryError instanceof Error ? queryError.message : 'Failed to fetch special offer',
+        variant: 'destructive',
+      });
+    } else {
+      setError(null);
+    }
+  }, [isError, queryError, toast]);
+
+  // Show toast when special offer is successfully loaded
+  useEffect(() => {
+    if (specialOffer && !isLoading && !isError) {
+      toast({
+        title: 'Special Offer Applied',
+        description: specialOffer.title,
       });
       
-      setApplicableOffers(applicable);
-    } else {
-      setApplicableOffers([]);
+      // Track offer application
+      trackEvent('special_offer_applied', 'offers', specialOffer.id);
     }
-  }, [quote.treatments, mappedOffers]);
-  
-  // Helper function to calculate discount amount
-  const calculateDiscountAmount = (currentQuote: any, offer: SpecialOffer): number => {
-    if (offer.discount_type === 'percentage') {
-      return Math.round((currentQuote.subtotal * offer.discount_value) / 100);
-    } else if (offer.discount_type === 'fixed_amount') {
-      return Math.min(offer.discount_value, currentQuote.subtotal);
+  }, [specialOffer, isLoading, isError, toast]);
+
+  /**
+   * Apply special offer discount to a quote
+   * 
+   * @param quote - The quote to apply the special offer to
+   * @returns The updated quote with special offer applied
+   */
+  const applySpecialOfferToQuote = (quote: any): any => {
+    if (!specialOffer) return quote;
+    
+    try {
+      // Create a copy of the quote to avoid mutating the original
+      const updatedQuote = { ...quote };
+      let appliedDiscount = 0;
+      
+      // Check if any treatments in the quote match the special offer's applicable treatments
+      const hasMatchingTreatments = updatedQuote.treatments.some((treatment: any) => 
+        specialOffer.applicable_treatments.includes(treatment.id)
+      );
+      
+      if (!hasMatchingTreatments) {
+        // If no matching treatments, check packages for matching treatments
+        const hasMatchingPackages = updatedQuote.packages.some((pkg: any) => 
+          pkg.treatments.some((treatment: any) => 
+            specialOffer.applicable_treatments.includes(treatment.id)
+          )
+        );
+        
+        if (!hasMatchingPackages) {
+          return quote; // No matching treatments or packages, return original quote
+        }
+      }
+      
+      // Calculate the discount based on the special offer type
+      if (specialOffer.discount_type === 'percentage') {
+        // Apply percentage discount to the subtotal
+        appliedDiscount = (updatedQuote.subtotal * specialOffer.discount_value) / 100;
+      } else if (specialOffer.discount_type === 'fixed_amount') {
+        // Apply fixed amount discount
+        appliedDiscount = specialOffer.discount_value;
+      }
+      
+      // Cap the discount to the subtotal
+      appliedDiscount = Math.min(appliedDiscount, updatedQuote.subtotal);
+      
+      // Update the quote with the special offer discount
+      updatedQuote.offerDiscount = appliedDiscount;
+      updatedQuote.appliedOfferId = specialOffer.id;
+      
+      // Recalculate the total by subtracting the new offer discount and existing discounts
+      const totalDiscount = (updatedQuote.discount || 0) + (updatedQuote.promoDiscount || 0) + appliedDiscount;
+      updatedQuote.total = Math.max(0, updatedQuote.subtotal - totalDiscount);
+      
+      // Track successful offer application
+      trackEvent('special_offer_discount_applied', 'offers', `${specialOffer.id}_${appliedDiscount}`);
+      
+      return updatedQuote;
+    } catch (error) {
+      console.error('Error applying special offer to quote:', error);
+      
+      // Track error
+      trackEvent('special_offer_application_error', 'error', error instanceof Error ? error.message : 'unknown');
+      
+      // Return original quote on error
+      return quote;
     }
-    return 0;
   };
-  
-  // Apply an offer to the quote
-  const applyOffer = (offerId: string): boolean => {
-    const offer = mappedOffers.find((o: SpecialOffer) => o.id === offerId);
-    if (!offer) return false;
-    
-    // Calculate new total with discount
-    const discountAmount = calculateDiscountAmount(quote, offer);
-    
-    // Track the special offer application
-    trackEvent('special_offer_applied', 'quote', offer.title);
-    
-    // Update the quote with the special offer discount
-    setQuote({
-      ...quote,
-      appliedOfferId: offerId,
-      offerDiscount: discountAmount,
-      discount: (quote.promoDiscount || 0) + discountAmount,
-      total: quote.subtotal - ((quote.promoDiscount || 0) + discountAmount)
-    });
-    
-    return true;
+
+  /**
+   * Clear the current special offer
+   */
+  const clearSpecialOffer = () => {
+    setSpecialOfferId(null);
+    trackEvent('special_offer_cleared', 'offers');
   };
-  
-  // Remove any applied offer from the quote
-  const removeOffer = (): boolean => {
-    if (!quote.appliedOfferId) return false;
-    
-    trackEvent('special_offer_removed', 'quote');
-    
-    setQuote({
-      ...quote,
-      appliedOfferId: undefined,
-      offerDiscount: 0,
-      discount: (quote.promoDiscount || 0),
-      total: quote.subtotal - (quote.promoDiscount || 0)
-    });
-    
-    return true;
-  };
-  
+
   return {
-    applicableOffers,
-    applyOffer,
-    removeOffer,
-    hasAppliedOffer: !!quote.appliedOfferId,
-    currentOfferId: quote.appliedOfferId
+    specialOfferId,
+    specialOffer,
+    isLoading,
+    error,
+    applySpecialOfferToQuote,
+    clearSpecialOffer
   };
 }
+
+export default useSpecialOffersInQuote;

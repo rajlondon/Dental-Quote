@@ -5,7 +5,7 @@ import { CheckCircle2, Link2, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/analytics';
-import { QuoteConfirmationEmail } from './QuoteConfirmationEmail';
+import QuoteConfirmationEmail from './QuoteConfirmationEmail';
 
 interface QuoteConfirmationProps {
   quoteId: string | number;
