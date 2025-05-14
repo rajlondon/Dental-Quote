@@ -24,9 +24,10 @@ type EmailFormValues = z.infer<typeof emailSchema>;
 interface QuoteConfirmationEmailProps {
   quoteId: string | number;
   recipientEmail?: string;
+  onComplete?: () => void;
 }
 
-export const QuoteConfirmationEmail = ({ quoteId, recipientEmail }: QuoteConfirmationEmailProps) => {
+export const QuoteConfirmationEmail = ({ quoteId, recipientEmail, onComplete }: QuoteConfirmationEmailProps) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showBackButton, setShowBackButton] = useState(true);
