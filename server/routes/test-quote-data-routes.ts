@@ -35,7 +35,14 @@ router.get('/promo-codes', (req, res) => {
 
 // Special route to access test promo codes without conflicts
 router.get('/', (req, res) => {
-  res.json(TEST_PROMO_CODES);
+  // Check path to determine what data to return
+  const path = req.baseUrl;
+  
+  if (path.includes('test-packages')) {
+    res.json(TEST_PACKAGES);
+  } else {
+    res.json(TEST_PROMO_CODES);
+  }
 });
 
 // Validate promo code for testing
@@ -91,6 +98,11 @@ router.get('/promo-codes', (req, res) => {
 // Get all special offers for testing
 router.get('/special-offers', (req, res) => {
   res.json(TEST_SPECIAL_OFFERS);
+});
+
+// Get all test packages for testing (dedicated endpoint)
+router.get('/test-packages', (req, res) => {
+  res.json(TEST_PACKAGES);
 });
 
 // Apply promo code to quote (for testing the complete flow)
@@ -196,13 +208,26 @@ router.get('/:packageId/:promoCode', (req, res) => {
   });
 });
 
+// Define quote item interface
+interface QuoteItem {
+  price?: number;
+  quantity?: number;
+}
+
+// Define quote data interface
+interface QuoteData {
+  selectedTreatments?: QuoteItem[];
+  selectedPackages?: QuoteItem[];
+  selectedAddons?: QuoteItem[];
+}
+
 // Helper function to calculate total quote price
-function calculateTotalPrice(quoteData) {
+function calculateTotalPrice(quoteData: QuoteData): number {
   let total = 0;
   
   // Add up treatment prices
   if (quoteData.selectedTreatments && Array.isArray(quoteData.selectedTreatments)) {
-    quoteData.selectedTreatments.forEach(treatment => {
+    quoteData.selectedTreatments.forEach((treatment: QuoteItem) => {
       if (treatment.price && treatment.quantity) {
         total += treatment.price * treatment.quantity;
       }
@@ -211,7 +236,7 @@ function calculateTotalPrice(quoteData) {
   
   // Add up package prices
   if (quoteData.selectedPackages && Array.isArray(quoteData.selectedPackages)) {
-    quoteData.selectedPackages.forEach(pkg => {
+    quoteData.selectedPackages.forEach((pkg: QuoteItem) => {
       if (pkg.price && pkg.quantity) {
         total += pkg.price * pkg.quantity;
       }
@@ -220,7 +245,7 @@ function calculateTotalPrice(quoteData) {
   
   // Add up addon prices
   if (quoteData.selectedAddons && Array.isArray(quoteData.selectedAddons)) {
-    quoteData.selectedAddons.forEach(addon => {
+    quoteData.selectedAddons.forEach((addon: QuoteItem) => {
       if (addon.price && addon.quantity) {
         total += addon.price * addon.quantity;
       }
@@ -232,7 +257,7 @@ function calculateTotalPrice(quoteData) {
 
 // Test endpoint for applying promo code directly to a quote
 router.post('/apply', (req, res) => {
-  const { code, quoteData } = req.body;
+  const { code, quoteData } = req.body as { code: string, quoteData: QuoteData };
   console.log('Testing promo application for code:', code);
   console.log('Quote data:', JSON.stringify(quoteData));
   
