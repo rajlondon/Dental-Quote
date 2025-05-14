@@ -1,282 +1,236 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useQuoteBuilder, Treatment, Package, Addon } from '@/hooks/use-quote-builder';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
+import { useQuoteBuilder } from '@/hooks/use-quote-builder';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 import { trackEvent } from '@/lib/analytics';
-import { Clipboard, X, Plus, Tag, Sparkles } from 'lucide-react';
 
-export interface QuoteBuilderProps {
-  initialData?: {
-    treatments?: Treatment[];
-    packages?: Package[];
-    addons?: Addon[];
-    promoCode?: string;
-  };
-  availableTreatments: Treatment[];
-  availablePackages: Package[];
-  availableAddons: Addon[];
-  onSave?: (quoteId: string) => void;
-}
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
-
-export default function QuoteBuilder({
-  initialData,
-  availableTreatments,
-  availablePackages,
-  availableAddons,
-  onSave,
-}: QuoteBuilderProps) {
-  const { toast } = useToast();
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const {
-    quote,
-    addTreatment,
-    removeTreatment,
+export function QuoteBuilder() {
+  const { 
+    quote, 
+    addTreatment, 
+    removeTreatment, 
     addPackage,
     removePackage,
     addAddon,
     removeAddon,
     applyPromoCode,
-    removePromoCode,
-    saveQuote
-  } = useQuoteBuilder({
-    treatments: initialData?.treatments || [],
-    packages: initialData?.packages || [],
-    addons: initialData?.addons || [],
-    promoCode: initialData?.promoCode || null,
-  });
+    resetQuote,
+    isLoading,
+    treatments,
+    packages,
+    addons
+  } = useQuoteBuilder();
   
-  const handleApplyPromoCode = async () => {
-    if (!promoCodeInput.trim()) {
+  const [promoCode, setPromoCode] = useState('');
+  const [activeTab, setActiveTab] = useState('treatments');
+  
+  const handlePromoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!promoCode.trim()) {
       toast({
-        title: 'Error',
-        description: 'Please enter a promo code',
-        variant: 'destructive',
+        title: "Error",
+        description: "Please enter a promo code",
+        variant: "destructive"
       });
       return;
     }
     
-    setIsApplyingPromo(true);
-    try {
-      const result = await applyPromoCode(promoCodeInput);
-      
+    const result = await applyPromoCode(promoCode);
+    
+    if (result.success) {
       toast({
-        title: result.success ? 'Success' : 'Error',
+        title: "Success",
         description: result.message,
-        variant: result.success ? 'default' : 'destructive',
       });
-      
-      if (result.success) {
-        setPromoCodeInput('');
-      }
-    } catch (error) {
+      trackEvent('promo_code_applied', { code: promoCode });
+    } else {
       toast({
-        title: 'Error',
-        description: 'Failed to apply promo code. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: result.message,
+        variant: "destructive"
       });
-    } finally {
-      setIsApplyingPromo(false);
+      trackEvent('promo_code_error', { code: promoCode, error: result.message });
     }
   };
-  
-  const handleSaveQuote = async () => {
-    if (quote.treatments.length === 0 && quote.packages.length === 0) {
-      toast({
-        title: 'Cannot save empty quote',
-        description: 'Please add at least one treatment or package to your quote.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      const result = await saveQuote();
-      
-      if (result.success) {
-        toast({
-          title: 'Quote saved successfully',
-          description: 'Your quote has been saved and can be accessed later.',
-          variant: 'default',
-        });
-        
-        if (onSave && result.quoteId) {
-          onSave(result.quoteId);
-        }
-      } else {
-        toast({
-          title: 'Error saving quote',
-          description: 'There was a problem saving your quote. Please try again.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
   };
   
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:w-2/3">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Build Your Dental Quote</CardTitle>
-              <CardDescription>
-                Select treatments, packages, and add-ons to create your personalized quote
-              </CardDescription>
-            </CardHeader>
+    <div className="quote-builder space-y-8">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold">Build Your Dental Treatment Quote</h2>
+        <Button 
+          variant="outline"
+          onClick={resetQuote}
+          disabled={
+            (!quote.treatments || quote.treatments.length === 0) && 
+            (!quote.packages || quote.packages.length === 0) && 
+            (!quote.addons || quote.addons.length === 0)
+          }
+        >
+          Reset Quote
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Left column: Selection tabs */}
+        <div className="md:col-span-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="treatments">Treatments</TabsTrigger>
+              <TabsTrigger value="packages">Packages</TabsTrigger>
+              <TabsTrigger value="addons">Add-ons</TabsTrigger>
+            </TabsList>
             
-            <Tabs defaultValue="treatments">
-              <CardContent>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="treatments">Treatments</TabsTrigger>
-                  <TabsTrigger value="packages">Packages</TabsTrigger>
-                  <TabsTrigger value="addons">Add-ons</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="treatments" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availableTreatments.map((treatment) => (
-                      <Card key={treatment.id} className="overflow-hidden">
-                        <CardHeader className="p-4 pb-2">
-                          <CardTitle className="text-lg">{treatment.name}</CardTitle>
-                          <CardDescription className="text-sm line-clamp-2">
-                            {treatment.description || 'No description available'}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardFooter className="flex justify-between items-center p-4 pt-2">
-                          <div className="font-semibold">{formatCurrency(treatment.price)}</div>
-                          <Button 
-                            size="sm"
-                            onClick={() => addTreatment(treatment)}
-                            disabled={quote.treatments.some(t => t.id === treatment.id)}
-                          >
-                            {quote.treatments.some(t => t.id === treatment.id) ? 'Added' : 'Add'}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="packages" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availablePackages.map((pkg) => (
-                      <Card key={pkg.id} className="overflow-hidden">
-                        <CardHeader className="p-4 pb-2">
-                          <CardTitle className="text-lg">{pkg.name}</CardTitle>
-                          <CardDescription className="text-sm line-clamp-2">
-                            {pkg.description || `Package includes ${pkg.treatments.length} treatments`}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0 pb-2">
-                          <div className="flex flex-wrap gap-1">
-                            {pkg.treatments.map((treatmentId) => {
-                              const treatment = availableTreatments.find(t => t.id === treatmentId);
-                              return treatment ? (
-                                <Badge key={treatmentId} variant="outline" className="text-xs">
-                                  {treatment.name}
-                                </Badge>
-                              ) : null;
-                            })}
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-between items-center p-4 pt-2">
-                          <div className="font-semibold">{formatCurrency(pkg.price)}</div>
-                          <Button 
-                            size="sm"
-                            onClick={() => addPackage(pkg)}
-                            disabled={quote.packages.some(p => p.id === pkg.id)}
-                          >
-                            {quote.packages.some(p => p.id === pkg.id) ? 'Added' : 'Add'}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="addons" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availableAddons.map((addon) => (
-                      <Card key={addon.id} className="overflow-hidden">
-                        <CardHeader className="p-4 pb-2">
-                          <CardTitle className="text-lg">{addon.name}</CardTitle>
-                          <CardDescription className="text-sm line-clamp-2">
-                            {addon.description || 'No description available'}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardFooter className="flex justify-between items-center p-4 pt-2">
-                          <div className="font-semibold">{formatCurrency(addon.price)}</div>
-                          <Button 
-                            size="sm"
-                            onClick={() => addAddon(addon)}
-                            disabled={quote.addons.some(a => a.id === addon.id)}
-                          >
-                            {quote.addons.some(a => a.id === addon.id) ? 'Added' : 'Add'}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                </TabsContent>
-              </CardContent>
-            </Tabs>
-          </Card>
+            {/* Treatments Tab */}
+            <TabsContent value="treatments" className="space-y-4">
+              <h3 className="text-xl font-semibold">Select Treatments</h3>
+              
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {treatments && treatments.map((treatment) => (
+                    <Card key={treatment.id} className="p-4 flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{treatment.name}</h4>
+                        <Badge>{formatCurrency(treatment.price)}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-500 flex-grow">{treatment.description}</p>
+                      <div className="mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => addTreatment(treatment)}
+                          className="w-full"
+                        >
+                          Add to Quote
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            {/* Packages Tab */}
+            <TabsContent value="packages" className="space-y-4">
+              <h3 className="text-xl font-semibold">Treatment Packages</h3>
+              
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {packages && packages.map((pkg) => (
+                    <Card key={pkg.id} className="p-4 flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{pkg.name}</h4>
+                        <Badge variant="outline">{formatCurrency(pkg.price)}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-2">{pkg.description}</p>
+                      <div className="mb-4">
+                        <h5 className="text-xs font-semibold mb-1">Includes:</h5>
+                        <ul className="text-xs text-gray-500 list-disc pl-4">
+                          {pkg.treatments && pkg.treatments.map((treatment, index) => (
+                            <li key={index}>{treatment.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-auto">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => addPackage(pkg)}
+                          className="w-full"
+                        >
+                          Add Package
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            {/* Add-ons Tab */}
+            <TabsContent value="addons" className="space-y-4">
+              <h3 className="text-xl font-semibold">Additional Services</h3>
+              
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {addons && addons.map((addon) => (
+                    <Card key={addon.id} className="p-4 flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{addon.name}</h4>
+                        <Badge variant="secondary">{formatCurrency(addon.price)}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-500 flex-grow">{addon.description}</p>
+                      <div className="mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => addAddon(addon)}
+                          className="w-full"
+                        >
+                          Add to Quote
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
         
-        <div className="lg:w-1/3">
-          <Card className="sticky top-4">
-            <CardHeader>
-              <CardTitle>Your Quote Summary</CardTitle>
-              <CardDescription>Review your selected items</CardDescription>
-            </CardHeader>
+        {/* Right column: Quote summary */}
+        <div>
+          <Card className="p-6">
+            <h3 className="text-xl font-bold mb-4">Quote Summary</h3>
             
-            <CardContent>
+            {/* Selected items */}
+            <div className="space-y-4 mb-6">
               {/* Treatments */}
-              {quote.treatments.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="font-medium mb-2">Treatments</h3>
+              {quote.treatments && quote.treatments.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Treatments</h4>
                   <ul className="space-y-2">
-                    {quote.treatments.map((treatment) => (
-                      <li key={treatment.id} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <span>{treatment.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            {formatCurrency(treatment.price)}
-                          </span>
+                    {quote.treatments.map((item, index) => (
+                      <li key={index} className="flex justify-between items-center text-sm">
+                        <span>{item.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{formatCurrency(item.price)}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6" 
+                            onClick={() => removeTreatment(item)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                          </Button>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => removeTreatment(treatment.id)}
-                          className="h-8 w-8"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
                       </li>
                     ))}
                   </ul>
@@ -284,26 +238,25 @@ export default function QuoteBuilder({
               )}
               
               {/* Packages */}
-              {quote.packages.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="font-medium mb-2">Packages</h3>
+              {quote.packages && quote.packages.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Packages</h4>
                   <ul className="space-y-2">
-                    {quote.packages.map((pkg) => (
-                      <li key={pkg.id} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <span>{pkg.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            {formatCurrency(pkg.price)}
-                          </span>
+                    {quote.packages.map((item, index) => (
+                      <li key={index} className="flex justify-between items-center text-sm">
+                        <span>{item.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{formatCurrency(item.price)}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6" 
+                            onClick={() => removePackage(item)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                          </Button>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => removePackage(pkg.id)}
-                          className="h-8 w-8"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
                       </li>
                     ))}
                   </ul>
@@ -311,120 +264,104 @@ export default function QuoteBuilder({
               )}
               
               {/* Add-ons */}
-              {quote.addons.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="font-medium mb-2">Add-ons</h3>
+              {quote.addons && quote.addons.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Add-ons</h4>
                   <ul className="space-y-2">
-                    {quote.addons.map((addon) => (
-                      <li key={addon.id} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <span>{addon.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            {formatCurrency(addon.price)}
-                          </span>
+                    {quote.addons.map((item, index) => (
+                      <li key={index} className="flex justify-between items-center text-sm">
+                        <span>{item.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{formatCurrency(item.price)}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6" 
+                            onClick={() => removeAddon(item)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                          </Button>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => removeAddon(addon.id)}
-                          className="h-8 w-8"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
               
-              {/* Empty state */}
-              {quote.treatments.length === 0 && quote.packages.length === 0 && quote.addons.length === 0 && (
-                <div className="py-8 text-center text-muted-foreground">
-                  <p className="mb-2">Your quote is empty</p>
-                  <p className="text-sm">Add treatments, packages, or add-ons to see them here</p>
+              {(!quote.treatments || quote.treatments.length === 0) && 
+               (!quote.packages || quote.packages.length === 0) && 
+               (!quote.addons || quote.addons.length === 0) && (
+                <p className="text-gray-500 text-sm italic">No items added to quote yet</p>
+              )}
+            </div>
+            
+            <Separator className="my-4" />
+            
+            {/* Promo code */}
+            <div className="mb-6">
+              <h4 className="font-medium mb-2">Promo Code</h4>
+              <form onSubmit={handlePromoSubmit} className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter code"
+                    disabled={isLoading || !!quote.promoCode}
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  size="sm"
+                  disabled={isLoading || !!quote.promoCode}
+                >
+                  Apply
+                </Button>
+              </form>
+              {quote.promoCode && (
+                <div className="mt-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-green-50">
+                      {quote.promoCode}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        resetQuote();
+                        setPromoCode('');
+                      }}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               )}
-              
-              {/* Promo code input */}
-              <div className="mt-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Input
-                    placeholder="Enter promo code"
-                    value={promoCodeInput}
-                    onChange={(e) => setPromoCodeInput(e.target.value)}
-                    disabled={isApplyingPromo || !!quote.promotion}
-                  />
-                  <Button
-                    onClick={handleApplyPromoCode}
-                    disabled={isApplyingPromo || !promoCodeInput.trim() || !!quote.promotion}
-                  >
-                    Apply
-                  </Button>
-                </div>
-                
-                {/* Active promotion */}
-                {quote.promotion && (
-                  <div className="bg-muted p-3 rounded-md mb-4 relative">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6"
-                      onClick={removePromoCode}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Tag className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-sm">{quote.promotion.title}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-1">{quote.promotion.description}</p>
-                    <div className="text-sm flex items-center">
-                      <Sparkles className="h-3 w-3 text-primary mr-1" />
-                      <span>
-                        {quote.promotion.discount_type === 'percentage' 
-                          ? `${quote.promotion.discount_value}% off` 
-                          : `${formatCurrency(quote.promotion.discount_value)} off`}
-                      </span>
-                    </div>
-                  </div>
-                )}
+            </div>
+            
+            {/* Totals */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span>Subtotal</span>
+                <span>{formatCurrency(quote.subtotal)}</span>
               </div>
               
-              {/* Totals */}
-              {(quote.treatments.length > 0 || quote.packages.length > 0 || quote.addons.length > 0) && (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex justify-between mb-2">
-                    <span>Subtotal:</span>
-                    <span>{formatCurrency(quote.subtotal)}</span>
-                  </div>
-                  
-                  {quote.discount > 0 && (
-                    <div className="flex justify-between mb-2 text-primary">
-                      <span>Discount:</span>
-                      <span>-{formatCurrency(quote.discount)}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total:</span>
-                    <span>{formatCurrency(quote.total)}</span>
-                  </div>
+              {quote.discount > 0 && (
+                <div className="flex justify-between items-center text-sm text-green-600">
+                  <span>Discount</span>
+                  <span>-{formatCurrency(quote.discount)}</span>
                 </div>
               )}
-            </CardContent>
-            
-            <CardFooter>
-              <Button 
-                className="w-full" 
-                onClick={handleSaveQuote}
-                disabled={
-                  isSaving || 
-                  (quote.treatments.length === 0 && quote.packages.length === 0 && quote.addons.length === 0)
-                }
-              >
-                {isSaving ? 'Saving...' : 'Save Quote'}
-              </Button>
-            </CardFooter>
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center font-bold">
+                <span>Total</span>
+                <span>{formatCurrency(quote.total)}</span>
+              </div>
+            </div>
           </Card>
         </div>
       </div>

@@ -1,282 +1,275 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { trackEvent } from '@/lib/analytics';
 
-// Define the types we need for our hook
-export interface Treatment {
+// Types for quote items
+interface Treatment {
   id: string;
   name: string;
-  price: number;
-  description?: string;
-}
-
-export interface Package {
-  id: string;
-  name: string;
-  price: number;
-  treatments: string[];
-  description?: string;
-}
-
-export interface Addon {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-}
-
-export interface Promotion {
-  id: string;
-  title: string;
   description: string;
-  promo_code: string;
-  discount_type: 'percentage' | 'fixed_amount';
-  discount_value: number;
+  price: number;
+  type: 'treatment';
 }
 
-export interface Quote {
-  id?: string;
+interface Package {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: 'package';
+  treatments: Treatment[];
+}
+
+interface Addon {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: 'addon';
+}
+
+// Quote state interface
+interface QuoteState {
   treatments: Treatment[];
   packages: Package[];
   addons: Addon[];
-  promotion: Promotion | null;
   subtotal: number;
   discount: number;
   total: number;
-  patientId?: number;
-  clinicId?: number;
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  promoCode: string | null;
+  promoCodeId: string | null;
+  discountType: 'percentage' | 'fixed_amount' | null;
+  discountValue: number | null;
 }
 
-export interface QuoteBuilderOptions {
-  treatments?: Treatment[];
-  packages?: Package[];
-  addons?: Addon[];
-  promoCode?: string | null;
-}
-
-export interface UseQuoteBuilderResult {
-  quote: Quote;
-  addTreatment: (treatment: Treatment) => void;
-  removeTreatment: (treatmentId: string) => void;
-  addPackage: (pkg: Package) => void;
-  removePackage: (packageId: string) => void;
-  addAddon: (addon: Addon) => void;
-  removeAddon: (addonId: string) => void;
-  applyPromoCode: (code: string) => Promise<{ success: boolean; message: string }>;
-  removePromoCode: () => void;
-  saveQuote: () => Promise<{ success: boolean; quoteId?: string; message?: string }>;
-  reset: () => void;
-}
-
-const calculateSubtotal = (
-  treatments: Treatment[], 
-  packages: Package[], 
-  addons: Addon[]
-): number => {
-  const treatmentsTotal = treatments.reduce((sum, t) => sum + t.price, 0);
-  const packagesTotal = packages.reduce((sum, p) => sum + p.price, 0);
-  const addonsTotal = addons.reduce((sum, a) => sum + a.price, 0);
-  
-  return treatmentsTotal + packagesTotal + addonsTotal;
+// Default empty quote
+const defaultQuote: QuoteState = {
+  treatments: [],
+  packages: [],
+  addons: [],
+  subtotal: 0,
+  discount: 0,
+  total: 0,
+  promoCode: null,
+  promoCodeId: null,
+  discountType: null,
+  discountValue: null
 };
 
-const calculateDiscount = (
-  subtotal: number, 
-  promotion: Promotion | null
-): number => {
-  if (!promotion) return 0;
-  
-  if (promotion.discount_type === 'percentage') {
-    return subtotal * (promotion.discount_value / 100);
-  } else {
-    // Fixed amount discount, don't exceed subtotal
-    return Math.min(promotion.discount_value, subtotal);
-  }
-};
+// Response type for promo code application
+interface PromoCodeResponse {
+  success: boolean;
+  message: string;
+  discountType?: 'percentage' | 'fixed_amount';
+  discountValue?: number;
+  promoCodeId?: string;
+}
 
-export const useQuoteBuilder = (options: QuoteBuilderOptions = {}): UseQuoteBuilderResult => {
-  const [treatments, setTreatments] = useState<Treatment[]>(options.treatments || []);
-  const [packages, setPackages] = useState<Package[]>(options.packages || []);
-  const [addons, setAddons] = useState<Addon[]>(options.addons || []);
-  const [promotion, setPromotion] = useState<Promotion | null>(null);
-  
-  // Initialize with promo code if provided
+/**
+ * Custom hook for building dental treatment quotes with promo code support
+ */
+export function useQuoteBuilder() {
+  const queryClient = useQueryClient();
+  const [quote, setQuote] = useState<QuoteState>(defaultQuote);
+
+  // Fetch treatments
+  const { 
+    data: treatments,
+    isLoading: isLoadingTreatments
+  } = useQuery({
+    queryKey: ['/api/treatments'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/treatments');
+      const data = await res.json();
+      return data;
+    }
+  });
+
+  // Fetch treatment packages
+  const { 
+    data: packages,
+    isLoading: isLoadingPackages
+  } = useQuery({
+    queryKey: ['/api/treatment-packages'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/treatment-packages');
+      const data = await res.json();
+      return data;
+    }
+  });
+
+  // Fetch add-ons
+  const { 
+    data: addons,
+    isLoading: isLoadingAddons
+  } = useQuery({
+    queryKey: ['/api/addons'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/addons');
+      const data = await res.json();
+      return data;
+    }
+  });
+
+  // Mutation for applying promo codes
+  const promoCodeMutation = useMutation({
+    mutationFn: async (code: string): Promise<PromoCodeResponse> => {
+      const res = await apiRequest('POST', '/api/validate-promo', { code });
+      return res.json();
+    }
+  });
+
+  // Effect to calculate totals whenever items change
   useEffect(() => {
-    if (options.promoCode) {
-      applyPromoCode(options.promoCode);
+    // Calculate subtotal
+    const treatmentsTotal = quote.treatments.reduce((sum, item) => sum + item.price, 0);
+    const packagesTotal = quote.packages.reduce((sum, item) => sum + item.price, 0);
+    const addonsTotal = quote.addons.reduce((sum, item) => sum + item.price, 0);
+    
+    const newSubtotal = treatmentsTotal + packagesTotal + addonsTotal;
+    
+    // Calculate discount if promo code is applied
+    let newDiscount = 0;
+    
+    if (quote.promoCode && quote.discountType && quote.discountValue) {
+      if (quote.discountType === 'percentage') {
+        newDiscount = newSubtotal * (quote.discountValue / 100);
+      } else if (quote.discountType === 'fixed_amount') {
+        newDiscount = Math.min(quote.discountValue, newSubtotal); // Don't apply more discount than subtotal
+      }
     }
-  }, []);
-  
-  // Calculate derived values
-  const subtotal = calculateSubtotal(treatments, packages, addons);
-  const discount = calculateDiscount(subtotal, promotion);
-  const total = Math.max(0, subtotal - discount);
-  
-  // Build the quote object
-  const quote: Quote = {
-    treatments,
-    packages,
-    addons,
-    promotion,
-    subtotal,
-    discount,
-    total
-  };
-  
-  /**
-   * Add a treatment to the quote
-   */
+    
+    // Calculate final total
+    const newTotal = Math.max(newSubtotal - newDiscount, 0);
+    
+    // Update quote state with new calculations
+    setQuote(prev => ({
+      ...prev,
+      subtotal: newSubtotal,
+      discount: newDiscount,
+      total: newTotal
+    }));
+  }, [quote.treatments, quote.packages, quote.addons, quote.discountType, quote.discountValue]);
+
+  // Add a treatment to the quote
   const addTreatment = (treatment: Treatment) => {
-    if (!treatments.some(t => t.id === treatment.id)) {
-      setTreatments([...treatments, treatment]);
-      trackEvent('add_treatment', 'quote_builder', treatment.id);
+    // Check if treatment is already in the quote
+    const exists = quote.treatments.some(item => item.id === treatment.id);
+    
+    if (!exists) {
+      setQuote(prev => ({
+        ...prev,
+        treatments: [...prev.treatments, treatment]
+      }));
     }
   };
   
-  /**
-   * Remove a treatment from the quote
-   */
-  const removeTreatment = (treatmentId: string) => {
-    setTreatments(treatments.filter(t => t.id !== treatmentId));
-    trackEvent('remove_treatment', 'quote_builder', treatmentId);
+  // Remove a treatment from the quote
+  const removeTreatment = (treatment: Treatment) => {
+    setQuote(prev => ({
+      ...prev,
+      treatments: prev.treatments.filter(item => item.id !== treatment.id)
+    }));
   };
   
-  /**
-   * Add a package to the quote
-   */
+  // Add a package to the quote
   const addPackage = (pkg: Package) => {
-    if (!packages.some(p => p.id === pkg.id)) {
-      setPackages([...packages, pkg]);
-      trackEvent('add_package', 'quote_builder', pkg.id);
+    // Check if package is already in the quote
+    const exists = quote.packages.some(item => item.id === pkg.id);
+    
+    if (!exists) {
+      setQuote(prev => ({
+        ...prev,
+        packages: [...prev.packages, pkg]
+      }));
     }
   };
   
-  /**
-   * Remove a package from the quote
-   */
-  const removePackage = (packageId: string) => {
-    setPackages(packages.filter(p => p.id !== packageId));
-    trackEvent('remove_package', 'quote_builder', packageId);
+  // Remove a package from the quote
+  const removePackage = (pkg: Package) => {
+    setQuote(prev => ({
+      ...prev,
+      packages: prev.packages.filter(item => item.id !== pkg.id)
+    }));
   };
   
-  /**
-   * Add an addon to the quote
-   */
+  // Add an addon to the quote
   const addAddon = (addon: Addon) => {
-    if (!addons.some(a => a.id === addon.id)) {
-      setAddons([...addons, addon]);
-      trackEvent('add_addon', 'quote_builder', addon.id);
+    // Check if addon is already in the quote
+    const exists = quote.addons.some(item => item.id === addon.id);
+    
+    if (!exists) {
+      setQuote(prev => ({
+        ...prev,
+        addons: [...prev.addons, addon]
+      }));
     }
   };
   
-  /**
-   * Remove an addon from the quote
-   */
-  const removeAddon = (addonId: string) => {
-    setAddons(addons.filter(a => a.id !== addonId));
-    trackEvent('remove_addon', 'quote_builder', addonId);
+  // Remove an addon from the quote
+  const removeAddon = (addon: Addon) => {
+    setQuote(prev => ({
+      ...prev,
+      addons: prev.addons.filter(item => item.id !== addon.id)
+    }));
   };
   
-  /**
-   * Apply a promotion code to the quote
-   */
-  const applyPromoCode = async (code: string): Promise<{ success: boolean; message: string }> => {
+  // Apply a promo code to the quote
+  const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
     try {
-      const response = await apiRequest('POST', '/api/promo-codes/validate', { code });
-      const data = await response.json();
+      const result = await promoCodeMutation.mutateAsync(code);
       
-      if (data.success && data.promotion) {
-        setPromotion(data.promotion);
-        trackEvent('apply_promo_code_success', 'quote_builder', code);
-        return { 
-          success: true, 
-          message: `Promotion "${data.promotion.title}" applied successfully!` 
-        };
-      } else {
-        trackEvent('apply_promo_code_fail', 'quote_builder', code);
-        return { 
-          success: false, 
-          message: data.message || 'Invalid promotion code. Please try again.' 
-        };
+      if (result.success) {
+        setQuote(prev => ({
+          ...prev,
+          promoCode: code,
+          promoCodeId: result.promoCodeId || null,
+          discountType: result.discountType || null,
+          discountValue: result.discountValue || null
+        }));
       }
-    } catch (error) {
-      console.error('Error applying promo code:', error);
-      trackEvent('apply_promo_code_error', 'quote_builder', code);
-      return { 
-        success: false, 
-        message: 'An error occurred while applying the promotion code. Please try again.' 
-      };
-    }
-  };
-  
-  /**
-   * Remove the applied promotion code
-   */
-  const removePromoCode = () => {
-    if (promotion) {
-      trackEvent('remove_promo_code', 'quote_builder', promotion.promo_code);
-      setPromotion(null);
-    }
-  };
-  
-  /**
-   * Save the quote
-   */
-  const saveQuote = async (): Promise<{ success: boolean; quoteId?: string; message?: string }> => {
-    try {
-      // Only include necessary data to save
-      const quoteData = {
-        treatments: quote.treatments,
-        packages: quote.packages,
-        addons: quote.addons,
-        promoCode: promotion?.promo_code,
-        subtotal: quote.subtotal,
-        discount: quote.discount,
-        total: quote.total
-      };
       
-      const response = await apiRequest('POST', '/api/quotes', quoteData);
-      const data = await response.json();
-      
-      if (data.success) {
-        trackEvent('save_quote_success', 'quote_builder');
-        return { 
-          success: true, 
-          quoteId: data.data.id 
-        };
-      } else {
-        trackEvent('save_quote_fail', 'quote_builder');
-        return { 
-          success: false, 
-          message: data.message || 'Failed to save quote. Please try again.' 
-        };
-      }
+      return result;
     } catch (error) {
-      console.error('Error saving quote:', error);
-      trackEvent('save_quote_error', 'quote_builder');
-      return { 
-        success: false, 
-        message: 'An error occurred while saving the quote. Please try again later.' 
+      return {
+        success: false,
+        message: 'Error applying promo code. Please try again.'
       };
     }
   };
   
-  /**
-   * Reset the quote to empty state
-   */
-  const reset = () => {
-    setTreatments([]);
-    setPackages([]);
-    setAddons([]);
-    setPromotion(null);
-    trackEvent('reset_quote', 'quote_builder');
+  // Reset the quote to empty
+  const resetQuote = () => {
+    setQuote(defaultQuote);
+  };
+  
+  // Save quote mutation
+  const saveQuoteMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest('POST', '/api/quotes', data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+    }
+  });
+  
+  // Save quote function
+  const saveQuote = async (additionalData: any = {}) => {
+    const quoteData = {
+      ...quote,
+      ...additionalData
+    };
+    
+    return saveQuoteMutation.mutateAsync(quoteData);
   };
   
   return {
     quote,
+    treatments,
+    packages,
+    addons,
+    isLoading: isLoadingTreatments || isLoadingPackages || isLoadingAddons || promoCodeMutation.isPending || saveQuoteMutation.isPending,
     addTreatment,
     removeTreatment,
     addPackage,
@@ -284,8 +277,7 @@ export const useQuoteBuilder = (options: QuoteBuilderOptions = {}): UseQuoteBuil
     addAddon,
     removeAddon,
     applyPromoCode,
-    removePromoCode,
-    saveQuote,
-    reset
+    resetQuote,
+    saveQuote
   };
-};
+}
