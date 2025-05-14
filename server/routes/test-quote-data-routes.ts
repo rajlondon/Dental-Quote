@@ -52,7 +52,7 @@ router.get('/promo-codes/:code/validate', validatePromoCode);
 router.get('/:code/validate', validatePromoCode);
 
 // Shared function for promo code validation
-function validatePromoCode(req, res) {
+function validatePromoCode(req: express.Request, res: express.Response) {
   const { code } = req.params;
   
   console.log(`[TEST API] Validating promo code: ${code} from path: ${req.path}`);

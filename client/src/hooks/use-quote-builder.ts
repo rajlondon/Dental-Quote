@@ -329,26 +329,80 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
       }
       
       const data = await response.json();
+      console.log('[QuoteBuilder] Promo code validation response:', data);
       
       if (data.success) {
+        // Log for debugging
+        console.log('[QuoteBuilder] Current quote state before applying promo:', { 
+          subtotal: quote.subtotal,
+          offerDiscount: quote.offerDiscount || 0,
+          selectedTreatments: quote.treatments.length,
+          selectedPackages: quote.packages.length,
+          total: quote.total
+        });
+        
+        // Calculate the subtotal first - it might be missing
+        let calculatedSubtotal = 0;
+        
+        // Add up treatment prices
+        quote.treatments.forEach(treatment => {
+          if (treatment.price) {
+            calculatedSubtotal += treatment.price * ((treatment as any).quantity || 1);
+          }
+        });
+        
+        // Add up package prices
+        quote.packages.forEach(pkg => {
+          if (pkg.price) {
+            calculatedSubtotal += pkg.price * ((pkg as any).quantity || 1);
+          }
+        });
+        
+        // Add up addon prices
+        quote.addons.forEach(addon => {
+          if (addon.price) {
+            calculatedSubtotal += addon.price * ((addon as any).quantity || 1);
+          }
+        });
+        
+        // Use the calculated subtotal if the quote subtotal is 0 or undefined
+        const effectiveSubtotal = quote.subtotal || calculatedSubtotal;
+        console.log('[QuoteBuilder] Calculated subtotal:', calculatedSubtotal, 'Quote subtotal:', quote.subtotal, 'Using:', effectiveSubtotal);
+        
         // Calculate new totals with discount
         let newDiscount = 0;
         if (data.data.discount_type === 'percentage') {
-          newDiscount = quote.subtotal * (data.data.discount_value / 100);
+          newDiscount = effectiveSubtotal * (data.data.discount_value / 100);
+          console.log(`[QuoteBuilder] Applying ${data.data.discount_value}% discount on ${effectiveSubtotal} = ${newDiscount}`);
         } else if (data.data.discount_type === 'fixed_amount') {
-          newDiscount = Math.min(data.data.discount_value, quote.subtotal);
+          newDiscount = Math.min(data.data.discount_value, effectiveSubtotal);
+          console.log(`[QuoteBuilder] Applying fixed discount of ${data.data.discount_value} (capped to ${effectiveSubtotal}) = ${newDiscount}`);
         }
+        
+        const totalDiscount = (quote.offerDiscount || 0) + newDiscount;
+        const newTotal = effectiveSubtotal - totalDiscount;
+        
+        console.log('[QuoteBuilder] Discount calculation:', {
+          effectiveSubtotal,
+          discountType: data.data.discount_type,
+          discountValue: data.data.discount_value,
+          calculatedDiscount: newDiscount,
+          offerDiscount: quote.offerDiscount || 0,
+          totalDiscount,
+          newTotal
+        });
         
         const updatedQuote = {
           ...quote,
+          subtotal: effectiveSubtotal, // Ensure subtotal is set
           promoCode: code,
           promoCodeId: data.data.id,
           discountType: data.data.discount_type,
           discountValue: data.data.discount_value,
           offerDiscount: quote.offerDiscount || 0,
           promoDiscount: newDiscount,
-          discount: (quote.offerDiscount || 0) + newDiscount,
-          total: quote.subtotal - ((quote.offerDiscount || 0) + newDiscount)
+          discount: totalDiscount,
+          total: newTotal
         };
         
         setQuote(updatedQuote);
