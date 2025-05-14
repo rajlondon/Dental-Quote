@@ -1,0 +1,206 @@
+✅ Backend Implementation
+Added quote management methods to IStorage interface
+Implemented these methods in the DatabaseStorage class
+Created API routes for quotes and promo codes
+Set up proper route registrations in Express
+✅ Frontend Components
+Created QuoteBuilder component with responsive UI
+Implemented use-quote-builder.ts hook with React Query integration
+Added QuoteBuilderPage to render the builder
+Updated App.tsx with the new route
+Added navigation link in AdminLayout
+✅ TypeScript Fixes
+Fixed typings for map functions in QuoteBuilder
+Updated trackEvent calls with proper parameter types
+Fixed AdminAuthContextType interface in use-admin-auth.tsx
+Next Steps for Completion
+1. Special Offers Integration
+The current implementation doesn't yet fully integrate special offers with the quote system. You should implement:
+
+// client/src/hooks/use-special-offers-in-quote.ts
+import { useState, useEffect } from 'react';
+import { useQuoteBuilder } from './use-quote-builder';
+import { useSpecialOffers } from './use-special-offers';
+
+export function useSpecialOffersInQuote() {
+  const { quote, updateQuote } = useQuoteBuilder();
+  const { offers, packages, getApplicableOffers } = useSpecialOffers();
+  const [applicableOffers, setApplicableOffers] = useState([]);
+  
+  // Update applicable offers when treatments change
+  useEffect(() => {
+    if (quote.treatments && quote.treatments.length > 0) {
+      const treatmentIds = quote.treatments.map(t => t.id);
+      const offers = getApplicableOffers(treatmentIds);
+      setApplicableOffers(offers);
+    } else {
+      setApplicableOffers([]);
+    }
+  }, [quote.treatments, getApplicableOffers]);
+  
+  // Apply an offer to the quote
+  const applyOffer = (offerId) => {
+    const offer = offers.find(o => o.id === offerId);
+    if (!offer) return false;
+    
+    // Calculate new total with discount
+    const discountAmount = calculateDiscountAmount(quote, offer);
+    
+    updateQuote({
+      ...quote,
+      appliedOfferId: offerId,
+      discount: discountAmount,
+      total: quote.subtotal - discountAmount
+    });
+    
+    return true;
+  };
+  
+  return {
+    applicableOffers,
+    applyOffer
+  };
+}
+2. Quote Flow Integration
+Create a multi-step quote flow for a better user experience:
+
+// client/src/components/quotes/QuoteFlow.tsx
+import React, { useState } from 'react';
+import { QuoteBuilder } from './QuoteBuilder';
+import { QuoteSummary } from './QuoteSummary';
+import { QuoteConfirmation } from './QuoteConfirmation';
+import { useQuoteBuilder } from '../../hooks/use-quote-builder';
+
+export function QuoteFlow() {
+  const [step, setStep] = useState(1);
+  const { quote, saveQuote } = useQuoteBuilder();
+  
+  const handleNext = async () => {
+    if (step === 2) {
+      // Save quote before final step
+      await saveQuote();
+    }
+    setStep(step + 1);
+  };
+  
+  const handleBack = () => {
+    setStep(step - 1);
+  };
+  
+  return (
+    <div className="quote-flow">
+      {/* Progress indicator */}
+      <div className="progress-indicator">
+        <div className={`step ${step >= 1 ? 'active' : ''}`}>Select Treatments</div>
+        <div className={`step ${step >= 2 ? 'active' : ''}`}>Review Quote</div>
+        <div className={`step ${step >= 3 ? 'active' : ''}`}>Confirm</div>
+      </div>
+      
+      {/* Step content */}
+      {step === 1 && (
+        <div className="step-content">
+          <QuoteBuilder />
+          <button 
+            onClick={handleNext}
+            disabled={!quote.treatments.length}
+            className="next-button"
+          >
+            Continue to Review
+          </button>
+        </div>
+      )}
+      
+      {step === 2 && (
+        <div className="step-content">
+          <QuoteSummary quote={quote} />
+          <div className="button-group">
+            <button onClick={handleBack} className="back-button">
+              Back to Edit
+            </button>
+            <button onClick={handleNext} className="next-button">
+              Continue to Confirmation
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {step === 3 && (
+        <div className="step-content">
+          <QuoteConfirmation quoteId={quote.id} />
+          <button onClick={handleBack} className="back-button">
+            Back to Review
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+3. Promo Code Persistence
+Ensure promo codes are persisted throughout the quote flow:
+
+// In client/src/hooks/use-quote-builder.ts
+
+// Add to the useQuoteBuilder hook
+const applyPromoCode = async (code) => {
+  try {
+    const response = await fetch(`/api/promo-codes/validate?code=${code}`);
+    const data = await response.json();
+    
+    if (data.valid) {
+      // Calculate new totals with discount
+      const newDiscount = calculateDiscount(quote.subtotal, data.discount);
+      
+      const updatedQuote = {
+        ...quote,
+        promoCode: code,
+        promoDiscount: newDiscount,
+        discount: (quote.offerDiscount || 0) + newDiscount,
+        total: quote.subtotal - ((quote.offerDiscount || 0) + newDiscount)
+      };
+      
+      setQuote(updatedQuote);
+      
+      // Persist the promo code to the server
+      if (quote.id) {
+        await fetch(`/api/quotes-api/${quote.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            promoCode: code,
+            promoDiscount: newDiscount,
+            discount: updatedQuote.discount,
+            total: updatedQuote.total
+          })
+        });
+      }
+      
+      return { success: true, message: `${data.promotion.title} applied!` };
+    } else {
+      return { success: false, message: data.message };
+    }
+  } catch (error) {
+    console.error('Error applying promo code:', error);
+    return { 
+      success: false, 
+      message: "Error validating promo code. Please try again." 
+    };
+  }
+};
+Architecture Recommendations
+For a robust Quote Management System, consider these architectural improvements:
+
+State Management: Consider using React Context or Redux for global state management of quotes, especially as the application grows
+
+Data Fetching Strategy: Implement optimistic updates for a smoother UX when applying promo codes or adding treatments
+
+Quote Persistence: Add auto-save functionality to preserve quote state between sessions
+
+Analytics Integration: Enhance tracking of user interactions with the quote builder to identify drop-off points
+
+Testing Approach
+To ensure reliability:
+
+Create unit tests for the quote calculation logic
+Add integration tests for the promo code application flow
+Test the quote builder with various treatment combinations
+Verify that discounts are correctly applied and persisted
