@@ -1,60 +1,121 @@
 import { useState, useEffect } from 'react';
 import { useApplyCode, ApplyCodeResponse, PromoDetails } from './use-apply-code';
 import { useToast } from './use-toast';
+import { useQuoteBuilder } from './use-quote-builder';
 
 interface AutoApplyCodeHookReturn {
+  code: string | null;
   appliedPromo: PromoDetails | null;
-  isLoading: boolean;
+  isProcessing: boolean;
   error: Error | null;
   clearAppliedPromo: () => void;
 }
 
 /**
  * Hook to automatically apply promo codes from URL parameters
- * @param quoteId The ID of the quote to apply the code to
+ * 
+ * This hook handles two scenarios:
+ * 1. When there's a saved quote (with quoteId) - applies the code via API
+ * 2. When building a new quote - provides the code for use in the quote builder
  */
-export function useAutoApplyCode(quoteId: string | null): AutoApplyCodeHookReturn {
+export function useAutoApplyCode(): AutoApplyCodeHookReturn {
   const [appliedPromo, setAppliedPromo] = useState<PromoDetails | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [code, setCode] = useState<string | null>(null);
   const { applyPromoCodeAsync, removePromoCodeAsync } = useApplyCode();
+  const { quote, applyPromoCode } = useQuoteBuilder();
   const { toast } = useToast();
 
-  const clearAppliedPromo = async () => {
-    if (quoteId && appliedPromo) {
-      try {
-        await removePromoCodeAsync({ quoteId });
-        setAppliedPromo(null);
-        // Remove code parameter from URL without page reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete('code');
-        window.history.replaceState({}, '', url.toString());
-      } catch (err) {
-        console.error('Failed to remove promo code:', err);
-      }
-    } else {
-      setAppliedPromo(null);
-    }
-  };
-  
-  // Check URL for code parameter and apply if present
+  // Get code from URL
   useEffect(() => {
-    const autoApplyFromUrl = async () => {
-      // Skip if we don't have a quoteId yet or already have an applied promo
-      if (!quoteId || appliedPromo || isLoading) return;
-      
+    try {
       const url = new URL(window.location.href);
-      const code = url.searchParams.get('code');
+      const urlCode = url.searchParams.get('code');
+      if (urlCode) {
+        setCode(urlCode);
+        // If we have a quoteId in the quotBuilder state
+        if (quote.id) {
+          // We'll handle this below in the API flow
+        } else {
+          // Apply directly to quote builder state
+          console.log('Auto applying promo code to quote builder state:', urlCode);
+          // This will happen in a separate effect to avoid dependency cycles
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing URL for promo code:', err);
+    }
+  }, []);
+
+  // Apply code to quote builder state when building a new quote
+  useEffect(() => {
+    if (!code || isProcessing || appliedPromo || !applyPromoCode) return;
+    
+    // If we don't have a quoteId, apply directly to the quote builder state
+    if (!quote.id) {
+      const applyCodeToBuilder = async () => {
+        setIsProcessing(true);
+        try {
+          const result = await applyPromoCode(code);
+          
+          if (result.success) {
+            setAppliedPromo({
+              id: result.promoCodeId || '',
+              title: 'Promo Code',
+              description: result.message,
+              code: code,
+              discountType: result.discountType || 'percentage',
+              discountValue: result.discountValue || 0,
+              created_at: new Date().toISOString()
+            });
+            
+            toast({
+              title: "Promo code applied",
+              description: result.message,
+            });
+          } else {
+            // Invalid code
+            setError(new Error(result.message));
+            
+            toast({
+              title: "Promo code error",
+              description: result.message,
+              variant: "destructive",
+            });
+            
+            // Clean up URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('code');
+            window.history.replaceState({}, '', url.toString());
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err : new Error('Failed to apply promo code'));
+          
+          toast({
+            title: "Promo code error",
+            description: err instanceof Error ? err.message : 'Failed to apply promo code',
+            variant: "destructive",
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      };
       
-      if (!code) return;
-      
+      applyCodeToBuilder();
+    }
+  }, [code, quote.id, applyPromoCode, isProcessing, appliedPromo, toast]);
+
+  // Apply code via API when we have a saved quote
+  useEffect(() => {
+    if (!code || !quote.id || isProcessing || appliedPromo) return;
+    
+    const applyCodeToSavedQuote = async () => {
+      setIsProcessing(true);
       try {
-        setIsLoading(true);
-        setError(null);
-        
         const response = await applyPromoCodeAsync({
           code,
-          quoteId
+          quoteId: quote.id.toString()
         });
         
         if (response.success && response.promo) {
@@ -71,6 +132,11 @@ export function useAutoApplyCode(quoteId: string | null): AutoApplyCodeHookRetur
           
           if (!response.success) {
             setError(new Error(response.message));
+            toast({
+              title: "Invalid promo code",
+              description: response.message,
+              variant: "destructive",
+            });
           }
         }
       } catch (err) {
@@ -81,16 +147,36 @@ export function useAutoApplyCode(quoteId: string | null): AutoApplyCodeHookRetur
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setIsProcessing(false);
       }
     };
     
-    autoApplyFromUrl();
-  }, [quoteId, appliedPromo, isLoading, applyPromoCodeAsync, toast]);
+    applyCodeToSavedQuote();
+  }, [code, quote.id, appliedPromo, isProcessing, applyPromoCodeAsync, toast]);
+  
+  const clearAppliedPromo = async () => {
+    if (quote.id && appliedPromo) {
+      try {
+        await removePromoCodeAsync({ quoteId: quote.id.toString() });
+        setAppliedPromo(null);
+        setCode(null);
+        // Remove code parameter from URL without page reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete('code');
+        window.history.replaceState({}, '', url.toString());
+      } catch (err) {
+        console.error('Failed to remove promo code:', err);
+      }
+    } else {
+      setAppliedPromo(null);
+      setCode(null);
+    }
+  };
   
   return {
+    code,
     appliedPromo,
-    isLoading,
+    isProcessing,
     error,
     clearAppliedPromo
   };

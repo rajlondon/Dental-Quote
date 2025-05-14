@@ -1,16 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QuoteBuilder } from './QuoteBuilder';
 import { QuoteSummary } from './QuoteSummary';
 import { QuoteConfirmation } from './QuoteConfirmation';
 import { useQuoteBuilder } from '@/hooks/use-quote-builder';
+import { useSpecialOffersInQuote } from '@/hooks/use-special-offers-in-quote';
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from '@/components/ui/badge';
+import { InfoIcon, CheckCircleIcon } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 
 export function QuoteFlow() {
   const [step, setStep] = useState(1);
-  const { quote, saveQuote } = useQuoteBuilder();
+  const { quote, saveQuote, addTreatment } = useQuoteBuilder();
+  const { applicableOffers, applyOffer } = useSpecialOffersInQuote();
   const [savedQuoteId, setSavedQuoteId] = useState<string | number | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Get context for special offers or other entry points
+  const { 
+    source, 
+    offerId, 
+    clinicId, 
+    isSpecialOfferFlow, 
+    isPackageFlow,
+    isPromoTokenFlow
+  } = useQuoteFlow();
+  
+  // Handle initialization when quote flow has a special context
+  useEffect(() => {
+    if (isInitialized) return;
+    
+    if (isSpecialOfferFlow && offerId) {
+      console.log('QuoteFlow: Initializing from special offer flow', { offerId });
+      
+      // If we have a special offer, apply it to the quote
+      const success = applyOffer(offerId);
+      
+      if (success) {
+        trackEvent('special_offer_initialized', 'quote_flow', offerId);
+        setIsInitialized(true);
+      }
+    } else {
+      // Mark as initialized if it's normal flow (no special context)
+      setIsInitialized(true);
+    }
+  }, [isSpecialOfferFlow, offerId, applyOffer, isInitialized]);
   
   const handleNext = async () => {
     if (step === 1) {
@@ -22,7 +59,13 @@ export function QuoteFlow() {
         const savedQuote = await saveQuote();
         if (savedQuote && savedQuote.id) {
           setSavedQuoteId(savedQuote.id);
-          trackEvent('quote_saved', 'quote_flow', savedQuote.id.toString());
+          
+          // Track event with context information
+          const eventContext = isSpecialOfferFlow ? 'special_offer' : 
+                              isPackageFlow ? 'package' : 
+                              isPromoTokenFlow ? 'promo_token' : 'normal';
+          
+          trackEvent('quote_saved', 'quote_flow', `${eventContext}_${savedQuote.id}`);
           setStep(3);
         }
       } catch (error) {
@@ -42,8 +85,37 @@ export function QuoteFlow() {
     }
   };
   
+  // Show a special message when user is in a special flow
+  const renderSpecialFlowAlert = () => {
+    if (!isSpecialOfferFlow || !offerId) return null;
+    
+    // Find the offer in the applicable offers
+    const offer = applicableOffers.find(o => o.id === offerId);
+    
+    if (!offer) return null;
+    
+    return (
+      <Alert className="mb-6 bg-primary/10 border-primary">
+        <InfoIcon className="h-4 w-4 text-primary" />
+        <AlertTitle className="text-primary">Special Offer Applied</AlertTitle>
+        <AlertDescription className="text-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-medium">{offer.title}</span>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary">
+              {offer.discount_type === 'percentage' ? `${offer.discount_value}% off` : `${offer.discount_value} off`}
+            </Badge>
+          </div>
+          <p className="text-sm">{offer.description}</p>
+        </AlertDescription>
+      </Alert>
+    );
+  };
+  
   return (
     <div className="quote-flow">
+      {/* Special flow alert */}
+      {renderSpecialFlowAlert()}
+      
       {/* Progress indicator */}
       <div className="flex justify-between items-center mb-8 px-4">
         <div className="w-full flex items-center">
