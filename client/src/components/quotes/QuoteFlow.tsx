@@ -23,12 +23,6 @@ import { trackEvent } from '@/lib/analytics';
 export function QuoteFlow() {
   const [step, setStep] = useState(1);
   const { quote, saveQuote, addTreatment } = useQuoteBuilder();
-  const { applicableOffers, applyOffer } = useSpecialOffersInQuote();
-  const [savedQuoteId, setSavedQuoteId] = useState<string | number | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
   
   // Get context for special offers or other entry points
   const { 
@@ -40,6 +34,13 @@ export function QuoteFlow() {
     isPromoTokenFlow
   } = useQuoteFlow();
   
+  const { specialOffer, applySpecialOfferToQuote } = useSpecialOffersInQuote(offerId || undefined);
+  const [savedQuoteId, setSavedQuoteId] = useState<string | number | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  
   // Calculate progress percentage
   const progressPercentage = step === 1 ? 33 : step === 2 ? 66 : 100;
   
@@ -47,20 +48,20 @@ export function QuoteFlow() {
   useEffect(() => {
     if (isInitialized) return;
     
-    if (isSpecialOfferFlow && offerId) {
+    if (isSpecialOfferFlow && offerId && specialOffer) {
       console.log('QuoteFlow: Initializing from special offer flow', { offerId });
       
       // If we have a special offer, apply it to the quote
-      const success = applyOffer(offerId);
+      const updatedQuote = applySpecialOfferToQuote(quote);
       
-      if (success) {
+      if (updatedQuote && updatedQuote.offerDiscount > 0) {
         trackEvent('special_offer_initialized', 'quote_flow', offerId);
         setIsInitialized(true);
         
         // Show toast to notify user
         toast({
           title: "Special Offer Applied",
-          description: "The selected special offer has been applied to your quote.",
+          description: `${specialOffer.title} has been applied to your quote.`,
           variant: "default",
         });
       } else {
@@ -76,7 +77,7 @@ export function QuoteFlow() {
       // Mark as initialized if it's normal flow (no special context)
       setIsInitialized(true);
     }
-  }, [isSpecialOfferFlow, offerId, applyOffer, isInitialized, toast]);
+  }, [isSpecialOfferFlow, offerId, specialOffer, applySpecialOfferToQuote, quote, isInitialized, toast]);
   
   const handleNext = async () => {
     // Reset any previous errors
@@ -155,12 +156,7 @@ export function QuoteFlow() {
   
   // Show a special message when user is in a special flow
   const renderSpecialFlowAlert = () => {
-    if (!isSpecialOfferFlow || !offerId) return null;
-    
-    // Find the offer in the applicable offers
-    const offer = applicableOffers.find(o => o.id === offerId);
-    
-    if (!offer) return null;
+    if (!isSpecialOfferFlow || !offerId || !specialOffer) return null;
     
     return (
       <Alert className="mb-6 bg-primary/10 border-primary">
@@ -168,12 +164,12 @@ export function QuoteFlow() {
         <AlertTitle className="text-primary">Special Offer Applied</AlertTitle>
         <AlertDescription className="text-gray-700">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium">{offer.title}</span>
+            <span className="font-medium">{specialOffer.title}</span>
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary">
-              {offer.discount_type === 'percentage' ? `${offer.discount_value}% off` : `${offer.discount_value} off`}
+              {specialOffer.discount_type === 'percentage' ? `${specialOffer.discount_value}% off` : `${specialOffer.discount_value} off`}
             </Badge>
           </div>
-          <p className="text-sm">{offer.description}</p>
+          <p className="text-sm">{specialOffer.description}</p>
         </AlertDescription>
       </Alert>
     );
