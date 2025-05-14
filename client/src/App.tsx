@@ -246,6 +246,14 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      <Route path="/simple-quote-test" component={() => {
+        const SimpleQuoteTest = React.lazy(() => import("./pages/SimpleQuoteTest"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading simple quote test page...</div>}>
+            <SimpleQuoteTest />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
