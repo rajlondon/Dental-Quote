@@ -1,113 +1,107 @@
 # Quote Management System Documentation
 
-## System Overview
-The Quote Management System allows users to create custom quotes for dental treatments with support for promo codes and special offers.
+## Overview
 
-## Key Components
+The Quote Management System provides a comprehensive solution for creating, managing, and tracking dental treatment quotes. It supports promo code application, special offers integration, and email notifications.
 
-### Core Components
-- **QuoteBuilder**: Core component for selecting treatments and building quotes
-- **QuoteFlow**: Multi-step flow for guiding users through quote creation
-- **QuoteSummary**: Displays quote details and pricing information
-- **QuoteConfirmation**: Final step for confirming and submitting quotes
-- **QuoteConfirmationEmail**: Handles sending quote confirmation emails
+## System Components
 
-### Integration Points
-- **Special Offers**: Integrated via useSpecialOffersInQuote hook
-- **Promo Codes**: Supported via URL parameters and manual entry
-- **Analytics**: Tracks user interactions throughout the quote flow
+### Frontend Components
 
-## State Management
-The system uses React hooks for state management:
-- **useQuoteBuilder**: Manages quote state and operations
-- **useSpecialOffersInQuote**: Handles special offer application
-- **useAutoApplyCode**: Manages promo code application from URL
+#### Core Components
+- **QuoteBuilder**: The main component for selecting treatments and building a quote
+- **QuoteSummary**: Displays a detailed breakdown of the quote with pricing information
+- **QuoteConfirmation**: Handles final quote confirmation and provides download options
+- **QuoteConfirmationEmail**: Manages email notifications for quotes
 
-## API Endpoints
-- **POST /api/quotes-api** - Create new quote
-- **GET /api/quotes-api/:id** - Get quote by ID
-- **PATCH /api/quotes-api/:id** - Update quote
-- **DELETE /api/quotes-api/:id** - Delete quote
-- **GET /api/promo-codes/validate** - Validate promo code
-- **POST /api/quotes/:id/send-confirmation** - Send confirmation email
+#### Supporting Components
+- **LazyQuoteFlow**: Lazy-loads quote components for performance optimization
+- **QuoteSummaryOptimized**: Memoized version of QuoteSummary to prevent unnecessary re-renders
 
-## User Flows
+### Custom Hooks
 
-### Quote Creation Flow
-1. User selects treatments, packages, and/or add-ons
-2. System calculates pricing
-3. User applies promo code (if applicable)
-4. User reviews quote summary
-5. User confirms quote
-6. User receives confirmation via email (optional)
+- **useQuoteBuilder**: Manages quote state and operations, handles treatment addition/removal
+- **useSpecialOffersInQuote**: Integrates special offers into quotes and applies relevant discounts
+- **useAutoApplyCode**: Automatically applies promo codes from URL parameters
 
-### Promo Code Application
-1. System checks URL for promo code parameters
-2. If found, system auto-applies the promo code
-3. User can manually enter promo code
-4. System validates promo code with backend
-5. If valid, discount is applied to the quote
+### Backend Services
 
-### Special Offer Application
-1. User clicks on special offer
-2. System applies the offer to the quote
-3. Applicable treatments get discount
-4. Offer displays in the quote summary
+- **Quote Storage API**: Stores and retrieves quotes from the database
+- **Promo Code Validation**: Validates and applies promo codes to quotes
+- **Email Notification Service**: Sends quote confirmations via email using Mailjet
+
+## Data Flow
+
+1. User selects treatments in the QuoteBuilder
+2. Quote data is stored in state via useQuoteBuilder hook
+3. Promo codes or special offers are applied if available
+4. Quote summary is displayed with updated pricing
+5. User confirms the quote and can download/email it
+6. Quote data is stored in the database for future reference
+
+## Integration Points
+
+- **Special Offers System**: Integrates with the special offers database to apply relevant discounts
+- **Promo Code System**: Validates and applies promo codes to quotes
+- **Email Service**: Uses Mailjet for sending quote confirmations
+- **Analytics**: Tracks user interactions and quote completion
 
 ## Performance Optimizations
-The system includes several performance optimizations:
-- React.memo for preventing unnecessary re-renders
-- useMemo for expensive calculations like price formatting
-- Lazy loading for quote steps components
-- Efficient state management with context API
+
+- **React.memo**: Used to prevent unnecessary re-renders of expensive components
+- **useMemo**: Applied for expensive calculations in quote summary
+- **Lazy Loading**: Implemented for quote flow components to improve initial load time
+- **Debounced Updates**: Quote updates are debounced to prevent excessive API calls
 
 ## Error Handling
-- Network error handling with fallback UI
-- Input validation for promo codes
-- Toast notifications for user feedback
-- Analytics tracking for errors
 
-## Integration Guidelines
+- Comprehensive error handling for API calls
+- User-friendly error messages with toast notifications
+- Recovery mechanisms for failed operations
 
-### User Authentication
-- Quotes are associated with authenticated users when available
-- Anonymous quotes are supported for new users
+## User Experience Considerations
 
-### Clinic Selection
-- Quotes can be associated with specific clinics
-- Clinic-specific pricing is supported
+- Loading indicators for asynchronous operations
+- Responsive design for various screen sizes
+- Accessible components with proper ARIA attributes
+- Form validation with clear error messages
 
-### Treatment Data
-- System supports up-to-date treatment pricing
-- Treatments can be categorized and filtered
+## Technical Architecture
 
-### Payment Integration
-- Quote system connects with payment processing
-- Stripe integration handles payments securely
+```
+┌─────────────────────┐      ┌─────────────────────┐
+│                     │      │                     │
+│  Quote Components   │◄────►│   Custom Hooks      │
+│                     │      │                     │
+└────────┬────────────┘      └─────────┬───────────┘
+         │                             │
+         │                             │
+         ▼                             ▼
+┌─────────────────────┐      ┌─────────────────────┐
+│                     │      │                     │
+│   Backend API       │◄────►│  Database Storage   │
+│                     │      │                     │
+└────────┬────────────┘      └─────────────────────┘
+         │
+         │
+         ▼
+┌─────────────────────┐
+│                     │
+│ Integration Services│
+│ (Email, Analytics)  │
+│                     │
+└─────────────────────┘
+```
 
 ## Testing Strategy
 
-### Unit Testing
-- Test individual components in isolation
-- Test hooks with different scenarios
+- **Unit Tests**: For individual components and hooks
+- **Integration Tests**: For component interactions
+- **End-to-End Tests**: For complete quote flow
 
-### Integration Testing
-- Test component interactions
-- Test data flow between components
+## Future Enhancements
 
-### End-to-End Testing
-- Test full quote creation flow
-- Test promo code application
-- Test special offer application
-
-## Maintenance and Updates
-- Regular updates to treatment pricing
-- Adding new treatment options
-- Updating discount calculation logic
-- Managing promo code campaigns
-
-## Troubleshooting
-- Check browser console for errors
-- Verify network requests in DevTools
-- Test promo codes manually
-- Check server logs for backend errors
+- A/B testing framework for optimizing conversion rates
+- Performance monitoring to identify bottlenecks
+- Enhanced analytics for business intelligence
+- Multi-currency support for international users
