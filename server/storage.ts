@@ -2041,6 +2041,450 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // ===== Enhanced Quote Management System Methods =====
+  
+  async getAllQuotes(): Promise<any[]> {
+    try {
+      console.log('[Storage] Getting all quotes');
+      const result = await pool.query(`
+        SELECT q.*, 
+               p.promo_code, 
+               p.discount_type, 
+               p.discount_value
+        FROM quotes q
+        LEFT JOIN promotions p ON q.promo_code_id = p.id
+        ORDER BY q.created_at DESC
+      `);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('[Storage] Error fetching all quotes:', error);
+      return [];
+    }
+  }
+
+  async getQuote(id: string): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Getting quote with ID: ${id}`);
+      const result = await pool.query(`
+        SELECT q.*, 
+               p.promo_code, 
+               p.discount_type, 
+               p.discount_value
+        FROM quotes q
+        LEFT JOIN promotions p ON q.promo_code_id = p.id
+        WHERE q.id = $1
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        console.log(`[Storage] No quote found with ID: ${id}`);
+        return undefined;
+      }
+      
+      // Get quote items
+      const itemsResult = await pool.query(`
+        SELECT * FROM quote_items
+        WHERE quote_id = $1
+      `, [id]);
+      
+      const quote = result.rows[0];
+      quote.items = itemsResult.rows;
+      
+      return quote;
+    } catch (error) {
+      console.error(`[Storage] Error fetching quote ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getQuotesByUserId(userId: number): Promise<any[]> {
+    try {
+      console.log(`[Storage] Getting quotes for user ID: ${userId}`);
+      const result = await pool.query(`
+        SELECT q.*, 
+               p.promo_code, 
+               p.discount_type, 
+               p.discount_value
+        FROM quotes q
+        LEFT JOIN promotions p ON q.promo_code_id = p.id
+        WHERE q.patient_id = $1
+        ORDER BY q.created_at DESC
+      `, [userId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error(`[Storage] Error fetching quotes for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async getQuotesByClinicId(clinicId: number): Promise<any[]> {
+    try {
+      console.log(`[Storage] Getting quotes for clinic ID: ${clinicId}`);
+      const result = await pool.query(`
+        SELECT q.*, 
+               p.promo_code, 
+               p.discount_type, 
+               p.discount_value
+        FROM quotes q
+        LEFT JOIN promotions p ON q.promo_code_id = p.id
+        WHERE q.clinic_id = $1
+        ORDER BY q.created_at DESC
+      `, [clinicId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error(`[Storage] Error fetching quotes for clinic ${clinicId}:`, error);
+      return [];
+    }
+  }
+
+  async createQuote(data: any): Promise<any> {
+    try {
+      console.log('[Storage] Creating new quote with data:', JSON.stringify(data));
+      
+      // Start a transaction
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        // Insert the quote
+        const quoteResult = await client.query(`
+          INSERT INTO quotes (
+            patient_id, 
+            clinic_id, 
+            status, 
+            subtotal, 
+            discount, 
+            total, 
+            promo_code_id, 
+            promo_code_applied,
+            discount_type,
+            discount_value,
+            currency,
+            notes,
+            created_by
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          RETURNING *
+        `, [
+          data.patientId,
+          data.clinicId,
+          data.status || 'draft',
+          data.subtotal || 0,
+          data.discount || 0,
+          data.total || 0,
+          data.promoCodeId,
+          data.promoCodeApplied || false,
+          data.discountType,
+          data.discountValue,
+          data.currency || 'USD',
+          data.notes,
+          data.createdBy
+        ]);
+        
+        const quote = quoteResult.rows[0];
+        
+        // Insert quote items if provided
+        if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+          for (const item of data.items) {
+            await client.query(`
+              INSERT INTO quote_items (
+                quote_id,
+                treatment_id,
+                package_id,
+                addon_id,
+                type,
+                name,
+                description,
+                quantity,
+                unit_price,
+                total_price
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            `, [
+              quote.id,
+              item.treatmentId,
+              item.packageId,
+              item.addonId,
+              item.type,
+              item.name,
+              item.description,
+              item.quantity || 1,
+              item.unitPrice || 0,
+              item.totalPrice || 0
+            ]);
+          }
+        }
+        
+        await client.query('COMMIT');
+        
+        // Get the quote with its items
+        return await this.getQuote(quote.id);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('[Storage] Error creating quote:', error);
+      throw error;
+    }
+  }
+
+  async updateQuote(id: string, data: any): Promise<any | undefined> {
+    try {
+      console.log(`[Storage] Updating quote ${id} with data:`, JSON.stringify(data));
+      
+      // Start a transaction
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        // Update the quote
+        const updateFields = [];
+        const updateValues = [];
+        let valueIndex = 1;
+        
+        // Build the dynamic update statement
+        if (data.patientId !== undefined) {
+          updateFields.push(`patient_id = $${valueIndex}`);
+          updateValues.push(data.patientId);
+          valueIndex++;
+        }
+        
+        if (data.clinicId !== undefined) {
+          updateFields.push(`clinic_id = $${valueIndex}`);
+          updateValues.push(data.clinicId);
+          valueIndex++;
+        }
+        
+        if (data.status !== undefined) {
+          updateFields.push(`status = $${valueIndex}`);
+          updateValues.push(data.status);
+          valueIndex++;
+        }
+        
+        if (data.subtotal !== undefined) {
+          updateFields.push(`subtotal = $${valueIndex}`);
+          updateValues.push(data.subtotal);
+          valueIndex++;
+        }
+        
+        if (data.discount !== undefined) {
+          updateFields.push(`discount = $${valueIndex}`);
+          updateValues.push(data.discount);
+          valueIndex++;
+        }
+        
+        if (data.total !== undefined) {
+          updateFields.push(`total = $${valueIndex}`);
+          updateValues.push(data.total);
+          valueIndex++;
+        }
+        
+        if (data.promoCodeId !== undefined) {
+          updateFields.push(`promo_code_id = $${valueIndex}`);
+          updateValues.push(data.promoCodeId);
+          valueIndex++;
+        }
+        
+        if (data.promoCodeApplied !== undefined) {
+          updateFields.push(`promo_code_applied = $${valueIndex}`);
+          updateValues.push(data.promoCodeApplied);
+          valueIndex++;
+        }
+        
+        if (data.discountType !== undefined) {
+          updateFields.push(`discount_type = $${valueIndex}`);
+          updateValues.push(data.discountType);
+          valueIndex++;
+        }
+        
+        if (data.discountValue !== undefined) {
+          updateFields.push(`discount_value = $${valueIndex}`);
+          updateValues.push(data.discountValue);
+          valueIndex++;
+        }
+        
+        if (data.currency !== undefined) {
+          updateFields.push(`currency = $${valueIndex}`);
+          updateValues.push(data.currency);
+          valueIndex++;
+        }
+        
+        if (data.notes !== undefined) {
+          updateFields.push(`notes = $${valueIndex}`);
+          updateValues.push(data.notes);
+          valueIndex++;
+        }
+        
+        // Always update the updated_at timestamp
+        updateFields.push(`updated_at = NOW()`);
+        
+        // If no fields to update, return the current quote
+        if (updateFields.length === 0) {
+          await client.query('ROLLBACK');
+          return await this.getQuote(id);
+        }
+        
+        // Add the ID parameter
+        updateValues.push(id);
+        
+        // Execute the update
+        await client.query(`
+          UPDATE quotes
+          SET ${updateFields.join(', ')}
+          WHERE id = $${valueIndex}
+        `, updateValues);
+        
+        // Update quote items if provided
+        if (data.items && Array.isArray(data.items)) {
+          // First delete existing items
+          await client.query(`
+            DELETE FROM quote_items
+            WHERE quote_id = $1
+          `, [id]);
+          
+          // Then insert new items
+          for (const item of data.items) {
+            await client.query(`
+              INSERT INTO quote_items (
+                quote_id,
+                treatment_id,
+                package_id,
+                addon_id,
+                type,
+                name,
+                description,
+                quantity,
+                unit_price,
+                total_price
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            `, [
+              id,
+              item.treatmentId,
+              item.packageId,
+              item.addonId,
+              item.type,
+              item.name,
+              item.description,
+              item.quantity || 1,
+              item.unitPrice || 0,
+              item.totalPrice || 0
+            ]);
+          }
+        }
+        
+        await client.query('COMMIT');
+        
+        // Get the updated quote with its items
+        return await this.getQuote(id);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error(`[Storage] Error updating quote ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteQuote(id: string): Promise<boolean> {
+    try {
+      console.log(`[Storage] Deleting quote: ${id}`);
+      
+      // Start a transaction
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        // First delete quote items
+        await client.query(`
+          DELETE FROM quote_items
+          WHERE quote_id = $1
+        `, [id]);
+        
+        // Then delete the quote
+        const result = await client.query(`
+          DELETE FROM quotes
+          WHERE id = $1
+        `, [id]);
+        
+        await client.query('COMMIT');
+        
+        const success = result.rowCount > 0;
+        console.log(`[Storage] Quote deletion ${success ? 'successful' : 'failed'} for ID: ${id}`);
+        
+        return success;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error(`[Storage] Error deleting quote ${id}:`, error);
+      return false;
+    }
+  }
+  
+  async getTreatments(): Promise<any[]> {
+    try {
+      console.log('[Storage] Getting all active treatments');
+      const result = await pool.query(`
+        SELECT * FROM treatments
+        WHERE is_active = true
+        ORDER BY name
+      `);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('[Storage] Error fetching treatments:', error);
+      return [];
+    }
+  }
+  
+  async getPackages(): Promise<any[]> {
+    try {
+      console.log('[Storage] Getting all active treatment packages');
+      const result = await pool.query(`
+        SELECT p.*, 
+               ARRAY(
+                 SELECT t.id 
+                 FROM package_treatments pt
+                 JOIN treatments t ON pt.treatment_id = t.id
+                 WHERE pt.package_id = p.id
+               ) as treatment_ids
+        FROM packages p
+        WHERE p.is_active = true
+        ORDER BY p.name
+      `);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('[Storage] Error fetching packages:', error);
+      return [];
+    }
+  }
+  
+  async getAddons(): Promise<any[]> {
+    try {
+      console.log('[Storage] Getting all active addons');
+      const result = await pool.query(`
+        SELECT * FROM addons
+        WHERE is_active = true
+        ORDER BY name
+      `);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('[Storage] Error fetching addons:', error);
+      return [];
+    }
+  }
 }
 
 // Export an instance of the storage class
