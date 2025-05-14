@@ -638,6 +638,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (process.env.NODE_ENV !== 'production') {
     app.use('/api/test', testRoutes);
     
+    // Mount test quote data routes for testing the quote system
+    app.use('/api/test-promo-codes', testQuoteDataRoutes);
+    app.use('/api/test-packages', testQuoteDataRoutes);
+    
     // Register error testing routes for development only
     app.use('/api/error-test', errorTestRoutes);
     
