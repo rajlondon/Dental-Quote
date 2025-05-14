@@ -82,8 +82,12 @@ export const QuoteConfirmation = ({ quoteId, onComplete }: QuoteConfirmationProp
     
     setLoading(true);
     try {
-      const response = await apiRequest('GET', `/api/quotes/${quoteId}/pdf`, null, {
-        responseType: 'blob'
+      // Use fetch directly for blob responses since apiRequest doesn't support responseType
+      const response = await fetch(`/api/quotes/${quoteId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (!response.ok) {
