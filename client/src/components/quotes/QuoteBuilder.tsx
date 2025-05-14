@@ -207,9 +207,17 @@ export function QuoteBuilder({
                     <Card key={treatment.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{treatment.name}</h4>
-                        <Badge>{formatCurrency(treatment.price)}</Badge>
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200 px-2.5 py-0.5">
+                          {formatCurrency(treatment.price)}
+                        </Badge>
                       </div>
                       <p className="text-sm text-gray-500 flex-grow">{treatment.description}</p>
+                      <div className="bg-green-50 p-2 rounded-md my-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Treatment Price:</span>
+                          <span className="font-bold text-green-700">{formatCurrency(treatment.price)}</span>
+                        </div>
+                      </div>
                       <div className="mt-4">
                         <Button 
                           variant="outline" 
@@ -240,7 +248,7 @@ export function QuoteBuilder({
                     <Card key={pkg.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{pkg.name}</h4>
-                        <Badge variant="outline">
+                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-2.5 py-0.5">
                           {pkg.price ? formatCurrency(pkg.price) : "Price on request"}
                         </Badge>
                       </div>
@@ -249,9 +257,18 @@ export function QuoteBuilder({
                         <h5 className="text-xs font-semibold mb-1">Includes:</h5>
                         <ul className="text-xs text-gray-500 list-disc pl-4">
                           {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
-                            <li key={index}>{treatment.name}</li>
+                            <li key={index} className="flex justify-between">
+                              <span>{treatment.name}</span>
+                              <span className="font-medium">{formatCurrency(treatment.price)}</span>
+                            </li>
                           ))}
                         </ul>
+                      </div>
+                      <div className="bg-gray-50 p-2 rounded-md mb-3">
+                        <div className="flex justify-between items-center text-sm font-medium">
+                          <span>Total Package Price:</span>
+                          <span className="text-blue-700">{formatCurrency(pkg.price)}</span>
+                        </div>
                       </div>
                       <div className="mt-auto">
                         <Button 

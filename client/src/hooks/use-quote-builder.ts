@@ -129,11 +129,21 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
     data: packages,
     isLoading: isLoadingPackages
   } = useQuery({
-    queryKey: ['/api/treatment-packages'],
+    queryKey: ['/api/test-packages'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/treatment-packages');
-      const data = await res.json();
-      return data;
+      try {
+        const res = await apiRequest('GET', '/api/test-packages');
+        if (!res.ok) {
+          console.error('Failed to fetch packages:', res.statusText);
+          return [];
+        }
+        const data = await res.json();
+        console.log('Successfully loaded packages:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching treatment packages:', error);
+        return [];
+      }
     }
   });
 
