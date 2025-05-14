@@ -129,7 +129,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
           specialOfferId={specialOfferId}
           promoCode={promoCode}
           packageId={packageId}
-          onComplete={handleBuilderComplete}
+          onComplete={(quoteData: any) => handleBuilderComplete(quoteData)}
           onCancel={handleCancel}
         />
       )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuoteBuilder } from '@/hooks/use-quote-builder';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,12 +9,27 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from '@/lib/analytics';
+import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
+import { PackageIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface QuoteBuilderProps {
-  onComplete?: () => void;
+  onComplete?: (quoteData: any) => void;
+  onCancel?: () => void;
+  quoteId?: string | number;
+  specialOfferId?: string;
+  promoCode?: string;
+  packageId?: string;
 }
 
-export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
+export function QuoteBuilder({ 
+  onComplete, 
+  onCancel,
+  quoteId,
+  specialOfferId,
+  promoCode: initialPromoCode,
+  packageId
+}: QuoteBuilderProps) {
   const { 
     quote, 
     addTreatment, 
@@ -31,8 +46,50 @@ export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
     addons
   } = useQuoteBuilder();
   
-  const [promoCode, setPromoCode] = useState('');
-  const [activeTab, setActiveTab] = useState('treatments');
+  const [promoCode, setPromoCode] = useState(initialPromoCode || '');
+  const [activeTab, setActiveTab] = useState(packageId ? 'packages' : 'treatments');
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [initialPackageAdded, setInitialPackageAdded] = useState(false);
+  
+  // Handle initial promo code if provided
+  useEffect(() => {
+    if (initialPromoCode && !quote.promoCode) {
+      (async () => {
+        const result = await applyPromoCode(initialPromoCode);
+        if (result.success) {
+          toast({
+            title: "Promo Code Applied",
+            description: result.message,
+          });
+          trackEvent('automatic_promo_code_applied', 'promotion', initialPromoCode);
+        } else {
+          toast({
+            title: "Error",
+            description: result.message,
+            variant: "destructive"
+          });
+          trackEvent('automatic_promo_code_error', 'promotion_error', result.message);
+        }
+      })();
+    }
+  }, [initialPromoCode, quote.promoCode, applyPromoCode]);
+  
+  // Handle initial packageId if provided
+  useEffect(() => {
+    if (packageId && packages && !initialPackageAdded) {
+      const packageToAdd = packages.find((pkg: any) => pkg.id === packageId);
+      if (packageToAdd) {
+        addPackage(packageToAdd);
+        setSelectedPackage(packageToAdd);
+        setInitialPackageAdded(true);
+        toast({
+          title: "Package Selected",
+          description: `Added ${packageToAdd.name} to your quote`,
+        });
+        trackEvent('package_auto_selected', 'package', packageToAdd.name);
+      }
+    }
+  }, [packageId, packages, initialPackageAdded, addPackage]);
   
   const handlePromoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,22 +129,59 @@ export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
     }).format(amount);
   };
   
+  // Modified onComplete handler to add test metadata 
+  const handleComplete = () => {
+    if (onComplete) {
+      const enrichedQuote = {
+        ...quote,
+        testMetadata: {
+          containsPackage: packageId ? true : false,
+          hasPromoCode: initialPromoCode ? true : false,
+          packageId: packageId,
+          promoCode: initialPromoCode,
+          timestamp: new Date().toISOString()
+        }
+      };
+      onComplete(enrichedQuote);
+    }
+  };
+  
   return (
     <div className="quote-builder space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Build Your Dental Treatment Quote</h2>
-        <Button 
-          variant="outline"
-          onClick={resetQuote}
-          disabled={
-            (!quote.treatments || quote.treatments.length === 0) && 
-            (!quote.packages || quote.packages.length === 0) && 
-            (!quote.addons || quote.addons.length === 0)
-          }
-        >
-          Reset Quote
-        </Button>
+        <div className="flex gap-2">
+          {onCancel && (
+            <Button 
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button 
+            variant="outline"
+            onClick={resetQuote}
+            disabled={
+              (!quote.treatments || quote.treatments.length === 0) && 
+              (!quote.packages || quote.packages.length === 0) && 
+              (!quote.addons || quote.addons.length === 0)
+            }
+          >
+            Reset Quote
+          </Button>
+        </div>
       </div>
+      
+      {/* Package notification */}
+      {selectedPackage && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <PackageIcon className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            You are viewing the <span className="font-semibold">{selectedPackage.name}</span> package with {selectedPackage.treatments?.length || 0} treatments.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Left column: Selection tabs */}
@@ -367,6 +461,18 @@ export function QuoteBuilder({ onComplete }: QuoteBuilderProps) {
                 <span>Total</span>
                 <span>{formatCurrency(quote.total)}</span>
               </div>
+              
+              {/* Complete Button */}
+              <Button 
+                className="w-full mt-4" 
+                onClick={handleComplete}
+                disabled={
+                  (!quote.treatments || quote.treatments.length === 0) && 
+                  (!quote.packages || quote.packages.length === 0)
+                }
+              >
+                Continue to Summary
+              </Button>
             </div>
           </Card>
         </div>
