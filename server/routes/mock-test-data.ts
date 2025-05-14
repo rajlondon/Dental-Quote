@@ -49,6 +49,55 @@ export const TEST_TREATMENTS = [
 ];
 
 // Mock treatment packages for testing
+// SpecialOffer model definition used in the frontend
+// Add a simple version here for reference:
+export interface SpecialOffer {
+  id: string;
+  title: string;
+  description: string;
+  discount_type: 'percentage' | 'fixed_amount';
+  discount_value: number;
+  applicable_treatments: string[];
+  promo_code: string;
+  banner_image: string;
+  is_active: boolean;
+  terms_conditions: string;
+  treatment_price_gbp: number;
+  treatment_price_usd: number;
+}
+
+// Mock data for testing special offers display
+export const TEST_SPECIAL_OFFERS = [
+  {
+    id: "offer-001",
+    title: "Luxury Airport Transfer",
+    description: "Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.",
+    discount_type: "fixed_amount" as const,
+    discount_value: 80,
+    applicable_treatments: ["pkg-001", "pkg-002", "pkg-003"],
+    promo_code: "LUXTRAVEL",
+    banner_image: "/cached-images/premium-hotel.jpg", // Updated path
+    is_active: true,
+    terms_conditions: "Minimum treatment value of $2000 required. 48-hour advance booking required for transfers.",
+    treatment_price_gbp: 180,
+    treatment_price_usd: 230
+  },
+  {
+    id: "offer-002",
+    title: "Free Teeth Whitening",
+    description: "Receive a complimentary professional teeth whitening session with any veneer or crown treatment package.",
+    discount_type: "fixed_amount" as const,
+    discount_value: 150,
+    applicable_treatments: ["tr-003", "tr-004"],
+    promo_code: "FREEWHITE",
+    banner_image: "/cached-images/whitening.jpg",
+    is_active: true,
+    terms_conditions: "Minimum of 4 veneers or crowns required. Not combinable with other offers.",
+    treatment_price_gbp: 150,
+    treatment_price_usd: 195
+  }
+];
+
 export const TEST_PACKAGES = [
   {
     id: "pkg-001",
@@ -158,7 +207,8 @@ export const TEST_PROMO_CODES = [
     is_active: true,
     min_purchase_amount: 0,
     max_discount_amount: 500,
-    expires_at: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString()
+    expires_at: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    applicable_treatments: ["tr-001", "tr-002", "tr-003"]
   },
   {
     id: "promo-002",
@@ -170,7 +220,8 @@ export const TEST_PROMO_CODES = [
     is_active: true,
     min_purchase_amount: 500,
     max_discount_amount: 100,
-    expires_at: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString()
+    expires_at: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(),
+    applicable_treatments: ["pkg-001", "pkg-002", "pkg-003"]
   },
   {
     id: "promo-003",
@@ -182,6 +233,7 @@ export const TEST_PROMO_CODES = [
     is_active: true,
     min_purchase_amount: 700,
     max_discount_amount: 350,
-    expires_at: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+    expires_at: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+    applicable_treatments: ["tr-001", "tr-002", "pkg-001"]
   }
 ];
