@@ -96,7 +96,7 @@ interface UseQuoteBuilderResult {
   addAddon: (addon: Addon) => void;
   removeAddon: (addon: Addon) => void;
   applyPromoCode: (code: string) => Promise<PromoCodeResponse>;
-  saveQuote: () => Promise<QuoteState>;
+  saveQuote: (additionalData?: any) => Promise<QuoteState>;
   finalizeQuote: () => Promise<QuoteState>;
   resetQuote: () => void;
   setQuoteId: (id: string | number) => void;

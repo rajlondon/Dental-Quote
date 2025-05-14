@@ -103,7 +103,7 @@ export function QuoteFlow() {
           flow_type: isSpecialOfferFlow ? 'special_offer' : 
                    isPackageFlow ? 'package' : 
                    isPromoTokenFlow ? 'promo_token' : 'standard'
-        });
+        } as any);
         
         if (savedQuote && savedQuote.id) {
           setSavedQuoteId(savedQuote.id);
