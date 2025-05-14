@@ -300,9 +300,17 @@ export function QuoteBuilder({
                     <Card key={addon.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{addon.name}</h4>
-                        <Badge variant="secondary">{formatCurrency(addon.price)}</Badge>
+                        <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200 px-2.5 py-0.5">
+                          {formatCurrency(addon.price)}
+                        </Badge>
                       </div>
                       <p className="text-sm text-gray-500 flex-grow">{addon.description}</p>
+                      <div className="bg-purple-50 p-2 rounded-md my-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Addon Price:</span>
+                          <span className="font-bold text-purple-700">{formatCurrency(addon.price)}</span>
+                        </div>
+                      </div>
                       <div className="mt-4">
                         <Button 
                           variant="outline" 
