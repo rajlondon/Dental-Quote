@@ -11,9 +11,12 @@ const router = express.Router();
 router.use('/treatments', testQuoteDataRoutes);
 router.use('/treatment-packages', testQuoteDataRoutes);
 router.use('/addons', testQuoteDataRoutes);
-router.use('/promo-codes', testQuoteDataRoutes);
 router.use('/promo', testQuoteDataRoutes);
 router.use('/special-offers', testQuoteDataRoutes);
 router.use('/test-promo-applied', testQuoteDataRoutes);
+
+// Special route to get test promo codes 
+// This avoids conflict with the /api/promo-codes route that's already defined
+router.use('/test-promo-codes', testQuoteDataRoutes);
 
 export default router;

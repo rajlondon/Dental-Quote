@@ -28,8 +28,13 @@ router.get('/addons', (req, res) => {
   res.json(TEST_ADDONS);
 });
 
-// Get all promo codes for testing
+// Get all promo codes for testing - standard route (may be shadowed by main API)
 router.get('/promo-codes', (req, res) => {
+  res.json(TEST_PROMO_CODES);
+});
+
+// Special route to access test promo codes without conflicts
+router.get('/', (req, res) => {
   res.json(TEST_PROMO_CODES);
 });
 
