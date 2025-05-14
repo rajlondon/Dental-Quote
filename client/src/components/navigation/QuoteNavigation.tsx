@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { ArrowRight, Tag, Gift, FileText } from 'lucide-react';
+import { ArrowRight, Tag, Gift, FileText, Package, Percent, BanknoteIcon } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 
 /**
@@ -55,7 +55,63 @@ const QuoteNavigation: React.FC = () => {
         </Link>
       </div>
       
-      <div className="text-xs text-gray-500 mt-2">
+      {/* New Treatment Package Testing Links */}
+      <h3 className="text-sm font-semibold mt-4 mb-2 text-blue-800">Treatment Package Testing</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Link 
+          href="/quote-test?packageId=pkg-001" 
+          className="flex items-center justify-between px-4 py-3 bg-white border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-50 transition-colors"
+          onClick={() => trackLinkClick('implant_package')}
+        >
+          <span className="font-medium flex items-center">
+            <Package className="h-4 w-4 mr-2" />
+            6 Implants + 6 Crowns
+          </span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        
+        <Link 
+          href="/quote-test?packageId=pkg-003" 
+          className="flex items-center justify-between px-4 py-3 bg-white border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-50 transition-colors"
+          onClick={() => trackLinkClick('all_on_4_package')}
+        >
+          <span className="font-medium flex items-center">
+            <Package className="h-4 w-4 mr-2" />
+            All-on-4 Implant Package
+          </span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      
+      {/* Treatment Packages with Promo Codes */}
+      <h3 className="text-sm font-semibold mt-4 mb-2 text-blue-800">Packages with Promo Codes</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Link 
+          href="/quote-test?packageId=pkg-001&promoCode=IMPLANT30" 
+          className="flex items-center justify-between px-4 py-3 bg-white border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors"
+          onClick={() => trackLinkClick('implant_with_percentage_discount')}
+        >
+          <span className="font-medium flex items-center text-sm">
+            <Percent className="h-4 w-4 mr-2" />
+            Implants + 30% Off (IMPLANT30)
+          </span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        
+        <Link 
+          href="/quote-test?packageId=pkg-001&promoCode=SUMMER100" 
+          className="flex items-center justify-between px-4 py-3 bg-white border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors"
+          onClick={() => trackLinkClick('implant_with_fixed_discount')}
+        >
+          <span className="font-medium flex items-center text-sm">
+            <BanknoteIcon className="h-4 w-4 mr-2" />
+            Implants + £100 Off (SUMMER100)
+          </span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      
+      <div className="text-xs text-gray-500 mt-4">
         Click any of the options above to test different quote scenarios
       </div>
     </div>

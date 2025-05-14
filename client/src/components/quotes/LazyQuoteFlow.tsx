@@ -46,6 +46,7 @@ interface LazyQuoteFlowProps {
   quoteId?: string | number;
   specialOfferId?: string;
   promoCode?: string;
+  packageId?: string;
   onComplete?: (quoteData: any) => void;
   onCancel?: () => void;
 }
@@ -59,6 +60,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
   quoteId,
   specialOfferId,
   promoCode,
+  packageId,
   onComplete,
   onCancel
 }) => {
@@ -126,6 +128,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
           quoteId={quoteId}
           specialOfferId={specialOfferId}
           promoCode={promoCode}
+          packageId={packageId}
           onComplete={handleBuilderComplete}
           onCancel={handleCancel}
         />
