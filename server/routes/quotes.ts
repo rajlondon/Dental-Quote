@@ -5,7 +5,8 @@ import { z } from 'zod';
 const router = Router();
 
 // Schema for validation
-const quoteIdSchema = z.number().or(z.string().transform(val => parseInt(val, 10)));
+// Parse IDs and ensure they're converted to strings for storage functions
+const quoteIdSchema = z.number().or(z.string()).transform(val => String(val));
 const emailSchema = z.object({
   email: z.string().email().optional()
 });
