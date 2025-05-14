@@ -38,6 +38,8 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     { path: '/admin-portal/treatment-plans', label: 'Treatment Plans' },
     { path: '/admin-portal/promotions', label: 'Promotions' },
     { path: '/admin/bookings', label: 'Bookings' },
+    { path: '/admin/new-quote', label: 'New Quote' },
+    { path: '/admin/quote-builder', label: 'Quote Builder' },
   ];
   
   return (

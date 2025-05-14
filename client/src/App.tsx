@@ -677,6 +677,17 @@ function Router() {
         )}
       </Route>
       
+      <Route path="/admin/quote-builder">
+        {() => (
+          <AdminPortalGuard>
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading Quote Builder...</div>}>
+              {/* Use dynamic import to reduce initial bundle size */}
+              {React.createElement(React.lazy(() => import("@/pages/QuoteBuilderPage")))}
+            </React.Suspense>
+          </AdminPortalGuard>
+        )}
+      </Route>
+      
       {/* Clinic Staff Protected Routes */}
       {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
       <Route path="/simple-clinic">

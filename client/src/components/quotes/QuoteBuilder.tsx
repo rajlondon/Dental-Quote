@@ -49,14 +49,14 @@ export function QuoteBuilder() {
         title: "Success",
         description: result.message,
       });
-      trackEvent('promo_code_applied', { code: promoCode });
+      trackEvent('promo_code_applied', 'promotion', promoCode);
     } else {
       toast({
         title: "Error",
         description: result.message,
         variant: "destructive"
       });
-      trackEvent('promo_code_error', { code: promoCode, error: result.message });
+      trackEvent('promo_code_error', 'promotion_error', result.message);
     }
   };
 
@@ -105,7 +105,7 @@ export function QuoteBuilder() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {treatments && treatments.map((treatment) => (
+                  {treatments && treatments.map((treatment: any) => (
                     <Card key={treatment.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{treatment.name}</h4>
