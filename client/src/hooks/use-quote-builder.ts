@@ -485,12 +485,6 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
             });
           }
         }, 100);
-            subtotal: quote.subtotal,
-            promoDiscount: quote.promoDiscount,
-            total: quote.total,
-            promoCode: quote.promoCode
-          });
-        }, 100);
         
         // Show success toast with discount details
         toast({

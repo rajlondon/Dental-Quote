@@ -37,6 +37,13 @@ const TestNavigationHeader: React.FC = () => {
               Quote Test
             </Button>
           </Link>
+          
+          <Link href="/simple-quote-test">
+            <Button variant="ghost" size="sm" className="text-slate-200 hover:text-white hover:bg-slate-700">
+              <FileText className="h-4 w-4 mr-2" />
+              Simple Test
+            </Button>
+          </Link>
         </nav>
       </div>
     </header>
