@@ -298,6 +298,8 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
     console.log('[QuoteBuilder] Starting promo code application for:', code);
     try {
+      setIsLoading?.(true); // Use optional chaining in case setIsLoading doesn't exist
+      
       // Track promo code attempt
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'promo_code_attempt', {
@@ -320,7 +322,16 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         : `/api/promo-codes/${encodeURIComponent(code.trim())}/validate`;
         
       console.log(`[QuoteBuilder] Using promo code validation endpoint: ${apiEndpoint}`);
-      const response = await fetch(apiEndpoint);
+      
+      // Prepare request with current quote data for proper validation
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          subtotal: quote.subtotal,
+          treatments: quote.treatments 
+        })
+      });
       
       // Handle network or server errors
       if (!response.ok) {
@@ -343,133 +354,137 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
       console.log('[QuoteBuilder] Promo code validation response:', data);
       
       if (data.success) {
-        // Log for debugging
-        console.log('[QuoteBuilder] Current quote state before applying promo:', { 
-          subtotal: quote.subtotal,
-          offerDiscount: quote.offerDiscount || 0,
-          selectedTreatments: quote.treatments.length,
-          selectedPackages: quote.packages.length,
-          total: quote.total
-        });
-        
-        // Calculate the subtotal first - it might be missing
-        let calculatedSubtotal = 0;
-        
-        // Add up treatment prices
-        quote.treatments.forEach(treatment => {
-          if (treatment.price) {
-            calculatedSubtotal += treatment.price * ((treatment as any).quantity || 1);
-          }
-        });
-        
-        // Add up package prices
-        quote.packages.forEach(pkg => {
-          if (pkg.price) {
-            calculatedSubtotal += pkg.price * ((pkg as any).quantity || 1);
-          }
-        });
-        
-        // Add up addon prices
-        quote.addons.forEach(addon => {
-          if (addon.price) {
-            calculatedSubtotal += addon.price * ((addon as any).quantity || 1);
-          }
-        });
-        
-        // Use the calculated subtotal if the quote subtotal is 0 or undefined
-        const effectiveSubtotal = quote.subtotal || calculatedSubtotal;
-        console.log('[QuoteBuilder] Calculated subtotal:', calculatedSubtotal, 'Quote subtotal:', quote.subtotal, 'Using:', effectiveSubtotal);
-        
-        // Calculate new totals with discount
-        let newDiscount = 0;
-        if (data.data.discount_type === 'percentage') {
-          newDiscount = effectiveSubtotal * (data.data.discount_value / 100);
-          console.log(`[QuoteBuilder] Applying ${data.data.discount_value}% discount on ${effectiveSubtotal} = ${newDiscount}`);
-        } else if (data.data.discount_type === 'fixed_amount') {
-          newDiscount = Math.min(data.data.discount_value, effectiveSubtotal);
-          console.log(`[QuoteBuilder] Applying fixed discount of ${data.data.discount_value} (capped to ${effectiveSubtotal}) = ${newDiscount}`);
-        }
-        
-        // Ensure discount is a valid number
-        if (isNaN(newDiscount) || !isFinite(newDiscount)) {
-          console.error('[QuoteBuilder] Invalid discount value calculated:', newDiscount);
-          newDiscount = 0;
-        } else {
-          // Round to 2 decimal places for currency
-          newDiscount = Math.round(newDiscount * 100) / 100;
-          console.log('[QuoteBuilder] Final normalized discount amount:', newDiscount);
-        }
-        
-        // Calculate total discount (combining offer discount and promo discount)
-        const offerDiscount = quote.offerDiscount || 0;
-        const totalDiscount = offerDiscount + newDiscount;
-        
-        // Calculate new total with rounding to ensure consistent currency values
-        let newTotal = effectiveSubtotal - totalDiscount;
-        newTotal = Math.max(0, Math.round(newTotal * 100) / 100); // Ensure positive and round to 2 decimals
-        
-        console.log('[QuoteBuilder] Discount calculation:', {
-          effectiveSubtotal,
-          discountType: data.data.discount_type,
-          discountValue: data.data.discount_value,
-          calculatedDiscount: newDiscount,
-          offerDiscount: quote.offerDiscount || 0,
-          totalDiscount,
-          newTotal
-        });
-        
-        const updatedQuote = {
-          ...quote,
-          subtotal: effectiveSubtotal, // Ensure subtotal is set
-          promoCode: code,
-          promoCodeId: data.data.id,
-          discountType: data.data.discount_type,
-          discountValue: data.data.discount_value,
-          offerDiscount: quote.offerDiscount || 0,
-          promoDiscount: newDiscount,
-          discount: totalDiscount,
-          total: newTotal
-        };
-        
-        // Debug log for updated quote object
-        console.log('[QuoteBuilder] Updated quote with discount:', {
-          subtotal: updatedQuote.subtotal,
-          promoDiscount: updatedQuote.promoDiscount,
-          offerDiscount: updatedQuote.offerDiscount,
-          totalDiscount: updatedQuote.discount,
-          newTotal: updatedQuote.total,
-          code: updatedQuote.promoCode
-        });
-        
-        // Force the quote update with a functional update to ensure we're using latest state
+        // Use functional update to ensure we have the latest state
         setQuote(prevQuote => {
-          const finalQuote = {
+          // Log for debugging
+          console.log('[QuoteBuilder] Current quote state before applying promo:', { 
+            subtotal: prevQuote.subtotal,
+            offerDiscount: prevQuote.offerDiscount || 0,
+            selectedTreatments: prevQuote.treatments.length,
+            selectedPackages: prevQuote.packages.length,
+            total: prevQuote.total
+          });
+          
+          // Calculate the subtotal first - it might be missing
+          let calculatedSubtotal = 0;
+          
+          // Add up treatment prices
+          prevQuote.treatments.forEach(treatment => {
+            if (treatment.price) {
+              calculatedSubtotal += treatment.price * ((treatment as any).quantity || 1);
+            }
+          });
+          
+          // Add up package prices
+          prevQuote.packages.forEach(pkg => {
+            if (pkg.price) {
+              calculatedSubtotal += pkg.price * ((pkg as any).quantity || 1);
+            }
+          });
+          
+          // Add up addon prices
+          prevQuote.addons.forEach(addon => {
+            if (addon.price) {
+              calculatedSubtotal += addon.price * ((addon as any).quantity || 1);
+            }
+          });
+          
+          // Use the calculated subtotal if the quote subtotal is 0 or undefined
+          const effectiveSubtotal = prevQuote.subtotal || calculatedSubtotal;
+          console.log('[QuoteBuilder] Calculated subtotal:', calculatedSubtotal, 'Quote subtotal:', prevQuote.subtotal, 'Using:', effectiveSubtotal);
+          
+          // Calculate the effective subtotal (may include special offer discounts)
+          const subtotalForDiscount = effectiveSubtotal - (prevQuote.offerDiscount || 0);
+          
+          // Calculate new totals with discount
+          let calculatedDiscount = 0;
+          if (data.data.discount_type === 'percentage') {
+            calculatedDiscount = effectiveSubtotal * (data.data.discount_value / 100);
+            console.log(`[QuoteBuilder] Applying ${data.data.discount_value}% discount on ${effectiveSubtotal} = ${calculatedDiscount}`);
+          } else if (data.data.discount_type === 'fixed_amount') {
+            calculatedDiscount = Math.min(data.data.discount_value, effectiveSubtotal);
+            console.log(`[QuoteBuilder] Applying fixed discount of ${data.data.discount_value} (capped to ${effectiveSubtotal}) = ${calculatedDiscount}`);
+          }
+          
+          // Ensure discount is a valid number
+          if (isNaN(calculatedDiscount) || !isFinite(calculatedDiscount)) {
+            console.error('[QuoteBuilder] Invalid discount value calculated:', calculatedDiscount);
+            calculatedDiscount = 0;
+          } else {
+            // Round to 2 decimal places for currency
+            calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
+            console.log('[QuoteBuilder] Final normalized discount amount:', calculatedDiscount);
+          }
+          
+          // Ensure discount doesn't exceed subtotal
+          calculatedDiscount = Math.min(calculatedDiscount, effectiveSubtotal);
+          
+          // Calculate total discount (combining offer discount and promo discount)
+          const offerDiscount = prevQuote.offerDiscount || 0;
+          const totalDiscount = offerDiscount + calculatedDiscount;
+          
+          // Calculate new total with rounding to ensure consistent currency values
+          let newTotal = Math.max(0, effectiveSubtotal - totalDiscount);
+          newTotal = Math.round(newTotal * 100) / 100; // Round to 2 decimal places
+          
+          console.log('[QuoteBuilder] Discount calculation:', {
+            effectiveSubtotal,
+            discountType: data.data.discount_type,
+            discountValue: data.data.discount_value,
+            calculatedDiscount,
+            offerDiscount,
+            totalDiscount,
+            newTotal
+          });
+          
+          // Create updated quote object with all fields consistently set
+          const updatedQuote = {
             ...prevQuote,
-            ...updatedQuote,
-            subtotal: effectiveSubtotal,
+            subtotal: effectiveSubtotal, // Ensure subtotal is set
             promoCode: code,
             promoCodeId: data.data.id,
             discountType: data.data.discount_type,
             discountValue: data.data.discount_value,
-            offerDiscount: prevQuote.offerDiscount || 0,
-            promoDiscount: newDiscount,
+            offerDiscount: offerDiscount,
+            promoDiscount: calculatedDiscount,
             discount: totalDiscount,
             total: newTotal
           };
           
-          console.log('[QuoteBuilder] Quote update with functional update:', {
-            subtotal: finalQuote.subtotal,
-            promoDiscount: finalQuote.promoDiscount,
-            total: finalQuote.total,
-            code: finalQuote.promoCode
+          console.log('[QuoteBuilder] Updated quote with discount:', {
+            subtotal: updatedQuote.subtotal,
+            promoDiscount: updatedQuote.promoDiscount,
+            offerDiscount: updatedQuote.offerDiscount,
+            totalDiscount: updatedQuote.discount,
+            newTotal: updatedQuote.total
           });
           
-          return finalQuote;
+          return updatedQuote;
         });
         
         // Add a delayed log to verify the quote state after React updates
         setTimeout(() => {
           console.log('[QuoteBuilder] State after update:', {
+            subtotal: quote.subtotal,
+            promoDiscount: quote.promoDiscount,
+            total: quote.total
+          });
+          
+          // Show success toast AFTER state update completes
+          toast({
+            title: "Promo Code Applied",
+            description: `${code} applied successfully! Discount: ${data.data.discount_type === 'percentage' ? data.data.discount_value + '%' : formatCurrency(data.data.discount_value)}`,
+          });
+          
+          // Track the successful application
+          if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'promo_code_applied', {
+              event_category: 'promotions',
+              event_label: code,
+              value: data.data.discount_value
+            });
+          }
+        }, 100);
             subtotal: quote.subtotal,
             promoDiscount: quote.promoDiscount,
             total: quote.total,

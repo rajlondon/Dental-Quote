@@ -1,0 +1,202 @@
+State Update Synchronization: The success toast may be triggered before the state is fully updated with the new price
+Component Re-rendering: The QuoteSummary component may not be re-rendering when the discount is applied
+Calculation Logic: There might be an issue in how the discount is calculated or applied to the total
+Recommended Solution
+Here's how we can fix this issue:
+
+1. Fix the applyPromoCode Function in use-quote-builder.ts
+// In client/src/hooks/use-quote-builder.ts
+const applyPromoCode = async (code: string) => {
+  try {
+    setIsLoading(true);
+    
+    // Log initial state for debugging
+    console.log("[PromoCode] Starting with quote:", quote);
+    
+    const response = await fetch(`/api/quotes-api/validate-promo/${code}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        subtotal: quote.subtotal,
+        treatments: quote.treatments 
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Invalid promo code');
+    }
+    
+    const data = await response.json();
+    console.log("[PromoCode] API response:", data);
+    
+    // Use functional update to ensure we have the latest state
+    setQuote(prevQuote => {
+      // Calculate effective subtotal (may include special offer discounts)
+      const effectiveSubtotal = prevQuote.subtotal - (prevQuote.offerDiscount || 0);
+      
+      // Calculate the promo discount amount
+      let calculatedDiscount = 0;
+      if (data.discountType === 'percentage') {
+        calculatedDiscount = (effectiveSubtotal * data.discountValue) / 100;
+      } else if (data.discountType === 'fixed') {
+        calculatedDiscount = data.discountValue;
+      }
+      
+      // Ensure discount doesn't exceed subtotal
+      calculatedDiscount = Math.min(calculatedDiscount, effectiveSubtotal);
+      
+      // Calculate the new total
+      const totalDiscount = (prevQuote.offerDiscount || 0) + calculatedDiscount;
+      const newTotal = Math.max(0, prevQuote.subtotal - totalDiscount);
+      
+      console.log("[PromoCode] Calculated new values:", {
+        originalSubtotal: prevQuote.subtotal,
+        calculatedDiscount,
+        offerDiscount: prevQuote.offerDiscount || 0,
+        totalDiscount,
+        newTotal
+      });
+      
+      // Create the updated quote object
+      const updatedQuote = {
+        ...prevQuote,
+        promoCode: code,
+        promoDiscount: calculatedDiscount,
+        total: newTotal
+      };
+      
+      console.log("[PromoCode] Updated quote:", updatedQuote);
+      return updatedQuote;
+    });
+    
+    // Show success toast AFTER state update
+    toast.success(`Promo code ${code} applied successfully! Discount: $${data.discountValue}${data.discountType === 'percentage' ? '%' : ''}`);
+    
+    // Track the event
+    if (analytics) {
+      analytics.track('promo_code_applied', {
+        code,
+        discountType: data.discountType,
+        discountValue: data.discountValue
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("[PromoCode] Error:", error);
+    toast.error(`Failed to apply promo code: ${error.message}`);
+    return false;
+  } finally {
+    setIsLoading(false);
+  }
+};
+2. Ensure the QuoteSummary Component Properly Displays Discounts
+// In client/src/components/quotes/QuoteSummary.tsx
+import React from 'react';
+import { formatCurrency } from '../../utils/format';
+
+interface QuoteSummaryProps {
+  quote: {
+    treatments: any[];
+    subtotal: number;
+    promoCode?: string;
+    promoDiscount?: number;
+    offerDiscount?: number;
+    total: number;
+  };
+}
+
+const QuoteSummary: React.FC<QuoteSummaryProps> = ({ quote }) => {
+  // Calculate values for display
+  const hasPromoDiscount = !!quote.promoCode && (quote.promoDiscount || 0) > 0;
+  const hasOfferDiscount = (quote.offerDiscount || 0) > 0;
+  const hasAnyDiscount = hasPromoDiscount || hasOfferDiscount;
+  
+  console.log("[QuoteSummary] Rendering with quote:", quote);
+
+  return (
+    <div className="quote-summary p-4 border rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">Quote Summary</h3>
+      
+      {quote.treatments.length === 0 ? (
+        <p className="text-gray-500">No items added to quote yet</p>
+      ) : (
+        <>
+          <div className="space-y-2">
+            {quote.treatments.map((treatment, index) => (
+              <div key={index} className="flex justify-between">
+                <span>{treatment.name} {treatment.quantity > 1 ? `(${treatment.quantity})` : ''}</span>
+                <span>{formatCurrency(treatment.price * (treatment.quantity || 1))}</span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 pt-2 border-t">
+            <div className="flex justify-between font-medium">
+              <span>Subtotal</span>
+              <span>{formatCurrency(quote.subtotal)}</span>
+            </div>
+            
+            {/* Show discounts if any */}
+            {hasAnyDiscount && (
+              <div className="mt-2 space-y-1 text-green-600">
+                {hasPromoDiscount && (
+                  <div className="flex justify-between">
+                    <span>Promo Discount ({quote.promoCode})</span>
+                    <span>-{formatCurrency(quote.promoDiscount || 0)}</span>
+                  </div>
+                )}
+                
+                {hasOfferDiscount && (
+                  <div className="flex justify-between">
+                    <span>Special Offer Discount</span>
+                    <span>-{formatCurrency(quote.offerDiscount || 0)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+              <span>Total</span>
+              <span data-testid="quote-total">{formatCurrency(quote.total)}</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Use React.memo to prevent unnecessary re-renders
+export default React.memo(QuoteSummary);
+3. Add a Format Currency Utility Function
+// In client/src/utils/format.ts
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(amount || 0);
+};
+4. Update the Default Quote State in use-quote-builder.ts
+// In client/src/hooks/use-quote-builder.ts
+const defaultQuote: QuoteState = {
+  id: null,
+  treatments: [],
+  subtotal: 0,
+  promoCode: null,
+  promoDiscount: 0,
+  offerDiscount: 0,
+  appliedOfferId: null,
+  total: 0
+};
+Additional State Management Considerations
+Based on the web search information about state management in React, there are a few key principles to implement:
+
+Functional Updates: Use functional form of setState to ensure you're working with the latest state
+Avoid Redundant State: Don't store derived values that can be calculated from existing state
+State Synchronization: Ensure all components that need the state have access to it
+Proper State Initialization: Initialize all state properties with appropriate default values
+The solution above implements these principles to fix the issue with promo code discounts not showing properly in the UI.
+
+Testing Recommendations
