@@ -45,13 +45,13 @@ router.get('/', (req, res) => {
   }
 });
 
-// Validate promo code for testing
-router.get('/promo-codes/validate', (req, res) => {
-  const { code } = req.query;
+// Validate promo code for testing - match the format of the main API
+router.get('/promo-codes/:code/validate', (req, res) => {
+  const { code } = req.params;
   
   if (!code) {
     return res.status(400).json({
-      valid: false,
+      success: false,
       message: 'Promo code is required'
     });
   }
@@ -62,7 +62,7 @@ router.get('/promo-codes/validate', (req, res) => {
   
   if (!promoCode) {
     return res.json({
-      valid: false,
+      success: false,
       message: 'Invalid promo code'
     });
   }
@@ -73,19 +73,20 @@ router.get('/promo-codes/validate', (req, res) => {
   
   if (!promoCode.is_active || now > expiresAt) {
     return res.json({
-      valid: false,
+      success: false,
       message: 'This promo code has expired'
     });
   }
   
   return res.json({
-    valid: true,
+    success: true,
     message: 'Promo code applied successfully',
-    promotion: {
+    data: {
       id: promoCode.id,
       title: promoCode.title,
       discount_type: promoCode.discount_type,
-      discount_value: promoCode.discount_value
+      discount_value: promoCode.discount_value,
+      code: promoCode.code
     }
   });
 });
