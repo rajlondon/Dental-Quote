@@ -62,7 +62,8 @@ const defaultQuote: QuoteState = {
   discountType: null,
   discountValue: null,
   offerDiscount: 0,
-  promoDiscount: 0
+  promoDiscount: 0,
+  appliedOfferId: undefined
 };
 
 // Response type for promo code application
@@ -411,10 +412,23 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           promoDiscount: updatedQuote.promoDiscount,
           offerDiscount: updatedQuote.offerDiscount,
           totalDiscount: updatedQuote.discount,
-          newTotal: updatedQuote.total
+          newTotal: updatedQuote.total,
+          code: updatedQuote.promoCode
         });
         
-        setQuote(updatedQuote);
+        // Force the quote update by creating a fresh object
+        const freshQuote = {...updatedQuote};
+        setQuote(freshQuote);
+        
+        // Add a delayed log to verify the quote state after React updates
+        setTimeout(() => {
+          console.log('[QuoteBuilder] State after update:', {
+            subtotal: quote.subtotal,
+            promoDiscount: quote.promoDiscount,
+            total: quote.total,
+            promoCode: quote.promoCode
+          });
+        }, 100);
         
         // Track successful promo code application
         if (typeof window !== 'undefined' && window.gtag) {

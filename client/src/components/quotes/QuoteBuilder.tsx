@@ -473,9 +473,9 @@ export function QuoteBuilder({
                 <span>{formatCurrency(quote.subtotal)}</span>
               </div>
               
-              {/* Show promo discount separately if it exists */}
-              {(quote.promoDiscount || 0) > 0 && (
-                <div className="flex justify-between items-center text-sm text-green-600">
+              {/* Always show any available discount information */}
+              {quote.promoCode && (
+                <div className="flex justify-between items-center text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-md">
                   <span>Promo Discount ({quote.promoCode})</span>
                   <span>-{formatCurrency(quote.promoDiscount || 0)}</span>
                 </div>
@@ -489,8 +489,8 @@ export function QuoteBuilder({
                 </div>
               )}
               
-              {/* Show total discount if neither exists separately */}
-              {quote.discount > 0 && !(quote.promoDiscount || 0) && !(quote.offerDiscount || 0) && (
+              {/* For backward compatibility - show total discount if nothing specific */}
+              {quote.discount > 0 && !quote.promoCode && !(quote.offerDiscount || 0) && (
                 <div className="flex justify-between items-center text-sm text-green-600">
                   <span>Discount</span>
                   <span>-{formatCurrency(quote.discount)}</span>
