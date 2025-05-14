@@ -8,20 +8,23 @@ import { trackEvent } from '@/lib/analytics';
 import QuoteConfirmationEmail from './QuoteConfirmationEmail';
 
 interface QuoteConfirmationProps {
-  quoteId: string | number;
-  onComplete?: () => void;
+  quoteId?: string | number;
+  quote?: any;
+  onComplete?: (quoteData?: any) => void;
+  onCancel?: () => void;
 }
 
-export const QuoteConfirmation = ({ quoteId, onComplete }: QuoteConfirmationProps) => {
+export const QuoteConfirmation = ({ quoteId, quote: initialQuote, onComplete, onCancel }: QuoteConfirmationProps) => {
   const [loading, setLoading] = useState(false);
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<any>(initialQuote || null);
   const [error, setError] = useState<string | null>(null);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const { toast } = useToast();
 
-  // Fetch quote data on component mount
+  // Fetch quote data on component mount if not provided via props
   useEffect(() => {
-    if (!quoteId) return;
+    // Skip if initialQuote is provided or no quoteId exists
+    if (initialQuote || !quoteId) return;
 
     const fetchQuote = async () => {
       setLoading(true);
@@ -52,7 +55,7 @@ export const QuoteConfirmation = ({ quoteId, onComplete }: QuoteConfirmationProp
     };
     
     fetchQuote();
-  }, [quoteId, toast]);
+  }, [quoteId, initialQuote, toast]);
 
   // Generate shareable link
   const shareableLink = `${window.location.origin}/quotes/${quoteId}`;
@@ -162,7 +165,8 @@ export const QuoteConfirmation = ({ quoteId, onComplete }: QuoteConfirmationProp
   }
 
   if (showEmailForm) {
-    return <QuoteConfirmationEmail quoteId={quoteId} />;
+    // Use empty string as fallback for quoteId when it's undefined
+    return <QuoteConfirmationEmail quoteId={quoteId || ''} />;
   }
 
   return (
