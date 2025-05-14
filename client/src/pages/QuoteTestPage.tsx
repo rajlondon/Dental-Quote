@@ -49,34 +49,35 @@ const QuoteTestPage: React.FC = () => {
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6">Quote System Test Page</h1>
       
-      {/* Display test parameters */}
-      {(promoCode || specialOfferId) && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-          <p className="text-sm font-medium text-blue-700">Testing with parameters:</p>
-          <ul className="mt-2 space-y-1">
-            {promoCode && (
-              <li className="text-sm">
-                <span className="font-semibold">Promo Code:</span> {promoCode}
-              </li>
-            )}
-            {specialOfferId && (
-              <li className="text-sm">
-                <span className="font-semibold">Special Offer ID:</span> {specialOfferId}
-              </li>
-            )}
-          </ul>
+        {/* Display test parameters */}
+        {(promoCode || specialOfferId) && (
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+            <p className="text-sm font-medium text-blue-700">Testing with parameters:</p>
+            <ul className="mt-2 space-y-1">
+              {promoCode && (
+                <li className="text-sm">
+                  <span className="font-semibold">Promo Code:</span> {promoCode}
+                </li>
+              )}
+              {specialOfferId && (
+                <li className="text-sm">
+                  <span className="font-semibold">Special Offer ID:</span> {specialOfferId}
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+        
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <LazyQuoteFlow 
+            promoCode={promoCode || undefined}
+            specialOfferId={specialOfferId || undefined}
+            onComplete={handleQuoteComplete}
+            onCancel={handleQuoteCancel}
+          />
         </div>
-      )}
-      
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <LazyQuoteFlow 
-          promoCode={promoCode || undefined}
-          specialOfferId={specialOfferId || undefined}
-          onComplete={handleQuoteComplete}
-          onCancel={handleQuoteCancel}
-        />
       </div>
-    </div>
+    </>
   );
 };
 
