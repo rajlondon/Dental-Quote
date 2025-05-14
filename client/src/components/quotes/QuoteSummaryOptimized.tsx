@@ -51,7 +51,7 @@ interface QuoteSummaryProps {
 }
 
 // Use React.memo to prevent unnecessary re-renders
-export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
+export const QuoteSummaryOptimized = React.memo(({ quote }: QuoteSummaryProps) => {
   // Memoize expensive calculations
   const formattedPrices = useMemo(() => {
     const formatter = new Intl.NumberFormat('en-US', {
@@ -73,6 +73,17 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
     return formattedPrices.formatPrice(amount);
   };
 
+  // Format discount display text based on discount type
+  const discountText = useMemo(() => {
+    if (!quote.discountValue) return 'Discount applied';
+    
+    if (quote.discountType === 'percentage') {
+      return `${quote.discountValue}% off`;
+    } else {
+      return `${formattedPrices.formatPrice(quote.discountValue)} off`;
+    }
+  }, [quote.discountType, quote.discountValue, formattedPrices]);
+
   return (
     <Card className="w-full mb-6">
       <CardHeader>
@@ -92,7 +103,7 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {quote.treatments.map((treatment: any) => (
+                {quote.treatments.map((treatment) => (
                   <TableRow key={treatment.id}>
                     <TableCell className="font-medium">{treatment.name}</TableCell>
                     <TableCell>{treatment.description}</TableCell>
@@ -117,12 +128,12 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {quote.packages.map((pkg: any) => (
+                {quote.packages.map((pkg) => (
                   <TableRow key={pkg.id}>
                     <TableCell className="font-medium">{pkg.name}</TableCell>
                     <TableCell>
                       <ul className="list-disc pl-5 text-sm">
-                        {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
+                        {pkg.treatments && pkg.treatments.map((treatment, index) => (
                           <li key={index}>{treatment.name}</li>
                         ))}
                       </ul>
@@ -148,7 +159,7 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {quote.addons.map((addon: any) => (
+                {quote.addons.map((addon) => (
                   <TableRow key={addon.id}>
                     <TableCell className="font-medium">{addon.name}</TableCell>
                     <TableCell>{addon.description}</TableCell>
@@ -166,11 +177,7 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
             <h3 className="text-md font-semibold mb-2">Applied Promo Code</h3>
             <div className="flex items-center">
               <Badge variant="outline" className="mr-2">{quote.promoCode}</Badge>
-              <span className="text-sm text-gray-500">
-                {quote.discountType === 'percentage' 
-                  ? `${quote.discountValue}% off` 
-                  : `${formatCurrency(quote.discountValue)} off`}
-              </span>
+              <span className="text-sm text-gray-500">{discountText}</span>
             </div>
           </div>
         )}
@@ -182,7 +189,7 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
             <div className="flex items-center">
               <Badge className="mr-2">Special Offer</Badge>
               <span className="text-sm text-gray-500">
-                Discount: {formatCurrency(quote.offerDiscount || 0)}
+                Discount: {formattedPrices.offerDiscount}
               </span>
             </div>
           </div>
@@ -192,20 +199,20 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
         <div className="mt-8 border-t pt-4">
           <div className="flex justify-between items-center py-2">
             <span className="text-md">Subtotal</span>
-            <span className="text-md">{formatCurrency(quote.subtotal)}</span>
+            <span className="text-md">{formattedPrices.subtotal}</span>
           </div>
           {quote.discount > 0 && (
             <div className="flex justify-between items-center py-2 text-green-600">
               <span className="text-md">Discount</span>
-              <span className="text-md">-{formatCurrency(quote.discount)}</span>
+              <span className="text-md">-{formattedPrices.discount}</span>
             </div>
           )}
           <div className="flex justify-between items-center py-2 border-t border-b mt-2 mb-2">
             <span className="text-lg font-bold">Total</span>
-            <span className="text-lg font-bold">{formatCurrency(quote.total)}</span>
+            <span className="text-lg font-bold">{formattedPrices.total}</span>
           </div>
         </div>
       </CardContent>
     </Card>
   );
-}
+});
