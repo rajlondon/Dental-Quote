@@ -1,0 +1,338 @@
+The main gaps currently are:
+
+Missing storage implementation methods in DatabaseStorage
+Incomplete frontend components for the quote flow
+Integration between special offers and the quote system
+Implementation Plan
+1. Complete Backend Storage Implementation
+First, let's implement the missing storage methods in DatabaseStorage:
+
+// In server/storage.ts
+
+// Add to the DatabaseStorage class
+async getAllQuotes(): Promise<Quote[]> {
+  const quotes = await this.db.collection('quotes').find({}).toArray();
+  return quotes;
+}
+
+async getQuote(quoteId: string): Promise<Quote | null> {
+  const quote = await this.db.collection('quotes').findOne({ 
+    _id: new ObjectId(quoteId) 
+  });
+  return quote;
+}
+
+async getQuotesByUserId(userId: string): Promise<Quote[]> {
+  const quotes = await this.db.collection('quotes')
+    .find({ userId: userId })
+    .toArray();
+  return quotes;
+}
+
+async getQuotesByClinicId(clinicId: string): Promise<Quote[]> {
+  const quotes = await this.db.collection('quotes')
+    .find({ clinicId: clinicId })
+    .toArray();
+  return quotes;
+}
+
+async createQuote(quoteData: Omit<Quote, '_id'>): Promise<Quote> {
+  const result = await this.db.collection('quotes').insertOne({
+    ...quoteData,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+  
+  return {
+    _id: result.insertedId,
+    ...quoteData
+  };
+}
+
+async updateQuote(quoteId: string, quoteData: Partial<Quote>): Promise<Quote | null> {
+  const result = await this.db.collection('quotes').findOneAndUpdate(
+    { _id: new ObjectId(quoteId) },
+    { 
+      $set: {
+        ...quoteData,
+        updatedAt: new Date()
+      } 
+    },
+    { returnDocument: 'after' }
+  );
+  
+  return result.value;
+}
+
+async deleteQuote(quoteId: string): Promise<boolean> {
+  const result = await this.db.collection('quotes').deleteOne({
+    _id: new ObjectId(quoteId)
+  });
+  
+  return result.deletedCount === 1;
+}
+2. Enhance the Quote Builder Component
+Next, let's improve the QuoteBuilder component:
+
+// client/src/components/quotes/QuoteBuilder.tsx
+import React, { useState } from 'react';
+import { useQuoteBuilder } from '../../hooks/use-quote-builder';
+import { Treatment, Package, Addon } from '../../types';
+import { analytics } from '../../lib/analytics';
+
+export function QuoteBuilder() {
+  const { 
+    quote, 
+    addTreatment, 
+    removeTreatment, 
+    addPackage,
+    removePackage,
+    addAddon,
+    removeAddon,
+    applyPromoCode,
+    resetQuote
+  } = useQuoteBuilder();
+  
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState('');
+  
+  const handlePromoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoError('');
+    setPromoSuccess('');
+    
+    const result = await applyPromoCode(promoCode);
+    
+    if (result.success) {
+      setPromoSuccess(result.message);
+      analytics.track('promo_code_applied', { code: promoCode });
+    } else {
+      setPromoError(result.message);
+      analytics.track('promo_code_error', { code: promoCode, error: result.message });
+    }
+  };
+  
+  return (
+    <div className="quote-builder">
+      <h2>Build Your Dental Treatment Quote</h2>
+      
+      {/* Treatment Selection Section */}
+      <section className="treatments-section">
+        <h3>Select Treatments</h3>
+        {/* Treatment selection UI */}
+      </section>
+      
+      {/* Packages Section */}
+      <section className="packages-section">
+        <h3>Treatment Packages</h3>
+        {/* Package selection UI */}
+      </section>
+      
+      {/* Add-ons Section */}
+      <section className="addons-section">
+        <h3>Additional Services</h3>
+        {/* Add-on selection UI */}
+      </section>
+      
+      {/* Promo Code Section */}
+      <section className="promo-section">
+        <h3>Promo Code</h3>
+        <form onSubmit={handlePromoSubmit}>
+          <input
+            type="text"
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value)}
+            placeholder="Enter promo code"
+          />
+          <button type="submit">Apply</button>
+        </form>
+        {promoError && <p className="error">{promoError}</p>}
+        {promoSuccess && <p className="success">{promoSuccess}</p>}
+        {quote.promoCode && (
+          <div className="applied-promo">
+            <p>Applied: {quote.promoCode}</p>
+            <button onClick={() => {
+              resetQuote();
+              setPromoCode('');
+              setPromoSuccess('');
+            }}>Remove</button>
+          </div>
+        )}
+      </section>
+      
+      {/* Quote Summary Section */}
+      <section className="quote-summary">
+        <h3>Quote Summary</h3>
+        <div className="summary-details">
+          <p>Subtotal: ${quote.subtotal.toFixed(2)}</p>
+          {quote.discount > 0 && (
+            <p>Discount: -${quote.discount.toFixed(2)}</p>
+          )}
+          <p className="total">Total: ${quote.total.toFixed(2)}</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+3. Integrate Special Offers with Quote System
+// client/src/hooks/use-special-offers.ts
+import { useState, useEffect } from 'react';
+import { SpecialOffer, TreatmentPackage } from '../types';
+
+export function useSpecialOffers() {
+  const [offers, setOffers] = useState<SpecialOffer[]>([]);
+  const [packages, setPackages] = useState<TreatmentPackage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch special offers
+        const offersResponse = await fetch('/api/special-offers');
+        const offersData = await offersResponse.json();
+        
+        // Fetch treatment packages
+        const packagesResponse = await fetch('/api/treatment-packages');
+        const packagesData = await packagesResponse.json();
+        
+        setOffers(offersData);
+        setPackages(packagesData);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load special offers and packages');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchOffers();
+  }, []);
+  
+  const getApplicableOffers = (treatmentIds: string[]) => {
+    return offers.filter(offer => 
+      offer.applicableTreatments.some(id => treatmentIds.includes(id))
+    );
+  };
+  
+  const getApplicablePackages = (treatmentIds: string[]) => {
+    return packages.filter(pkg => 
+      pkg.treatments.every(treatment => treatmentIds.includes(treatment.id))
+    );
+  };
+  
+  return {
+    offers,
+    packages,
+    loading,
+    error,
+    getApplicableOffers,
+    getApplicablePackages
+  };
+}
+4. Create Quote Flow Pages
+// client/src/pages/QuoteFlowPage.tsx
+import React, { useState } from 'react';
+import { QuoteBuilder } from '../components/quotes/QuoteBuilder';
+import { SpecialOffersCarousel } from '../components/SpecialOffersCarousel';
+import { useSpecialOffers } from '../hooks/use-special-offers';
+import { useQuoteBuilder } from '../hooks/use-quote-builder';
+import { analytics } from '../lib/analytics';
+
+export function QuoteFlowPage() {
+  const [step, setStep] = useState(1);
+  const { offers, packages, loading } = useSpecialOffers();
+  const { quote, saveQuote } = useQuoteBuilder();
+  
+  const handleSaveQuote = async () => {
+    try {
+      const savedQuote = await saveQuote();
+      analytics.track('quote_saved', { 
+        quoteId: savedQuote._id,
+        total: savedQuote.total,
+        treatments: savedQuote.treatments.length
+      });
+      // Navigate to next step
+      setStep(step + 1);
+    } catch (error) {
+      console.error('Failed to save quote', error);
+    }
+  };
+  
+  return (
+    <div className="quote-flow-page">
+      <h1>Create Your Dental Treatment Plan</h1>
+      
+      {/* Step indicators */}
+      <div className="step-indicators">
+        <div className={`step ${step >= 1 ? 'active' : ''}`}>1. Select Treatments</div>
+        <div className={`step ${step >= 2 ? 'active' : ''}`}>2. Review Quote</div>
+        <div className={`step ${step >= 3 ? 'active' : ''}`}>3. Confirm Booking</div>
+      </div>
+      
+      {/* Special offers carousel */}
+      {!loading && offers.length > 0 && (
+        <SpecialOffersCarousel offers={offers} />
+      )}
+      
+      {/* Step 1: Quote Builder */}
+      {step === 1 && (
+        <div className="step-content">
+          <QuoteBuilder />
+          <button 
+            className="next-button"
+            onClick={handleSaveQuote}
+            disabled={quote.treatments.length === 0}
+          >
+            Continue to Review
+          </button>
+        </div>
+      )}
+      
+      {/* Step 2: Quote Review */}
+      {step === 2 && (
+        <div className="step-content">
+          <h2>Review Your Quote</h2>
+          {/* Quote review component */}
+          <div className="button-group">
+            <button className="back-button" onClick={() => setStep(1)}>
+              Back to Edit
+            </button>
+            <button className="next-button" onClick={() => setStep(3)}>
+              Proceed to Booking
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Step 3: Booking Confirmation */}
+      {step === 3 && (
+        <div className="step-content">
+          <h2>Confirm Your Booking</h2>
+          {/* Booking form component */}
+          <div className="button-group">
+            <button className="back-button" onClick={() => setStep(2)}>
+              Back to Review
+            </button>
+            <button className="submit-button">
+              Complete Booking
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+Implementation Priorities
+For effective development, I recommend focusing on these components in order:
+
+Backend Storage Methods: Complete the database methods first to ensure data persistence
+Quote Builder Core: Build the basic quote builder without special offers integration
+Special Offers Integration: Add the ability to apply special offers to quotes
+Promo Code System: Implement the promo code validation and application system
+Quote Flow Pages: Create the multi-step quote flow interface
+This approach allows you to build the system incrementally, testing each component as you go.
