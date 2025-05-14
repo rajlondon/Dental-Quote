@@ -30,6 +30,7 @@ interface Addon {
 
 // Quote state interface
 interface QuoteState {
+  id?: string | number;
   treatments: Treatment[];
   packages: Package[];
   addons: Addon[];
@@ -40,6 +41,9 @@ interface QuoteState {
   promoCodeId: string | null;
   discountType: 'percentage' | 'fixed_amount' | null;
   discountValue: number | null;
+  offerDiscount?: number;
+  promoDiscount?: number;
+  appliedOfferId?: string;
 }
 
 // Default empty quote
@@ -53,7 +57,9 @@ const defaultQuote: QuoteState = {
   promoCode: null,
   promoCodeId: null,
   discountType: null,
-  discountValue: null
+  discountValue: null,
+  offerDiscount: 0,
+  promoDiscount: 0
 };
 
 // Response type for promo code application
@@ -214,26 +220,64 @@ export function useQuoteBuilder() {
     }));
   };
   
-  // Apply a promo code to the quote
+  // Apply a promo code to the quote with enhanced persistence
   const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
     try {
-      const result = await promoCodeMutation.mutateAsync(code);
+      const response = await fetch(`/api/promo-codes/validate?code=${code}`);
+      const data = await response.json();
       
-      if (result.success) {
-        setQuote(prev => ({
-          ...prev,
+      if (data.valid) {
+        // Calculate new totals with discount
+        let newDiscount = 0;
+        if (data.promotion.discount_type === 'percentage') {
+          newDiscount = quote.subtotal * (data.promotion.discount_value / 100);
+        } else if (data.promotion.discount_type === 'fixed_amount') {
+          newDiscount = Math.min(data.promotion.discount_value, quote.subtotal);
+        }
+        
+        const updatedQuote = {
+          ...quote,
           promoCode: code,
-          promoCodeId: result.promoCodeId || null,
-          discountType: result.discountType || null,
-          discountValue: result.discountValue || null
-        }));
+          promoCodeId: data.promotion.id,
+          discountType: data.promotion.discount_type,
+          discountValue: data.promotion.discount_value,
+          offerDiscount: quote.offerDiscount || 0,
+          promoDiscount: newDiscount,
+          discount: (quote.offerDiscount || 0) + newDiscount,
+          total: quote.subtotal - ((quote.offerDiscount || 0) + newDiscount)
+        };
+        
+        setQuote(updatedQuote);
+        
+        // Persist the promo code to the server if we have a quote ID
+        if (quote.id) {
+          await apiRequest('PATCH', `/api/quotes/${quote.id}`, { 
+            promoCode: code,
+            promoCodeId: data.promotion.id,
+            promoDiscount: newDiscount,
+            discount: updatedQuote.discount,
+            total: updatedQuote.total
+          });
+          
+          // Invalidate cache to ensure fresh data
+          queryClient.invalidateQueries({ queryKey: ['/api/quotes', quote.id] });
+        }
+        
+        return { 
+          success: true, 
+          message: `${data.promotion.title} applied!`,
+          discountType: data.promotion.discount_type,
+          discountValue: data.promotion.discount_value,
+          promoCodeId: data.promotion.id
+        };
+      } else {
+        return { success: false, message: data.message };
       }
-      
-      return result;
     } catch (error) {
-      return {
-        success: false,
-        message: 'Error applying promo code. Please try again.'
+      console.error('Error applying promo code:', error);
+      return { 
+        success: false, 
+        message: "Error validating promo code. Please try again." 
       };
     }
   };
@@ -266,6 +310,7 @@ export function useQuoteBuilder() {
   
   return {
     quote,
+    setQuote, // Expose setQuote to allow direct state updates from other hooks
     treatments,
     packages,
     addons,
