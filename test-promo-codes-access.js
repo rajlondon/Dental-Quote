@@ -2,7 +2,7 @@
  * Test script to verify promo code endpoints are accessible
  * This script tests both the main API and test endpoints for promo codes
  */
-const axios = require('axios');
+import axios from 'axios';
 
 async function testPromoCodeEndpoints() {
   const BASE_URL = 'http://localhost:5000/api';
@@ -79,4 +79,7 @@ async function testPromoCodeEndpoints() {
   }
 }
 
-testPromoCodeEndpoints();
+testPromoCodeEndpoints()
+  .catch(error => {
+    console.error('Unhandled error:', error.message);
+  });
