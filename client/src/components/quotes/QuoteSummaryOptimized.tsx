@@ -381,4 +381,4 @@ const QuoteSummaryOptimized: React.FC<QuoteSummaryOptimizedProps> = React.memo((
 // Display name for debugging purposes
 QuoteSummaryOptimized.displayName = 'QuoteSummaryOptimized';
 
-export default QuoteSummaryOptimized;
+export { QuoteSummaryOptimized };

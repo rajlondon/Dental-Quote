@@ -3,15 +3,15 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
 
-// Lazy-loaded components with explicit default imports
+// Lazy-loaded components with proper named imports
 const QuoteBuilder = lazy(() => 
-  import('@/components/quotes/QuoteBuilder').then(module => ({ default: module.default || module }))
+  import('@/components/quotes/QuoteBuilder').then(module => ({ default: module.QuoteBuilder }))
 );
 const QuoteSummaryOptimized = lazy(() => 
-  import('@/components/quotes/QuoteSummaryOptimized').then(module => ({ default: module.default || module }))
+  import('@/components/quotes/QuoteSummaryOptimized').then(module => ({ default: module.QuoteSummaryOptimized }))
 );
 const QuoteConfirmation = lazy(() => 
-  import('@/components/quotes/QuoteConfirmation').then(module => ({ default: module.default || module }))
+  import('@/components/quotes/QuoteConfirmation').then(module => ({ default: module.QuoteConfirmation }))
 );
 
 // Fallback loading component
