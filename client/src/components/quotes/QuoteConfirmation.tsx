@@ -1,57 +1,104 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Download, Share2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { CheckCircle2, Link2, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/analytics';
+import { QuoteConfirmationEmail } from './QuoteConfirmationEmail';
 
 interface QuoteConfirmationProps {
   quoteId: string | number;
+  onComplete?: () => void;
 }
 
-export function QuoteConfirmation({ quoteId }: QuoteConfirmationProps) {
+export const QuoteConfirmation = ({ quoteId, onComplete }: QuoteConfirmationProps) => {
+  const [loading, setLoading] = useState(false);
+  const [quote, setQuote] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const { toast } = useToast();
-  const [downloading, setDownloading] = useState(false);
-  const [sharing, setSharing] = useState(false);
 
-  const { data: quote, isLoading, error } = useQuery({
-    queryKey: ['/api/quotes', quoteId],
-    // Query will use the default queryFn from queryClient
-  });
-
+  // Fetch quote data on component mount
   useEffect(() => {
-    if (quote) {
-      // Track successful quote creation
-      trackEvent('quote_confirmed', 'quote', quoteId.toString());
-    }
-  }, [quote, quoteId]);
+    if (!quoteId) return;
 
-  const handleDownloadPDF = async () => {
-    setDownloading(true);
+    const fetchQuote = async () => {
+      setLoading(true);
+      try {
+        const response = await apiRequest('GET', `/api/quotes/${quoteId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch quote');
+        }
+        
+        const data = await response.json();
+        setQuote(data.quote);
+        
+        // Track quote viewed event
+        trackEvent('quote_confirmation_viewed', 'quotes', `quote_id_${quoteId}`);
+      } catch (err) {
+        console.error('Error fetching quote:', err);
+        setError('Could not load quote details. Please try again later.');
+        
+        toast({
+          title: 'Error',
+          description: 'Could not load quote details. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
     
+    fetchQuote();
+  }, [quoteId, toast]);
+
+  // Generate shareable link
+  const shareableLink = `${window.location.origin}/quotes/${quoteId}`;
+  
+  // Handle copying link to clipboard
+  const copyLinkToClipboard = () => {
+    navigator.clipboard.writeText(shareableLink).then(() => {
+      toast({
+        title: 'Link Copied!',
+        description: 'Quote link copied to clipboard',
+      });
+      
+      trackEvent('quote_link_copied', 'quotes', `quote_id_${quoteId}`);
+    }).catch(err => {
+      console.error('Failed to copy link:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to copy link to clipboard',
+        variant: 'destructive',
+      });
+    });
+  };
+  
+  // Handle downloading quote as PDF
+  const downloadQuotePDF = async () => {
+    if (!quoteId) return;
+    
+    setLoading(true);
     try {
-      const response = await fetch(`/api/quotes/${quoteId}/pdf`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await apiRequest('GET', `/api/quotes/${quoteId}/pdf`, null, {
+        responseType: 'blob'
       });
       
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
       }
       
-      // Get blob from response
+      // Create a blob from the PDF data
       const blob = await response.blob();
-      
-      // Create object URL
       const url = window.URL.createObjectURL(blob);
       
-      // Create temporary link and trigger download
+      // Create a temporary link and trigger download
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
-      a.download = `dental-quote-${quoteId}.pdf`;
+      a.download = `quote-${quoteId}.pdf`;
       document.body.appendChild(a);
       a.click();
       
@@ -60,143 +107,125 @@ export function QuoteConfirmation({ quoteId }: QuoteConfirmationProps) {
       document.body.removeChild(a);
       
       toast({
-        title: 'Quote PDF Downloaded',
-        description: 'Your quote has been downloaded successfully.',
+        title: 'Success',
+        description: 'Quote PDF downloaded successfully',
       });
       
-      trackEvent('quote_pdf_downloaded', 'quote', quoteId.toString());
-    } catch (err) {
-      console.error('Error downloading PDF:', err);
+      // Track PDF download event
+      trackEvent('quote_pdf_downloaded', 'quotes', `quote_id_${quoteId}`);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
       toast({
-        title: 'Download Failed',
-        description: 'There was an error downloading your quote. Please try again.',
+        title: 'Error',
+        description: 'Could not download quote PDF. Please try again later.',
         variant: 'destructive',
       });
     } finally {
-      setDownloading(false);
+      setLoading(false);
     }
   };
 
-  const handleShareQuote = async () => {
-    setSharing(true);
-    
-    try {
-      // Get shareable link from the API
-      const response = await fetch(`/api/quotes/${quoteId}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create share link');
-      }
-      
-      const { shareUrl } = await response.json();
-      
-      // Copy to clipboard
-      await navigator.clipboard.writeText(shareUrl);
-      
-      toast({
-        title: 'Quote Shared',
-        description: 'Share link copied to clipboard.',
-      });
-      
-      trackEvent('quote_shared', 'quote', quoteId.toString());
-    } catch (err) {
-      console.error('Error sharing quote:', err);
-      toast({
-        title: 'Share Failed',
-        description: 'There was an error creating a share link. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSharing(false);
-    }
-  };
-
-  if (isLoading) {
+  if (loading && !quote) {
     return (
       <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center py-8">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-4" aria-label="Loading" />
-            <p>Loading quote details...</p>
-          </div>
+        <CardContent className="flex items-center justify-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-3 text-lg">Loading quote details...</span>
         </CardContent>
       </Card>
     );
   }
 
-  if (error || !quote) {
+  if (error) {
     return (
       <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="text-destructive mb-4 text-4xl">!</div>
-            <h3 className="text-lg font-semibold mb-2">Error Loading Quote</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              We couldn't load your quote details. Please try again or contact support.
-            </p>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle className="text-destructive">Error</CardTitle>
+          <CardDescription>We encountered a problem loading your quote</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>{error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
         </CardContent>
       </Card>
     );
+  }
+
+  if (showEmailForm) {
+    return <QuoteConfirmationEmail quoteId={quoteId} />;
   }
 
   return (
     <Card className="w-full">
-      <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
-          <CheckCircle className="h-12 w-12 text-green-500" />
-        </div>
-        <CardTitle className="text-2xl">Quote Confirmed!</CardTitle>
+      <CardHeader>
+        <CardTitle className="flex items-center text-2xl">
+          <CheckCircle2 className="mr-2 text-green-500" />
+          Quote Created Successfully
+        </CardTitle>
         <CardDescription>
-          Your quote #{quoteId} has been created and saved successfully.
+          Your dental quote has been created and saved to our system
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center space-y-4">
-          <p className="text-center text-gray-500 mb-4">
-            Thank you for creating your dental treatment quote. You can download a PDF copy
-            of your quote or share it via a secure link.
-          </p>
+      <CardContent className="space-y-4">
+        <p className="text-lg">
+          Thank you for using MyDentalFly! Your quote (ID: <span className="font-semibold">{quoteId}</span>) 
+          is now saved in our system.
+        </p>
+        
+        <div className="bg-muted p-4 rounded-md">
+          <h3 className="font-semibold mb-2">Next Steps:</h3>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>Our team will review your quote details</li>
+            <li>You'll receive price confirmation within 24 hours</li>
+            <li>Feel free to contact us with any questions</li>
+            <li>If you're ready to proceed, you can book your appointment</li>
+          </ul>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
+          <Button
+            variant="outline"
+            className="flex items-center"
+            onClick={copyLinkToClipboard}
+          >
+            <Link2 className="mr-2 h-4 w-4" />
+            Copy Quote Link
+          </Button>
           
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Button
-              onClick={handleDownloadPDF}
-              disabled={downloading}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {downloading ? 'Downloading...' : 'Download PDF'}
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={handleShareQuote}
-              disabled={sharing}
-              className="flex items-center gap-2"
-            >
-              <Share2 className="h-4 w-4" />
-              {sharing ? 'Creating Link...' : 'Share Quote'}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="flex items-center"
+            onClick={downloadQuotePDF}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Download as PDF
+          </Button>
           
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              Quote reference: <span className="font-mono">{quoteId}</span>
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Created on: {new Date().toLocaleDateString()}
-            </p>
-          </div>
+          <Button
+            variant="outline"
+            className="flex items-center"
+            onClick={() => setShowEmailForm(true)}
+          >
+            Send via Email
+          </Button>
         </div>
       </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button onClick={onComplete}>
+          Continue
+        </Button>
+      </CardFooter>
     </Card>
   );
-}
+};
