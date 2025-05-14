@@ -51,8 +51,8 @@ export const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
         discountType: null,
         discountValue: null
       }} />}
-      {step === 'confirmation' && quoteId && <QuoteConfirmation quoteId={quoteId} />}
-      {step === 'email' && quoteId && <QuoteConfirmationEmail quoteId={quoteId} recipientEmail={recipientEmail} />}
+      {step === 'confirmation' && quoteId && <QuoteConfirmation quoteId={quoteId} onComplete={onComplete} />}
+      {step === 'email' && quoteId && <QuoteConfirmationEmail quoteId={quoteId} recipientEmail={recipientEmail} onComplete={onComplete} />}
     </Suspense>
   );
 };
