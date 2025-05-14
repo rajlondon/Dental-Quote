@@ -28,6 +28,11 @@ router.get('/addons', (req, res) => {
   res.json(TEST_ADDONS);
 });
 
+// Get all promo codes for testing
+router.get('/promo-codes', (req, res) => {
+  res.json(TEST_PROMO_CODES);
+});
+
 // Validate promo code for testing
 router.get('/promo-codes/validate', (req, res) => {
   const { code } = req.query;
