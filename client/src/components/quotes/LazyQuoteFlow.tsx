@@ -3,33 +3,33 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
 
-// Create fake default exports by wrapping them in components
-const LazyQuoteBuilder = lazy(() => {
-  return Promise.resolve({
-    default: (props: any) => {
-      const QuoteBuilderModule = require('@/components/quotes/QuoteBuilder');
-      return <QuoteBuilderModule.QuoteBuilder {...props} />;
-    }
-  });
-});
+// Import types to use for proper type safety
+import type { ComponentProps } from 'react';
+import type { QuoteBuilder } from '@/components/quotes/QuoteBuilder';
+import type { QuoteSummaryOptimized } from '@/components/quotes/QuoteSummaryOptimized';
+import type { QuoteConfirmation } from '@/components/quotes/QuoteConfirmation';
 
-const LazyQuoteSummaryOptimized = lazy(() => {
-  return Promise.resolve({
-    default: (props: any) => {
-      const QuoteSummaryOptimizedModule = require('@/components/quotes/QuoteSummaryOptimized');
-      return <QuoteSummaryOptimizedModule.QuoteSummaryOptimized {...props} />;
-    }
-  });
-});
+// Create dynamic imports for lazy loading with proper typing
+const LazyQuoteBuilder = lazy(() => 
+  import('@/components/quotes/QuoteBuilder')
+    .then(module => ({ 
+      default: (props: ComponentProps<typeof QuoteBuilder>) => <module.QuoteBuilder {...props} /> 
+    }))
+);
 
-const LazyQuoteConfirmation = lazy(() => {
-  return Promise.resolve({
-    default: (props: any) => {
-      const QuoteConfirmationModule = require('@/components/quotes/QuoteConfirmation');
-      return <QuoteConfirmationModule.QuoteConfirmation {...props} />;
-    }
-  });
-});
+const LazyQuoteSummaryOptimized = lazy(() => 
+  import('@/components/quotes/QuoteSummaryOptimized')
+    .then(module => ({ 
+      default: (props: ComponentProps<typeof QuoteSummaryOptimized>) => <module.QuoteSummaryOptimized {...props} /> 
+    }))
+);
+
+const LazyQuoteConfirmation = lazy(() => 
+  import('@/components/quotes/QuoteConfirmation')
+    .then(module => ({ 
+      default: (props: ComponentProps<typeof QuoteConfirmation>) => <module.QuoteConfirmation {...props} /> 
+    }))
+);
 
 // Fallback loading component
 const LoadingFallback = () => (
