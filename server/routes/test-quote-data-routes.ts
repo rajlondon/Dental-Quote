@@ -118,4 +118,72 @@ router.post('/promo/apply/:quoteId', (req, res) => {
   });
 });
 
+// Test endpoint to demonstrate promo code application to a package
+router.get('/:packageId/:promoCode', (req, res) => {
+  const { packageId, promoCode } = req.params;
+  
+  // Find the package
+  const packageItem = TEST_PACKAGES.find(pkg => pkg.id === packageId);
+  if (!packageItem) {
+    return res.status(404).json({
+      success: false,
+      message: 'Package not found'
+    });
+  }
+  
+  // Find the promo code
+  const promo = TEST_PROMO_CODES.find(
+    p => p.code.toLowerCase() === promoCode.toLowerCase()
+  );
+  if (!promo) {
+    return res.status(404).json({
+      success: false,
+      message: 'Promo code not found'
+    });
+  }
+  
+  // Check if promo code is applicable to this package
+  const isApplicable = promo.applicable_treatments?.includes(packageId) || false;
+  if (!isApplicable) {
+    return res.json({
+      success: false,
+      message: 'Promo code is not applicable to this package',
+      packageDetails: packageItem,
+      promoDetails: promo
+    });
+  }
+  
+  // Calculate discounted price
+  let discountedPrice = packageItem.price;
+  let discountAmount = 0;
+  
+  if (promo.discount_type === 'percentage') {
+    discountAmount = (packageItem.price * promo.discount_value) / 100;
+    // Apply max discount if available
+    if (promo.max_discount_amount && discountAmount > promo.max_discount_amount) {
+      discountAmount = promo.max_discount_amount;
+    }
+  } else if (promo.discount_type === 'fixed_amount') {
+    discountAmount = promo.discount_value;
+  }
+  
+  discountedPrice = packageItem.price - discountAmount;
+  
+  // Ensure price is not negative
+  if (discountedPrice < 0) {
+    discountedPrice = 0;
+  }
+  
+  return res.json({
+    success: true,
+    message: 'Promo code applied successfully',
+    packageDetails: packageItem,
+    promoDetails: promo,
+    originalPrice: packageItem.price,
+    discountAmount,
+    discountedPrice,
+    savings: discountAmount
+  });
+});
+
 export default router;

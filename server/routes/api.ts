@@ -14,5 +14,6 @@ router.use('/addons', testQuoteDataRoutes);
 router.use('/promo-codes', testQuoteDataRoutes);
 router.use('/promo', testQuoteDataRoutes);
 router.use('/special-offers', testQuoteDataRoutes);
+router.use('/test-promo-applied', testQuoteDataRoutes);
 
 export default router;
