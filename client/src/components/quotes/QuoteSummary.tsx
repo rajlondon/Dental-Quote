@@ -169,7 +169,7 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
               <span className="text-sm text-gray-500">
                 {quote.discountType === 'percentage' 
                   ? `${quote.discountValue}% off` 
-                  : `${formatCurrency(quote.discountValue)} off`}
+                  : `${formatCurrency(quote.discountValue || 0)} off`}
               </span>
             </div>
           </div>
@@ -208,4 +208,4 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
       </CardContent>
     </Card>
   );
-}
+});
