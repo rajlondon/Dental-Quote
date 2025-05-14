@@ -2,7 +2,7 @@ import React from 'react';
 import QuoteNavigation from '@/components/navigation/QuoteNavigation';
 import TestNavigationHeader from '@/components/navigation/TestNavigationHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, HelpCircle, Package, Tag } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 
@@ -129,13 +129,59 @@ const TestDashboard: React.FC = () => {
                     <code className="bg-gray-100 px-2 py-1 rounded">/api/treatments</code> - Available treatments
                   </li>
                   <li>
-                    <code className="bg-gray-100 px-2 py-1 rounded">/api/treatment-packages</code> - Treatment packages
+                    <code className="bg-gray-100 px-2 py-1 rounded">/api/test-packages</code> - Treatment packages
                   </li>
                   <li>
                     <code className="bg-gray-100 px-2 py-1 rounded">/api/promo-codes/validate</code> - Validate promo codes
                   </li>
                   <li>
                     <code className="bg-gray-100 px-2 py-1 rounded">/api/special-offers</code> - Get special offers
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="bg-amber-50 p-4 rounded-md border border-amber-100 mb-4">
+                <h3 className="text-sm font-medium text-amber-800 flex items-center mb-2">
+                  <Package className="h-4 w-4 mr-2" />
+                  Treatment Packages Pricing
+                </h3>
+                <ul className="space-y-2 text-sm text-amber-800">
+                  <li className="flex justify-between">
+                    <span>6 Implants + 6 Crowns Bundle:</span>
+                    <span className="font-semibold">£6,900</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>4 Implants + 4 Crowns Bundle:</span>
+                    <span className="font-semibold">£4,600</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>All-on-4 Implant Package:</span>
+                    <span className="font-semibold">£8,500</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>8 Veneers Smile Makeover:</span>
+                    <span className="font-semibold">£3,050</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="bg-green-50 p-4 rounded-md border border-green-100 mb-4">
+                <h3 className="text-sm font-medium text-green-800 flex items-center mb-2">
+                  <Tag className="h-4 w-4 mr-2" />
+                  Available Promo Codes
+                </h3>
+                <ul className="space-y-2 text-sm text-green-800">
+                  <li className="flex justify-between">
+                    <span className="font-mono bg-white px-1 py-0.5 rounded">WELCOME20</span>
+                    <span>20% off (max £500)</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="font-mono bg-white px-1 py-0.5 rounded">SUMMER100</span>
+                    <span>£100 off packages</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="font-mono bg-white px-1 py-0.5 rounded">IMPLANT30</span>
+                    <span>30% off implant packages</span>
                   </li>
                 </ul>
               </div>
