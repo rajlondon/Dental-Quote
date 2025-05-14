@@ -112,10 +112,16 @@ export const QuoteConfirmationEmail = ({ quoteId, recipientEmail, onComplete }: 
         </CardContent>
         <CardFooter className="flex justify-end">
           <Button 
-            onClick={() => window.location.href = '/quotes'}
+            onClick={() => {
+              if (onComplete) {
+                onComplete();
+              } else {
+                window.location.href = '/quotes';
+              }
+            }}
             className="mt-4"
           >
-            View All Quotes
+            {onComplete ? 'Continue' : 'View All Quotes'}
           </Button>
         </CardFooter>
       </Card>
@@ -163,7 +169,7 @@ export const QuoteConfirmationEmail = ({ quoteId, recipientEmail, onComplete }: 
                   type="button"
                   variant="outline"
                   className="flex items-center"
-                  onClick={() => window.history.back()}
+                  onClick={() => onComplete ? onComplete() : window.history.back()}
                   disabled={loading}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
