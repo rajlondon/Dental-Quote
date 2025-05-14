@@ -279,7 +279,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         return { success: false, message: "Please enter a valid promo code" };
       }
       
-      const response = await fetch(`/api/promo-codes/validate?code=${encodeURIComponent(code.trim())}`);
+      const response = await fetch(`/api/promo-codes/${encodeURIComponent(code.trim())}/validate`);
       
       // Handle network or server errors
       if (!response.ok) {
@@ -300,21 +300,21 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
       
       const data = await response.json();
       
-      if (data.valid) {
+      if (data.success) {
         // Calculate new totals with discount
         let newDiscount = 0;
-        if (data.promotion.discount_type === 'percentage') {
-          newDiscount = quote.subtotal * (data.promotion.discount_value / 100);
-        } else if (data.promotion.discount_type === 'fixed_amount') {
-          newDiscount = Math.min(data.promotion.discount_value, quote.subtotal);
+        if (data.data.discount_type === 'percentage') {
+          newDiscount = quote.subtotal * (data.data.discount_value / 100);
+        } else if (data.data.discount_type === 'fixed_amount') {
+          newDiscount = Math.min(data.data.discount_value, quote.subtotal);
         }
         
         const updatedQuote = {
           ...quote,
           promoCode: code,
-          promoCodeId: data.promotion.id,
-          discountType: data.promotion.discount_type,
-          discountValue: data.promotion.discount_value,
+          promoCodeId: data.data.id,
+          discountType: data.data.discount_type,
+          discountValue: data.data.discount_value,
           offerDiscount: quote.offerDiscount || 0,
           promoDiscount: newDiscount,
           discount: (quote.offerDiscount || 0) + newDiscount,
@@ -353,10 +353,10 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         
         return { 
           success: true, 
-          message: `${data.promotion.title} applied!`,
-          discountType: data.promotion.discount_type,
-          discountValue: data.promotion.discount_value,
-          promoCodeId: data.promotion.id
+          message: `${data.data.title} applied!`,
+          discountType: data.data.discount_type,
+          discountValue: data.data.discount_value,
+          promoCodeId: data.data.id
         };
       } else {
         // Track invalid promo code
