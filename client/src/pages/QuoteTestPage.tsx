@@ -51,8 +51,8 @@ const QuoteTestPage: React.FC = () => {
       
         {/* Display test parameters */}
         {(promoCode || specialOfferId) && (
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-            <p className="text-sm font-medium text-blue-700">Testing with parameters:</p>
+          <div className="bg-slate-50 p-4 mb-6 rounded-lg">
+            <p className="text-sm font-medium text-slate-700">Testing with parameters:</p>
             <ul className="mt-2 space-y-1">
               {promoCode && (
                 <li className="text-sm">
