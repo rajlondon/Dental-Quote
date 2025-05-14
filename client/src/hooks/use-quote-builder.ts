@@ -296,6 +296,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   
   // Apply a promo code to the quote with enhanced persistence and error handling
   const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
+    console.log('[QuoteBuilder] Starting promo code application for:', code);
     try {
       // Track promo code attempt
       if (typeof window !== 'undefined' && window.gtag) {
@@ -389,8 +390,23 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           console.log(`[QuoteBuilder] Applying fixed discount of ${data.data.discount_value} (capped to ${effectiveSubtotal}) = ${newDiscount}`);
         }
         
-        const totalDiscount = (quote.offerDiscount || 0) + newDiscount;
-        const newTotal = effectiveSubtotal - totalDiscount;
+        // Ensure discount is a valid number
+        if (isNaN(newDiscount) || !isFinite(newDiscount)) {
+          console.error('[QuoteBuilder] Invalid discount value calculated:', newDiscount);
+          newDiscount = 0;
+        } else {
+          // Round to 2 decimal places for currency
+          newDiscount = Math.round(newDiscount * 100) / 100;
+          console.log('[QuoteBuilder] Final normalized discount amount:', newDiscount);
+        }
+        
+        // Calculate total discount (combining offer discount and promo discount)
+        const offerDiscount = quote.offerDiscount || 0;
+        const totalDiscount = offerDiscount + newDiscount;
+        
+        // Calculate new total with rounding to ensure consistent currency values
+        let newTotal = effectiveSubtotal - totalDiscount;
+        newTotal = Math.max(0, Math.round(newTotal * 100) / 100); // Ensure positive and round to 2 decimals
         
         console.log('[QuoteBuilder] Discount calculation:', {
           effectiveSubtotal,
@@ -460,6 +476,15 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
             promoCode: quote.promoCode
           });
         }, 100);
+        
+        // Show success toast with discount details
+        toast({
+          title: "Promo Code Applied Successfully",
+          description: `${data.data.discount_type === 'percentage' 
+            ? `${data.data.discount_value}% discount (${formatCurrency(newDiscount)})` 
+            : `${formatCurrency(data.data.discount_value)} discount`} has been applied to your quote.`,
+          variant: "default",
+        });
         
         // Track successful promo code application
         if (typeof window !== 'undefined' && window.gtag) {
