@@ -5,6 +5,15 @@ import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
 import debounce from 'lodash/debounce';
 
+// Utility formatter for consistent currency formatting
+export const formatCurrency = (amount: number): string => {
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  });
+  return formatter.format(amount);
+};
+
 // Types for quote items
 interface Treatment {
   id: string;
