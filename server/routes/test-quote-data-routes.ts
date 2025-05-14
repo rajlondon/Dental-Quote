@@ -46,8 +46,16 @@ router.get('/', (req, res) => {
 });
 
 // Validate promo code for testing - match the format of the main API
-router.get('/promo-codes/:code/validate', (req, res) => {
+router.get('/promo-codes/:code/validate', validatePromoCode);
+
+// Add endpoint for test-promo-codes/:code/validate
+router.get('/:code/validate', validatePromoCode);
+
+// Shared function for promo code validation
+function validatePromoCode(req, res) {
   const { code } = req.params;
+  
+  console.log(`[TEST API] Validating promo code: ${code} from path: ${req.path}`);
   
   if (!code) {
     return res.status(400).json({
@@ -61,6 +69,7 @@ router.get('/promo-codes/:code/validate', (req, res) => {
   );
   
   if (!promoCode) {
+    console.log(`[TEST API] Promo code not found: ${code}`);
     return res.json({
       success: false,
       message: 'Invalid promo code'
@@ -72,12 +81,14 @@ router.get('/promo-codes/:code/validate', (req, res) => {
   const expiresAt = new Date(promoCode.expires_at);
   
   if (!promoCode.is_active || now > expiresAt) {
+    console.log(`[TEST API] Promo code expired: ${code}`);
     return res.json({
       success: false,
       message: 'This promo code has expired'
     });
   }
   
+  console.log(`[TEST API] Successfully validated promo code: ${code}`);
   return res.json({
     success: true,
     message: 'Promo code applied successfully',
@@ -89,7 +100,7 @@ router.get('/promo-codes/:code/validate', (req, res) => {
       code: promoCode.code
     }
   });
-});
+}
 
 // Get all promo codes for testing (admin use)
 router.get('/promo-codes', (req, res) => {
