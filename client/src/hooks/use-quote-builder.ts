@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { trackEvent } from '@/lib/analytics';
+import debounce from 'lodash/debounce';
 
 // Types for quote items
 interface Treatment {
@@ -74,9 +77,36 @@ interface PromoCodeResponse {
 /**
  * Custom hook for building dental treatment quotes with promo code support
  */
-export function useQuoteBuilder() {
+interface UseQuoteBuilderResult {
+  quote: QuoteState;
+  isLoading: boolean;
+  isLoadingTreatments: boolean;
+  isLoadingPackages: boolean;
+  isLoadingAddons: boolean;
+  isDirty: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  addTreatment: (treatment: Treatment) => void;
+  removeTreatment: (treatment: Treatment) => void;
+  addPackage: (pkg: Package) => void;
+  removePackage: (pkg: Package) => void;
+  addAddon: (addon: Addon) => void;
+  removeAddon: (addon: Addon) => void;
+  applyPromoCode: (code: string) => Promise<void>;
+  saveQuote: () => Promise<QuoteState>;
+  finalizeQuote: () => Promise<QuoteState>;
+  resetQuote: () => void;
+  setQuoteId: (id: string | number) => void;
+}
+
+export function useQuoteBuilder(): UseQuoteBuilderResult {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [quote, setQuote] = useState<QuoteState>(defaultQuote);
+  const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [quoteStartTime] = useState<number>(Date.now());
 
   // Fetch treatments
   const { 
@@ -414,13 +444,111 @@ export function useQuoteBuilder() {
     }
   };
   
+  // Debounced save quote function
+  const debouncedSaveQuote = useCallback(
+    debounce(async (quoteData: QuoteState) => {
+      try {
+        if (!quoteData.id) {
+          console.log('No quote ID available for saving');
+          return;
+        }
+
+        console.log('Debounced save for quote:', quoteData.id);
+        const response = await apiRequest('PATCH', `/api/quotes/${quoteData.id}`, quoteData);
+        
+        if (!response.ok) {
+          throw new Error('Failed to save quote');
+        }
+        
+        const savedQuote = await response.json();
+        return savedQuote;
+      } catch (error) {
+        console.error('Error saving quote:', error);
+        setError(`Failed to save quote: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }, 1000),
+    [setError]
+  );
+
+  // Save quote function (non-debounced, for explicit saves)
+  const finalizeQuote = async (): Promise<QuoteState> => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // First save the quote
+      const savedQuote = await saveQuote();
+      
+      // Then finalize it
+      const response = await apiRequest('POST', `/api/quotes/${savedQuote.id}/finalize`, {});
+      
+      if (!response.ok) {
+        throw new Error('Failed to finalize quote');
+      }
+      
+      const finalizedQuote = await response.json();
+      
+      // Track completion
+      trackEvent('quote_completed', 'quotes', `quote_id_${savedQuote.id}`);
+      
+      // Show success notification
+      toast({
+        title: 'Quote Finalized',
+        description: 'Your quote has been successfully finalized and is ready for review.',
+      });
+      
+      return finalizedQuote;
+    } catch (error) {
+      console.error('Error finalizing quote:', error);
+      setError(`Failed to finalize quote: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Show error notification
+      toast({
+        title: 'Error',
+        description: `Failed to finalize quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+      });
+      
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Set the quote ID (useful for editing existing quotes)
+  const setQuoteId = (id: string | number) => {
+    setQuote(prev => ({ ...prev, id }));
+  };
+
+  // Effect to trigger debounced save when quote changes and is dirty
+  useEffect(() => {
+    if (quote.id && isDirty) {
+      debouncedSaveQuote(quote);
+    }
+  }, [quote, isDirty, debouncedSaveQuote]);
+
+  // Set quote as dirty when data changes
+  useEffect(() => {
+    if (quote.id) {
+      setIsDirty(true);
+    }
+  }, [
+    quote.treatments, 
+    quote.packages, 
+    quote.addons, 
+    quote.promoCode, 
+    quote.appliedOfferId
+  ]);
+
   return {
     quote,
-    setQuote, // Expose setQuote to allow direct state updates from other hooks
-    treatments,
-    packages,
-    addons,
     isLoading: isLoadingTreatments || isLoadingPackages || isLoadingAddons || promoCodeMutation.isPending || saveQuoteMutation.isPending,
+    isLoadingTreatments,
+    isLoadingPackages,
+    isLoadingAddons,
+    isDirty,
+    isSubmitting,
+    error,
     addTreatment,
     removeTreatment,
     addPackage,
@@ -428,7 +556,9 @@ export function useQuoteBuilder() {
     addAddon,
     removeAddon,
     applyPromoCode,
+    saveQuote,
+    finalizeQuote,
     resetQuote,
-    saveQuote
+    setQuoteId
   };
 }
