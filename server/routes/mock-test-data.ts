@@ -101,69 +101,100 @@ export const TEST_SPECIAL_OFFERS = [
 export const TEST_PACKAGES = [
   {
     id: "pkg-001",
-    name: "Dental Implant Package",
-    description: "Complete dental implant package with premium materials",
-    price: 1200,
+    name: "6 Implants + 6 Crowns Bundle",
+    description: "Complete full-arch restoration with 6 dental implants and custom zirconia crowns",
+    price: 6900,
     type: "package",
     treatments: [
       {
         id: "tr-001",
-        name: "Standard Dental Implant",
-        description: "Titanium implant with abutment",
-        price: 700,
+        name: "Standard Dental Implant (x6)",
+        description: "Six titanium implants with abutments",
+        price: 700 * 6,
+        quantity: 6,
         type: "treatment"
       },
       {
         id: "tr-004",
-        name: "Zirconia Crown",
-        description: "High-quality zirconia crown",
-        price: 450,
+        name: "Zirconia Crown (x6)",
+        description: "Six high-quality custom zirconia crowns",
+        price: 450 * 6,
+        quantity: 6,
         type: "treatment"
       }
     ]
   },
   {
     id: "pkg-002",
-    name: "Smile Makeover Package",
-    description: "Complete smile transformation with veneers and whitening",
-    price: 1800,
+    name: "4 Implants + 4 Crowns Bundle",
+    description: "Partial arch restoration with 4 dental implants and premium zirconia crowns",
+    price: 4600,
     type: "package",
     treatments: [
       {
-        id: "tr-003",
-        name: "Porcelain Veneer",
-        description: "High-quality porcelain veneer for front teeth (x6)",
-        price: 350 * 6,
+        id: "tr-001",
+        name: "Standard Dental Implant (x4)",
+        description: "Four titanium implants with abutments",
+        price: 700 * 4,
+        quantity: 4,
         type: "treatment"
       },
       {
-        id: "tr-005",
-        name: "Teeth Whitening",
-        description: "Professional teeth whitening procedure",
-        price: 250,
+        id: "tr-004",
+        name: "Zirconia Crown (x4)",
+        description: "Four high-quality custom zirconia crowns",
+        price: 450 * 4,
+        quantity: 4,
         type: "treatment"
       }
     ]
   },
   {
     id: "pkg-003",
-    name: "Hollywood Smile Package",
-    description: "Complete smile transformation with premium veneers for all visible teeth",
-    price: 3500,
+    name: "All-on-4 Implant Package",
+    description: "Full arch restoration using just 4 implants with fixed prosthesis",
+    price: 8500,
+    type: "package",
+    treatments: [
+      {
+        id: "tr-002",
+        name: "Premium Dental Implant (x4)",
+        description: "Four premium titanium implants with custom abutments",
+        price: 900 * 4,
+        quantity: 4,
+        type: "treatment"
+      },
+      {
+        id: "tr-004",
+        name: "Full Arch Zirconia Bridge",
+        description: "Complete full-arch fixed zirconia prosthesis",
+        price: 4900,
+        quantity: 1,
+        type: "treatment"
+      }
+    ]
+  },
+  {
+    id: "pkg-004",
+    name: "8 Veneers Smile Makeover",
+    description: "Complete smile transformation with 8 premium porcelain veneers and whitening",
+    price: 3050,
     type: "package",
     treatments: [
       {
         id: "tr-003",
-        name: "Porcelain Veneer",
-        description: "High-quality porcelain veneer for front teeth (x10)",
-        price: 350 * 10,
+        name: "Porcelain Veneer (x8)",
+        description: "Eight high-quality porcelain veneers for front teeth",
+        price: 350 * 8,
+        quantity: 8,
         type: "treatment"
       },
       {
         id: "tr-005",
-        name: "Teeth Whitening",
-        description: "Professional teeth whitening procedure",
+        name: "Professional Teeth Whitening",
+        description: "Premium in-office teeth whitening procedure",
         price: 250,
+        quantity: 1,
         type: "treatment"
       }
     ]
