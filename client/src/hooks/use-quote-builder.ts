@@ -416,9 +416,31 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           code: updatedQuote.promoCode
         });
         
-        // Force the quote update by creating a fresh object
-        const freshQuote = {...updatedQuote};
-        setQuote(freshQuote);
+        // Force the quote update with a functional update to ensure we're using latest state
+        setQuote(prevQuote => {
+          const finalQuote = {
+            ...prevQuote,
+            ...updatedQuote,
+            subtotal: effectiveSubtotal,
+            promoCode: code,
+            promoCodeId: data.data.id,
+            discountType: data.data.discount_type,
+            discountValue: data.data.discount_value,
+            offerDiscount: prevQuote.offerDiscount || 0,
+            promoDiscount: newDiscount,
+            discount: totalDiscount,
+            total: newTotal
+          };
+          
+          console.log('[QuoteBuilder] Quote update with functional update:', {
+            subtotal: finalQuote.subtotal,
+            promoDiscount: finalQuote.promoDiscount,
+            total: finalQuote.total,
+            code: finalQuote.promoCode
+          });
+          
+          return finalQuote;
+        });
         
         // Add a delayed log to verify the quote state after React updates
         setTimeout(() => {
