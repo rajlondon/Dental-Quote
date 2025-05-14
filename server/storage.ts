@@ -42,6 +42,18 @@ export interface IStorage {
   createQuoteRequest(data: InsertQuoteRequest): Promise<QuoteRequest>;
   updateQuoteRequest(id: number, data: Partial<QuoteRequest>): Promise<QuoteRequest | undefined>;
   
+  // Enhanced Quote Management System methods
+  getAllQuotes(): Promise<any[]>;
+  getQuote(id: string): Promise<any | undefined>;
+  getQuotesByUserId(userId: number): Promise<any[]>;
+  getQuotesByClinicId(clinicId: number): Promise<any[]>;
+  createQuote(data: any): Promise<any>;
+  updateQuote(id: string, data: any): Promise<any | undefined>;
+  deleteQuote(id: string): Promise<boolean>;
+  getTreatments(): Promise<any[]>;
+  getPackages(): Promise<any[]>;
+  getAddons(): Promise<any[]>;
+  
   // File upload
   uploadFile(file: Express.Multer.File): Promise<{ url: string, filename: string }>;
   
