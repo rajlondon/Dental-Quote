@@ -19,4 +19,7 @@ router.use('/test-promo-applied', testQuoteDataRoutes);
 // This avoids conflict with the /api/promo-codes route that's already defined
 router.use('/test-promo-codes', testQuoteDataRoutes);
 
+// Dedicated route for test packages
+router.use('/test-packages', testQuoteDataRoutes);
+
 export default router;
