@@ -64,9 +64,10 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
       discount: formatter.format(quote.discount),
       total: formatter.format(quote.total),
       offerDiscount: formatter.format(quote.offerDiscount || 0),
+      promoDiscount: formatter.format(quote.promoDiscount || 0),
       formatPrice: (amount: number) => formatter.format(amount)
     };
-  }, [quote.subtotal, quote.discount, quote.total, quote.offerDiscount]);
+  }, [quote.subtotal, quote.discount, quote.total, quote.offerDiscount, quote.promoDiscount, quote.promoCode]);
   
   // Helper function that uses the memoized formatter
   const formatCurrency = (amount: number): string => {
@@ -194,7 +195,20 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
             <span className="text-md">Subtotal</span>
             <span className="text-md">{formatCurrency(quote.subtotal)}</span>
           </div>
-          {quote.discount > 0 && (
+          {/* Detailed discount breakdown */}
+          {(quote.promoDiscount || 0) > 0 && (
+            <div className="flex justify-between items-center py-2 text-green-600 bg-green-50 p-2 rounded-md">
+              <span className="text-md">Promo Discount {quote.promoCode && `(${quote.promoCode})`}</span>
+              <span className="text-md font-semibold">-{formatCurrency(quote.promoDiscount || 0)}</span>
+            </div>
+          )}
+          {(quote.offerDiscount || 0) > 0 && (
+            <div className="flex justify-between items-center py-2 text-green-600">
+              <span className="text-md">Special Offer Discount</span>
+              <span className="text-md">-{formatCurrency(quote.offerDiscount || 0)}</span>
+            </div>
+          )}
+          {quote.discount > 0 && !(quote.promoDiscount || 0) && !(quote.offerDiscount || 0) && (
             <div className="flex justify-between items-center py-2 text-green-600">
               <span className="text-md">Discount</span>
               <span className="text-md">-{formatCurrency(quote.discount)}</span>
