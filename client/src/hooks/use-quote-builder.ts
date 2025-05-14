@@ -220,10 +220,41 @@ export function useQuoteBuilder() {
     }));
   };
   
-  // Apply a promo code to the quote with enhanced persistence
+  // Apply a promo code to the quote with enhanced persistence and error handling
   const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
     try {
-      const response = await fetch(`/api/promo-codes/validate?code=${code}`);
+      // Track promo code attempt
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'promo_code_attempt', {
+          event_category: 'promotions',
+          event_label: code,
+        });
+      }
+      
+      // Validate input
+      if (!code || typeof code !== 'string' || code.trim() === '') {
+        return { success: false, message: "Please enter a valid promo code" };
+      }
+      
+      const response = await fetch(`/api/promo-codes/validate?code=${encodeURIComponent(code.trim())}`);
+      
+      // Handle network or server errors
+      if (!response.ok) {
+        const errorMessage = response.status === 503 
+          ? "Service temporarily unavailable. Please try again later."
+          : `Server error: ${response.status} ${response.statusText}`;
+          
+        // Track error
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'promo_code_server_error', {
+            event_category: 'error',
+            event_label: `${response.status}: ${code}`,
+          });
+        }
+        
+        return { success: false, message: errorMessage };
+      }
+      
       const data = await response.json();
       
       if (data.valid) {
@@ -249,18 +280,32 @@ export function useQuoteBuilder() {
         
         setQuote(updatedQuote);
         
+        // Track successful promo code application
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'promo_code_applied', {
+            event_category: 'promotions',
+            event_label: code,
+            value: newDiscount,
+          });
+        }
+        
         // Persist the promo code to the server if we have a quote ID
         if (quote.id) {
-          await apiRequest('PATCH', `/api/quotes/${quote.id}`, { 
-            promoCode: code,
-            promoCodeId: data.promotion.id,
-            promoDiscount: newDiscount,
-            discount: updatedQuote.discount,
-            total: updatedQuote.total
-          });
-          
-          // Invalidate cache to ensure fresh data
-          queryClient.invalidateQueries({ queryKey: ['/api/quotes', quote.id] });
+          try {
+            await apiRequest('PATCH', `/api/quotes/${quote.id}`, { 
+              promoCode: code,
+              promoCodeId: data.promotion.id,
+              promoDiscount: newDiscount,
+              discount: updatedQuote.discount,
+              total: updatedQuote.total
+            });
+            
+            // Invalidate cache to ensure fresh data
+            queryClient.invalidateQueries({ queryKey: ['/api/quotes', quote.id] });
+          } catch (persistError) {
+            console.error('Error persisting promo code:', persistError);
+            // Continue even if persistence fails - user still sees the discount
+          }
         }
         
         return { 
@@ -271,10 +316,27 @@ export function useQuoteBuilder() {
           promoCodeId: data.promotion.id
         };
       } else {
-        return { success: false, message: data.message };
+        // Track invalid promo code
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'promo_code_invalid', {
+            event_category: 'promotions',
+            event_label: code,
+          });
+        }
+        
+        return { success: false, message: data.message || "Invalid promo code" };
       }
     } catch (error) {
       console.error('Error applying promo code:', error);
+      
+      // Track exception
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'promo_code_exception', {
+          event_category: 'error',
+          event_label: `${code}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+      
       return { 
         success: false, 
         message: "Error validating promo code. Please try again." 
@@ -287,25 +349,69 @@ export function useQuoteBuilder() {
     setQuote(defaultQuote);
   };
   
-  // Save quote mutation
+  // Save quote mutation with improved error handling
   const saveQuoteMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest('POST', '/api/quotes', data);
-      return res.json();
+      try {
+        const res = await apiRequest('POST', '/api/quotes', data);
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({
+            message: `Server error: ${res.status} ${res.statusText}`
+          }));
+          
+          throw new Error(errorData.message || 'Failed to save quote');
+        }
+        
+        return res.json();
+      } catch (error) {
+        console.error('Error in save quote mutation:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Track successful save
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'quote_saved', {
+          event_category: 'quotes',
+          event_label: data.id,
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+    },
+    onError: (error) => {
+      // Track error for monitoring
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'quote_save_error', {
+          event_category: 'error',
+          event_label: error.message,
+        });
+      }
     }
   });
   
-  // Save quote function
+  // Save quote function with additional error handling
   const saveQuote = async (additionalData: any = {}) => {
-    const quoteData = {
-      ...quote,
-      ...additionalData
-    };
-    
-    return saveQuoteMutation.mutateAsync(quoteData);
+    try {
+      // Add timestamp and client information for debugging
+      const quoteData = {
+        ...quote,
+        clientInfo: {
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString()
+        },
+        ...additionalData
+      };
+      
+      const result = await saveQuoteMutation.mutateAsync(quoteData);
+      return result;
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      
+      // Re-throw for component handling
+      throw error;
+    }
   };
   
   return {
