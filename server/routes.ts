@@ -66,6 +66,8 @@ import treatmentLinesRouter from "./routes/v1/treatment-lines";
 import { treatmentPlansRoutes } from "./routes/v1";
 // Import special Free Consultation Routes for unauthenticated flow
 import freeConsultationRoutes from "./routes/free-consultation-routes";
+// Import test quote data routes
+import testQuoteDataRoutes from "./routes/test-quote-data-routes";
 // Import security middleware
 import { 
   csrfProtection, 
