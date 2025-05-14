@@ -21,7 +21,10 @@ interface AdminAuthState {
 }
 
 // Context interface
-interface AdminAuthContextType extends AdminAuthState {
+interface AdminAuthContextType {
+  adminUser: AdminUser | null;
+  isLoading: boolean;
+  error: Error | null;
   adminLogin: (email: string, password: string) => Promise<void>;
   adminLogout: () => Promise<void>;
 }

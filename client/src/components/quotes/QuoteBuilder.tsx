@@ -138,7 +138,7 @@ export function QuoteBuilder() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {packages && packages.map((pkg) => (
+                  {packages && packages.map((pkg: any) => (
                     <Card key={pkg.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{pkg.name}</h4>
@@ -148,7 +148,7 @@ export function QuoteBuilder() {
                       <div className="mb-4">
                         <h5 className="text-xs font-semibold mb-1">Includes:</h5>
                         <ul className="text-xs text-gray-500 list-disc pl-4">
-                          {pkg.treatments && pkg.treatments.map((treatment, index) => (
+                          {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
                             <li key={index}>{treatment.name}</li>
                           ))}
                         </ul>
@@ -179,7 +179,7 @@ export function QuoteBuilder() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {addons && addons.map((addon) => (
+                  {addons && addons.map((addon: any) => (
                     <Card key={addon.id} className="p-4 flex flex-col h-full">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{addon.name}</h4>
