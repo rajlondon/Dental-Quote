@@ -3,7 +3,13 @@
  * Provides test treatments, packages, and add-ons for the quote system
  */
 import express from 'express';
-import { TEST_TREATMENTS, TEST_PACKAGES, TEST_ADDONS, TEST_PROMO_CODES } from './mock-test-data';
+import { 
+  TEST_TREATMENTS, 
+  TEST_PACKAGES, 
+  TEST_ADDONS, 
+  TEST_PROMO_CODES,
+  TEST_SPECIAL_OFFERS 
+} from './mock-test-data';
 
 const router = express.Router();
 
@@ -70,6 +76,11 @@ router.get('/promo-codes/validate', (req, res) => {
 // Get all promo codes for testing (admin use)
 router.get('/promo-codes', (req, res) => {
   res.json(TEST_PROMO_CODES);
+});
+
+// Get all special offers for testing
+router.get('/special-offers', (req, res) => {
+  res.json(TEST_SPECIAL_OFFERS);
 });
 
 // Apply promo code to quote (for testing the complete flow)

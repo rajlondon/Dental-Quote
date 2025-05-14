@@ -13,5 +13,6 @@ router.use('/treatment-packages', testQuoteDataRoutes);
 router.use('/addons', testQuoteDataRoutes);
 router.use('/promo-codes', testQuoteDataRoutes);
 router.use('/promo', testQuoteDataRoutes);
+router.use('/special-offers', testQuoteDataRoutes);
 
 export default router;
