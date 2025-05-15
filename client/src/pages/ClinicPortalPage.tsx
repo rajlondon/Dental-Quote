@@ -905,6 +905,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
           aria-hidden="true"
         />
       )}
+      {/* Add Test Page Link for clinic staff */}
+      <ClinicTestPageLink />
     </div>
   );
 };
