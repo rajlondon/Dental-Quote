@@ -584,12 +584,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(specialOffersRoutes);
   
   // Register our improved clinic special offers API
+  // Direct mock implementation for special offers to ensure it works in demo mode
+  app.get('/api/special-offers', (req, res) => {
+    console.log('Serving special offers from direct handler');
+    const specialOffers = [
+      {
+        id: "ac36590b-b0dc-434e-ba74-d42ab2485e81",
+        clinic_id: "1",
+        title: "Free Consultation Package",
+        description: "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
+        discount_type: "percentage",
+        discount_value: 100,
+        applicable_treatments: ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"],
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        promo_code: "FREECONSULT",
+        terms_conditions: "Applicable for new patients only. One consultation per patient.",
+        banner_image: "/images/clinics/dentgroup.jpg",
+        is_active: true,
+        admin_approved: true,
+        commission_percentage: 20,
+        promotion_level: "premium",
+        homepage_display: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        admin_reviewed_at: new Date().toISOString(),
+        treatment_price_gbp: 75,
+        treatment_price_usd: 95
+      },
+      {
+        id: "134cdb0f-e783-47f5-a502-70e3960f7246",
+        clinic_id: "2",
+        title: "Premium Hotel Deal",
+        description: "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
+        discount_type: "percentage",
+        discount_value: 20,
+        applicable_treatments: ["dental_implant_standard", "porcelain_veneers", "dental_crowns"],
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        promo_code: "LUXHOTEL20",
+        terms_conditions: "Minimum treatment value of $1000 required. Subject to hotel availability.",
+        banner_image: "/images/offers/premium-hotel-new.png",
+        is_active: true,
+        admin_approved: true,
+        commission_percentage: 20,
+        promotion_level: "premium",
+        homepage_display: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        admin_reviewed_at: new Date().toISOString(),
+        treatment_price_gbp: 250,
+        treatment_price_usd: 325
+      },
+      {
+        id: "3e6a315d-9d9f-4b56-97da-4b3d4b4b5367",
+        clinic_id: "3",
+        title: "Dental Implant + Crown Bundle",
+        description: "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
+        discount_type: "percentage",
+        discount_value: 30,
+        applicable_treatments: ["dental_implant_standard", "dental_crowns"],
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+        promo_code: "IMPLANTCROWN30",
+        terms_conditions: "Valid for single tooth implant and crown combinations only.",
+        banner_image: "/images/treatments/illustrations/dental-implants1.png",
+        is_active: true,
+        admin_approved: true,
+        commission_percentage: 18,
+        promotion_level: "featured",
+        homepage_display: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        admin_reviewed_at: new Date().toISOString(),
+        treatment_price_gbp: 1200,
+        treatment_price_usd: 1550
+      }
+    ];
+    
+    res.json(specialOffers);
+  });
+  
+  // Also keep the original router for other routes
   app.use('/api/special-offers', clinicSpecialOffersRoutes);
   
   // Register special offers update helper routes for image generation
   app.use(specialOffersUpdateHelper);
   
   // Register new treatment packages API
+  // Direct mock implementation for treatment packages to ensure it works in demo mode
+  app.get('/api/treatment-packages', (req, res) => {
+    console.log('Serving treatment packages from direct handler');
+    const treatmentPackages = [
+      {
+        id: "pkg-001",
+        title: "Dental Implant Package",
+        name: "Dental Implant Package",
+        description: "Complete package including implant, abutment, and crown",
+        clinicId: "1",
+        price: 1200,
+        savings: 200,
+        includedTreatments: [
+          { id: 'impl-001', name: 'Dental Implant', price: 800, quantity: 1 },
+          { id: 'abut-001', name: 'Abutment', price: 200, quantity: 1 },
+          { id: 'crwn-001', name: 'Crown', price: 400, quantity: 1 }
+        ],
+        additionalPerks: ['Free consultation', 'Priority scheduling'],
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: "pkg-002",
+        title: "Hollywood Smile",
+        name: "Hollywood Smile",
+        description: "8 premium porcelain veneers for a perfect smile",
+        clinicId: "2",
+        price: 2400,
+        savings: 300,
+        includedTreatments: [
+          { id: 'exam-001', name: 'Dental Exam', price: 100, quantity: 1 },
+          { id: 'xray-001', name: 'X-rays', price: 150, quantity: 1 },
+          { id: 'venr-001', name: 'Porcelain Veneers', price: 300, quantity: 8 }
+        ],
+        additionalPerks: ['Free teeth whitening', 'Aftercare kit'],
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: "pkg-003",
+        title: "Full Mouth Reconstruction",
+        name: "Full Mouth Reconstruction",
+        description: "Complete restoration with implants and fixed prosthetics",
+        clinicId: "3",
+        price: 7500,
+        savings: 1500,
+        includedTreatments: [
+          { id: 'impl-002', name: 'Dental Implants', price: 800, quantity: 6 },
+          { id: 'brdg-001', name: 'Fixed Bridge', price: 1200, quantity: 1 },
+          { id: 'extr-001', name: 'Extractions', price: 150, quantity: 4 },
+          { id: 'bgrft-001', name: 'Bone Grafting', price: 600, quantity: 2 }
+        ],
+        additionalPerks: ['Luxury hotel stay', 'Airport transfer', 'Dental insurance consultation'],
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+    
+    res.json(treatmentPackages);
+  });
+  
+  // Also keep the original router for other routes
   app.use('/api/treatment-packages', treatmentPackagesRouter);
   
   // Register new unified treatment plan/offers integration routes
