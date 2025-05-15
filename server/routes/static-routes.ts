@@ -20,4 +20,10 @@ router.get('/clinic-test', (req, res) => {
   res.redirect('/clinic-quote-test');
 });
 
+// Standalone quote test page that doesn't require authentication
+router.get('/quote-management', (req, res) => {
+  const standalonePath = path.resolve('public/standalone-quote-test.html');
+  res.sendFile(standalonePath);
+});
+
 export default router;
