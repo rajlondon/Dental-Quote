@@ -88,7 +88,7 @@ const SimpleClinicPage: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await api.post('/api/auth/logout');
+      await api.post('/auth/logout');
       
       toast({
         title: 'Success',

@@ -44,6 +44,7 @@ const SimpleClinicLoginPage: React.FC = () => {
     setError(null);
 
     try {
+      console.log('Attempting login with:', email);
       // Call the authentication endpoint - no need to prefix with /api since it's already in the baseURL
       const response = await api.post('/auth/login', {
         email,
@@ -155,7 +156,7 @@ const SimpleClinicLoginPage: React.FC = () => {
         {/* Test Credentials for Development */}
         <div className="mt-6 p-4 bg-gray-100 rounded-md border border-gray-200">
           <h3 className="text-sm font-medium mb-2">Test Credentials</h3>
-          <p className="text-xs text-gray-600 mb-1">Email: clinic@test.com</p>
+          <p className="text-xs text-gray-600 mb-1">Email: clinic@mydentalfly.com</p>
           <p className="text-xs text-gray-600">Password: clinic123</p>
         </div>
       </div>
