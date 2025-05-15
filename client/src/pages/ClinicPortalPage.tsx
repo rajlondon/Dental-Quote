@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
 import ClinicWebSocketProvider, { useClinicWebSocket, WebSocketMessage } from "@/components/ClinicWebSocketProvider";
+import ClinicTestPageLink from "@/components/ClinicTestPageLink";
 import {
   Select,
   SelectContent,
