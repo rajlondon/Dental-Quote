@@ -62,14 +62,13 @@ export function QuoteBuilder({
   // Treatment packages integration
   const {
     availablePackages,
-    selectedPackage,
+    selectedPackage: selectedTreatmentPackage,
     selectPackage,
     isLoading: isLoadingPackages
   } = useTreatmentPackages(quote.treatments);
   
   const [promoCode, setPromoCode] = useState(initialPromoCode || '');
   const [activeTab, setActiveTab] = useState(packageId ? 'packages' : 'treatments');
-  const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [initialPackageAdded, setInitialPackageAdded] = useState(false);
   
   // Handle initial promo code if provided
@@ -101,7 +100,8 @@ export function QuoteBuilder({
       const packageToAdd = packages.find((pkg: any) => pkg.id === packageId);
       if (packageToAdd) {
         addPackage(packageToAdd);
-        setSelectedPackage(packageToAdd);
+        // Use selectPackage from useTreatmentPackages hook
+        selectPackage(packageId);
         setInitialPackageAdded(true);
         toast({
           title: "Package Selected",
@@ -110,7 +110,7 @@ export function QuoteBuilder({
         trackEvent('package_auto_selected', 'package', packageToAdd.name);
       }
     }
-  }, [packageId, packages, initialPackageAdded, addPackage]);
+  }, [packageId, packages, initialPackageAdded, addPackage, selectPackage]);
   
   const handlePromoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,11 +195,11 @@ export function QuoteBuilder({
       </div>
       
       {/* Package notification */}
-      {selectedPackage && (
+      {selectedTreatmentPackage && (
         <Alert className="bg-blue-50 border-blue-200">
           <PackageIcon className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            You are viewing the <span className="font-semibold">{selectedPackage.name}</span> package with {selectedPackage.treatments?.length || 0} treatments.
+            You are viewing the <span className="font-semibold">{selectedTreatmentPackage.title}</span> package with {selectedTreatmentPackage.includedTreatments?.length || 0} treatments.
           </AlertDescription>
         </Alert>
       )}
