@@ -109,24 +109,49 @@ const QuoteSystemDemo: React.FC = () => {
   };
 
   const handleStartPackageQuote = (packageId: string) => {
+    console.log('🚀 Starting package quote with ID:', packageId);
+    
+    // Reset any existing flows
     resetQuoteFlow();
+    
+    // Update state
     setActiveDemo('package');
     setCurrentPackageId(packageId);
     setCurrentOfferId(null);
+    setCurrentPromoCode(null);
+    
+    // Get the package details for the toast notification
+    const selectedPackage = treatmentPackages.find(pkg => pkg.id === packageId);
+    const packageName = selectedPackage?.name || packageId;
     
     // Initialize with package params
     const params = new URLSearchParams();
     params.set('packageId', packageId);
     
-    initializeQuoteFlow({
-      queryParams: params,
-      onSuccess: () => {
-        toast({
-          title: 'Package Quote Started',
-          description: `Package ${packageId} selected. Continue with the quote flow.`
-        });
-      }
-    });
+    console.log('📦 Setting up package flow with params:', params.toString());
+    
+    // Added delay to ensure state updates finish before initializing flow
+    setTimeout(() => {
+      initializeQuoteFlow({
+        queryParams: params,
+        onSuccess: () => {
+          console.log('✅ Package quote flow initialized successfully');
+          toast({
+            title: 'Package Quote Started',
+            description: `Package "${packageName}" selected. Continue with the quote flow.`,
+            duration: 5000,
+          });
+        },
+        onError: (error) => {
+          console.error('❌ Failed to initialize package quote flow:', error);
+          toast({
+            title: 'Error Starting Quote',
+            description: 'There was a problem starting the package quote. Please try again.',
+            variant: 'destructive',
+          });
+        }
+      });
+    }, 100);
   };
 
   const handleStartSpecialOfferQuote = (offerId: string) => {

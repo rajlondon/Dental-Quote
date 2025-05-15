@@ -80,20 +80,35 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
     
     if (packageId) {
       console.log("📦 Package ID detected in LazyQuoteFlow:", packageId);
+      
       // Add a toast notification to visually confirm package detection in UI
       toast({
         title: "Package Selected",
         description: `Processing package: ${packageId}`,
         duration: 3000,
       });
+      
+      // Track package detection event
+      trackEvent('package_selected', 'quotes', `package_${packageId}`);
     }
+    
     if (specialOfferId) {
       console.log("🎁 Special Offer ID detected in LazyQuoteFlow:", specialOfferId);
+      trackEvent('special_offer_selected', 'quotes', `offer_${specialOfferId}`);
     }
+    
     if (promoCode) {
       console.log("🏷️ Promo Code detected in LazyQuoteFlow:", promoCode);
+      trackEvent('promo_code_applied', 'quotes', `promo_${promoCode}`);
     }
   }, [packageId, specialOfferId, promoCode, initialStep, quoteId, toast]);
+  
+  // Special handling for package ID changes to ensure it's properly passed to the builder
+  useEffect(() => {
+    if (packageId && currentStep === 'builder') {
+      console.log("⚠️ Important: Ensuring packageId is passed to QuoteBuilder:", packageId);
+    }
+  }, [packageId, currentStep]);
 
   // Track step changes for analytics
   const goToStep = (step: Step, data?: any) => {
