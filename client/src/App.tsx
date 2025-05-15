@@ -264,6 +264,18 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      <Route path="/quote-system-demo" component={() => {
+        const QuoteSystemDemo = React.lazy(() => import("./pages/QuoteSystemDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote system demo...</div>}>
+            <SpecialOffersProvider>
+              <QuoteFlowProvider>
+                <QuoteSystemDemo />
+              </QuoteFlowProvider>
+            </SpecialOffersProvider>
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
