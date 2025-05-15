@@ -116,6 +116,7 @@ import ClinicTreatmentPlanPage from "@/pages/clinic/ClinicTreatmentPlanPage";
 import AdminTreatmentPlansPage from "@/pages/admin/AdminTreatmentPlansPage";
 import { UnifiedTreatmentPlansProvider } from "@/hooks/use-unified-treatment-plans";
 import { QuoteFlowProvider } from "@/contexts/QuoteFlowContext";
+import { EnhancedQuoteFlowProvider } from "@/contexts/EnhancedQuoteFlowContext";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -269,9 +270,9 @@ function Router() {
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote system demo...</div>}>
             <SpecialOffersProvider>
-              <QuoteFlowProvider>
+              <EnhancedQuoteFlowProvider>
                 <QuoteSystemDemo />
-              </QuoteFlowProvider>
+              </EnhancedQuoteFlowProvider>
             </SpecialOffersProvider>
           </React.Suspense>
         );
