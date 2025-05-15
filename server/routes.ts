@@ -23,7 +23,6 @@ import { isAuthenticated, ensureRole } from "./middleware/auth";
 import { setupAuth } from "./auth";
 import portalRoutes from "./routes/portal-routes";
 import fileRoutes from "./routes/fileRoutes";
-import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentPlansModuleRoutes from "./routes/treatment-plans-routes";
 import treatmentOfferIntegration from "./routes/treatment-offer-integration"; // New integration between offers and treatment plans
@@ -48,7 +47,7 @@ import quoteFromPromoRoutes from "./routes/api/v1"; // Add new v1 API endpoints 
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
-import authRoutesRouter from "./routes/auth-routes"; // Add enhanced auth routes
+import enhancedAuthRoutes from "./routes/auth-routes"; // Add enhanced auth routes
 import promoCodesRoutes from "./routes/promo-codes";
 import quotesApiRoutes from "./routes/quotes";
 import openaiRoutes from "./routes/openai-routes";
@@ -545,6 +544,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register the rest of the quote routes 
   app.use('/api/quotes', quoteRoutes);
   
+  // Register enhanced auth routes
+  app.use('/api/v2/auth', enhancedAuthRoutes);
+  
   // Register the apply-code endpoint for coupon code redemption
   app.use(applyCodeRoutes);
   
@@ -555,7 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/gemini', geminiRoutes);
   
   // Register routes for email verification, password reset, and user registration
-  app.use('/api/auth', authRoutesRouter);
+  app.use('/api/auth', enhancedAuthRoutes);
   
   // Redirect the frontend /verify-email route to the backend API route
   app.get('/verify-email', (req, res) => {

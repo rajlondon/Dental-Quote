@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import passport from 'passport';
 import { db } from '../db';
 import { users, type User } from '@shared/schema';
@@ -15,10 +15,10 @@ declare module 'express-session' {
   }
 }
 
-const authRoutesRouter = Router();
+const enhancedAuthRoutes = Router();
 
 // Add an auth status endpoint that's more reliable
-authRoutesRouter.get('/status', (req, res) => {
+enhancedAuthRoutes.get('/status', (req, res) => {
   const authStatus = {
     isAuthenticated: req.isAuthenticated(),
     user: req.isAuthenticated() ? req.user : null,
@@ -30,7 +30,7 @@ authRoutesRouter.get('/status', (req, res) => {
 });
 
 // Enhanced login endpoint with better error handling
-authRoutesRouter.post('/login', (req, res, next) => {
+enhancedAuthRoutes.post('/login', (req, res, next) => {
   // Clear any potential stale session data
   if (req.session.passport) {
     delete req.session.passport;
@@ -92,7 +92,7 @@ authRoutesRouter.post('/login', (req, res, next) => {
 });
 
 // Enhanced register endpoint
-authRoutesRouter.post('/register', async (req, res) => {
+enhancedAuthRoutes.post('/register', async (req, res) => {
   try {
     const { email, password, firstName, lastName, phone, consent = false } = req.body;
     
@@ -178,7 +178,7 @@ authRoutesRouter.post('/register', async (req, res) => {
 });
 
 // Enhanced logout endpoint
-authRoutesRouter.post('/logout', (req, res) => {
+enhancedAuthRoutes.post('/logout', (req, res) => {
   const wasAuthenticated = req.isAuthenticated();
   const userId = req.user?.id;
   
@@ -211,4 +211,4 @@ authRoutesRouter.post('/logout', (req, res) => {
   });
 });
 
-export default authRoutesRouter;
+export default enhancedAuthRoutes;
