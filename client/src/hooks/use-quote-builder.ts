@@ -98,6 +98,7 @@ interface UseQuoteBuilderResult {
   isLoadingAddons: boolean;
   isDirty: boolean;
   isSubmitting: boolean;
+  isApplyingPromo: boolean;
   error: string | null;
   addTreatment: (treatment: Treatment) => void;
   removeTreatment: (treatment: Treatment) => void;
@@ -118,6 +119,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   const [quote, setQuote] = useState<QuoteState>(defaultQuote);
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isApplyingPromo, setIsApplyingPromo] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [quoteStartTime] = useState<number>(Date.now());
 
@@ -298,7 +300,8 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
     console.log('[QuoteBuilder] Starting promo code application for:', code);
     try {
-      setIsLoading?.(true); // Use optional chaining in case setIsLoading doesn't exist
+      // Set loading state for promo code application specifically
+      setIsApplyingPromo(true);
       
       // Track promo code attempt
       if (typeof window !== 'undefined' && window.gtag) {
