@@ -11,6 +11,7 @@ export interface SpecialOffer {
   discountType: 'percentage' | 'fixed';
   discountValue: number;
   minTreatmentCount?: number;
+  maxDiscountAmount?: number;
   applicableTreatments: string[]; // treatment IDs
   startDate: string;
   endDate: string;
@@ -25,16 +26,19 @@ export interface TreatmentPackage {
   description: string;
   clinicId: string;
   includedTreatments: {
-    treatmentId: string;
+    id: string;
+    name: string;
+    price: number;
     quantity: number;
-    standardPrice: number;
   }[];
-  packagePrice: number; // This would be less than sum of individual treatments
+  requiredTreatments?: string[]; // Treatment IDs that must be selected for this package to apply
+  price: number; // Package price is less than sum of individual treatments
   savings: number; // Calculated field
   additionalPerks: string[]; // E.g., "Free hotel stay", "Airport transfer"
   featuredImage?: string;
   startDate: string;
   endDate: string;
+  name?: string; // Alias for title for consistency with other types
 }
 
 // Extended Quote State with offers and packages
