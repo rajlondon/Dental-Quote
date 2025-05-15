@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import api from '@/lib/api';
+import axios from 'axios';
 
 const SimpleClinicLoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -20,7 +21,11 @@ const SimpleClinicLoginPage: React.FC = () => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await api.get('/clinic-status');
+        // Use the full URL to ensure consistent domain context
+        const baseUrl = `${window.location.protocol}//${window.location.host}`;
+        const response = await axios.get(`${baseUrl}/api/clinic-status`, {
+          withCredentials: true
+        });
         if (response.data.success && response.data.user) {
           console.log('Already authenticated, redirecting to clinic portal');
           toast({
@@ -46,10 +51,18 @@ const SimpleClinicLoginPage: React.FC = () => {
     try {
       console.log('Attempting login with:', email);
       // Use auth/login endpoint - api client will add the /api prefix
-      const response = await api.post('/auth/login', {
+      // Construct the full URL using window.location to ensure correct domain
+      const baseUrl = `${window.location.protocol}//${window.location.host}`;
+      console.log(`Using base URL: ${baseUrl} for authentication request`);
+      const response = await axios.post(`${baseUrl}/api/auth/login`, {
         email,
         password,
         role: 'clinic_staff' // Make sure to specify the role for session organization
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.data.success) {
@@ -80,10 +93,26 @@ const SimpleClinicLoginPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'An error occurred during login. Please try again.');
+      
+      // Enhanced error logging for debugging
+      if (err.response) {
+        console.error('Error response data:', err.response.data);
+        console.error('Error response status:', err.response.status);
+        console.error('Error response headers:', err.response.headers);
+      } else if (err.request) {
+        console.error('Error request without response. Request details:', err.request);
+      } else {
+        console.error('Error message:', err.message);
+      }
+      
+      // Check for specific password error
+      const errorMsg = err.response?.data?.message || 'An error occurred during login. Please try again.';
+      setError(errorMsg);
+      
+      // Show detailed error message
       toast({
         title: 'Login error',
-        description: err.response?.data?.message || 'An error occurred. Please try again.',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
