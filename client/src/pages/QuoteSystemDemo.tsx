@@ -187,10 +187,19 @@ const QuoteSystemDemo: React.FC = () => {
 
   const handleClearPromoCode = () => {
     setCurrentPromoCode(null);
+    setCurrentPackageId(null);
+    setCurrentOfferId(null);
     resetQuoteFlow();
-    toast({
-      title: 'Promo Code Cleared',
-      description: 'The promo code has been removed from your quote.'
+    
+    // Initialize an empty quote
+    initializeQuoteFlow({
+      queryParams: new URLSearchParams(),
+      onSuccess: () => {
+        toast({
+          title: 'Promo Code Cleared',
+          description: 'The promo code has been removed from your quote.'
+        });
+      }
     });
   };
 
@@ -441,7 +450,7 @@ const QuoteSystemDemo: React.FC = () => {
                   <LazyQuoteFlow 
                     packageId={activeDemo === 'package' && currentPackageId ? currentPackageId : undefined}
                     specialOfferId={activeDemo === 'special_offer' && currentOfferId ? currentOfferId : undefined}
-                    promoCode={currentPromoCode || undefined}
+                    promoCode={currentPromoCode ? currentPromoCode : undefined}
                   />
                 ) : (
                   <div className="text-center py-12">
