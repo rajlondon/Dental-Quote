@@ -119,7 +119,7 @@ const ClinicQuoteTest: React.FC = () => {
                   This lightweight test console is specifically designed for clinic staff to test quote functionality
                   without affecting real patient data.
                 </p>
-                <Alert variant="warning" className="mb-4">
+                <Alert className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     This is a simplified test environment. No data will be stored in the patient database.

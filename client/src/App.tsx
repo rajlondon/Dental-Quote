@@ -228,6 +228,16 @@ function Router() {
       <Route path="/resilient-websocket" component={ResilientWebSocketTest} />
       <Route path="/resilient-websocket-test3" component={ResilientWebSocketTest3} />
       
+      {/* Clinic-accessible test page - does not require being a patient */}
+      <Route path="/clinic-quote-test" component={() => {
+        const ClinicQuoteTest = React.lazy(() => import("./pages/ClinicQuoteTest"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading clinic test page...</div>}>
+            <ClinicQuoteTest />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Quote System Testing Routes */}
       <Route path="/quote-test" component={() => {
         // Import QuoteTestPage directly
