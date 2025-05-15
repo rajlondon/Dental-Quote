@@ -48,6 +48,7 @@ import quoteFromPromoRoutes from "./routes/api/v1"; // Add new v1 API endpoints 
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
+import authRoutesRouter from "./routes/auth-routes"; // Add enhanced auth routes
 import promoCodesRoutes from "./routes/promo-codes";
 import quotesApiRoutes from "./routes/quotes";
 import openaiRoutes from "./routes/openai-routes";
