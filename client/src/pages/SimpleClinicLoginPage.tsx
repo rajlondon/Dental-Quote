@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import api from '@/lib/api';
-import axios from 'axios';
+import { useCookieAuth } from '@/hooks/use-cookie-auth';
 
 const SimpleClinicLoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -16,6 +15,7 @@ const SimpleClinicLoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login, checkClinicStatus, loading: authLoading } = useCookieAuth();
 
   // Check if already logged in on component mount
   useEffect(() => {
