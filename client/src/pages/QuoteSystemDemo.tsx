@@ -438,18 +438,40 @@ const QuoteSystemDemo: React.FC = () => {
                             ))}
                           </ul>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-sm text-gray-500">Package price:</p>
-                            <p className="font-bold text-lg">£{pkg.price}</p>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                            <div>
+                              <p className="text-sm text-gray-500">Package ID:</p>
+                              <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded mt-1">{pkg.id}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-500">Package price:</p>
+                              <p className="font-bold text-lg">£{pkg.price}</p>
+                            </div>
                           </div>
-                          <Button
-                            onClick={() => handleStartPackageQuote(pkg.id)}
-                            className="flex items-center"
-                          >
-                            Select
-                            <ChevronRight className="ml-1 h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleStartPackageQuote(pkg.id)}
+                              className="flex-1"
+                              variant="default"
+                            >
+                              Start with Package
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setCurrentPackageId(pkg.id);
+                                toast({
+                                  title: 'Package Selected',
+                                  description: `Package "${pkg.name}" selected. Click "Start a Standard Quote" to begin.`,
+                                  duration: 5000,
+                                });
+                              }}
+                              className="flex-1"
+                              variant="outline"
+                            >
+                              Select Package Only
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -482,11 +504,49 @@ const QuoteSystemDemo: React.FC = () => {
                     <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-xl font-medium mb-2">No Quote Started</h3>
                     <p className="text-gray-500 mb-6">
-                      Select an option from the left to begin building your dental quote
+                      Select an option from the left or use the buttons below to begin
                     </p>
-                    <Button onClick={handleStartStandardQuote}>
-                      Start a Standard Quote
-                    </Button>
+                    
+                    <div className="space-y-4">
+                      <Button 
+                        onClick={handleStartStandardQuote}
+                        className="w-full"
+                      >
+                        Start a Standard Quote
+                      </Button>
+                      
+                      {currentPackageId && (
+                        <div className="space-y-2 border p-4 rounded-md bg-blue-50">
+                          <div className="flex items-center justify-center gap-2">
+                            <Package className="h-5 w-5 text-blue-500" />
+                            <span className="font-medium">Selected Package: {currentPackageId}</span>
+                          </div>
+                          <Button 
+                            onClick={() => handleStartPackageQuote(currentPackageId)}
+                            variant="default"
+                            className="w-full"
+                          >
+                            Start with Selected Package
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {currentPromoCode && (
+                        <div className="space-y-2 border p-4 rounded-md bg-green-50">
+                          <div className="flex items-center justify-center gap-2">
+                            <Percent className="h-5 w-5 text-green-500" />
+                            <span className="font-medium">Promo Code: {currentPromoCode}</span>
+                          </div>
+                          <Button 
+                            onClick={handleApplyPromoCode}
+                            variant="outline"
+                            className="w-full"
+                          >
+                            Apply Promo Code
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
