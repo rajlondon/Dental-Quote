@@ -55,6 +55,7 @@ import imageCacheRoutes from "./routes/image-cache-routes";
 import promoTokenRoutes from "./routes/promo-token-routes";
 import applyCodeRoutes from "./routes/apply-code";
 import adminPromotionsRoutes from "./routes/admin/promotions";
+import clinicStatusRoutes from "./routes/clinic-status"; // Add simplified clinic status endpoint
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -119,6 +120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   // API Routes
   app.use('/api', apiRouter);
+  
+  // Register clinic status route
+  app.use('/api', clinicStatusRoutes);
   
   // Serve the public directory for static files like translations and images
   app.use('/locales', express.static(path.join(__dirname, '../public/locales')));
