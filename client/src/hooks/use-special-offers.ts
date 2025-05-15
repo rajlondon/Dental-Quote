@@ -1,190 +1,146 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/hooks/use-quote-builder';
 import { SpecialOffer } from '@shared/offer-types';
-import { trackEvent } from '@/lib/analytics';
 
-interface UseSpecialOffersProps {
-  quoteId: string | null;
-  treatments: { id: string; quantity: number }[];
-  subtotal: number;
-  updateQuote: (updates: Record<string, any>) => void;
+interface Treatment {
+  id: string;
+  name: string;
+  price: number;
+  quantity?: number;
+  type: 'treatment';
 }
 
-export const useSpecialOffers = ({
-  quoteId,
-  treatments,
-  subtotal,
-  updateQuote
-}: UseSpecialOffersProps) => {
+/**
+ * Hook for managing special offers in the quote builder
+ */
+export function useSpecialOffers(selectedTreatments: Treatment[] = []) {
   const { toast } = useToast();
-  const [isApplyingOffer, setIsApplyingOffer] = useState(false);
-  const [availableOffers, setAvailableOffers] = useState<SpecialOffer[]>([]);
-  const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+  const queryClient = useQueryClient();
+  const [selectedOffer, setSelectedOffer] = useState<SpecialOffer | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
 
-  // Fetch available offers for the current treatments
-  const fetchAvailableOffers = async () => {
-    if (treatments.length === 0) {
-      setAvailableOffers([]);
+  // Fetch available special offers
+  const { data: availableOffers = [], isLoading } = useQuery<SpecialOffer[]>({
+    queryKey: ['/api/special-offers'],
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Filter offers that apply to selected treatments
+  const filteredOffers = useCallback(() => {
+    if (!selectedTreatments || selectedTreatments.length === 0) return [];
+    
+    const treatmentIds = selectedTreatments.map(t => t.id);
+    
+    return availableOffers.filter(offer => {
+      // Check if any selected treatment is in the offer's applicable treatments
+      return offer.applicableTreatments.some(id => treatmentIds.includes(id));
+    });
+  }, [availableOffers, selectedTreatments]);
+
+  // Calculate discount when treatments or selected offer changes
+  useEffect(() => {
+    if (!selectedOffer || !selectedTreatments.length) {
+      setDiscountAmount(0);
       return;
     }
-
-    try {
-      setIsLoadingOffers(true);
-      const treatmentIds = treatments.map(t => t.id);
-      
-      const response = await fetch('/api/quotes-api/available-offers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ treatmentIds, quoteId })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch available offers');
-      }
-      
-      const data = await response.json();
-      setAvailableOffers(data.offers || []);
-      return data.offers;
-    } catch (error) {
-      console.error("Error fetching available offers:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load available offers. Please try again.",
-        variant: "destructive"
-      });
-      return [];
-    } finally {
-      setIsLoadingOffers(false);
-    }
-  };
-
-  // Apply a special offer to the quote
-  const applySpecialOffer = async (offerId: string) => {
-    if (!quoteId) {
-      toast({
-        title: "Error",
-        description: "Cannot apply offer to an unsaved quote",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    try {
-      setIsApplyingOffer(true);
-      
-      // Fetch offer details and validate
-      const response = await fetch(`/api/quotes-api/apply-offer/${offerId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          quoteId,
-          treatments,
-          subtotal
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to apply special offer');
-      }
-      
-      const data = await response.json();
-      
-      // Update quote with offer discount
-      updateQuote({
-        appliedOfferId: offerId,
-        offerDiscount: data.discountAmount || 0
-      });
-      
-      // Track the event
-      trackEvent('apply_special_offer', 'quote', offerId);
-      
-      toast({
-        title: "Special Offer Applied",
-        description: `You save ${formatCurrency(data.discountAmount)}!`,
-        variant: "default"
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Error applying special offer:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to apply special offer",
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setIsApplyingOffer(false);
-    }
-  };
-  
-  // Remove a special offer from the quote
-  const removeSpecialOffer = async () => {
-    if (!quoteId) {
-      updateQuote({
-        appliedOfferId: null,
-        offerDiscount: 0
-      });
-      return true;
+    
+    // Get subtotal of applicable treatments
+    const applicableTreatmentIds = selectedOffer.applicableTreatments;
+    const applicableTreatments = selectedTreatments.filter(t => 
+      applicableTreatmentIds.includes(t.id)
+    );
+    
+    const applicableSubtotal = applicableTreatments.reduce(
+      (sum, treatment) => sum + (treatment.price * (treatment.quantity || 1)), 
+      0
+    );
+    
+    // Calculate discount based on type
+    let discount = 0;
+    if (selectedOffer.discountType === 'percentage') {
+      discount = (applicableSubtotal * selectedOffer.discountValue) / 100;
+    } else if (selectedOffer.discountType === 'fixed') {
+      discount = selectedOffer.discountValue;
     }
     
-    try {
-      setIsApplyingOffer(true);
-      
-      const response = await fetch(`/api/quotes-api/remove-offer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quoteId })
+    // Apply any maximum discount limits (hardcoded for now)
+    const maxDiscount = 1000;
+    if (discount > maxDiscount) {
+      discount = maxDiscount;
+    }
+    
+    setDiscountAmount(discount);
+  }, [selectedOffer, selectedTreatments]);
+
+  // Apply offer mutation
+  const applyOfferMutation = useMutation({
+    mutationFn: async (offerId: string) => {
+      const response = await apiRequest('POST', `/api/quotes-api/apply-offer/${offerId}`, {
+        treatments: selectedTreatments
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove special offer');
+        throw new Error(errorData.message || 'Failed to apply offer');
       }
       
-      // Update quote state
-      updateQuote({
-        appliedOfferId: null,
-        offerDiscount: 0
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Special Offer Applied',
+        description: `Discount: ${formatCurrency(data.discount)}`,
       });
       
+      // Update cached data
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Special Offer Removed",
-        description: "The special offer has been removed from your quote",
-        variant: "default"
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-      
-      return true;
-    } catch (error) {
-      console.error("Error removing special offer:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to remove special offer",
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setIsApplyingOffer(false);
     }
-  };
+  });
 
-  // Format currency helper
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(value);
-  };
+  // Select an offer
+  const selectOffer = useCallback(async (offerId: string | null) => {
+    if (!offerId) {
+      setSelectedOffer(null);
+      setDiscountAmount(0);
+      return;
+    }
+    
+    const offer = availableOffers.find(o => o.id === offerId);
+    if (!offer) {
+      toast({
+        title: 'Error',
+        description: 'Selected offer not found',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setSelectedOffer(offer);
+    
+    // Optionally persist via API
+    try {
+      await applyOfferMutation.mutateAsync(offerId);
+    } catch (error) {
+      // Error is handled in mutation
+    }
+  }, [availableOffers, applyOfferMutation, toast]);
 
   return {
-    availableOffers,
-    isLoadingOffers,
-    isApplyingOffer,
-    fetchAvailableOffers,
-    applySpecialOffer,
-    removeSpecialOffer
+    availableOffers: filteredOffers(),
+    selectedOffer,
+    discountAmount,
+    isLoading,
+    selectOffer,
+    applyOfferMutation
   };
-};
-
-export default useSpecialOffers;
+}

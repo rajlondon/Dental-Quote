@@ -1,187 +1,127 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/hooks/use-quote-builder';
 import { TreatmentPackage } from '@shared/offer-types';
-import { trackEvent } from '@/lib/analytics';
 
-interface UseTreatmentPackagesProps {
-  quoteId: string | null;
-  treatments: { id: string; quantity: number }[];
-  updateQuote: (updates: Record<string, any>) => void;
+interface Treatment {
+  id: string;
+  name: string;
+  price: number;
+  quantity?: number;
+  type: 'treatment';
 }
 
-export const useTreatmentPackages = ({
-  quoteId,
-  treatments,
-  updateQuote
-}: UseTreatmentPackagesProps) => {
+/**
+ * Hook for managing treatment packages in the quote builder
+ */
+export function useTreatmentPackages(selectedTreatments: Treatment[] = []) {
   const { toast } = useToast();
-  const [isApplyingPackage, setIsApplyingPackage] = useState(false);
-  const [availablePackages, setAvailablePackages] = useState<TreatmentPackage[]>([]);
-  const [isLoadingPackages, setIsLoadingPackages] = useState(false);
-
-  // Fetch available packages for the current treatments
-  const fetchAvailablePackages = async () => {
-    if (treatments.length === 0) {
-      setAvailablePackages([]);
-      return;
-    }
-
-    try {
-      setIsLoadingPackages(true);
-      const treatmentIds = treatments.map(t => t.id);
-      
-      const response = await fetch('/api/quotes-api/available-packages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ treatmentIds, quoteId })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch available packages');
-      }
-      
-      const data = await response.json();
-      setAvailablePackages(data.packages || []);
-      return data.packages;
-    } catch (error) {
-      console.error("Error fetching available packages:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load available packages. Please try again.",
-        variant: "destructive"
-      });
-      return [];
-    } finally {
-      setIsLoadingPackages(false);
-    }
-  };
-
-  // Apply a treatment package to the quote
-  const applyTreatmentPackage = async (packageId: string) => {
-    try {
-      setIsApplyingPackage(true);
-      
-      // Fetch package details
-      const response = await fetch(`/api/quotes-api/apply-package/${packageId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          quoteId, 
-          currentTreatments: treatments 
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to apply treatment package');
-      }
-      
-      const data = await response.json();
-      
-      // Update the quote state with packaged treatments
-      updateQuote({
-        treatments: data.packagedTreatments,
-        subtotal: data.packagePrice,
-        appliedPackageId: packageId,
-        packageSavings: data.savings,
-        includedPerks: data.additionalPerks || []
-      });
-      
-      // Track the event
-      trackEvent('apply_treatment_package', 'quote', packageId);
-      
-      toast({
-        title: "Package Applied",
-        description: `Package applied! You save ${formatCurrency(data.savings)}`,
-        variant: "default"
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Error applying treatment package:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to apply treatment package",
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setIsApplyingPackage(false);
-    }
-  };
+  const queryClient = useQueryClient();
+  const [selectedPackage, setSelectedPackage] = useState<TreatmentPackage | null>(null);
   
-  // Remove a treatment package from the quote
-  const removeTreatmentPackage = async () => {
-    if (!quoteId) {
-      updateQuote({
-        appliedPackageId: null,
-        packageSavings: 0,
-        includedPerks: []
-      });
-      return true;
+  // Fetch available treatment packages
+  const { data: availablePackages = [], isLoading } = useQuery<TreatmentPackage[]>({
+    queryKey: ['/api/treatment-packages'],
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Filter and rank packages based on relevance to selected treatments
+  const filteredPackages = useCallback(() => {
+    if (!selectedTreatments || selectedTreatments.length === 0) {
+      // If no treatments selected, return all packages
+      return availablePackages;
     }
     
-    try {
-      setIsApplyingPackage(true);
+    const treatmentIds = selectedTreatments.map(t => t.id);
+    
+    // Calculate a relevance score for each package
+    const packagesWithRelevance = availablePackages.map(pkg => {
+      // Count how many treatments in the package match the selected treatments
+      const matchingTreatments = pkg.includedTreatments.filter(item => 
+        treatmentIds.includes(item.treatmentId)
+      );
       
-      const response = await fetch(`/api/quotes-api/remove-package`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quoteId })
+      const relevanceScore = matchingTreatments.length / pkg.includedTreatments.length;
+      
+      return {
+        package: pkg,
+        relevanceScore
+      };
+    });
+    
+    // Sort by relevance score (descending)
+    packagesWithRelevance.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    
+    // Return just the packages, now ordered by relevance
+    return packagesWithRelevance.map(item => item.package);
+  }, [availablePackages, selectedTreatments]);
+
+  // Apply package mutation
+  const applyPackageMutation = useMutation({
+    mutationFn: async (packageId: string) => {
+      const response = await apiRequest('POST', `/api/quotes-api/apply-package/${packageId}`, {
+        treatments: selectedTreatments
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove package');
+        throw new Error(errorData.message || 'Failed to apply package');
       }
       
-      const data = await response.json();
-      
-      // Restore the original treatments
-      updateQuote({
-        treatments: data.originalTreatments || [],
-        subtotal: data.originalSubtotal || 0,
-        appliedPackageId: null,
-        packageSavings: 0,
-        includedPerks: []
-      });
-      
+      return await response.json();
+    },
+    onSuccess: (data) => {
       toast({
-        title: "Package Removed",
-        description: "The treatment package has been removed from your quote",
-        variant: "default"
+        title: 'Package Applied',
+        description: `You saved ${formatCurrency(data.savings)}`,
       });
       
-      return true;
-    } catch (error) {
-      console.error("Error removing treatment package:", error);
+      // Update cached data
+      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to remove treatment package",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-      return false;
-    } finally {
-      setIsApplyingPackage(false);
     }
-  };
+  });
 
-  // Format currency helper
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(value);
-  };
+  // Select a package
+  const selectPackage = useCallback(async (packageId: string | null) => {
+    if (!packageId) {
+      setSelectedPackage(null);
+      return;
+    }
+    
+    const pkg = availablePackages.find(p => p.id === packageId);
+    if (!pkg) {
+      toast({
+        title: 'Error',
+        description: 'Selected package not found',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setSelectedPackage(pkg);
+    
+    // Persist via API
+    try {
+      await applyPackageMutation.mutateAsync(packageId);
+    } catch (error) {
+      // Error is handled in mutation
+    }
+  }, [availablePackages, applyPackageMutation, toast]);
 
   return {
-    availablePackages,
-    isLoadingPackages,
-    isApplyingPackage,
-    fetchAvailablePackages,
-    applyTreatmentPackage,
-    removeTreatmentPackage
+    availablePackages: filteredPackages(),
+    selectedPackage,
+    isLoading,
+    selectPackage,
+    applyPackageMutation
   };
-};
-
-export default useTreatmentPackages;
+}
