@@ -312,6 +312,30 @@ const HomePage: React.FC = () => {
       {/* Using our fixed special offers component */}
       <FixedHomePageOffers className="px-4" />
       
+      {/* Demo System Alert - Added for quick access to the quote system demo */}
+      <div className="container mx-auto px-4 my-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm p-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-blue-900 flex items-center">
+                <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
+                Quote System Demo Available
+              </h3>
+              <p className="text-blue-700 mt-1">
+                Try out our complete quote builder with special offers, treatment packages, and promo codes.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/quote-system-demo">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Launch Demo
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {/* Popular Clinics Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">

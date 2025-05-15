@@ -29,6 +29,23 @@ const TestDashboard: React.FC = () => {
             <CardContent>
               <QuoteNavigation />
               
+              {/* Prominent link to the new comprehensive demo */}
+              <div className="mt-6 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-blue-900">New: Comprehensive Quote System Demo</h3>
+                    <p className="text-sm text-blue-700">
+                      Try our new all-in-one demo page that showcases all quote system features together.
+                    </p>
+                  </div>
+                  <Link href="/quote-system-demo">
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      Launch Full Demo
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              
               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-6">
                 <h3 className="font-bold flex items-center">
                   <AlertCircle className="h-5 w-5 mr-2 text-yellow-500" /> 
