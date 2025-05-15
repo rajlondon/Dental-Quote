@@ -6,10 +6,13 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { type Session } from 'express-session';
 import { 
-  configureSessionForPersistence, 
-  setRoleSpecificCookies, 
-  clearAllAuthCookies,
-  getUserIdentifier
+  getSessionConfig,
+  requireAuthentication,
+  logAuthDiagnostics,
+  serializeUserForSession,
+  sendLoginResponse,
+  handleLogout,
+  requireRole
 } from '../utils/auth-utils';
 
 // Extend the Session type to include passport
@@ -37,6 +40,9 @@ enhancedAuthRoutes.get('/status', (req: Request, res: Response) => {
 
 // Enhanced login endpoint with better error handling and shared utility functions
 enhancedAuthRoutes.post('/login', (req: Request, res: Response, next: NextFunction) => {
+  // Log detailed authentication diagnostics
+  logAuthDiagnostics(req, 'LOGIN_ATTEMPT');
+  
   // Clear any potential stale session data
   if (req.session.passport) {
     delete req.session.passport;
@@ -75,13 +81,8 @@ enhancedAuthRoutes.post('/login', (req: Request, res: Response, next: NextFuncti
         // Set role-specific cookies using shared utility
         setRoleSpecificCookies(req, res, user);
         
-        // Return success with user object and timestamp to prevent caching
-        return res.json({ 
-          success: true, 
-          user,
-          message: 'Login successful',
-          timestamp: new Date().getTime()
-        });
+        // Use standardized login response utility
+        sendLoginResponse(req, res, user);
       });
     });
   })(req, res, next);
@@ -196,41 +197,11 @@ enhancedAuthRoutes.post('/register', async (req: Request, res: Response) => {
 
 // Enhanced logout endpoint with complete session destruction
 enhancedAuthRoutes.post('/logout', (req: Request, res: Response) => {
-  const wasAuthenticated = req.isAuthenticated();
-  const userId = req.user?.id;
-  const userRole = req.user?.role;
+  // Log detailed authentication diagnostics
+  logAuthDiagnostics(req, 'LOGOUT_ATTEMPT');
   
-  console.log(`Logout attempt for user ID: ${userId} with role: ${userRole}`);
-  
-  // Use the shared utility function to clear all auth-related cookies
-  clearAllAuthCookies(res);
-  
-  // Standard logout to clear Passport.js authentication
-  req.logout((err: Error | null) => {
-    if (err) {
-      console.error('Logout error:', err);
-      return res.status(500).json({ success: false, message: 'Failed to logout', error: err.message });
-    }
-    
-    // Completely destroy the session instead of just regenerating
-    req.session.destroy((destroyErr: Error | null) => {
-      if (destroyErr) {
-        console.error('Session destruction error during logout:', destroyErr);
-        return res.status(500).json({ success: false, message: 'Failed to completely logout', error: destroyErr.message });
-      }
-      
-      if (wasAuthenticated) {
-        console.log(`User ${userId} with role ${userRole} logged out successfully`);
-      }
-      
-      // Return success with timestamp to prevent caching
-      return res.json({ 
-        success: true, 
-        message: 'Logged out successfully',
-        timestamp: new Date().getTime()
-      });
-    });
-  });
+  // Use standardized logout handling
+  handleLogout(req, res);
 });
 
 export default enhancedAuthRoutes;

@@ -1,110 +1,247 @@
 /**
  * Authentication Utilities
  * 
- * This module provides centralized authentication utilities for consistent session handling
- * across different parts of the application.
+ * This module provides standardized authentication functions and utilities
+ * for consistent authentication behavior across all portals.
+ * 
+ * Features:
+ * - Standardized session configuration
+ * - Enhanced session persistence
+ * - Role-based authentication
+ * - Consistent login/logout handling
+ * - Authentication diagnostics
  */
 
-import { Request, Response } from 'express';
-import { User } from '@shared/schema';
+import { Request, Response, NextFunction } from 'express';
+import session from 'express-session';
+import { log } from '../vite';
 
-/**
- * Sets up a consistent session configuration across all authentication endpoints
- */
-export function configureSessionForPersistence(req: Request): void {
-  // Set a longer cookie expiry for better persistence (7 days)
-  req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000;
+// Session configuration - Standardized across all portals
+export const getSessionConfig = (): session.SessionOptions => {
+  // Basic security check for required environment variable
+  if (!process.env.SESSION_SECRET) {
+    log('⚠️ SESSION_SECRET is not defined. Using a fallback secret (NOT secure for production)', 'auth');
+  }
+
+  // Calculate session expiry (7 days)
+  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
   
-  // Configure cookie security settings
-  req.session.cookie.secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-  req.session.cookie.httpOnly = true;
-  req.session.cookie.sameSite = 'lax';
+  return {
+    name: 'mydentalfly.sid', // Standardized session cookie name across portals
+    secret: process.env.SESSION_SECRET || 'mydentalfly-session-secret-fallback',
+    resave: false,
+    saveUninitialized: false, // Don't create session until user logs in
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // Secure in production only
+      httpOnly: true, // Not accessible via JavaScript
+      sameSite: 'lax', // Balances security with usability
+      maxAge: SEVEN_DAYS, // Longer session expiry for better UX
+      path: '/', // Ensure cookie is available on all paths
+    },
+    rolling: true, // Refresh expiration on activity
+  };
+};
+
+// Authentication middleware - Use for protected routes
+export const requireAuthentication = (req: Request, res: Response, next: NextFunction) => {
+  // Log detailed diagnostic information for troubleshooting
+  logAuthDiagnostics(req, 'REQUIRE_AUTH');
   
-  // For development/testing to ensure cookies persist without HTTPS
-  if (process.env.NODE_ENV !== 'production') {
-    req.session.cookie.secure = false;
+  if (req.isAuthenticated()) {
+    return next();
   }
   
-  // Log session configuration for debugging
-  console.log('Session configured:', {
-    maxAge: req.session.cookie.maxAge,
-    secure: req.session.cookie.secure,
-    httpOnly: req.session.cookie.httpOnly,
-    sameSite: req.session.cookie.sameSite,
-    path: req.session.cookie.path,
-    domain: req.session.cookie.domain,
+  return res.status(401).json({ success: false, message: 'Not authenticated' });
+};
+
+// Helper to log detailed authentication diagnostics
+export const logAuthDiagnostics = (req: Request, source = 'AUTH') => {
+  log(`====== AUTH REQUEST DIAGNOSTICS ======`, source);
+  log(`Path: ${req.path}`, source);
+  log(`Method: ${req.method}`, source);
+  log(`Authenticated: ${req.isAuthenticated?.() || false}`, source);
+  log(`User ID: ${req.user?.id}`, source);
+  log(`User Role: ${req.user?.role}`, source);
+  
+  // Analyze cookies
+  const hasCookieHeader = Boolean(req.headers.cookie);
+  log(`Has Cookie Header: ${hasCookieHeader}`, source);
+  if (hasCookieHeader && req.headers.cookie) {
+    log(`Cookie Length: ${req.headers.cookie.length}`, source);
+    log(`Cookie Preview: ${req.headers.cookie.substring(0, 40)}...`, source);
+  }
+  
+  // Session info
+  if (req.session) {
+    log(`Session ID: ${req.sessionID}`, source);
+    log(`Session Created: ${Boolean(req.session)}`, source);
+  } else {
+    log(`Session Missing`, source);
+  }
+  log(`======================================`, source);
+};
+
+// Helper to safely serialize user object for session
+export const serializeUserForSession = (user: any) => {
+  // Only include essential fields for session storage
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role
+  };
+};
+
+// Helper to handle login response consistently across different portals
+export const sendLoginResponse = (req: Request, res: Response, user: any) => {
+  // Remove password and other sensitive fields
+  const sanitizedUser = { ...user };
+  if (sanitizedUser.password) delete sanitizedUser.password;
+  
+  res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    user: sanitizedUser
   });
-}
+};
 
-/**
- * Sets role-specific cookies for better front-end experience
- */
-export function setRoleSpecificCookies(req: Request, res: Response, user: User): void {
-  if (user.role === 'clinic_staff') {
-    res.cookie('is_clinic_staff', 'true', { 
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      httpOnly: false, // Make accessible to client JS
-      path: '/',
-      sameSite: 'lax',
-      // Don't set secure in development for testing
-      secure: process.env.NODE_ENV === 'production'
-    });
-
-    res.cookie('clinic_session_active', 'true', {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      httpOnly: false,
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production'
-    });
-  }
-
-  if (user.role === 'admin') {
-    res.cookie('is_admin', 'true', { 
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      httpOnly: false, // Make accessible to client JS
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production'
-    });
-  }
-}
-
-/**
- * Clear all authentication cookies with multiple options to ensure proper cleanup
- */
-export function clearAllAuthCookies(res: Response): void {
-  const cookieOptions = { path: '/', sameSite: 'lax' as const };
-  const secureCookieOptions = { ...cookieOptions, secure: true };
-  const insecureCookieOptions = { ...cookieOptions, secure: false };
+// Helper to handle logout consistently
+export const handleLogout = (req: Request, res: Response) => {
+  // Get user info before logout for logging
+  const userId = req.user?.id;
+  const userRole = req.user?.role;
   
-  // List of cookies to clear
-  const cookiesToClear = [
-    'is_clinic_staff',
-    'clinic_session_active',
-    'is_admin',
-    'no_promo_redirect',
-    'disable_quote_redirect',
-    'no_special_offer_redirect',
-    'connect.sid'  // Clear the session cookie explicitly
-  ];
-  
-  // Clear each cookie with multiple option combinations for thorough cleanup
-  cookiesToClear.forEach(cookieName => {
-    res.clearCookie(cookieName, cookieOptions);
-    res.clearCookie(cookieName, secureCookieOptions);
-    res.clearCookie(cookieName, insecureCookieOptions);
-    res.clearCookie(cookieName, { path: '/' });
-    res.clearCookie(cookieName); // Default options
+  req.logout((err) => {
+    if (err) {
+      log(`Logout error for user ${userId}: ${err.message}`, 'auth');
+      return res.status(500).json({ success: false, message: 'Logout failed' });
+    }
+    
+    // Destroy session completely
+    req.session.destroy((sessionErr) => {
+      if (sessionErr) {
+        log(`Session destruction error: ${sessionErr.message}`, 'auth');
+      }
+      
+      log(`User ${userId} (${userRole}) logged out successfully`, 'auth');
+      
+      // Clear cookie regardless of session destruction
+      res.clearCookie('mydentalfly.sid');
+      // Also clear the legacy cookie name
+      res.clearCookie('connect.sid');
+      
+      return res.json({ success: true, message: 'Logged out successfully' });
+    });
   });
-}
+};
 
-/**
- * Helper to return user's type & ID for analytics/logging
- */
-export function getUserIdentifier(req: Request): string {
-  if (!req.isAuthenticated() || !req.user) {
-    return 'unauthenticated';
+// Helper to configure session for better persistence
+export const configureSessionForPersistence = (req: Request) => {
+  if (req.session && req.session.cookie) {
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    
+    // Set longer session cookie expiry
+    req.session.cookie.maxAge = SEVEN_DAYS;
+    
+    // Use secure cookies in production
+    req.session.cookie.secure = process.env.NODE_ENV === 'production';
+    
+    // Ensure cookie is accessible across the entire domain
+    req.session.cookie.path = '/';
+    
+    // Set proper SameSite attribute for modern browsers
+    req.session.cookie.sameSite = 'lax';
+    
+    log(`Session configured for persistence (maxAge: ${SEVEN_DAYS}ms)`, 'auth');
+  } else {
+    log('Warning: Session or cookie object not available, could not configure persistence', 'auth');
   }
-  return `${req.user.role}:${req.user.id}`;
-}
+};
+
+// Helper to set role-specific cookies to help with portal-specific auth
+export const setRoleSpecificCookies = (req: Request, res: Response, user: any) => {
+  const roleCookieExpiryDate = new Date();
+  roleCookieExpiryDate.setDate(roleCookieExpiryDate.getDate() + 7); // 7 days
+  
+  // Use the role to set a specific cookie
+  const role = user.role;
+  
+  if (role === 'admin') {
+    res.cookie('admin_auth', 'true', {
+      expires: roleCookieExpiryDate,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax'
+    });
+    log(`Set admin_auth cookie for user ${user.id}`, 'auth');
+  } else if (role === 'clinic_staff') {
+    res.cookie('clinic_auth', 'true', {
+      expires: roleCookieExpiryDate,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax'
+    });
+    log(`Set clinic_auth cookie for user ${user.id}`, 'auth');
+  } else if (role === 'patient') {
+    res.cookie('patient_auth', 'true', {
+      expires: roleCookieExpiryDate,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax'
+    });
+    log(`Set patient_auth cookie for user ${user.id}`, 'auth');
+  }
+  
+  // Also set a general auth cookie for global auth checks
+  res.cookie('authenticated', 'true', {
+    expires: roleCookieExpiryDate,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    sameSite: 'lax'
+  });
+};
+
+// Helper to clear all auth-related cookies
+export const clearAllAuthCookies = (res: Response) => {
+  // Clear all possible auth cookies
+  res.clearCookie('mydentalfly.sid');
+  res.clearCookie('connect.sid'); // Legacy cookie name
+  res.clearCookie('admin_auth');
+  res.clearCookie('clinic_auth');
+  res.clearCookie('patient_auth');
+  res.clearCookie('authenticated');
+  
+  log('All authentication cookies cleared', 'auth');
+};
+
+// Helper to get user identifier for consistent logging
+export const getUserIdentifier = (user: any): string => {
+  if (!user) return 'unknown';
+  
+  return `${user.id} (${user.role})`;
+};
+
+// Middleware to ensure authentication for specific user roles
+export const requireRole = (roles: string | string[]) => {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  
+  return (req: Request, res: Response, next: NextFunction) => {
+    // First ensure user is authenticated
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    
+    // Then check if user has required role
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: `Access denied. Required role: ${allowedRoles.join(' or ')}`
+      });
+    }
+    
+    next();
+  };
+};
