@@ -209,25 +209,33 @@ export default function SpecialOffersTestPage() {
   // Handle treatment package selection
   const handleSelectPackage = async (packageId: string) => {
     try {
-      const response = await fetch(`/api/quotes-api/apply-package/${packageId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentTreatments: treatments })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to apply treatment package');
+      // Find selected package
+      const selectedPackage = availablePackages.find(pkg => pkg.id === packageId);
+      if (!selectedPackage) {
+        throw new Error('Selected package not found');
       }
       
-      const data = await response.json();
       setSelectedPackageId(packageId);
       
-      // Update treatments with packaged treatments
-      setTreatments(data.packagedTreatments);
+      // Create new treatments array based on the package
+      const packagedTreatments = selectedPackage.includedTreatments.map(item => ({
+        id: item.treatmentId,
+        name: treatments.find(t => t.id === item.treatmentId)?.name || 'Unknown Treatment',
+        price: item.standardPrice,
+        quantity: item.quantity,
+        type: 'treatment' as const
+      }));
+      
+      // Filter out treatments that are part of the package
+      const packageTreatmentIds = packagedTreatments.map(t => t.id);
+      const nonPackageTreatments = treatments.filter(t => !packageTreatmentIds.includes(t.id));
+      
+      // Combine both arrays
+      setTreatments([...packagedTreatments, ...nonPackageTreatments]);
       
       toast({
         title: "Package Applied",
-        description: `You saved £${data.savings.toFixed(2)}`,
+        description: `You saved £${selectedPackage.savings.toFixed(2)}`,
         variant: "default"
       });
     } catch (error) {
