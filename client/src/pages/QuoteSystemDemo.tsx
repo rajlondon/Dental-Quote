@@ -127,31 +127,30 @@ const QuoteSystemDemo: React.FC = () => {
     // Initialize with package params
     const params = new URLSearchParams();
     params.set('packageId', packageId);
+    params.set('source', 'package');
     
     console.log('📦 Setting up package flow with params:', params.toString());
     
-    // Added delay to ensure state updates finish before initializing flow
-    setTimeout(() => {
-      initializeQuoteFlow({
-        queryParams: params,
-        onSuccess: () => {
-          console.log('✅ Package quote flow initialized successfully');
-          toast({
-            title: 'Package Quote Started',
-            description: `Package "${packageName}" selected. Continue with the quote flow.`,
-            duration: 5000,
-          });
-        },
-        onError: (error) => {
-          console.error('❌ Failed to initialize package quote flow:', error);
-          toast({
-            title: 'Error Starting Quote',
-            description: 'There was a problem starting the package quote. Please try again.',
-            variant: 'destructive',
-          });
-        }
-      });
-    }, 100);
+    // Initialize the quote flow
+    initializeQuoteFlow({
+      queryParams: params,
+      onSuccess: () => {
+        console.log('✅ Package quote flow initialized successfully');
+        toast({
+          title: 'Package Quote Started',
+          description: `Package "${packageName}" selected.`,
+          duration: 3000,
+        });
+      },
+      onError: (error) => {
+        console.error('❌ Failed to initialize package quote flow:', error);
+        toast({
+          title: 'Error Starting Quote',
+          description: 'There was a problem starting the package quote.',
+          variant: 'destructive',
+        });
+      }
+    });
   };
 
   const handleStartSpecialOfferQuote = (offerId: string) => {
@@ -451,22 +450,48 @@ const QuoteSystemDemo: React.FC = () => {
                           </div>
                           <div className="flex gap-2">
                             <Button
-                              onClick={() => handleStartPackageQuote(pkg.id)}
-                              className="flex-1"
-                              variant="default"
-                            >
-                              Start with Package
-                            </Button>
-                            <Button
                               onClick={() => {
+                                resetQuoteFlow();
                                 setCurrentPackageId(pkg.id);
                                 toast({
                                   title: 'Package Selected',
-                                  description: `Package "${pkg.name}" selected. Click "Start a Standard Quote" to begin.`,
-                                  duration: 5000,
+                                  description: `Package "${pkg.name}" is ready to use`,
+                                  duration: 2000,
                                 });
                               }}
                               className="flex-1"
+                              variant="outline"
+                            >
+                              Select Package
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                // Direct approach - start immediately without state changes
+                                const params = new URLSearchParams();
+                                params.set('packageId', pkg.id);
+                                params.set('source', 'direct');
+                                
+                                initializeQuoteFlow({
+                                  queryParams: params,
+                                  onSuccess: () => {
+                                    toast({
+                                      title: 'Package Quote Started',
+                                      description: `Starting quote with "${pkg.name}"`,
+                                      duration: 3000,
+                                    });
+                                  },
+                                  onError: (error) => {
+                                    console.error('Error starting quote:', error);
+                                    toast({
+                                      title: 'Error',
+                                      description: 'Failed to start the quote. Please try again.',
+                                      variant: 'destructive',
+                                    });
+                                  }
+                                });
+                              }}
+                              className="flex-1"
+                              variant="default"
                               variant="outline"
                             >
                               Select Package Only
