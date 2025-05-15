@@ -103,12 +103,29 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
     }
   }, [packageId, specialOfferId, promoCode, initialStep, quoteId, toast]);
   
-  // Special handling for package ID changes to ensure it's properly passed to the builder
+  // Enhanced special handling for package ID changes
   useEffect(() => {
     if (packageId && currentStep === 'builder') {
       console.log("⚠️ Important: Ensuring packageId is passed to QuoteBuilder:", packageId);
+      
+      // Check if the packageId is one of our predefined IDs
+      const isValidPackageId = packageId.startsWith('pkg-');
+      
+      if (!isValidPackageId) {
+        console.warn("⚠️ Potentially invalid package ID format:", packageId);
+        toast({
+          title: "Package ID Format",
+          description: `Proceeding with package ID: ${packageId}`,
+          duration: 5000,
+        });
+      } else {
+        console.log("✅ Valid package ID format detected:", packageId);
+        
+        // Track detailed package selection event for analytics
+        trackEvent('valid_package_id_detected', 'quotes', packageId);
+      }
     }
-  }, [packageId, currentStep]);
+  }, [packageId, currentStep, toast]);
 
   // Track step changes for analytics
   const goToStep = (step: Step, data?: any) => {
