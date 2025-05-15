@@ -9,4 +9,15 @@ router.get('/promo-test', (req, res) => {
   res.sendFile(promoTestPath);
 });
 
+// Serve clinic direct test page access
+router.get('/clinic-test-direct', (req, res) => {
+  const clinicTestDirectPath = path.resolve('client/public/clinic-test-direct.html');
+  res.sendFile(clinicTestDirectPath);
+});
+
+// Alternative shortcut URL for clinic staff to access test page
+router.get('/clinic-test', (req, res) => {
+  res.redirect('/clinic-quote-test');
+});
+
 export default router;
