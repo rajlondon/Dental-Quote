@@ -18,9 +18,14 @@ const SimpleClinicPage: React.FC = () => {
   const [clinicData, setClinicData] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState<boolean>(false);
   
-  // Check authentication status on mount using our cookie-aware hook
+  // A single authentication check on mount with rate limiting protection
   useEffect(() => {
+    let isActive = true; // Cleanup flag
+    
     const verifyClinicAuth = async () => {
+      // Only perform one check when component mounts
+      if (!isActive) return;
+      
       try {
         const result = await checkClinicStatus();
         
@@ -45,7 +50,13 @@ const SimpleClinicPage: React.FC = () => {
       }
     };
     
+    // Execute the check once
     verifyClinicAuth();
+    
+    // Cleanup function
+    return () => {
+      isActive = false;
+    };
   }, [checkClinicStatus, toast, setLocation]);
   
   // Effect to fetch basic clinic data
