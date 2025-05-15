@@ -4,7 +4,7 @@ import { isAuthenticated } from '../middleware/auth';
 const clinicStatusRoutes = Router();
 
 // Simple endpoint to get clinic status with user information
-clinicStatusRoutes.get('/clinic-status', isAuthenticated, async (req: Request, res: Response) => {
+clinicStatusRoutes.get('/', isAuthenticated, async (req: Request, res: Response) => {
   try {
     // If we reach here, the user is authenticated (checked by isAuthenticated middleware)
     if (!req.user) {

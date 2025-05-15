@@ -554,6 +554,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register the apply-code endpoint for coupon code redemption
   app.use(applyCodeRoutes);
   
+  // Register the simplified clinic status endpoint for direct auth checks
+  app.use('/api/clinic-status', clinicStatusRoutes);
+  
   // Register Admin Promotions Management routes
   app.use('/api/admin', isAuthenticated, ensureRole("admin"), adminPromotionsRoutes);
   
