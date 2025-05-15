@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import api from '@/lib/api';
 import { Loader2 } from 'lucide-react';
+import { useCookieAuth } from '@/hooks/use-cookie-auth';
 
 /**
  * Simple Clinic Portal Page
@@ -14,28 +14,25 @@ import { Loader2 } from 'lucide-react';
 const SimpleClinicPage: React.FC = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading, error, logout, checkClinicStatus } = useCookieAuth();
   const [clinicData, setClinicData] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState<boolean>(false);
   
-  // Directly fetch authentication status bypassing complex hooks
+  // Check authentication status on mount using our cookie-aware hook
   useEffect(() => {
-    const fetchAuthStatus = async () => {
+    const verifyClinicAuth = async () => {
       try {
-        setIsLoading(true);
-        const response = await api.get('/clinic-status');
+        const result = await checkClinicStatus();
         
-        if (response.data.success && response.data.user) {
-          setUser(response.data.user);
-          console.log('Successfully authenticated as clinic staff');
-        } else {
+        if (!result.success) {
           console.error('Authentication failed or insufficient permissions');
           toast({
             title: 'Authentication Required',
             description: 'Please log in to access the clinic portal.',
           });
           setLocation('/simple-clinic-login');
+        } else {
+          console.log('Successfully authenticated as clinic staff');
         }
       } catch (error) {
         console.error('Authentication error:', error);
@@ -45,13 +42,11 @@ const SimpleClinicPage: React.FC = () => {
           variant: 'destructive',
         });
         setLocation('/simple-clinic-login');
-      } finally {
-        setIsLoading(false);
       }
     };
     
-    fetchAuthStatus();
-  }, [toast, setLocation]);
+    verifyClinicAuth();
+  }, [checkClinicStatus, toast, setLocation]);
   
   // Effect to fetch basic clinic data
   useEffect(() => {
@@ -60,17 +55,14 @@ const SimpleClinicPage: React.FC = () => {
       
       setDataLoading(true);
       try {
-        // Use our direct clinic-status endpoint
-        const { data } = await api.get('/clinic-status');
-        if (data.success) {
-          setClinicData({
-            name: 'Your Clinic', // Placeholder since we're just demonstrating login works
-            location: 'Istanbul, Turkey',
-            id: user.clinicId || 1
-          });
-        }
+        // Just use the user data we already have from the cookie auth hook
+        setClinicData({
+          name: 'Your Clinic', // Placeholder since we're just demonstrating login works
+          location: 'Istanbul, Turkey',
+          id: user.clinicId || 1
+        });
       } catch (error) {
-        console.error('Error fetching clinic data:', error);
+        console.error('Error setting clinic data:', error);
         toast({
           title: 'Error',
           description: 'Failed to load clinic data. Please try again.',
@@ -81,23 +73,27 @@ const SimpleClinicPage: React.FC = () => {
       }
     };
     
-    if (user && !isLoading) {
+    if (user && !loading) {
       fetchClinicData();
     }
-  }, [user, isLoading, toast]);
+  }, [user, loading, toast]);
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout');
+      // Use the cookie-aware logout function
+      const success = await logout();
       
-      toast({
-        title: 'Success',
-        description: 'You have been logged out successfully.',
-      });
-      
-      // Clear user state and redirect
-      setUser(null);
-      setLocation('/simple-clinic-login');
+      if (success) {
+        toast({
+          title: 'Success',
+          description: 'You have been logged out successfully.',
+        });
+        
+        // Redirect to login page
+        setLocation('/simple-clinic-login');
+      } else {
+        throw new Error('Logout failed');
+      }
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -108,7 +104,7 @@ const SimpleClinicPage: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />

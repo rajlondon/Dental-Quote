@@ -20,13 +20,10 @@ const SimpleClinicLoginPage: React.FC = () => {
   // Check if already logged in on component mount
   useEffect(() => {
     const checkAuthStatus = async () => {
+      setIsLoading(true);
       try {
-        // Use the full URL to ensure consistent domain context
-        const baseUrl = `${window.location.protocol}//${window.location.host}`;
-        const response = await axios.get(`${baseUrl}/api/clinic-status`, {
-          withCredentials: true
-        });
-        if (response.data.success && response.data.user) {
+        const result = await checkClinicStatus();
+        if (result.success && result.user) {
           console.log('Already authenticated, redirecting to clinic portal');
           toast({
             title: 'Already signed in',
@@ -37,11 +34,13 @@ const SimpleClinicLoginPage: React.FC = () => {
       } catch (error) {
         // Not authenticated, that's expected
         console.log('Not authenticated, showing login page');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuthStatus();
-  }, [setLocation, toast]);
+  }, [checkClinicStatus, setLocation, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,33 +49,22 @@ const SimpleClinicLoginPage: React.FC = () => {
 
     try {
       console.log('Attempting login with:', email);
-      // Use auth/login endpoint - api client will add the /api prefix
-      // Construct the full URL using window.location to ensure correct domain
-      const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      console.log(`Using base URL: ${baseUrl} for authentication request`);
-      const response = await axios.post(`${baseUrl}/api/auth/login`, {
-        email,
-        password,
-        role: 'clinic_staff' // Make sure to specify the role for session organization
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      
+      // Use the cookie-aware login function
+      const result = await login(email, password, 'clinic_staff');
 
-      if (response.data.success) {
+      if (result.success) {
         toast({
           title: 'Login successful',
           description: 'Redirecting to clinic portal...',
         });
         
-        // Store user data in session storage
-        if (response.data.user) {
-          sessionStorage.setItem('user_data', JSON.stringify(response.data.user));
-          sessionStorage.setItem('user_role', response.data.user.role);
+        // Store user data in session storage as a backup
+        if (result.user) {
+          sessionStorage.setItem('user_data', JSON.stringify(result.user));
+          sessionStorage.setItem('user_role', result.user.role);
           
-          if (response.data.user.role === 'clinic_staff') {
+          if (result.user.role === 'clinic_staff') {
             sessionStorage.setItem('is_clinic_staff', 'true');
           }
         }
@@ -84,29 +72,18 @@ const SimpleClinicLoginPage: React.FC = () => {
         // Redirect to simplified clinic portal
         setLocation('/simple-clinic');
       } else {
-        setError(response.data.message || 'Login failed. Please check your credentials.');
+        setError(result.message || 'Login failed. Please check your credentials.');
         toast({
           title: 'Login failed',
-          description: response.data.message || 'Please check your credentials and try again.',
+          description: result.message || 'Please check your credentials and try again.',
           variant: 'destructive',
         });
       }
     } catch (err: any) {
       console.error('Login error:', err);
       
-      // Enhanced error logging for debugging
-      if (err.response) {
-        console.error('Error response data:', err.response.data);
-        console.error('Error response status:', err.response.status);
-        console.error('Error response headers:', err.response.headers);
-      } else if (err.request) {
-        console.error('Error request without response. Request details:', err.request);
-      } else {
-        console.error('Error message:', err.message);
-      }
-      
-      // Check for specific password error
-      const errorMsg = err.response?.data?.message || 'An error occurred during login. Please try again.';
+      // Handle error with message from error object
+      const errorMsg = err.message || 'An error occurred during login. Please try again.';
       setError(errorMsg);
       
       // Show detailed error message
