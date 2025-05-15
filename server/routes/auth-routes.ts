@@ -137,14 +137,24 @@ enhancedAuthRoutes.post('/register', async (req: Request, res: Response) => {
     console.log(`New user registered: ${newUser.email} (${newUser.id})`);
     
     // Convert newUser to match User type expected by req.login
-    const userForLogin = {
+    // Create a properly typed user object with null values converted to undefined
+    const userForLogin: User = {
       ...newUser,
-      // Convert null values to undefined to match User type
-      firstName: newUser.firstName || undefined,
-      lastName: newUser.lastName || undefined,
-      status: newUser.status || undefined,
-      phone: newUser.phone || undefined
-    } as User;
+      // Convert null values to undefined for fields that are defined in User type
+      firstName: newUser.firstName ?? undefined,
+      lastName: newUser.lastName ?? undefined,
+      phone: newUser.phone ?? undefined,
+      profileImage: newUser.profileImage ?? undefined,
+      address: newUser.address ?? undefined,
+      dateOfBirth: newUser.dateOfBirth ?? undefined,
+      nationality: newUser.nationality ?? undefined,
+      preferredLanguage: newUser.preferredLanguage ?? "English",
+      passportNumber: newUser.passportNumber ?? undefined,
+      emergencyContact: newUser.emergencyContact ?? undefined,
+      medicalInfo: newUser.medicalInfo ?? undefined,
+      jobTitle: newUser.jobTitle ?? undefined,
+      status: newUser.status ?? undefined
+    };
     
     // Automatically log in the new user
     req.login(userForLogin, (err: Error | null) => {
