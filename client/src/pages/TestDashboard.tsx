@@ -188,9 +188,14 @@ const TestDashboard: React.FC = () => {
               
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Navigate To:</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Link href="/quote-test">
                     <Button variant="outline" className="w-full">Quote Test Page</Button>
+                  </Link>
+                  <Link href="/simple-quote-test">
+                    <Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100">
+                      Simple Test Page
+                    </Button>
                   </Link>
                   <Link href="/">
                     <Button variant="outline" className="w-full">Main Application</Button>
