@@ -43,7 +43,9 @@ const QuoteSystemDemo: React.FC = () => {
     isSpecialOfferFlow,
     isPackageFlow 
   } = useEnhancedQuoteFlow();
-  const { specialOffers } = useSpecialOffers();
+  // Get special offers from context
+  const specialOffersContext = useSpecialOffers();
+  const specialOffers = specialOffersContext?.offers || [];
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [activeDemo, setActiveDemo] = useState<string | null>(null);
   const [currentPromoCode, setCurrentPromoCode] = useState<string | null>(null);
@@ -306,15 +308,15 @@ const QuoteSystemDemo: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {specialOffers.length > 0 ? (
-                      specialOffers.map((offer) => (
+                      specialOffers.map((offer: any) => (
                         <div
                           key={offer.id}
                           className="border rounded-md overflow-hidden hover:border-primary/50 cursor-pointer transition-all"
                         >
-                          {offer.banner_image && (
+                          {(offer.bannerImage || offer.banner_image) && (
                             <div className="h-32 overflow-hidden">
                               <img
-                                src={offer.banner_image}
+                                src={offer.bannerImage || offer.banner_image || '/images/default-offer.png'}
                                 alt={offer.title}
                                 className="w-full h-full object-cover"
                               />
@@ -327,9 +329,9 @@ const QuoteSystemDemo: React.FC = () => {
                             </p>
                             <div className="flex justify-between items-center mt-2">
                               <Badge>
-                                {offer.discount_type === 'percentage'
-                                  ? `${offer.discount_value}% off`
-                                  : `£${offer.discount_value} off`}
+                                {(offer.discountType || offer.discount_type) === 'percentage'
+                                  ? `${offer.discountValue || offer.discount_value}% off`
+                                  : `£${offer.discountValue || offer.discount_value} off`}
                               </Badge>
                               <Button
                                 size="sm"
@@ -420,7 +422,7 @@ const QuoteSystemDemo: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isQuoteStarted ? (
+                {isQuoteInitialized ? (
                   <LazyQuoteFlow />
                 ) : (
                   <div className="text-center py-12">
