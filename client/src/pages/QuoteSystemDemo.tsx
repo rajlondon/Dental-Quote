@@ -491,7 +491,6 @@ const QuoteSystemDemo: React.FC = () => {
                                 });
                               }}
                               className="flex-1"
-                              variant="default"
                               variant="outline"
                             >
                               Select Package Only
