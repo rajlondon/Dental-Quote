@@ -55,7 +55,7 @@ export function useCookieAuth() {
     }
   };
   
-  // Login function
+  // Login function with enhanced error handling and diagnostics
   const login = async (email: string, password: string, role: string): Promise<AuthResult> => {
     try {
       setLoading(true);
@@ -64,28 +64,53 @@ export function useCookieAuth() {
       const baseUrl = getBaseUrl();
       console.log(`Logging in with ${baseUrl}/api/auth/login`);
       
+      // Clean the credentials to ensure no whitespace or other issues
+      const cleanEmail = email.trim();
+      
       const response = await authAxios.post(`${baseUrl}/api/auth/login`, {
-        email,
-        password,
-        role
+        email: cleanEmail,
+        password: password,
+        role: role
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
+      console.log('Login response status:', response.status);
+      
       if (response.data.success && response.data.user) {
+        console.log('Login successful, setting user data');
         setUser(response.data.user);
         return {
           success: true,
           user: response.data.user
         };
       } else {
-        setError(response.data.message || 'Login failed');
+        const errorMessage = response.data.message || 'Login failed';
+        console.error('Login response indicates failure:', errorMessage);
+        setError(errorMessage);
         return {
           success: false,
-          message: response.data.message || 'Login failed'
+          message: errorMessage
         };
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      const errorMsg = err.response?.data?.message || 'An error occurred during login';
+      // Enhanced error handling with better extraction of server message
+      let errorMsg = 'An error occurred during login';
+      
+      if (err.response && err.response.data) {
+        errorMsg = err.response.data.message || errorMsg;
+        console.error('Server error response:', err.response.data);
+      }
+      
+      // If wrong password error, provide more specific message
+      if (errorMsg.includes('password')) {
+        errorMsg = 'Incorrect password. Please check your credentials.';
+      }
+      
       setError(errorMsg);
       return {
         success: false,
