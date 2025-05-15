@@ -33,11 +33,11 @@ export default function QuoteIntegrationTestPage() {
   const [testMode, setTestMode] = useState<'normal' | 'special-offer' | 'package'>('normal');
 
   // Special offer test data
-  const { data: specialOffers } = useSpecialOffers();
+  const { availableOffers: specialOffers } = useSpecialOffers();
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
   // Treatment package test data
-  const { data: treatmentPackages } = useTreatmentPackages();
+  const { availablePackages: treatmentPackages } = useTreatmentPackages();
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
 
   // Handle quote builder completion
