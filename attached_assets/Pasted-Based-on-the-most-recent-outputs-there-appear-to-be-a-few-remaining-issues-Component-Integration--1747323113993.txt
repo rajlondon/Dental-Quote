@@ -1,0 +1,149 @@
+Based on the most recent outputs, there appear to be a few remaining issues:
+
+Component Integration: The special offers and treatment packages are being integrated into the QuoteBuilder component, but there might be some prop mismatches or type issues.
+
+Test Page Functionality: The integration test page has been created but might not be fully functional yet.
+
+Currency Formatting: You've added a currency formatter utility, but it may need to be properly imported in all relevant components.
+
+Next Steps to Complete Implementation
+Here's what I recommend to complete the integration:
+
+1. Fix Component Prop Types
+Ensure the props match between your hooks and components:
+
+// In SpecialOffersSelector.tsx
+interface SpecialOffersSelectorProps {
+  availableOffers: SpecialOffer[];
+  selectedOfferId: string | null;
+  onSelectOffer: (offerId: string) => void;
+  isLoading?: boolean;
+}
+
+// In TreatmentPackageSelector.tsx
+interface TreatmentPackageSelectorProps {
+  availablePackages: TreatmentPackage[];
+  selectedPackageId: string | null;
+  onSelectPackage: (packageId: string) => void;
+  isLoading?: boolean;
+}
+2. Update QuoteBuilder Integration
+Make sure your QuoteBuilder properly uses the selectors:
+
+// In QuoteBuilder.tsx
+const QuoteBuilder = ({ onComplete }) => {
+  // Existing state
+  
+  // Special offers integration
+  const { 
+    availableOffers,
+    selectedOfferId,
+    selectOffer,
+    isLoadingOffers 
+  } = useSpecialOffers(selectedTreatmentIds);
+  
+  // Treatment packages integration
+  const {
+    availablePackages,
+    selectedPackageId,
+    selectPackage,
+    isLoadingPackages
+  } = useTreatmentPackages(selectedTreatmentIds);
+  
+  // In the TabsContent for offers
+  <SpecialOffersSelector
+    availableOffers={availableOffers}
+    selectedOfferId={selectedOfferId}
+    onSelectOffer={selectOffer}
+    isLoading={isLoadingOffers}
+  />
+  
+  // In the TabsContent for packages
+  <TreatmentPackageSelector
+    availablePackages={availablePackages}
+    selectedPackageId={selectedPackageId}
+    onSelectPackage={selectPackage}
+    isLoading={isLoadingPackages}
+  />
+}
+3. Update QuoteSummary
+Ensure the QuoteSummary properly displays the applied offers and packages:
+
+// In QuoteSummary.tsx
+const QuoteSummary = ({ quote }) => {
+  const hasSpecialOffer = quote.appliedOfferId && quote.offerDiscount > 0;
+  const hasPackage = quote.appliedPackageId && quote.packageSavings > 0;
+  
+  // In the price summary section
+  return (
+    <div className="quote-summary">
+      {/* Existing subtotal */}
+      
+      {hasSpecialOffer && (
+        <div className="flex justify-between text-green-600">
+          <span>Special Offer Discount</span>
+          <span>-{formatCurrency(quote.offerDiscount)}</span>
+        </div>
+      )}
+      
+      {hasPackage && (
+        <div className="flex justify-between text-green-600">
+          <span>Package Savings</span>
+          <span>-{formatCurrency(quote.packageSavings)}</span>
+        </div>
+      )}
+      
+      {/* Total after all discounts */}
+    </div>
+  );
+};
+4. Add API Integration
+Implement the API calls to save and retrieve offers and packages:
+
+// In use-quote-builder.ts
+const saveQuote = async () => {
+  try {
+    const response = await fetch('/api/quotes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...quote,
+        appliedOfferId: selectedOfferId,
+        appliedPackageId: selectedPackageId
+      })
+    });
+    
+    if (!response.ok) throw new Error('Failed to save quote');
+    
+    const data = await response.json();
+    return data.quoteId;
+  } catch (error) {
+    console.error('Error saving quote:', error);
+    throw error;
+  }
+};
+Testing the Integration
+To properly test your implementation:
+
+Visit the Test Page: Go to /quote-integration-test to see if the components render correctly
+
+Check Network Requests: Monitor the network tab to ensure API calls are working
+
+Test User Flows:
+
+Add treatments to a quote
+Check if applicable offers appear
+Select an offer and verify the discount is applied
+Check if package recommendations appear
+Select a package and verify it replaces individual treatments
+Next Feature Priorities
+Once you've completed this integration, I recommend focusing on:
+
+Email Notifications: Send confirmation emails with applied offers/packages
+
+Admin Management: Create interfaces for clinics to manage their offers
+
+Marketing Integration: Add social sharing for special offers
+
+Analytics: Track which offers and packages convert best
+
