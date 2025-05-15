@@ -476,8 +476,11 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           
           // Show success toast AFTER state update completes
           toast({
-            title: "Promo Code Applied",
-            description: `${code} applied successfully! Discount: ${data.data.discount_type === 'percentage' ? data.data.discount_value + '%' : formatCurrency(data.data.discount_value)}`,
+            title: "Promo Code Applied Successfully",
+            description: `${data.data.discount_type === 'percentage' 
+              ? `${data.data.discount_value}% discount (${formatCurrency(data.data.discount_value)})` 
+              : `${formatCurrency(data.data.discount_value)} discount`} has been applied to your quote.`,
+            variant: "default",
           });
           
           // Track the successful application
@@ -490,33 +493,15 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           }
         }, 100);
         
-        // Show success toast with discount details
-        toast({
-          title: "Promo Code Applied Successfully",
-          description: `${data.data.discount_type === 'percentage' 
-            ? `${data.data.discount_value}% discount (${formatCurrency(data.data.discount_value)})` 
-            : `${formatCurrency(data.data.discount_value)} discount`} has been applied to your quote.`,
-          variant: "default",
-        });
-        
-        // Track successful promo code application
-        if (typeof window !== 'undefined' && window.gtag) {
-          window.gtag('event', 'promo_code_applied', {
-            event_category: 'promotions',
-            event_label: code,
-            value: data.data.discount_value,
-          });
-        }
-        
         // Persist the promo code to the server if we have a quote ID
         if (quote.id) {
           try {
             await apiRequest('PATCH', `/api/quotes/${quote.id}`, { 
               promoCode: code,
-              promoCodeId: data.promotion.id,
-              promoDiscount: calculatedDiscount,
-              discount: totalDiscount,
-              total: newTotal
+              promoCodeId: data.data.id,
+              promoDiscount: data.data.discount_value,
+              discount: data.data.discount_value,
+              total: quote.subtotal - data.data.discount_value
             });
             
             // Invalidate cache to ensure fresh data
