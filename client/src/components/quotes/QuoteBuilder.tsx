@@ -346,7 +346,7 @@ export function QuoteBuilder({
                       <TreatmentPackageSelector 
                         availablePackages={availablePackages}
                         selectedPackageId={selectedTreatmentPackage?.id || null}
-                        onSelectPackage={selectPackage}
+                        onSelectPackage={(packageId: string) => selectPackage(packageId)}
                       />
                     </div>
                   )}

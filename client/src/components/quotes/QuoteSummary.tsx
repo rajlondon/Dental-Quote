@@ -44,6 +44,9 @@ interface QuoteState {
   offerDiscount?: number;
   promoDiscount?: number;
   appliedOfferId?: string;
+  appliedPackageId?: string;
+  packageSavings?: number;
+  includedPerks?: string[];
 }
 
 interface QuoteSummaryProps {
@@ -65,9 +68,17 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
       total: formatter.format(quote.total),
       offerDiscount: formatter.format(quote.offerDiscount || 0),
       promoDiscount: formatter.format(quote.promoDiscount || 0),
+      packageSavings: formatter.format(quote.packageSavings || 0),
       formatPrice: (amount: number) => formatter.format(amount)
     };
-  }, [quote.subtotal, quote.discount, quote.total, quote.offerDiscount, quote.promoDiscount]);
+  }, [
+    quote.subtotal, 
+    quote.discount, 
+    quote.total, 
+    quote.offerDiscount, 
+    quote.promoDiscount,
+    quote.packageSavings
+  ]);
   
   // Helper function that uses the memoized formatter
   const formatCurrency = (amount: number): string => {
@@ -197,17 +208,45 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
     if (!quote.appliedOfferId) return null;
     
     return (
-      <div className="mt-6 bg-muted p-4 rounded-md">
+      <div className="mt-6 bg-yellow-50 p-4 rounded-md border border-yellow-100">
         <h3 className="text-md font-semibold mb-2">Applied Special Offer</h3>
         <div className="flex items-center">
-          <Badge className="mr-2">Special Offer</Badge>
-          <span className="text-sm text-gray-500">
+          <Badge className="mr-2 bg-yellow-200 text-yellow-800 hover:bg-yellow-300">Special Offer</Badge>
+          <span className="text-sm text-yellow-800">
             Discount: {formatCurrency(quote.offerDiscount || 0)}
           </span>
         </div>
       </div>
     );
   }, [quote.appliedOfferId, quote.offerDiscount, formatCurrency]);
+
+  // Memoize treatment package information
+  const treatmentPackageInfo = useMemo(() => {
+    if (!quote.appliedPackageId) return null;
+    
+    return (
+      <div className="mt-6 bg-blue-50 p-4 rounded-md border border-blue-100">
+        <h3 className="text-md font-semibold mb-2">Applied Treatment Package</h3>
+        <div className="flex items-center mb-2">
+          <Badge className="mr-2 bg-blue-200 text-blue-800 hover:bg-blue-300">Package</Badge>
+          <span className="text-sm text-blue-800">
+            Savings: {formattedPrices.packageSavings}
+          </span>
+        </div>
+        
+        {quote.includedPerks && quote.includedPerks.length > 0 && (
+          <div className="mt-2">
+            <h4 className="text-sm font-medium mb-1">Package Perks:</h4>
+            <ul className="list-disc pl-5 text-sm text-blue-700">
+              {quote.includedPerks.map((perk, index) => (
+                <li key={index}>{perk}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }, [quote.appliedPackageId, quote.packageSavings, quote.includedPerks, formattedPrices.packageSavings]);
   
   // Memoize price summary section
   const priceSummary = useMemo(() => {
@@ -225,9 +264,16 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
           </div>
         )}
         {(quote.offerDiscount || 0) > 0 && (
-          <div className="flex justify-between items-center py-2 text-green-600">
+          <div className="flex justify-between items-center py-2 text-green-600 bg-green-50 p-2 rounded-md my-1">
             <span className="text-md">Special Offer Discount</span>
-            <span className="text-md">-{formattedPrices.offerDiscount}</span>
+            <span className="text-md font-semibold">-{formattedPrices.offerDiscount}</span>
+          </div>
+        )}
+        
+        {(quote.packageSavings || 0) > 0 && (
+          <div className="flex justify-between items-center py-2 text-blue-600 bg-blue-50 p-2 rounded-md my-1">
+            <span className="text-md">Package Savings</span>
+            <span className="text-md font-semibold">-{formattedPrices.packageSavings}</span>
           </div>
         )}
         {quote.discount > 0 && !(quote.promoDiscount || 0) && !(quote.offerDiscount || 0) && (
@@ -262,6 +308,7 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
         {addonsSection}
         {promoCodeInfo}
         {specialOfferInfo}
+        {treatmentPackageInfo}
         {priceSummary}
       </CardContent>
     </Card>
