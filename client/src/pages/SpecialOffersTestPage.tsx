@@ -219,9 +219,9 @@ export default function SpecialOffersTestPage() {
       
       // Create new treatments array based on the package
       const packagedTreatments = selectedPackage.includedTreatments.map(item => ({
-        id: item.treatmentId,
-        name: treatments.find(t => t.id === item.treatmentId)?.name || 'Unknown Treatment',
-        price: item.standardPrice,
+        id: item.id,
+        name: item.name || 'Unknown Treatment',
+        price: item.price,
         quantity: item.quantity,
         type: 'treatment' as const
       }));

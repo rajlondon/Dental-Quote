@@ -39,10 +39,10 @@ const mockTreatmentPackages: TreatmentPackage[] = [
     description: 'Complete package including implants and veneers',
     clinicId: 'dentgroup-istanbul',
     includedTreatments: [
-      { treatmentId: 'tr-001', quantity: 2, standardPrice: 600 },
-      { treatmentId: 'tr-003', quantity: 4, standardPrice: 1200 }
+      { id: 'tr-001', name: 'Dental Implant', quantity: 2, price: 600 },
+      { id: 'tr-003', name: 'Dental Crown', quantity: 4, price: 1200 }
     ],
-    packagePrice: 1500,
+    price: 1500,
     savings: 300,
     additionalPerks: ['Free consultation', 'Free airport transfer'],
     startDate: '2025-05-01',
@@ -55,10 +55,10 @@ const mockTreatmentPackages: TreatmentPackage[] = [
     description: '8 veneers with free whitening',
     clinicId: 'istanbul-dental-care',
     includedTreatments: [
-      { treatmentId: 'tr-003', quantity: 8, standardPrice: 2400 },
-      { treatmentId: 'tr-006', quantity: 1, standardPrice: 200 }
+      { id: 'tr-003', name: 'Veneer', quantity: 8, price: 2400 },
+      { id: 'tr-006', name: 'Teeth Whitening', quantity: 1, price: 200 }
     ],
-    packagePrice: 2000,
+    price: 2000,
     savings: 600,
     additionalPerks: ['Free whitening treatment', '1 night hotel accommodation'],
     startDate: '2025-04-01',
@@ -104,7 +104,7 @@ router.post('/available-packages', (req, res) => {
   // Filter packages that include at least one of the selected treatments
   const applicablePackages = mockTreatmentPackages.filter(pkg => {
     return pkg.includedTreatments.some(item => 
-      treatmentIds.includes(item.treatmentId)
+      treatmentIds.includes(item.id)
     );
   });
 
