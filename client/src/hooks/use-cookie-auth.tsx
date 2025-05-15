@@ -22,13 +22,11 @@ interface AuthResult {
 
 export function useCookieAuth() {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false); // Start with not loading
   const [error, setError] = useState<string | null>(null);
   
-  // Check auth status on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  // NOTE: We've removed the automatic auth check on mount
+  // This helps prevent excessive API calls when not needed
   
   // Function to get base URL with correct protocol and host
   const getBaseUrl = () => {

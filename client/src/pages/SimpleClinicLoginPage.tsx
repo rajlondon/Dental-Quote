@@ -17,30 +17,15 @@ const SimpleClinicLoginPage: React.FC = () => {
   const { toast } = useToast();
   const { login, checkClinicStatus, loading: authLoading } = useCookieAuth();
 
-  // Check if already logged in on component mount
+  // We've removed the automatic check on mount
+  // This prevents the infinite auth check loop
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      setIsLoading(true);
-      try {
-        const result = await checkClinicStatus();
-        if (result.success && result.user) {
-          console.log('Already authenticated, redirecting to clinic portal');
-          toast({
-            title: 'Already signed in',
-            description: 'Redirecting to clinic portal...',
-          });
-          setLocation('/simple-clinic');
-        }
-      } catch (error) {
-        // Not authenticated, that's expected
-        console.log('Not authenticated, showing login page');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuthStatus();
-  }, [checkClinicStatus, setLocation, toast]);
+    // Set loading to false initially
+    setIsLoading(false);
+    
+    // Manual check is done only when user clicks Login button
+    console.log('Login page ready');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
