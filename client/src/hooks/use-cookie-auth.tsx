@@ -55,7 +55,7 @@ export function useCookieAuth() {
     }
   };
   
-  // Login function with enhanced error handling and diagnostics
+  // Login function with improved session handling
   const login = async (email: string, password: string, role: string): Promise<AuthResult> => {
     try {
       setLoading(true);
@@ -67,14 +67,21 @@ export function useCookieAuth() {
       // Clean the credentials to ensure no whitespace or other issues
       const cleanEmail = email.trim();
       
+      // Add delay for better loading experience and to ensure request completes
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Set cookies and use credentials for cross-origin requests
       const response = await authAxios.post(`${baseUrl}/api/auth/login`, {
         email: cleanEmail,
         password: password,
-        role: role
+        role: role,
+        // Add client timestamp to help debug session issues
+        _client_ts: Date.now()
       }, {
         withCredentials: true,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
       });
       
@@ -82,7 +89,22 @@ export function useCookieAuth() {
       
       if (response.data.success && response.data.user) {
         console.log('Login successful, setting user data');
+        
+        // Set user in state
         setUser(response.data.user);
+        
+        // Also store in sessionStorage as a backup
+        sessionStorage.setItem('user_data', JSON.stringify(response.data.user));
+        sessionStorage.setItem('user_role', response.data.user.role);
+        sessionStorage.setItem('auth_timestamp', Date.now().toString());
+        
+        if (response.data.user.role === 'clinic_staff') {
+          sessionStorage.setItem('is_clinic_staff', 'true');
+        }
+        
+        // Wait a moment to ensure cookies are properly set
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         return {
           success: true,
           user: response.data.user
@@ -108,7 +130,7 @@ export function useCookieAuth() {
       
       // If wrong password error, provide more specific message
       if (errorMsg.includes('password')) {
-        errorMsg = 'Incorrect password. Please check your credentials.';
+        errorMsg = 'Incorrect password. Please check your credentials and try again.';
       }
       
       setError(errorMsg);

@@ -35,27 +35,46 @@ const SimpleClinicLoginPage: React.FC = () => {
     try {
       console.log('Attempting login with:', email);
       
-      // Use the cookie-aware login function
-      const result = await login(email, password, 'clinic_staff');
+      // Clear any previous login data
+      sessionStorage.removeItem('user_data');
+      sessionStorage.removeItem('user_role');
+      sessionStorage.removeItem('is_clinic_staff');
+      
+      // Add some validation before sending request
+      if (!email.trim() || !password) {
+        setError('Please provide both email and password');
+        toast({
+          title: 'Login failed',
+          description: 'Please provide both email and password',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Always use clinic@mydentalfly.com for testing (if test credentials are shown)
+      const loginEmail = (document.querySelector('.test-credentials') && email === '') ? 
+        'clinic@mydentalfly.com' : email;
+      const loginPassword = (document.querySelector('.test-credentials') && password === '') ? 
+        'clinic123' : password;
+      
+      // Use the cookie-aware login function with enhanced session handling
+      const result = await login(loginEmail, loginPassword, 'clinic_staff');
 
       if (result.success) {
+        // Display success message to user
         toast({
           title: 'Login successful',
-          description: 'Redirecting to clinic portal...',
+          description: 'Welcome to the clinic portal!',
         });
         
-        // Store user data in session storage as a backup
-        if (result.user) {
-          sessionStorage.setItem('user_data', JSON.stringify(result.user));
-          sessionStorage.setItem('user_role', result.user.role);
-          
-          if (result.user.role === 'clinic_staff') {
-            sessionStorage.setItem('is_clinic_staff', 'true');
-          }
-        }
+        console.log('Login successful, user data:', result.user);
         
-        // Redirect to simplified clinic portal
-        setLocation('/simple-clinic');
+        // Add a short delay before redirect for better UX
+        setTimeout(() => {
+          // Redirect to simplified clinic portal
+          setLocation('/simple-clinic');
+        }, 1000);
       } else {
         setError(result.message || 'Login failed. Please check your credentials.');
         toast({
@@ -145,10 +164,20 @@ const SimpleClinicLoginPage: React.FC = () => {
         </Card>
         
         {/* Test Credentials for Development */}
-        <div className="mt-6 p-4 bg-gray-100 rounded-md border border-gray-200">
+        <div className="mt-6 p-4 bg-gray-100 rounded-md border border-gray-200 test-credentials">
           <h3 className="text-sm font-medium mb-2">Test Credentials</h3>
           <p className="text-xs text-gray-600 mb-1">Email: clinic@mydentalfly.com</p>
           <p className="text-xs text-gray-600">Password: clinic123</p>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              setEmail('clinic@mydentalfly.com');
+              setPassword('clinic123');
+            }}
+            className="mt-2 text-xs text-blue-600 hover:underline"
+          >
+            Auto-fill
+          </button>
         </div>
       </div>
     </div>
