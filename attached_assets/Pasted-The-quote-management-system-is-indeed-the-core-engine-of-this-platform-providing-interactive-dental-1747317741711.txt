@@ -1,0 +1,508 @@
+The quote management system is indeed the core engine of this platform, providing interactive dental charts and treatment information while building personalized quotes.
+
+Special Offers & Treatment Packages Implementation
+Now that we've fixed the promo code functionality, let's address the special offers and treatment packages implementation that was causing problems. Here's how we can properly integrate these features:
+
+1. Data Structure for Special Offers
+interface SpecialOffer {
+  id: string;
+  title: string;
+  description: string;
+  clinicId: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minTreatmentCount?: number;
+  applicableTreatments: string[]; // treatment IDs
+  startDate: string;
+  endDate: string;
+  featuredImage?: string;
+  terms?: string;
+}
+2. Treatment Package Structure
+interface TreatmentPackage {
+  id: string;
+  title: string;
+  description: string;
+  clinicId: string;
+  includedTreatments: {
+    treatmentId: string;
+    quantity: number;
+    standardPrice: number;
+  }[];
+  packagePrice: number; // This would be less than sum of individual treatments
+  savings: number; // Calculated field
+  additionalPerks: string[]; // E.g., "Free hotel stay", "Airport transfer"
+  featuredImage?: string;
+  startDate: string;
+  endDate: string;
+}
+3. State Management for Quote Builder
+We need to extend our quote state to handle both special offers and treatment packages:
+
+interface QuoteState {
+  id: string | null;
+  treatments: QuoteTreatment[];
+  subtotal: number;
+  
+  // Promo code (already implemented)
+  promoCode: string | null;
+  promoDiscount: number;
+  
+  // Special offers
+  appliedOfferId: string | null;
+  offerDiscount: number;
+  
+  // Treatment packages
+  appliedPackageId: string | null;
+  packageSavings: number;
+  
+  // Additional perks from packages
+  includedPerks: string[];
+  
+  // Final total after all discounts
+  total: number;
+}
+4. Quote Flow UI Components
+// SpecialOffersSelector.tsx
+const SpecialOffersSelector = ({ 
+  availableOffers, 
+  onSelectOffer, 
+  selectedOfferId 
+}) => {
+  return (
+    <div className="special-offers-container">
+      <h3 className="text-lg font-semibold mb-4">Available Special Offers</h3>
+      
+      {availableOffers.length === 0 ? (
+        <p className="text-gray-500">No special offers available for selected treatments</p>
+      ) : (
+        <div className="grid gap-4">
+          {availableOffers.map(offer => (
+            <div 
+              key={offer.id}
+              className={`offer-card p-4 border rounded-lg cursor-pointer transition
+                ${selectedOfferId === offer.id ? 'border-primary-500 bg-primary-50' : 'hover:border-gray-400'}`}
+              onClick={() => onSelectOffer(offer.id)}
+            >
+              {offer.featuredImage && (
+                <img 
+                  src={offer.featuredImage} 
+                  alt={offer.title}
+                  className="w-full h-32 object-cover rounded-md mb-3" 
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/default-offer.jpg';
+                  }}
+                />
+              )}
+              
+              <h4 className="font-medium text-lg">{offer.title}</h4>
+              <p className="text-sm text-gray-600 mb-2">{offer.description}</p>
+              
+              <div className="discount-badge bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm inline-block">
+                {offer.discountType === 'percentage' 
+                  ? `${offer.discountValue}% off` 
+                  : `$${offer.discountValue} off`}
+              </div>
+              
+              {selectedOfferId === offer.id && (
+                <div className="mt-2 text-primary-600 flex items-center">
+                  <CheckCircleIcon className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Applied to your quote</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+// TreatmentPackageSelector.tsx
+const TreatmentPackageSelector = ({ 
+  availablePackages, 
+  onSelectPackage, 
+  selectedPackageId 
+}) => {
+  return (
+    <div className="treatment-packages-container">
+      <h3 className="text-lg font-semibold mb-4">Recommended Treatment Packages</h3>
+      
+      {availablePackages.length === 0 ? (
+        <p className="text-gray-500">No packages available for your selected treatments</p>
+      ) : (
+        <div className="grid gap-4">
+          {availablePackages.map(pkg => (
+            <div 
+              key={pkg.id}
+              className={`package-card p-4 border rounded-lg cursor-pointer transition
+                ${selectedPackageId === pkg.id ? 'border-primary-500 bg-primary-50' : 'hover:border-gray-400'}`}
+              onClick={() => onSelectPackage(pkg.id)}
+            >
+              {pkg.featuredImage && (
+                <img 
+                  src={pkg.featuredImage} 
+                  alt={pkg.title}
+                  className="w-full h-32 object-cover rounded-md mb-3" 
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/default-package.jpg';
+                  }}
+                />
+              )}
+              
+              <h4 className="font-medium text-lg">{pkg.title}</h4>
+              <p className="text-sm text-gray-600 mb-2">{pkg.description}</p>
+              
+              <div className="flex justify-between items-center mb-2">
+                <div className="price-badge bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                  ${pkg.packagePrice}
+                </div>
+                <div className="savings-badge bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+                  Save ${pkg.savings}
+                </div>
+              </div>
+              
+              <div className="included-treatments text-sm text-gray-700 mb-2">
+                <strong>Includes:</strong>
+                <ul className="list-disc pl-5 mt-1">
+                  {pkg.includedTreatments.map((item, idx) => (
+                    <li key={idx}>{item.quantity}× {getTreatmentName(item.treatmentId)}</li>
+                  ))}
+                </ul>
+              </div>
+              
+              {pkg.additionalPerks.length > 0 && (
+                <div className="perks text-sm text-gray-700">
+                  <strong>Additional perks:</strong>
+                  <ul className="list-disc pl-5 mt-1">
+                    {pkg.additionalPerks.map((perk, idx) => (
+                      <li key={idx}>{perk}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {selectedPackageId === pkg.id && (
+                <div className="mt-2 text-primary-600 flex items-center">
+                  <CheckCircleIcon className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Applied to your quote</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+5. Backend API Integration
+// Quote Builder Hook Extensions
+const useQuoteBuilder = () => {
+  // ... existing code ...
+  
+  const [isApplyingOffer, setIsApplyingOffer] = useState(false);
+  const [isApplyingPackage, setIsApplyingPackage] = useState(false);
+  
+  // Apply special offer to quote
+  const applySpecialOffer = async (offerId: string) => {
+    try {
+      setIsApplyingOffer(true);
+      
+      // Fetch offer details and validate
+      const response = await fetch(`/api/quotes-api/apply-offer/${offerId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          treatments: quote.treatments,
+          subtotal: quote.subtotal
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to apply special offer');
+      }
+      
+      const data = await response.json();
+      
+      // Update quote with offer discount
+      setQuote(prevQuote => {
+        const offerDiscount = data.discountAmount;
+        
+        // Calculate total with all discounts
+        const totalDiscount = (prevQuote.promoDiscount || 0) + offerDiscount;
+        const newTotal = Math.max(0, prevQuote.subtotal - totalDiscount);
+        
+        return {
+          ...prevQuote,
+          appliedOfferId: offerId,
+          offerDiscount,
+          total: newTotal
+        };
+      });
+      
+      toast.success(`Special offer applied! You save $${data.discountAmount}`);
+      return true;
+    } catch (error) {
+      console.error("Error applying special offer:", error);
+      toast.error(error.message || "Failed to apply special offer");
+      return false;
+    } finally {
+      setIsApplyingOffer(false);
+    }
+  };
+  
+  // Apply treatment package to quote
+  const applyTreatmentPackage = async (packageId: string) => {
+    try {
+      setIsApplyingPackage(true);
+      
+      // Fetch package details
+      const response = await fetch(`/api/quotes-api/apply-package/${packageId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentTreatments: quote.treatments })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to apply treatment package');
+      }
+      
+      const data = await response.json();
+      
+      // Replace individual treatments with package
+      setQuote(prevQuote => {
+        return {
+          ...prevQuote,
+          treatments: data.packagedTreatments,
+          subtotal: data.packagePrice,
+          appliedPackageId: packageId,
+          packageSavings: data.savings,
+          includedPerks: data.additionalPerks,
+          // Recalculate total with any promo discounts
+          total: data.packagePrice - (prevQuote.promoDiscount || 0)
+        };
+      });
+      
+      toast.success(`Package applied! You save $${data.savings}`);
+      return true;
+    } catch (error) {
+      console.error("Error applying treatment package:", error);
+      toast.error(error.message || "Failed to apply treatment package");
+      return false;
+    } finally {
+      setIsApplyingPackage(false);
+    }
+  };
+  
+  // Return extended hook functions
+  return {
+    // ... existing return values ...
+    applySpecialOffer,
+    applyTreatmentPackage,
+    isApplyingOffer,
+    isApplyingPackage
+  };
+};
+6. Quote Flow Integration
+To integrate these components into the quote flow:
+
+// In QuoteBuilder.tsx
+const QuoteBuilder = ({ onComplete }) => {
+  const { 
+    quote, addTreatment, removeTreatment, updateTreatmentQuantity,
+    applyPromoCode, isApplyingPromo,
+    applySpecialOffer, isApplyingOffer,
+    applyTreatmentPackage, isApplyingPackage
+  } = useQuoteBuilder();
+  
+  const [step, setStep] = useState(1);
+  const [availableOffers, setAvailableOffers] = useState([]);
+  const [availablePackages, setAvailablePackages] = useState([]);
+  
+  // Fetch available offers and packages when treatments change
+  useEffect(() => {
+    if (quote.treatments.length === 0) return;
+    
+    const fetchOffers = async () => {
+      try {
+        const treatmentIds = quote.treatments.map(t => t.id);
+        const response = await fetch('/api/quotes-api/available-offers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ treatmentIds })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableOffers(data.offers);
+          setAvailablePackages(data.packages);
+        }
+      } catch (error) {
+        console.error("Error fetching available offers:", error);
+      }
+    };
+    
+    fetchOffers();
+  }, [quote.treatments]);
+  
+  // Render different steps of the quote flow
+  const renderStep = () => {
+    switch(step) {
+      case 1:
+        return (
+          <TreatmentSelector 
+            onAddTreatment={addTreatment} 
+            selectedTreatments={quote.treatments}
+            onUpdateQuantity={updateTreatmentQuantity}
+            onRemoveTreatment={removeTreatment}
+          />
+        );
+      case 2:
+        return (
+          <div className="space-y-6">
+            {availableOffers.length > 0 && (
+              <SpecialOffersSelector 
+                availableOffers={availableOffers}
+                onSelectOffer={applySpecialOffer}
+                selectedOfferId={quote.appliedOfferId}
+              />
+            )}
+            
+            {availablePackages.length > 0 && (
+              <TreatmentPackageSelector
+                availablePackages={availablePackages}
+                onSelectPackage={applyTreatmentPackage}
+                selectedPackageId={quote.appliedPackageId}
+              />
+            )}
+            
+            <PromoCodeInput 
+              onApply={applyPromoCode} 
+              isLoading={isApplyingPromo}
+              appliedCode={quote.promoCode}
+            />
+          </div>
+        );
+      case 3:
+        return (
+          <QuoteSummary 
+            quote={quote} 
+            onComplete={onComplete}
+          />
+        );
+    }
+  };
+  
+  return (
+    <div className="quote-builder">
+      <div className="steps-indicator mb-6">
+        {/* Step indicator UI */}
+      </div>
+      
+      {renderStep()}
+      
+      <div className="navigation-buttons mt-6 flex justify-between">
+        {step > 1 && (
+          <button 
+            onClick={() => setStep(prev => prev - 1)}
+            className="btn-secondary"
+          >
+            Back
+          </button>
+        )}
+        
+        {step < 3 && quote.treatments.length > 0 && (
+          <button 
+            onClick={() => setStep(prev => prev + 1)}
+            className="btn-primary ml-auto"
+          >
+            Continue
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+7. Enhanced Quote Summary
+// Enhanced QuoteSummary.tsx
+const QuoteSummary = ({ quote, onComplete }) => {
+  const hasPromoDiscount = quote.promoDiscount > 0;
+  const hasOfferDiscount = quote.offerDiscount > 0;
+  const hasPackageSavings = quote.packageSavings > 0;
+  
+  return (
+    <div className="quote-summary p-4 border rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">Quote Summary</h3>
+      
+      {/* Treatments */}
+      <div className="space-y-2 mb-4">
+        {quote.treatments.map((treatment, index) => (
+          <div key={index} className="flex justify-between">
+            <span>
+              {treatment.name} {treatment.quantity > 1 ? `(${treatment.quantity})` : ''}
+              {treatment.isPackaged && <span className="text-blue-600 text-sm ml-1">(Package)</span>}
+            </span>
+            <span>{formatCurrency(treatment.price * treatment.quantity)}</span>
+          </div>
+        ))}
+      </div>
+      
+      {/* Subtotal and Discounts */}
+      <div className="pt-2 border-t">
+        <div className="flex justify-between font-medium">
+          <span>Subtotal</span>
+          <span>{formatCurrency(quote.subtotal)}</span>
+        </div>
+        
+        {/* Show package savings if any */}
+        {hasPackageSavings && (
+          <div className="flex justify-between text-green-600 mt-1">
+            <span>Package Savings</span>
+            <span>-{formatCurrency(quote.packageSavings)}</span>
+          </div>
+        )}
+        
+        {/* Show special offer discount if any */}
+        {hasOfferDiscount && (
+          <div className="flex justify-between text-green-600 mt-1">
+            <span>Special Offer Discount</span>
+            <span>-{formatCurrency(quote.offerDiscount)}</span>
+          </div>
+        )}
+        
+        {/* Show promo code discount if any */}
+        {hasPromoDiscount && (
+          <div className="flex justify-between text-green-600 mt-1">
+            <span>Promo Discount ({quote.promoCode})</span>
+            <span>-{formatCurrency(quote.promoDiscount)}</span>
+          </div>
+        )}
+        
+        {/* Total */}
+        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+          <span>Total</span>
+          <span>{formatCurrency(quote.total)}</span>
+        </div>
+      </div>
+      
+      {/* Additional Perks */}
+      {quote.includedPerks && quote.includedPerks.length > 0 && (
+        <div className="mt-4 pt-2 border-t">
+          <h4 className="font-medium mb-2">Additional Perks Included:</h4>
+          <ul className="list-disc pl-5 text-sm">
+            {quote.includedPerks.map((perk, idx) => (
+              <li key={idx}>{perk}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      {/* Complete Button */}
+      <button 
+        onClick={onComplete}
+        className="w-full btn-primary mt-6"
+      >
+        Complete Quote
+      </button>
+    </div>
+  );
+};
