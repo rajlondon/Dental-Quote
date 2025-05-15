@@ -1,53 +1,40 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { isAuthenticated } from '../middleware/auth';
 
-const router = Router();
+const clinicStatusRoutes = Router();
 
-// Simple endpoint to verify auth status and return basic clinic info
-router.get('/clinic-status', isAuthenticated, async (req, res) => {
+// Simple endpoint to get clinic status with user information
+clinicStatusRoutes.get('/clinic-status', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    // Check if user is authenticated and has proper role
+    // If we reach here, the user is authenticated (checked by isAuthenticated middleware)
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Not authenticated'
+        message: 'Authentication required'
       });
     }
 
-    // Check if user has proper role
+    // Check if the user is a clinic staff or admin
     if (req.user.role !== 'clinic_staff' && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to access clinic portal'
+        message: 'Access denied. Only clinic staff and admins can access this endpoint.'
       });
     }
 
-    // Return basic user info and auth status
+    // Return the user data (from session)
     return res.json({
       success: true,
-      authStatus: {
-        authenticated: true,
-        userId: req.user.id,
-        userRole: req.user.role,
-        sessionId: req.sessionID,
-        hasSession: !!req.session,
-      },
-      user: {
-        id: req.user.id,
-        email: req.user.email,
-        firstName: req.user.firstName,
-        lastName: req.user.lastName,
-        role: req.user.role,
-        clinicId: req.user.clinicId
-      }
+      user: req.user
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in clinic status endpoint:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error while fetching clinic status'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 });
 
-export default router;
+export default clinicStatusRoutes;
