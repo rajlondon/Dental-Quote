@@ -97,9 +97,16 @@ export function QuoteBuilder({
   
   // Handle initial packageId if provided
   useEffect(() => {
+    console.log('🔍 QuoteBuilder effect - packageId:', packageId);
+    console.log('🔍 QuoteBuilder effect - packages available:', packages?.length);
+    console.log('🔍 QuoteBuilder effect - initialPackageAdded:', initialPackageAdded);
+    
     if (packageId && packages && !initialPackageAdded) {
+      console.log('🔍 Attempting to find package with ID:', packageId);
       const packageToAdd = packages.find((pkg: any) => pkg.id === packageId);
+      
       if (packageToAdd) {
+        console.log('🔍 Found package to add:', packageToAdd.name);
         addPackage(packageToAdd);
         // Use selectPackage from useTreatmentPackages hook
         selectPackage(packageId);
@@ -109,6 +116,8 @@ export function QuoteBuilder({
           description: `Added ${packageToAdd.name} to your quote`,
         });
         trackEvent('package_auto_selected', 'package', packageToAdd.name);
+      } else {
+        console.warn('❌ Package not found with ID:', packageId);
       }
     }
   }, [packageId, packages, initialPackageAdded, addPackage, selectPackage]);
