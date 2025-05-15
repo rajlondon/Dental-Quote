@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from '@/lib/analytics';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import { PackageIcon, CheckCircle, Sparkles, Gift } from 'lucide-react';
+import { Package as PackageIcon, CheckCircle, Sparkles, Gift } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SpecialOffersSelector } from '@/components/offers/SpecialOffersSelector';
 import { TreatmentPackageSelector } from '@/components/packages/TreatmentPackageSelector';
