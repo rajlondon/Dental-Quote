@@ -16,6 +16,7 @@ import { PackageIcon, CheckCircle, Sparkles, Gift } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SpecialOffersSelector } from '@/components/offers/SpecialOffersSelector';
 import { TreatmentPackageSelector } from '@/components/packages/TreatmentPackageSelector';
+import { SpecialOffer, TreatmentPackage } from '@shared/offer-types';
 
 interface QuoteBuilderProps {
   onComplete?: (quoteData: any) => void;
@@ -265,7 +266,7 @@ export function QuoteBuilder({
                   <SpecialOffersSelector 
                     availableOffers={availableOffers}
                     selectedOfferId={selectedOffer?.id || null}
-                    onSelectOffer={selectOffer}
+                    onSelectOffer={(offerId: string) => selectOffer(offerId)}
                   />
                   
                   {selectedOffer && offerDiscountAmount > 0 && (
