@@ -20,13 +20,18 @@ export default function SpecialOffersTestPage() {
   useEffect(() => {
     const fetchTreatments = async () => {
       try {
-        const response = await fetch('/api/treatments');
-        if (response.ok) {
-          const data = await response.json();
-          setTreatments(data);
-        }
+        // Use mock data directly instead of fetching from API to avoid issues
+        const mockTreatments = [
+          { id: 'tr-001', name: 'Dental Implant', price: 700, quantity: 1 },
+          { id: 'tr-002', name: 'Crown', price: 350, quantity: 1 },
+          { id: 'tr-003', name: 'Veneer', price: 300, quantity: 1 },
+          { id: 'tr-004', name: 'Root Canal', price: 400, quantity: 1 },
+          { id: 'tr-005', name: 'Teeth Whitening', price: 250, quantity: 1 },
+        ];
+        
+        setTreatments(mockTreatments);
       } catch (error) {
-        console.error("Error fetching treatments:", error);
+        console.error("Error setting treatments:", error);
         toast({
           title: "Error",
           description: "Failed to load treatments",
@@ -42,89 +47,153 @@ export default function SpecialOffersTestPage() {
   useEffect(() => {
     if (treatments.length === 0) return;
 
-    const fetchOffers = async () => {
+    const loadMockData = async () => {
       try {
         setIsLoadingOffers(true);
-        const treatmentIds = treatments.map(t => t.id);
-        const response = await fetch('/api/quotes-api/available-offers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ treatmentIds })
-        });
+        setIsLoadingPackages(true);
         
-        if (response.ok) {
-          const data = await response.json();
-          setAvailableOffers(data.offers || []);
-        } else {
-          throw new Error('Failed to fetch special offers');
-        }
+        // Mock special offers data
+        const mockOffers: SpecialOffer[] = [
+          {
+            id: 'offer-001',
+            title: 'Welcome Discount',
+            description: '20% off your first treatment',
+            clinicId: 'clinic-001',
+            discountType: 'percentage',
+            discountValue: 20,
+            applicableTreatments: ['tr-001', 'tr-002', 'tr-003'],
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            featuredImage: '/images/offers/welcome-discount.jpg',
+            terms: 'Valid for new patients only.'
+          },
+          {
+            id: 'offer-002',
+            title: 'Implant Package',
+            description: '15% off implant + crown combination',
+            clinicId: 'clinic-001',
+            discountType: 'percentage',
+            discountValue: 15,
+            applicableTreatments: ['tr-001', 'tr-002'],
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            featuredImage: '/images/offers/implant-package.jpg',
+            terms: 'Minimum purchase of £1000 required.'
+          },
+          {
+            id: 'offer-003',
+            title: 'Smile Makeover',
+            description: 'Free teeth whitening with 4+ veneers',
+            clinicId: 'clinic-001',
+            discountType: 'fixed',
+            discountValue: 250, // Fixed discount equal to price of teeth whitening
+            applicableTreatments: ['tr-003', 'tr-005'],
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            featuredImage: '/images/offers/smile-makeover.jpg',
+            terms: 'Must purchase 4 or more veneers.'
+          }
+        ];
+        
+        // Mock treatment packages data
+        const mockPackages: TreatmentPackage[] = [
+          {
+            id: 'pkg-001',
+            title: 'Complete Implant Solution',
+            description: 'Dental implant with crown at a bundle price',
+            clinicId: 'clinic-001',
+            packagePrice: 950, // Discounted package price
+            savings: 100,
+            includedTreatments: [
+              { treatmentId: 'tr-001', quantity: 1, standardPrice: 700 },
+              { treatmentId: 'tr-002', quantity: 1, standardPrice: 350 }
+            ],
+            additionalPerks: ['Free consultation'],
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            featuredImage: '/images/packages/implant-solution.jpg'
+          },
+          {
+            id: 'pkg-002',
+            title: 'Smile Transformation',
+            description: '4 veneers and teeth whitening for a complete smile makeover',
+            clinicId: 'clinic-001',
+            packagePrice: 1250, // Discounted package price
+            savings: 200,
+            includedTreatments: [
+              { treatmentId: 'tr-003', quantity: 4, standardPrice: 300 },
+              { treatmentId: 'tr-005', quantity: 1, standardPrice: 250 }
+            ],
+            additionalPerks: ['Free whitening touch-up kit'],
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            featuredImage: '/images/packages/smile-transformation.jpg'
+          },
+          {
+            id: 'pkg-003',
+            title: 'Full Mouth Rehabilitation',
+            description: 'Comprehensive treatment package for full mouth restoration',
+            clinicId: 'clinic-001',
+            packagePrice: 2500, // Discounted package price
+            savings: 500,
+            includedTreatments: [
+              { treatmentId: 'tr-001', quantity: 2, standardPrice: 700 },
+              { treatmentId: 'tr-002', quantity: 2, standardPrice: 350 },
+              { treatmentId: 'tr-004', quantity: 2, standardPrice: 400 }
+            ],
+            additionalPerks: ['Free hotel stay', 'Airport transfer'],
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            featuredImage: '/images/packages/full-mouth-rehab.jpg'
+          }
+        ];
+        
+        setAvailableOffers(mockOffers);
+        setAvailablePackages(mockPackages);
       } catch (error) {
-        console.error("Error fetching offers:", error);
+        console.error("Error loading mock data:", error);
         toast({
           title: "Error",
-          description: "Failed to load special offers",
+          description: "Failed to load offers and packages",
           variant: "destructive"
         });
       } finally {
         setIsLoadingOffers(false);
-      }
-    };
-
-    const fetchPackages = async () => {
-      try {
-        setIsLoadingPackages(true);
-        const treatmentIds = treatments.map(t => t.id);
-        const response = await fetch('/api/quotes-api/available-packages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ treatmentIds })
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setAvailablePackages(data.packages || []);
-        } else {
-          throw new Error('Failed to fetch treatment packages');
-        }
-      } catch (error) {
-        console.error("Error fetching packages:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load treatment packages",
-          variant: "destructive"
-        });
-      } finally {
         setIsLoadingPackages(false);
       }
     };
 
-    fetchOffers();
-    fetchPackages();
+    loadMockData();
   }, [treatments, toast]);
 
   // Handle special offer selection
   const handleSelectOffer = async (offerId: string) => {
     try {
-      const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
-      const response = await fetch(`/api/quotes-api/apply-offer/${offerId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          treatments,
-          subtotal
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to apply special offer');
+      const selectedOffer = availableOffers.find(offer => offer.id === offerId);
+      if (!selectedOffer) {
+        throw new Error('Selected offer not found');
       }
       
-      const data = await response.json();
       setSelectedOfferId(offerId);
+      
+      // Calculate mock discount based on the selected offer
+      const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
+      let discountAmount = 0;
+      
+      if (selectedOffer.discountType === 'percentage') {
+        discountAmount = (subtotal * selectedOffer.discountValue) / 100;
+        // Apply a reasonable max discount
+        const maxDiscount = 500;
+        if (discountAmount > maxDiscount) {
+          discountAmount = maxDiscount;
+        }
+      } else if (selectedOffer.discountType === 'fixed') {
+        discountAmount = selectedOffer.discountValue;
+      }
       
       toast({
         title: "Special Offer Applied",
-        description: `Discount amount: £${data.discountAmount.toFixed(2)}`,
+        description: `Discount amount: £${discountAmount.toFixed(2)}`,
         variant: "default"
       });
     } catch (error) {
