@@ -26,7 +26,7 @@ interface UsePackagesResult {
 /**
  * Hook for managing treatment packages in the quote builder
  */
-export function useTreatmentPackages(selectedTreatments: Treatment[] = []): UsePackagesResult {
+export function useTreatmentPackages(initialPackageId?: string): UsePackagesResult {
   const [selectedPackage, setSelectedPackage] = useState<TreatmentPackage | null>(null);
   const [packageSavings, setPackageSavings] = useState<number>(0);
 
@@ -38,6 +38,18 @@ export function useTreatmentPackages(selectedTreatments: Treatment[] = []): UseP
 
   // Derived state for available packages
   const availablePackages = data || [];
+  
+  // Effect to select initial package if provided
+  useEffect(() => {
+    if (initialPackageId && data && !isLoading) {
+      const pkg = data.find(pkg => pkg.id === initialPackageId);
+      if (pkg) {
+        setSelectedPackage(pkg);
+        const savings = calculatePackageSavings(initialPackageId);
+        setPackageSavings(savings);
+      }
+    }
+  }, [initialPackageId, data, isLoading]);
 
   // Function to select a package
   const selectPackage = (packageId: string | null) => {

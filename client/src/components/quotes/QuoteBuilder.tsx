@@ -58,7 +58,7 @@ export function QuoteBuilder({
     discountAmount: offerDiscountAmount,
     selectOffer,
     isLoading: isLoadingOffers
-  } = useSpecialOffers(quote.treatments);
+  } = useSpecialOffers(specialOfferId);
   
   // Treatment packages integration
   const {
@@ -66,7 +66,7 @@ export function QuoteBuilder({
     selectedPackage: selectedTreatmentPackage,
     selectPackage,
     isLoading: isLoadingPackages
-  } = useTreatmentPackages(quote.treatments);
+  } = useTreatmentPackages(packageId);
   
   const [promoCode, setPromoCode] = useState(initialPromoCode || '');
   const [activeTab, setActiveTab] = useState(packageId ? 'packages' : 'treatments');
