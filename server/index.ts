@@ -7,6 +7,7 @@ import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { addCityColumns } from "./migrations/add-city-columns";
 import { runMigrations } from "./migrations/run-migrations";
+import { authDiagnosticsMiddleware } from "./middleware/auth-diagnostics";
 
 /**
  * Helper function to detect duplicate routes in Express app
@@ -73,6 +74,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add authentication diagnostics middleware to help trace session issues
+app.use(authDiagnosticsMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();
