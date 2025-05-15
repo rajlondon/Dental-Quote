@@ -278,6 +278,48 @@ export default function BasicQuoteDemo() {
         <p className="text-gray-600">
           Create a custom dental treatment quote with special offers and promo codes
         </p>
+        
+        {/* Direct promo code application section */}
+        <div className="mt-4 p-4 border rounded-md bg-gray-50 max-w-xl">
+          <h3 className="text-lg font-medium mb-2">Quick Promo Code Application</h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              placeholder="Enter promo code (e.g., NEWSMILE)"
+              className="flex-1 p-2 border rounded"
+              disabled={!!quote.promoCode || isApplyingPromo}
+            />
+            {quote.promoCode ? (
+              <Button onClick={handleClearPromoCode} variant="destructive">
+                Remove Code
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleApplyPromoCode} 
+                disabled={isApplyingPromo || !promoInput.trim()} 
+                variant="default"
+              >
+                {isApplyingPromo ? 'Applying...' : 'Apply'}
+              </Button>
+            )}
+          </div>
+          {promoError && (
+            <p className="text-red-500 text-sm mt-2">{promoError}</p>
+          )}
+          {quote.promoCode && (
+            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+              <p className="text-green-700 text-sm">
+                Promo code <span className="font-semibold">{quote.promoCode}</span> applied: {formatCurrency(quote.promoDiscount)} discount
+              </p>
+            </div>
+          )}
+          <div className="mt-2 text-xs text-gray-500">
+            Try: NEWSMILE (£100 off), DENTAL25 (25% off), SUMMER2025 (15% off)
+          </div>
+        </div>
+        
         <div className="mt-4">
           <Button onClick={handleReset} variant="outline">Reset Quote</Button>
         </div>
