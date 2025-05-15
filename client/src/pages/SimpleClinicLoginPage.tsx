@@ -133,6 +133,11 @@ const SimpleClinicLoginPage: React.FC = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => {
+                    if (!password && document.querySelector('.test-credentials')) {
+                      setPassword('clinic123'); // Auto-fill password if empty on blur and test credentials are visible
+                    }
+                  }}
                   required
                   className="h-10"
                 />

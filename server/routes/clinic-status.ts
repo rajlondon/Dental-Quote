@@ -37,4 +37,29 @@ clinicStatusRoutes.get('/', isAuthenticated, async (req: Request, res: Response)
   }
 });
 
+// Diagnostic endpoint to check authentication status - doesn't require auth
+clinicStatusRoutes.get('/check', async (req: Request, res: Response) => {
+  // Log session information for debugging
+  console.log('==== AUTH CHECK DIAGNOSTICS ====');
+  console.log('Session ID:', req.sessionID);
+  console.log('Is Authenticated:', req.isAuthenticated());
+  console.log('Session data:', req.session);
+  console.log('User:', req.user);
+  console.log('Cookies:', req.cookies);
+  console.log('==============================');
+  
+  // Return detailed auth status information
+  return res.json({
+    success: true,
+    authenticated: req.isAuthenticated(),
+    user: req.user || null,
+    sessionID: req.sessionID,
+    sessionExists: !!req.session,
+    hasCookies: Object.keys(req.cookies || {}).length > 0,
+    cookieCount: Object.keys(req.cookies || {}).length,
+    // Don't send actual cookie values in response for security
+    cookieNames: Object.keys(req.cookies || {})
+  });
+});
+
 export default clinicStatusRoutes;

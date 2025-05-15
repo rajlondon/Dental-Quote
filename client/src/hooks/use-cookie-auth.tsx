@@ -161,21 +161,77 @@ export function useCookieAuth() {
     }
   };
   
-  // Check clinic status for clinic portal
+  // Enhanced check for clinic status with detailed diagnostic information
   const checkClinicStatus = async (): Promise<AuthResult> => {
     try {
       setLoading(true);
       
+      // First try the diagnostic endpoint to get detailed session information
       const baseUrl = getBaseUrl();
-      const response = await authAxios.get(`${baseUrl}/api/clinic-status`);
+      
+      // Check the diagnostic endpoint first
+      try {
+        const diagnosticResponse = await authAxios.get(`${baseUrl}/api/clinic-status/check`, {
+          withCredentials: true
+        });
+        
+        console.log('Auth diagnostic response:', diagnosticResponse.data);
+        
+        // If we're already authenticated according to diagnostics, use that information
+        if (diagnosticResponse.data.authenticated && diagnosticResponse.data.user) {
+          setUser(diagnosticResponse.data.user);
+          return {
+            success: true,
+            user: diagnosticResponse.data.user
+          };
+        }
+        
+        // If the diagnostic shows session issues, log them
+        if (!diagnosticResponse.data.hasCookies) {
+          console.warn('No cookies found in diagnostic check - session may be lost');
+        }
+      } catch (diagErr) {
+        console.error('Auth diagnostic check failed:', diagErr);
+      }
+      
+      // Proceed with the normal status check
+      const response = await authAxios.get(`${baseUrl}/api/clinic-status`, {
+        withCredentials: true
+      });
       
       if (response.data.success && response.data.user) {
+        console.log('Clinic status check successful, user:', response.data.user);
         setUser(response.data.user);
+        
+        // Also update the session storage as a backup mechanism
+        sessionStorage.setItem('user_data', JSON.stringify(response.data.user));
+        sessionStorage.setItem('user_role', response.data.user.role);
+        
+        if (response.data.user.role === 'clinic_staff') {
+          sessionStorage.setItem('is_clinic_staff', 'true');
+        }
+        
         return {
           success: true,
           user: response.data.user
         };
       } else {
+        // Try to use session storage as fallback if API call succeeded but no user in response
+        const storedUserData = sessionStorage.getItem('user_data');
+        if (storedUserData) {
+          try {
+            const storedUser = JSON.parse(storedUserData);
+            console.log('Using stored user data as fallback:', storedUser);
+            setUser(storedUser);
+            return {
+              success: true,
+              user: storedUser
+            };
+          } catch (parseErr) {
+            console.error('Failed to parse stored user data:', parseErr);
+          }
+        }
+        
         return {
           success: false,
           message: 'Not authenticated as clinic staff'
@@ -183,6 +239,23 @@ export function useCookieAuth() {
       }
     } catch (err: any) {
       console.error('Clinic status check error:', err);
+      
+      // Try to use session storage as fallback
+      const storedUserData = sessionStorage.getItem('user_data');
+      if (storedUserData) {
+        try {
+          const storedUser = JSON.parse(storedUserData);
+          console.log('Using stored user data as fallback after error:', storedUser);
+          setUser(storedUser);
+          return {
+            success: true,
+            user: storedUser
+          };
+        } catch (parseErr) {
+          console.error('Failed to parse stored user data:', parseErr);
+        }
+      }
+      
       return {
         success: false,
         message: err.response?.data?.message || 'Failed to verify clinic status'

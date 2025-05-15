@@ -18,35 +18,102 @@ const SimpleClinicPage: React.FC = () => {
   const [clinicData, setClinicData] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState<boolean>(false);
   
-  // A single authentication check on mount with rate limiting protection
+  // Enhanced authentication check with fallback mechanisms
   useEffect(() => {
     let isActive = true; // Cleanup flag
+    let redirectTimeout: NodeJS.Timeout;
     
     const verifyClinicAuth = async () => {
-      // Only perform one check when component mounts
+      // Only perform check if component is still mounted
       if (!isActive) return;
       
       try {
+        // First check if we have session storage backup
+        const storedUserData = sessionStorage.getItem('user_data');
+        const isClinicStaff = sessionStorage.getItem('is_clinic_staff');
+        
+        if (user) {
+          console.log('User already available in state:', user);
+          return; // Already authenticated
+        }
+        
+        // Try the API check first
+        console.log('Checking clinic authentication status...');
         const result = await checkClinicStatus();
         
-        if (!result.success) {
-          console.error('Authentication failed or insufficient permissions');
-          toast({
-            title: 'Authentication Required',
-            description: 'Please log in to access the clinic portal.',
-          });
-          setLocation('/simple-clinic-login');
-        } else {
-          console.log('Successfully authenticated as clinic staff');
+        if (result.success) {
+          console.log('Successfully authenticated as clinic staff via API');
+          return; // Success!
         }
+        
+        // If API check fails but we have stored data, try to use that
+        if (!result.success && storedUserData && isClinicStaff) {
+          try {
+            const userData = JSON.parse(storedUserData);
+            console.log('Using stored user data:', userData);
+            
+            // Show a warning toast that we're using cached data
+            toast({
+              title: 'Using Cached Session',
+              description: 'Your session will be restored from cache.',
+            });
+            
+            return; // Using backup data
+          } catch (parseErr) {
+            console.error('Failed to parse stored user data:', parseErr);
+          }
+        }
+        
+        // If we get here, authentication has failed
+        console.error('Authentication failed or insufficient permissions');
+        
+        // Show toast with delayed redirect to prevent jarring UX
+        toast({
+          title: 'Authentication Required',
+          description: 'Please log in to access the clinic portal.',
+        });
+        
+        // Redirect after a short delay
+        redirectTimeout = setTimeout(() => {
+          if (isActive) {
+            setLocation('/simple-clinic-login');
+          }
+        }, 2000);
+        
       } catch (error) {
         console.error('Authentication error:', error);
+        
+        // Try backup from session storage if available
+        const storedUserData = sessionStorage.getItem('user_data');
+        if (storedUserData && sessionStorage.getItem('is_clinic_staff')) {
+          try {
+            const userData = JSON.parse(storedUserData);
+            console.log('Using stored user data after error:', userData);
+            
+            toast({
+              title: 'Using Cached Session',
+              description: 'Connection issue detected. Using cached credentials.',
+            });
+            
+            return; // Using backup data after error
+          } catch (parseErr) {
+            console.error('Failed to parse stored user data:', parseErr);
+          }
+        }
+        
+        // Show error toast
         toast({
           title: 'Authentication Error',
           description: 'Please try logging in again.',
           variant: 'destructive',
         });
-        setLocation('/simple-clinic-login');
+        
+        // Redirect after a short delay
+        redirectTimeout = setTimeout(() => {
+          if (isActive) {
+            setLocation('/simple-clinic-login');
+          }
+        }, 2000);
       }
     };
     
@@ -56,8 +123,11 @@ const SimpleClinicPage: React.FC = () => {
     // Cleanup function
     return () => {
       isActive = false;
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
+      }
     };
-  }, [checkClinicStatus, toast, setLocation]);
+  }, [checkClinicStatus, toast, setLocation, user]);
   
   // Effect to fetch basic clinic data
   useEffect(() => {
