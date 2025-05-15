@@ -107,6 +107,7 @@ interface UseQuoteBuilderResult {
   addAddon: (addon: Addon) => void;
   removeAddon: (addon: Addon) => void;
   applyPromoCode: (code: string) => Promise<PromoCodeResponse>;
+  removePromoCode: () => Promise<boolean>;
   saveQuote: (additionalData?: any) => Promise<QuoteState>;
   finalizeQuote: () => Promise<QuoteState>;
   resetQuote: () => void;
@@ -552,6 +553,75 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
     }
   };
   
+  // Remove promo code from the quote
+  const removePromoCode = async (): Promise<boolean> => {
+    try {
+      // Use functional update to ensure we have the latest state
+      setQuote(prevQuote => {
+        // Calculate new total without promo discount
+        const newTotal = prevQuote.subtotal - (prevQuote.offerDiscount || 0);
+        
+        // Return quote without promo code
+        return {
+          ...prevQuote,
+          promoCode: null,
+          promoCodeId: null,
+          discountType: null,
+          discountValue: null,
+          promoDiscount: 0,
+          discount: prevQuote.offerDiscount || 0,
+          total: newTotal
+        };
+      });
+      
+      // Track promo code removal if analytics is available
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'promo_code_removed', {
+          event_category: 'promotions',
+          event_label: quote.promoCode || 'unknown'
+        });
+      }
+      
+      // If we have a quote ID, update it on the server
+      if (quote.id) {
+        try {
+          await apiRequest('PATCH', `/api/quotes/${quote.id}`, {
+            promoCode: null,
+            promoCodeId: null,
+            promoDiscount: 0,
+            discount: quote.offerDiscount || 0,
+            total: quote.subtotal - (quote.offerDiscount || 0)
+          });
+          
+          // Invalidate cache to ensure fresh data
+          queryClient.invalidateQueries({ queryKey: ['/api/quotes', quote.id] });
+        } catch (persistError) {
+          console.error('Error persisting promo code removal:', persistError);
+          // Continue even if persistence fails - user still sees the discount removed
+        }
+      }
+      
+      // Show toast with success message
+      toast({
+        title: 'Promo Code Removed',
+        description: 'The promo code has been removed from your quote.',
+        variant: 'default'
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error removing promo code:', error);
+      
+      toast({
+        title: 'Error',
+        description: 'Could not remove promo code. Please try again.',
+        variant: 'destructive'
+      });
+      
+      return false;
+    }
+  };
+  
   // Reset the quote to empty
   const resetQuote = () => {
     setQuote(defaultQuote);
@@ -738,6 +808,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
     addAddon,
     removeAddon,
     applyPromoCode,
+    removePromoCode,
     saveQuote,
     finalizeQuote,
     resetQuote,

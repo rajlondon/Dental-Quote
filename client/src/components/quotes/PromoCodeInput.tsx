@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { useQuoteBuilder } from '@/hooks/use-quote-builder';
+import { formatCurrency } from '@/hooks/use-promo-code';
 import { Loader2, CheckCircle } from 'lucide-react';
 
 interface PromoCodeInputProps {
@@ -17,7 +18,7 @@ export const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
   initialPromoCode = ''
 }) => {
   const [promoCode, setPromoCode] = useState(initialPromoCode);
-  const { applyPromoCode, isApplyingPromo } = useQuoteBuilder();
+  const { applyPromoCode, removePromoCode, isApplyingPromo } = useQuoteBuilder();
   
   const handleApplyPromoCode = async () => {
     try {
@@ -42,34 +43,31 @@ export const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
   
   // If promo code is already applied, show applied state
   if (quote.promoCode) {
+    // Calculate the discount amount for display
+    const discountValue = quote.promoDiscount || 0;
+    const discountText = quote.discountType === 'percentage' 
+      ? `${quote.discountValue}% (${formatCurrency(discountValue)})` 
+      : formatCurrency(discountValue);
+    
     return (
       <div className="flex flex-col space-y-2">
         <div className="flex items-center space-x-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
           <CheckCircle className="h-4 w-4" />
-          <span>Promo code <strong>{quote.promoCode}</strong> applied</span>
+          <span>
+            Promo code <strong>{quote.promoCode}</strong> applied
+            <span className="ml-1 font-medium">(-{discountText})</span>
+          </span>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => {
-            // Clear promo code from quote
-            setQuote({
-              ...quote,
-              promoCode: null,
-              promoCodeId: null,
-              discountType: null,
-              discountValue: null,
-              promoDiscount: 0,
-              discount: quote.offerDiscount || 0,
-              total: quote.subtotal - (quote.offerDiscount || 0)
-            });
-            // Clear input
-            setPromoCode('');
-            // Show toast
-            toast({
-              title: 'Promo Code Removed',
-              description: 'The promo code has been removed from your quote.'
-            });
+          onClick={async () => {
+            // Use the hook's removePromoCode function
+            const result = await removePromoCode();
+            // Clear input if successful
+            if (result) {
+              setPromoCode('');
+            }
           }}
         >
           Remove Promo Code
