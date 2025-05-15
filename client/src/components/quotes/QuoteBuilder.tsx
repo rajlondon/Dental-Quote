@@ -264,9 +264,9 @@ export function QuoteBuilder({
                   </h3>
                   
                   <SpecialOffersSelector 
-                    availableOffers={availableOffers}
+                    offers={availableOffers}
                     selectedOfferId={selectedOffer?.id || null}
-                    onSelectOffer={(offerId: string) => selectOffer(offerId)}
+                    onChange={(offerId: string | null) => selectOffer(offerId || '')}
                   />
                   
                   {selectedOffer && offerDiscountAmount > 0 && (
@@ -344,9 +344,9 @@ export function QuoteBuilder({
                       </h3>
                       
                       <TreatmentPackageSelector 
-                        availablePackages={availablePackages}
+                        packages={availablePackages}
                         selectedPackageId={selectedTreatmentPackage?.id || null}
-                        onSelectPackage={(packageId: string) => selectPackage(packageId)}
+                        onChange={(packageId: string | null) => selectPackage(packageId || '')}
                       />
                     </div>
                   )}

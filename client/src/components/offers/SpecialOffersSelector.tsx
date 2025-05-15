@@ -1,94 +1,151 @@
-import React from 'react';
-import { CheckCircle } from 'lucide-react';
-import { SpecialOffer } from '@shared/offer-types';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Sparkles, Check, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/hooks/use-quote-builder';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { SpecialOffer } from '@shared/offer-types';
+import { formatCurrency } from '@/utils/currency-formatter';
+import { format } from 'date-fns';
 
 interface SpecialOffersSelectorProps {
-  availableOffers: SpecialOffer[];
-  onSelectOffer: (offerId: string) => void;
+  offers: SpecialOffer[];
   selectedOfferId: string | null;
+  onChange: (offerId: string | null) => void;
   isLoading?: boolean;
 }
 
-export const SpecialOffersSelector: React.FC<SpecialOffersSelectorProps> = ({
-  availableOffers,
-  onSelectOffer,
+export function SpecialOffersSelector({
+  offers,
   selectedOfferId,
+  onChange,
   isLoading = false
-}) => {
+}: SpecialOffersSelectorProps) {
+  const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
+
+  const toggleExpand = (offerId: string) => {
+    setExpandedOfferId(expandedOfferId === offerId ? null : offerId);
+  };
+
+  const handleSelectOffer = (offerId: string) => {
+    // Toggle selection
+    onChange(selectedOfferId === offerId ? null : offerId);
+  };
+
   if (isLoading) {
     return (
-      <div className="special-offers-container p-4 border rounded-lg animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-          <div className="h-48 bg-gray-200 rounded"></div>
-          <div className="h-48 bg-gray-200 rounded"></div>
-        </div>
+      <div className="space-y-4">
+        {[1, 2].map((index) => (
+          <Card key={index} className="relative">
+            <CardHeader className="pb-2">
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-4 w-3/4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-9 w-24" />
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     );
   }
 
+  if (!offers || offers.length === 0) {
+    return (
+      <Alert>
+        <AlertDescription>No special offers are currently available.</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="special-offers-container">
-      <h3 className="text-lg font-semibold mb-4">Available Special Offers</h3>
-      
-      {availableOffers.length === 0 ? (
-        <p className="text-gray-500">No special offers available for selected treatments</p>
-      ) : (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {availableOffers.map(offer => (
-            <Card 
-              key={offer.id}
-              className={`offer-card cursor-pointer transition hover:shadow-md
-                ${selectedOfferId === offer.id ? 'border-primary ring-2 ring-primary/50' : 'hover:border-gray-400'}`}
-              onClick={() => onSelectOffer(offer.id)}
-            >
-              <CardContent className="p-4">
-                {offer.featuredImage && (
-                  <div className="relative w-full h-32 mb-3">
-                    <img 
-                      src={offer.featuredImage} 
-                      alt={offer.title}
-                      className="w-full h-full object-cover rounded-md" 
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/default-offer.jpg';
-                      }}
-                    />
+    <RadioGroup value={selectedOfferId || ''} className="space-y-4" onValueChange={(value) => onChange(value || null)}>
+      {offers.map((offer) => {
+        const isSelected = selectedOfferId === offer.id;
+        const isExpanded = expandedOfferId === offer.id;
+        const discountValue = offer.discountValue || 0;
+        const discountLabel = offer.discountType === 'percentage' 
+          ? `${discountValue}% Off` 
+          : `${formatCurrency(discountValue)} Off`;
+
+        return (
+          <Card 
+            key={offer.id} 
+            className={`relative ${isSelected ? 'border-primary' : ''}`}
+          >
+            {isSelected && (
+              <div className="absolute -top-2 -right-2 bg-primary text-white rounded-full p-1">
+                <Check className="h-4 w-4" />
+              </div>
+            )}
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  {offer.title}
+                </CardTitle>
+                <Badge variant="outline" className="bg-primary-50 text-primary border-primary-200">
+                  {discountLabel}
+                </Badge>
+              </div>
+              <CardDescription>{offer.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center mb-2">
+                <RadioGroupItem value={offer.id} id={`offer-${offer.id}`} className="mr-2" />
+                <Label htmlFor={`offer-${offer.id}`} className="font-medium flex-1">
+                  Apply this offer
+                </Label>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-4 space-y-3">
+                  <Separator />
+
+                  {offer.terms && (
+                    <>
+                      <h4 className="font-medium text-sm">Terms & Conditions</h4>
+                      <p className="text-sm text-muted-foreground">{offer.terms}</p>
+                    </>
+                  )}
+
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                    <span>
+                      Valid from {format(new Date(offer.startDate), 'MMM d, yyyy')} to {format(new Date(offer.endDate), 'MMM d, yyyy')}
+                    </span>
                   </div>
-                )}
-                
-                <h4 className="font-medium text-lg">{offer.title}</h4>
-                <p className="text-sm text-gray-600 mb-2">{offer.description}</p>
-                
-                <div className="flex justify-between items-center mt-2">
-                  <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">
-                    {offer.discountType === 'percentage' 
-                      ? `${offer.discountValue}% off` 
-                      : `${formatCurrency(offer.discountValue)} off`}
-                  </Badge>
-                  
-                  {selectedOfferId === offer.id && (
-                    <div className="text-primary flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      <span className="text-sm">Applied</span>
-                    </div>
+
+                  {offer.minTreatmentCount && (
+                    <p className="text-sm text-muted-foreground">
+                      *Requires minimum {offer.minTreatmentCount} eligible treatments
+                    </p>
                   )}
                 </div>
-                
-                {offer.terms && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    <span className="font-semibold">Terms:</span> {offer.terms}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+              )}
+            </CardContent>
+            <CardFooter className="pt-0 flex justify-between">
+              <Button variant="ghost" size="sm" onClick={() => toggleExpand(offer.id)}>
+                {isExpanded ? 'Show less' : 'Show details'}
+              </Button>
+              <Button 
+                variant={isSelected ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => handleSelectOffer(offer.id)}
+              >
+                {isSelected ? 'Applied' : 'Apply'}
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      })}
+    </RadioGroup>
   );
-};
-
-export default SpecialOffersSelector;
+}
