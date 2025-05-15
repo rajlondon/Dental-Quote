@@ -117,25 +117,6 @@ export function useTreatmentPackages(initialPackageId?: string): UsePackagesResu
     return savings;
   };
 
-  // Update selected package based on selected treatments
-  useEffect(() => {
-    if (selectedPackage && selectedTreatments.length > 0) {
-      // Check if the selected treatments still qualify for the package
-      const treatmentIds = selectedTreatments.map(t => t.id);
-      const isStillApplicable = isPackageApplicable(selectedPackage.id, treatmentIds);
-      
-      if (!isStillApplicable) {
-        // Deselect the package if it's no longer applicable
-        setSelectedPackage(null);
-        setPackageSavings(0);
-      } else {
-        // Update package savings
-        const savings = calculatePackageSavings(selectedPackage.id);
-        setPackageSavings(savings);
-      }
-    }
-  }, [selectedTreatments, selectedPackage]);
-
   return {
     data,
     isLoading,
