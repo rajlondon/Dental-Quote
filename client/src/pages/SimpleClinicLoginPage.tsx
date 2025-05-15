@@ -45,7 +45,7 @@ const SimpleClinicLoginPage: React.FC = () => {
 
     try {
       console.log('Attempting login with:', email);
-      // Call the authentication endpoint - no need to prefix with /api since it's already in the baseURL
+      // Use auth/login endpoint - api client will add the /api prefix
       const response = await api.post('/auth/login', {
         email,
         password,
