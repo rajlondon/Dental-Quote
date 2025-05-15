@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuoteBuilder } from '@/hooks/use-quote-builder';
+import { useSpecialOffers } from '@/hooks/use-special-offers';
+import { useTreatmentPackages } from '@/hooks/use-treatment-packages';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,8 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from '@/lib/analytics';
 import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import { PackageIcon, CheckCircle } from 'lucide-react';
+import { PackageIcon, CheckCircle, Sparkles, Gift } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SpecialOffersSelector } from '@/components/offers/SpecialOffersSelector';
+import { TreatmentPackageSelector } from '@/components/packages/TreatmentPackageSelector';
 
 interface QuoteBuilderProps {
   onComplete?: (quoteData: any) => void;
@@ -45,6 +49,23 @@ export function QuoteBuilder({
     packages,
     addons
   } = useQuoteBuilder();
+  
+  // Special offers integration
+  const { 
+    availableOffers, 
+    selectedOffer, 
+    discountAmount: offerDiscountAmount,
+    selectOffer,
+    isLoading: isLoadingOffers
+  } = useSpecialOffers(quote.treatments);
+  
+  // Treatment packages integration
+  const {
+    availablePackages,
+    selectedPackage,
+    selectPackage,
+    isLoading: isLoadingPackages
+  } = useTreatmentPackages(quote.treatments);
   
   const [promoCode, setPromoCode] = useState(initialPromoCode || '');
   const [activeTab, setActiveTab] = useState(packageId ? 'packages' : 'treatments');
