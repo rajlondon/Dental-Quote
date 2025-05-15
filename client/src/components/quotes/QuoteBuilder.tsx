@@ -253,56 +253,102 @@ export function QuoteBuilder({
                   ))}
                 </div>
               )}
+              
+              {/* Special Offers Section */}
+              {!isLoadingOffers && availableOffers.length > 0 && (
+                <div className="mt-8 border-t pt-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                    <Sparkles className="h-5 w-5 text-yellow-500" />
+                    Special Offers Available
+                  </h3>
+                  
+                  <SpecialOffersSelector 
+                    availableOffers={availableOffers}
+                    selectedOfferId={selectedOffer?.id || null}
+                    onSelectOffer={selectOffer}
+                  />
+                  
+                  {selectedOffer && offerDiscountAmount > 0 && (
+                    <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                      <p className="text-sm text-yellow-800 flex items-center gap-2">
+                        <Gift className="h-4 w-4" />
+                        <span>You're saving <strong>{formatCurrency(offerDiscountAmount)}</strong> with this offer!</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
             
             {/* Packages Tab */}
             <TabsContent value="packages" className="space-y-4">
               <h3 className="text-xl font-semibold">Treatment Packages</h3>
               
-              {isLoading ? (
+              {isLoading || isLoadingPackages ? (
                 <div className="flex items-center justify-center h-40">
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {packages && packages.map((pkg: any) => (
-                    <Card key={pkg.id} className="p-4 flex flex-col h-full">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium">{pkg.name}</h4>
-                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-2.5 py-0.5">
-                          {pkg.price ? formatCurrency(pkg.price) : "Price on request"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-2">{pkg.description}</p>
-                      <div className="mb-4">
-                        <h5 className="text-xs font-semibold mb-1">Includes:</h5>
-                        <ul className="text-xs text-gray-500 list-disc pl-4">
-                          {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
-                            <li key={index} className="flex justify-between">
-                              <span>{treatment.name}</span>
-                              <span className="font-medium">{formatCurrency(treatment.price)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="bg-gray-50 p-2 rounded-md mb-3">
-                        <div className="flex justify-between items-center text-sm font-medium">
-                          <span>Total Package Price:</span>
-                          <span className="text-blue-700">{formatCurrency(pkg.price)}</span>
-                        </div>
-                      </div>
-                      <div className="mt-auto">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => addPackage(pkg)}
-                          className="w-full"
-                        >
-                          Add Package
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
+                <div className="space-y-6">
+                  {/* Legacy packages (from the existing system) */}
+                  {packages && packages.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {packages.map((pkg: any) => (
+                        <Card key={pkg.id} className="p-4 flex flex-col h-full">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium">{pkg.name}</h4>
+                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-2.5 py-0.5">
+                              {pkg.price ? formatCurrency(pkg.price) : "Price on request"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-500 mb-2">{pkg.description}</p>
+                          <div className="mb-4">
+                            <h5 className="text-xs font-semibold mb-1">Includes:</h5>
+                            <ul className="text-xs text-gray-500 list-disc pl-4">
+                              {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
+                                <li key={index} className="flex justify-between">
+                                  <span>{treatment.name}</span>
+                                  <span className="font-medium">{formatCurrency(treatment.price)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="bg-gray-50 p-2 rounded-md mb-3">
+                            <div className="flex justify-between items-center text-sm font-medium">
+                              <span>Total Package Price:</span>
+                              <span className="text-blue-700">{formatCurrency(pkg.price)}</span>
+                            </div>
+                          </div>
+                          <div className="mt-auto">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => addPackage(pkg)}
+                              className="w-full"
+                            >
+                              Add Package
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* New treatment packages system */}
+                  {availablePackages && availablePackages.length > 0 && (
+                    <div className="mt-8 pt-4 border-t border-gray-200">
+                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                        <PackageIcon className="h-5 w-5 text-blue-500" />
+                        Recommended Treatment Packages
+                      </h3>
+                      
+                      <TreatmentPackageSelector 
+                        availablePackages={availablePackages}
+                        selectedPackageId={selectedTreatmentPackage?.id || null}
+                        onSelectPackage={selectPackage}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
