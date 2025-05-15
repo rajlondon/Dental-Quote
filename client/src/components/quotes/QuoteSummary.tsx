@@ -67,158 +67,202 @@ export const QuoteSummary = React.memo(({ quote }: QuoteSummaryProps) => {
       promoDiscount: formatter.format(quote.promoDiscount || 0),
       formatPrice: (amount: number) => formatter.format(amount)
     };
-  }, [quote.subtotal, quote.discount, quote.total, quote.offerDiscount, quote.promoDiscount, quote.promoCode]);
+  }, [quote.subtotal, quote.discount, quote.total, quote.offerDiscount, quote.promoDiscount]);
   
   // Helper function that uses the memoized formatter
   const formatCurrency = (amount: number): string => {
     return formattedPrices.formatPrice(amount);
   };
+  
+  // Memoize treatments section to prevent unnecessary re-renders
+  const treatmentsSection = useMemo(() => {
+    if (!quote.treatments || quote.treatments.length === 0) {
+      return null;
+    }
+    
+    return (
+      <>
+        <h3 className="text-lg font-semibold mb-2">Treatments</h3>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {quote.treatments.map((treatment: any) => (
+              <TableRow key={treatment.id}>
+                <TableCell className="font-medium">{treatment.name}</TableCell>
+                <TableCell>{treatment.description}</TableCell>
+                <TableCell className="text-right">{formattedPrices.formatPrice(treatment.price)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </>
+    );
+  }, [quote.treatments, formattedPrices]);
+  
+  // Memoize packages section to prevent unnecessary re-renders
+  const packagesSection = useMemo(() => {
+    if (!quote.packages || quote.packages.length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">Packages</h3>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Package</TableHead>
+              <TableHead>Includes</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {quote.packages.map((pkg: any) => (
+              <TableRow key={pkg.id}>
+                <TableCell className="font-medium">{pkg.name}</TableCell>
+                <TableCell>
+                  <ul className="list-disc pl-5 text-sm">
+                    {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
+                      <li key={index}>{treatment.name}</li>
+                    ))}
+                  </ul>
+                </TableCell>
+                <TableCell className="text-right">{formattedPrices.formatPrice(pkg.price)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }, [quote.packages, formattedPrices]);
+  
+  // Memoize addons section to prevent unnecessary re-renders
+  const addonsSection = useMemo(() => {
+    if (!quote.addons || quote.addons.length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">Add-ons</h3>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {quote.addons.map((addon: any) => (
+              <TableRow key={addon.id}>
+                <TableCell className="font-medium">{addon.name}</TableCell>
+                <TableCell>{addon.description}</TableCell>
+                <TableCell className="text-right">{formattedPrices.formatPrice(addon.price)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }, [quote.addons, formattedPrices]);
 
+  // Memoize promo code information
+  const promoCodeInfo = useMemo(() => {
+    if (!quote.promoCode) return null;
+    
+    return (
+      <div className="mt-6 bg-muted p-4 rounded-md">
+        <h3 className="text-md font-semibold mb-2">Applied Promo Code</h3>
+        <div className="flex items-center">
+          <Badge variant="outline" className="mr-2">{quote.promoCode}</Badge>
+          <span className="text-sm text-gray-500">
+            {quote.discountType === 'percentage' 
+              ? `${quote.discountValue}% off` 
+              : `${formatCurrency(quote.discountValue || 0)} off`}
+          </span>
+        </div>
+      </div>
+    );
+  }, [quote.promoCode, quote.discountType, quote.discountValue, formatCurrency]);
+  
+  // Memoize special offer information
+  const specialOfferInfo = useMemo(() => {
+    if (!quote.appliedOfferId) return null;
+    
+    return (
+      <div className="mt-6 bg-muted p-4 rounded-md">
+        <h3 className="text-md font-semibold mb-2">Applied Special Offer</h3>
+        <div className="flex items-center">
+          <Badge className="mr-2">Special Offer</Badge>
+          <span className="text-sm text-gray-500">
+            Discount: {formatCurrency(quote.offerDiscount || 0)}
+          </span>
+        </div>
+      </div>
+    );
+  }, [quote.appliedOfferId, quote.offerDiscount, formatCurrency]);
+  
+  // Memoize price summary section
+  const priceSummary = useMemo(() => {
+    return (
+      <div className="mt-8 border-t pt-4">
+        <div className="flex justify-between items-center py-2">
+          <span className="text-md">Subtotal</span>
+          <span className="text-md">{formattedPrices.subtotal}</span>
+        </div>
+        {/* Detailed discount breakdown */}
+        {(quote.promoDiscount || 0) > 0 && (
+          <div className="flex justify-between items-center py-2 text-green-600 bg-green-50 p-2 rounded-md">
+            <span className="text-md">Promo Discount {quote.promoCode && `(${quote.promoCode})`}</span>
+            <span className="text-md font-semibold">-{formattedPrices.promoDiscount}</span>
+          </div>
+        )}
+        {(quote.offerDiscount || 0) > 0 && (
+          <div className="flex justify-between items-center py-2 text-green-600">
+            <span className="text-md">Special Offer Discount</span>
+            <span className="text-md">-{formattedPrices.offerDiscount}</span>
+          </div>
+        )}
+        {quote.discount > 0 && !(quote.promoDiscount || 0) && !(quote.offerDiscount || 0) && (
+          <div className="flex justify-between items-center py-2 text-green-600">
+            <span className="text-md">Discount</span>
+            <span className="text-md">-{formattedPrices.discount}</span>
+          </div>
+        )}
+        <div className="flex justify-between items-center py-2 border-t border-b mt-2 mb-2">
+          <span className="text-lg font-bold">Total</span>
+          <span className="text-lg font-bold">{formattedPrices.total}</span>
+        </div>
+      </div>
+    );
+  }, [
+    formattedPrices, 
+    quote.promoDiscount, 
+    quote.offerDiscount, 
+    quote.discount, 
+    quote.promoCode
+  ]);
+  
   return (
     <Card className="w-full mb-6">
       <CardHeader>
         <CardTitle>Quote Summary</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Treatments Section */}
-        {quote.treatments && quote.treatments.length > 0 && (
-          <>
-            <h3 className="text-lg font-semibold mb-2">Treatments</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quote.treatments.map((treatment: any) => (
-                  <TableRow key={treatment.id}>
-                    <TableCell className="font-medium">{treatment.name}</TableCell>
-                    <TableCell>{treatment.description}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(treatment.price)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </>
-        )}
-
-        {/* Packages Section */}
-        {quote.packages && quote.packages.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Packages</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Package</TableHead>
-                  <TableHead>Includes</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quote.packages.map((pkg: any) => (
-                  <TableRow key={pkg.id}>
-                    <TableCell className="font-medium">{pkg.name}</TableCell>
-                    <TableCell>
-                      <ul className="list-disc pl-5 text-sm">
-                        {pkg.treatments && pkg.treatments.map((treatment: any, index: number) => (
-                          <li key={index}>{treatment.name}</li>
-                        ))}
-                      </ul>
-                    </TableCell>
-                    <TableCell className="text-right">{formatCurrency(pkg.price)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-
-        {/* Add-ons Section */}
-        {quote.addons && quote.addons.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Add-ons</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quote.addons.map((addon: any) => (
-                  <TableRow key={addon.id}>
-                    <TableCell className="font-medium">{addon.name}</TableCell>
-                    <TableCell>{addon.description}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(addon.price)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-
-        {/* Promo Code Information */}
-        {quote.promoCode && (
-          <div className="mt-6 bg-muted p-4 rounded-md">
-            <h3 className="text-md font-semibold mb-2">Applied Promo Code</h3>
-            <div className="flex items-center">
-              <Badge variant="outline" className="mr-2">{quote.promoCode}</Badge>
-              <span className="text-sm text-gray-500">
-                {quote.discountType === 'percentage' 
-                  ? `${quote.discountValue}% off` 
-                  : `${formatCurrency(quote.discountValue || 0)} off`}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Applied Offer Information */}
-        {quote.appliedOfferId && (
-          <div className="mt-6 bg-muted p-4 rounded-md">
-            <h3 className="text-md font-semibold mb-2">Applied Special Offer</h3>
-            <div className="flex items-center">
-              <Badge className="mr-2">Special Offer</Badge>
-              <span className="text-sm text-gray-500">
-                Discount: {formatCurrency(quote.offerDiscount || 0)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Price Summary */}
-        <div className="mt-8 border-t pt-4">
-          <div className="flex justify-between items-center py-2">
-            <span className="text-md">Subtotal</span>
-            <span className="text-md">{formatCurrency(quote.subtotal)}</span>
-          </div>
-          {/* Detailed discount breakdown */}
-          {(quote.promoDiscount || 0) > 0 && (
-            <div className="flex justify-between items-center py-2 text-green-600 bg-green-50 p-2 rounded-md">
-              <span className="text-md">Promo Discount {quote.promoCode && `(${quote.promoCode})`}</span>
-              <span className="text-md font-semibold">-{formatCurrency(quote.promoDiscount || 0)}</span>
-            </div>
-          )}
-          {(quote.offerDiscount || 0) > 0 && (
-            <div className="flex justify-between items-center py-2 text-green-600">
-              <span className="text-md">Special Offer Discount</span>
-              <span className="text-md">-{formatCurrency(quote.offerDiscount || 0)}</span>
-            </div>
-          )}
-          {quote.discount > 0 && !(quote.promoDiscount || 0) && !(quote.offerDiscount || 0) && (
-            <div className="flex justify-between items-center py-2 text-green-600">
-              <span className="text-md">Discount</span>
-              <span className="text-md">-{formatCurrency(quote.discount)}</span>
-            </div>
-          )}
-          <div className="flex justify-between items-center py-2 border-t border-b mt-2 mb-2">
-            <span className="text-lg font-bold">Total</span>
-            <span className="text-lg font-bold">{formatCurrency(quote.total)}</span>
-          </div>
-        </div>
+        {/* Render memoized sections */}
+        {treatmentsSection}
+        {packagesSection}
+        {addonsSection}
+        {promoCodeInfo}
+        {specialOfferInfo}
+        {priceSummary}
       </CardContent>
     </Card>
   );
