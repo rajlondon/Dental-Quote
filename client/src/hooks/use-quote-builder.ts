@@ -494,7 +494,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         toast({
           title: "Promo Code Applied Successfully",
           description: `${data.data.discount_type === 'percentage' 
-            ? `${data.data.discount_value}% discount (${formatCurrency(newDiscount)})` 
+            ? `${data.data.discount_value}% discount (${formatCurrency(data.data.discount_value)})` 
             : `${formatCurrency(data.data.discount_value)} discount`} has been applied to your quote.`,
           variant: "default",
         });
@@ -504,7 +504,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
           window.gtag('event', 'promo_code_applied', {
             event_category: 'promotions',
             event_label: code,
-            value: newDiscount,
+            value: data.data.discount_value,
           });
         }
         
@@ -514,9 +514,9 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
             await apiRequest('PATCH', `/api/quotes/${quote.id}`, { 
               promoCode: code,
               promoCodeId: data.promotion.id,
-              promoDiscount: newDiscount,
-              discount: updatedQuote.discount,
-              total: updatedQuote.total
+              promoDiscount: calculatedDiscount,
+              discount: totalDiscount,
+              total: newTotal
             });
             
             // Invalidate cache to ensure fresh data
@@ -560,6 +560,10 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         success: false, 
         message: "Error validating promo code. Please try again." 
       };
+    } finally {
+      // Always reset loading state when done, regardless of success or failure
+      setIsApplyingPromo(false);
+      console.log('[QuoteBuilder] Promo code application completed, loading state reset');
     }
   };
   
@@ -740,6 +744,7 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
     isLoadingAddons,
     isDirty,
     isSubmitting,
+    isApplyingPromo,
     error,
     addTreatment,
     removeTreatment,
