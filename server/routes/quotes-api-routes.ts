@@ -165,7 +165,7 @@ router.post('/apply-package/:packageId', (req, res) => {
   // Include any treatments that weren't part of the package
   const nonPackageTreatmentIds = packageData.includedTreatments.map(t => t.treatmentId);
   const remainingTreatments = currentTreatments.filter(
-    t => !nonPackageTreatmentIds.includes(t.id)
+    (t: { id: string }) => !nonPackageTreatmentIds.includes(t.id)
   );
 
   res.json({
@@ -203,7 +203,7 @@ router.post('/remove-package', (req, res) => {
   ];
   
   const originalSubtotal = originalTreatments.reduce(
-    (total, t) => total + (t.price * t.quantity), 
+    (total, t: { price: number; quantity: number }) => total + (t.price * t.quantity), 
     0
   );
   

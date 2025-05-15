@@ -1,315 +1,115 @@
 /**
- * Test quote data API routes
- * Provides test treatments, packages, and add-ons for the quote system
+ * Test Quote Data Routes
+ * 
+ * This file contains routes for serving test data for quotes, treatments,
+ * special offers, and packages that can be used for testing the UI.
  */
-import express from 'express';
-import { 
-  TEST_TREATMENTS, 
-  TEST_PACKAGES, 
-  TEST_ADDONS, 
-  TEST_PROMO_CODES,
-  TEST_SPECIAL_OFFERS 
-} from './mock-test-data';
+import { Router } from 'express';
+import { Request, Response } from 'express';
+import { catchAsync } from '../middleware/error-handler';
 
-const router = express.Router();
+const router = Router();
 
-// Get all treatments for testing
-router.get('/treatments', (req, res) => {
-  res.json(TEST_TREATMENTS);
-});
+// Sample test data for treatments
+const testTreatments = [
+  { id: 'tr-001', name: 'Dental Implant', price: 700, quantity: 1 },
+  { id: 'tr-002', name: 'Crown', price: 350, quantity: 1 },
+  { id: 'tr-003', name: 'Veneer', price: 300, quantity: 1 },
+  { id: 'tr-004', name: 'Root Canal', price: 400, quantity: 1 },
+  { id: 'tr-005', name: 'Teeth Whitening', price: 250, quantity: 1 },
+];
 
-// Get all treatment packages for testing
-router.get('/treatment-packages', (req, res) => {
-  res.json(TEST_PACKAGES);
-});
-
-// Get all add-ons for testing
-router.get('/addons', (req, res) => {
-  res.json(TEST_ADDONS);
-});
-
-// Get all promo codes for testing - standard route (may be shadowed by main API)
-router.get('/promo-codes', (req, res) => {
-  res.json(TEST_PROMO_CODES);
-});
-
-// Special route to access test promo codes without conflicts
-router.get('/', (req, res) => {
-  // Check path to determine what data to return
-  const path = req.baseUrl;
-  
-  if (path.includes('test-packages')) {
-    res.json(TEST_PACKAGES);
-  } else {
-    res.json(TEST_PROMO_CODES);
+// Sample test data for special offers
+const testSpecialOffers = [
+  {
+    id: 'offer-001',
+    title: 'Welcome Discount',
+    description: '20% off your first treatment',
+    discountPercentage: 20,
+    minPurchaseAmount: 500,
+    maxDiscountAmount: 300,
+    applicableTreatments: ['tr-001', 'tr-002', 'tr-003'],
+    imageUrl: '/images/offers/welcome-discount.jpg'
+  },
+  {
+    id: 'offer-002',
+    title: 'Implant Package',
+    description: '15% off implant + crown combination',
+    discountPercentage: 15,
+    minPurchaseAmount: 1000,
+    maxDiscountAmount: 400,
+    applicableTreatments: ['tr-001', 'tr-002'],
+    imageUrl: '/images/offers/implant-package.jpg'
+  },
+  {
+    id: 'offer-003',
+    title: 'Smile Makeover',
+    description: 'Free teeth whitening with 4+ veneers',
+    discountPercentage: 100, // 100% off the teeth whitening
+    minPurchaseAmount: 1200,
+    maxDiscountAmount: 250, // Max discount is the price of teeth whitening
+    applicableTreatments: ['tr-003', 'tr-005'],
+    imageUrl: '/images/offers/smile-makeover.jpg'
   }
-});
+];
 
-// Validate promo code for testing - match the format of the main API
-router.get('/promo-codes/:code/validate', validatePromoCode);
+// Sample test data for treatment packages
+const testTreatmentPackages = [
+  {
+    id: 'pkg-001',
+    title: 'Complete Implant Solution',
+    description: 'Dental implant with crown at a bundle price',
+    originalPrice: 1050, // Sum of individual treatments
+    packagePrice: 950, // Discounted package price
+    savings: 100,
+    includedTreatments: [
+      { treatmentId: 'tr-001', quantity: 1 },
+      { treatmentId: 'tr-002', quantity: 1 }
+    ],
+    imageUrl: '/images/packages/implant-solution.jpg'
+  },
+  {
+    id: 'pkg-002',
+    title: 'Smile Transformation',
+    description: '4 veneers and teeth whitening for a complete smile makeover',
+    originalPrice: 1450, // Sum of individual treatments
+    packagePrice: 1250, // Discounted package price
+    savings: 200,
+    includedTreatments: [
+      { treatmentId: 'tr-003', quantity: 4 },
+      { treatmentId: 'tr-005', quantity: 1 }
+    ],
+    imageUrl: '/images/packages/smile-transformation.jpg'
+  },
+  {
+    id: 'pkg-003',
+    title: 'Full Mouth Rehabilitation',
+    description: 'Comprehensive treatment package for full mouth restoration',
+    originalPrice: 3000, // Sum of individual treatments
+    packagePrice: 2500, // Discounted package price
+    savings: 500,
+    includedTreatments: [
+      { treatmentId: 'tr-001', quantity: 2 },
+      { treatmentId: 'tr-002', quantity: 2 },
+      { treatmentId: 'tr-004', quantity: 2 }
+    ],
+    imageUrl: '/images/packages/full-mouth-rehab.jpg'
+  }
+];
 
-// Add endpoint for test-promo-codes/:code/validate
-router.get('/:code/validate', validatePromoCode);
+// GET /api/treatments - Return test treatments
+router.get('/treatments', catchAsync(async (req: Request, res: Response) => {
+  res.json(testTreatments);
+}));
 
-// Shared function for promo code validation
-function validatePromoCode(req: express.Request, res: express.Response) {
-  const { code } = req.params;
-  
-  console.log(`[TEST API] Validating promo code: ${code} from path: ${req.path}`);
-  
-  if (!code) {
-    return res.status(400).json({
-      success: false,
-      message: 'Promo code is required'
-    });
-  }
-  
-  const promoCode = TEST_PROMO_CODES.find(
-    promo => promo.code.toLowerCase() === code.toString().toLowerCase()
-  );
-  
-  if (!promoCode) {
-    console.log(`[TEST API] Promo code not found: ${code}`);
-    return res.json({
-      success: false,
-      message: 'Invalid promo code'
-    });
-  }
-  
-  // Check if promo code is active and not expired
-  const now = new Date();
-  const expiresAt = new Date(promoCode.expires_at);
-  
-  if (!promoCode.is_active || now > expiresAt) {
-    console.log(`[TEST API] Promo code expired: ${code}`);
-    return res.json({
-      success: false,
-      message: 'This promo code has expired'
-    });
-  }
-  
-  console.log(`[TEST API] Successfully validated promo code: ${code}`);
-  return res.json({
-    success: true,
-    message: 'Promo code applied successfully',
-    data: {
-      id: promoCode.id,
-      title: promoCode.title,
-      discount_type: promoCode.discount_type,
-      discount_value: promoCode.discount_value,
-      code: promoCode.code
-    }
-  });
-}
+// GET /api/offers - Return test special offers
+router.get('/offers', catchAsync(async (req: Request, res: Response) => {
+  res.json(testSpecialOffers);
+}));
 
-// Get all promo codes for testing (admin use)
-router.get('/promo-codes', (req, res) => {
-  res.json(TEST_PROMO_CODES);
-});
-
-// Get all special offers for testing
-router.get('/special-offers', (req, res) => {
-  res.json(TEST_SPECIAL_OFFERS);
-});
-
-// Get all test packages for testing (dedicated endpoint)
-router.get('/test-packages', (req, res) => {
-  res.json(TEST_PACKAGES);
-});
-
-// Apply promo code to quote (for testing the complete flow)
-router.post('/promo/apply/:quoteId', (req, res) => {
-  const { code } = req.body;
-  
-  if (!code) {
-    return res.status(400).json({
-      success: false,
-      message: 'Promo code is required'
-    });
-  }
-  
-  const promoCode = TEST_PROMO_CODES.find(
-    promo => promo.code.toLowerCase() === code.toLowerCase()
-  );
-  
-  if (!promoCode) {
-    return res.json({
-      success: false,
-      message: 'Invalid promo code'
-    });
-  }
-  
-  // Return a successful response
-  return res.json({
-    success: true,
-    message: 'Promo code applied successfully',
-    promoDetails: {
-      id: promoCode.id,
-      title: promoCode.title,
-      discount_type: promoCode.discount_type,
-      discount_value: promoCode.discount_value
-    }
-  });
-});
-
-// Test endpoint to demonstrate promo code application to a package
-router.get('/:packageId/:promoCode', (req, res) => {
-  const { packageId, promoCode } = req.params;
-  
-  // Find the package
-  const packageItem = TEST_PACKAGES.find(pkg => pkg.id === packageId);
-  if (!packageItem) {
-    return res.status(404).json({
-      success: false,
-      message: 'Package not found'
-    });
-  }
-  
-  // Find the promo code
-  const promo = TEST_PROMO_CODES.find(
-    p => p.code.toLowerCase() === promoCode.toLowerCase()
-  );
-  if (!promo) {
-    return res.status(404).json({
-      success: false,
-      message: 'Promo code not found'
-    });
-  }
-  
-  // Check if promo code is applicable to this package
-  const isApplicable = promo.applicable_treatments?.includes(packageId) || false;
-  if (!isApplicable) {
-    return res.json({
-      success: false,
-      message: 'Promo code is not applicable to this package',
-      packageDetails: packageItem,
-      promoDetails: promo
-    });
-  }
-  
-  // Calculate discounted price
-  let discountedPrice = packageItem.price;
-  let discountAmount = 0;
-  
-  if (promo.discount_type === 'percentage') {
-    discountAmount = (packageItem.price * promo.discount_value) / 100;
-    // Apply max discount if available
-    if (promo.max_discount_amount && discountAmount > promo.max_discount_amount) {
-      discountAmount = promo.max_discount_amount;
-    }
-  } else if (promo.discount_type === 'fixed_amount') {
-    discountAmount = promo.discount_value;
-  }
-  
-  discountedPrice = packageItem.price - discountAmount;
-  
-  // Ensure price is not negative
-  if (discountedPrice < 0) {
-    discountedPrice = 0;
-  }
-  
-  return res.json({
-    success: true,
-    message: 'Promo code applied successfully',
-    packageDetails: packageItem,
-    promoDetails: promo,
-    originalPrice: packageItem.price,
-    discountAmount,
-    discountedPrice,
-    savings: discountAmount
-  });
-});
-
-// Define quote item interface
-interface QuoteItem {
-  price?: number;
-  quantity?: number;
-}
-
-// Define quote data interface
-interface QuoteData {
-  selectedTreatments?: QuoteItem[];
-  selectedPackages?: QuoteItem[];
-  selectedAddons?: QuoteItem[];
-}
-
-// Helper function to calculate total quote price
-function calculateTotalPrice(quoteData: QuoteData): number {
-  let total = 0;
-  
-  // Add up treatment prices
-  if (quoteData.selectedTreatments && Array.isArray(quoteData.selectedTreatments)) {
-    quoteData.selectedTreatments.forEach((treatment: QuoteItem) => {
-      if (treatment.price && treatment.quantity) {
-        total += treatment.price * treatment.quantity;
-      }
-    });
-  }
-  
-  // Add up package prices
-  if (quoteData.selectedPackages && Array.isArray(quoteData.selectedPackages)) {
-    quoteData.selectedPackages.forEach((pkg: QuoteItem) => {
-      if (pkg.price && pkg.quantity) {
-        total += pkg.price * pkg.quantity;
-      }
-    });
-  }
-  
-  // Add up addon prices
-  if (quoteData.selectedAddons && Array.isArray(quoteData.selectedAddons)) {
-    quoteData.selectedAddons.forEach((addon: QuoteItem) => {
-      if (addon.price && addon.quantity) {
-        total += addon.price * addon.quantity;
-      }
-    });
-  }
-  
-  return total;
-}
-
-// Test endpoint for applying promo code directly to a quote
-router.post('/apply', (req, res) => {
-  const { code, quoteData } = req.body as { code: string, quoteData: QuoteData };
-  console.log('Testing promo application for code:', code);
-  console.log('Quote data:', JSON.stringify(quoteData));
-  
-  // Find matching promo code
-  const matchingPromo = TEST_PROMO_CODES.find(
-    promo => promo.code.toLowerCase() === code.toLowerCase()
-  );
-  
-  if (!matchingPromo) {
-    return res.status(404).json({
-      success: false,
-      message: 'Promo code not found'
-    });
-  }
-  
-  // Calculate the discount
-  const originalTotal = calculateTotalPrice(quoteData);
-  let discountAmount = 0;
-  
-  if (matchingPromo.discount_type === 'percentage') {
-    discountAmount = originalTotal * (matchingPromo.discount_value / 100);
-    // Apply max discount if available
-    if (matchingPromo.max_discount_amount && discountAmount > matchingPromo.max_discount_amount) {
-      discountAmount = matchingPromo.max_discount_amount;
-    }
-  } else if (matchingPromo.discount_type === 'fixed_amount') {
-    discountAmount = Math.min(originalTotal, matchingPromo.discount_value);
-  }
-  
-  const discountedTotal = Math.max(0, originalTotal - discountAmount);
-  
-  return res.json({
-    success: true,
-    data: {
-      original_total: originalTotal,
-      discount_amount: discountAmount,
-      discounted_total: discountedTotal,
-      promo: matchingPromo
-    }
-  });
-});
+// GET /api/packages - Return test treatment packages
+router.get('/packages', catchAsync(async (req: Request, res: Response) => {
+  res.json(testTreatmentPackages);
+}));
 
 export default router;

@@ -466,6 +466,18 @@ function Router() {
           );
         }}
       </Route>
+      
+      {/* Special Offers & Treatment Packages Testing Route */}
+      <Route path="/special-offers-test">
+        {() => {
+          const SpecialOffersTestPage = React.lazy(() => import("@/pages/SpecialOffersTestPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+              <SpecialOffersTestPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       {/* Route moved to avoid duplication */}
       <Route path="/rebuild">
         {() => {
