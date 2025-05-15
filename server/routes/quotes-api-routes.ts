@@ -152,25 +152,24 @@ router.post('/apply-package/:packageId', (req, res) => {
 
   // Transform package into treatments for the quote
   const packagedTreatments = packageData.includedTreatments.map(item => {
-    const treatment = treatmentsData[item.treatmentId];
     return {
-      id: item.treatmentId,
-      name: treatment.name,
-      price: item.standardPrice / item.quantity, // Calculate per-unit price
+      id: item.id,
+      name: item.name,
+      price: item.price / item.quantity, // Calculate per-unit price
       quantity: item.quantity,
       type: 'treatment'
     };
   });
 
   // Include any treatments that weren't part of the package
-  const nonPackageTreatmentIds = packageData.includedTreatments.map(t => t.treatmentId);
+  const nonPackageTreatmentIds = packageData.includedTreatments.map(t => t.id);
   const remainingTreatments = currentTreatments.filter(
     (t: { id: string }) => !nonPackageTreatmentIds.includes(t.id)
   );
 
   res.json({
     packageId,
-    packagePrice: packageData.packagePrice,
+    packagePrice: packageData.price,
     packagedTreatments: [...packagedTreatments, ...remainingTreatments],
     savings: packageData.savings,
     additionalPerks: packageData.additionalPerks
