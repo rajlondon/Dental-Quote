@@ -750,9 +750,32 @@ function Router() {
       </Route>
       
       {/* Clinic Staff Protected Routes */}
-      {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
+      {/* Adding a simple, alternative clinic portal route with simplified authentication */}
       <Route path="/simple-clinic">
-        {() => <ClinicGuard><SimpleClinicPage /></ClinicGuard>}
+        {() => {
+          const SimpleClinicGuard = React.lazy(() => import("@/components/SimpleClinicGuard"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>}>
+              <SimpleClinicGuard><SimpleClinicPage /></SimpleClinicGuard>
+            </React.Suspense>
+          );
+        }}
+      </Route>
+
+      {/* Simple clinic login page with minimal dependencies */}
+      <Route path="/simple-clinic-login">
+        {() => {
+          const SimpleClinicLoginPage = React.lazy(() => import("@/pages/SimpleClinicLoginPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>}>
+              <SimpleClinicLoginPage />
+            </React.Suspense>
+          );
+        }}
       </Route>
       
       {/* Dedicated clinic login page */}
