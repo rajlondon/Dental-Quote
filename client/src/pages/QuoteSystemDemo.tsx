@@ -49,6 +49,8 @@ const QuoteSystemDemo: React.FC = () => {
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [activeDemo, setActiveDemo] = useState<string | null>(null);
   const [currentPromoCode, setCurrentPromoCode] = useState<string | null>(null);
+  const [currentPackageId, setCurrentPackageId] = useState<string | null>(null);
+  const [currentOfferId, setCurrentOfferId] = useState<string | null>(null);
 
   // Sample treatment packages
   const treatmentPackages = [
@@ -91,6 +93,8 @@ const QuoteSystemDemo: React.FC = () => {
   const handleStartStandardQuote = () => {
     resetQuoteFlow();
     setActiveDemo('standard');
+    setCurrentPackageId(null);
+    setCurrentOfferId(null);
     
     // Initialize a standard quote with empty params
     initializeQuoteFlow({
@@ -107,6 +111,8 @@ const QuoteSystemDemo: React.FC = () => {
   const handleStartPackageQuote = (packageId: string) => {
     resetQuoteFlow();
     setActiveDemo('package');
+    setCurrentPackageId(packageId);
+    setCurrentOfferId(null);
     
     // Initialize with package params
     const params = new URLSearchParams();
@@ -128,6 +134,8 @@ const QuoteSystemDemo: React.FC = () => {
     if (offer) {
       resetQuoteFlow();
       setActiveDemo('special_offer');
+      setCurrentOfferId(offerId);
+      setCurrentPackageId(null);
       
       // Initialize with special offer params
       const params = new URLSearchParams();
@@ -157,6 +165,8 @@ const QuoteSystemDemo: React.FC = () => {
 
     // Set current promo code and reset any active flows
     setCurrentPromoCode(promoCodeInput);
+    setCurrentPackageId(null);
+    setCurrentOfferId(null);
     resetQuoteFlow();
     
     // Initialize with promo code params
@@ -328,11 +338,16 @@ const QuoteSystemDemo: React.FC = () => {
                               {offer.description}
                             </p>
                             <div className="flex justify-between items-center mt-2">
-                              <Badge>
-                                {(offer.discountType || offer.discount_type) === 'percentage'
-                                  ? `${offer.discountValue || offer.discount_value}% off`
-                                  : `£${offer.discountValue || offer.discount_value} off`}
-                              </Badge>
+                              <div className="flex flex-col gap-1">
+                                <Badge className="self-start">
+                                  {(offer.discountType || offer.discount_type) === 'percentage'
+                                    ? `${offer.discountValue || offer.discount_value}% off`
+                                    : `£${offer.discountValue || offer.discount_value} off`}
+                                </Badge>
+                                <div className="text-xs text-gray-500">
+                                  Regular price: £{offer.treatment_price_gbp || 150}
+                                </div>
+                              </div>
                               <Button
                                 size="sm"
                                 onClick={() => handleStartSpecialOfferQuote(offer.id)}
@@ -423,7 +438,11 @@ const QuoteSystemDemo: React.FC = () => {
               </CardHeader>
               <CardContent>
                 {isQuoteInitialized ? (
-                  <LazyQuoteFlow />
+                  <LazyQuoteFlow 
+                    packageId={activeDemo === 'package' && currentPackageId ? currentPackageId : undefined}
+                    specialOfferId={activeDemo === 'special_offer' && currentOfferId ? currentOfferId : undefined}
+                    promoCode={currentPromoCode || undefined}
+                  />
                 ) : (
                   <div className="text-center py-12">
                     <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />

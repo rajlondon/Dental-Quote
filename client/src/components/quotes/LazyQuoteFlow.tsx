@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/analytics';
@@ -67,6 +67,19 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
   const [currentStep, setCurrentStep] = useState<Step>(initialStep);
   const [quote, setQuote] = useState<any>(null);
   const { toast } = useToast();
+  
+  // Debugging logs to help troubleshoot
+  useEffect(() => {
+    if (packageId) {
+      console.log("📦 Package ID detected in LazyQuoteFlow:", packageId);
+    }
+    if (specialOfferId) {
+      console.log("🎁 Special Offer ID detected in LazyQuoteFlow:", specialOfferId);
+    }
+    if (promoCode) {
+      console.log("🏷️ Promo Code detected in LazyQuoteFlow:", promoCode);
+    }
+  }, [packageId, specialOfferId, promoCode]);
 
   // Track step changes for analytics
   const goToStep = (step: Step, data?: any) => {
