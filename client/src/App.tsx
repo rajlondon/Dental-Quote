@@ -478,6 +478,18 @@ function Router() {
           );
         }}
       </Route>
+      
+      {/* Quote Integration Testing Route */}
+      <Route path="/quote-integration-test">
+        {() => {
+          const QuoteIntegrationTestPage = React.lazy(() => import("@/pages/QuoteIntegrationTestPage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+              <QuoteIntegrationTestPage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       {/* Route moved to avoid duplication */}
       <Route path="/rebuild">
         {() => {
