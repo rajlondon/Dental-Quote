@@ -299,10 +299,11 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
   // Apply a promo code to the quote with enhanced persistence and error handling
   const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
     console.log('[QuoteBuilder] Starting promo code application for:', code);
+    
+    // Always set loading state at the beginning of the function, outside of try/catch
+    setIsApplyingPromo(true);
+    
     try {
-      // Set loading state for promo code application specifically
-      setIsApplyingPromo(true);
-      
       // Track promo code attempt
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'promo_code_attempt', {
