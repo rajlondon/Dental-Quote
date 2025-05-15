@@ -68,6 +68,8 @@ import { treatmentPlansRoutes } from "./routes/v1";
 import freeConsultationRoutes from "./routes/free-consultation-routes";
 // Import test quote data routes
 import testQuoteDataRoutes from "./routes/test-quote-data-routes";
+// Import quotes API routes for special offers and treatment packages
+import quotesSpecialOffersRoutes from "./routes/quotes-api-routes";
 // Import security middleware
 import { 
   csrfProtection, 
@@ -619,6 +621,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register quotes API routes
   console.log('[DEBUG] Mounting quotes-api-routes at /api/quotes-api');
   app.use('/api/quotes-api', quotesApiRoutes);
+  
+  // Mount the special offers and treatment packages API routes
+  console.log('[DEBUG] Mounting quotes-special-offers-routes at /api/quotes-api');
+  app.use('/api/quotes-api', quotesSpecialOffersRoutes);
   
   // Create image-cache directory for storing cached images
   const imageCacheDir = path.join(process.cwd(), 'public', 'image-cache');
