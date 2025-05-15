@@ -24,7 +24,7 @@ const SimpleClinicPage: React.FC = () => {
     const fetchAuthStatus = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get('/api/clinic-status');
+        const response = await api.get('/clinic-status');
         
         if (response.data.success && response.data.user) {
           setUser(response.data.user);
@@ -61,7 +61,7 @@ const SimpleClinicPage: React.FC = () => {
       setDataLoading(true);
       try {
         // Use our direct clinic-status endpoint
-        const { data } = await api.get('/api/clinic-status');
+        const { data } = await api.get('/clinic-status');
         if (data.success) {
           setClinicData({
             name: 'Your Clinic', // Placeholder since we're just demonstrating login works

@@ -84,7 +84,6 @@ import { setupWebSocketService, getWebSocketService, WebSocketService } from "./
 import { registerMessageRoutes } from "./routes/messageRoutes";
 import { createNotificationService } from "./services/notificationService";
 import { createEmailNotificationService } from "./services/emailNotificationService";
-import clinicStatusRoutes from "./routes/clinic-status";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
