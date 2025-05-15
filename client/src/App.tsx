@@ -291,6 +291,16 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Basic Quote Demo - standalone with no dependencies */}
+      <Route path="/basic-quote-demo" component={() => {
+        const BasicQuoteDemo = React.lazy(() => import("./pages/BasicQuoteDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading basic quote demo...</div>}>
+            <BasicQuoteDemo />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
