@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Quote Test - Direct Access</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9fafb;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      color: #111827;
+      margin-bottom: 20px;
+    }
+    p {
+      color: #4b5563;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    .btn {
+      background-color: #6366f1;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.15s ease;
+    }
+    .btn:hover {
+      background-color: #4f46e5;
+    }
+    .btn-secondary {
+      background-color: #e5e7eb;
+      color: #374151;
+      margin-left: 10px;
+    }
+    .btn-secondary:hover {
+      background-color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Simple Quote Test Page</h1>
+    <p>
+      This direct access page provides a lightweight way to access the Simple Quote Test page without navigating through the full application.
+    </p>
+    <div>
+      <a href="/simple-quote-test" class="btn">Access Simple Test Page</a>
+      <a href="/" class="btn btn-secondary">Back to Home</a>
+    </div>
+  </div>
+</body>
+</html>
