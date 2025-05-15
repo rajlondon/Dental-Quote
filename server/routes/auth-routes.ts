@@ -5,6 +5,12 @@ import { users, type User } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { type Session } from 'express-session';
+import { 
+  configureSessionForPersistence, 
+  setRoleSpecificCookies, 
+  clearAllAuthCookies,
+  getUserIdentifier
+} from '../utils/auth-utils';
 
 // Extend the Session type to include passport
 declare module 'express-session' {
@@ -29,7 +35,7 @@ enhancedAuthRoutes.get('/status', (req: Request, res: Response) => {
   res.json(authStatus);
 });
 
-// Enhanced login endpoint with better error handling
+// Enhanced login endpoint with better error handling and shared utility functions
 enhancedAuthRoutes.post('/login', (req: Request, res: Response, next: NextFunction) => {
   // Clear any potential stale session data
   if (req.session.passport) {
@@ -46,27 +52,11 @@ enhancedAuthRoutes.post('/login', (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ success: false, message: info?.message || 'Invalid credentials' });
     }
     
-    // Log the login attempt
-    console.log(`Login attempt successful for user ${user.email} (${user.id})`);
+    // Log the login attempt with more detailed user information
+    console.log(`Login attempt successful for user ${user.email} (ID: ${user.id}, Role: ${user.role})`);
     
-    // Configure session for better persistence
-    req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000; // Set to 7 days
-    req.session.cookie.secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    req.session.cookie.httpOnly = true;
-    req.session.cookie.sameSite = 'lax';
-    
-    // For development/testing to ensure cookies persist without HTTPS
-    if (process.env.NODE_ENV !== 'production') {
-      req.session.cookie.secure = false;
-    }
-    
-    console.log('Session configuration:', {
-      maxAge: req.session.cookie.maxAge,
-      secure: req.session.cookie.secure,
-      httpOnly: req.session.cookie.httpOnly,
-      sameSite: req.session.cookie.sameSite,
-      path: req.session.cookie.path
-    });
+    // Configure session for better persistence using shared utility
+    configureSessionForPersistence(req);
     
     // Manually handle login to have more control
     req.login(user, (loginErr: Error | null) => {
@@ -82,28 +72,15 @@ enhancedAuthRoutes.post('/login', (req: Request, res: Response, next: NextFuncti
           return res.status(500).json({ success: false, message: 'Failed to save session', error: saveErr.message });
         }
         
-        // Set special-case cookies for clinic staff with longer expiration
-        if (user.role === 'clinic_staff') {
-          res.cookie('is_clinic_staff', 'true', { 
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            httpOnly: false, // Make accessible to client JS
-            path: '/',
-            sameSite: 'lax'
-          });
-          
-          res.cookie('clinic_session_active', 'true', {
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            httpOnly: false,
-            path: '/',
-            sameSite: 'lax'
-          });
-        }
+        // Set role-specific cookies using shared utility
+        setRoleSpecificCookies(req, res, user);
         
-        // Return success with user object
+        // Return success with user object and timestamp to prevent caching
         return res.json({ 
           success: true, 
           user,
-          message: 'Login successful'
+          message: 'Login successful',
+          timestamp: new Date().getTime()
         });
       });
     });
@@ -175,24 +152,8 @@ enhancedAuthRoutes.post('/register', async (req: Request, res: Response) => {
       status: newUser.status ?? undefined
     };
     
-    // Configure session for better persistence
-    req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000; // Set to 7 days
-    req.session.cookie.secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    req.session.cookie.httpOnly = true;
-    req.session.cookie.sameSite = 'lax';
-    
-    // For development/testing to ensure cookies persist without HTTPS
-    if (process.env.NODE_ENV !== 'production') {
-      req.session.cookie.secure = false;
-    }
-    
-    console.log('Registration session configuration:', {
-      maxAge: req.session.cookie.maxAge,
-      secure: req.session.cookie.secure,
-      httpOnly: req.session.cookie.httpOnly,
-      sameSite: req.session.cookie.sameSite,
-      path: req.session.cookie.path
-    });
+    // Configure session for better persistence using shared utility
+    configureSessionForPersistence(req);
     
     // Automatically log in the new user
     req.login(userForLogin, (err: Error | null) => {
@@ -216,22 +177,8 @@ enhancedAuthRoutes.post('/register', async (req: Request, res: Response) => {
           });
         }
         
-        // Set special-case cookies for clinic staff
-        if (userForLogin.role === 'clinic_staff') {
-          res.cookie('is_clinic_staff', 'true', { 
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            httpOnly: false, // Make accessible to client JS
-            path: '/',
-            sameSite: 'lax'
-          });
-          
-          res.cookie('clinic_session_active', 'true', {
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            httpOnly: false,
-            path: '/',
-            sameSite: 'lax'
-          });
-        }
+        // Set role-specific cookies using shared utility
+        setRoleSpecificCookies(req, res, userForLogin);
         
         return res.status(201).json({ 
           success: true, 
@@ -255,29 +202,8 @@ enhancedAuthRoutes.post('/logout', (req: Request, res: Response) => {
   
   console.log(`Logout attempt for user ID: ${userId} with role: ${userRole}`);
   
-  // Clear all application-specific cookies with various combinations to ensure removal
-  const cookieOptions = { path: '/', sameSite: 'lax' as const };
-  const secureCookieOptions = { ...cookieOptions, secure: true };
-  const insecureCookieOptions = { ...cookieOptions, secure: false };
-  
-  // List of cookies to clear
-  const cookiesToClear = [
-    'is_clinic_staff',
-    'clinic_session_active',
-    'no_promo_redirect',
-    'disable_quote_redirect',
-    'no_special_offer_redirect',
-    'connect.sid'  // Clear the session cookie explicitly
-  ];
-  
-  // Clear each cookie with multiple option combinations for thorough cleanup
-  cookiesToClear.forEach(cookieName => {
-    res.clearCookie(cookieName, cookieOptions);
-    res.clearCookie(cookieName, secureCookieOptions);
-    res.clearCookie(cookieName, insecureCookieOptions);
-    res.clearCookie(cookieName, { path: '/' });
-    res.clearCookie(cookieName); // Default options
-  });
+  // Use the shared utility function to clear all auth-related cookies
+  clearAllAuthCookies(res);
   
   // Standard logout to clear Passport.js authentication
   req.logout((err: Error | null) => {
