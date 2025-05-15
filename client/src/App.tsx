@@ -277,6 +277,20 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Simplified Quote Demo - has better performance */}
+      <Route path="/simplified-quote-demo" component={() => {
+        const SimplifiedQuoteDemo = React.lazy(() => import("./pages/SimplifiedQuoteDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading simplified quote demo...</div>}>
+            <SpecialOffersProvider>
+              <EnhancedQuoteFlowProvider>
+                <SimplifiedQuoteDemo />
+              </EnhancedQuoteFlowProvider>
+            </SpecialOffersProvider>
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
