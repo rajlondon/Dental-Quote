@@ -101,7 +101,7 @@ export const useTreatmentPackages = ({
       console.error("Error applying treatment package:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to apply treatment package",
+        description: error instanceof Error ? error.message : "Failed to apply treatment package",
         variant: "destructive"
       });
       return false;
@@ -157,7 +157,7 @@ export const useTreatmentPackages = ({
       console.error("Error removing treatment package:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to remove treatment package",
+        description: error instanceof Error ? error.message : "Failed to remove treatment package",
         variant: "destructive"
       });
       return false;
