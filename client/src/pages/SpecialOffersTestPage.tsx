@@ -102,11 +102,11 @@ export default function SpecialOffersTestPage() {
             title: 'Complete Implant Solution',
             description: 'Dental implant with crown at a bundle price',
             clinicId: 'clinic-001',
-            packagePrice: 950, // Discounted package price
+            price: 950, // Discounted package price
             savings: 100,
             includedTreatments: [
-              { treatmentId: 'tr-001', quantity: 1, standardPrice: 700 },
-              { treatmentId: 'tr-002', quantity: 1, standardPrice: 350 }
+              { id: 'tr-001', name: 'Dental Implant', quantity: 1, price: 700 },
+              { id: 'tr-002', name: 'Porcelain Crown', quantity: 1, price: 350 }
             ],
             additionalPerks: ['Free consultation'],
             startDate: new Date().toISOString(),
@@ -118,11 +118,11 @@ export default function SpecialOffersTestPage() {
             title: 'Smile Transformation',
             description: '4 veneers and teeth whitening for a complete smile makeover',
             clinicId: 'clinic-001',
-            packagePrice: 1250, // Discounted package price
+            price: 1250, // Discounted package price
             savings: 200,
             includedTreatments: [
-              { treatmentId: 'tr-003', quantity: 4, standardPrice: 300 },
-              { treatmentId: 'tr-005', quantity: 1, standardPrice: 250 }
+              { id: 'tr-003', name: 'Porcelain Veneer', quantity: 4, price: 300 },
+              { id: 'tr-005', name: 'Teeth Whitening', quantity: 1, price: 250 }
             ],
             additionalPerks: ['Free whitening touch-up kit'],
             startDate: new Date().toISOString(),
@@ -134,12 +134,12 @@ export default function SpecialOffersTestPage() {
             title: 'Full Mouth Rehabilitation',
             description: 'Comprehensive treatment package for full mouth restoration',
             clinicId: 'clinic-001',
-            packagePrice: 2500, // Discounted package price
+            price: 2500, // Discounted package price
             savings: 500,
             includedTreatments: [
-              { treatmentId: 'tr-001', quantity: 2, standardPrice: 700 },
-              { treatmentId: 'tr-002', quantity: 2, standardPrice: 350 },
-              { treatmentId: 'tr-004', quantity: 2, standardPrice: 400 }
+              { id: 'tr-001', name: 'Dental Implant', quantity: 2, price: 700 },
+              { id: 'tr-002', name: 'Porcelain Crown', quantity: 2, price: 350 },
+              { id: 'tr-004', name: 'Dental Bridge', quantity: 2, price: 400 }
             ],
             additionalPerks: ['Free hotel stay', 'Airport transfer'],
             startDate: new Date().toISOString(),
@@ -318,8 +318,8 @@ export default function SpecialOffersTestPage() {
           </CardHeader>
           <CardContent>
             <SpecialOffersSelector
-              availableOffers={availableOffers}
-              onSelectOffer={handleSelectOffer}
+              offers={availableOffers}
+              onChange={(offerId) => handleSelectOffer(offerId || '')}
               selectedOfferId={selectedOfferId}
               isLoading={isLoadingOffers}
             />
@@ -332,11 +332,10 @@ export default function SpecialOffersTestPage() {
           </CardHeader>
           <CardContent>
             <TreatmentPackageSelector
-              availablePackages={availablePackages}
-              onSelectPackage={handleSelectPackage}
+              packages={availablePackages}
+              onChange={(packageId) => handleSelectPackage(packageId || '')}
               selectedPackageId={selectedPackageId}
               isLoading={isLoadingPackages}
-              treatmentNames={Object.fromEntries(treatments.map(t => [t.id, t.name]))}
             />
           </CardContent>
         </Card>
