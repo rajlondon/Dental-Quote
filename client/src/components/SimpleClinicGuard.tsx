@@ -23,7 +23,7 @@ const SimpleClinicGuard: React.FC<SimpleClinicGuardProps> = ({ children }) => {
     const fetchAuthStatus = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get('/api/clinic-status');
+        const response = await api.get('/clinic-status');
         
         if (response.data.success && response.data.user) {
           setUser(response.data.user);

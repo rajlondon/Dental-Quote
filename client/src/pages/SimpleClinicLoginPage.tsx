@@ -20,7 +20,7 @@ const SimpleClinicLoginPage: React.FC = () => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await api.get('/api/clinic-status');
+        const response = await api.get('/clinic-status');
         if (response.data.success && response.data.user) {
           console.log('Already authenticated, redirecting to clinic portal');
           toast({
@@ -44,8 +44,8 @@ const SimpleClinicLoginPage: React.FC = () => {
     setError(null);
 
     try {
-      // Call the authentication endpoint
-      const response = await api.post('/api/auth/login', {
+      // Call the authentication endpoint - no need to prefix with /api since it's already in the baseURL
+      const response = await api.post('/auth/login', {
         email,
         password,
         role: 'clinic_staff' // Make sure to specify the role for session organization
