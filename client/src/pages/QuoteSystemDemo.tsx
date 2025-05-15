@@ -508,27 +508,42 @@ const QuoteSystemDemo: React.FC = () => {
                     </p>
                     
                     <div className="space-y-4">
-                      <Button 
-                        onClick={handleStartStandardQuote}
-                        className="w-full"
-                      >
-                        Start a Standard Quote
-                      </Button>
-                      
-                      {currentPackageId && (
-                        <div className="space-y-2 border p-4 rounded-md bg-blue-50">
-                          <div className="flex items-center justify-center gap-2">
-                            <Package className="h-5 w-5 text-blue-500" />
-                            <span className="font-medium">Selected Package: {currentPackageId}</span>
+                      {currentPackageId ? (
+                        <div className="space-y-4">
+                          <div className="border p-4 rounded-md bg-blue-50">
+                            <div className="flex items-center justify-center gap-2 mb-3">
+                              <Package className="h-5 w-5 text-blue-500" />
+                              <span className="font-medium">Selected Package: {currentPackageId}</span>
+                            </div>
+                            <p className="text-sm text-blue-700 mb-3">
+                              You have a dental treatment package selected. Click below to start building your quote with this package.
+                            </p>
+                            <Button 
+                              onClick={() => handleStartPackageQuote(currentPackageId)}
+                              variant="default"
+                              className="w-full"
+                            >
+                              Start with Selected Package
+                            </Button>
+                          </div>
+                          <div className="pt-2 text-sm text-gray-500">
+                            <p>Or start a standard quote without the package:</p>
                           </div>
                           <Button 
-                            onClick={() => handleStartPackageQuote(currentPackageId)}
-                            variant="default"
+                            onClick={handleStartStandardQuote}
+                            variant="outline"
                             className="w-full"
                           >
-                            Start with Selected Package
+                            Start Standard Quote Instead
                           </Button>
                         </div>
+                      ) : (
+                        <Button 
+                          onClick={handleStartStandardQuote}
+                          className="w-full"
+                        >
+                          Start a Standard Quote
+                        </Button>
                       )}
                       
                       {currentPromoCode && (
