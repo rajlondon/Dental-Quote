@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import SpecialOffersSelector from '@/components/offers/SpecialOffersSelector';
-import TreatmentPackageSelector from '@/components/packages/TreatmentPackageSelector';
+import { SpecialOffersSelector } from '@/components/offers/SpecialOffersSelector';
+import { TreatmentPackageSelector } from '@/components/packages/TreatmentPackageSelector';
 import { SpecialOffer, TreatmentPackage } from '@shared/offer-types';
 import { useToast } from '@/hooks/use-toast';
 
