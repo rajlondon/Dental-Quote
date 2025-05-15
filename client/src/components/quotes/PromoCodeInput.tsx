@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { applyPromoCode } from '@/hooks/use-promo-code';
+import { useQuoteBuilder } from '@/hooks/use-quote-builder';
 import { Loader2, CheckCircle } from 'lucide-react';
 
 interface PromoCodeInputProps {
@@ -17,12 +17,11 @@ export const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
   initialPromoCode = ''
 }) => {
   const [promoCode, setPromoCode] = useState(initialPromoCode);
-  const [isApplying, setIsApplying] = useState(false);
+  const { applyPromoCode, isApplyingPromo } = useQuoteBuilder();
   
   const handleApplyPromoCode = async () => {
     try {
-      setIsApplying(true);
-      const result = await applyPromoCode(promoCode, quote, setQuote);
+      const result = await applyPromoCode(promoCode);
       
       if (!result.success) {
         toast({
@@ -38,8 +37,6 @@ export const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to apply promo code'
       });
-    } finally {
-      setIsApplying(false);
     }
   };
   
@@ -93,13 +90,13 @@ export const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
               handleApplyPromoCode();
             }
           }}
-          disabled={isApplying}
+          disabled={isApplyingPromo}
         />
         <Button
           onClick={handleApplyPromoCode}
-          disabled={!promoCode.trim() || isApplying}
+          disabled={!promoCode.trim() || isApplyingPromo}
         >
-          {isApplying ? (
+          {isApplyingPromo ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Applying...
