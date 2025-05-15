@@ -76,7 +76,9 @@ export const authDiagnosticsMiddleware = (req: Request, res: Response, next: Nex
       return originalJson.apply(res, [body]);
     };
     
-    res.end = function(...args) {
+    // Save original end method
+    // Simple override without complex type handling
+    res.end = function() {
       // Log response cookies
       const cookies = res.getHeader('set-cookie');
       if (cookies) {
@@ -98,7 +100,8 @@ export const authDiagnosticsMiddleware = (req: Request, res: Response, next: Nex
       log(`🔍 AUTH DIAGNOSTICS - RESPONSE: ${res.statusCode}`, 'auth-diagnostics');
       log('-----------------------------------------------------', 'auth-diagnostics');
       
-      return originalEnd.apply(res, args);
+      // Call original end with all arguments
+      return originalEnd.apply(res, arguments);
     };
   }
   
