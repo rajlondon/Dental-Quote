@@ -18,7 +18,7 @@ declare module 'express-session' {
 const enhancedAuthRoutes = Router();
 
 // Add an auth status endpoint that's more reliable
-enhancedAuthRoutes.get('/status', (req, res) => {
+enhancedAuthRoutes.get('/status', (req: Request, res: Response) => {
   const authStatus = {
     isAuthenticated: req.isAuthenticated(),
     user: req.isAuthenticated() ? req.user : null,
@@ -30,7 +30,7 @@ enhancedAuthRoutes.get('/status', (req, res) => {
 });
 
 // Enhanced login endpoint with better error handling
-enhancedAuthRoutes.post('/login', (req, res, next) => {
+enhancedAuthRoutes.post('/login', (req: Request, res: Response, next: NextFunction) => {
   // Clear any potential stale session data
   if (req.session.passport) {
     delete req.session.passport;
@@ -50,14 +50,14 @@ enhancedAuthRoutes.post('/login', (req, res, next) => {
     console.log(`Login attempt successful for user ${user.email} (${user.id})`);
     
     // Manually handle login to have more control
-    req.login(user, (loginErr) => {
+    req.login(user, (loginErr: Error | null) => {
       if (loginErr) {
         console.error('Session error during login:', loginErr);
         return res.status(500).json({ success: false, message: 'Failed to establish session', error: loginErr.message });
       }
       
       // Force session save to ensure cookie is set
-      req.session.save((saveErr) => {
+      req.session.save((saveErr: Error | null) => {
         if (saveErr) {
           console.error('Session save error:', saveErr);
           return res.status(500).json({ success: false, message: 'Failed to save session', error: saveErr.message });
@@ -92,7 +92,7 @@ enhancedAuthRoutes.post('/login', (req, res, next) => {
 });
 
 // Enhanced register endpoint
-enhancedAuthRoutes.post('/register', async (req, res) => {
+enhancedAuthRoutes.post('/register', async (req: Request, res: Response) => {
   try {
     const { email, password, firstName, lastName, phone, consent = false } = req.body;
     
@@ -147,7 +147,7 @@ enhancedAuthRoutes.post('/register', async (req, res) => {
     } as User;
     
     // Automatically log in the new user
-    req.login(userForLogin, (err) => {
+    req.login(userForLogin, (err: Error | null) => {
       if (err) {
         console.error('Session error during auto-login after registration:', err);
         return res.status(201).json({ 
@@ -158,7 +158,7 @@ enhancedAuthRoutes.post('/register', async (req, res) => {
       }
       
       // Force session save
-      req.session.save((saveErr) => {
+      req.session.save((saveErr: Error | null) => {
         if (saveErr) {
           console.error('Session save error after registration:', saveErr);
         }
@@ -178,7 +178,7 @@ enhancedAuthRoutes.post('/register', async (req, res) => {
 });
 
 // Enhanced logout endpoint
-enhancedAuthRoutes.post('/logout', (req, res) => {
+enhancedAuthRoutes.post('/logout', (req: Request, res: Response) => {
   const wasAuthenticated = req.isAuthenticated();
   const userId = req.user?.id;
   
@@ -190,14 +190,14 @@ enhancedAuthRoutes.post('/logout', (req, res) => {
   res.clearCookie('no_special_offer_redirect', { path: '/' });
   
   // Standard logout
-  req.logout((err) => {
+  req.logout((err: Error | null) => {
     if (err) {
       console.error('Logout error:', err);
       return res.status(500).json({ success: false, message: 'Failed to logout', error: err.message });
     }
     
     // Regenerate session for security
-    req.session.regenerate((regenerateErr) => {
+    req.session.regenerate((regenerateErr: Error | null) => {
       if (regenerateErr) {
         console.error('Session regeneration error during logout:', regenerateErr);
       }
