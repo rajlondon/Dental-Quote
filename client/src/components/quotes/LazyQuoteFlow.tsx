@@ -70,8 +70,22 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
   
   // Debugging logs to help troubleshoot
   useEffect(() => {
+    console.log("🔍 LazyQuoteFlow props:", { 
+      packageId, 
+      specialOfferId, 
+      promoCode,
+      initialStep,
+      quoteId
+    });
+    
     if (packageId) {
       console.log("📦 Package ID detected in LazyQuoteFlow:", packageId);
+      // Add a toast notification to visually confirm package detection in UI
+      toast({
+        title: "Package Selected",
+        description: `Processing package: ${packageId}`,
+        duration: 3000,
+      });
     }
     if (specialOfferId) {
       console.log("🎁 Special Offer ID detected in LazyQuoteFlow:", specialOfferId);
@@ -79,7 +93,7 @@ const LazyQuoteFlow: React.FC<LazyQuoteFlowProps> = ({
     if (promoCode) {
       console.log("🏷️ Promo Code detected in LazyQuoteFlow:", promoCode);
     }
-  }, [packageId, specialOfferId, promoCode]);
+  }, [packageId, specialOfferId, promoCode, initialStep, quoteId, toast]);
 
   // Track step changes for analytics
   const goToStep = (step: Step, data?: any) => {
