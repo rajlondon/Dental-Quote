@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -202,37 +202,54 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
     }
   });
 
-  // Effect to calculate totals whenever items change
-  useEffect(() => {
-    // Calculate subtotal
+  // Memoized calculation of subtotal
+  const subtotal = useMemo(() => {
+    // Calculate subtotal from all items
     const treatmentsTotal = quote.treatments.reduce((sum, item) => sum + item.price, 0);
     const packagesTotal = quote.packages.reduce((sum, item) => sum + (item.price || 0), 0);
     const addonsTotal = quote.addons.reduce((sum, item) => sum + item.price, 0);
     
-    const newSubtotal = treatmentsTotal + packagesTotal + addonsTotal;
-    
+    return treatmentsTotal + packagesTotal + addonsTotal;
+  }, [quote.treatments, quote.packages, quote.addons]);
+  
+  // Memoized calculation of discount
+  const discount = useMemo(() => {
     // Calculate discount if promo code is applied
-    let newDiscount = 0;
-    
-    if (quote.promoCode && quote.discountType && quote.discountValue) {
-      if (quote.discountType === 'percentage') {
-        newDiscount = newSubtotal * (quote.discountValue / 100);
-      } else if (quote.discountType === 'fixed_amount') {
-        newDiscount = Math.min(quote.discountValue, newSubtotal); // Don't apply more discount than subtotal
-      }
+    if (!quote.promoCode || !quote.discountType || !quote.discountValue) {
+      return 0;
     }
     
-    // Calculate final total
-    const newTotal = Math.max(newSubtotal - newDiscount, 0);
+    if (quote.discountType === 'percentage') {
+      return subtotal * (quote.discountValue / 100);
+    } else if (quote.discountType === 'fixed_amount') {
+      return Math.min(quote.discountValue, subtotal); // Don't apply more discount than subtotal
+    }
     
-    // Update quote state with new calculations
+    return 0;
+  }, [subtotal, quote.promoCode, quote.discountType, quote.discountValue]);
+  
+  // Memoized calculation of total
+  const total = useMemo(() => {
+    let offerDiscount = quote.offerDiscount || 0;
+    let promoDiscount = quote.promoCode ? discount : 0;
+    
+    // Ensure discount doesn't exceed subtotal
+    const totalDiscount = Math.min(offerDiscount + promoDiscount, subtotal);
+    
+    // Calculate final total (never negative)
+    return Math.max(subtotal - totalDiscount, 0);
+  }, [subtotal, discount, quote.offerDiscount, quote.promoCode]);
+  
+  // Update quote with calculated values when they change
+  useEffect(() => {
     setQuote(prev => ({
       ...prev,
-      subtotal: newSubtotal,
-      discount: newDiscount,
-      total: newTotal
+      subtotal,
+      promoDiscount: quote.promoCode ? discount : 0,
+      discount: total < subtotal ? subtotal - total : 0,
+      total
     }));
-  }, [quote.treatments, quote.packages, quote.addons, quote.discountType, quote.discountValue]);
+  }, [subtotal, discount, total, quote.promoCode]);
 
   // Add a treatment to the quote
   const addTreatment = (treatment: Treatment) => {

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { useQuoteBuilder } from '@/hooks/use-quote-builder';
-import { formatCurrency } from '@/hooks/use-promo-code';
+import { useQuoteBuilder, formatCurrency } from '@/hooks/use-quote-builder';
 import { Loader2, CheckCircle } from 'lucide-react';
 
 interface PromoCodeInputProps {
