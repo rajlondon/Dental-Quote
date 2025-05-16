@@ -1,168 +1,104 @@
 import { useState, useEffect } from 'react';
-import { TreatmentPackage } from '../stores/quoteStore';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
-// Sample treatment packages data
-const SAMPLE_PACKAGES: TreatmentPackage[] = [
-  {
-    id: 'pkg-001',
-    name: 'Dental Implant Package',
-    description: 'Complete dental implant package including consultation, surgery, and crown.',
-    price: 1200,
-    originalPrice: 1500,
-    treatments: [
-      { 
-        id: 'impl-001', 
-        name: 'Dental Implant', 
-        description: 'Titanium dental implant procedure', 
-        price: 800, 
-        quantity: 1,
-        category: 'dental_implant_standard'
-      },
-      { 
-        id: 'crown-001', 
-        name: 'Porcelain Crown', 
-        description: 'High-quality porcelain crown placement', 
-        price: 400, 
-        quantity: 1,
-        category: 'dental_crowns'
-      },
-      { 
-        id: 'consult-001', 
-        name: 'Dental Consultation', 
-        description: 'Initial consultation and treatment planning', 
-        price: 100, 
-        quantity: 1,
-        category: 'consultation'
-      }
-    ]
-  },
-  {
-    id: 'pkg-002',
-    name: 'Hollywood Smile Package',
-    description: 'Complete smile makeover with teeth whitening and veneers.',
-    price: 2500,
-    originalPrice: 3200,
-    treatments: [
-      { 
-        id: 'veneer-001', 
-        name: 'Porcelain Veneers (6 teeth)', 
-        description: 'Premium porcelain veneers for front teeth', 
-        price: 2000, 
-        quantity: 1,
-        category: 'porcelain_veneers'
-      },
-      { 
-        id: 'whiten-001', 
-        name: 'Professional Teeth Whitening', 
-        description: 'In-office teeth whitening treatment', 
-        price: 300, 
-        quantity: 1,
-        category: 'teeth_whitening'
-      },
-      { 
-        id: 'consult-002', 
-        name: 'Cosmetic Consultation', 
-        description: 'Smile design consultation and planning', 
-        price: 150, 
-        quantity: 1,
-        category: 'consultation'
-      }
-    ]
-  },
-  {
-    id: 'pkg-003',
-    name: 'Full Mouth Rehabilitation',
-    description: 'Complete rehabilitation for patients with multiple dental issues.',
-    price: 5000,
-    originalPrice: 6500,
-    treatments: [
-      { 
-        id: 'impl-multi', 
-        name: 'Multiple Dental Implants (4)', 
-        description: 'Four dental implants for stable foundation', 
-        price: 3200, 
-        quantity: 1,
-        category: 'dental_implant_standard'
-      },
-      { 
-        id: 'bridge-001', 
-        name: 'Dental Bridge', 
-        description: 'Fixed dental bridge for replacing missing teeth', 
-        price: 1200, 
-        quantity: 1,
-        category: 'bridges'
-      },
-      { 
-        id: 'perio-001', 
-        name: 'Periodontal Treatment', 
-        description: 'Comprehensive gum disease treatment', 
-        price: 800, 
-        quantity: 1,
-        category: 'periodontal_treatment'
-      },
-      { 
-        id: 'consult-003', 
-        name: 'Comprehensive Consultation', 
-        description: 'Detailed examination and treatment planning', 
-        price: 200, 
-        quantity: 1,
-        category: 'consultation'
-      }
-    ]
-  }
-];
+// Define package treatment type
+export interface PackageTreatment {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  quantity: number;
+  category?: string;
+}
 
-export function useTreatmentPackages() {
-  const [packages, setPackages] = useState<TreatmentPackage[]>([]);
+// Define the package type
+export interface TreatmentPackage {
+  id: string;
+  name: string;
+  description: string;
+  treatments: PackageTreatment[];
+  discount: number;
+  discountType: 'percentage' | 'fixed';
+  imageUrl?: string;
+  cityCode?: string;
+  clinicId?: string;
+}
+
+export interface UsePackagesResult {
+  packages: TreatmentPackage[];
+  isLoading: boolean;
+  error: Error | null;
+  packageSavings: number;
+  selectedPackage: TreatmentPackage | null;
+  selectPackage: (packageData: TreatmentPackage | null) => void;
+  calculatePackageSavings: (packageData: TreatmentPackage) => number;
+}
+
+export function useTreatmentPackages(): UsePackagesResult {
   const [selectedPackage, setSelectedPackage] = useState<TreatmentPackage | null>(null);
-  const [packageSavings, setPackageSavings] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [packageSavings, setPackageSavings] = useState<number>(0);
 
-  // Fetch packages on component mount
-  useEffect(() => {
-    const fetchPackages = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // In a real app, this would be an API call
-        // const response = await fetch('/api/treatment-packages');
-        // const data = await response.json();
-        
-        // Using sample data for now
-        setTimeout(() => {
-          setPackages(SAMPLE_PACKAGES);
-          setIsLoading(false);
-        }, 500); // Simulate API delay
-      } catch (err) {
-        setError('Failed to load treatment packages');
-        setIsLoading(false);
+  // Fetch packages from API
+  const { data: packages = [], isLoading, error } = useQuery({
+    queryKey: ['/api/v1/packages'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/v1/packages');
+      if (!response.ok) {
+        throw new Error('Failed to fetch treatment packages');
       }
-    };
-    
-    fetchPackages();
-  }, []);
+      return response.json();
+    }
+  });
 
-  // Calculate savings when a package is selected
-  const selectPackage = (pkg: TreatmentPackage | null) => {
-    setSelectedPackage(pkg);
+  // Calculate savings for a package
+  const calculatePackageSavings = (packageData: TreatmentPackage): number => {
+    if (!packageData || !packageData.treatments || packageData.treatments.length === 0) {
+      return 0;
+    }
+
+    // Calculate the total regular price of all treatments
+    const totalRegularPrice = packageData.treatments.reduce(
+      (sum, treatment) => sum + treatment.price * (treatment.quantity || 1),
+      0
+    );
+
+    // Calculate the savings based on discount type
+    if (packageData.discountType === 'percentage') {
+      return totalRegularPrice * (packageData.discount / 100);
+    } else {
+      // For fixed discount
+      return packageData.discount;
+    }
+  };
+
+  // Handle package selection
+  const selectPackage = (packageData: TreatmentPackage | null) => {
+    setSelectedPackage(packageData);
     
-    if (pkg) {
-      // Calculate the savings compared to buying treatments individually
-      const savings = pkg.originalPrice - pkg.price;
+    if (packageData) {
+      const savings = calculatePackageSavings(packageData);
       setPackageSavings(savings);
     } else {
       setPackageSavings(0);
     }
   };
 
+  // Update savings if selected package changes
+  useEffect(() => {
+    if (selectedPackage) {
+      const savings = calculatePackageSavings(selectedPackage);
+      setPackageSavings(savings);
+    }
+  }, [selectedPackage]);
+
   return {
     packages,
+    isLoading,
+    error,
+    packageSavings,
     selectedPackage,
     selectPackage,
-    packageSavings,
-    isLoading,
-    error
+    calculatePackageSavings
   };
 }
