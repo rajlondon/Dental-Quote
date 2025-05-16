@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import MainLayout from '@/components/layout/MainLayout';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
-// Define types for the component
+// Define Treatment type
 interface Treatment {
   id: string;
   name: string;
@@ -14,90 +14,108 @@ interface Treatment {
   quantity: number;
 }
 
-// Mock promo codes for testing
-const PROMO_CODES: Record<string, { type: 'percentage' | 'fixed', value: number }> = {
-  'DENTAL10': { type: 'percentage', value: 10 },
-  'SMILE20': { type: 'percentage', value: 20 },
-  'DISCOUNT30': { type: 'percentage', value: 30 },
-  'NEWSMILE': { type: 'fixed', value: 100 },
-};
-
-// Mock treatments
-const TREATMENTS: Treatment[] = [
-  { id: 'clean', name: 'Dental Cleaning', description: 'Professional teeth cleaning', price: 100, quantity: 1 },
-  { id: 'whitening', name: 'Teeth Whitening', description: 'Professional whitening treatment', price: 250, quantity: 1 },
-  { id: 'filling', name: 'Dental Filling', description: 'Composite filling for cavities', price: 150, quantity: 1 },
-  { id: 'root', name: 'Root Canal', description: 'Root canal therapy', price: 800, quantity: 1 },
-  { id: 'crown', name: 'Dental Crown', description: 'Porcelain crown', price: 1200, quantity: 1 },
-];
+// Define PromoCode type
+interface PromoCode {
+  code: string;
+  discountPercentage: number;
+  isValid: boolean;
+}
 
 /**
  * A completely isolated implementation with separate state variables for 
  * treatments and promo code information.
  */
-const BasicQuoteDemo = () => {
-  // Core state - completely separate variables
+export default function BasicQuoteDemo() {
+  // Separate state variables for treatments and promo code
   const [treatments, setTreatments] = useState<Treatment[]>([]);
-  const [promoInput, setPromoInput] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
-  const [discount, setDiscount] = useState(0);
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [promoCode, setPromoCode] = useState<string>("");
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [backupTreatments, setBackupTreatments] = useState<Treatment[]>([]);
+
+  // Debug state to track state changes
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   
-  // Debug references
-  const treatmentsRef = useRef<Treatment[]>([]);
-  
-  // Component mount logging
+  const { toast } = useToast();
+
+  // Log to both console and debug state
+  const logDebug = (message: string) => {
+    console.log(message);
+    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
+
+  // Load sample treatments when component mounts
   useEffect(() => {
-    console.log('[BASIC_DEMO] Component mounted');
+    logDebug("Component mounted");
+    
+    // Load sample treatments
+    const sampleTreatments: Treatment[] = [
+      { id: "t1", name: "Dental Implant", price: 1200, description: "Titanium implant with crown", quantity: 1 },
+      { id: "t2", name: "Teeth Whitening", price: 300, description: "Professional whitening treatment", quantity: 1 },
+      { id: "t3", name: "Root Canal", price: 500, description: "Complete root canal treatment", quantity: 1 },
+      { id: "t4", name: "Dental Veneers", price: 800, description: "Porcelain veneers (per tooth)", quantity: 1 },
+      { id: "t5", name: "Dental Crown", price: 650, description: "Full porcelain crown", quantity: 1 }
+    ];
+    
+    setTreatments(sampleTreatments);
+    logDebug(`Loaded ${sampleTreatments.length} sample treatments`);
     
     return () => {
-      console.log('[BASIC_DEMO] Component unmounted');
+      logDebug("Component unmounting");
     };
   }, []);
-  
-  // Track treatment changes
-  useEffect(() => {
-    console.log('[BASIC_DEMO] Treatments changed:', {
-      previous: treatmentsRef.current.map(t => t.id),
-      current: treatments.map(t => t.id),
-      treatmentCount: treatments.length
-    });
-    treatmentsRef.current = [...treatments];
-  }, [treatments]);
-  
+
   // Calculate totals
-  const calculateTotals = () => {
-    const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
-    const total = Math.max(0, subtotal - discount);
-    return { subtotal, total };
+  const calculateSubtotal = () => {
+    return treatments.reduce((sum, t) => sum + (t.price * t.quantity), 0);
   };
-  
+
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    return (calculateSubtotal() * appliedPromo.discountPercentage) / 100;
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() - calculateDiscount();
+  };
+
   // Toggle treatment selection
   const toggleTreatment = (treatment: Treatment) => {
-    console.log('[BASIC_DEMO] Toggling treatment:', treatment.id);
+    logDebug(`Toggling treatment: ${treatment.name}`);
+    
+    // Create backup before modifying treatments
+    setBackupTreatments([...treatments]);
     
     setTreatments(prev => {
       const exists = prev.some(t => t.id === treatment.id);
       
       if (exists) {
-        // Remove treatment
-        const newTreatments = prev.filter(t => t.id !== treatment.id);
-        console.log('[BASIC_DEMO] Removed treatment. New count:', newTreatments.length);
-        return newTreatments;
+        logDebug(`Removing treatment: ${treatment.name}`);
+        return prev.filter(t => t.id !== treatment.id);
       } else {
-        // Add treatment
-        const newTreatments = [...prev, treatment];
-        console.log('[BASIC_DEMO] Added treatment. New count:', newTreatments.length);
-        return newTreatments;
+        logDebug(`Adding treatment: ${treatment.name}`);
+        return [...prev, { ...treatment, quantity: 1 }];
       }
     });
   };
-  
-  // Apply promo code - completely isolated from treatment state
-  const applyPromoCode = () => {
-    const code = promoInput.trim().toUpperCase();
+
+  // Update treatment quantity
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity < 1) return;
     
-    if (!code) {
+    logDebug(`Updating quantity for treatment ${id} to ${quantity}`);
+    
+    // Create backup before modifying treatments
+    setBackupTreatments([...treatments]);
+    
+    setTreatments(prev => 
+      prev.map(t => t.id === id ? { ...t, quantity } : t)
+    );
+  };
+
+  // Apply promo code
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
       toast({
         title: "Error",
         description: "Please enter a promo code",
@@ -105,233 +123,294 @@ const BasicQuoteDemo = () => {
       });
       return;
     }
+
+    logDebug(`Applying promo code: ${promoCode}`);
     
-    // Log state before changes
-    console.log('[BASIC_DEMO] Before applying promo:', {
-      treatments: treatments.map(t => t.id),
-      treatmentCount: treatments.length,
-      code
-    });
+    // Backup treatments before applying promo code
+    setBackupTreatments([...treatments]);
     
-    // Create a backup copy of treatments
-    const treatmentsCopy = [...treatments];
+    setIsLoading(true);
     
-    if (!PROMO_CODES[code]) {
-      toast({
-        title: "Invalid Code",
-        description: "The promo code you entered is not valid",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsApplyingPromo(true);
-    
-    // Simulate a small delay for API call
-    setTimeout(() => {
-      try {
-        // Calculate discount
-        const { subtotal } = calculateTotals();
-        let calculatedDiscount = 0;
-        
-        if (PROMO_CODES[code].type === 'percentage') {
-          calculatedDiscount = (subtotal * PROMO_CODES[code].value / 100);
-          console.log(`[BASIC_DEMO] Applying ${PROMO_CODES[code].value}% discount on ${subtotal} = ${calculatedDiscount}`);
-        } else {
-          calculatedDiscount = PROMO_CODES[code].value;
-          console.log(`[BASIC_DEMO] Applying fixed discount of ${calculatedDiscount}`);
-        }
-        
-        // Ensure discount doesn't exceed subtotal
-        calculatedDiscount = Math.min(calculatedDiscount, subtotal);
-        
-        // Update state in a specific order
-        setAppliedPromo(code);
-        setDiscount(calculatedDiscount);
-        setPromoInput('');
-        
-        // Verify treatments still exist
-        console.log('[BASIC_DEMO] After applying promo:', {
-          treatments: treatments.map(t => t.id),
-          treatmentCount: treatments.length
-        });
-        
-        // Safety check - restore treatments if they were lost
-        if (treatments.length === 0 && treatmentsCopy.length > 0) {
-          console.log('[BASIC_DEMO] Treatments were lost! Restoring...');
-          setTreatments(treatmentsCopy);
-        }
-        
+    try {
+      // Simulate API call with artificial delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Test promo codes (in a real app, this would be an API call)
+      let promoResult: PromoCode | null = null;
+      
+      if (promoCode.toLowerCase() === "discount10") {
+        promoResult = { code: promoCode, discountPercentage: 10, isValid: true };
+      } else if (promoCode.toLowerCase() === "discount20") {
+        promoResult = { code: promoCode, discountPercentage: 20, isValid: true };
+      } else if (promoCode.toLowerCase() === "discount50") {
+        promoResult = { code: promoCode, discountPercentage: 50, isValid: true };
+      } else {
         toast({
-          title: "Promo Applied",
-          description: `Discount: £${calculatedDiscount.toFixed(2)}`,
-        });
-      } catch (error) {
-        console.error('[BASIC_DEMO] Error:', error);
-        toast({
-          title: "Error",
-          description: "Failed to apply promo code",
+          title: "Invalid Promo Code",
+          description: "The promo code you entered is not valid",
           variant: "destructive",
         });
-      } finally {
-        setIsApplyingPromo(false);
+        setAppliedPromo(null);
+        setIsLoading(false);
+        return;
       }
-    }, 300);
+      
+      // Important: Apply the promo code without modifying treatments
+      logDebug(`Valid promo code applied: ${promoResult.code} with ${promoResult.discountPercentage}% discount`);
+      setAppliedPromo(promoResult);
+      
+      toast({
+        title: "Promo Code Applied",
+        description: `Discount of ${promoResult.discountPercentage}% has been applied`,
+      });
+      
+      // Check if treatments were accidentally cleared (this shouldn't happen with this implementation)
+      if (treatments.length === 0 && backupTreatments.length > 0) {
+        logDebug("WARNING: Treatments were cleared! Restoring from backup.");
+        setTreatments([...backupTreatments]);
+      }
+      
+    } catch (error) {
+      console.error("Error applying promo code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to apply promo code",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
+
   // Remove promo code
   const removePromoCode = () => {
+    logDebug("Removing applied promo code");
     setAppliedPromo(null);
-    setDiscount(0);
+    setPromoCode("");
     
     toast({
-      title: "Promo Removed",
-      description: "Promo code has been removed"
+      title: "Promo Code Removed",
+      description: "Discount has been removed from your quote",
     });
   };
-  
-  // Reset quote
-  const resetQuote = () => {
-    setTreatments([]);
-    setAppliedPromo(null);
-    setDiscount(0);
-    setPromoInput('');
+
+  // Save quote
+  const saveQuote = () => {
+    logDebug("Saving quote");
+    
+    const quoteData = {
+      treatments: treatments,
+      promoCode: appliedPromo,
+      subtotal: calculateSubtotal(),
+      discount: calculateDiscount(),
+      total: calculateTotal()
+    };
+    
+    console.log("Quote data:", quoteData);
     
     toast({
-      title: "Quote Reset",
-      description: "Your quote has been reset"
+      title: "Quote Saved",
+      description: "Your quote has been saved successfully",
     });
   };
-  
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return `£${amount.toFixed(2)}`;
-  };
-  
-  const { subtotal, total } = calculateTotals();
-  
+
   return (
-    <MainLayout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Basic Quote Demo <span className="text-sm font-medium text-green-600">(Completely Isolated)</span></h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column - Treatments */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Select Treatments</h2>
-            <div className="space-y-4 mb-6">
-              {TREATMENTS.map(treatment => (
-                <Card 
-                  key={treatment.id} 
-                  className={`cursor-pointer transition-colors ${
-                    treatments.some(t => t.id === treatment.id) 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'hover:border-gray-300'
-                  }`} 
-                  onClick={() => toggleTreatment(treatment)}
-                >
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">{treatment.name}</h3>
-                      <p className="text-sm text-gray-500">{treatment.description}</p>
-                    </div>
-                    <div className="text-lg font-semibold">{formatCurrency(treatment.price)}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            
-            <div className="bg-gray-100 p-4 rounded-lg mb-6">
-              <h2 className="text-lg font-semibold mb-2">Promo Code</h2>
-              <div className="flex gap-2">
-                <Input 
-                  value={promoInput} 
-                  onChange={e => setPromoInput(e.target.value)} 
-                  placeholder="Enter promo code"
-                  disabled={isApplyingPromo}
-                />
-                <Button 
-                  onClick={applyPromoCode} 
-                  disabled={isApplyingPromo || !promoInput.trim()}
-                >
-                  {isApplyingPromo ? 'Applying...' : 'Apply'}
-                </Button>
-              </div>
-              {appliedPromo && (
-                <div className="mt-2 flex justify-between items-center">
-                  <div className="text-sm">
-                    <span className="font-medium">{appliedPromo}</span> applied: 
-                    <span className="text-green-600 ml-1">{formatCurrency(discount)} discount</span>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={removePromoCode}>Remove</Button>
-                </div>
-              )}
-              <div className="mt-2 text-xs text-gray-500">
-                Try: DENTAL10 (10% off), SMILE20 (20% off), DISCOUNT30 (30% off), NEWSMILE (£100 off)
-              </div>
-            </div>
-            
-            <Button variant="outline" onClick={resetQuote}>Reset Quote</Button>
-          </div>
-          
-          {/* Right column - Summary */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Quote Summary</h2>
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                {treatments.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">Select treatments to see your quote</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-4">
-                      {treatments.map(treatment => (
-                        <div key={treatment.id} className="flex justify-between">
-                          <span>{treatment.name}</span>
-                          <span>{formatCurrency(treatment.price)}</span>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8 text-center">Basic Quote Builder Demo</h1>
+      <p className="text-center mb-8 text-gray-600">
+        This is a completely isolated implementation with separate state variables for treatments and promo code.
+      </p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Treatment selection */}
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Treatments</CardTitle>
+              <CardDescription>Select treatments to add to your quote</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  { id: "t1", name: "Dental Implant", price: 1200, description: "Titanium implant with crown" },
+                  { id: "t2", name: "Teeth Whitening", price: 300, description: "Professional whitening treatment" },
+                  { id: "t3", name: "Root Canal", price: 500, description: "Complete root canal treatment" },
+                  { id: "t4", name: "Dental Veneers", price: 800, description: "Porcelain veneers (per tooth)" },
+                  { id: "t5", name: "Dental Crown", price: 650, description: "Full porcelain crown" }
+                ].map(treatment => {
+                  const isSelected = treatments.some(t => t.id === treatment.id);
+                  const selectedTreatment = treatments.find(t => t.id === treatment.id);
+                  
+                  return (
+                    <div key={treatment.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="flex-1">
+                        <div className="font-medium">{treatment.name}</div>
+                        <div className="text-sm text-gray-500">{treatment.description}</div>
+                        <div className="text-sm font-medium mt-1">${treatment.price.toFixed(2)}</div>
+                      </div>
+                      
+                      {isSelected ? (
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => updateQuantity(treatment.id, (selectedTreatment?.quantity || 1) - 1)}
+                            disabled={(selectedTreatment?.quantity || 0) <= 1}
+                          >
+                            -
+                          </Button>
+                          
+                          <div className="w-8 text-center">
+                            {selectedTreatment?.quantity || 1}
+                          </div>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => updateQuantity(treatment.id, (selectedTreatment?.quantity || 1) + 1)}
+                          >
+                            +
+                          </Button>
+                          
+                          <Button 
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => toggleTreatment(treatment)}
+                          >
+                            Remove
+                          </Button>
                         </div>
-                      ))}
+                      ) : (
+                        <Button
+                          onClick={() => toggleTreatment(treatment)}
+                        >
+                          Add
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Debug logs */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Debug Logs</CardTitle>
+              <CardDescription>Real-time state updates and event tracking</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-100 p-4 rounded-md h-48 overflow-y-auto font-mono text-xs">
+                {debugLogs.map((log, index) => (
+                  <div key={index} className="mb-1">{log}</div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Quote summary */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Summary</CardTitle>
+              <CardDescription>
+                Selected treatments: {treatments.length}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {treatments.length > 0 ? (
+                <div className="space-y-4">
+                  {treatments.map(treatment => (
+                    <div key={treatment.id} className="flex justify-between">
+                      <div>
+                        <div className="font-medium">{treatment.name}</div>
+                        <div className="text-sm text-gray-500">Qty: {treatment.quantity}</div>
+                      </div>
+                      <div className="font-medium">
+                        ${(treatment.price * treatment.quantity).toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-4 border-t">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
                     </div>
                     
-                    <div className="border-t mt-4 pt-4">
-                      <div className="flex justify-between font-medium">
-                        <span>Subtotal:</span>
-                        <span>{formatCurrency(subtotal)}</span>
+                    {appliedPromo && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount ({appliedPromo.discountPercentage}%):</span>
+                        <span>-${calculateDiscount().toFixed(2)}</span>
                       </div>
-                      
-                      {discount > 0 && (
-                        <div className="flex justify-between text-green-600">
-                          <span>Discount:</span>
-                          <span>-{formatCurrency(discount)}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between font-bold text-lg mt-2">
-                        <span>Total:</span>
-                        <span>{formatCurrency(total)}</span>
-                      </div>
+                    )}
+                    
+                    <div className="flex justify-between font-bold mt-2 text-lg">
+                      <span>Total:</span>
+                      <span>${calculateTotal().toFixed(2)}</span>
                     </div>
-                  </>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  No treatments selected yet
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="flex space-x-2 w-full">
+                <div className="flex-1">
+                  <Label htmlFor="promo-code" className="sr-only">Promo Code</Label>
+                  <Input
+                    id="promo-code"
+                    placeholder="Enter promo code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    disabled={!!appliedPromo || isLoading}
+                  />
+                </div>
+                
+                {appliedPromo ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={removePromoCode}
+                    disabled={isLoading}
+                  >
+                    Remove
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={applyPromoCode}
+                    disabled={!promoCode.trim() || isLoading}
+                  >
+                    Apply
+                  </Button>
                 )}
-              </CardContent>
-            </Card>
-            
-            {/* Debug information */}
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded text-xs">
-              <h3 className="font-medium mb-2">Debug Info:</h3>
-              <div className="space-y-1">
-                <div>Selected treatments: {treatments.length}</div>
-                <div>Treatment IDs: {treatments.map(t => t.id).join(', ')}</div>
-                <div>Applied promo: {appliedPromo || 'None'}</div>
-                <div>Discount: {formatCurrency(discount)}</div>
               </div>
-            </div>
-          </div>
+              
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={saveQuote}
+                disabled={treatments.length === 0 || isLoading}
+              >
+                Save Quote
+              </Button>
+
+              <div className="text-xs text-gray-500 mt-2">
+                <p className="mb-1"><strong>Test Promo Codes:</strong></p>
+                <ul className="list-disc list-inside">
+                  <li>discount10 - 10% off</li>
+                  <li>discount20 - 20% off</li>
+                  <li>discount50 - 50% off</li>
+                </ul>
+              </div>
+            </CardFooter>
+          </Card>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
-};
-
-export default BasicQuoteDemo;
+}

@@ -356,6 +356,16 @@ function Router() {
         );
       }} />
       
+      {/* Basic Quote Demo - completely clean implementation with zero dependencies */}
+      <Route path="/basic-quote-demo" component={() => {
+        const BasicQuoteDemo = React.lazy(() => import("./pages/BasicQuoteDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading basic quote demo...</div>}>
+            <BasicQuoteDemo />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Quote Management System with MainLayout */}
       <Route path="/quotes" component={() => {
         const QuoteListPage = React.lazy(() => import("./pages/quotes/QuoteListPage"));
