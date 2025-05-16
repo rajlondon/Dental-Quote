@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useSearch } from 'wouter';
+import { useLocation, useSearch, Link } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -23,7 +23,9 @@ import {
   Plane,
   CheckCircle2,
   AlertCircle,
-  Clock
+  Clock,
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,10 +66,6 @@ import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
-import { queryClient } from '@/lib/queryClient';
-import { useSearch, Link } from 'wouter';
-import { Plus, Loader2, FileText } from 'lucide-react';
-
 // Import our components for the quotes section
 import PatientQuotesContent from '@/components/patient/PatientQuotesContent';
 import PatientQuoteDetail from '@/components/patient/PatientQuoteDetail';

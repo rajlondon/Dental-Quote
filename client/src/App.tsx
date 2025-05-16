@@ -540,8 +540,13 @@ function Router() {
             );
           }
           
-          // Otherwise, proceed with normal redirect for patients and visitors
-          return <Redirect to="/your-quote" />;
+          // Otherwise, redirect to our enhanced quote builder
+          const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading enhanced quote builder...</div>}>
+              <EnhancedQuotePage />
+            </React.Suspense>
+          );
         }}
       </Route>
       
