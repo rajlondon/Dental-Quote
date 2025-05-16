@@ -397,10 +397,48 @@ const HomePage: React.FC = () => {
               </div>
               <div className="p-4">
                 <Button asChild className="w-full bg-white hover:bg-gray-50 text-primary border-2 border-primary/30 hover:border-primary/50 font-medium">
-                  <Link href="/your-quote">
+                  <Link href="/quote">
                     Build Custom Package
                   </Link>
                 </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Quote Builder CTA Section */}
+      <section className="py-16 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">Plan Your Dental Treatment</h2>
+            <p className="text-xl text-gray-600 mb-8">
+              Get an instant quote for your dental procedures with our easy-to-use quote builder.
+            </p>
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg">
+              <Link href="/quote">Build Your Quote</Link>
+            </Button>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center mb-3">
+                  <Calculator className="h-5 w-5 text-primary mr-2" />
+                  <h3 className="font-semibold">Instant Pricing</h3>
+                </div>
+                <p className="text-sm text-gray-600">See transparent pricing for all dental treatments instantly.</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center mb-3">
+                  <Sparkles className="h-5 w-5 text-primary mr-2" />
+                  <h3 className="font-semibold">Special Offers</h3>
+                </div>
+                <p className="text-sm text-gray-600">Apply promo codes and access exclusive special offers.</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center mb-3">
+                  <FileText className="h-5 w-5 text-primary mr-2" />
+                  <h3 className="font-semibold">Printable Quotes</h3>
+                </div>
+                <p className="text-sm text-gray-600">Generate professional treatment quotes you can save and share.</p>
               </div>
             </div>
           </div>

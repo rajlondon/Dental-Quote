@@ -30,7 +30,7 @@ const Navbar: React.FC = () => {
         </div>
         
         <div className="hidden md:flex items-center space-x-3">
-          <Link href="/your-quote" className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-4 py-1.5 rounded-md flex items-center text-sm">
+          <Link href="/quote" className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-4 py-1.5 rounded-md flex items-center text-sm">
             <Calculator className="h-4 w-4 mr-1.5" />
             {t('navbar.get_quote', 'Get a Quote')}
           </Link>
@@ -78,7 +78,7 @@ const Navbar: React.FC = () => {
         </div>
         
         <div className="md:hidden flex items-center gap-2">
-          <Link href="/your-quote" className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-2 py-1 rounded-md flex items-center text-xs">
+          <Link href="/quote" className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-2 py-1 rounded-md flex items-center text-xs">
             <Calculator className="h-3 w-3 mr-1" />
             {t('navbar.get_quote', 'Quote')}
           </Link>
@@ -114,7 +114,7 @@ const Navbar: React.FC = () => {
         id="mobileMenu"
       >
         <div className="px-3 py-2 space-y-2">
-          <Link href="/your-quote" className="block py-1.5 bg-[#0071c2] text-white font-bold hover:bg-[#00487a] text-xs rounded px-3 mb-2">
+          <Link href="/quote" className="block py-1.5 bg-[#0071c2] text-white font-bold hover:bg-[#00487a] text-xs rounded px-3 mb-2">
             {t('navbar.get_quote', 'Get a Quote')}
           </Link>
           
