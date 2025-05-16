@@ -36,57 +36,75 @@ export function Navbar() {
         <div className="hidden md:flex md:flex-1 md:items-center md:justify-between">
           <nav className="flex items-center space-x-6">
             {navItems.map((item) => (
-              <Link
+              <div
                 key={item.href}
-                href={item.href}
-                className="text-sm font-medium transition-colors hover:text-primary"
+                className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+                onClick={() => window.location.href = item.href}
               >
                 {item.label}
-              </Link>
+              </div>
             ))}
           </nav>
           <div className="flex items-center space-x-4">
-            <Link href="/quote-builder">
-              <Button size="sm" className="bg-primary text-primary-foreground">
-                Get a Quote
-              </Button>
-            </Link>
+            <Button 
+              size="sm" 
+              className="bg-primary text-primary-foreground"
+              onClick={() => window.location.href = '/quote-builder'}
+            >
+              Get a Quote
+            </Button>
             <div className="flex items-center">
-              <Link href="/language" className="flex items-center space-x-1">
-                <div className="relative group">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm">🇬🇧</span>
-                    <span className="text-sm font-medium">English</span>
-                  </div>
-                  <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-background border border-border hidden group-hover:block z-50">
-                    <div className="py-1">
-                      <Link href="/language?lang=tr" className="flex items-center px-4 py-2 hover:bg-accent">
-                        <span className="text-sm mr-2">🇹🇷</span>
-                        <span className="text-sm">Türkçe</span>
-                      </Link>
-                      <Link href="/language?lang=de" className="flex items-center px-4 py-2 hover:bg-accent">
-                        <span className="text-sm mr-2">🇩🇪</span>
-                        <span className="text-sm">Deutsch</span>
-                      </Link>
-                      <Link href="/language?lang=fr" className="flex items-center px-4 py-2 hover:bg-accent">
-                        <span className="text-sm mr-2">🇫🇷</span>
-                        <span className="text-sm">Français</span>
-                      </Link>
+              <div className="relative group cursor-pointer">
+                <div className="flex items-center space-x-1">
+                  <span className="text-sm">🇬🇧</span>
+                  <span className="text-sm font-medium">English</span>
+                </div>
+                <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-background border border-border hidden group-hover:block z-50">
+                  <div className="py-1">
+                    <div 
+                      className="flex items-center px-4 py-2 hover:bg-accent cursor-pointer" 
+                      onClick={() => window.location.href = '/language?lang=en'}
+                    >
+                      <span className="text-sm mr-2">🇬🇧</span>
+                      <span className="text-sm">English</span>
+                    </div>
+                    <div 
+                      className="flex items-center px-4 py-2 hover:bg-accent cursor-pointer" 
+                      onClick={() => window.location.href = '/language?lang=tr'}
+                    >
+                      <span className="text-sm mr-2">🇹🇷</span>
+                      <span className="text-sm">Türkçe</span>
+                    </div>
+                    <div 
+                      className="flex items-center px-4 py-2 hover:bg-accent cursor-pointer" 
+                      onClick={() => window.location.href = '/language?lang=de'}
+                    >
+                      <span className="text-sm mr-2">🇩🇪</span>
+                      <span className="text-sm">Deutsch</span>
+                    </div>
+                    <div 
+                      className="flex items-center px-4 py-2 hover:bg-accent cursor-pointer" 
+                      onClick={() => window.location.href = '/language?lang=fr'}
+                    >
+                      <span className="text-sm mr-2">🇫🇷</span>
+                      <span className="text-sm">Français</span>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mobile Menu Toggle */}
         <div className="flex flex-1 items-center justify-end md:hidden">
-          <Link href="/quote-builder" className="mr-2">
-            <Button size="sm" className="bg-primary text-primary-foreground">
-              Get a Quote
-            </Button>
-          </Link>
+          <Button 
+            size="sm" 
+            className="bg-primary text-primary-foreground mr-2"
+            onClick={() => window.location.href = '/quote-builder'}
+          >
+            Get a Quote
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -104,34 +122,48 @@ export function Navbar() {
         <div className="container md:hidden">
           <nav className="mt-2 flex flex-col space-y-3 pb-4">
             {navItems.map((item) => (
-              <Link
+              <div
                 key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
-                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent cursor-pointer"
+                onClick={() => {
+                  window.location.href = item.href;
+                  setMobileMenuOpen(false);
+                }}
               >
                 {item.label}
-              </Link>
+              </div>
             ))}
             <div className="mt-4 px-3">
               <div className="text-sm font-medium mb-2">Language</div>
               <div className="space-y-2">
-                <Link href="/language?lang=en" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                <div 
+                  className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent cursor-pointer"
+                  onClick={() => window.location.href = '/language?lang=en'}
+                >
                   <span className="text-sm">🇬🇧</span>
                   <span className="text-sm">English</span>
-                </Link>
-                <Link href="/language?lang=tr" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                </div>
+                <div 
+                  className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent cursor-pointer"
+                  onClick={() => window.location.href = '/language?lang=tr'}
+                >
                   <span className="text-sm">🇹🇷</span>
                   <span className="text-sm">Türkçe</span>
-                </Link>
-                <Link href="/language?lang=de" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                </div>
+                <div 
+                  className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent cursor-pointer"
+                  onClick={() => window.location.href = '/language?lang=de'}
+                >
                   <span className="text-sm">🇩🇪</span>
                   <span className="text-sm">Deutsch</span>
-                </Link>
-                <Link href="/language?lang=fr" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                </div>
+                <div 
+                  className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent cursor-pointer"
+                  onClick={() => window.location.href = '/language?lang=fr'}
+                >
                   <span className="text-sm">🇫🇷</span>
                   <span className="text-sm">Français</span>
-                </Link>
+                </div>
               </div>
             </div>
           </nav>
