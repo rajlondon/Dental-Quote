@@ -1,169 +1,102 @@
 import { Router } from 'express';
-import { db } from '../db';
-import { sql } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
-// Get all treatment options
-router.get('/treatments', async (req, res) => {
-  try {
-    const treatments = await db.execute(sql`
-      SELECT id, name, description, base_price, clinic_id
-      FROM treatments
-      WHERE is_active = TRUE
-      ORDER BY name ASC
-    `);
-    
-    res.json(treatments.rows);
-  } catch (error) {
-    console.error('Error fetching treatments:', error);
-    res.status(500).json({ success: false, message: 'Error retrieving treatments' });
-  }
-});
+// In-memory storage for quotes
+const quotes = new Map<string, any>();
 
-// Get all treatment packages
-router.get('/treatment-packages', async (req, res) => {
+// Debug endpoint to save quote data
+router.post('/api/standalone-quote/save', (req, res) => {
   try {
-    const packages = await db.execute(sql`
-      SELECT id, name, description, price, image_url, city_code
-      FROM treatment_packages
-      WHERE is_active = TRUE
-      ORDER BY name ASC
-    `);
+    console.log('Received quote save request with data:', JSON.stringify(req.body, null, 2));
     
-    res.json(packages.rows);
-  } catch (error) {
-    console.error('Error fetching treatment packages:', error);
-    res.status(500).json({ success: false, message: 'Error retrieving packages' });
-  }
-});
-
-// Save a quote to the database
-router.post('/quotes-api/save', async (req, res) => {
-  try {
-    const { 
-      patientName, 
-      patientEmail, 
-      items,
-      subtotal,
-      discount,
-      total,
-      promoCode
-    } = req.body;
+    // Generate a unique ID for the quote
+    const quoteId = uuidv4();
     
-    if (!patientName || !items || !items.length) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields: patient name and at least one quote item' 
-      });
-    }
+    // Store the quote with timestamp
+    const storedQuote = {
+      id: quoteId,
+      ...req.body,
+      createdAt: new Date().toISOString()
+    };
     
-    // Create a quote record
-    const quoteResult = await db.execute(sql`
-      INSERT INTO quotes (
-        patient_name, 
-        patient_email, 
-        subtotal, 
-        discount_amount,
-        total_amount,
-        promo_code,
-        status,
-        created_at
-      )
-      VALUES (
-        ${patientName},
-        ${patientEmail || null},
-        ${subtotal},
-        ${discount || 0},
-        ${total},
-        ${promoCode || null},
-        'draft',
-        NOW()
-      )
-      RETURNING id
-    `);
+    quotes.set(quoteId, storedQuote);
     
-    const quoteId = quoteResult.rows[0].id;
+    console.log(`Quote saved with ID: ${quoteId}`);
     
-    // Insert quote items
-    for (const item of items) {
-      await db.execute(sql`
-        INSERT INTO quote_items (
-          quote_id,
-          treatment_name,
-          clinic_name,
-          quantity,
-          unit_price,
-          total_price,
-          is_package
-        )
-        VALUES (
-          ${quoteId},
-          ${item.treatmentName},
-          ${item.clinicName},
-          ${item.quantity},
-          ${item.unitPrice},
-          ${item.totalPrice},
-          ${item.isPackage || false}
-        )
-      `);
-    }
-    
-    res.json({ 
-      success: true, 
-      message: 'Quote saved successfully', 
-      quoteId,
-      quoteNumber: `Q-${quoteId}-${Math.floor(1000 + Math.random() * 9000)}`
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      id: quoteId,
+      message: 'Quote saved successfully'
     });
   } catch (error) {
     console.error('Error saving quote:', error);
-    res.status(500).json({ success: false, message: 'Error saving quote' });
+    return res.status(500).json({
+      success: false,
+      message: `Failed to save quote: ${error.message}`
+    });
   }
 });
 
-// Generate a PDF quote
-router.post('/quotes-api/generate-pdf', async (req, res) => {
+// Debug endpoint to email quote
+router.post('/api/standalone-quote/email', (req, res) => {
   try {
-    // In a real implementation, this would generate a PDF
-    // For the test page, we'll just return a success message
+    const { quoteId, email } = req.body;
     
-    setTimeout(() => {
-      res.json({ 
-        success: true, 
-        message: 'PDF generated successfully',
-        pdfUrl: '/sample-quote.pdf' // This would be a real URL in production
-      });
-    }, 1500); // Simulate PDF generation time
-  } catch (error) {
-    console.error('Error generating PDF:', error);
-    res.status(500).json({ success: false, message: 'Error generating PDF' });
-  }
-});
-
-// Send an email with the quote
-router.post('/quotes-api/email', async (req, res) => {
-  try {
-    const { email, quoteId } = req.body;
+    console.log(`Email request received for quote ${quoteId} to ${email}`);
     
-    if (!email || !quoteId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields: email and quoteId' 
+    // Check if quote exists
+    if (!quotes.has(quoteId)) {
+      console.log(`Quote ${quoteId} not found`);
+      return res.status(404).json({
+        success: false,
+        message: 'Quote not found'
       });
     }
     
-    // In a real implementation, this would send an email
-    // For the test page, we'll just return a success message
+    // In a production environment, this would send an actual email
+    console.log(`Would send email to ${email} with quote ${quoteId}`);
     
-    setTimeout(() => {
-      res.json({ 
-        success: true, 
-        message: `Quote sent successfully to ${email}`
-      });
-    }, 2000); // Simulate email sending time
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: `Email would be sent to ${email} with quote ${quoteId}`
+    });
   } catch (error) {
-    console.error('Error sending email:', error);
-    res.status(500).json({ success: false, message: 'Error sending email' });
+    console.error('Error emailing quote:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Failed to email quote: ${error.message}`
+    });
+  }
+});
+
+// Debug endpoint to retrieve a saved quote
+router.get('/api/standalone-quote/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if quote exists
+    if (!quotes.has(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quote not found'
+      });
+    }
+    
+    // Return the quote
+    return res.status(200).json({
+      success: true,
+      quote: quotes.get(id)
+    });
+  } catch (error) {
+    console.error('Error retrieving quote:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Failed to retrieve quote: ${error.message}`
+    });
   }
 });
 
