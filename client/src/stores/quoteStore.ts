@@ -7,6 +7,18 @@ interface Treatment {
   name: string;
   price: number;
   quantity: number;
+  category?: string;
+  description?: string;
+  imageUrl?: string;
+}
+
+interface PatientInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  preferredDate?: string;
+  notes?: string;
 }
 
 interface QuoteState {
@@ -15,9 +27,12 @@ interface QuoteState {
   discountPercent: number;
   subtotal: number;
   total: number;
+  patientInfo: PatientInfo | null;
+  currentStep: 'treatments' | 'patient-info' | 'summary';
   loading: {
     promoCode: boolean;
     saving: boolean;
+    treatments: boolean;
   };
   
   // Actions
@@ -26,6 +41,8 @@ interface QuoteState {
   updateQuantity: (id: string, quantity: number) => void;
   applyPromoCode: (code: string) => Promise<boolean>;
   removePromoCode: () => void;
+  setPatientInfo: (info: PatientInfo) => void;
+  setCurrentStep: (step: 'treatments' | 'patient-info' | 'summary') => void;
   saveQuote: () => Promise<string | null>;
   resetQuote: () => void;
 }
@@ -50,9 +67,12 @@ export const useQuoteStore = create<QuoteState>()(
       discountPercent: 0,
       subtotal: 0,
       total: 0,
+      patientInfo: null,
+      currentStep: 'treatments',
       loading: {
         promoCode: false,
-        saving: false
+        saving: false,
+        treatments: false
       },
       
       // Add treatment action
@@ -254,6 +274,18 @@ export const useQuoteStore = create<QuoteState>()(
         }
       },
       
+      // Set patient info action
+      setPatientInfo: (info) => {
+        console.log('STORE: Setting patient info', info);
+        set({ patientInfo: info });
+      },
+
+      // Set current step action
+      setCurrentStep: (step) => {
+        console.log('STORE: Setting current step to', step);
+        set({ currentStep: step });
+      },
+      
       // Reset quote action
       resetQuote: () => {
         console.log('STORE: Reset quote');
@@ -264,9 +296,12 @@ export const useQuoteStore = create<QuoteState>()(
           discountPercent: 0,
           subtotal: 0,
           total: 0,
+          patientInfo: null,
+          currentStep: 'treatments',
           loading: {
             promoCode: false,
-            saving: false
+            saving: false,
+            treatments: false
           }
         });
       }
