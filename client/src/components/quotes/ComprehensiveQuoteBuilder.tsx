@@ -1,608 +1,651 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
 import { useQuoteStore } from '../../stores/quoteStore';
-import { TreatmentPackageSelector } from '../packages/TreatmentPackageSelector';
-import { SpecialOffersSelector } from '../offers/SpecialOffersSelector';
-// Fix import statement to match the export in QuoteSummary.tsx
-import { QuoteSummary } from './QuoteSummary';
-import { useToast } from '../../hooks/use-toast';
-
-// Import the hooks for special offers and packages
 import { useTreatmentPackages } from '../../hooks/use-treatment-packages';
 import { useSpecialOffers } from '../../hooks/use-special-offers';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Separator } from '../ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { toast } from '../../hooks/use-toast';
+import { TreatmentPackageSelector } from '../packages/TreatmentPackageSelector';
+import { SpecialOffersSelector } from '../offers/SpecialOffersSelector';
+import QuoteSummary from './QuoteSummary';
+import { 
+  PackageIcon, 
+  TagIcon, 
+  ShoppingCartIcon, 
+  CheckCircleIcon, 
+  XCircleIcon, 
+  Loader2Icon, 
+  UserIcon, 
+  SendIcon,
+  SmileIcon
+} from 'lucide-react';
 
-// Placeholder for dental chart - to be integrated
-const DentalChart = ({ onSelectTooth }: { onSelectTooth: (toothData: any) => void }) => {
-  // This is a placeholder for the actual dental chart component
-  // In a real implementation, this would be a proper dental chart
-  const teethNumbers = Array.from({ length: 32 }, (_, i) => i + 1);
-  
-  return (
-    <div className="p-4 border rounded-md">
-      <h3 className="font-medium mb-2">Dental Chart (Placeholder)</h3>
-      <div className="grid grid-cols-8 gap-2">
-        {teethNumbers.map(toothNumber => (
-          <button
-            key={toothNumber}
-            className="p-2 bg-gray-100 hover:bg-blue-100 rounded text-sm"
-            onClick={() => onSelectTooth({ 
-              toothNumber, 
-              position: toothNumber <= 16 ? 'upper' : 'lower',
-              side: toothNumber % 16 <= 8 ? 'right' : 'left'
-            })}
-          >
-            {toothNumber}
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Click on a tooth to add a treatment for that specific tooth.
-      </p>
-    </div>
-  );
-};
+// Dental chart mock treatments
+const mockTreatments = [
+  { id: 'clean-1', name: 'Professional Cleaning', description: 'Complete dental cleaning', price: 75, category: 'Hygiene' },
+  { id: 'xray-1', name: 'X-Ray (Full Mouth)', description: 'Complete x-ray examination', price: 120, category: 'Diagnostics' },
+  { id: 'filling-1', name: 'Composite Filling', description: 'Tooth-colored filling', price: 100, category: 'Restorative' },
+  { id: 'filling-2', name: 'Amalgam Filling', description: 'Silver filling', price: 85, category: 'Restorative' },
+  { id: 'crown-1', name: 'Porcelain Crown', description: 'Full porcelain crown', price: 800, category: 'Restorative' },
+  { id: 'root-1', name: 'Root Canal', description: 'Single root canal therapy', price: 750, category: 'Endodontics' },
+  { id: 'extract-1', name: 'Simple Extraction', description: 'Simple tooth extraction', price: 120, category: 'Surgery' },
+  { id: 'extract-2', name: 'Surgical Extraction', description: 'Complex surgical extraction', price: 250, category: 'Surgery' },
+  { id: 'implant-1', name: 'Dental Implant', description: 'Titanium implant placement', price: 1500, category: 'Implants' },
+  { id: 'implant-2', name: 'Implant Abutment', description: 'Connecting piece for implant', price: 500, category: 'Implants' },
+  { id: 'implant-3', name: 'Implant Crown', description: 'Crown for dental implant', price: 1200, category: 'Implants' },
+  { id: 'veneer-1', name: 'Porcelain Veneer', description: 'Single porcelain veneer', price: 900, category: 'Cosmetic' },
+  { id: 'whitening-1', name: 'Teeth Whitening', description: 'Professional whitening treatment', price: 350, category: 'Cosmetic' },
+  { id: 'bridge-1', name: '3-Unit Bridge', description: 'Fixed dental bridge (3 units)', price: 2500, category: 'Prosthetics' },
+  { id: 'denture-1', name: 'Partial Denture', description: 'Removable partial denture', price: 1200, category: 'Prosthetics' },
+  { id: 'denture-2', name: 'Complete Denture', description: 'Full removable denture', price: 1800, category: 'Prosthetics' },
+  { id: 'denture-3', name: 'Implant-Supported Denture', description: 'Denture attached to implants', price: 3500, category: 'Prosthetics' },
+  { id: 'perio-1', name: 'Periodontal Scaling', description: 'Deep cleaning for gum disease', price: 200, category: 'Periodontics' },
+  { id: 'ortho-1', name: 'Braces (Traditional)', description: 'Complete orthodontic treatment', price: 5000, category: 'Orthodontics' },
+  { id: 'ortho-2', name: 'Clear Aligners', description: 'Complete clear aligner treatment', price: 5500, category: 'Orthodontics' }
+];
 
-// Placeholder for the patient info form - to be implemented
-const PatientInfoForm = ({ 
-  patientInfo, 
-  onUpdate,
-  onSubmit 
-}: { 
-  patientInfo: any;
-  onUpdate: (info: any) => void;
-  onSubmit: () => void;
-}) => {
-  return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      onSubmit();
-    }} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">First Name</label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            value={patientInfo?.firstName || ''}
-            onChange={(e) => onUpdate({ ...patientInfo, firstName: e.target.value })}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Last Name</label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            value={patientInfo?.lastName || ''}
-            onChange={(e) => onUpdate({ ...patientInfo, lastName: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Email</label>
-        <input
-          type="email"
-          className="w-full p-2 border rounded-md"
-          value={patientInfo?.email || ''}
-          onChange={(e) => onUpdate({ ...patientInfo, email: e.target.value })}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Phone</label>
-        <input
-          type="tel"
-          className="w-full p-2 border rounded-md"
-          value={patientInfo?.phone || ''}
-          onChange={(e) => onUpdate({ ...patientInfo, phone: e.target.value })}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Preferred Date</label>
-        <input
-          type="date"
-          className="w-full p-2 border rounded-md"
-          value={patientInfo?.preferredDate || ''}
-          onChange={(e) => onUpdate({ ...patientInfo, preferredDate: e.target.value })}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Notes</label>
-        <textarea
-          className="w-full p-2 border rounded-md"
-          rows={3}
-          value={patientInfo?.notes || ''}
-          onChange={(e) => onUpdate({ ...patientInfo, notes: e.target.value })}
-        />
-      </div>
-      <div className="pt-2">
-        <Button type="submit">Submit Information</Button>
-      </div>
-    </form>
-  );
-};
+// Treatment categories
+const treatmentCategories = [
+  { id: 'all', name: 'All Treatments' },
+  { id: 'Implants', name: 'Implants' },
+  { id: 'Restorative', name: 'Restorative' },
+  { id: 'Cosmetic', name: 'Cosmetic' },
+  { id: 'Prosthetics', name: 'Prosthetics' },
+  { id: 'Orthodontics', name: 'Orthodontics' },
+  { id: 'Surgery', name: 'Surgery' },
+  { id: 'Hygiene', name: 'Hygiene' }
+];
 
 export function ComprehensiveQuoteBuilder() {
-  // Quote store state and actions
+  // State for selected category
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // State for active tab (treatments, packages, offers, info)
+  const [activeTab, setActiveTab] = useState('treatments');
+
+  // Quote store for state management
   const {
     treatments,
     addTreatment,
     removeTreatment,
     updateQuantity,
-    subtotal,
-    discount,
-    total,
-    discountPercentage,
     promoCode,
     applyPromoCode,
     clearPromoCode,
     patientInfo,
     updatePatientInfo,
-    currentStep,
-    setCurrentStep,
-    saveQuote,
-    selectPackage,
+    clearPatientInfo,
     selectedPackage,
-    selectOffer,
     selectedOffer,
-    error,
-    success,
-    loading
+    selectPackage,
+    selectOffer,
+    saveQuote,
+    loading,
+    resetQuote
   } = useQuoteStore();
 
-  // State for treatment packages and special offers
+  // Get special offers and treatment packages
   const { 
     packages, 
-    packageSavings,
-    isLoading: isLoadingPackages 
+    isLoading: isLoadingPackages, 
+    selectedPackage: storeSelectedPackage,
+    selectPackage: storeSelectPackage
   } = useTreatmentPackages();
   
   const { 
     offers, 
-    offerDiscount,
-    isLoading: isLoadingOffers 
+    isLoading: isLoadingOffers,
+    selectedOffer: storeSelectedOffer,
+    selectOffer: storeSelectOffer
   } = useSpecialOffers();
 
   // State for promo code input
-  const [promoInput, setPromoInput] = useState('');
-  
-  // State for active tab
-  const [activeTab, setActiveTab] = useState('treatments');
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
 
-  const { toast } = useToast();
+  // Handle category selection
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
+
+  // Handle treatment selection (add to quote)
+  const handleAddTreatment = (treatment: any) => {
+    // Find if treatment is already in the list
+    const existingTreatment = treatments.find(t => t.id === treatment.id);
+    
+    if (existingTreatment) {
+      // If found, increment quantity
+      updateQuantity(treatment.id, existingTreatment.quantity + 1);
+    } else {
+      // If not found, add treatment with quantity of 1
+      addTreatment({
+        ...treatment,
+        quantity: 1
+      });
+    }
+    
+    toast({
+      title: "Treatment added",
+      description: `${treatment.name} has been added to your quote`,
+    });
+  };
+
+  // Handle treatment removal
+  const handleRemoveTreatment = (id: string) => {
+    removeTreatment(id);
+    
+    toast({
+      title: "Treatment removed",
+      description: "The treatment has been removed from your quote",
+    });
+  };
+
+  // Handle treatment quantity update
+  const handleQuantityChange = (id: string, quantity: number) => {
+    updateQuantity(id, quantity);
+  };
 
   // Handle promo code submission
-  const handlePromoSubmit = (e: React.FormEvent) => {
+  const handlePromoCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (promoInput.trim()) {
-      applyPromoCode(promoInput);
-      // We'll keep the input value so user can see what they entered
+    
+    if (!promoCodeInput.trim()) {
+      toast({
+        title: "Please enter a promo code",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmittingPromo(true);
+    
+    try {
+      const success = await applyPromoCode(promoCodeInput);
+      
+      if (success) {
+        toast({
+          title: "Promo code applied",
+          description: `Promo code ${promoCodeInput} has been applied to your quote`,
+        });
+        setPromoCodeInput('');
+      } else {
+        toast({
+          title: "Invalid promo code",
+          description: "The promo code you entered is invalid or expired",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error applying promo code",
+        description: "There was a problem applying your promo code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingPromo(false);
     }
   };
 
-  // Handle save quote
-  const handleSaveQuote = async () => {
-    const success = await saveQuote({
-      treatments,
-      patientInfo,
-      packageInfo: selectedPackage,
-      offerInfo: selectedOffer,
-      promoCode,
-      subtotal,
-      discount,
-      total
-    });
-
-    if (success) {
+  // Handle package selection
+  const handlePackageSelect = (pkg: any) => {
+    selectPackage(pkg);
+    if (pkg) {
+      // When a package is selected, clear any selected offer
+      selectOffer(null);
+      // Clear any promo code
+      clearPromoCode();
+      
       toast({
-        title: "Quote Saved Successfully",
-        description: "Your quote has been saved and can be accessed from your dashboard.",
-        variant: "default",
+        title: "Package selected",
+        description: `${pkg.name} has been applied to your quote`,
       });
-    } else {
+    }
+  };
+
+  // Handle offer selection
+  const handleOfferSelect = (offer: any) => {
+    selectOffer(offer);
+    if (offer) {
+      // When an offer is selected, clear any selected package
+      selectPackage(null);
+      // Clear any promo code
+      clearPromoCode();
+      
       toast({
-        title: "Error Saving Quote",
-        description: "There was a problem saving your quote. Please try again.",
+        title: "Special offer selected",
+        description: `${offer.name} has been applied to your quote`,
+      });
+    }
+  };
+
+  // Handle patient info update
+  const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    updatePatientInfo({ [name]: value });
+  };
+
+  // Handle quote submission
+  const handleSubmitQuote = async () => {
+    if (!patientInfo || !patientInfo.firstName || !patientInfo.email) {
+      toast({
+        title: "Missing information",
+        description: "Please provide your name and email before submitting the quote",
+        variant: "destructive",
+      });
+      setActiveTab('patient-info');
+      return;
+    }
+    
+    if (treatments.length === 0) {
+      toast({
+        title: "Empty quote",
+        description: "Please add at least one treatment to your quote",
+        variant: "destructive",
+      });
+      setActiveTab('treatments');
+      return;
+    }
+    
+    try {
+      // Prepare quote data to be saved
+      const quoteData = {
+        treatments,
+        patientInfo,
+        promoCode,
+        packageId: selectedPackage?.id,
+        offerId: selectedOffer?.id
+      };
+      
+      const success = await saveQuote(quoteData);
+      
+      if (success) {
+        toast({
+          title: "Quote submitted successfully!",
+          description: "We've received your quote request and will be in touch shortly.",
+        });
+        
+        // Reset the form after successful submission
+        resetQuote();
+        setActiveTab('treatments');
+      }
+    } catch (error) {
+      toast({
+        title: "Error submitting quote",
+        description: "There was a problem submitting your quote. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  // Get the current step content
-  const getCurrentStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <Tabs defaultValue="treatments" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="treatments">Treatments</TabsTrigger>
-              <TabsTrigger value="packages">Packages</TabsTrigger>
-              <TabsTrigger value="specialoffers">Special Offers</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="treatments" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Select Treatments</h3>
-                  <div className="space-y-2">
-                    {/* Dental Chart */}
-                    <Card>
-                      <CardContent className="pt-4">
-                        <DentalChart onSelectTooth={(toothData) => {
-                          // Handle tooth selection and add treatment
-                          addTreatment({
-                            id: `tooth-${toothData.toothNumber}`,
-                            name: `Treatment for Tooth ${toothData.toothNumber}`,
-                            description: `Dental treatment for tooth ${toothData.toothNumber}`,
-                            price: 150, // Default price
-                            category: 'dental',
-                            quantity: 1,
-                            toothData
-                          });
-                        }} />
-                      </CardContent>
-                    </Card>
-                    
-                    {/* Regular treatment list */}
-                    <Card>
-                      <CardContent className="pt-4">
-                        <h4 className="font-medium mb-2">Common Treatments</h4>
-                        {/* List of common treatments */}
-                        {[
-                          { id: 't1', name: 'Dental Checkup', description: 'Basic dental examination', price: 50, category: 'preventive' },
-                          { id: 't2', name: 'Teeth Cleaning', description: 'Professional teeth cleaning', price: 75, category: 'preventive' },
-                          { id: 't3', name: 'X-Ray', description: 'Dental X-ray imaging', price: 120, category: 'diagnostic' },
-                          { id: 't4', name: 'Filling', description: 'Dental filling procedure', price: 150, category: 'restorative' },
-                          { id: 't5', name: 'Root Canal', description: 'Complete root canal therapy', price: 800, category: 'restorative' }
-                        ].map(treatment => (
-                          <div key={treatment.id} className="flex justify-between items-center p-2 border-b">
-                            <div>
-                              <p className="font-medium">{treatment.name}</p>
-                              <p className="text-sm text-muted-foreground">£{treatment.price}</p>
-                            </div>
-                            <Button 
-                              onClick={() => addTreatment(treatment)}
-                              size="sm"
-                            >
-                              Add
-                            </Button>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
+  // Filter treatments based on selected category
+  const filteredTreatments = selectedCategory === 'all'
+    ? mockTreatments
+    : mockTreatments.filter(treatment => treatment.category === selectedCategory);
+
+  // Check if a treatment is in the quote and return its quantity
+  const getTreatmentQuantity = (id: string) => {
+    const treatment = treatments.find(t => t.id === id);
+    return treatment ? treatment.quantity : 0;
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Main content area */}
+        <div className="flex-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Build Your Dental Treatment Quote</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
+                  <TabsTrigger value="treatments" className="flex items-center gap-1">
+                    <ShoppingCartIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Treatments</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="packages" className="flex items-center gap-1">
+                    <PackageIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Packages</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="offers" className="flex items-center gap-1">
+                    <TagIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Special Offers</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="patient-info" className="flex items-center gap-1">
+                    <UserIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Patient Info</span>
+                  </TabsTrigger>
+                </TabsList>
                 
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Your Treatments</h3>
-                  <Card>
-                    <CardContent className="pt-4">
-                      {treatments.length === 0 ? (
-                        <p className="text-muted-foreground italic">No treatments selected</p>
-                      ) : (
+                {/* Treatments Tab */}
+                <TabsContent value="treatments">
+                  <div className="space-y-6">
+                    {/* Categories selector */}
+                    <div className="flex flex-wrap gap-2">
+                      {treatmentCategories.map(category => (
+                        <Button 
+                          key={category.id}
+                          variant={selectedCategory === category.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleCategorySelect(category.id)}
+                        >
+                          {category.name}
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* Treatments grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredTreatments.map(treatment => {
+                        const quantity = getTreatmentQuantity(treatment.id);
+                        
+                        return (
+                          <Card key={treatment.id} className="overflow-hidden">
+                            <CardHeader className="p-4 pb-0">
+                              <CardTitle className="text-base">{treatment.name}</CardTitle>
+                              <p className="text-sm text-muted-foreground">{treatment.description}</p>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-2">
+                              <div className="flex justify-between items-center">
+                                <p className="font-bold">£{treatment.price}</p>
+                                
+                                {quantity > 0 ? (
+                                  <div className="flex items-center gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="icon" 
+                                      className="h-8 w-8"
+                                      onClick={() => handleQuantityChange(treatment.id, Math.max(0, quantity - 1))}
+                                    >
+                                      -
+                                    </Button>
+                                    <span className="w-6 text-center">{quantity}</span>
+                                    <Button 
+                                      variant="outline" 
+                                      size="icon" 
+                                      className="h-8 w-8"
+                                      onClick={() => handleQuantityChange(treatment.id, quantity + 1)}
+                                    >
+                                      +
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button onClick={() => handleAddTreatment(treatment)}>
+                                    Add
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Selected treatments */}
+                    {treatments.length > 0 && (
+                      <div className="mt-8">
+                        <h3 className="text-lg font-medium mb-4">Selected Treatments</h3>
                         <div className="space-y-2">
                           {treatments.map(treatment => (
-                            <div key={treatment.id} className="flex justify-between items-center p-2 border-b">
+                            <div 
+                              key={treatment.id} 
+                              className="flex justify-between items-center p-3 bg-secondary rounded-md"
+                            >
                               <div>
                                 <p className="font-medium">{treatment.name}</p>
-                                <p className="text-sm text-muted-foreground">£{treatment.price} each</p>
+                                <p className="text-sm text-muted-foreground">
+                                  £{treatment.price} x {treatment.quantity}
+                                </p>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => updateQuantity(treatment.id, Math.max(1, treatment.quantity - 1))}
-                                >
-                                  -
-                                </Button>
-                                <span>{treatment.quantity}</span>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => updateQuantity(treatment.id, treatment.quantity + 1)}
-                                >
-                                  +
-                                </Button>
+                              <div className="flex items-center gap-2">
+                                <div className="font-medium">
+                                  £{(treatment.price * treatment.quantity).toFixed(2)}
+                                </div>
                                 <Button 
                                   variant="ghost" 
-                                  size="sm"
-                                  onClick={() => removeTreatment(treatment.id)}
-                                  className="text-red-500"
+                                  size="icon" 
+                                  className="h-8 w-8 text-destructive"
+                                  onClick={() => handleRemoveTreatment(treatment.id)}
                                 >
-                                  Remove
+                                  <XCircleIcon className="h-5 w-5" />
                                 </Button>
                               </div>
                             </div>
                           ))}
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Quote Summary */}
-                  <QuoteSummary 
-                    treatments={treatments}
-                    subtotal={subtotal}
-                    discount={discount}
-                    total={total}
-                    promoCode={promoCode}
-                    discountPercentage={discountPercentage}
-                    packageName={selectedPackage?.name}
-                    packageSavings={packageSavings}
-                    offerName={selectedOffer?.name}
-                    offerDiscount={offerDiscount}
-                    className="mt-4"
-                  />
-                  
-                  {/* Promo Code Form */}
-                  <Card className="mt-4">
-                    <CardContent className="pt-4">
-                      <h4 className="font-medium mb-2">Promo Code</h4>
-                      {promoCode ? (
-                        <div className="flex items-center justify-between">
-                          <p>
-                            Applied: <strong>{promoCode}</strong> ({discountPercentage}% off)
-                          </p>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => clearPromoCode()}
-                            className="text-red-500"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ) : (
-                        <form onSubmit={handlePromoSubmit} className="flex space-x-2">
-                          <input
-                            type="text"
-                            value={promoInput}
-                            onChange={(e) => setPromoInput(e.target.value)}
+                      </div>
+                    )}
+                    
+                    {/* Promo code input */}
+                    {!promoCode && !selectedPackage && !selectedOffer && (
+                      <div className="mt-6">
+                        <h3 className="text-lg font-medium mb-2">Have a Promo Code?</h3>
+                        <form 
+                          className="flex gap-2" 
+                          onSubmit={handlePromoCodeSubmit}
+                        >
+                          <Input
+                            className="max-w-xs"
                             placeholder="Enter promo code"
-                            className="flex-1 px-3 py-2 border rounded-md"
+                            value={promoCodeInput}
+                            onChange={(e) => setPromoCodeInput(e.target.value)}
                           />
-                          <Button type="submit" disabled={loading.promoCode}>
-                            {loading.promoCode ? 'Applying...' : 'Apply'}
+                          <Button 
+                            type="submit"
+                            disabled={isSubmittingPromo || !promoCodeInput.trim()}
+                          >
+                            {isSubmittingPromo ? (
+                              <Loader2Icon className="h-4 w-4 animate-spin" />
+                            ) : (
+                              'Apply'
+                            )}
                           </Button>
                         </form>
-                      )}
-                      {error.promoCode && (
-                        <p className="text-red-500 text-sm mt-1">{error.promoCode}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="packages" className="space-y-4">
-              <TreatmentPackageSelector 
-                packages={packages}
-                selectedPackageId={selectedPackage?.id}
-                onSelectPackage={selectPackage}
-                isLoading={isLoadingPackages}
-              />
-              
-              {/* Show selected package details */}
-              {selectedPackage && (
-                <Card className="mt-4">
-                  <CardContent className="pt-4">
-                    <h4 className="font-medium mb-2">Selected Package: {selectedPackage.name}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">{selectedPackage.description}</p>
-                    <p className="font-medium">Savings: £{packageSavings}</p>
-                    
-                    {/* Show package treatments */}
-                    <div className="mt-4">
-                      <h5 className="font-medium mb-2">Included Treatments:</h5>
-                      <ul className="list-disc list-inside">
-                        {selectedPackage.treatments.map(treatment => (
-                          <li key={treatment.id}>
-                            {treatment.name} (£{treatment.price})
-                          </li>
-                        ))}
-                      </ul>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                {/* Packages Tab */}
+                <TabsContent value="packages">
+                  <TreatmentPackageSelector
+                    packages={packages}
+                    selectedPackageId={selectedPackage?.id}
+                    onSelectPackage={handlePackageSelect}
+                    isLoading={isLoadingPackages}
+                  />
+                </TabsContent>
+                
+                {/* Special Offers Tab */}
+                <TabsContent value="offers">
+                  <SpecialOffersSelector
+                    offers={offers}
+                    selectedOfferId={selectedOffer?.id}
+                    onSelectOffer={handleOfferSelect}
+                    isLoading={isLoadingOffers}
+                  />
+                </TabsContent>
+                
+                {/* Patient Info Tab */}
+                <TabsContent value="patient-info">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Your Information</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Please provide your contact information so we can send you the quote
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Quote Summary for the Package tab */}
-              <QuoteSummary 
-                treatments={treatments}
-                subtotal={subtotal}
-                discount={discount}
-                total={total}
-                promoCode={promoCode}
-                discountPercentage={discountPercentage}
-                packageName={selectedPackage?.name}
-                packageSavings={packageSavings}
-                offerName={selectedOffer?.name}
-                offerDiscount={offerDiscount}
-                className="mt-4"
-              />
-            </TabsContent>
-            
-            <TabsContent value="specialoffers" className="space-y-4">
-              <SpecialOffersSelector 
-                offers={offers}
-                selectedOfferId={selectedOffer?.id}
-                onSelectOffer={selectOffer}
-                isLoading={isLoadingOffers}
-              />
-              
-              {/* Show selected offer details */}
-              {selectedOffer && (
-                <Card className="mt-4">
-                  <CardContent className="pt-4">
-                    <h4 className="font-medium mb-2">Selected Offer: {selectedOffer.name}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">{selectedOffer.description}</p>
-                    <p className="font-medium">
-                      Discount: {selectedOffer.discountType === 'percentage' 
-                        ? `${selectedOffer.discountValue}%` 
-                        : `£${selectedOffer.discountValue}`}
-                    </p>
-                    <p className="text-sm font-medium mt-2">
-                      Promo Code: <span className="text-primary">{selectedOffer.promoCode}</span>
-                    </p>
                     
-                    {/* Apply offer button */}
-                    <div className="mt-4">
-                      <Button onClick={() => {
-                        applyPromoCode(selectedOffer.promoCode);
-                        setPromoInput(selectedOffer.promoCode);
-                        setActiveTab('treatments');
-                        toast({
-                          title: "Promo Code Applied",
-                          description: `${selectedOffer.promoCode} has been applied to your quote.`,
-                        });
-                      }}>
-                        Apply Offer Discount
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label htmlFor="firstName" className="text-sm font-medium">
+                          First Name*
+                        </label>
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          value={patientInfo?.firstName || ''}
+                          onChange={handlePatientInfoChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label htmlFor="lastName" className="text-sm font-medium">
+                          Last Name
+                        </label>
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          value={patientInfo?.lastName || ''}
+                          onChange={handlePatientInfoChange}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label htmlFor="email" className="text-sm font-medium">
+                          Email*
+                        </label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          value={patientInfo?.email || ''}
+                          onChange={handlePatientInfoChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label htmlFor="phone" className="text-sm font-medium">
+                          Phone Number
+                        </label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          value={patientInfo?.phone || ''}
+                          onChange={handlePatientInfoChange}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2 md:col-span-2">
+                        <label htmlFor="preferredDate" className="text-sm font-medium">
+                          Preferred Date
+                        </label>
+                        <Input
+                          id="preferredDate"
+                          name="preferredDate"
+                          type="date"
+                          value={patientInfo?.preferredDate || ''}
+                          onChange={handlePatientInfoChange}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2 md:col-span-2">
+                        <label htmlFor="notes" className="text-sm font-medium">
+                          Additional Notes
+                        </label>
+                        <Input
+                          id="notes"
+                          name="notes"
+                          value={patientInfo?.notes || ''}
+                          onChange={handlePatientInfoChange}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => clearPatientInfo()}
+                      >
+                        Clear Info
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setActiveTab('treatments')}
+                      >
+                        Back to Treatments
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                </TabsContent>
+              </Tabs>
               
-              {/* Quote Summary for the Special Offers tab */}
-              <QuoteSummary 
-                treatments={treatments}
-                subtotal={subtotal}
-                discount={discount}
-                total={total}
-                promoCode={promoCode}
-                discountPercentage={discountPercentage}
-                packageName={selectedPackage?.name}
-                packageSavings={packageSavings}
-                offerName={selectedOffer?.name}
-                offerDiscount={offerDiscount}
-                className="mt-4"
-              />
-            </TabsContent>
-          </Tabs>
-        );
-      case 2:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Patient Information</h3>
-            <PatientInfoForm 
-              patientInfo={patientInfo} 
-              onUpdate={updatePatientInfo}
-              onSubmit={() => setCurrentStep(3)}
-            />
-          </div>
-        );
-      case 3:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Quote Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardContent className="pt-4">
-                  <h4 className="font-medium mb-2">Patient Information</h4>
-                  {patientInfo ? (
-                    <div className="space-y-2">
-                      <p><span className="font-medium">Name:</span> {patientInfo.firstName} {patientInfo.lastName}</p>
-                      <p><span className="font-medium">Email:</span> {patientInfo.email}</p>
-                      <p><span className="font-medium">Phone:</span> {patientInfo.phone}</p>
-                      <p><span className="font-medium">Preferred Date:</span> {patientInfo.preferredDate}</p>
-                      {patientInfo.notes && (
-                        <p><span className="font-medium">Notes:</span> {patientInfo.notes}</p>
-                      )}
-                    </div>
+              {/* Submit quote button */}
+              <div className="flex justify-between items-center mt-8">
+                <Button 
+                  variant="outline" 
+                  onClick={() => resetQuote()}
+                >
+                  Reset Quote
+                </Button>
+                <Button
+                  className="gap-2"
+                  size="lg"
+                  onClick={handleSubmitQuote}
+                  disabled={loading.saveQuote || treatments.length === 0}
+                >
+                  {loading.saveQuote ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
                   ) : (
-                    <p className="text-muted-foreground italic">No patient information provided</p>
+                    <>
+                      <SendIcon className="h-4 w-4" />
+                      Submit Quote
+                    </>
                   )}
-                </CardContent>
-              </Card>
-              
-              <QuoteSummary 
-                treatments={treatments}
-                subtotal={subtotal}
-                discount={discount}
-                total={total}
-                promoCode={promoCode}
-                discountPercentage={discountPercentage}
-                packageName={selectedPackage?.name}
-                packageSavings={packageSavings}
-                offerName={selectedOffer?.name}
-                offerDiscount={offerDiscount}
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-4 mt-6">
-              <Button 
-                variant="outline" 
-                onClick={() => setCurrentStep(currentStep - 1)}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={handleSaveQuote}
-                disabled={loading.saveQuote}
-              >
-                {loading.saveQuote ? 'Saving...' : 'Save Quote'}
-              </Button>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Comprehensive Dental Quote Builder</h2>
-        
-        <div className="flex items-center space-x-4">
-          {currentStep > 1 && currentStep < 3 && (
-            <Button 
-              variant="outline" 
-              onClick={() => setCurrentStep(currentStep - 1)}
-            >
-              Previous
-            </Button>
-          )}
-          {currentStep < 3 && (
-            <Button 
-              onClick={() => {
-                // For step 1, we need treatments
-                if (currentStep === 1 && treatments.length === 0) {
-                  toast({
-                    title: "No Treatments Selected",
-                    description: "Please select at least one treatment to proceed.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                
-                // For step 2, we need patient info
-                if (currentStep === 2 && (!patientInfo || !patientInfo.firstName)) {
-                  toast({
-                    title: "Patient Information Required",
-                    description: "Please fill out the patient information form to proceed.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                
-                setCurrentStep(currentStep + 1);
-              }}
-            >
-              Next
-            </Button>
-          )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-      
-      <div className="bg-card rounded-lg border p-6">
-        {getCurrentStepContent()}
+        
+        {/* Sidebar summary */}
+        <div className="md:w-80">
+          <div className="md:sticky md:top-4 space-y-4">
+            <QuoteSummary />
+            
+            {/* Navigation guidance */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <SmileIcon className="mr-2 h-5 w-5" />
+                  Quick Guide
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <ShoppingCartIcon className="h-4 w-4 mt-0.5 text-primary" />
+                    <span><strong>Treatments:</strong> Select individual dental treatments</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <PackageIcon className="h-4 w-4 mt-0.5 text-primary" />
+                    <span><strong>Packages:</strong> Pre-bundled treatments at a discount</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <TagIcon className="h-4 w-4 mt-0.5 text-primary" />
+                    <span><strong>Special Offers:</strong> Time-limited promotional discounts</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <UserIcon className="h-4 w-4 mt-0.5 text-primary" />
+                    <span><strong>Patient Info:</strong> Provide your contact details</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

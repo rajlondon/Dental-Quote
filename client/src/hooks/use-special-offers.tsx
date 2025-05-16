@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
 
 // Define special offer type
-export interface SpecialOffer {
+export type SpecialOffer = {
   id: string;
   name: string;
   description: string;

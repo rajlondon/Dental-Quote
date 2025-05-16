@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { SpecialOffer } from '../../hooks/use-special-offers';
+import type { SpecialOffer } from '../../hooks/use-special-offers';
 import { Skeleton } from '../ui/skeleton';
 import { CalendarIcon, TagIcon, BadgePercentIcon } from 'lucide-react';
 
@@ -61,7 +61,7 @@ export function SpecialOffersSelector({
       <div>
         <h3 className="text-lg font-medium mb-2">Special Offers</h3>
         <p className="text-muted-foreground mb-4">
-          Take advantage of our limited-time dental offers to save on your treatment.
+          Choose from our limited-time special offers to get the best value for your dental treatment.
         </p>
         
         {/* Clear selection button if an offer is selected */}
@@ -80,14 +80,22 @@ export function SpecialOffersSelector({
         {offers.map((offer) => {
           const isSelected = offer.id === selectedOfferId;
           
-          // Format expiration date if it exists
+          // Format discount display
+          const discountDisplay = offer.discountType === 'percentage'
+            ? `${offer.discountValue}% Off`
+            : `£${offer.discountValue} Off`;
+          
+          // Format expiry date if available
           const expiryDate = offer.expiryDate 
-            ? new Date(offer.expiryDate).toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-              })
+            ? new Date(offer.expiryDate)
             : null;
+          
+          const isExpired = expiryDate 
+            ? expiryDate < new Date() 
+            : false;
+          
+          // Skip expired offers
+          if (isExpired) return null;
           
           return (
             <Card 
@@ -109,6 +117,11 @@ export function SpecialOffersSelector({
                       Selected
                     </div>
                   )}
+                  {offer.featured && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-xs font-medium">
+                      Featured
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -121,27 +134,27 @@ export function SpecialOffersSelector({
               </CardHeader>
               
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-primary">
+                <div className="space-y-4">
+                  <div className="flex items-center text-primary font-bold text-lg">
                     <BadgePercentIcon className="h-5 w-5 mr-2" />
-                    <span className="font-semibold">
-                      {offer.discountType === 'percentage'
-                        ? `${offer.discountValue}% off`
-                        : `£${offer.discountValue} off`}
-                    </span>
+                    <span>{discountDisplay}</span>
                   </div>
                   
-                  <div className="flex items-center text-muted-foreground">
-                    <span className="font-medium mr-2">Promo Code:</span>
-                    <code className="bg-secondary px-2 py-1 rounded text-sm font-bold">
-                      {offer.promoCode}
-                    </code>
-                  </div>
+                  {offer.promoCode && (
+                    <div className="bg-secondary p-2 rounded-md">
+                      <p className="text-sm font-medium mb-1">Promo Code:</p>
+                      <div className="font-mono bg-background p-1 rounded border text-center">
+                        {offer.promoCode}
+                      </div>
+                    </div>
+                  )}
                   
                   {expiryDate && (
-                    <div className="flex items-center text-muted-foreground">
-                      <CalendarIcon className="h-4 w-4 mr-2" />
-                      <span>Valid until {expiryDate}</span>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <CalendarIcon className="h-4 w-4 mr-1" />
+                      <span>
+                        Expires: {expiryDate.toLocaleDateString()}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -156,7 +169,7 @@ export function SpecialOffersSelector({
                     onSelectOffer(isSelected ? null : offer);
                   }}
                 >
-                  {isSelected ? 'Deselect Offer' : 'Select Offer'}
+                  {isSelected ? 'Remove Offer' : 'Apply Offer'}
                 </Button>
               </CardFooter>
             </Card>
