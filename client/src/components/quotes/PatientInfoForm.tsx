@@ -1,35 +1,39 @@
 import React from 'react';
-import { useQuoteStore } from '@/stores/quoteStore';
+import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useLocation } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useQuoteStore, PatientInfo } from '@/stores/quoteStore';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
 
-// Define the form schema
+// Form validation schema
 const patientInfoSchema = z.object({
-  firstName: z.string().min(2, { message: 'First name must be at least 2 characters' }),
-  lastName: z.string().min(2, { message: 'Last name must be at least 2 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  phone: z.string().min(8, { message: 'Please enter a valid phone number' }),
-  preferredDate: z.string().min(1, { message: 'Please select a preferred date' }),
-  notes: z.string().optional(),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  phone: z.string().min(6, 'Please enter a valid phone number'),
+  preferredDate: z.string().min(1, 'Please select a preferred date'),
+  notes: z.string().optional()
 });
 
 type PatientInfoFormValues = z.infer<typeof patientInfoSchema>;
 
 const PatientInfoForm: React.FC = () => {
-  const { patientInfo, treatments, setPatientInfo } = useQuoteStore();
-  const [, navigate] = useLocation();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  // Initialize form with default values
+  const [_, navigate] = useLocation();
+  const { patientInfo, setPatientInfo } = useQuoteStore();
+  
+  // Initialize form with existing values or defaults
   const form = useForm<PatientInfoFormValues>({
     resolver: zodResolver(patientInfoSchema),
     defaultValues: patientInfo || {
@@ -38,88 +42,62 @@ const PatientInfoForm: React.FC = () => {
       email: '',
       phone: '',
       preferredDate: '',
-      notes: '',
-    },
+      notes: ''
+    }
   });
-
+  
   // Handle form submission
-  const onSubmit = async (data: PatientInfoFormValues) => {
-    if (treatments.length === 0) {
-      toast({
-        title: 'No treatments selected',
-        description: 'Please select at least one treatment before proceeding',
-        variant: 'destructive'
-      });
-      navigate('/quote/treatments');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Update the patient info in the store
-      setPatientInfo(data);
-      
-      // Show success message
-      toast({
-        title: 'Information saved',
-        description: 'Your information has been saved',
-        variant: 'default'
-      });
-      
-      // Navigate to summary page
-      navigate('/quote/summary');
-    } catch (error) {
-      console.error('Error saving patient info:', error);
-      toast({
-        title: 'Error',
-        description: 'There was an error saving your information. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const onSubmit = (data: PatientInfoFormValues) => {
+    setPatientInfo({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      preferredDate: data.preferredDate,
+      notes: data.notes || '' // Ensure notes is always a string
+    });
+    
+    // Navigate to summary step
+    navigate('/quote/summary');
   };
-
+  
+  // Go back to treatments step
+  const handleGoBack = () => {
+    navigate('/quote/treatments');
+  };
+  
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Your Information</CardTitle>
-        <CardDescription>Please provide your contact details so we can prepare your quote</CardDescription>
-      </CardHeader>
-      
+    <div className="space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
@@ -153,8 +131,8 @@ const PatientInfoForm: React.FC = () => {
               control={form.control}
               name="preferredDate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preferred Treatment Date</FormLabel>
+                <FormItem className="col-span-full md:col-span-1">
+                  <FormLabel>Preferred Date for Appointment</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -162,53 +140,42 @@ const PatientInfoForm: React.FC = () => {
                 </FormItem>
               )}
             />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Notes (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Tell us about any specific requirements or questions you have"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
+          </div>
           
-          <CardFooter className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => navigate('/quote/treatments')}
-              disabled={isSubmitting}
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Additional Notes (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Any special requirements or questions you may have..." 
+                    className="min-h-[120px]" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="flex justify-between pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoBack}
             >
-              Back
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Treatments
             </Button>
             
-            <Button 
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Continue to Summary'
-              )}
+            <Button type="submit">
+              Review Quote <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </CardFooter>
+          </div>
         </form>
       </Form>
-    </Card>
+    </div>
   );
 };
 
