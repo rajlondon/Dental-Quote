@@ -314,6 +314,9 @@ function Router() {
         );
       }} />
       
+      {/* Standalone Quote Builder - with persistent state management */}
+      <Route path="/quote-builder" component={StandaloneQuotePage} />
+      
       {/* Robust Quote Demo - reducer-based solution for reliable state management */}
       <Route path="/robust-quote" component={() => {
         return (

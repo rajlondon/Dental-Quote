@@ -1,163 +1,106 @@
 import React from 'react';
+import { useQuoteStore } from '@/stores/quoteStore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useQuoteStore } from '@/stores/quoteStore';
+import * as z from 'zod';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
+import { Loader2 } from 'lucide-react';
 
-// Validation schema
+// Define the form schema
 const patientInfoSchema = z.object({
   firstName: z.string().min(2, { message: 'First name must be at least 2 characters' }),
   lastName: z.string().min(2, { message: 'Last name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  phone: z.string().optional(),
-  preferredDate: z.string().optional(),
+  phone: z.string().min(8, { message: 'Please enter a valid phone number' }),
+  preferredDate: z.string().min(1, { message: 'Please select a preferred date' }),
   notes: z.string().optional(),
 });
 
 type PatientInfoFormValues = z.infer<typeof patientInfoSchema>;
 
 const PatientInfoForm: React.FC = () => {
-  const { patientInfo, setPatientInfo, treatments } = useQuoteStore();
+  const { patientInfo, treatments, setPatientInfo } = useQuoteStore();
   const [, navigate] = useLocation();
-  
-  // Create form with default values from the store
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Initialize form with default values
   const form = useForm<PatientInfoFormValues>({
     resolver: zodResolver(patientInfoSchema),
-    defaultValues: {
-      firstName: patientInfo?.firstName || '',
-      lastName: patientInfo?.lastName || '',
-      email: patientInfo?.email || '',
-      phone: patientInfo?.phone || '',
-      preferredDate: patientInfo?.preferredDate || '',
-      notes: patientInfo?.notes || '',
+    defaultValues: patientInfo || {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      preferredDate: '',
+      notes: '',
     },
   });
 
-  const onSubmit = (values: PatientInfoFormValues) => {
-    // Save patient info to the store
-    setPatientInfo({
-      firstName: values.firstName,
-      lastName: values.lastName,
-      email: values.email,
-      phone: values.phone || '',
-      preferredDate: values.preferredDate || '',
-      notes: values.notes || '',
-    });
+  // Handle form submission
+  const onSubmit = async (data: PatientInfoFormValues) => {
+    if (treatments.length === 0) {
+      toast({
+        title: 'No treatments selected',
+        description: 'Please select at least one treatment before proceeding',
+        variant: 'destructive'
+      });
+      navigate('/quote/treatments');
+      return;
+    }
 
-    toast({
-      title: 'Information saved',
-      description: 'Your contact information has been saved.',
-    });
+    setIsSubmitting(true);
 
-    // Navigate to the summary page
-    navigate('/standalone-quote/summary');
-  };
-
-  const goBack = () => {
-    navigate('/standalone-quote/treatments');
+    try {
+      // Update the patient info in the store
+      setPatientInfo(data);
+      
+      // Show success message
+      toast({
+        title: 'Information saved',
+        description: 'Your information has been saved',
+        variant: 'default'
+      });
+      
+      // Navigate to summary page
+      navigate('/quote/summary');
+    } catch (error) {
+      console.error('Error saving patient info:', error);
+      toast({
+        title: 'Error',
+        description: 'There was an error saving your information. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Your Information</h2>
-        <p className="text-gray-600">
-          Please provide your contact information so we can prepare your quote.
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact Details</CardTitle>
-          <CardDescription>
-            Fill in your information below to receive your personalized dental treatment quote.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your first name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your last name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="your.email@example.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        We'll send your quote to this email address
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+1 (555) 123-4567" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Your Information</CardTitle>
+        <CardDescription>Please provide your contact details so we can prepare your quote</CardDescription>
+      </CardHeader>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="preferredDate"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred Date (Optional)</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input placeholder="John" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      When would you like to start your treatment?
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -165,43 +108,107 @@ const PatientInfoForm: React.FC = () => {
               
               <FormField
                 control={form.control}
-                name="notes"
+                name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Notes (Optional)</FormLabel>
+                    <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Any additional information or questions you'd like to include with your quote..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
+                      <Input placeholder="Doe" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <div className="flex justify-between mt-8">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goBack}
-                >
-                  Back to Treatments
-                </Button>
-                
-                <Button 
-                  type="submit"
-                  disabled={treatments.length === 0}
-                >
-                  {treatments.length === 0 ? 'Please select treatments first' : 'Continue to Summary'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="john.doe@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="+1 (555) 123-4567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="preferredDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Treatment Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Additional Notes (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Tell us about any specific requirements or questions you have"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+          
+          <CardFooter className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => navigate('/quote/treatments')}
+              disabled={isSubmitting}
+            >
+              Back
+            </Button>
+            
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Continue to Summary'
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
+    </Card>
   );
 };
 
