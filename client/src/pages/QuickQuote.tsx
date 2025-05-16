@@ -22,6 +22,8 @@ interface Treatment {
 interface QuoteState {
   treatments: Treatment[];
   promoCode: string | null;
+  promoType?: 'percentage' | 'fixed';
+  promoValue?: number;
   discount: number;
   subtotal: number;
   total: number;
@@ -131,19 +133,21 @@ export default function QuickQuote() {
     }
     
     // Use functional update to ensure we have the latest state
-    setQuote(prev => {
-      console.log("[QuickQuote] Applying promo to quote:", prev);
+    setQuote(prevQuote => {
+      console.log("[QuoteBuilder] Applying promo to quote:", prevQuote);
       
-      const subtotal = prev.subtotal;
-      const promoDetails = promoCodes[code];
+      const subtotal = prevQuote.subtotal || 0;
+      const discountType = promoCodes[code].type;
+      const discountValue = promoCodes[code].value;
+      
       let calculatedDiscount = 0;
       
-      if (promoDetails.type === 'percentage') {
-        calculatedDiscount = (subtotal * promoDetails.value / 100);
-        console.log(`[QuickQuote] Applying ${promoDetails.value}% discount on ${subtotal} = ${calculatedDiscount}`);
-      } else {
-        calculatedDiscount = promoDetails.value;
-        console.log(`[QuickQuote] Applying fixed discount of ${promoDetails.value}`);
+      if (discountType === 'percentage') {
+        calculatedDiscount = (subtotal * discountValue / 100);
+        console.log(`[QuoteBuilder] Applying ${discountValue}% discount on ${subtotal} = ${calculatedDiscount}`);
+      } else if (discountType === 'fixed') {
+        calculatedDiscount = discountValue;
+        console.log(`[QuoteBuilder] Applying fixed discount of ${discountValue}`);
       }
       
       // Ensure discount doesn't exceed subtotal
@@ -151,8 +155,10 @@ export default function QuickQuote() {
       
       // Return a new object that preserves ALL previous state
       return {
-        ...prev,
+        ...prevQuote,
         promoCode: code,
+        promoType: discountType,
+        promoValue: discountValue,
         discount: calculatedDiscount,
         total: subtotal - calculatedDiscount
       };
@@ -162,36 +168,36 @@ export default function QuickQuote() {
     
     // Delay the success message to ensure state is updated
     setTimeout(() => {
-      const promoDetails = promoCodes[code];
-      const discountText = promoDetails.type === 'percentage' 
-        ? `${promoDetails.value}%` 
-        : `${formatCurrency(promoDetails.value)}`;
-        
       toast({
         title: 'Promo Code Applied',
-        description: `${code} (${discountText} discount) has been applied to your quote`,
+        description: `${code} has been applied successfully! Your discount: ${formatCurrency(quote.discount)}`,
       });
     }, 100);
   };
   
   // Remove promo code
   const removePromoCode = () => {
-    setQuote(prev => {
-      console.log("[QuickQuote] Removing promo code from quote:", prev);
+    setQuote(prevQuote => {
+      console.log("[QuoteBuilder] Removing promo code from quote:", prevQuote);
       
       // Return a new object that preserves ALL previous state
       return {
-        ...prev,
+        ...prevQuote,
         promoCode: null,
+        promoType: undefined,
+        promoValue: undefined,
         discount: 0,
-        total: prev.subtotal
+        total: prevQuote.subtotal
       };
     });
     
-    toast({
-      title: 'Promo Code Removed',
-      description: 'The promo code has been removed from your quote',
-    });
+    // Delay the success message to ensure state is updated
+    setTimeout(() => {
+      toast({
+        title: 'Promo Code Removed',
+        description: 'The promo code has been removed from your quote',
+      });
+    }, 100);
   };
   
   // Reset quote
