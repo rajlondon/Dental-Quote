@@ -171,7 +171,9 @@ export const useQuoteStore = create<QuoteState>()(
               discountPercent: data.discountPercentage,
               subtotal,
               total,
-              loading: { ...state.loading, promoCode: false }
+              loading: { ...state.loading, promoCode: false },
+              // Preserve the current step
+              currentStep: state.currentStep
             });
             
             console.log('STORE: Promo code applied successfully', code, data.discountPercentage);
@@ -205,7 +207,9 @@ export const useQuoteStore = create<QuoteState>()(
               discountPercent: discountPercentage,
               subtotal,
               total,
-              loading: { ...state.loading, promoCode: false }
+              loading: { ...state.loading, promoCode: false },
+              // Preserve the current step in fallback case too
+              currentStep: state.currentStep
             });
             
             console.log('STORE: Promo code applied successfully', code, discountPercentage);
