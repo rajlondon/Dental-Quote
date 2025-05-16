@@ -73,10 +73,12 @@ function SimpleQuoteDemo() {
     };
     
     if (promoCodes[promoCode]) {
-      setDiscount(subtotal * (promoCodes[promoCode] / 100));
+      const discountAmount = subtotal * (promoCodes[promoCode] / 100);
+      setDiscount(discountAmount);
+      
       toast({
         title: 'Promo Code Applied',
-        description: `${promoCode} has been applied to your quote.`,
+        description: `${promoCode} has been applied to your quote. You saved ${formatCurrency(discountAmount)}!`,
       });
     } else {
       toast({
