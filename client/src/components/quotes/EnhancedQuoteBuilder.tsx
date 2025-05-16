@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuoteStore } from '@/stores/quoteStore';
 import { PatientInfoForm } from './PatientInfoForm';
+import { QuotePrintView } from './QuotePrintView';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Trash2, Minus, Plus, ArrowRight, FileText } from 'lucide-react';
+import { Check, Trash2, Minus, Plus, ArrowRight, FileText, Printer } from 'lucide-react';
 
 // Formatting helpers
 const formatCurrency = (amount: number) => {
@@ -47,6 +48,7 @@ export function EnhancedQuoteBuilder() {
   // Local state
   const [promoInput, setPromoInput] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
+  const [showPrintView, setShowPrintView] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [availableTreatments, setAvailableTreatments] = useState<Array<{
     id: string;
@@ -597,6 +599,15 @@ export function EnhancedQuoteBuilder() {
                 </span>
               )}
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowPrintView(true)}
+              className="flex items-center gap-1 ml-2"
+              disabled={!patientInfo || treatments.length === 0}
+            >
+              <Printer className="h-4 w-4" />
+              Print Quote
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -629,6 +640,11 @@ export function EnhancedQuoteBuilder() {
         {currentStep === 'treatments' && renderTreatmentsStep()}
         {currentStep === 'patient-info' && <PatientInfoForm />}
         {currentStep === 'summary' && renderSummaryStep()}
+        
+        {/* Print View Modal */}
+        {showPrintView && patientInfo && (
+          <QuotePrintView onClose={() => setShowPrintView(false)} />
+        )}
       </div>
     </div>
   );
