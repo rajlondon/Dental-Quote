@@ -231,7 +231,12 @@ export function PersistentQuoteBuilder() {
                 {treatments.length > 0 && (
                   <div className="mt-6 flex justify-center">
                     <Button 
-                      onClick={() => setActiveTab('summary')}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveTab('summary');
+                      }}
                       className="w-full max-w-md"
                     >
                       View Quote Summary ({treatments.reduce((sum, t) => sum + t.quantity, 0)} items)
@@ -330,10 +335,19 @@ export function PersistentQuoteBuilder() {
                               </div>
                             </div>
                             <Button 
+                              type="button"
                               variant="ghost" 
                               size="sm" 
                               className="text-red-500 hover:text-red-700"
-                              onClick={removePromoCode}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // Store current tab
+                                const currentTab = activeTab;
+                                removePromoCode();
+                                // Restore tab
+                                setTimeout(() => setActiveTab(currentTab), 10);
+                              }}
                             >
                               Remove
                             </Button>
