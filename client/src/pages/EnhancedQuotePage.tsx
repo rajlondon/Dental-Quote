@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { EnhancedQuoteBuilder } from '@/components/quotes/EnhancedQuoteBuilder';
+import { SimplePatientQuoteBuilder } from '@/components/quotes/SimplePatientQuoteBuilder';
 
 const EnhancedQuotePage: React.FC = () => {
   const { t } = useTranslation();
@@ -30,7 +30,7 @@ const EnhancedQuotePage: React.FC = () => {
             </div>
             
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <EnhancedQuoteBuilder />
+              <SimplePatientQuoteBuilder />
             </div>
           </div>
         </main>
